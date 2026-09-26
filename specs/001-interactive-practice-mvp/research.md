@@ -345,11 +345,12 @@ compatible.
 | **YIN** (de Cheveigné & Kawahara 2002) | Good: cumulative-mean-normalised difference + absolute threshold targets the fundamental | ~2–3 periods of lowest f0 (≈ 30–45 ms at 62–73 Hz) | Aperiodicity (CMNDF minimum) → natural *uncertain* signal | O(W·τmax) naive; O(N log N) via FFT-based ACF | **Recommended** |
 | **McLeod Pitch Method** (McLeod & Wyvill 2005) | Good; "key maximum" selection; used in instrument tuners | Similar to YIN | NSDF clarity | Similar | **Candidate B** |
 
-**Decision**: implement **YIN with parabolic interpolation**, difference function computed via
-FFT-based autocorrelation (reusing the permissive `craigl` FFT or an equivalent in-module FFT),
-analysis window sized for ≥ 2 periods of the lowest supported fundamental, hop ≈ 5–10 ms.
-Implement from the published algorithm; **do not** add third-party DSP libraries (e.g.
-TarsosDSP is GPL-3.0, incompatible with shipping inside an LGPL-2.1 application).
+**Decision (superseded 2026-09-26 — see "S3 results")**: the original plan was to implement YIN
+from the paper without third-party DSP. After S3 the product owner chose **TarsosDSP `FastYin`,
+2048-sample window** as the provisional MVP detector. TarsosDSP 2.5 is published under
+**GPL-3.0** (`<license>GNU GENERAL PUBLIC LICENSE Version 3` in its POM). Constitution v1.1.0
+permits GPL-3.0 dependencies (intended GPLv3 combined distribution) and makes distribution
+compliance a release gate; provenance is recorded in plan.md.
 **SPIKE S3**: benchmark YIN vs McLeod on the synthetic suite and the first recorded set
 (interface + built-in microphone); switch to McLeod only if it is measurably better on octave
 errors and false acceptance at equal latency. The chosen estimator is the **only** pitch
@@ -894,3 +895,57 @@ grant is tied to TuxGuitar rather than to a generic executable name. Not yet ver
 identifier-signing of the launcher alone (the bundle cannot currently be sealed because of jars
 in `Contents/MacOS`) makes `tccd` use `app.tuxguitar`, and whether a rebuilt launcher (new cdhash)
 keeps an existing grant. Both are checked when the production launcher is built (Phase 3).
+
+### S3 — pitch detection on real recordings + live validation (2026-09-26)
+
+**Experiment**: TarsosDSP 2.5 (`be.tarsos.dsp:core:2.5`, from `mvn.0110.be/releases`, not Maven
+Central) `Yin` and `McLeodPitchMethod` fed identical PCM frames of the 22 accepted builtin-mic
+benchmark clips (mono 48 kHz/16-bit), windows 2048 (42.7 ms) and 4096 (85.3 ms), hop 256
+(5.3 ms). Per clip: first stable note (same note for 10 consecutive frames ≈ 53 ms after the
+energy onset), median f0 and cents, median probability, time to stable, and in the sustain window
+the share of frames on the recorded note / an octave off / another note / unpitched. Clips 18–21
+use QA-derived truth and are reported separately. (A first run with a 3-frame criterion was
+discarded: pluck transients produce ~16 ms of subharmonic readings, e.g. G2 for D4.)
+
+| Detector / window | First stable note correct (17 clips) | Time to stable after onset | Silence clip |
+|---|---|---|---|
+| **YIN 2048** | **14/17**; 11 clips ≥ 94 % of frames on the note | median 101 ms, max 149 ms | 16/555 frames pitched (F1–A1, below guitar range) |
+| YIN 4096 | 14/17 | median 133 ms, max 181 ms | 8/547 frames pitched |
+| MPM 2048 | 10/17; more unpitched frames and early subharmonic/octave readings | median 107 ms | 0 pitched frames |
+| MPM 4096 | 8/17 | median 80 ms | 0 pitched frames |
+
+YIN 2048 details: open E2/A2/D3/G3/B3 correct in 97–100 % of frames (cents +1…+11); fretted
+A2/E3/D4/E4/B4/A5/B5 and the D4 repeat correct (A5/B5 lose confidence while decaying, not
+misidentified); F#4 94 % correct but first stable reading an octave low; G3 on string 4 fret 5
+only 27 % correct with 50 % octave-off frames; failures 07 (open E4) and 15 (E5) coincide with
+other strings ringing −4 / −1 dB below the played note (recording quality). The D4 repeat stays on
+D4 across both plucks. Fretted notes read consistently +10…+25 cents sharp versus open strings
+(playing/intonation, not the detector).
+
+`FastYin` (same YIN, FFT-based) matched `Yin` on 1 758/1 760 frames (±0.5 Hz) at 0.046 ms per
+2048 frame versus 1.03 ms.
+
+**Live validation**: a throwaway command-line tuner (`LiveTuner`, scratch) captured "Micro
+MacBook Pro" via Java Sound (48 kHz, 16-bit, native channel count), ran `FastYin` on a 2048
+window every 256 samples and displayed note/octave/Hz/cents/probability/level about 8×/s, with a
+proof-of-concept display gate (pitched, probability ≥ 0.90, same note for 5 frames ≈ 27 ms,
+otherwise "-- | uncertain"). **The product owner tested it with their guitar through the built-in
+microphone and reported that notes appear quickly and correctly enough for the intended MVP use**
+— recorded as positive manual validation of the basic real-time approach (qualitative, one
+guitar, one input; no per-note numbers were recorded).
+
+**Decisions**:
+- Provisional MVP pitch detector: **TarsosDSP `FastYin`, 2048-sample window** (hop 256 used in
+  the experiments), wrapped behind the engine's own estimator interface so it can be replaced.
+- Confidence gate, stability window, acceptance tolerance and level gates stay **provisional
+  parameters** until integration testing; the proof-of-concept values (0.90, 5 frames) are not
+  product constants.
+- Articulation/re-pluck detection remains a **separate component** (S4 model), not part of the
+  pitch detector.
+- The 48-clip manual benchmark need not be completed before implementation; the 22 accepted clips
+  are kept as real-audio regression fixtures.
+
+**Still to validate / improve**: direct USB/interface input and multi-channel (P2) input; octave-
+error mitigation (G3/F#4 cases, pluck-transient subharmonics); sympathetic/other-string
+interference (clips 07/15); low-frequency false readings in silence (YIN reported F1–A1 at low
+level — guitar-range limiting and level/confidence gating to be tuned).

@@ -30,7 +30,7 @@ disappearance, and suspected permission denial (research spike S1) are reported 
 |---|---|
 | `subscribe(listener)` | Delivers `AnalysisFrame`s on the analysis thread; listeners must return quickly and must not touch UI. |
 | Frame rate | one per hop (≈ 5–10 ms, parameter) |
-| Estimator | the single estimator selected by spike S3 (YIN default); range at least 60 Hz – 1.4 kHz |
+| Estimator | TarsosDSP `FastYin`, 2048-sample window (S3 decision), behind the engine's estimator interface; range at least 60 Hz – 1.4 kHz; confidence/stability gates are provisional parameters |
 | Determinism | given the same sample sequence and parameters, frames are identical (tested) |
 
 ## Interpretation

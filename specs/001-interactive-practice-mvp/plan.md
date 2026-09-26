@@ -17,8 +17,9 @@ TuxGuitar's own repeat/alternate-ending traversal (`MidiRepeatController`) and t
 external-beat API for a practice highlight separate from the editing cursor.
 
 A new library module, **TuxGuitar-audio-engine**, holds the reusable, UI-independent engine
-(Java Sound capture with per-channel logical inputs, level assessment, YIN-based pitch
-estimation, onset detection, shared note interpretation). An **evolved tuner**
+(Java Sound capture with per-channel logical inputs, level assessment, pitch estimation with
+TarsosDSP `FastYin` on a 2048-sample window — validated on real recordings and live — separate
+articulation detection, shared note interpretation). An **evolved tuner**
 (**TuxGuitar-tuner-next**) keeps the existing tuner's identity and learner-facing capabilities
 and uses that engine. For the MVP, the engine, the evolved tuner and practice are packaged only
 in the validated **macOS Apple Silicon + SWT Cocoa** build; the other eight desktop builds keep
@@ -70,7 +71,7 @@ length (thousands of events).
 
 **Open items**: GPLv3 distribution compliance (release gate per constitution v1.1.0, not an
 implementation blocker);
-spike S3; multi-channel validation on a real multi-input interface (P2);
+direct USB/interface input validation; multi-channel validation on a real multi-input interface (P2);
 launcher signing-identity check in Phase 3 (research.md "Q-L option A probe"); the
 owner's initial benchmark recordings (needed before S3 and the Phase 4 conclusions). S1 (partly),
 S2 and S4 have run — results in research.md "Spike results". Product questions P1–P9 and
@@ -90,7 +91,7 @@ planning point Q-B are decided.
 | V. Incremental delivery | Spikes + seven buildable phases, each with observable acceptance. |
 | VI. Real-time correctness | Dedicated capture/analysis/session threads; lock-free ring buffer; preallocated buffers; UI via `TGSynchronizer`; graceful input failure (FR-063). |
 | VII. Separable, testable DSP | Engine is a separate module with no UI/app dependencies; deterministic synthetic tests; manifest-driven recorded benchmark. |
-| VIII. Deterministic DSP first | YIN (McLeod as benchmarked alternative); no ML. |
+| VIII. Deterministic DSP first | TarsosDSP `FastYin` (deterministic YIN) chosen after S3 (beat McLeod on real clips) and live validation; no ML. |
 | IX. Cross-platform conscious | Pure Java + Java Sound; UI via toolkit abstraction; shipped only in the validated build; explicit per-build migration path (research R19); `common/` untouched. |
 | X. No unrelated refactoring | Legacy tuner untouched; no reformatting of untouched files. |
 | XI. Build and test integrity | Each phase ends with a green `mvn -e clean verify -P native-modules`; existing tests untouched; packaging check prevents two tuners in one build. |
@@ -215,8 +216,10 @@ behaviour.
 
 ### Phase 0 — Spikes (throw-away code, results recorded in research.md)
 
-Status (2026-09-26): S1 partly done (built-in and Continuity microphones; no multi-channel
-interface available), S2 done, S4 done on synthetic signals, S3 not started.
+Status (2026-09-26): S1 done for the built-in/Continuity microphones and the macOS permission
+path (multi-channel interface still to validate), S2 done, S4 done on synthetic signals, S3 done
+on 22 real clips plus positive live manual validation (research.md "S3 results"). The full
+48-clip benchmark is not required before implementation.
 
 | Spike | Question | Blocks |
 |---|---|---|
@@ -284,8 +287,11 @@ interface available), S2 done, S4 done on synthetic signals, S3 not started.
 
 ### Phase 4 — Pitch engine and evolved tuner
 
-- Engine: YIN (or McLeod per S3), `NoteInterpreter`, `TolerancePolicy`; deterministic tests;
-  manifest-driven benchmark and first recorded results (per input type).
+- Engine: pitch estimation via TarsosDSP `FastYin` (2048-sample window) behind the engine's
+  estimator interface; `NoteInterpreter`, `TolerancePolicy`; confidence/stability/tolerance as
+  provisional parameters tuned during integration; deterministic synthetic tests plus the 22
+  accepted real clips as regression fixtures; octave-error mitigation and other-string
+  interference handling as explicit work items.
 - `TuxGuitar-tuner-next` plugin (module id `tuxguitar-tuner`, action `tuner.tuner`): chromatic
   and guided modes, presets from `TuningManager`, custom tuning, track tuning per FR-052
   (physical targets), run retention, input/channel selector and level status; preserved
@@ -356,7 +362,10 @@ cleanup change.
    hardened-runtime signing (would need the audio-input entitlement).
 2. Per-channel access on multi-input interfaces through Java Sound: not yet verified (no
    interface available); mono devices only advertise mono formats.
-3. Detection quality through the built-in microphone (noise, room, computer sound).
+3. Detection quality: built-in microphone positively validated live (qualitative); known
+   weak areas — octave errors (G3/F#4 cases, pluck-transient subharmonics), sympathetic or
+   other ringing strings, low-frequency false readings in silence; direct USB/interface input
+   not yet tested.
 4. Same-pitch re-articulation: no deterministic detector tested was both miss-free and
    false-free (S4); the chosen gated detector trades weak-re-pluck misses for robustness; a
    strong body knock could still count as an articulation.
