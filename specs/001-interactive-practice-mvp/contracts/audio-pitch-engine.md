@@ -4,7 +4,7 @@
 `app.tuxguitar.audio.engine.input`, `.analysis`, `.pitch`; packaged in `lib/` of the macOS SWT
 build only for the MVP). **Consumers**: evolved tuner plugin (`TuxGuitar-tuner-next`), practice
 plugin. The legacy tuner does not use it.
-**Constraints**: Java 9; no `app.tuxguitar.ui.*` or `app.tuxguitar.app.*` imports in `analysis`
+**Constraints**: Java release 11 (research.md "Java release of the new modules"); no `app.tuxguitar.ui.*` or `app.tuxguitar.app.*` imports in `analysis`
 and `pitch`; `input` may import only `javax.sound.sampled` and `app.tuxguitar.util.*`.
 Names below are indicative; signatures are fixed in tasks, behaviour here is binding.
 
