@@ -949,3 +949,39 @@ guitar, one input; no per-note numbers were recorded).
 error mitigation (G3/F#4 cases, pluck-transient subharmonics); sympathetic/other-string
 interference (clips 07/15); low-frequency false readings in silence (YIN reported F1–A1 at low
 level — guitar-range limiting and level/confidence gating to be tuned).
+
+### Java release of the new modules (found during /speckit-tasks, 2026-09-26)
+
+**Finding**: all 175 class files in `be.tarsos.dsp:core:2.5` (`core-2.5.jar`, including
+`module-info.class`, which requires only `java.base`) have class-file major version 55 (Java 11).
+The desktop parent POM (`desktop/pom.xml`) configures `maven-compiler-plugin` with
+`<release>9</release>`. Checked with Temurin 21 `javac`: a class referencing `FastYin` compiles at
+both `--release 9` (output major 53) and `--release 11` (exit 0 in both cases) — javac reads
+dependency class files up to its own version. So release 9 is **not** a compile error with the
+validated JDK; the real constraint is at run time: TarsosDSP, and therefore the engine and both
+plugins, need a Java 11+ runtime.
+
+**Decision**: `TuxGuitar-audio-engine`, `TuxGuitar-tuner-next` and `TuxGuitar-practice` compile at
+`<release>11</release>`, so their bytecode states the Java 11 minimum they actually have (instead
+of Java 9 bytecode that would still fail on Java 9/10 when TarsosDSP loads), and they may use
+Java 11 APIs. The override lives in each new module's own `maven-compiler-plugin` configuration,
+which Maven merges over the parent's per module, so existing modules keep release 9
+(`desktop/pom.xml`, `common/TuxGuitar-lib/pom.xml`, `desktop/gervill/pom.xml` are unchanged).
+`common/` is not touched, so Android is unaffected.
+
+**Dependency direction** (must hold): new plugin modules → `tuxguitar-audio-engine` → existing
+`tuxguitar-lib`; the core tablature hook uses only the existing `TGExternalBeatViewerManager` API.
+No existing (release-9) module may declare a dependency on a new module.
+
+**Runtime**: the macOS SWT app runs `Contents/MacOS/jre/bin/java` with a flat classpath
+(`lib/*`, `share/`, `dist/`; `common-resources/common-macosx/Contents/MacOS/tuxguitar.sh`), so
+`module-info.class` is ignored and only the class-file version matters. The validated runtime is
+Temurin 21 (development `jre` link) and CI builds with Java 21
+(`.github/workflows/macos-maven.yml`); release packaging jlinks a JRE from a current Homebrew
+OpenJDK (`misc/build_tuxguitar_from_source.sh`). Java 11 bytecode therefore raises no runtime
+requirement beyond what is already used.
+
+**Alternatives rejected**: keeping release 9 on the new modules (compiles with JDK 21, but
+misstates the runtime minimum); raising the parent POM to release 11 (changes every existing
+desktop module); recompiling or shading TarsosDSP for Java 9 (diverges from the validated
+published artifact and complicates provenance).

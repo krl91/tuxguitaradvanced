@@ -30,8 +30,13 @@ honour the existing external-beat API, default shortcut entries, and macOS-SWT-o
 
 ## Technical Context
 
-**Language/Version**: Java, compiled at `<release>9</release>` (desktop parent POM); built and run
-with Temurin 21.
+**Language/Version**: Java. Existing modules stay at `<release>9</release>` (desktop parent POM
+`desktop/pom.xml`; `common/TuxGuitar-lib`). The three new modules (`TuxGuitar-audio-engine`,
+`TuxGuitar-tuner-next`, `TuxGuitar-practice`) compile at `<release>11</release>`, set in each
+module's own POM, because TarsosDSP 2.5 is Java 11 bytecode (class-file major 55): anything using
+the engine can only run on Java 11+, and the modules declare that minimum explicitly instead of
+emitting Java 9 bytecode that would still fail on a Java 9/10 runtime (research.md "Java release
+of the new modules"). Built and run with Temurin 21, so the runtime requirement does not change.
 
 **Primary Dependencies**: `tuxguitar-lib`, `tuxguitar-editor-utils`, `tuxguitar` (app),
 `tuxguitar-ui-toolkit` (abstract UI; SWT Cocoa at runtime), new `tuxguitar-audio-engine`,
@@ -92,7 +97,7 @@ planning point Q-B are decided.
 | VI. Real-time correctness | Dedicated capture/analysis/session threads; lock-free ring buffer; preallocated buffers; UI via `TGSynchronizer`; graceful input failure (FR-063). |
 | VII. Separable, testable DSP | Engine is a separate module with no UI/app dependencies; deterministic synthetic tests; manifest-driven recorded benchmark. |
 | VIII. Deterministic DSP first | TarsosDSP `FastYin` (deterministic YIN) chosen after S3 (beat McLeod on real clips) and live validation; no ML. |
-| IX. Cross-platform conscious | Pure Java + Java Sound; UI via toolkit abstraction; shipped only in the validated build; explicit per-build migration path (research R19); `common/` untouched. |
+| IX. Cross-platform conscious | Pure Java + Java Sound; UI via toolkit abstraction; shipped only in the validated build; explicit per-build migration path (research R19); `common/` untouched (still release 9, Android unaffected); only the three new desktop modules compile at release 11 (TarsosDSP needs Java 11+), existing modules stay at 9. |
 | X. No unrelated refactoring | Legacy tuner untouched; no reformatting of untouched files. |
 | XI. Build and test integrity | Each phase ends with a green `mvn -e clean verify -P native-modules`; existing tests untouched; packaging check prevents two tuners in one build. |
 | XII. Observable acceptance / truthful reporting | Per-phase checks in quickstart.md; benchmark results recorded per input type; nothing claimed without a run. |
@@ -149,7 +154,7 @@ specs/001-interactive-practice-mvp/
 
 ```text
 desktop/TuxGuitar-audio-engine/                   # NEW library module (tuxguitar-audio-engine)
-├── pom.xml                                       # deps: tuxguitar-lib (provided); junit (test)
+├── pom.xml                                       # release 11; deps: tuxguitar-lib (provided), TarsosDSP core 2.5; junit (test)
 ├── src/main/java/app/tuxguitar/audio/engine/
 │   ├── input/        # devices, logical per-channel inputs, capture, CurrentInputSelection
 │   ├── analysis/     # level, YIN, onset, AnalysisFrame
@@ -159,7 +164,7 @@ desktop/TuxGuitar-audio-engine/                   # NEW library module (tuxguita
                                                   #   interface/<tuning>/*.wav, builtin-mic/<tuning>/*.wav (≤ 50 MB)
 
 desktop/TuxGuitar-tuner-next/                     # NEW evolved tuner plugin (module id tuxguitar-tuner)
-├── pom.xml                                       # provided: lib, tuxguitar, ui-toolkit, audio-engine
+├── pom.xml                                       # release 11; provided: lib, tuxguitar, ui-toolkit, audio-engine
 ├── src/app/tuxguitar/app/tools/custom/tunernext/ # own package (no clash with legacy)
 ├── share/META-INF/services/app.tuxguitar.util.plugin.TGPlugin
 ├── share/META-INF/tuxguitar-tuner.info           # same info name as legacy (never co-packaged)
@@ -167,7 +172,7 @@ desktop/TuxGuitar-tuner-next/                     # NEW evolved tuner plugin (mo
 └── test/…
 
 desktop/TuxGuitar-practice/                       # NEW practice plugin (module id tuxguitar-practice)
-├── pom.xml                                       # provided: lib, editor-utils, tuxguitar, ui-toolkit, audio-engine
+├── pom.xml                                       # release 11; provided: lib, editor-utils, tuxguitar, ui-toolkit, audio-engine
 ├── src/app/tuxguitar/app/tools/custom/practice/{model,session,ui}/
 ├── share/META-INF/services/app.tuxguitar.util.plugin.TGPlugin
 ├── share/META-INF/tuxguitar-practice.info
@@ -187,7 +192,11 @@ desktop/build-scripts/tuxguitar-macosx-swt-cocoa/launcher/tuxguitar-launcher.c  
 **Structure Decision**: one library module (engine) + two plugin modules (evolved tuner,
 practice); legacy tuner kept unchanged for unvalidated builds; no `common/` changes; new module
 POMs reference sibling artifacts with `${project.version}`, so the shared parent POM
-(`desktop/pom.xml`) does not need to change.
+(`desktop/pom.xml`) does not need to change. Dependency direction: the new modules depend on
+existing ones (`tuxguitar-practice`/`tuxguitar-tuner-next` → `tuxguitar-audio-engine` →
+`tuxguitar-lib`), never the reverse; the only core change (tablature hook) uses the existing
+`TGExternalBeatViewerManager` API and has no dependency on the new modules, so no release-9 module
+ever compiles against release-11 classes.
 
 ## Build files changed for the MVP
 
@@ -195,7 +204,7 @@ POMs reference sibling artifacts with `${project.version}`, so the shared parent
 |---|---|
 | macOS SWT launcher (new, Q-L option A) | Tiny native Mach-O stub as `CFBundleExecutable` of the SWT `.app`; its only job is to start the existing, unchanged `Contents/MacOS/tuxguitar.sh` and wait. Launch, classpath and runtime logic stay in the script. Compiled (clang) and signed at least ad-hoc with identifier `app.tuxguitar` by the SWT build unconditionally (not only under `-P native-modules`); the packaged `Info.plist` gets `CFBundleExecutable` = the stub plus `NSMicrophoneUsageDescription` via the SWT-only post-copy step. |
 | `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` | Modules: replace `../../TuxGuitar-tuner` with `../../TuxGuitar-audio-engine`, `../../TuxGuitar-tuner-next`, `../../TuxGuitar-practice`. Copy: `tuxguitar-audio-engine` → `Contents/MacOS/lib`; `tuxguitar-tuner-next`, `tuxguitar-practice` → `Contents/MacOS/share/plugins`; remove the legacy `tuxguitar-tuner` copy. After copying `common-macosx`, insert `NSMicrophoneUsageDescription` into the packaged `Info.plist` (SWT build only; the source plist is shared with macOS JFX). Packaging check: fail if both tuner jars are in `share/plugins`. |
-| `desktop/TuxGuitar-audio-engine/pom.xml`, `desktop/TuxGuitar-tuner-next/pom.xml`, `desktop/TuxGuitar-practice/pom.xml` | New module POMs. |
+| `desktop/TuxGuitar-audio-engine/pom.xml`, `desktop/TuxGuitar-tuner-next/pom.xml`, `desktop/TuxGuitar-practice/pom.xml` | New module POMs; each overrides `maven-compiler-plugin` `<release>11</release>` locally (the parent's release 9 is untouched). The engine POM declares TarsosDSP 2.5 and its repository `https://mvn.0110.be/releases`. |
 
 Not changed: the other eight build-script POMs, `desktop/pom.xml`,
 `common-resources/common-macosx/Contents/Info.plist`, `desktop/TuxGuitar-tuner`.
@@ -409,3 +418,4 @@ macOS-specific build transformation.
 | Separate engine library module | Enforces UI-free, testable engine; shared by tuner and practice without plugin-to-plugin coupling | Engine inside a plugin couples practice to a tuner plugin jar and mixes UI and DSP in one module |
 | Two tuner modules temporarily | Keep unvalidated builds unchanged (P9) while macOS SWT gets one evolved tuner | Evolving the single module would change the tuner in eight unvalidated builds |
 | Three worker threads (capture, analysis, session) | Keep capture non-blocking and state single-writer | Analysis on the capture thread risks overruns; state on the UI thread risks UI stalls |
+| Java release 11 for the three new modules (existing modules stay at 9) | TarsosDSP 2.5 classes are Java 11 bytecode, so the engine and everything using it need a Java 11+ runtime; release 11 states that minimum truthfully (release 9 output would compile with JDK 21 but still fail on Java 9/10) | Raising `desktop/pom.xml` to 11 would change every existing desktop module; recompiling or shading TarsosDSP for Java 9 would diverge from the published, validated artifact |
