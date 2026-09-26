@@ -27,6 +27,7 @@ public class PracticePlugin extends TGToolItemPlugin {
 	};
 
 	private volatile Consumer<PracticeCommand> commandSink;
+	private PracticeWindow window;
 
 	public String getModuleId() {
 		return MODULE_ID;
@@ -37,7 +38,10 @@ public class PracticePlugin extends TGToolItemPlugin {
 	}
 
 	protected void doAction(TGContext context) {
-		// the practice window is added by T029
+		if( this.window == null ) {
+			this.window = new PracticeWindow(context);
+		}
+		this.window.open();
 	}
 
 	public void connect(TGContext context) throws TGPluginException {
@@ -55,6 +59,10 @@ public class PracticePlugin extends TGToolItemPlugin {
 	}
 
 	public void disconnect(TGContext context) throws TGPluginException {
+		if( this.window != null ) {
+			this.window.close();
+			this.window = null;
+		}
 		try {
 			TGActionAdapterManager adapterManager = TGActionAdapterManager.getInstance(context);
 			for( String actionId : ACTION_IDS ) {
