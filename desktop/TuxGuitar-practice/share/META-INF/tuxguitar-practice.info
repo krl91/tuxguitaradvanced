@@ -1,0 +1,5 @@
+### Plugin Information ###
+plugin.name=Interactive Practice
+plugin.description=Practise a guitar track note by note: the score waits until\nthe expected note is played.
+plugin.author=TuxGuitarAdvanced
+plugin.version=0.1
