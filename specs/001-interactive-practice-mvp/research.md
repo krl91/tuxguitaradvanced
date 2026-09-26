@@ -1007,3 +1007,17 @@ requirement beyond what is already used.
 misstates the runtime minimum); raising the parent POM to release 11 (changes every existing
 desktop module); recompiling or shading TarsosDSP for Java 9 (diverges from the validated
 published artifact and complicates provenance).
+
+### T026 — packaged macOS SWT app, microphone permission (2026-09-26)
+
+Automated checks on the `mvn -e clean verify -P native-modules` build: packaged `Info.plist` has
+`CFBundleIdentifier` `app.tuxguitar`, `CFBundleExecutable` `tuxguitar-launcher` and
+`NSMicrophoneUsageDescription`; the stub is an arm64 Mach-O, executable, ad-hoc signed with
+identifier `app.tuxguitar`; only the legacy tuner is packaged.
+
+Manual check by the product owner (app launched via `open`, microphone used through the legacy
+tuner, the only packaged component that captures audio): **microphone access works and notes are
+detected**. Not verified in this session: the `tccd` responsible-client attribution (the agent's
+sandbox cannot run `log show`) and whether the grant persists across a rebuild; no privacy
+setting was changed or reset.
+
