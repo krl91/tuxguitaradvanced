@@ -532,7 +532,7 @@ Fixture pattern: `.tg` files in `src/test/resources` loaded with `TGSongReaderIm
   `drop-d/`) with `LICENSE` and `manifest.csv`. The runner reads only `manifest.csv` (file,
   expected note/pitch, case, tuning, input type, played note/cents where relevant, setup,
   gain/level, notes) — no file names in test code. JUnit-tagged, excluded from the default build,
-  run explicitly (`-Dgroups=benchmark`); results written to
+  run explicitly (`-Dgroups=benchmark -DexcludedGroups=`); results written to
   `specs/001-interactive-practice-mvp/benchmark/`, reported per input type. A build-time check
   fails the benchmark run if the set exceeds 50 MB or a WAV is not mono/48 kHz/16-bit (except
   cases flagged as channel-handling tests in the manifest). Never created from learner audio.
@@ -904,7 +904,9 @@ benchmark clips (mono 48 kHz/16-bit), windows 2048 (42.7 ms) and 4096 (85.3 ms),
 (5.3 ms). Per clip: first stable note (same note for 10 consecutive frames ≈ 53 ms after the
 energy onset), median f0 and cents, median probability, time to stable, and in the sustain window
 the share of frames on the recorded note / an octave off / another note / unpitched. Clips 18–21
-use QA-derived truth and are reported separately. (A first run with a 3-frame criterion was
+(requested wrong semitones) are excluded from the counts: their played pitch is unverified (the
+owner may have played the expected notes; a pitch-analysis reading of the same clips is not
+independent ground truth). (A first run with a 3-frame criterion was
 discarded: pluck transients produce ~16 ms of subharmonic readings, e.g. G2 for D4.)
 
 | Detector / window | First stable note correct (17 clips) | Time to stable after onset | Silence clip |
@@ -943,7 +945,9 @@ guitar, one input; no per-note numbers were recorded).
 - Articulation/re-pluck detection remains a **separate component** (S4 model), not part of the
   pitch detector.
 - The 48-clip manual benchmark need not be completed before implementation; the 22 accepted clips
-  are kept as real-audio regression fixtures.
+  are kept as real-audio regression fixtures (copy into the repository approved by the product
+  owner, 2026-09-26): clean, carefully recorded reference fixtures that complement the synthetic
+  tests and do not represent all guitars, microphones, rooms or playing styles.
 
 **Still to validate / improve**: direct USB/interface input and multi-channel (P2) input; octave-
 error mitigation (G3/F#4 cases, pluck-transient subharmonics); sympathetic/other-string

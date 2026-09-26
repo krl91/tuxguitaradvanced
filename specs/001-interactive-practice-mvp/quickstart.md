@@ -33,7 +33,7 @@ mvn test -pl ../../TuxGuitar-tuner-next -am -Dsurefire.failIfNoSpecifiedTests=fa
 # practice model/session
 mvn test -pl ../../TuxGuitar-practice -am -Dsurefire.failIfNoSpecifiedTests=false
 # recorded detection benchmark (explicit, not part of the default build) — Phase 4+
-mvn test -pl ../../TuxGuitar-audio-engine -am -Dgroups=benchmark -Dsurefire.failIfNoSpecifiedTests=false
+mvn test -pl ../../TuxGuitar-audio-engine -am -Dgroups=benchmark -DexcludedGroups= -Dsurefire.failIfNoSpecifiedTests=false
 ```
 
 Expected: existing tests unchanged and passing (SC-008); new unit tests passing; benchmark
