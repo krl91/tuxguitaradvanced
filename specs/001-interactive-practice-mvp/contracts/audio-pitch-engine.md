@@ -5,7 +5,8 @@
 build only for the MVP). **Consumers**: evolved tuner plugin (`TuxGuitar-tuner-next`), practice
 plugin. The legacy tuner does not use it.
 **Constraints**: Java release 11 (research.md "Java release of the new modules"); no `app.tuxguitar.ui.*` or `app.tuxguitar.app.*` imports in `analysis`
-and `pitch`; `input` may import only `javax.sound.sampled` and `app.tuxguitar.util.*`.
+and `pitch`; `input` may import only `javax.sound.sampled`, `app.tuxguitar.util.*` and the
+shared `app.tuxguitar.thread.*` worker abstraction.
 Names below are indicative; signatures are fixed in tasks, behaviour here is binding.
 
 ## Input service (per `TGContext`)
