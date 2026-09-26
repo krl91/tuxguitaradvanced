@@ -1021,3 +1021,12 @@ detected**. Not verified in this session: the `tccd` responsible-client attribut
 sandbox cannot run `log show`) and whether the grant persists across a rebuild; no privacy
 setting was changed or reset.
 
+
+### R14 correction — macOS default shortcuts (T028, 2026-09-26)
+
+R14 stated that default bindings come from exactly one resource. That holds per build, but the
+macOS builds (SWT and JFX) copy `desktop/build-scripts/common-resources/common-macosx/Contents/MacOS/dist/tuxguitar-shortcuts.xml`
+over the shared `desktop/TuxGuitar/dist/tuxguitar-shortcuts.xml` when packaging; the macOS copy uses
+`Command` where the shared file uses `Ctrl`. The practice defaults are therefore added to both files
+(`F2`; `Ctrl Shift` / `Command Shift` + `s` `k` `r` `x`). Like the shared entries, the macOS entries are
+inert where the practice actions are not registered (macOS JFX); T081 covers that check.

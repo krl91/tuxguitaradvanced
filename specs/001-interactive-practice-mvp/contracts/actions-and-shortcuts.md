@@ -20,7 +20,11 @@ Rules
 - The practice window calls `KeyBindingActionManager.appendListenersTo(control)` so shortcuts
   work while it has focus (as `TGFretBoard`/`TGPiano` do).
 - Default combinations are added to the shared `desktop/TuxGuitar/dist/tuxguitar-shortcuts.xml`
-  (the only defaults source; verified inert on builds without the plugin — research R14). They must not collide with existing defaults (digits, `Space`, `F9`,
+  and, because macOS builds replace that file with their own copy, to
+  `desktop/build-scripts/common-resources/common-macosx/Contents/MacOS/dist/tuxguitar-shortcuts.xml`
+  (`Command` instead of `Ctrl`); both are inert on builds without the plugin (research R14 and its
+  T028 correction). Approved defaults: `F2` for `practice.open`; `Ctrl Shift` (macOS: `Command Shift`)
+  + `s` / `k` / `r` / `x` for start / skip / resume / stop. They must not collide with existing defaults (digits, `Space`, `F9`,
   `Ctrl t`, …); collisions are checked in Phase 1. Users can reassign them in Tools › Shortcuts
   (existing editor).
 - The practice plugin opens the tuner by processing the tuner's existing action id — no class

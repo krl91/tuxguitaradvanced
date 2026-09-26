@@ -77,4 +77,9 @@
 	<shortcut keys="F9" action="action.gui.open-transport-mode-dialog"/>
 	<shortcut keys="Space" action="action.transport.play"/>
 	<shortcut keys="Ctrl t" action="action.gui.toggle-transport-dialog"/>
+	<shortcut keys="F2" action="practice.open"/>
+	<shortcut keys="Ctrl Shift s" action="action.practice.start"/>
+	<shortcut keys="Ctrl Shift k" action="action.practice.skip"/>
+	<shortcut keys="Ctrl Shift r" action="action.practice.resume"/>
+	<shortcut keys="Ctrl Shift x" action="action.practice.stop"/>
 </shortcuts>
