@@ -52,6 +52,14 @@ public final class CaptureService {
 		void captureEvent(Event event);
 	}
 
+	/**
+	 * Called synchronously on the capture thread once the input format is chosen and before
+	 * any sample of that opening is written to the ring buffer.
+	 */
+	public interface FormatListener {
+		void formatNegotiated(AudioFormat format);
+	}
+
 	private static final int FRAMES_PER_READ = 1024;
 
 	private final TGContext context;
@@ -63,6 +71,7 @@ public final class CaptureService {
 	private long generation;
 	private long observedInputRevision;
 	private volatile TargetDataLine activeLine;
+	private volatile FormatListener formatListener;
 
 	public CaptureService(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection, SampleRingBuffer ringBuffer) {
 		this.context = context;
@@ -101,6 +110,10 @@ public final class CaptureService {
 		this.listeners.remove(listener);
 	}
 
+	public void setFormatListener(FormatListener formatListener) {
+		this.formatListener = formatListener;
+	}
+
 	private synchronized void restartForSelectionChange(CurrentInputSelection.Snapshot snapshot) {
 		if (snapshot.getInputRevision() != this.observedInputRevision) {
 			this.observedInputRevision = snapshot.getInputRevision();
@@ -137,6 +150,10 @@ public final class CaptureService {
 			}
 			Mixer mixer = this.catalog.resolveMixer(snapshot.getInput());
 			AudioFormat format = chooseFormat(mixer, snapshot.getInput(), this.catalog.advertisedFormats(snapshot.getInput()));
+			FormatListener negotiatedFormatListener = this.formatListener;
+			if (negotiatedFormatListener != null) {
+				negotiatedFormatListener.formatNegotiated(format);
+			}
 			DataLine.Info lineInfo = new DataLine.Info(TargetDataLine.class, format);
 			line = (TargetDataLine) mixer.getLine(lineInfo);
 			line.open(format, format.getFrameSize() * FRAMES_PER_READ * 4);

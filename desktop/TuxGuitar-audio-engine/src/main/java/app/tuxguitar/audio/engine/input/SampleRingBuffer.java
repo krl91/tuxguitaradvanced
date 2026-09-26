@@ -108,6 +108,30 @@ public final class SampleRingBuffer {
 		return this.droppedSampleCount;
 	}
 
+	/**
+	 * Returns the cumulative number of accepted samples. Any thread may read it;
+	 * the producer can use it to mark where its next write will start.
+	 */
+	public long getWrittenSampleCount() {
+		return this.writeSequence;
+	}
+
+	/**
+	 * Consumer only: discards unread samples written before the given written-sample
+	 * count, without waiting. Samples written after that mark stay readable.
+	 *
+	 * @return number of samples discarded
+	 */
+	public int skipTo(long writtenSampleCount) {
+		long currentRead = this.readSequence;
+		long target = Math.min(writtenSampleCount, this.writeSequence);
+		if (target <= currentRead) {
+			return 0;
+		}
+		this.readSequence = target;
+		return (int) (target - currentRead);
+	}
+
 	private int index(long sequence) {
 		return (int) (sequence % this.capacity);
 	}

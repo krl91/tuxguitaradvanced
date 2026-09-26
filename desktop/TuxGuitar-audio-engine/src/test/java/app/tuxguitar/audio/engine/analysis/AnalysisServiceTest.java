@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
@@ -50,6 +51,84 @@ public class AnalysisServiceTest {
 			assertEquals((windowSize + hopSize) * 1_000_000_000L / sampleRate, frames.get(1).getTimestampNanos());
 			assertEquals(440.0, frames.get(2).getF0Hz());
 			assertEquals(1.0, frames.get(2).getConfidence());
+		}
+		finally {
+			TGThreadManager.getInstance(context).dispose();
+		}
+	}
+
+	@Test
+	public void reconfigureAnalysesAtTheNegotiatedRateAndDiscardsEarlierSamples() throws InterruptedException {
+		TGContext context = new TGContext();
+		TGThreadManager.getInstance(context).setThreadHandler(new TGMultiThreadHandler());
+		try {
+			int windowSize = TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE;
+			int hopSize = TarsosFastYinEstimator.DEFAULT_HOP_SIZE;
+			SampleRingBuffer buffer = new SampleRingBuffer(48000);
+			float[] previousOpening = SyntheticSignals.sine(220.0, 48000, windowSize, 0.5);
+			buffer.write(previousOpening, 0, previousOpening.length);
+
+			AnalysisService service = new AnalysisService(context, buffer,
+					new LevelAnalyzer(-80.0, -1.0, 0.99, 0.1), new TarsosFastYinEstimator(),
+					48000, windowSize, hopSize);
+			service.reconfigure(44100, new TarsosFastYinEstimator(44100f, windowSize, hopSize),
+					buffer.getWrittenSampleCount());
+			float[] negotiated = SyntheticSignals.sine(440.0, 44100, windowSize + hopSize, 0.5);
+			buffer.write(negotiated, 0, negotiated.length);
+
+			List<AnalysisFrame> frames = new CopyOnWriteArrayList<AnalysisFrame>();
+			CountDownLatch latch = new CountDownLatch(2);
+			AnalysisService.Listener listener = frame -> {
+				frames.add(frame);
+				latch.countDown();
+			};
+			service.subscribe(listener);
+			assertTrue(latch.await(2, TimeUnit.SECONDS));
+			service.unsubscribe(listener);
+
+			assertEquals(windowSize * 1_000_000_000L / 44100, frames.get(0).getTimestampNanos());
+			for (AnalysisFrame frame : frames) {
+				assertEquals(440.0, frame.getF0Hz(), 2.0);
+			}
+		}
+		finally {
+			TGThreadManager.getInstance(context).dispose();
+		}
+	}
+
+	@Test
+	public void rapidResubscriptionNeverRunsTwoConsumersAtOnce() throws InterruptedException {
+		TGContext context = new TGContext();
+		TGThreadManager.getInstance(context).setThreadHandler(new TGMultiThreadHandler());
+		try {
+			SampleRingBuffer buffer = new SampleRingBuffer(48000);
+			AtomicInteger inFlight = new AtomicInteger();
+			AtomicInteger maxInFlight = new AtomicInteger();
+			PitchEstimator estimator = window -> {
+				maxInFlight.accumulateAndGet(inFlight.incrementAndGet(), Math::max);
+				try {
+					Thread.sleep(1L);
+				} catch (InterruptedException exception) {
+					Thread.currentThread().interrupt();
+				}
+				inFlight.decrementAndGet();
+				return new PitchEstimate(440.0, 1.0, true);
+			};
+			AnalysisService service = new AnalysisService(context, buffer,
+					new LevelAnalyzer(-80.0, -1.0, 0.99, 0.1), estimator, 48000, 2048, 256);
+			float[] block = SyntheticSignals.sine(440.0, 48000, 256, 0.5);
+			AnalysisService.Listener listener = frame -> { };
+
+			for (int i = 0; i < 200; i++) {
+				buffer.write(block, 0, block.length);
+				service.subscribe(listener);
+				service.unsubscribe(listener);
+			}
+			service.subscribe(listener);
+			Thread.sleep(50L);
+			service.unsubscribe(listener);
+
+			assertTrue(maxInFlight.get() <= 1, "concurrent analysis workers: " + maxInFlight.get());
 		}
 		finally {
 			TGThreadManager.getInstance(context).dispose();

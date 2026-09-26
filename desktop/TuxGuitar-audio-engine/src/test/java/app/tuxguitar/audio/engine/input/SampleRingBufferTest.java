@@ -120,6 +120,35 @@ public class SampleRingBufferTest {
 	}
 
 	@Test
+	public void skipToDiscardsOnlySamplesWrittenBeforeTheMark() {
+		SampleRingBuffer buffer = new SampleRingBuffer(4);
+		buffer.write(new float[] { 1f, 2f }, 0, 2);
+		long mark = buffer.getWrittenSampleCount();
+		buffer.write(new float[] { 3f, 4f }, 0, 2);
+
+		assertEquals(2, mark);
+		assertEquals(2, buffer.skipTo(mark));
+		float[] actual = new float[2];
+		assertEquals(2, buffer.read(actual, 0, actual.length));
+		assertArrayEquals(new float[] { 3f, 4f }, actual);
+	}
+
+	@Test
+	public void skipToNeverPassesUnwrittenOrAlreadyReadSamples() {
+		SampleRingBuffer buffer = new SampleRingBuffer(4);
+		buffer.write(new float[] { 1f, 2f }, 0, 2);
+
+		assertEquals(2, buffer.skipTo(10L));
+		assertEquals(0, buffer.availableToRead());
+		assertEquals(0, buffer.skipTo(1L));
+		assertTrue(buffer.write(5f));
+		float[] actual = new float[1];
+		assertEquals(1, buffer.read(actual, 0, 1));
+		assertArrayEquals(new float[] { 5f }, actual);
+		assertEquals(3, buffer.getWrittenSampleCount());
+	}
+
+	@Test
 	public void validatesCapacityAndArrayRanges() {
 		assertThrows(IllegalArgumentException.class, () -> new SampleRingBuffer(0));
 		SampleRingBuffer buffer = new SampleRingBuffer(2);
