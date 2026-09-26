@@ -54,7 +54,7 @@
   automatic pause when input becomes unusable mid-session. FRs renumbered FR-001..FR-068;
   cross-references verified. No markers; all items still pass.
 - Revision 8: explicit Resume after any pause needing input revalidation (FR-044); tuner tuning
-  kept for the application session once explicitly chosen (FR-052, FR-055); eligibility
+  kept for the application run once explicitly chosen (FR-052, FR-055); eligibility
   requires confident identification as a supported 6-string guitar, six strings alone are not
   sufficient, and an unresolvable limitation returns to the product owner (FR-003). FRs
   renumbered FR-001..FR-070; cross-references verified. No markers; all items still pass.
