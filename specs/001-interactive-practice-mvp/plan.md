@@ -34,7 +34,9 @@ with Temurin 21.
 
 **Primary Dependencies**: `tuxguitar-lib`, `tuxguitar-editor-utils`, `tuxguitar` (app),
 `tuxguitar-ui-toolkit` (abstract UI; SWT Cocoa at runtime), new `tuxguitar-audio-engine`,
-`javax.sound.sampled` (JDK). No new third-party libraries.
+`javax.sound.sampled` (JDK), **TarsosDSP 2.5 core** (`be.tarsos.dsp:core:2.5`, repository
+`https://mvn.0110.be/releases`, not Maven Central) for pitch estimation — GPL-3.0, permitted by
+constitution v1.1.0; provenance below; GPLv3 distribution compliance is a release gate.
 
 **Storage**: none. Session state, guitar confirmations and the tuner's chosen tuning are in
 memory for the application run only; no learner audio is ever stored (FR-034, FR-055, FR-068).
@@ -57,10 +59,18 @@ updates coalesced ≤ ~30/s; analysis hop ≈ 5–10 ms; no UI stalls in a 30-mi
 Java 9 language level; LGPL-compatible code only; no persistence of learner audio; no change to
 existing behaviour when the feature is inactive (FR-067); other eight builds unchanged (P9).
 
+**Third-party dependency provenance** (constitution v1.1.0):
+
+| Dependency | Version | Licence | Source | Used by |
+|---|---|---|---|---|
+| TarsosDSP core (`be.tarsos.dsp:core`) | 2.5 | GPL-3.0 (published POM) | https://github.com/JorenSix/TarsosDSP (Maven repository https://mvn.0110.be/releases) | `TuxGuitar-audio-engine` (pitch estimation, `FastYin`) |
+
 **Scale/Scope**: one learner, one Practice Track, one input device/channel; songs of typical
 length (thousands of events).
 
-**Open items**: spike S3; multi-channel validation on a real multi-input interface (P2);
+**Open items**: GPLv3 distribution compliance (release gate per constitution v1.1.0, not an
+implementation blocker);
+spike S3; multi-channel validation on a real multi-input interface (P2);
 launcher signing-identity check in Phase 3 (research.md "Q-L option A probe"); the
 owner's initial benchmark recordings (needed before S3 and the Phase 4 conclusions). S1 (partly),
 S2 and S4 have run — results in research.md "Spike results". Product questions P1–P9 and
@@ -73,6 +83,7 @@ planning point Q-B are decided.
 | Principle | Assessment |
 |---|---|
 | I. Preserve compatibility | Additive; no model/file-format change; practice never modifies the song. The eight unvalidated builds keep the legacy tuner unchanged (P9); the macOS SWT tuner preserves the FR-059 capabilities. The tablature hook is inert unless an external beat is shown. |
+| Technical & Platform Constraints (dependency licences, constitution v1.1.0) | PASS: TarsosDSP 2.5 has an identified licence (GPL-3.0), compatible with the intended GPLv3 combined distribution and explicitly permitted; provenance documented below; GPL-dependent code confined to fork-specific modules (`TuxGuitar-audio-engine`, `TuxGuitar-tuner-next`, `TuxGuitar-practice`; the core tablature hook does not use it); GPLv3 distribution compliance is a **release gate**. |
 | II. Extend before core | Practice and the evolved tuner are plugins; the engine is a library module. Core Java edits limited to the tablature hook (research R18), justified by the absence of any plugin paint/highlight contribution point. |
 | III. Evidence-based | research.md R1–R19 cite every file relied on; FR-003, P7 and P9 decisions were taken on documented evidence, not assumptions. |
 | IV. Spec-driven | Plan derives from the clarified spec; every product question returned and decided. |
