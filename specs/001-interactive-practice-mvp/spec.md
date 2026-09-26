@@ -23,6 +23,7 @@
 - Q: Who records the real-guitar benchmark, under what licence, and may it live in the repository? → A: The project owner records a compact curated set on the validation setup; CC0-1.0 with its own licence file; mono 48 kHz 16-bit PCM WAV; committed with the repository within a 50 MB hard target; driven by a machine-readable manifest; run explicitly, not in every unit-test run; never made from learner audio.
 - Q: Should the preparation step warn about unusually large track offsets? → A: Only for negative offsets, and only when the resulting physical open-string targets go below the range covered by TuxGuitar's built-in Guitar / 6-String tuning presets; informational and non-blocking. No threshold for positive offsets.
 - Q: How is the evolved tuner rolled out across TuxGuitar's desktop builds? → A: For the MVP only the validated macOS Apple Silicon + SWT Cocoa build packages the evolved tuner and Interactive Practice (and not the legacy tuner); every other desktop build keeps its existing tuner unchanged and claims neither feature until deliberately validated. Each build exposes exactly one tuner.
+- Q: What can Practice truthfully guarantee for two consecutive identical expected pitches, given the articulation experiment (S4)? → A: A continuously sustained previous note must not by itself validate the next identical pitch; evidence of a new articulation event is required. Detection is biased toward missing weak articulations rather than accepting incidental transients; a strong non-pluck transient (e.g. a body knock) may theoretically be taken for an articulation, and a very weak re-pluck may need to be played again more clearly. No absolute guarantee is claimed.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -81,8 +82,9 @@ position unchanged, and the running view shows all the information listed above.
    correct octave reliably, **Then** the note is marked correct and practice moves to the next
    practice event.
 6. **Given** two consecutive expected notes have the same pitch, **When** the learner sustains
-   the first note without playing it again, **Then** the second note is not accepted until the
-   learner articulates it anew.
+   the first note without playing it again, **Then** the second note is not accepted until a new
+   articulation is detected; **when** the learner re-plucks the note clearly, **then** the
+   second note can be accepted (a very weak re-pluck may need to be played again).
 7. **Given** notes connected by a hammer-on, pull-off, or slide, **When** the learner plays the
    written sequence of pitches, **Then** each note can be accepted by its pitch, and nothing
    states that the technique was detected.
@@ -412,6 +414,10 @@ playback order to the end of the track.
 - **Guitar plugged into another input of a multi-channel interface** than the one selected: the
   level check reports no meaningful signal on the selected channel and may suggest another
   channel; it never switches or mixes channels on its own.
+- **Repeated identical pitches — known limitation**: the system requires evidence of a new
+  articulation (FR-022) and prefers missing a weak one to advancing wrongly; a strong non-pluck
+  transient such as a knock on the guitar body may still be taken for an articulation, and a very
+  soft re-pluck may need to be played again more clearly.
 - **Silence** never validates a note.
 - **Other pitched sounds** — speech, humming, singing, other instruments, sound from the computer
   — may occasionally be matched by pitch alone, particularly through a microphone; this is a
@@ -577,9 +583,17 @@ playback order to the end of the track.
   determined through technical testing and is not part of this specification.
 - **FR-021**: A note MUST only be accepted when its pitch is detected reliably, not from a
   momentary reading.
-- **FR-022**: One sustained note MUST NOT validate two consecutive expected notes of the same
-  pitch; the second requires a new articulation by the learner. How articulation is detected is
-  not part of this specification.
+- **FR-022**: A continuously sustained instance of the previous pitch MUST NOT, by itself,
+  validate the next identical expected pitch. When two consecutive expected notes have the same
+  pitch, the second MUST NOT be accepted until the system has detected evidence of a new
+  articulation event after the first was accepted. Detection MUST be biased toward false
+  negatives rather than false positives: missing a weak articulation (the learner plays the note
+  again) is preferable to advancing from a sustained note or an incidental transient. This is
+  pitch/articulation detection only — not rhythm scoring or technique recognition. How
+  articulation is detected, and its thresholds, are not part of this specification. Known
+  limitation: from conventional mono guitar audio no absolute guarantee is possible — a
+  sufficiently strong non-pluck transient (for example a knock on the guitar body) may be taken
+  for a new articulation, and a very weak re-pluck may not produce enough evidence.
 - **FR-023**: *Incorrect* feedback MUST show both the expected and the detected note.
 - **FR-024**: On acceptance the system MUST show the note as correct and advance to the next
   practice event.
@@ -937,7 +951,8 @@ playback order to the end of the track.
   consistently; no learner audio is saved or sent anywhere; Start, Skip, Resume, and Stop work from the keyboard without the mouse; a note the tuner shows as in tune, in the expected octave, is never rejected by
   practice on pitch tolerance alone; silence alone never validates a note; an incorrect note does not advance
   practice; a correct note advances practice; the wrong octave is rejected; two consecutive
-  identical notes require two articulations; Skip advances without marking the event correct;
+  identical notes need a detectable second articulation (sustaining the first never validates
+  the second, and a clear re-pluck does); Skip advances without marking the event correct;
   unsupported multi-note events are not judged and wait for Skip; dead notes pass automatically;
   bends, harmonics, tremolo-bar pitch changes, and trills pass automatically and are not
   presented as validated; no screen claims physical string/fret

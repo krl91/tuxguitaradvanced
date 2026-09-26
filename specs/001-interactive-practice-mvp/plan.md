@@ -60,8 +60,11 @@ existing behaviour when the feature is inactive (FR-067); other eight builds unc
 **Scale/Scope**: one learner, one Practice Track, one input device/channel; songs of typical
 length (thousands of events).
 
-**Open items**: spikes S1–S4; the owner's initial benchmark recordings (needed before S3 and the
-Phase 4 conclusions). Product questions P1–P9 and planning point Q-B are decided.
+**Open items**: spike S3; multi-channel validation on a real multi-input interface (P2);
+launcher signing-identity check in Phase 3 (research.md "Q-L option A probe"); the
+owner's initial benchmark recordings (needed before S3 and the Phase 4 conclusions). S1 (partly),
+S2 and S4 have run — results in research.md "Spike results". Product questions P1–P9 and
+planning point Q-B are decided.
 
 ## Constitution Check
 
@@ -166,6 +169,7 @@ desktop/TuxGuitar/src/app/tuxguitar/app/view/component/tab/
     TablatureEditor.java, Tablature.java, TGControl.java   # tablature hook (research R18)
 desktop/TuxGuitar/dist/tuxguitar-shortcuts.xml             # default bindings (shared; inert without plugin — Q-B)
 desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml   # the only build-script change
+desktop/build-scripts/tuxguitar-macosx-swt-cocoa/launcher/tuxguitar-launcher.c   # NEW Q-L option A stub (SWT build only)
 ```
 
 **Structure Decision**: one library module (engine) + two plugin modules (evolved tuner,
@@ -177,6 +181,7 @@ POMs reference sibling artifacts with `${project.version}`, so the shared parent
 
 | File | Change |
 |---|---|
+| macOS SWT launcher (new, Q-L option A) | Tiny native Mach-O stub as `CFBundleExecutable` of the SWT `.app`; its only job is to start the existing, unchanged `Contents/MacOS/tuxguitar.sh` and wait. Launch, classpath and runtime logic stay in the script. Compiled (clang) and signed at least ad-hoc with identifier `app.tuxguitar` by the SWT build unconditionally (not only under `-P native-modules`); the packaged `Info.plist` gets `CFBundleExecutable` = the stub plus `NSMicrophoneUsageDescription` via the SWT-only post-copy step. |
 | `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` | Modules: replace `../../TuxGuitar-tuner` with `../../TuxGuitar-audio-engine`, `../../TuxGuitar-tuner-next`, `../../TuxGuitar-practice`. Copy: `tuxguitar-audio-engine` → `Contents/MacOS/lib`; `tuxguitar-tuner-next`, `tuxguitar-practice` → `Contents/MacOS/share/plugins`; remove the legacy `tuxguitar-tuner` copy. After copying `common-macosx`, insert `NSMicrophoneUsageDescription` into the packaged `Info.plist` (SWT build only; the source plist is shared with macOS JFX). Packaging check: fail if both tuner jars are in `share/plugins`. |
 | `desktop/TuxGuitar-audio-engine/pom.xml`, `desktop/TuxGuitar-tuner-next/pom.xml`, `desktop/TuxGuitar-practice/pom.xml` | New module POMs. |
 
@@ -188,6 +193,7 @@ Not changed: the other eight build-script POMs, `desktop/pom.xml`,
 | Change | Limitation found in source | Smallest change | Effect on other builds |
 |---|---|---|---|
 | `TablatureEditor.java`, `Tablature.java`, `TGControl.java` | No plugin API can highlight a beat in the tablature: playback highlight bound to `MidiPlayer`/`TGTransport`; `TGController` has no contribution point; the generic external-beat API is consumed only by fretboard and piano (research R18). | Tablature honours `TGExternalBeatViewerEvent`; `isRunning` true for the external beat while the player is stopped; `TGControl` paints it with the existing played-beat style and scrolls once per change. | Compiled into the shared app jar of every build but inert: nothing in those builds shows an external beat. |
+| macOS SWT `.app` launcher | TuxGuitar's bundle executable is the shell script `Contents/MacOS/tuxguitar.sh` (`common-resources/common-macosx/Contents/Info.plist`, `CFBundleExecutable`); with a script executable macOS attributes microphone requests to the hardened-runtime `java` (no audio-input entitlement) and silently returns silence; with a native launcher the bundle is responsible and the permission dialog works (research.md "S1 follow-up"). | Q-L option A (verified): a stub that only starts the unchanged `tuxguitar.sh`, as `CFBundleExecutable` of the SWT build only (P9), plus `NSMicrophoneUsageDescription`. | None: other builds keep their launcher; the shared `common-macosx` resources are not edited (the SWT build overrides after copying). |
 | `tuxguitar-shortcuts.xml` | Default bindings come only from this file (`KeyBindingActionDefaults`); plugins cannot add defaults (research R14). | Add 4–5 `<shortcut>` lines for practice action ids. | File is copied into every build; verified inert where the actions are not registered: no errors, never invoked, not shown in the shortcut editor, user files unaffected (research R14, Q-B decided). |
 
 ## Implementation phases
@@ -197,6 +203,9 @@ from [quickstart.md](./quickstart.md) performed and recorded. No phase implement
 behaviour.
 
 ### Phase 0 — Spikes (throw-away code, results recorded in research.md)
+
+Status (2026-09-26): S1 partly done (built-in and Continuity microphones; no multi-channel
+interface available), S2 done, S4 done on synthetic signals, S3 not started.
 
 | Spike | Question | Blocks |
 |---|---|---|
@@ -239,9 +248,25 @@ behaviour.
 
 - `TuxGuitar-audio-engine` module: input (logical per-channel inputs, de-interleaving per S1,
   shared `CurrentInputSelection`, acquire/release), level analysis, assessment, failure
-  reporting; macOS SWT packaging of the engine jar in `lib/` and the SWT-only `Info.plist` step.
+  reporting; macOS SWT packaging of the engine jar in `lib/`, the SWT-only `Info.plist` step
+  (`CFBundleExecutable` → stub, `NSMicrophoneUsageDescription`) and the Q-L option A launcher
+  stub (built and identifier-signed by the SWT build); verify in `tccd` that the grant is
+  attributed to `app.tuxguitar` and survives a rebuild.
 - Practice preparation: input/channel selector, level meter, assessment, calibration guidance,
   headphone recommendation, Start disabled while unusable.
+- From S1/S2: query each device's advertised formats and open at its native channel count (never
+  request stereo from a mono device); prefer 48 kHz/16-bit, accept 24-bit; open the line off
+  the UI thread with a "starting input" state (cold open measured at 2.4 s, warm ≈ 0.1 s);
+  treat a window of entirely exact-zero samples as "no signal received — check microphone access
+  and the input" (not asserted as a denial); no automatic gain — manual guidance only (the only
+  gain Java Sound exposes is the global macOS input volume of some devices).
+- P2 per-channel inputs remain the intended MVP behaviour and are implemented as designed.
+  Validation status: mono capture verified on the tested devices; multi-channel
+  de-interleaving and Java Sound channel k → physical input k mapping **not yet verified** (no
+  multi-input interface attached). An Aggregate Device may serve as an intermediate technical
+  test only; final validation requires a real multi-input USB interface before MVP acceptance.
+  If that validation fails, the exact limitation returns to the product owner — no silent
+  fallback to channel 1, mixing or strongest-channel selection.
 - **Acceptance**: synthetic level and de-interleave tests; manual: interface (each channel
   explicitly) + built-in mic, gain sweep, silent-channel hint without automatic switch, unplug,
   permission behaviour as characterised by S1.
@@ -270,8 +295,11 @@ behaviour.
 ### Phase 6 — Strict progression, articulation, pauses
 
 - Acceptance with stability window; advance; articulation requirement for same-pitch
-  consecutive notes (onset, per S4); auto-pause on unusable input; ready-to-resume + explicit
-  Resume for every pause cause.
+  consecutive notes using the engine's articulation event (S4: spectral-flux transient AND
+  post-vs-pre-maximum level gate; thresholds are tunable parameters selected from the real
+  `*_repeat` benchmark recordings — the +1.5 dB synthetic-test value is not a product constant;
+  biased toward false negatives per revised FR-022); auto-pause on unusable input;
+  ready-to-resume + explicit Resume for every pause cause.
 - **Acceptance**: session tests (silence/incorrect/uncertain never advance; repeated notes need
   two onsets; Skip never correct); manual melody practice and cable-pull recovery.
 
@@ -310,10 +338,17 @@ cleanup change.
 
 ## Major risks
 
-1. macOS microphone permission/TCC behaviour under a script-launched JVM (S1).
-2. Per-channel access on multi-input interfaces through Java Sound (S1).
+1. macOS microphone permission: verified that a native stub starting `tuxguitar.sh` makes the
+   app's launcher the responsible process, enables the prompt and yields real audio after Allow
+   (Q-L option A probe); Deny yields silent zeros, never an exception. Remaining risks: the
+   launcher's signing identity (to be `app.tuxguitar`), grant persistence across rebuilds, and
+   hardened-runtime signing (would need the audio-input entitlement).
+2. Per-channel access on multi-input interfaces through Java Sound: not yet verified (no
+   interface available); mono devices only advertise mono formats.
 3. Detection quality through the built-in microphone (noise, room, computer sound).
-4. Onset detection for repeated same-pitch notes without false onsets (S4).
+4. Same-pitch re-articulation: no deterministic detector tested was both miss-free and
+   false-free (S4); the chosen gated detector trades weak-re-pluck misses for robustness; a
+   strong body knock could still count as an articulation.
 5. Latency budget: window for low strings + stability window vs 300 ms (measured in Phases 6/7).
 6. Tablature hook must not alter existing rendering or playback highlighting.
 7. Two tuner modules in the repository during migration: mitigated by the per-build rule,
@@ -339,6 +374,9 @@ cleanup change.
 P1 Practice Track selection; P2 per-channel input; P3 offset realization; P4 tuner regression
 definition; P5 benchmark assets; P6 preselection/confirmation lifetime/track clicks; P7 separate
 practice highlight; P8 negative-offset notice; P9 macOS-SWT-only rollout with migration path.
+
+**Q-L (decided)**: option A — tiny native stub that only invokes the existing `tuxguitar.sh`
+(verified by the option A probe); option B and jpackage not needed.
 
 **Q-B (decided)**: practice default shortcuts stay in the shared `tuxguitar-shortcuts.xml`; source
 verification (research R14) shows they are inert on builds without the practice plugin. No

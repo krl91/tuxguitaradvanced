@@ -633,3 +633,264 @@ regression checks; only then switch that build-script POM from `tuxguitar-tuner`
 `tuxguitar-tuner-next` (+ `tuxguitar-audio-engine` in `lib/`). Support is never claimed before
 that. When all intended builds have switched, remove `desktop/TuxGuitar-tuner` in a separate
 cleanup change.
+
+---
+
+## Spike results (Phase 0) — S1, S2, S4
+
+**Environment (all spikes)**: MacBook Pro, Apple Silicon (`arm64`), macOS 26.7 (build 25G229),
+Temurin 21.0.12.1 (`os.arch=aarch64`). Audio hardware present (`system_profiler
+SPAudioDataType`): built-in microphone "Micro MacBook Pro" (1 input channel, 48 kHz, system
+default input), Continuity microphone of an iPhone (1 channel), "Microsoft Teams Audio" virtual
+device (1 in / 1 out), built-in speakers. **No external audio interface was attached.**
+Experiments were standalone Java programs in the session scratch directory (not in the
+repository). Only level statistics were printed; no audio was written or kept.
+
+### S1 — Java Sound input on macOS
+
+**Experiments**: (1) enumerate all mixers, their target/source line infos, advertised formats,
+`isLineSupported` for 48/44.1 kHz × 16/24-bit × mono/stereo, and port controls; (2) open a
+`TargetDataLine` per device and print per-250 ms RMS/peak and the count of exact-zero samples
+for 0.5–3 s; (3) repeat opens to time them; (4) request stereo on a mono device; (5) run the
+same capture from a throw-away app bundle whose executable is a shell script starting `java`
+(same topology as TuxGuitar's `Contents/MacOS/tuxguitar.sh`) with **no**
+`NSMicrophoneUsageDescription`, launched with `open`.
+
+**Observed**
+
+- Mixers: for every CoreAudio device there is a `com.sun.media.sound.DirectAudioDevice` mixer
+  named after the device (localized name, e.g. "Micro MacBook Pro"), a `PortMixer` named
+  "Port <device>", and a "Default Audio Device" mixer that follows the system default input.
+  Vendor strings: "Apple Inc.", "Microsoft Corp.".
+- Capture formats advertised per input device: PCM signed/unsigned 8-bit, signed 16- and
+  24-bit (LE/BE) at unspecified rate, plus 48 kHz/16-bit — **all mono**, i.e. only the device's
+  native channel count. `isLineSupported` is true for 48 kHz and 44.1 kHz, 16- and 24-bit mono;
+  false for every stereo request on these mono devices.
+- Captures (iTerm2 launch context): real signal at 48 kHz/16-bit mono (room noise ≈ −44…−53 dBFS
+  RMS, 0.4–0.6 % exact-zero samples); 24-bit capture works (0–1 exact-zero samples per 12 000);
+  44.1 kHz on the default device works (the device runs at 48 kHz; Java Sound/CoreAudio
+  converts).
+- Requesting stereo on a mono device throws `IllegalArgumentException: Line unsupported`
+  (`DirectAudioDevice.getLine`); Java Sound does not up-mix or expose virtual channels.
+- Open + start: 2.36 s on the first open after a while, then ≈ 104–107 ms on repeated opens.
+- Permission: the shell capture ran under iTerm2 (process ancestry `iTerm2 → login → zsh →
+  claude → zsh → java`), which already has microphone access, so data flowed. The TCC database
+  could not be read (`authorization denied`). The script-launched bundle **without**
+  `NSMicrophoneUsageDescription` opened the line without error, no prompt appeared, no crash —
+  and delivered **100 % exact-zero samples** (−240 dBFS) for the whole capture.
+- **Correction (verified from the unified log, `log show … process == "tccd"`)**: the silence
+  was *not* caused by the missing usage description. In both script-launched bundles — without
+  the key (15:16:36) and **with** it (`S1ProbeAllow`, 15:27:56) — `tccd` attributed the request
+  to the Temurin `java` binary alone (`attribution={requesting={identifier=net.java.openjdk.java,
+  binary_path=…/temurin-21.jdk/Contents/Home/bin/java}}`, no `responsible` process) and logged
+  `Prompting policy for hardened runtime; service: kTCCServiceMicrophone requires entitlement
+  com.apple.security.device.audio-input but it is missing`, result `authValue=1`; no prompt was
+  shown and Java Sound received zeros. When the same java ran under iTerm2, `tccd` attributed
+  it to `responsible=com.googlecode.iterm2` and allowed it (`authValue=2`).
+- Temurin's `java` is Developer-ID signed (Eclipse Foundation, `JCDTMS22B4`) with the hardened
+  runtime flag and entitlements `allow-jit`, `allow-unsigned-executable-memory`,
+  `allow-dyld-environment-variables`, `debugger`, `disable-library-validation` — **no
+  `com.apple.security.device.audio-input`** (`codesign -d --entitlements -`).
+- The development app's `Contents/MacOS/jre` links to that same JDK, and TuxGuitar's bundle
+  executable is the shell script `tuxguitar.sh`, i.e. the same topology as the probes. By
+  inference (not run with TuxGuitar itself), a Finder/`open`-launched TuxGuitar currently cannot
+  obtain microphone input on this setup — adding `NSMicrophoneUsageDescription` alone does not
+  change that.
+- No crash occurred: `S1ProbeAllow` ran its full 20 s and `java` exited 0; no diagnostic report
+  exists for it.
+
+**Confirmed**: 48 kHz/16-bit mono capture works on the built-in and Continuity microphones;
+device names and default device are visible; in TuxGuitar's current macOS launch topology
+(shell-script bundle executable → Developer-ID, hardened-runtime `java` without the audio-input
+entitlement) macOS denies the microphone silently — no prompt, no error, zeros — with or without
+`NSMicrophoneUsageDescription`; a denial is detectable only indirectly, but exact digital
+silence is clearly distinguishable from a real microphone's noise floor.
+
+**Not verified (hardware/interaction unavailable)**:
+- Multi-channel interfaces: how Java Sound advertises a 2+ input interface, whether a
+  multi-channel line can be opened, and whether channel k maps to physical input k. **The P2
+  logical-channel design remains unverified** (see the plan's hardware follow-up).
+- A **native stub that starts the existing shell script** (the smallest production-like change)
+  was not tested; only a native launcher that starts `java` directly was.
+- The behaviour of the real TuxGuitar `.app` (inferred to match the probe bundle, not run).
+
+**P2 validation status**: mono capture on the tested macOS devices is verified; multi-channel
+de-interleaving and channel k → physical input k mapping are **not verified** (no multi-input
+interface attached). An Aggregate Device (e.g. built-in + iPhone microphones) may be used as an
+intermediate technical test of multi-channel lines and de-interleaving, but it is **not** proof
+that a USB interface maps Java Sound channel k to physical input k; final validation requires a
+real multi-input interface. P2 is not reopened; if that validation fails, the exact limitation
+returns to the product owner (no silent channel-1, mixing or strongest-channel fallback).
+
+**Impact on the plan**: keep the SWT-only `NSMicrophoneUsageDescription` step; the engine must
+query each device's advertised formats and open at the native channel count (mono devices:
+never request stereo); prefer 48 kHz/16-bit, accept 24-bit; open the line off the UI thread and
+show a "starting input" state (cold open measured at 2.4 s); report "no signal received — check
+microphone access in System Settings and the input" when a window is entirely exact zeros
+(wording must not claim denial as a fact, since some devices may output digital silence).
+
+### S2 — input gain controls
+
+**Experiments**: list controls on open `TargetDataLine`s and on every `Port`; on the built-in
+microphone port, set `FloatControl.Type.VOLUME` to 0.1, 0.5, 1.0 and back to the original
+(0.989369), measuring 1.5 s RMS after each change; the original value was restored in a
+`finally` block, and the macOS input volume read 99 before and after (`osascript`).
+
+**Observed**: capture lines expose **no controls** (`MASTER_GAIN`/`VOLUME` unsupported). Input
+ports: built-in microphone — `Volume` [0,1] and `Mute`; iPhone microphone — no controls; Teams
+virtual device — `Volume`/`Mute`. Changing the built-in microphone port volume changed the
+captured level: ≈ −47 dBFS (original) → −69.6 (0.1) → −58.5 (0.5) → −48.0 (1.0) → −43.8
+(restored; room noise varies by a few dB). This control is the **system-wide macOS input
+volume** for that device (same value as `input volume of (get volume settings)`).
+
+**Confirmed**: gain is controllable through Java Sound only for some devices (built-in mic
+yes, iPhone mic no), only as the global macOS input volume (affects other apps and persists
+after TuxGuitar exits), never on the capture line itself. Audio interfaces: not tested (none
+available); many have hardware-only gain.
+
+**Impact on the plan**: as planned, the MVP provides measurement plus manual guidance (macOS
+Sound settings / interface gain knob) and **no automatic gain adjustment**. FR-041 ("MAY offer
+automatic adjustment") is not exercised; changing the global input volume would be a separate
+product decision.
+
+### S4 — repeated-identical-note articulation
+
+**Experiment**: deterministic synthetic signals at 48 kHz (Karplus–Strong strings with fixed
+seeds; harmonic tones with vibrato/amplitude modulation), analysed with 1024-sample Hann
+windows, 256-sample hop (5.3 ms). Cases: single sustained pluck; same-pitch re-pluck (equal and
+weak ≈ 0.35 gain, E3 and E2); five repeats 150 ms apart; vibrato ±30 cents/5.5 Hz with ±1.5 dB AM;
+wide vibrato ±50 cents/6 Hz with ±3 dB AM; beating ±4 dB at 2 Hz; −40 dBFS noise floor; 15 ms
+noise click at −18 dB; 10 ms soft click at −30 dB; 25 ms −12 dB dropout; weak re-pluck followed by
+a click. Detectors: energy rise vs 32 ms minimum (3/6 dB); envelope slope (≥ 4 dB per ≈ 11 ms);
+log-magnitude spectral flux with adaptive median threshold; pitch-clarity drop and
+reacquisition (normalised autocorrelation); and flux/slope gated by "mean level 21–70 ms after
+the transient minus the **maximum** level 11–100 ms before it ≥ X dB". Correct = within ±30 ms.
+No real guitar recording was used (none was provided; user files were not searched).
+
+**Observed** (hits / 18 expected onsets, false detections):
+
+| Detector | Hits | False | Notes |
+|---|---|---|---|
+| Pitch-clarity reacquisition | 5 | 2 | Periodicity stays continuous through a same-pitch re-pluck; only fast staccato repeats detected — **unusable** |
+| Energy rise 3 dB | 16 | 19 | 16 false detections on wide vibrato with ±3 dB AM |
+| Envelope slope 4 dB/11 ms | 16 | 3 | Robust to vibrato/beating; misses weak re-pluck; fires on clicks and dropout recovery |
+| Spectral flux | 18 | 4 | Catches every re-pluck incl. the weak one; fires on loud and soft clicks and dropout recovery |
+| Flux + gate ≥ 0 dB | 15 | 2 | Dropout rejected; loud click still passes |
+| Flux + gate ≥ +1.5 dB | 13 | **0** | No false detections in any case; misses the weak re-pluck and 3 of 5 fast repeats |
+| Slope + gate ≥ 0 dB | 14 | 1 | — |
+
+**Confirmed**: same-pitch re-articulation needs a transient/energy detector, not pitch
+continuity. A transient (spectral flux) gated by a post-vs-pre-maximum level rise can reject
+clicks, dropouts, vibrato and amplitude modulation on synthetic signals, at the cost of missing
+weak re-plucks. No tested deterministic detector achieved both zero misses and zero false
+detections: a pick attack and a broadband click are both transients, and a weak re-pluck that
+does not raise the level looks like a click.
+
+**Uncertain**: behaviour on real guitars (pick noise, fret buzz, body knocks, room reflections,
+microphone vs interface), exact thresholds, and hop/window choices — to be measured with the
+`*_repeat` recordings of the benchmark.
+
+**Impact on the plan**: the engine emits an **articulation event** = spectral-flux transient
+AND post/pre-maximum level gate ≥ X dB. X and the flux threshold are tunable parameters, chosen
+only after testing on the real `*_repeat` benchmark recordings; the +1.5 dB value is a
+synthetic-test result, not a product constant. The event is independently testable with the
+synthetic cases above. Spec FR-022 was revised accordingly (evidence of a new articulation;
+bias toward false negatives; documented limitation). Session rule (unchanged
+intent): a same-pitch expected note may be accepted only after an articulation event later
+than the previous acceptance. The detector is biased toward **misses** (the learner simply plays
+again — a safe failure under wait-for-correct-note) rather than false articulations (which would
+let one sustained note validate two notes, FR-022). A residual risk remains that a strong
+non-pluck transient raising the level (e.g. knocking the guitar body) is counted as an
+articulation; this is a limitation of mono pitch-and-level input, like other pitched sounds.
+
+### S1 follow-up — microphone permission with a native launcher (manual run, 2026-09-26)
+
+**Experiment**: three throwaway bundles in the session scratch directory, each with
+`NSMicrophoneUsageDescription`, ad-hoc signed, whose `CFBundleExecutable` is a ~30-line native
+C launcher (`posix_spawn` of the same `java … S1Capture "Micro MacBook Pro" 48000 16 1 20`
+command as before, logging levels only): `S1NativeProbeAllow`
+(`app.tuxguitar.spike.s1probe.native.allow`), `S1NativeProbeDeny` (`…native.deny`, where Allow
+was clicked by accident) and `S1NativeProbeDeny2` (`…native.deny2`). Launched with `open` by the
+product owner, who reported the dialogs; results cross-checked with the probe logs and `tccd`
+unified-log entries (saved as `perm2/tccd-15h33-15h41.txt` in scratch).
+
+**Attribution**: every microphone request was attributed with
+`responsible=app.tuxguitar.spike.s1probe.native.<variant>` and `requesting=net.java.openjdk.java`.
+The bundle — not the hardened-runtime `java` — is what macOS evaluated, so the missing
+`audio-input` entitlement on Temurin's `java` no longer blocked the prompt.
+
+| Case | Dialog | `tccd` result | Java Sound behaviour |
+|---|---|---|---|
+| First run, Allow (`native.allow`, 15:33:47) | Yes (bundle name + usage text) | preflight `authValue=1` (undecided) → prompt → `authValue=2, authReason=2` | `TargetDataLine.open/start` blocked until answered (2 287 ms ≈ 15:33:47.79→15:33:50.12), then real signal: ≈ −39…−55 dBFS RMS, 0.4 % exact-zero samples |
+| Remembered Allow (`native.allow` 15:36:32; `native.deny` 15:37:30, 15:38:11) | No | preflight `authValue=2` immediately | open in 60–84 ms, real signal (0.3–0.4 % zeros) |
+| First run, Deny (`native.deny2`, 15:40:16) | Yes | preflight `1` → prompt → `authValue=0, authReason=2` | open/start succeeded after the answer (2 582 ms), **no exception**, 100 % exact-zero samples (−240 dBFS) |
+| Remembered Deny (`native.deny2`, 15:41:02) | No | preflight `authValue=0` immediately | open in 66 ms, no exception, 100 % exact-zero samples |
+
+(`kTCCServiceAudioCapture` was also preflighted and stayed `authValue=1`; microphone capture did
+not depend on it.)
+
+**Confirmed**:
+1. macOS shows the permission dialog only when the **app bundle is the responsible process**;
+   with a shell-script `CFBundleExecutable` (TuxGuitar's current `tuxguitar.sh`) the request is
+   attributed to the Developer-ID, hardened-runtime `java` without the audio-input entitlement
+   and is silently refused, with or without `NSMicrophoneUsageDescription`.
+2. A denial (first-run or remembered) never raises a Java Sound error: the line opens and
+   delivers exact digital silence. Detection must therefore rely on the "entire window of exact
+   zeros" signal (a real microphone showed 0.3–0.6 % zero samples).
+3. Decisions are remembered per bundle identity; relaunches do not prompt.
+4. On first use, opening the line blocks while the dialog is displayed — the engine must never
+   open the line on the UI thread (already planned) and should show a "waiting for microphone
+   permission / starting input" state.
+
+**Uncertain / not tested (at that point)**: a native stub that starts the existing
+`tuxguitar.sh` — tested afterwards, see "Q-L option A probe" below; behaviour when the launcher is signed with the
+hardened runtime (e.g. for notarization) — Apple's rule, as logged by `tccd`, then requires the
+`com.apple.security.device.audio-input` entitlement on the responsible binary; whether an
+ad-hoc re-signed rebuild keeps an earlier grant (TCC stores a code requirement per client);
+the real TuxGuitar `.app` itself.
+
+**Packaging requirement for the real macOS SWT app** (derived from the above):
+- The `.app`'s `CFBundleExecutable` must be a **native Mach-O launcher**, so that the TuxGuitar
+  bundle (`app.tuxguitar`) is the process macOS evaluates; the JVM started from it inherits that
+  responsibility.
+- The packaged `Info.plist` must contain `NSMicrophoneUsageDescription` (SWT build only, P9).
+- If that launcher is ever signed with the hardened runtime, it must carry the
+  `com.apple.security.device.audio-input` entitlement.
+- The launcher must reproduce what `tuxguitar.sh` does today (classpath, library path,
+  `-XstartOnFirstThread`, `tuxguitar.home.path`/`share.path`, theme property, arguments).
+
+### Q-L option A probe — native stub starting the existing `tuxguitar.sh` (manual run, 2026-09-26)
+
+**Experiment**: throwaway `S1StubProbe.app` (bundle id `app.tuxguitar.spike.s1probe.stub.a`, fresh
+permission state, `NSMicrophoneUsageDescription`), laid out like the development SWT `.app`:
+unsigned bundle; `Contents/MacOS/jre` → Temurin 21 JDK; `lib/*.jar`; `CFBundleExecutable` =
+`tuxguitar-launcher`, a native arm64 stub (clang, carrying only the linker's automatic ad-hoc
+signature) whose only job is `posix_spawn("/bin/sh", "<bundle>/Contents/MacOS/tuxguitar.sh")`
+and wait; `tuxguitar.sh` is a copy of the real
+`common-resources/common-macosx/Contents/MacOS/tuxguitar.sh` with only `MAINCLASS` and the
+program arguments changed. Process chain: `launchd → tuxguitar-launcher → /bin/sh tuxguitar.sh
+→ ./jre/bin/java … S1Capture`. Launched twice with `open`; the product owner clicked Allow on the
+first prompt. Evidence: `perm3/s1-stub-a.log` and `tccd` entries (`perm3/tccd-15h48.txt`).
+
+**Observed**
+
+| Launch | Dialog | `tccd` (all entries) | Java Sound |
+|---|---|---|---|
+| 1st, 15:48:03 | Yes → Allow | `responsible=tuxguitar-launcher (responsible_path=…/S1StubProbe.app/Contents/MacOS/tuxguitar-launcher)`, `requesting=net.java.openjdk.java`; preflight `authValue=1` → prompt → `authValue=2, authReason=2` at 15:48:08.019 | open/start 4 093 ms (blocked while the dialog was shown), then real signal: ≈ −45…−53 dBFS RMS, desk taps −19 dBFS RMS / −6.8 dBFS peak, 0.2 % exact zeros |
+| 2nd, 15:48:50 | No | same attribution; preflight `authValue=2` immediately | open 64 ms, real signal (≈ −39…−50 dBFS, 0.2 % exact zeros) |
+
+No "requires entitlement … audio-input" message appeared for this probe.
+
+**Confirmed**: responsibility survives the shell hop — a native `CFBundleExecutable` that only
+starts `tuxguitar.sh` makes the app's launcher the responsible process, the prompt appears, Allow
+yields real samples, and the decision is remembered. **Q-L option A is chosen.**
+
+**Qualification — signing identity**: with an unsigned bundle, `tccd` identifies the responsible
+client by the launcher's code-signing identifier (`tuxguitar-launcher`, the default the linker
+gives an ad-hoc signed binary), not by the bundle id; the fully bundle-signed native probes were
+identified by their bundle ids. For the real app the launcher should therefore be signed
+(at least ad-hoc) with an identifier equal to `CFBundleIdentifier` (`app.tuxguitar`) so the
+grant is tied to TuxGuitar rather than to a generic executable name. Not yet verified: that
+identifier-signing of the launcher alone (the bundle cannot currently be sealed because of jars
+in `Contents/MacOS`) makes `tccd` use `app.tuxguitar`, and whether a rebuilt launcher (new cdhash)
+keeps an existing grant. Both are checked when the production launcher is built (Phase 3).
