@@ -1,0 +1,5 @@
+test_id,tuning,expected_note,fixture,relation,status
+ws-A2-up,standard,A2,{input}/standard/18_As2_fretted_s6f6.wav,wrong-semitone-up,disabled
+ws-G3-up,standard,G3,{input}/standard/19_Gs3_fretted_s4f6.wav,wrong-semitone-up,disabled
+ws-E5-up,standard,E5,{input}/standard/20_F5_fretted_s1f13.wav,wrong-semitone-up,disabled
+ws-E5-down,standard,E5,{input}/standard/21_Ds5_fretted_s1f11.wav,wrong-semitone-down,disabled

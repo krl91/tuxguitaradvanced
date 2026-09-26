@@ -954,6 +954,24 @@ error mitigation (G3/F#4 cases, pluck-transient subharmonics); sympathetic/other
 interference (clips 07/15); low-frequency false readings in silence (YIN reported F1–A1 at low
 level — guitar-range limiting and level/confidence gating to be tuned).
 
+**T023 committed-fixture regression follow-up**: the accepted WAVs were copied byte-for-byte and
+their SHA-256 values recorded in the manifest. The default-build regression uses test-only,
+provisional parameters: confidence gate 0.80, minimum usable window level −35 dBFS, 20 consecutive
+equal-note frames for stability (about 107 ms at hop 256), energy-onset floor −45 dBFS, at most 20
+octave-off usable frames in a clip, no octave-off run reaching the 20-frame stability window, and
+stable-detection latency at most 750 ms. These are evidence-backed regression parameters, not
+product constants; the live proof-of-concept's 0.90 / 5-frame values remain non-normative.
+
+With those parameters, every manifest `reference` fixture has the expected dominant note and first
+stable note. The maximum observed stable-detection latency is 288 ms (F#4); the longest octave-off
+run is 17 frames (also F#4), so no wrong octave becomes stable. The G3 string-4 fixture has zero
+usable octave-off frames, and the open G3 fixture has one isolated octave-off frame. The silence
+fixture yields no usable pitch. This resolves the G3/F#4 acceptance issue through the intended
+level and stability gates rather than by relabelling ground truth or rewriting detector output.
+Clips 07/15 remain informational recording-quality cases because another string dominates their
+recorded signal; clips 18–21 remain informational because their played note has no independent
+ground truth.
+
 ### Java release of the new modules (found during /speckit-tasks, 2026-09-26)
 
 **Finding**: all 175 class files in `be.tarsos.dsp:core:2.5` (`core-2.5.jar`, including
