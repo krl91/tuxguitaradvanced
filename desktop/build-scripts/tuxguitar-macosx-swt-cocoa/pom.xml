@@ -17,6 +17,7 @@
 		<project.rootPath>${project.parent.relativePath}</project.rootPath>
 		<project.finalName>tuxguitar-${project.version}-macosx-swt-cocoa.app</project.finalName>
 		<org.eclipse.swt.artifactId>org.eclipse.swt.cocoa.macosx</org.eclipse.swt.artifactId>
+		<macos.microphoneUsageDescription>TuxGuitar uses the microphone to detect notes for the tuner and interactive practice.</macos.microphoneUsageDescription>
 	</properties>
 
 	<modules>
@@ -399,8 +400,39 @@
 									<fileset dir="../common-resources/common-macosx" />
 								</copy>
 
+								<exec executable="/usr/bin/clang" failonerror="true">
+									<arg value="-std=c11" />
+									<arg value="-Wall" />
+									<arg value="-Wextra" />
+									<arg value="-Werror" />
+									<arg value="-o" />
+									<arg value="${project.build.directory}/tuxguitar-launcher" />
+									<arg value="${project.basedir}/launcher/tuxguitar-launcher.c" />
+								</exec>
+								<exec executable="/usr/bin/codesign" failonerror="true">
+									<arg value="--force" />
+									<arg value="--sign" />
+									<arg value="-" />
+									<arg value="--identifier" />
+									<arg value="app.tuxguitar" />
+									<arg value="${project.build.directory}/tuxguitar-launcher" />
+								</exec>
+								<copy file="${project.build.directory}/tuxguitar-launcher"
+										tofile="${project.build.directory}/${project.finalName}/Contents/MacOS/tuxguitar-launcher"
+										overwrite="true" />
+								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
+									<arg value="-c" />
+									<arg value="Set :CFBundleExecutable tuxguitar-launcher" />
+									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
+								</exec>
+								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
+									<arg value="-c" />
+									<arg value="Add :NSMicrophoneUsageDescription string ${macos.microphoneUsageDescription}" />
+									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
+								</exec>
 								<chmod perm="755">
 									<fileset dir="${project.build.directory}/${project.finalName}/Contents/MacOS">
+										<include name="tuxguitar-launcher" />
 										<include name="tuxguitar.sh" />
 										<include name="jre/bin/*" />
 									</fileset>

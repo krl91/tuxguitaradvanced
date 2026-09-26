@@ -70,8 +70,8 @@ validated before this phase is complete.
 
 ### macOS microphone launcher (Q-L option A)
 
-- [ ] T024 [P] Write `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/launcher/tuxguitar-launcher.c`: resolve its own directory, `posix_spawn("/bin/sh", "<Contents/MacOS>/tuxguitar.sh", argv…)`, wait, return the script's exit status; no other logic (launch/classpath stay in `tuxguitar.sh`)
-- [ ] T025 Extend `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` to compile the stub with clang for the build machine architecture **in every SWT build** (not only `-P native-modules`), ad-hoc sign it with identifier `app.tuxguitar`, place it in `Contents/MacOS/`, and after copying `common-macosx` set the packaged `Info.plist` `CFBundleExecutable` to `tuxguitar-launcher` and add `NSMicrophoneUsageDescription` (the shared `common-resources/common-macosx/Contents/Info.plist` stays unchanged)
+- [x] T024 [P] Write `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/launcher/tuxguitar-launcher.c`: resolve its own directory, `posix_spawn("/bin/sh", "<Contents/MacOS>/tuxguitar.sh", argv…)`, wait, return the script's exit status; no other logic (launch/classpath stay in `tuxguitar.sh`)
+- [x] T025 Extend `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` to compile the stub with clang for the build machine architecture **in every SWT build** (not only `-P native-modules`), ad-hoc sign it with identifier `app.tuxguitar`, place it in `Contents/MacOS/`, and after copying `common-macosx` set the packaged `Info.plist` `CFBundleExecutable` to `tuxguitar-launcher` and add `NSMicrophoneUsageDescription` (the shared `common-resources/common-macosx/Contents/Info.plist` stays unchanged)
 - [ ] T026 Validate the packaged app manually: launch via `open`, confirm the permission dialog, confirm in `log show --predicate 'process == "tccd"'` that the responsible client is `app.tuxguitar`, rebuild and relaunch to see whether the grant persists; record results in `specs/001-interactive-practice-mvp/research.md`
 
 ### Practice plugin shell
