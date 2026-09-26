@@ -15,6 +15,7 @@ Names below are indicative; signatures are fixed in tasks, behaviour here is bin
 | `listInputs()` | Enumerates Java Sound mixers that support `TargetDataLine`; returns one logical `AudioInputDescriptor` per mono device and one per usable channel of a multi-channel device ("<device> — Input k"); system default first. |
 | `select(input)` | Makes that single device/channel the current input for tuner **and** practice; increments `revision`; sets assessment `UNCHECKED`; restarts capture. Callable from either UI. Never called automatically in response to signal levels. |
 | Channel handling | Capture reads the device at its native channel count and copies only the selected channel into the mono ring buffer (de-interleave). No mixing, no implicit channel 1, no automatic channel switching. Level check and analysis see only the selected channel. |
+| Ring-buffer pressure | Capture and analysis communicate through a preallocated lock-free SPSC buffer. A full buffer accepts only its remaining capacity, rejects the newest excess samples without blocking, and increments a cumulative dropped-sample count. An empty read returns zero samples immediately. |
 | `current()` | Returns `CurrentInputSelection` snapshot. |
 | `addListener(l)` / `removeListener(l)` | Notified (off the audio threads) of: selection changed, assessment changed, device lost, capture error. |
 | `acquire(consumerId)` / `release(consumerId)` | Capture runs only while ≥ 1 consumer holds it (tuner open, practice preparation or session active). With zero consumers the line is closed (FR-067). |
