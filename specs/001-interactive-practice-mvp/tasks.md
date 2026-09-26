@@ -31,16 +31,15 @@ Build/verify command for every phase (quickstart.md):
 
 ## Phase 1: Setup (shared infrastructure)
 
-**Purpose**: create the three new modules and wire them into the macOS SWT build only.
+**Purpose**: create the three new modules and wire the engine and practice plugin into the macOS SWT build only. Invariant for the whole implementation: every packaged application contains exactly one usable tuner — the legacy tuner stays packaged until tuner-next is functional and is swapped atomically in US4 (T005).
 
 - [x] T001 Create `desktop/TuxGuitar-audio-engine/pom.xml`: parent `tuxguitar-pom` (`<relativePath>../</relativePath>`), artifactId `tuxguitar-audio-engine`, standard `src/main/java` / `src/test/java` layout; dependencies `tuxguitar-lib` `${project.version}` (provided), `be.tarsos.dsp:core:2.5` with repository `https://mvn.0110.be/releases` (not Maven Central), `org.junit.jupiter:junit-jupiter-engine:5.9.2` (test); override `maven-compiler-plugin` `<release>11</release>` in this POM only (TarsosDSP 2.5 is Java 11 bytecode, so the module needs a Java 11+ runtime; research.md "Java release of the new modules"); configure surefire to exclude JUnit tag `benchmark` by default. Verify with `mvn help:effective-pom` that only this module has release 11, that no existing module declares a dependency on it, and that the build accepts the TarsosDSP classes
 - [x] T002 [P] Create `desktop/TuxGuitar-tuner-next/` skeleton: `pom.xml` (parent `tuxguitar-pom`, artifactId `tuxguitar-tuner-next`, `<sourceDirectory>src</sourceDirectory>`, resources `share`, `<testSourceDirectory>test</testSourceDirectory>`, `<release>11</release>`, provided deps `tuxguitar-lib`, `tuxguitar`, `tuxguitar-ui-toolkit`, `tuxguitar-audio-engine` `${project.version}` with TarsosDSP excluded so only the engine API is visible, junit 5.9.2 test), `share/META-INF/services/app.tuxguitar.util.plugin.TGPlugin` naming a lifecycle-only `src/app/tuxguitar/app/tools/custom/tunernext/TunerNextPlugin.java` (`MODULE_ID` `tuxguitar-tuner`, `ACTION_ID` `tuner.tuner`; T064 turns it into the tool-item plugin), `share/META-INF/tuxguitar-tuner.info` (same file name and fields as `desktop/TuxGuitar-tuner/share/META-INF/tuxguitar-tuner.info`), `share/lang/messages.properties`
 - [x] T003 [P] Create `desktop/TuxGuitar-practice/` skeleton: `pom.xml` (same conventions as T002 plus provided `tuxguitar-editor-utils`; artifactId `tuxguitar-practice`; test sources `test/` and test resources `test-resources/` declared, created with the first tests), `share/META-INF/services/app.tuxguitar.util.plugin.TGPlugin` naming a lifecycle-only `src/app/tuxguitar/app/tools/custom/practice/ui/PracticePlugin.java` (`MODULE_ID` `tuxguitar-practice`; T027 turns it into the tool-item plugin), `share/META-INF/tuxguitar-practice.info`, `share/lang/messages.properties`
-- [ ] T004 Wire the modules into `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` only: replace module `../../TuxGuitar-tuner` with `../../TuxGuitar-audio-engine`, `../../TuxGuitar-tuner-next`, `../../TuxGuitar-practice`; copy `tuxguitar-audio-engine.jar` and TarsosDSP `core-2.5.jar` to `Contents/MacOS/lib`, `tuxguitar-tuner-next.jar` and `tuxguitar-practice.jar` to `Contents/MacOS/share/plugins`; remove the legacy `tuxguitar-tuner` copy entry
-- [ ] T005 Add a packaging check to `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` that fails the build if `Contents/MacOS/share/plugins` contains both `tuxguitar-tuner.jar` and `tuxguitar-tuner-next.jar` (research R19: the two tuners share module id `tuxguitar-tuner`)
+- [x] T004 Wire the engine and practice plugin into `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` only: add modules `../../TuxGuitar-audio-engine` and `../../TuxGuitar-practice`; copy `tuxguitar-audio-engine.jar` and the TarsosDSP 2.5 jar (once, `Contents/MacOS/lib` only; declare the TarsosDSP repository so the build script can resolve it) to `Contents/MacOS/lib` and `tuxguitar-practice.jar` to `Contents/MacOS/share/plugins`; keep module `../../TuxGuitar-tuner` and its `tuxguitar-tuner.jar` copy unchanged; do **not** add or package `TuxGuitar-tuner-next` (swap in T005). Run the full macOS SWT build, inspect the `.app` (engine, TarsosDSP, practice present; legacy tuner present; tuner-next absent; no duplicate TarsosDSP), and launch it to confirm normal startup, the existing tuner, and no errors from the practice plugin
 - [ ] T006 Run the phase build command; confirm `git diff --stat` shows no change to the other eight `desktop/build-scripts/*/pom.xml`, `desktop/pom.xml`, or `desktop/TuxGuitar-tuner/`
 
-**Checkpoint**: macOS SWT build green with three empty modules; nothing else changed.
+**Checkpoint**: macOS SWT build green with the engine and an empty practice plugin packaged, the legacy tuner still packaged, tuner-next built nowhere; nothing else changed.
 
 ---
 
@@ -175,6 +174,7 @@ problem; opening during a session pauses practice; FR-059 capabilities preserved
 - [ ] T066 [US4] Implement `desktop/TuxGuitar-tuner-next/src/app/tuxguitar/app/tools/custom/tunernext/TunerWindow.java`: chromatic and guided modes, note/octave/cents, flat/in tune/sharp via `TolerancePolicy.tunerState`, Hz readout, fine/rough widgets ported from the display logic of `desktop/TuxGuitar-tuner/src/.../TGTunerFineWidget.java` and `TGTunerRoughWidget.java` (not the FFT engine), clickable string targets, input/channel selector and level status, input problem instead of confident readings (FR-048–FR-056)
 - [ ] T067 [US4] Implement `desktop/TuxGuitar-tuner-next/src/app/tuxguitar/app/tools/custom/tunernext/TunerSettingsDialog.java` with device/channel, level status and recalibration only — no FFT/buffer/sample-rate/sample-size/noise-gate controls, no reused old control names (FR-059)
 - [ ] T068 [US4] Integrate with practice in `PracticeWindow.java`/`SessionEvents.java`: "Tune guitar" processes action id `tuner.tuner`; opening the tuner pauses the session and closing returns to the paused event (FR-058, FR-044); tuner/track mismatch warning before start (FR-062)
+- [ ] T005 [US4] Atomic tuner swap in `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml`, only once tuner-next is functional (after T064–T068): in one change, replace module `../../TuxGuitar-tuner` with `../../TuxGuitar-tuner-next` and the `tuxguitar-tuner.jar` copy with `tuxguitar-tuner-next.jar` (before: legacy packaged, tuner-next not; after: tuner-next packaged, legacy not). Add a packaging check that fails the build unless `Contents/MacOS/share/plugins` contains exactly one tuner implementation (never both `tuxguitar-tuner.jar` and `tuxguitar-tuner-next.jar`; research R19: they share module id `tuxguitar-tuner`), and verify that the packaged tuner reports module id `tuxguitar-tuner` and registers action `tuner.tuner`. The other eight builds keep the legacy tuner
 - [ ] T069 [US4] Manually execute US4 scenarios, the FR-059 regression checks and the macOS SWT package-content check (quickstart Phase 4 rows); record in `specs/001-interactive-practice-mvp/checklists/acceptance.md`
 
 ---
@@ -226,7 +226,7 @@ track during the session changes nothing (spec US6).
 
 ### Phase dependencies
 
-- Setup (T001–T006) → Foundational (T007–T030) → user stories → Polish.
+- Setup (T001–T004, T006) → Foundational (T007–T030) → user stories → Polish. T005 (tuner swap) belongs to US4.
 - Within Foundational: T007–T014 in parallel; T015–T018 depend on T007–T014; T019–T023 depend on the classes they test; T024 ∥ engine work; T025 → T026; T027–T030 after T003.
 - T023 (approved) depends on T011 and T012; its bounds are test parameters, not product thresholds.
 
@@ -235,7 +235,7 @@ track during the session changes nothing (spec US6).
 - **US1** needs Foundational. It is the MVP core.
 - **US2** needs US1's `PracticeSession`/`PracticeWindow` (T041, T047).
 - **US3** needs Foundational; its UI panels plug into `PracticeWindow` (T046). US1 can be exercised with the default input before US3 lands.
-- **US4** needs Foundational (engine) and, for T068, US1's window/session.
+- **US4** needs Foundational (engine) and, for T068, US1's window/session. T005 (atomic tuner swap + exactly-one-tuner check) runs after T064–T068 and before T069.
 - **US5** needs US1's sequence and session (T038, T041).
 - **US6** needs US1's builder (T038).
 

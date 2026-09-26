@@ -55,7 +55,17 @@
 		<module>../../TuxGuitar-synth-export</module>
 		<module>../../TuxGuitar-debug-helper</module>
 		<module>../../TuxGuitar-tray-swt</module>
+		<module>../../TuxGuitar-audio-engine</module>
+		<module>../../TuxGuitar-practice</module>
 	</modules>
+
+	<repositories>
+		<!-- TarsosDSP (used by tuxguitar-audio-engine) is not on Maven Central -->
+		<repository>
+			<id>tarsos-dsp</id>
+			<url>https://mvn.0110.be/releases</url>
+		</repository>
+	</repositories>
 
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -122,6 +132,13 @@
 									<destFileName>tuxguitar-awt-graphics.jar</destFileName>
 									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/lib</outputDirectory>
 								</artifactItem>
+								<artifactItem>
+									<groupId>${project.groupId}</groupId>
+									<artifactId>tuxguitar-audio-engine</artifactId>
+									<version>${project.version}</version>
+									<destFileName>tuxguitar-audio-engine.jar</destFileName>
+									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/lib</outputDirectory>
+								</artifactItem>
 								<!-- /LIBRARIES -->
 
 								<!-- 3RD PARTY LIBRARIES -->
@@ -153,6 +170,13 @@
 									<groupId>commons-io</groupId>
 									<artifactId>commons-io</artifactId>
 									<destFileName>commons-io.jar</destFileName>
+									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/lib</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>be.tarsos.dsp</groupId>
+									<artifactId>core</artifactId>
+									<version>2.5</version>
+									<destFileName>tarsos-dsp-core.jar</destFileName>
 									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/lib</outputDirectory>
 								</artifactItem>
 								<!-- /3RD PARTY LIBRARIES -->
@@ -318,6 +342,13 @@
 									<groupId>${project.groupId}</groupId>
 									<artifactId>tuxguitar-tray-swt</artifactId>
 									<destFileName>tuxguitar-tray-swt.jar</destFileName>
+									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${project.groupId}</groupId>
+									<artifactId>tuxguitar-practice</artifactId>
+									<version>${project.version}</version>
+									<destFileName>tuxguitar-practice.jar</destFileName>
 									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
 								</artifactItem>
 								<!-- /PLUGINS -->
