@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import be.tarsos.dsp.pitch.FastYin;
-import be.tarsos.dsp.pitch.PitchDetectionResult;
+import app.tuxguitar.audio.engine.analysis.PitchEstimate;
+import app.tuxguitar.audio.engine.analysis.TarsosFastYinEstimator;
 
 /**
  * Checks that the TarsosDSP dependency resolves, compiles and runs in this module
@@ -22,9 +22,9 @@ public class TarsosDependencyTest {
 			window[i] = (float) (0.5 * Math.sin(2 * Math.PI * 440.0 * i / sampleRate));
 		}
 
-		PitchDetectionResult result = new FastYin(sampleRate, window.length).getPitch(window);
+		PitchEstimate result = new TarsosFastYinEstimator(sampleRate, window.length, 256).estimate(window);
 
 		assertTrue(result.isPitched());
-		assertEquals(440.0, result.getPitch(), 1.0);
+		assertEquals(440.0, result.getF0Hz(), 1.0);
 	}
 }
