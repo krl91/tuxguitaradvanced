@@ -38,6 +38,7 @@ public final class AnalysisService {
 	private final TGContext context;
 	private final SampleRingBuffer ringBuffer;
 	private final LevelAnalyzer levelAnalyzer;
+	private final ArticulationDetector articulationDetector;
 	private final int windowSize;
 	private final int hopSize;
 	private final List<Listener> listeners;
@@ -48,12 +49,19 @@ public final class AnalysisService {
 
 	public AnalysisService(TGContext context, SampleRingBuffer ringBuffer, LevelAnalyzer levelAnalyzer,
 			PitchEstimator pitchEstimator, int sampleRate, int windowSize, int hopSize) {
+		this(context, ringBuffer, levelAnalyzer, new ArticulationDetector(), pitchEstimator, sampleRate, windowSize, hopSize);
+	}
+
+	public AnalysisService(TGContext context, SampleRingBuffer ringBuffer, LevelAnalyzer levelAnalyzer,
+			ArticulationDetector articulationDetector, PitchEstimator pitchEstimator, int sampleRate,
+			int windowSize, int hopSize) {
 		if (sampleRate <= 0 || windowSize <= 0 || hopSize <= 0 || hopSize > windowSize || windowSize % hopSize != 0) {
 			throw new IllegalArgumentException("invalid analysis dimensions");
 		}
 		this.context = context;
 		this.ringBuffer = ringBuffer;
 		this.levelAnalyzer = levelAnalyzer;
+		this.articulationDetector = articulationDetector;
 		this.windowSize = windowSize;
 		this.hopSize = hopSize;
 		this.configuration = new Configuration(sampleRate, pitchEstimator, 0L);
@@ -107,6 +115,7 @@ public final class AnalysisService {
 				this.configuration = pending;
 				this.ringBuffer.skipTo(pending.discardUntil);
 				observedDroppedSamples = this.ringBuffer.getDroppedSampleCount();
+				this.articulationDetector.reset();
 				windowFill = 0;
 				hopFill = 0;
 			}
@@ -114,6 +123,7 @@ public final class AnalysisService {
 			if (droppedSamples != observedDroppedSamples) {
 				processedSamples += droppedSamples - observedDroppedSamples;
 				observedDroppedSamples = droppedSamples;
+				this.articulationDetector.reset();
 				windowFill = 0;
 				hopFill = 0;
 			}
@@ -147,10 +157,11 @@ public final class AnalysisService {
 	private AnalysisFrame analyze(float[] window, long timestampNanos) {
 		LevelMeasurement level = this.levelAnalyzer.analyze(window);
 		PitchEstimate pitch = this.configuration.pitchEstimator.estimate(window);
+		boolean onset = this.articulationDetector.process(window);
 		return new AnalysisFrame(timestampNanos, level.getRmsDbfs(), level.getPeakDbfs(),
 				level.getClippedRatio(), level.getLevelState(),
 				pitch.isPitched() ? pitch.getF0Hz() : Double.NaN,
-				pitch.getProbability(), false);
+				pitch.getProbability(), onset);
 	}
 
 	private void publish(AnalysisFrame frame) {
