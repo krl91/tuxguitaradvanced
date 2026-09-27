@@ -83,6 +83,26 @@ public class PracticeSessionTest {
 	}
 
 	@Test
+	public void snapshotsCarryFeedbackAndTheAcceptedNote() {
+		PracticeSession session = running(new int[] { 0, 1 });
+
+		this.now += HOP_NANOS;
+		PracticeSnapshot wrong = session.onFrame(analysis(F4, 0.95, false));
+		assertEquals(Feedback.Kind.INCORRECT, wrong.getFeedback().getKind());
+		assertEquals(65, wrong.getFeedback().getDetectedMidi());
+
+		PracticeSnapshot last = null;
+		long end = this.now + STABILITY_NANOS + HOP_NANOS;
+		while( session.getCurrentIndex() == 0 && this.now < end ) {
+			this.now += HOP_NANOS;
+			last = session.onFrame(analysis(E4, 0.95, false));
+		}
+		assertEquals(Feedback.Kind.CORRECT, last.getFeedback().getKind());
+		assertEquals(0, last.getLastAccepted().getSequenceIndex());
+		assertEquals(1, last.getCurrentIndex());
+	}
+
+	@Test
 	public void samePitchNeedsAnArticulationAfterThePreviousAcceptance() {
 		PracticeSession session = running(new int[] { 0, 0 });
 

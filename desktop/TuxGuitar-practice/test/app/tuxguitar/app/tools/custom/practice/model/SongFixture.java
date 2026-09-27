@@ -42,6 +42,10 @@ public final class SongFixture {
 		}
 	}
 
+	public TGFactory factory() {
+		return this.factory;
+	}
+
 	public TGTrack track() {
 		return this.song.getTrack(0);
 	}

@@ -27,25 +27,54 @@ public final class PracticeSequenceBuilder {
 	private PracticeSequenceBuilder() {
 	}
 
+	/** Builds the whole track's sequence, starting at its first event. */
 	public static PracticeSequence build(TGSong song, TGTrack track, TrackTuning tuning) {
-		return build(song, track, tuning, 0);
+		return build(song, track, tuning, null, 0);
 	}
 
-	public static PracticeSequence build(TGSong song, TGTrack track, TrackTuning tuning, int startIndex) {
+	/**
+	 * Builds the sequence and resolves the start from the score cursor (FR-004–FR-006): in the
+	 * first played occurrence of the cursor's measure (never rewinding a repeat), the first event
+	 * at or after the cursor position, else the first event after that occurrence; the track's
+	 * first event when the cursor is not on this track or no event follows it.
+	 *
+	 * @param caretMeasure the cursor's measure, or null
+	 * @param caretPosition the cursor's position in ticks ({@code Caret.getPosition()})
+	 */
+	public static PracticeSequence build(TGSong song, TGTrack track, TrackTuning tuning, TGMeasure caretMeasure, long caretPosition) {
 		List<PracticeEvent> events = new ArrayList<PracticeEvent>();
 		Builder builder = new Builder(tuning, events);
 		MidiRepeatController controller = new MidiRepeatController(song, -1, -1);
+		boolean caretOnTrack = (caretMeasure != null && caretMeasure.getTrack() == track);
+		int caretPlayIndex = -1;
 		int playIndex = 0;
 		while( !controller.finished() ) {
 			int measureIndex = controller.getIndex();
 			controller.process();
 			if( controller.shouldPlay() ) {
-				builder.addMeasure(track.getMeasure(measureIndex), measureIndex, playIndex);
+				TGMeasure measure = track.getMeasure(measureIndex);
+				if( caretOnTrack && caretPlayIndex < 0 && measure == caretMeasure ) {
+					caretPlayIndex = playIndex;
+				}
+				builder.addMeasure(measure, measureIndex, playIndex);
 				playIndex ++;
 			}
 		}
-		int resolvedStart = (startIndex >= 0 && startIndex < events.size() ? startIndex : 0);
-		return new PracticeSequence(events, resolvedStart, tuning);
+		int startIndex = 0;
+		if( caretPlayIndex >= 0 ) {
+			startIndex = -1;
+			for( PracticeEvent event : events ) {
+				if( event.getPlayIndex() > caretPlayIndex
+						|| (event.getPlayIndex() == caretPlayIndex && event.getBeat().getStart() >= caretPosition) ) {
+					startIndex = event.getSequenceIndex();
+					break;
+				}
+			}
+			if( startIndex < 0 ) {
+				startIndex = 0;
+			}
+		}
+		return new PracticeSequence(events, startIndex, tuning);
 	}
 
 	private static final class Sounding {

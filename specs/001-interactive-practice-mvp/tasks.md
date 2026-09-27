@@ -131,8 +131,8 @@ turn; silence, uncertain input, wrong notes and wrong octaves never advance (spe
 the note slightly sharp and slightly flat, and a very quiet sound; each gives the matching distinct feedback and
 only the slightly sharp/flat expected note is accepted (spec US2).
 
-- [ ] T050 [P] [US2] Add `desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/FeedbackTest.java`: `INCORRECT(detected, octaveOnly)` for wrong octave, detected cents relative to the detected note (never to a different expected semitone), `UNCERTAIN` on unreliable or suboptimal input
-- [ ] T051 [US2] Implement `desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/session/Feedback.java` (`WAITING`, `UNCERTAIN`, `INCORRECT(detected, octaveOnly)`, `CORRECT`) and use it in `PracticeSession.java` (FR-018, FR-019, FR-023, FR-026)
+- [x] T050 [P] [US2] Add `desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/FeedbackTest.java`: `INCORRECT(detected, octaveOnly)` for wrong octave, detected cents relative to the detected note (never to a different expected semitone), `UNCERTAIN` on unreliable or suboptimal input
+- [x] T051 [US2] Implement `desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/session/Feedback.java` (`WAITING`, `UNCERTAIN`, `INCORRECT(detected, octaveOnly)`, `CORRECT`) and use it in `PracticeSession.java` (FR-018, FR-019, FR-023, FR-026). A matching note not accepted yet stays WAITING (with a play-again hint when a new articulation is needed); CORRECT is reported on acceptance and the last accepted note stays visible, so the 30/s snapshot coalescing cannot hide it; the right note beyond the acceptance tolerance is INCORRECT as that same note
 - [ ] T052 [US2] Present feedback in `PracticeWindow.java`: detected note + octave + own-cents sharp/flat, expected note separately, octave hint, text/symbol cues not relying on colour (FR-017, FR-070); no wording implying string, fret or technique verification (FR-027)
 - [ ] T053 [P] [US2] Add learner-worded English messages for all feedback states and hints to `desktop/TuxGuitar-practice/share/lang/messages.properties` (FR-069, FR-071)
 - [ ] T054 [US2] Manually execute the US2 acceptance scenarios; record in `specs/001-interactive-practice-mvp/checklists/acceptance.md`
@@ -189,7 +189,7 @@ automatically; Skip for any event.
 briefly indicated and never shown as correct; the chord waits for Skip; skipped events are marked skipped
 (spec US5).
 
-- [ ] T070 [P] [US5] Add `desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/UnsupportedEventsTest.java`: `AUTO_PASS` advances with outcome `AUTO_PASSED`; `MULTI_NOTE` gives no judgement and advances only on Skip; Skip on any event → `SKIPPED`, never `CORRECT` (FR-011–FR-013, FR-025, FR-030, FR-031)
+- [x] T070 [P] [US5] Add `desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/UnsupportedEventsTest.java`: `AUTO_PASS` advances with outcome `AUTO_PASSED`; `MULTI_NOTE` gives no judgement and advances only on Skip; Skip on any event → `SKIPPED`, never `CORRECT` (FR-011–FR-013, FR-025, FR-030, FR-031)
 - [ ] T071 [US5] Implement auto-pass and Skip handling in `PracticeSession.java` and brief auto-pass indications plus the multi-note "not supported in this version" message with Skip, and skipped-event marking, in `PracticeWindow.java` (FR-016)
 - [ ] T072 [US5] Manually execute US5 scenarios; record in `specs/001-interactive-practice-mvp/checklists/acceptance.md`
 
@@ -203,7 +203,7 @@ briefly indicated and never shown as correct; the chord waits for Skip; skipped 
 step shows that position and practice follows playback order to the end; moving the cursor or selecting another
 track during the session changes nothing (spec US6).
 
-- [ ] T073 [P] [US6] Add start-resolution cases to `PracticeSequenceBuilderTest.java`: cursor on an event, between events, on another track, inside a repeated section (first played occurrence, no rewind) (FR-004–FR-006)
+- [x] T073 [P] [US6] Add start-resolution cases to `PracticeSequenceBuilderTest.java`: cursor on an event, between events, on another track, inside a repeated section (first played occurrence, no rewind) (FR-004–FR-006)
 - [ ] T074 [US6] Implement cursor-based start resolution in `PracticeSequenceBuilder.java` and show the resolved start in the preparation step of `PracticeWindow.java`
 - [ ] T075 [US6] Manually execute US6 scenarios; record in `specs/001-interactive-practice-mvp/checklists/acceptance.md`
 

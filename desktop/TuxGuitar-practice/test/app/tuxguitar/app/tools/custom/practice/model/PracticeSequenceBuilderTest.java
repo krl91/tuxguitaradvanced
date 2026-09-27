@@ -14,7 +14,9 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent.Kind;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent.Technique;
 import app.tuxguitar.song.models.TGDuration;
 import app.tuxguitar.song.models.TGNote;
+import app.tuxguitar.song.models.TGMeasure;
 import app.tuxguitar.song.models.TGSong;
+import app.tuxguitar.song.models.TGTrack;
 import app.tuxguitar.song.models.effects.TGEffectBend;
 import app.tuxguitar.song.models.effects.TGEffectGrace;
 
@@ -170,6 +172,66 @@ public class PracticeSequenceBuilderTest {
 		assertEquals(expectedPitches(original.getEvents()), expectedPitches(fromFile.getEvents()));
 		assertEquals(measureIndexes(original.getEvents()), measureIndexes(fromFile.getEvents()));
 		assertInvariants(fromFile.getEvents());
+	}
+
+	@Test
+	public void startsExactlyOnTheEventUnderTheCursor() {
+		SongFixture fixture = fourNotes();
+		assertEquals(2, startAt(fixture, fixture.track(), 0, 2));
+	}
+
+	@Test
+	public void startsAtTheFirstEventAfterACursorBetweenEvents() {
+		SongFixture fixture = new SongFixture(2);
+		fixture.quarter(0, 0, 1, 0);
+		fixture.quarter(0, 2, 1, 1);
+		fixture.quarter(1, 0, 1, 2);
+		assertEquals(1, startAt(fixture, fixture.track(), 0, 1));
+		assertEquals(2, startAt(fixture, fixture.track(), 0, 3));
+	}
+
+	@Test
+	public void cursorOnAnotherTrackOrAfterTheLastNoteStartsAtTheBeginning() {
+		SongFixture fixture = fourNotes();
+		TGTrack other = fixture.addTrack();
+		assertEquals(0, startAt(fixture, other, 0, 2));
+		assertEquals(0, PracticeSequenceBuilder.build(fixture.song, fixture.track(), fixture.tuning(), null, 0).getStartIndex());
+
+		SongFixture trailing = new SongFixture(2);
+		trailing.quarter(0, 0, 1, 0);
+		assertEquals(0, startAt(trailing, trailing.track(), 1, 2));
+	}
+
+	@Test
+	public void startingInsideARepeatUsesItsFirstOccurrenceWithoutRewinding() {
+		SongFixture fixture = new SongFixture(3);
+		fixture.header(0).setRepeatOpen(true);
+		fixture.header(1).setRepeatClose(1);
+		fixture.quarter(0, 0, 1, 0);
+		fixture.quarter(1, 0, 1, 1);
+		fixture.quarter(1, 2, 1, 2);
+		fixture.quarter(2, 0, 1, 3);
+
+		PracticeSequence sequence = PracticeSequenceBuilder.build(fixture.song, fixture.track(), fixture.tuning(),
+				fixture.track().getMeasure(1), fixture.track().getMeasure(1).getStart() + 2 * SongFixture.QUARTER);
+
+		assertEquals(2, sequence.getStartIndex());
+		List<PracticeEvent> rest = sequence.getEvents().subList(sequence.getStartIndex(), sequence.getEvents().size());
+		assertEquals(List.of(66, 64, 65, 66, 67), expectedPitches(rest));
+	}
+
+	private static SongFixture fourNotes() {
+		SongFixture fixture = new SongFixture(1);
+		for( int q = 0 ; q < 4 ; q ++ ) {
+			fixture.quarter(0, q, 1, q);
+		}
+		return fixture;
+	}
+
+	private static int startAt(SongFixture fixture, TGTrack caretTrack, int measureIndex, int quarter) {
+		TGMeasure measure = caretTrack.getMeasure(measureIndex);
+		return PracticeSequenceBuilder.build(fixture.song, fixture.track(), fixture.tuning(), measure,
+				measure.getStart() + quarter * SongFixture.QUARTER).getStartIndex();
 	}
 
 	private static SongFixture richFixture() {

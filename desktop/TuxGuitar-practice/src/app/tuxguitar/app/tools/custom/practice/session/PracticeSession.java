@@ -64,6 +64,10 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private long matchStartNanos = -1;
 	private long lastAcceptanceNanos = Long.MIN_VALUE;
 	private boolean articulationArmed;
+	private Feedback feedback;
+	private PracticeEvent lastAccepted;
+	private PracticeEvent lastPassed;
+	private Outcome lastPassedOutcome;
 
 	/**
 	 * @param stabilityNanos how long matching readings must continue before acceptance
@@ -110,8 +114,17 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 				this.state = State.STOPPED;
 				break;
 			case SKIP:
+				if( this.state == State.RUNNING && currentEvent() != null ) {
+					PracticeEvent skipped = currentEvent();
+					this.outcomes.put(skipped.getSequenceIndex(), Outcome.SKIPPED);
+					this.lastPassed = skipped;
+					this.lastPassedOutcome = Outcome.SKIPPED;
+					this.feedback = null;
+					resetMatch();
+					advance();
+				}
+				break;
 			default:
-				// Skip and unsupported events belong to User Story 5.
 				return null;
 		}
 		return snapshot();
@@ -127,7 +140,10 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			this.articulationArmed = true;
 		}
 		PracticeEvent event = currentEvent();
+		this.feedback = null;
 		if( event != null && event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ) {
+			this.feedback = Feedback.evaluate(frame, this.reading, event.getExpectedMidi(), this.tolerance,
+					event.isSameAsPrevious() && !this.articulationArmed);
 			if( this.tolerance.matches(this.reading, event.getExpectedMidi()) ) {
 				if( this.matchStartNanos < 0 ) {
 					this.matchStartNanos = frame.getTimestampNanos();
@@ -185,15 +201,39 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.state = State.RUNNING;
 		this.lastAcceptanceNanos = Long.MIN_VALUE;
 		this.articulationArmed = false;
+		this.feedback = null;
+		this.lastAccepted = null;
+		this.lastPassed = null;
+		this.lastPassedOutcome = null;
 		resetMatch();
+		passAutomatically();
 	}
 
 	private void accept(PracticeEvent event, long timestampNanos) {
 		this.outcomes.put(event.getSequenceIndex(), Outcome.ACCEPTED);
+		this.lastAccepted = event;
+		this.feedback = Feedback.CORRECT;
 		this.lastAcceptanceNanos = timestampNanos;
 		this.articulationArmed = false;
 		resetMatch();
+		advance();
+	}
+
+	/** Moves to the next event, passing unsupported ones automatically (FR-011, FR-013). */
+	private void advance() {
 		this.currentIndex ++;
+		passAutomatically();
+	}
+
+	private void passAutomatically() {
+		while( this.currentIndex < this.sequence.getEvents().size()
+				&& this.sequence.getEvents().get(this.currentIndex).getKind() == PracticeEvent.Kind.AUTO_PASS ) {
+			PracticeEvent passed = this.sequence.getEvents().get(this.currentIndex);
+			this.outcomes.put(passed.getSequenceIndex(), Outcome.AUTO_PASSED);
+			this.lastPassed = passed;
+			this.lastPassedOutcome = Outcome.AUTO_PASSED;
+			this.currentIndex ++;
+		}
 		if( this.currentIndex >= this.sequence.getEvents().size() ) {
 			this.state = State.COMPLETE;
 		}
@@ -212,6 +252,6 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 
 	private PracticeSnapshot snapshot() {
 		return new PracticeSnapshot(this.state, this.currentIndex, this.sequence.getEvents().size(), currentEvent(),
-				this.reading, this.pauseReasons);
+				this.reading, this.pauseReasons, this.feedback, this.lastAccepted, this.lastPassed, this.lastPassedOutcome);
 	}
 }
