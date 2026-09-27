@@ -22,3 +22,25 @@ the supervising agent with computer use (no guitar input).
 | Same-pitch notes: sustain does not validate, re-pluck does | Deferred | Needs guitar and microphone |
 | Practice highlight separate from the cursor; cursor still movable | Deferred | Needs a running session with playing |
 | MIDI playback pauses practice; Resume after stopping playback | Deferred | |
+
+## US4 — Tune the guitar and check detection (T069)
+
+Run 2026-09-27 on the macOS SWT build with the evolved tuner packaged (after the T005 swap and the
+three tuner fixes, uncommitted at the time), French UI, checked by the supervising agent with
+computer use. A first run found three defects (reopening raised "Index 6 out of bounds for
+length 6" then repeated "Widget is disposed"; the first open showed "Input: none"; tuner labels
+were English in the French UI); they were fixed with regression tests and this run repeats the
+checks.
+
+| Check | Result | Observation |
+|---|---|---|
+| Tools menu shows one tuner entry, translated ("Accordeur"); tuner labels in French | Pass | |
+| First open selects the default input | Pass | "Entrée : Default Audio Device" |
+| Choosing Dropped D changes string 6 to D2 | Pass | |
+| Close and reopen the tuner: no error | Pass | |
+| Explicit choice persists after reopening (FR-055) | Pass | Dropped D still selected |
+| Needle dial, rough scale and level status rendered | Pass | |
+| Settings dialog limited to input, level status and level re-check (FR-059) | Deferred | Not reported |
+| Custom tuning | Deferred | Not reported |
+| "Tune guitar" from practice, tuning-mismatch note, practice paused while the tuner is open | Deferred | Not reported |
+| Needle moves left when flat, up when in tune, right when sharp, with note, text state and Hz | Deferred | Needs guitar or sound |
