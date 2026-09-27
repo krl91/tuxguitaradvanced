@@ -47,7 +47,7 @@
 		<module>../../TuxGuitar-pdf-ui</module>
 		<module>../../../common/TuxGuitar-ptb</module>
 		<module>../../TuxGuitar-tef</module>
-		<module>../../TuxGuitar-tuner</module>
+		<module>../../TuxGuitar-tuner-next</module>
 		<module>../../TuxGuitar-svg</module>
 		<module>../../TuxGuitar-image-swt</module>
 		<module>../../TuxGuitar-cocoa-integration-swt</module>
@@ -293,8 +293,9 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>${project.groupId}</groupId>
-									<artifactId>tuxguitar-tuner</artifactId>
-									<destFileName>tuxguitar-tuner.jar</destFileName>
+									<artifactId>tuxguitar-tuner-next</artifactId>
+									<version>${project.version}</version>
+									<destFileName>tuxguitar-tuner-next.jar</destFileName>
 									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -430,6 +431,24 @@
 									<arg value="Add :NSMicrophoneUsageDescription string ${macos.microphoneUsageDescription}" />
 									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
 								</exec>
+								<!-- exactly one tuner: legacy and evolved tuners share module id tuxguitar-tuner (research R19) -->
+								<resourcecount property="tuner.jar.count">
+									<fileset dir="${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins" includes="tuxguitar-tuner*.jar" />
+								</resourcecount>
+								<fail message="Expected exactly one tuner plugin jar, found ${tuner.jar.count}">
+									<condition>
+										<not><equals arg1="${tuner.jar.count}" arg2="1" /></not>
+									</condition>
+								</fail>
+								<fail message="The packaged tuner must provide module id tuxguitar-tuner (META-INF/tuxguitar-tuner.info)">
+									<condition>
+										<not>
+											<resourceexists>
+												<zipentry zipfile="${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins/tuxguitar-tuner-next.jar" name="META-INF/tuxguitar-tuner.info" />
+											</resourceexists>
+										</not>
+									</condition>
+								</fail>
 								<chmod perm="755">
 									<fileset dir="${project.build.directory}/${project.finalName}/Contents/MacOS">
 										<include name="tuxguitar-launcher" />
