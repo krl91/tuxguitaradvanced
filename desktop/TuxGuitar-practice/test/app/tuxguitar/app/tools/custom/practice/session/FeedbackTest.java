@@ -67,6 +67,13 @@ public class FeedbackTest {
 				unusable, E4, this.tolerance, false).getKind());
 	}
 
+	/** T077 regression: silence gave confident F#1–A1 readings at a very low level. */
+	@Test
+	public void aWrongNoteAtATooLowLevelIsUncertainNotIncorrect() {
+		assertEquals(Feedback.Kind.UNCERTAIN, evaluate(hz(30, 0), 0.95, LevelState.TOO_LOW, false).getKind());
+		assertEquals(Feedback.Kind.WAITING, evaluate(hz(E4, 3), 0.95, LevelState.TOO_LOW, false).getKind());
+	}
+
 	@Test
 	public void silenceWaitsAndAHeldRepeatedNoteAsksForANewPluck() {
 		assertEquals(Feedback.Kind.WAITING, evaluate(Double.NaN, 0.0, LevelState.TOO_LOW, false).getKind());

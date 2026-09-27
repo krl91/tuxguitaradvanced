@@ -11,7 +11,8 @@ import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
  * <li>WAITING: no usable playing, or the expected note is heard but not accepted yet (stability,
  * or a new articulation still needed — {@link #needsArticulation()}).</li>
  * <li>UNCERTAIN: a signal is present but the pitch is not reliable (weak, clipping, unreliable
- * input); never shown as incorrect (FR-026).</li>
+ * input), or a non-matching reading comes from a too-low level; never shown as incorrect
+ * (FR-026).</li>
  * <li>INCORRECT: a reliable pitch that does not match: another note, the right note in another
  * octave ({@link #isOctaveOnly()}, FR-019), or the right note too far out of tune.</li>
  * <li>CORRECT: the expected note was accepted (FR-024).</li>
@@ -57,8 +58,14 @@ public final class Feedback {
 		if( !reading.isReliable() || frame.getLevelState() == AnalysisFrame.LevelState.CLIPPING ) {
 			return UNCERTAIN;
 		}
+		boolean weak = (frame.getLevelState() == AnalysisFrame.LevelState.TOO_LOW);
 		if( tolerance.matches(reading, expectedMidi) ) {
 			return (articulationMissing ? WAITING_FOR_ARTICULATION : WAITING);
+		}
+		if( weak ) {
+			// FR-026: a signal too weak for a reliable judgement is uncertain, never incorrect (T077:
+			// silence yields occasional confident sub-guitar readings, F#1–A1, at a very low level)
+			return UNCERTAIN;
 		}
 		int detected = reading.getMidi();
 		boolean octaveOnly = (detected != expectedMidi && (detected - expectedMidi) % 12 == 0);
