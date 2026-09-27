@@ -1030,3 +1030,63 @@ over the shared `desktop/TuxGuitar/dist/tuxguitar-shortcuts.xml` when packaging;
 `Command` where the shared file uses `Ctrl`. The practice defaults are therefore added to both files
 (`F2`; `Ctrl Shift` / `Command Shift` + `s` `k` `r` `x`). Like the shared entries, the macOS entries are
 inert where the practice actions are not registered (macOS JFX); T081 covers that check.
+
+### T076 — provisional parameters from the committed real-guitar clips (2026-09-27)
+
+Run: `mvn test -pl ../../TuxGuitar-audio-engine -am -Dgroups=benchmark -DexcludedGroups=
+-Dsurefire.failIfNoSpecifiedTests=false` (macOS SWT build directory). Reports in
+`specs/001-interactive-practice-mvp/benchmark/`: `builtin-mic.csv` (per clip), `builtin-mic-sweep.csv`
+(pitch parameters), `builtin-mic-articulation.csv` and `builtin-mic-articulation-sweep.csv`
+(articulation), `builtin-mic-level-check.csv` (level check), `builtin-mic-cents.csv` (intonation).
+Evidence covers one guitar, the built-in microphone and a quiet room only (15 reference clips);
+interface input is still to be measured (T078).
+
+- **Confidence gate × stability window × level floor** (27 combinations): the gate (0.70 / 0.80 /
+  0.90) does not change correctness, only latency; a level floor (none / −40 / −35 dBFS) has no
+  effect. Stability 10 hops (≈ 53 ms) makes one first stable note an octave off; 20 hops (≈ 107 ms)
+  and 30 hops give 15/15 correct first stable notes. At gate 0.80 / 20 hops: median latency 171 ms,
+  max 288 ms (F#4); 30 hops adds ≈ 55 ms. The silence clip never produces a stable note.
+  **Kept: confidence 0.80, stability 20 hops.**
+- **Intonation**: fretted notes read sharp (median +10.6…+24.8 cents, p90 up to +30.5 cents on A5);
+  open strings within ±12 cents. With ±30 cents part of the A5 frames would break the stability run.
+  **Practice acceptance widened from ±30 to ±35 cents** (still ≥ the tuner's ±5 cents in-tune range
+  and well below the ±50 cents neighbouring-semitone boundary, FR-020). **Tuner in-tune: ±5 cents
+  kept.**
+- **Articulation** (17 clips with a known onset count, 18 expected onsets): flux factor 1.5 / 2 / 3
+  makes no difference; the level gate does: +1.5 dB (S4 value) reports 2 false articulations (A5
+  decay), +3 dB one, +4.5 dB and +6 dB none; every setting reports one onset fewer than expected, on
+  the D4 repeat clip (see T077: that recording contains a single audible pluck). **Gate raised from
+  +1.5 to +4.5 dB**; the synthetic S4 tests still pass.
+- **Level check**: every guitar clip concludes SUITABLE; the silence clip does not conclude within
+  its 3 s (the check waits for playing, 10 s timeout). **Level thresholds kept** (−40 / −6 dBFS,
+  0.99, 10 %).
+
+All values stay provisional and configurable until acceptance.
+
+### T077 — octave errors, other strings, low readings in silence (2026-09-27)
+
+- **Octave errors (G3 on string 4, F#4)**: with the 20-hop stability window no first stable note is
+  an octave off on any reference clip; F#4 still has a 17-frame octave-off run, below the 20-frame
+  window, so it never becomes stable (a 10-hop window would, see T076). Covered by
+  `RealGuitarRegressionTest` (octave-off runs must stay shorter than the stability window). No
+  detector change.
+- **Pluck-transient subharmonics**: the ≈ 16 ms of subharmonic readings at the attack (S3) are
+  absorbed by the same stability window. No change.
+- **Other strings ringing (clips 07 E4, 15 E5)**: the dominant readings are A2 and F#2, i.e. another
+  string louder than the played one in the recording. The detector reports the strongest
+  periodicity correctly; wait-for-correct-note then simply does not accept, a safe false negative.
+  Recording-quality cases, kept as `known-issue` fixtures; no change.
+- **Clip 22 (D4 "repeat")**: the level envelope shows a single attack at 0.65 s followed by a
+  smooth decay to the end of the 4 s clip, with no level rise anywhere. The recording therefore
+  contains one audible pluck, not the two planned by the recording matrix, so it gives no evidence
+  about real same-pitch re-plucks. Its manifest `expected_onsets` (2, from the recording plan) is
+  left unchanged pending the product owner's decision; there is still no real-guitar evidence for
+  FR-022 re-articulation (synthetic S4 tests only).
+- **Low readings in silence**: at confidence 0.80 the silence clip gives 16 confident frames out of
+  555, all F#1–A1 (MIDI 30–33), below the lowest open string of TuxGuitar's built-in 6-string
+  tunings (A#1). They never form a stable note, but practice showed them as "incorrect". Fixed per
+  FR-026: a non-matching reading at a too-low level is now *uncertain* (FeedbackTest). The tuner
+  already shows "input level too low" for such frames (FR-056). Limiting pitch detection below A#1
+  would remove these readings entirely but would also make notes below A#1 undetectable in the
+  "unusual setup" tunings that FR-008 allows; left as a product decision.
+
