@@ -95,8 +95,12 @@ public final class InputSelectorPanel {
 		if( available.isEmpty() ) {
 			this.hint.setText(TuxGuitar.getProperty("practice.input.none"));
 		} else if( current == null ) {
-			this.inputs.setSelectedValue(available.get(0));
-			select(available.get(0));
+			AudioInputDescriptor selected = this.engine.selectDefaultInputIfNone();
+			for( AudioInputDescriptor input : available ) {
+				if( selected != null && input.getId().equals(selected.getId()) ) {
+					this.inputs.setSelectedValue(input);
+				}
+			}
 		} else {
 			updateHint(snapshot);
 		}

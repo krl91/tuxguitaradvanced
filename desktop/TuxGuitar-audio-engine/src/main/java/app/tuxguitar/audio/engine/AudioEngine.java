@@ -1,5 +1,6 @@
 package app.tuxguitar.audio.engine;
 
+import java.util.List;
 import java.util.function.IntFunction;
 
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
@@ -7,6 +8,7 @@ import app.tuxguitar.audio.engine.analysis.InputAssessor;
 import app.tuxguitar.audio.engine.analysis.LevelAnalyzer;
 import app.tuxguitar.audio.engine.analysis.PitchEstimator;
 import app.tuxguitar.audio.engine.analysis.TarsosFastYinEstimator;
+import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CaptureService;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
@@ -120,6 +122,27 @@ public final class AudioEngine {
 
 	public void removeCaptureListener(CaptureService.Listener listener) {
 		this.captureService.removeListener(listener);
+	}
+
+	/**
+	 * When no input is selected yet, selects the first listed input (the system default comes
+	 * first). Used by the tuner and practice when they open; never switches an existing choice.
+	 *
+	 * @return the selected input, or null when none is available
+	 */
+	public AudioInputDescriptor selectDefaultInputIfNone() {
+		return selectDefaultInputIfNone(this.catalog.listInputs());
+	}
+
+	AudioInputDescriptor selectDefaultInputIfNone(List<AudioInputDescriptor> available) {
+		synchronized (this) {
+			AudioInputDescriptor current = this.selection.snapshot().getInput();
+			if( current != null || available.isEmpty() ) {
+				return current;
+			}
+			this.selection.select(available.get(0), null);
+			return available.get(0);
+		}
 	}
 
 	public CurrentInputSelection getSelection() {

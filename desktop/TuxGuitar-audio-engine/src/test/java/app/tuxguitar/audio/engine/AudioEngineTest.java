@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.analysis.LevelAnalyzer;
 import app.tuxguitar.audio.engine.analysis.PitchEstimate;
+import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.input.InputDeviceCatalog;
@@ -114,6 +115,30 @@ public class AudioEngineTest {
 				Thread.sleep(21L);
 			}
 			assertTrue(assessed.await(2, TimeUnit.SECONDS));
+		}
+		finally {
+			TGThreadManager.getInstance(context).dispose();
+		}
+	}
+
+	/** Regression: the tuner opened with "Input: none" although inputs were available. */
+	@Test
+	public void selectsTheFirstListedInputOnlyWhenNoneIsSelected() {
+		TGContext context = newContext();
+		try {
+			AudioEngine engine = newEngine(context, AudioEngine.DEFAULT_RING_BUFFER_CAPACITY);
+			AudioInputDescriptor builtIn = new AudioInputDescriptor("mic", "Built-in", null, 1, "Built-in",
+					AudioInputDescriptor.Kind.BUILT_IN_MICROPHONE, true);
+			AudioInputDescriptor other = new AudioInputDescriptor("usb", "USB", null, 1, "USB",
+					AudioInputDescriptor.Kind.UNKNOWN, false);
+
+			assertEquals(null, engine.selectDefaultInputIfNone(java.util.Collections.<AudioInputDescriptor>emptyList()));
+			assertSame(builtIn, engine.selectDefaultInputIfNone(java.util.Arrays.asList(builtIn, other)));
+			assertSame(builtIn, engine.getSelection().snapshot().getInput());
+
+			engine.getSelection().select(other, null);
+			assertSame(other, engine.selectDefaultInputIfNone(java.util.Arrays.asList(builtIn, other)));
+			assertSame(other, engine.getSelection().snapshot().getInput());
 		}
 		finally {
 			TGThreadManager.getInstance(context).dispose();
