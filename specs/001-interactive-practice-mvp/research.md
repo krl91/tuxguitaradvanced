@@ -1079,9 +1079,11 @@ All values stay provisional and configurable until acceptance.
 - **Clip 22 (D4 "repeat")**: the level envelope shows a single attack at 0.65 s followed by a
   smooth decay to the end of the 4 s clip, with no level rise anywhere. The recording therefore
   contains one audible pluck, not the two planned by the recording matrix, so it gives no evidence
-  about real same-pitch re-plucks. Its manifest `expected_onsets` (2, from the recording plan) is
-  left unchanged pending the product owner's decision; there is still no real-guitar evidence for
-  FR-022 re-articulation (synthetic S4 tests only).
+  about real same-pitch re-plucks. Accepted correction (2026-09-27): its manifest `expected_onsets`
+  is now 1, with a note; the WAV is unchanged. With it, the +4.5 dB gate reports every expected
+  onset and no extra one on the 17 clips (`builtin-mic-articulation-sweep.csv` regenerated). There
+  is still no real-guitar evidence for FR-022 re-articulation (synthetic S4 tests only); a real
+  same-pitch re-pluck clip should be recorded later.
 - **Low readings in silence**: at confidence 0.80 the silence clip gives 16 confident frames out of
   555, all F#1–A1 (MIDI 30–33), below the lowest open string of TuxGuitar's built-in 6-string
   tunings (A#1). They never form a stable note, but practice showed them as "incorrect". Fixed per
