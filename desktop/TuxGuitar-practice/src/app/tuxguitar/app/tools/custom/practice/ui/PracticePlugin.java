@@ -39,7 +39,7 @@ public class PracticePlugin extends TGToolItemPlugin {
 
 	protected void doAction(TGContext context) {
 		if( this.window == null ) {
-			this.window = new PracticeWindow(context);
+			this.window = new PracticeWindow(context, this);
 		}
 		this.window.open();
 	}
