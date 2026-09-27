@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 
-import app.tuxguitar.app.tools.custom.practice.model.GuitarConfirmationMemory;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.SongFixture;
@@ -17,6 +16,7 @@ import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
 import app.tuxguitar.util.TGContext;
+import app.tuxguitar.audio.engine.session.PracticeTunerContext;
 
 /** Scripted analysis frames against the session rules (FR-007, FR-022, FR-032/033, FR-044). */
 public class PracticeSessionTest {
@@ -185,7 +185,7 @@ public class PracticeSessionTest {
 	private static PracticeTrackSelection selection(SongFixture fixture) {
 		return new PracticeTrackSelection(fixture.song,
 				PracticeTrackCandidates.evaluate(fixture.song, fixture.track()).getPreselected(),
-				GuitarConfirmationMemory.getInstance(new TGContext()));
+				PracticeTunerContext.getInstance(new TGContext()));
 	}
 
 	private static PracticeSession session(SongFixture fixture, PracticeTrackSelection selection) {

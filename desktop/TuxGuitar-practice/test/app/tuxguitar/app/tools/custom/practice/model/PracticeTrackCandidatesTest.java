@@ -14,6 +14,8 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates.Exc
 import app.tuxguitar.song.models.TGChannel;
 import app.tuxguitar.song.models.TGDuration;
 import app.tuxguitar.song.models.TGTrack;
+import app.tuxguitar.audio.engine.session.PracticeTunerContext;
+import app.tuxguitar.util.TGContext;
 
 public class PracticeTrackCandidatesTest {
 
@@ -74,7 +76,7 @@ public class PracticeTrackCandidatesTest {
 		fixture.quarter(0, 0, 1, 0);
 		TGTrack other = fixture.addTrack();
 		fixture.note(other, 0, 0, 0, 1, 0, TGDuration.QUARTER);
-		GuitarConfirmationMemory memory = new GuitarConfirmationMemory();
+		PracticeTunerContext memory = PracticeTunerContext.getInstance(new TGContext());
 		List<PracticeTrackCandidate> candidates = PracticeTrackCandidates.evaluate(fixture.song, fixture.track()).getCandidates();
 
 		PracticeTrackSelection preselected = new PracticeTrackSelection(fixture.song, candidates.get(0), memory);

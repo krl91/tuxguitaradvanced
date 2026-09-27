@@ -1,10 +1,10 @@
 package app.tuxguitar.app.tools.custom.practice.ui;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
-import app.tuxguitar.app.tools.custom.practice.model.GuitarConfirmationMemory;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequenceBuilder;
@@ -32,6 +32,8 @@ import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
+import app.tuxguitar.audio.engine.session.PracticeTunerContext;
+import app.tuxguitar.editor.action.TGActionProcessor;
 import app.tuxguitar.song.helpers.tuning.TuningManager;
 import app.tuxguitar.song.models.TGSong;
 import app.tuxguitar.song.models.TGTrack;
@@ -69,7 +71,7 @@ public class PracticeWindow {
 
 	private final TGContext context;
 	private final PracticePlugin plugin;
-	private final GuitarConfirmationMemory memory;
+	private final PracticeTunerContext shared;
 	private final PracticeHighlight highlight;
 	private final TolerancePolicy displayTolerance = new TolerancePolicy(TUNER_IN_TUNE_CENTS, PRACTICE_ACCEPT_CENTS);
 	private AudioEngine engine;
@@ -86,6 +88,8 @@ public class PracticeWindow {
 	private UILabel tuningLabel;
 	private UILabel unusualLabel;
 	private UILabel startLabel;
+	private UILabel mismatchLabel;
+	private PracticeTunerContext.Listener sharedListener;
 	private PracticeSequence preparedSequence;
 	private UIButton startButton;
 	private UILabel expectedLabel;
@@ -111,7 +115,7 @@ public class PracticeWindow {
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
 		this.context = context;
 		this.plugin = plugin;
-		this.memory = GuitarConfirmationMemory.getInstance(context);
+		this.shared = PracticeTunerContext.getInstance(context);
 		this.highlight = new PracticeHighlight(context);
 	}
 
@@ -152,6 +156,8 @@ public class PracticeWindow {
 				PracticeWindow.this.levelPanel.disconnect();
 				PracticeWindow.this.engine.getSelection().removeListener(PracticeWindow.this.selectionListener);
 				PracticeWindow.this.engine.release(CONSUMER_ID);
+				PracticeWindow.this.shared.removeListener(PracticeWindow.this.sharedListener);
+				PracticeWindow.this.shared.setPracticeTrack(null);
 				PracticeWindow.this.window = null;
 			}
 		});
@@ -159,6 +165,8 @@ public class PracticeWindow {
 		this.selectionListener = snapshot -> TGSynchronizer.getInstance(this.context).executeLater(() -> inputChanged(snapshot));
 		this.engine.getSelection().addListener(this.selectionListener);
 		this.levelPanel.connect();
+		this.sharedListener = changed -> TGSynchronizer.getInstance(this.context).executeLater(() -> updateMismatch());
+		this.shared.addListener(this.sharedListener);
 		this.engine.acquire(CONSUMER_ID);
 		this.assessment = this.engine.getSelection().snapshot().getAssessment();
 
@@ -197,6 +205,7 @@ public class PracticeWindow {
 		this.tuningLabel = label(uiFactory, panel, layout, 3);
 		this.unusualLabel = label(uiFactory, panel, layout, 4);
 		this.startLabel = label(uiFactory, panel, layout, 7);
+		this.mismatchLabel = label(uiFactory, panel, layout, 9);
 
 		this.inputSelector = new InputSelectorPanel(this.context, this.engine, uiFactory, panel);
 		layout.set(this.inputSelector.getControl(), 5, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
@@ -207,8 +216,9 @@ public class PracticeWindow {
 		UITableLayout startLayout = new UITableLayout(0f);
 		UIPanel startPanel = uiFactory.createPanel(panel, false);
 		startPanel.setLayout(startLayout);
-		layout.set(startPanel, 9, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
-		this.startButton = button(uiFactory, startPanel, startLayout, 1, "practice.start", () -> startSession());
+		layout.set(startPanel, 10, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		button(uiFactory, startPanel, startLayout, 1, "practice.tune-guitar", () -> openTuner());
+		this.startButton = button(uiFactory, startPanel, startLayout, 2, "practice.start", () -> startSession());
 		listenKeys(panel, this.tracks, startPanel, this.startButton);
 		return panel;
 	}
@@ -239,6 +249,7 @@ public class PracticeWindow {
 
 	private void updateTuning() {
 		PracticeTrackCandidate candidate = this.tracks.getSelectedValue();
+		this.shared.setPracticeTrack(candidate != null ? candidate.getTrack() : null);
 		if( candidate == null ) {
 			this.tuningLabel.setText("");
 			this.unusualLabel.setText("");
@@ -265,6 +276,7 @@ public class PracticeWindow {
 		}
 		this.tuningLabel.setText(text);
 		this.unusualLabel.setText(tuning.isUnusualSetup() ? TuxGuitar.getProperty("practice.tuning.unusual") : "");
+		updateMismatch();
 		updateStartButton();
 		this.window.layout();
 	}
@@ -311,6 +323,7 @@ public class PracticeWindow {
 		UIPanel buttons = uiFactory.createPanel(panel, false);
 		buttons.setLayout(buttonsLayout);
 		layout.set(buttons, 8, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		button(uiFactory, buttons, buttonsLayout, 5, "practice.tune-guitar", () -> openTuner());
 		this.skipButton = button(uiFactory, buttons, buttonsLayout, 1, "practice.skip", () -> post(PracticeCommand.SKIP));
 		this.resumeButton = button(uiFactory, buttons, buttonsLayout, 2, "practice.resume", () -> post(PracticeCommand.RESUME));
 		this.restartButton = button(uiFactory, buttons, buttonsLayout, 3, "practice.restart", () -> post(PracticeCommand.RESTART));
@@ -324,7 +337,7 @@ public class PracticeWindow {
 		if( candidate == null ) {
 			return;
 		}
-		PracticeTrackSelection selection = new PracticeTrackSelection(this.song, candidate, this.memory);
+		PracticeTrackSelection selection = new PracticeTrackSelection(this.song, candidate, this.shared);
 		selection.accept();
 		PracticeSequence sequence = this.preparedSequence;
 		long hopNanos = TarsosFastYinEstimator.DEFAULT_HOP_SIZE * 1_000_000_000L / 48000L;
@@ -333,7 +346,7 @@ public class PracticeWindow {
 				STABILITY_HOPS * hopNanos, ArticulationDetector.DECISION_DELAY_HOPS * hopNanos);
 		this.session.setAssessment(this.assessment);
 		this.loop = new SessionLoop<PracticeSnapshot>(this.context, this.session, this::render);
-		this.events = new SessionEvents(this.context, this.loop, this.session, this.engine.getSelection());
+		this.events = new SessionEvents(this.context, this.loop, this.session, this.engine.getSelection(), this.shared);
 		final SessionLoop<PracticeSnapshot> sessionLoop = this.loop;
 		this.frameListener = frame -> sessionLoop.postFrame(frame);
 
@@ -475,6 +488,23 @@ public class PracticeWindow {
 			this.events = null;
 			this.frameListener = null;
 		}
+	}
+
+	/** Opens the tuner through its action id: no dependency on the tuner plugin (FR-047, FR-058). */
+	private void openTuner() {
+		new TGActionProcessor(this.context, "tuner.tuner").process();
+	}
+
+	/** Non-blocking warning when the tuner guides another tuning than the Practice Track (FR-062). */
+	private void updateMismatch() {
+		if( !isOpen() ) {
+			return;
+		}
+		PracticeTrackCandidate candidate = this.tracks.getSelectedValue();
+		int[] chosen = this.shared.getTunerChosenTargets();
+		boolean differs = (candidate != null && chosen != null && !Arrays.equals(chosen, tuning(candidate.getTrack()).getPhysicalTargetMidi()));
+		this.mismatchLabel.setText(differs ? TuxGuitar.getProperty("practice.tuner-mismatch", new String[] { noteNames(chosen) }) : "");
+		this.window.layout();
 	}
 
 	// ---------------------------------------------------------------- helpers

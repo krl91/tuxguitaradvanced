@@ -11,7 +11,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import app.tuxguitar.app.tools.custom.practice.model.GuitarConfirmationMemory;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.SongFixture;
@@ -26,6 +25,7 @@ import app.tuxguitar.player.base.MidiPlayerEvent;
 import app.tuxguitar.thread.TGMultiThreadHandler;
 import app.tuxguitar.thread.TGThreadManager;
 import app.tuxguitar.util.TGContext;
+import app.tuxguitar.audio.engine.session.PracticeTunerContext;
 
 public class SessionEventsTest {
 
@@ -34,6 +34,7 @@ public class SessionEventsTest {
 	private SessionLoop<PracticeSnapshot> loop;
 	private SessionEvents events;
 	private CurrentInputSelection selection;
+	private PracticeTunerContext shared;
 
 	@BeforeEach
 	public void setUp() throws InterruptedException {
@@ -43,7 +44,7 @@ public class SessionEventsTest {
 		fixture.quarter(0, 0, 1, 0);
 		PracticeTrackSelection selection = new PracticeTrackSelection(fixture.song,
 				PracticeTrackCandidates.evaluate(fixture.song, fixture.track()).getPreselected(),
-				GuitarConfirmationMemory.getInstance(this.context));
+				PracticeTunerContext.getInstance(this.context));
 		selection.accept();
 		PracticeSession session = new PracticeSession(selection, fixture.sequence(), new NoteInterpreter(0.8),
 				new TolerancePolicy(5.0, 30.0), 100_000_000L, 0L);
@@ -51,7 +52,9 @@ public class SessionEventsTest {
 		this.states = new LinkedBlockingQueue<State>();
 		this.loop = new SessionLoop<PracticeSnapshot>(this.context, session, snapshot -> this.states.add(snapshot.getState()), Runnable::run);
 		this.selection = CurrentInputSelection.getInstance(this.context);
-		this.events = new SessionEvents(this.context, this.loop, session, this.selection);
+		this.shared = PracticeTunerContext.getInstance(this.context);
+		this.events = new SessionEvents(this.context, this.loop, session, this.selection, this.shared);
+		this.shared.addListener(changed -> this.events.tunerStateChanged(changed.isTunerOpen()));
 		this.selection.addListener(this.events::selectionChanged);
 		this.loop.start();
 		this.loop.postCommand(PracticeCommand.START);
@@ -117,6 +120,18 @@ public class SessionEventsTest {
 		this.events.selectionChanged(stale);
 		this.loop.postCommand(PracticeCommand.RESUME);
 		assertEquals(State.PAUSED, next());
+	}
+
+	@Test
+	public void openingTheTunerPausesUntilItClosesAndAnExplicitResume() throws InterruptedException {
+		this.shared.setTunerOpen(true);
+		assertEquals(State.PAUSED, next());
+
+		this.shared.setTunerOpen(false);
+		assertEquals(State.READY_TO_RESUME, next());
+
+		this.loop.postCommand(PracticeCommand.RESUME);
+		assertEquals(State.RUNNING, next());
 	}
 
 	private State next() throws InterruptedException {

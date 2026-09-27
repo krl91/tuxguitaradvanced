@@ -1,5 +1,6 @@
 package app.tuxguitar.app.tools.custom.practice.model;
 
+import app.tuxguitar.audio.engine.session.PracticeTunerContext;
 import app.tuxguitar.song.models.TGSong;
 
 /**
@@ -11,10 +12,10 @@ public final class PracticeTrackSelection {
 
 	private final TGSong song;
 	private final PracticeTrackCandidate candidate;
-	private final GuitarConfirmationMemory memory;
+	private final PracticeTunerContext memory;
 	private boolean accepted;
 
-	public PracticeTrackSelection(TGSong song, PracticeTrackCandidate candidate, GuitarConfirmationMemory memory) {
+	public PracticeTrackSelection(TGSong song, PracticeTrackCandidate candidate, PracticeTunerContext memory) {
 		this.song = song;
 		this.candidate = candidate;
 		this.memory = memory;

@@ -19,6 +19,12 @@ import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
+import app.tuxguitar.audio.engine.session.PracticeTunerContext;
+import app.tuxguitar.editor.TGEditorManager;
+import app.tuxguitar.editor.event.TGUpdateEvent;
+import app.tuxguitar.event.TGEventListener;
+import app.tuxguitar.song.models.TGSong;
+import app.tuxguitar.song.models.TGTrack;
 import app.tuxguitar.song.helpers.tuning.TuningManager;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UIDisposeEvent;
@@ -62,6 +68,9 @@ public class TunerWindow {
 	private AudioEngine engine;
 	private AnalysisService.Listener frameListener;
 	private CurrentInputSelection.Listener selectionListener;
+	private PracticeTunerContext shared;
+	private PracticeTunerContext.Listener sharedListener;
+	private TGEventListener updateListener;
 
 	private UIWindow window;
 	private UIDropDownSelect<Boolean> mode;
@@ -169,6 +178,9 @@ public class TunerWindow {
 				TunerWindow.this.engine.unsubscribe(TunerWindow.this.frameListener);
 				TunerWindow.this.engine.getSelection().removeListener(TunerWindow.this.selectionListener);
 				TunerWindow.this.engine.release(CONSUMER_ID);
+				TunerWindow.this.shared.removeListener(TunerWindow.this.sharedListener);
+				TGEditorManager.getInstance(TunerWindow.this.context).removeUpdateListener(TunerWindow.this.updateListener);
+				TunerWindow.this.shared.setTunerOpen(false);
 				TunerWindow.this.noteFont.dispose();
 				TunerWindow.this.window = null;
 			}
@@ -179,6 +191,18 @@ public class TunerWindow {
 		this.engine.getSelection().addListener(this.selectionListener);
 		this.engine.subscribe(this.frameListener);
 		this.engine.acquire(CONSUMER_ID);
+
+		// FR-052: follow the Practice Track, or the selected guitar-confirmed track, until an explicit choice
+		this.shared = PracticeTunerContext.getInstance(this.context);
+		this.sharedListener = changed -> TGSynchronizer.getInstance(this.context).executeLater(this::refreshTrackTuning);
+		this.shared.addListener(this.sharedListener);
+		this.updateListener = event -> {
+			if( TGUpdateEvent.EVENT_TYPE.equals(event.getEventType()) ) {
+				TGSynchronizer.getInstance(this.context).executeLater(this::refreshTrackTuning);
+			}
+		};
+		TGEditorManager.getInstance(this.context).addUpdateListener(this.updateListener);
+		this.shared.setTunerOpen(true);
 
 		loadTunings();
 		updateInput();
@@ -196,9 +220,34 @@ public class TunerWindow {
 		return (this.window != null && !this.window.isDisposed());
 	}
 
-	/** Lists the presets and shows the effective tuning (explicit choice, else Standard E). */
+	/** Re-evaluates a track-based tuning when the practice track or the selected track changed. */
+	private void refreshTrackTuning() {
+		if( isOpen() && this.state.getExplicitChoice() == null ) {
+			TunerTuning next = this.state.effectiveTuning(practiceTrackTuning(), confirmedSelectedTrackTuning());
+			if( !next.sameTargets(this.tuning.getTargets()) || next.getSource() != this.tuning.getSource() ) {
+				loadTunings();
+			}
+		}
+	}
+
+	private TunerTuning practiceTrackTuning() {
+		TGTrack track = this.shared.getPracticeTrack();
+		return (track != null && track.stringCount() == TunerTuning.STRING_COUNT ? TunerTuning.track(track) : null);
+	}
+
+	/** The track selected in the score, only if the learner confirmed it as a guitar part (FR-052 b). */
+	private TunerTuning confirmedSelectedTrackTuning() {
+		TGSong song = TuxGuitar.getInstance().getDocumentManager().getSong();
+		TGTrack track = TuxGuitar.getInstance().getTablatureEditor().getTablature().getCaret().getTrack();
+		if( song == null || track == null || track.stringCount() != TunerTuning.STRING_COUNT || !this.shared.isConfirmed(song, track) ) {
+			return null;
+		}
+		return TunerTuning.track(track);
+	}
+
+	/** Lists the presets and shows the effective tuning (FR-052, FR-055). */
 	private void loadTunings() {
-		this.tuning = this.state.effectiveTuning(null, null);
+		this.tuning = this.state.effectiveTuning(practiceTrackTuning(), confirmedSelectedTrackTuning());
 		List<TunerTuning> presets = TunerTuning.builtInPresets(TuningManager.getInstance(this.context).getTgTuningsGroup());
 		this.tunings.removeItems();
 		boolean listed = false;
