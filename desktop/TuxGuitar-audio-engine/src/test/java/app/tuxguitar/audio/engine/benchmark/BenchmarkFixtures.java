@@ -64,7 +64,8 @@ final class BenchmarkFixtures {
 					value(values, positions, "fixture_role"),
 					value(values, positions, "played_note"),
 					parseOptionalInteger(value(values, positions, "midi")),
-					value(values, positions, "sha256")));
+					value(values, positions, "sha256"),
+					parseOptionalInteger(value(values, positions, "expected_onsets"))));
 		}
 		return Collections.unmodifiableList(fixtures);
 	}
@@ -95,8 +96,13 @@ final class BenchmarkFixtures {
 	}
 
 	static Result analyze(Recording recording) {
+		return analyze(recording, CONFIDENCE_GATE, STABLE_FRAMES, PITCH_FLOOR_DBFS);
+	}
+
+	/** Same analysis with other provisional parameters (T076 sweep). */
+	static Result analyze(Recording recording, double confidenceGate, int stableFrames, double pitchFloorDbfs) {
 		PitchEstimator estimator = new TarsosFastYinEstimator(SAMPLE_RATE, WINDOW_SIZE, HOP_SIZE);
-		NoteInterpreter interpreter = new NoteInterpreter(CONFIDENCE_GATE);
+		NoteInterpreter interpreter = new NoteInterpreter(confidenceGate);
 		InputAssessment assessment = new InputAssessment(
 				InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE);
 		float[] window = new float[WINDOW_SIZE];
@@ -118,7 +124,7 @@ final class BenchmarkFixtures {
 			}
 			PitchEstimate estimate = estimator.estimate(window);
 			PitchReading reading = interpreter.interpret(estimate, assessment);
-			if (!reading.isReliable() || levelDbfs < PITCH_FLOOR_DBFS) {
+			if (!reading.isReliable() || levelDbfs < pitchFloorDbfs) {
 				runMidi = -1;
 				runLength = 0;
 				continue;
@@ -132,7 +138,7 @@ final class BenchmarkFixtures {
 				runMidi = midi;
 				runLength = 1;
 			}
-			if (stableFrame < 0 && runLength >= STABLE_FRAMES) {
+			if (stableFrame < 0 && runLength >= stableFrames) {
 				stableMidi = midi;
 				stableFrame = frame;
 			}
@@ -242,15 +248,17 @@ final class BenchmarkFixtures {
 		final String playedNote;
 		final Integer manifestMidi;
 		final String sha256;
+		final Integer expectedOnsets;
 
 		Fixture(String file, String inputType, String role, String playedNote,
-				Integer manifestMidi, String sha256) {
+				Integer manifestMidi, String sha256, Integer expectedOnsets) {
 			this.file = file;
 			this.inputType = inputType;
 			this.role = role;
 			this.playedNote = playedNote;
 			this.manifestMidi = manifestMidi;
 			this.sha256 = sha256;
+			this.expectedOnsets = expectedOnsets;
 		}
 	}
 

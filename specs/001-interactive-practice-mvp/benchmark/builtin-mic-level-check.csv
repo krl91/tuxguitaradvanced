@@ -1,0 +1,23 @@
+file,fixture_role,assessment_status,assessment_reason
+builtin-mic/standard/01_none_silence.wav,silence,not concluded,
+builtin-mic/standard/02_E2_open_s6f0.wav,reference,SUITABLE,NONE
+builtin-mic/standard/03_A2_open_s5f0.wav,reference,SUITABLE,NONE
+builtin-mic/standard/04_D3_open_s4f0.wav,reference,SUITABLE,NONE
+builtin-mic/standard/05_G3_open_s3f0.wav,reference,SUITABLE,NONE
+builtin-mic/standard/06_B3_open_s2f0.wav,reference,SUITABLE,NONE
+builtin-mic/standard/07_E4_open_s1f0.wav,known-issue,SUITABLE,NONE
+builtin-mic/standard/08_A2_fretted_s6f5.wav,reference,SUITABLE,NONE
+builtin-mic/standard/09_E3_fretted_s5f7.wav,reference,SUITABLE,NONE
+builtin-mic/standard/10_G3_fretted_s4f5.wav,reference,SUITABLE,NONE
+builtin-mic/standard/11_D4_fretted_s3f7.wav,reference,SUITABLE,NONE
+builtin-mic/standard/12_Fs4_fretted_s2f7.wav,reference,SUITABLE,NONE
+builtin-mic/standard/13_E4_fretted_s2f5.wav,reference,SUITABLE,NONE
+builtin-mic/standard/14_B4_fretted_s2f12.wav,reference,SUITABLE,NONE
+builtin-mic/standard/15_E5_fretted_s1f12.wav,known-issue,SUITABLE,NONE
+builtin-mic/standard/16_A5_fretted_s1f17.wav,reference,SUITABLE,NONE
+builtin-mic/standard/17_B5_fretted_s1f19.wav,reference,SUITABLE,NONE
+builtin-mic/standard/18_As2_fretted_s6f6.wav,unverified,SUITABLE,NONE
+builtin-mic/standard/19_Gs3_fretted_s4f6.wav,unverified,SUITABLE,NONE
+builtin-mic/standard/20_F5_fretted_s1f13.wav,unverified,SUITABLE,NONE
+builtin-mic/standard/21_Ds5_fretted_s1f11.wav,unverified,SUITABLE,NONE
+builtin-mic/standard/22_D4_repeat-normal_s3f7.wav,reference,SUITABLE,NONE

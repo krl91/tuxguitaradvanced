@@ -60,11 +60,14 @@ import app.tuxguitar.util.TGSynchronizer;
  */
 public class PracticeWindow {
 
-	/** Provisional, configurable defaults approved 2026-09-26 (refined in tasks T076). */
+	/**
+	 * Provisional, configurable defaults approved 2026-09-26; acceptance widened from 30 to 35
+	 * cents by T076 (fretted notes on the real-guitar clips read up to +30.5 cents at p90).
+	 */
 	public static final double CONFIDENCE_GATE = 0.80;
 	public static final int STABILITY_HOPS = 20;
 	public static final double TUNER_IN_TUNE_CENTS = 5.0;
-	public static final double PRACTICE_ACCEPT_CENTS = 30.0;
+	public static final double PRACTICE_ACCEPT_CENTS = 35.0;
 
 	private static final String CONSUMER_ID = "practice";
 	private static final String[] NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };

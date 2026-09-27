@@ -15,12 +15,16 @@ public final class ArticulationDetector {
 	/** Hops between the transient and the hop on which it is reported. */
 	public static final int DECISION_DELAY_HOPS = 13;
 
-	/** Provisional defaults from the synthetic S4 experiment (to be tuned on real recordings). */
+	/**
+	 * Provisional defaults: flux and level thresholds from the synthetic S4 experiment; the gate
+	 * raised from +1.5 to +4.5 dB on the real-guitar clips (T076: no false articulation left, no
+	 * additional miss; research.md "T076").
+	 */
 	public static final double DEFAULT_FLUX_MEDIAN_FACTOR = 1.5;
 	public static final double DEFAULT_FLUX_OFFSET = 5.0;
 	public static final double DEFAULT_MIN_LEVEL_DB = -50.0;
 	public static final int DEFAULT_REFRACTORY_HOPS = 12;
-	public static final double DEFAULT_GATE_DB = 1.5;
+	public static final double DEFAULT_GATE_DB = 4.5;
 
 	private static final int FFT_SIZE = 1024;
 	private static final int MEDIAN_HOPS = 10;
