@@ -26,10 +26,15 @@ public class TunerNextPlugin extends TGToolItemPlugin {
 	}
 
 	protected void doAction(TGContext context) {
-		if( this.window == null ) {
+		windowFor(context).open();
+	}
+
+	/** The open window, or a new one: nothing of a closed window is reused. */
+	TunerWindow windowFor(TGContext context) {
+		if( this.window == null || !this.window.isOpen() ) {
 			this.window = new TunerWindow(context);
 		}
-		this.window.open();
+		return this.window;
 	}
 
 	public void disconnect(TGContext context) throws TGPluginException {

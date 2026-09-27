@@ -99,6 +99,8 @@ public class TunerWindow {
 			return;
 		}
 		this.engine = AudioEngine.getInstance(this.context);
+		this.engine.selectDefaultInputIfNone();
+		this.stringButtons.clear();
 		UIFactory uiFactory = TGApplication.getInstance(this.context).getFactory();
 		UITableLayout layout = new UITableLayout();
 		this.window = uiFactory.createWindow(TGWindow.getInstance(this.context).getWindow(), false, true);
