@@ -12,18 +12,21 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidate;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
+import app.tuxguitar.app.tools.custom.practice.session.Feedback;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeSession;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeSnapshot;
 import app.tuxguitar.app.tools.custom.practice.session.SessionEvents;
 import app.tuxguitar.app.tools.custom.practice.session.SessionLoop;
 import app.tuxguitar.app.ui.TGApplication;
+import app.tuxguitar.app.view.component.tab.Caret;
 import app.tuxguitar.app.view.main.TGWindow;
 import app.tuxguitar.app.view.util.TGDialogUtil;
 import app.tuxguitar.audio.engine.AudioEngine;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.analysis.ArticulationDetector;
 import app.tuxguitar.audio.engine.analysis.TarsosFastYinEstimator;
+import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
@@ -68,21 +71,28 @@ public class PracticeWindow {
 	private final PracticePlugin plugin;
 	private final GuitarConfirmationMemory memory;
 	private final PracticeHighlight highlight;
+	private final TolerancePolicy displayTolerance = new TolerancePolicy(TUNER_IN_TUNE_CENTS, PRACTICE_ACCEPT_CENTS);
 	private AudioEngine engine;
 
 	private UIWindow window;
 	private UIPanel preparation;
 	private UIPanel running;
 	private InputSelectorPanel inputSelector;
+	private InputSelectorPanel runningInputSelector;
+	private LevelPanel levelPanel;
+	private UILabel headphoneLabel;
 	private UIDropDownSelect<PracticeTrackCandidate> tracks;
 	private UILabel trackNotice;
 	private UILabel tuningLabel;
 	private UILabel unusualLabel;
-	private UILabel inputStatus;
+	private UILabel startLabel;
+	private PracticeSequence preparedSequence;
 	private UIButton startButton;
 	private UILabel expectedLabel;
 	private UILabel instructionLabel;
 	private UILabel detectedLabel;
+	private UILabel feedbackLabel;
+	private UILabel acceptedLabel;
 	private UILabel stateLabel;
 	private UILabel runningInputStatus;
 	private UIButton skipButton;
@@ -137,17 +147,18 @@ public class PracticeWindow {
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
 				teardownSession();
-				if( PracticeWindow.this.inputSelector != null ) {
-					PracticeWindow.this.inputSelector.dispose();
-				}
+				PracticeWindow.this.inputSelector.dispose();
+				PracticeWindow.this.runningInputSelector.dispose();
+				PracticeWindow.this.levelPanel.disconnect();
 				PracticeWindow.this.engine.getSelection().removeListener(PracticeWindow.this.selectionListener);
 				PracticeWindow.this.engine.release(CONSUMER_ID);
 				PracticeWindow.this.window = null;
 			}
 		});
 
-		this.selectionListener = snapshot -> TGSynchronizer.getInstance(this.context).executeLater(() -> assessmentChanged(snapshot.getAssessment()));
+		this.selectionListener = snapshot -> TGSynchronizer.getInstance(this.context).executeLater(() -> inputChanged(snapshot));
 		this.engine.getSelection().addListener(this.selectionListener);
+		this.levelPanel.connect();
 		this.engine.acquire(CONSUMER_ID);
 		this.assessment = this.engine.getSelection().snapshot().getAssessment();
 
@@ -185,15 +196,18 @@ public class PracticeWindow {
 		this.trackNotice = label(uiFactory, panel, layout, 2);
 		this.tuningLabel = label(uiFactory, panel, layout, 3);
 		this.unusualLabel = label(uiFactory, panel, layout, 4);
+		this.startLabel = label(uiFactory, panel, layout, 7);
 
 		this.inputSelector = new InputSelectorPanel(this.context, this.engine, uiFactory, panel);
 		layout.set(this.inputSelector.getControl(), 5, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
-		this.inputStatus = label(uiFactory, panel, layout, 6);
+		this.levelPanel = new LevelPanel(this.context, this.engine, uiFactory, panel);
+		layout.set(this.levelPanel.getControl(), 6, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		this.headphoneLabel = label(uiFactory, panel, layout, 8);
 
 		UITableLayout startLayout = new UITableLayout(0f);
 		UIPanel startPanel = uiFactory.createPanel(panel, false);
 		startPanel.setLayout(startLayout);
-		layout.set(startPanel, 7, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		layout.set(startPanel, 9, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.startButton = button(uiFactory, startPanel, startLayout, 1, "practice.start", () -> startSession());
 		listenKeys(panel, this.tracks, startPanel, this.startButton);
 		return panel;
@@ -218,7 +232,7 @@ public class PracticeWindow {
 		}
 		this.trackNotice.setText(candidates.getCandidates().isEmpty() ? noCandidateText(candidates.getExclusions()) : "");
 		updateTuning();
-		assessmentChanged(this.assessment);
+		inputChanged(this.engine.getSelection().snapshot());
 		setVisible(this.preparation, true);
 		setVisible(this.running, false);
 	}
@@ -228,10 +242,15 @@ public class PracticeWindow {
 		if( candidate == null ) {
 			this.tuningLabel.setText("");
 			this.unusualLabel.setText("");
+			this.startLabel.setText("");
+			this.preparedSequence = null;
 			updateStartButton();
 			return;
 		}
 		TrackTuning tuning = tuning(candidate.getTrack());
+		Caret caret = TuxGuitar.getInstance().getTablatureEditor().getTablature().getCaret();
+		this.preparedSequence = PracticeSequenceBuilder.build(this.song, candidate.getTrack(), tuning, caret.getMeasure(), caret.getPosition());
+		this.startLabel.setText(startText(this.preparedSequence));
 		String strings = noteNames(tuning.getOpenStringMidi());
 		String text = TuxGuitar.getProperty("practice.tuning", new String[] { strings });
 		switch( tuning.getRealization() ) {
@@ -250,22 +269,18 @@ public class PracticeWindow {
 		this.window.layout();
 	}
 
-	private void assessmentChanged(InputAssessment assessment) {
-		this.assessment = assessment;
+	/** Input or assessment changed (UI thread). The session itself is informed by SessionEvents. */
+	private void inputChanged(CurrentInputSelection.Snapshot snapshot) {
+		this.assessment = snapshot.getAssessment();
 		if( !isOpen() ) {
 			return;
 		}
-		String reason = TuxGuitar.getProperty("practice.input.reason." + assessment.getReason().name());
-		String status = TuxGuitar.getProperty("practice.input.status." + assessment.getStatus().name(), new String[] { reason });
-		this.inputStatus.setText(status);
-		this.runningInputStatus.setText(status);
-		if( this.loop != null ) {
-			final PracticeSession current = this.session;
-			this.loop.post(() -> {
-				current.setAssessment(assessment);
-				return null;
-			});
-		}
+		String reason = TuxGuitar.getProperty("practice.input.reason." + this.assessment.getReason().name());
+		this.runningInputStatus.setText(TuxGuitar.getProperty("practice.input.status." + this.assessment.getStatus().name(), new String[] { reason }));
+		this.levelPanel.setAssessment(this.assessment);
+		AudioInputDescriptor input = snapshot.getInput();
+		boolean headphones = (input != null && input.getKind() != AudioInputDescriptor.Kind.INSTRUMENT);
+		this.headphoneLabel.setText(headphones ? TuxGuitar.getProperty("practice.headphones") : "");
 		updateStartButton();
 		this.window.layout();
 	}
@@ -285,13 +300,17 @@ public class PracticeWindow {
 		this.expectedLabel = label(uiFactory, panel, layout, 1);
 		this.instructionLabel = label(uiFactory, panel, layout, 2);
 		this.detectedLabel = label(uiFactory, panel, layout, 3);
-		this.stateLabel = label(uiFactory, panel, layout, 4);
-		this.runningInputStatus = label(uiFactory, panel, layout, 5);
+		this.feedbackLabel = label(uiFactory, panel, layout, 4);
+		this.acceptedLabel = label(uiFactory, panel, layout, 5);
+		this.stateLabel = label(uiFactory, panel, layout, 6);
+		this.runningInputStatus = label(uiFactory, panel, layout, 7);
+		this.runningInputSelector = new InputSelectorPanel(this.context, this.engine, uiFactory, panel);
+		layout.set(this.runningInputSelector.getControl(), 9, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel buttons = uiFactory.createPanel(panel, false);
 		buttons.setLayout(buttonsLayout);
-		layout.set(buttons, 6, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		layout.set(buttons, 8, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.skipButton = button(uiFactory, buttons, buttonsLayout, 1, "practice.skip", () -> post(PracticeCommand.SKIP));
 		this.resumeButton = button(uiFactory, buttons, buttonsLayout, 2, "practice.resume", () -> post(PracticeCommand.RESUME));
 		this.restartButton = button(uiFactory, buttons, buttonsLayout, 3, "practice.restart", () -> post(PracticeCommand.RESTART));
@@ -307,14 +326,14 @@ public class PracticeWindow {
 		}
 		PracticeTrackSelection selection = new PracticeTrackSelection(this.song, candidate, this.memory);
 		selection.accept();
-		PracticeSequence sequence = PracticeSequenceBuilder.build(this.song, candidate.getTrack(), tuning(candidate.getTrack()));
+		PracticeSequence sequence = this.preparedSequence;
 		long hopNanos = TarsosFastYinEstimator.DEFAULT_HOP_SIZE * 1_000_000_000L / 48000L;
 		this.session = new PracticeSession(selection, sequence, new NoteInterpreter(CONFIDENCE_GATE),
 				new TolerancePolicy(TUNER_IN_TUNE_CENTS, PRACTICE_ACCEPT_CENTS),
 				STABILITY_HOPS * hopNanos, ArticulationDetector.DECISION_DELAY_HOPS * hopNanos);
 		this.session.setAssessment(this.assessment);
 		this.loop = new SessionLoop<PracticeSnapshot>(this.context, this.session, this::render);
-		this.events = new SessionEvents(this.context, this.loop, this.session);
+		this.events = new SessionEvents(this.context, this.loop, this.session, this.engine.getSelection());
 		final SessionLoop<PracticeSnapshot> sessionLoop = this.loop;
 		this.frameListener = frame -> sessionLoop.postFrame(frame);
 
@@ -346,14 +365,16 @@ public class PracticeWindow {
 			this.expectedLabel.setText(TuxGuitar.getProperty("practice.expected", new String[] { noteName(event.getExpectedMidi()) }));
 			this.instructionLabel.setText(TuxGuitar.getProperty("practice.instruction",
 					new String[] { Integer.toString(event.getStringNumber()), Integer.toString(event.getFret()) }));
+		} else if( event != null && event.getKind() == PracticeEvent.Kind.MULTI_NOTE ) {
+			this.expectedLabel.setText(TuxGuitar.getProperty("practice.multi-note"));
+			this.instructionLabel.setText("");
 		} else {
 			this.expectedLabel.setText("");
 			this.instructionLabel.setText("");
 		}
-		PitchReading reading = snapshot.getReading();
-		this.detectedLabel.setText(reading.hasPitch() && reading.isReliable()
-				? TuxGuitar.getProperty("practice.detected", new String[] { reading.getNoteName() + reading.getOctave(), String.format("%+.0f", reading.getCents()) })
-				: TuxGuitar.getProperty("practice.detected.none"));
+		this.detectedLabel.setText(detectedText(snapshot.getReading()));
+		this.feedbackLabel.setText(feedbackText(snapshot.getFeedback(), event));
+		this.acceptedLabel.setText(lastOutcomeText(snapshot));
 		String stateText = TuxGuitar.getProperty("practice.state." + state.name());
 		if( state == PracticeSession.State.PAUSED ) {
 			StringBuilder reasons = new StringBuilder();
@@ -378,6 +399,70 @@ public class PracticeWindow {
 		this.window.layout();
 	}
 
+	/**
+	 * The latest result line: the accepted note, or a skipped / automatically passed event
+	 * (FR-016, FR-030), whichever happened last. Never shows a skipped event as correct.
+	 */
+	private String lastOutcomeText(PracticeSnapshot snapshot) {
+		PracticeEvent accepted = snapshot.getLastAccepted();
+		PracticeEvent passed = snapshot.getLastPassed();
+		if( passed != null && (accepted == null || passed.getSequenceIndex() > accepted.getSequenceIndex()) ) {
+			if( snapshot.getLastPassedOutcome() == PracticeSession.Outcome.AUTO_PASSED ) {
+				return TuxGuitar.getProperty("practice.auto-passed", new String[] {
+						TuxGuitar.getProperty("practice.auto-pass." + passed.getAutoPassReason().name()) });
+			}
+			return TuxGuitar.getProperty("practice.skipped");
+		}
+		return (accepted != null ? TuxGuitar.getProperty("practice.feedback.correct", new String[] { noteName(accepted.getExpectedMidi()) }) : "");
+	}
+
+	/** Tuner-style reading: note, octave and cents from that note's own centre (FR-017). */
+	private String detectedText(PitchReading reading) {
+		if( !reading.hasPitch() || !reading.isReliable() ) {
+			return TuxGuitar.getProperty("practice.detected.none");
+		}
+		String note = reading.getNoteName() + reading.getOctave();
+		String cents = Long.toString(Math.round(Math.abs(reading.getCents())));
+		switch( this.displayTolerance.tunerState(reading) ) {
+			case FLAT:
+				return TuxGuitar.getProperty("practice.detected.flat", new String[] { note, cents });
+			case SHARP:
+				return TuxGuitar.getProperty("practice.detected.sharp", new String[] { note, cents });
+			default:
+				return TuxGuitar.getProperty("practice.detected.in-tune", new String[] { note });
+		}
+	}
+
+	/** One learner-worded feedback line with a text symbol, never colour alone (FR-018, FR-070). */
+	private String feedbackText(Feedback feedback, PracticeEvent event) {
+		if( feedback == null || event == null || event.getKind() != PracticeEvent.Kind.EXPECTED_NOTE ) {
+			return "";
+		}
+		String expected = noteName(event.getExpectedMidi());
+		switch( feedback.getKind() ) {
+			case UNCERTAIN:
+				return TuxGuitar.getProperty("practice.feedback.uncertain");
+			case INCORRECT: {
+				String detected = noteName(feedback.getDetectedMidi());
+				if( feedback.isOctaveOnly() ) {
+					String direction = TuxGuitar.getProperty(feedback.getDetectedMidi() > event.getExpectedMidi()
+							? "practice.feedback.octave.higher" : "practice.feedback.octave.lower");
+					return TuxGuitar.getProperty("practice.feedback.octave", new String[] { detected, expected, direction });
+				}
+				if( feedback.getDetectedMidi() == event.getExpectedMidi() ) {
+					return TuxGuitar.getProperty("practice.feedback.out-of-tune", new String[] { expected });
+				}
+				return TuxGuitar.getProperty("practice.feedback.incorrect", new String[] { detected, expected });
+			}
+			case CORRECT:
+				return "";
+			case WAITING:
+			default:
+				return TuxGuitar.getProperty(feedback.needsArticulation() ? "practice.feedback.play-again" : "practice.feedback.waiting",
+						new String[] { expected });
+		}
+	}
+
 	private void teardownSession() {
 		this.highlight.hide();
 		if( this.loop != null ) {
@@ -393,6 +478,19 @@ public class PracticeWindow {
 	}
 
 	// ---------------------------------------------------------------- helpers
+
+	/** The resolved starting position shown in the preparation step (FR-004). */
+	private static String startText(PracticeSequence sequence) {
+		if( sequence.isEmpty() ) {
+			return "";
+		}
+		PracticeEvent first = sequence.getEvents().get(sequence.getStartIndex());
+		String measure = Integer.toString(first.getMeasureIndex() + 1);
+		if( sequence.getStartIndex() == 0 ) {
+			return TuxGuitar.getProperty("practice.start-position.beginning", new String[] { measure });
+		}
+		return TuxGuitar.getProperty("practice.start-position.cursor", new String[] { measure });
+	}
 
 	private TrackTuning tuning(TGTrack track) {
 		return TrackTuning.of(track, TrackTuning.builtInSixStringMinimum(TuningManager.getInstance(this.context).getTgTuningsGroup()));

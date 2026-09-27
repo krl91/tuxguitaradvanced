@@ -16,6 +16,8 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.SongFixture;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeSession.State;
+import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
+import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
@@ -31,6 +33,7 @@ public class SessionEventsTest {
 	private BlockingQueue<State> states;
 	private SessionLoop<PracticeSnapshot> loop;
 	private SessionEvents events;
+	private CurrentInputSelection selection;
 
 	@BeforeEach
 	public void setUp() throws InterruptedException {
@@ -47,7 +50,9 @@ public class SessionEventsTest {
 		session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		this.states = new LinkedBlockingQueue<State>();
 		this.loop = new SessionLoop<PracticeSnapshot>(this.context, session, snapshot -> this.states.add(snapshot.getState()), Runnable::run);
-		this.events = new SessionEvents(this.context, this.loop, session);
+		this.selection = CurrentInputSelection.getInstance(this.context);
+		this.events = new SessionEvents(this.context, this.loop, session, this.selection);
+		this.selection.addListener(this.events::selectionChanged);
 		this.loop.start();
 		this.loop.postCommand(PracticeCommand.START);
 		assertEquals(State.RUNNING, next());
@@ -79,6 +84,39 @@ public class SessionEventsTest {
 
 		this.events.processEvent(new TGUpdateEvent(TGUpdateEvent.MEASURE_UPDATED, null));
 		assertEquals(State.STOPPED, next());
+	}
+
+	@Test
+	public void unusableInputPausesUntilACheckSucceedsAndAnExplicitResume() throws InterruptedException {
+		this.selection.updateAssessment(new InputAssessment(InputAssessment.Status.UNUSABLE, InputAssessment.Reason.DEVICE_LOST));
+		assertEquals(State.PAUSED, next());
+
+		this.selection.updateAssessment(new InputAssessment(InputAssessment.Status.SUBOPTIMAL, InputAssessment.Reason.TOO_LOW));
+		assertEquals(State.READY_TO_RESUME, next());
+
+		this.loop.postCommand(PracticeCommand.RESUME);
+		assertEquals(State.RUNNING, next());
+	}
+
+	@Test
+	public void changingTheInputPausesUntilTheNewInputWasChecked() throws InterruptedException {
+		this.selection.select(new AudioInputDescriptor("other", "Interface", 1, 2, "Interface — Input 2",
+				AudioInputDescriptor.Kind.UNKNOWN, false), null);
+		assertEquals(State.PAUSED, next());
+
+		this.selection.updateAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
+		assertEquals(State.READY_TO_RESUME, next());
+	}
+
+	@Test
+	public void outdatedSelectionNotificationsAreIgnored() throws InterruptedException {
+		CurrentInputSelection.Snapshot stale = this.selection.snapshot();
+		this.selection.updateAssessment(new InputAssessment(InputAssessment.Status.UNUSABLE, InputAssessment.Reason.NO_SIGNAL));
+		assertEquals(State.PAUSED, next());
+
+		this.events.selectionChanged(stale);
+		this.loop.postCommand(PracticeCommand.RESUME);
+		assertEquals(State.PAUSED, next());
 	}
 
 	private State next() throws InterruptedException {

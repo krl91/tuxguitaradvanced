@@ -133,8 +133,8 @@ only the slightly sharp/flat expected note is accepted (spec US2).
 
 - [x] T050 [P] [US2] Add `desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/FeedbackTest.java`: `INCORRECT(detected, octaveOnly)` for wrong octave, detected cents relative to the detected note (never to a different expected semitone), `UNCERTAIN` on unreliable or suboptimal input
 - [x] T051 [US2] Implement `desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/session/Feedback.java` (`WAITING`, `UNCERTAIN`, `INCORRECT(detected, octaveOnly)`, `CORRECT`) and use it in `PracticeSession.java` (FR-018, FR-019, FR-023, FR-026). A matching note not accepted yet stays WAITING (with a play-again hint when a new articulation is needed); CORRECT is reported on acceptance and the last accepted note stays visible, so the 30/s snapshot coalescing cannot hide it; the right note beyond the acceptance tolerance is INCORRECT as that same note
-- [ ] T052 [US2] Present feedback in `PracticeWindow.java`: detected note + octave + own-cents sharp/flat, expected note separately, octave hint, text/symbol cues not relying on colour (FR-017, FR-070); no wording implying string, fret or technique verification (FR-027)
-- [ ] T053 [P] [US2] Add learner-worded English messages for all feedback states and hints to `desktop/TuxGuitar-practice/share/lang/messages.properties` (FR-069, FR-071)
+- [x] T052 [US2] Present feedback in `PracticeWindow.java`: detected note + octave + own-cents sharp/flat, expected note separately, octave hint, text/symbol cues not relying on colour (FR-017, FR-070); no wording implying string, fret or technique verification (FR-027)
+- [x] T053 [P] [US2] Add learner-worded English messages for all feedback states and hints to `desktop/TuxGuitar-practice/share/lang/messages.properties` (FR-069, FR-071)
 - [ ] T054 [US2] Manually execute the US2 acceptance scenarios; record in `specs/001-interactive-practice-mvp/checklists/acceptance.md`
 
 ---
@@ -151,10 +151,10 @@ suboptimal warns, unusable blocks; deny access, unplug, and start with no input 
 - [x] T055 [P] [US3] Add `desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/analysis/InputAssessorTest.java`: `SUITABLE`/`SUBOPTIMAL`/`UNUSABLE` with reasons `NO_SIGNAL`, `TOO_LOW`, `TOO_HIGH`, `CLIPPING`, `DEVICE_LOST`, `ACCESS_DENIED_SUSPECTED` (all-zero window); thresholds are test parameters
 - [x] T056 [US3] Implement `desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/analysis/InputAssessor.java` (quick level check on the selected channel only while the learner plays; `runLevelCheck()`; FR-038). Done before T046 (approved 2026-09-27). Integrated in `AudioEngine`: automatic check when an input is selected/changed while capture runs and on first acquire of an unchecked input; result stored in `CurrentInputSelection`; capture loss/error → UNUSABLE DEVICE_LOST. Provisional criteria (`InputAssessor.Parameters`, refined in T076): frames with pitch confidence ≥ 0.80 count as playing; conclude after 0.5 s of playing or 10 s timeout; clipping ≥ 50 % of playing frames unusable, ≥ 10 % suboptimal; too high ≥ 10 % suboptimal; too low ≥ 50 % suboptimal; no playing by the timeout → NO_SIGNAL (all-zero window → ACCESS_DENIED_SUSPECTED, mostly clipping → CLIPPING)
 - [x] T057 [US3] Implement the shared input/channel selector `desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/ui/InputSelectorPanel.java` (logical inputs from `InputDeviceCatalog`, selection via `CurrentInputSelection`, new level check on change, "try another input channel" hint, never auto-switch; FR-035, FR-039). Done before T046 (approved 2026-09-27). When no input is selected yet, the first listed input (system default first) is offered and selected once; the panel never switches input afterwards
-- [ ] T058 [US3] Implement the level meter + assessment display `desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/ui/LevelPanel.java` (too low/suitable/too high/clipping with text cues; suboptimal warning; Start disabled while unusable; FR-037, FR-038)
-- [ ] T059 [US3] Implement calibration/gain guidance in `LevelPanel.java`: explicit recalibrate; manual guidance to the interface gain knob or macOS Sound input settings; no automatic gain adjustment (S2; FR-040–FR-042)
-- [ ] T060 [US3] Implement the non-blocking headphone recommendation in `PracticeWindow.java` for the built-in microphone, identified microphones and `UNKNOWN` inputs, not for positively identified instrument inputs (FR-036)
-- [ ] T061 [US3] Implement mid-session input handling in `PracticeSession.java`/`SessionEvents.java`: suboptimal → continue with warning and `UNCERTAIN`; unusable/device lost/input changed → pause at the current event, explain, monitor or allow another input, resume only by explicit Resume after a new check (FR-043, FR-044, FR-063)
+- [x] T058 [US3] Implement the level meter + assessment display `desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/ui/LevelPanel.java` (too low/suitable/too high/clipping with text cues; suboptimal warning; Start disabled while unusable; FR-037, FR-038). The live meter shows RMS level with a text state, updated at most ~30 times per second
+- [x] T059 [US3] Implement calibration/gain guidance in `LevelPanel.java`: explicit recalibrate; manual guidance to the interface gain knob or macOS Sound input settings; no automatic gain adjustment (S2; FR-040–FR-042)
+- [x] T060 [US3] Implement the non-blocking headphone recommendation in `PracticeWindow.java` for the built-in microphone, identified microphones and `UNKNOWN` inputs, not for positively identified instrument inputs (FR-036)
+- [x] T061 [US3] Implement mid-session input handling in `PracticeSession.java`/`SessionEvents.java`: suboptimal → continue with warning and `UNCERTAIN`; unusable/device lost/input changed → pause at the current event, explain, monitor or allow another input, resume only by explicit Resume after a new check (FR-043, FR-044, FR-063). Mid-session monitoring pauses on a lost device or capture error, on any level check that concludes unusable, and on an input change (until the new input is checked usable); there is no continuous re-assessment during a session, so a learner who stops playing is never paused; the running view has an input selector
 - [ ] T062 [US3] Manually execute the US3 scenarios and quickstart Phase 3 rows (built-in mic gain sweep, unplug, silent channel, permission behaviour); record in `specs/001-interactive-practice-mvp/checklists/acceptance.md`
 
 **Checkpoint**: US1–US3 (all P1) together form the MVP.
@@ -190,7 +190,7 @@ briefly indicated and never shown as correct; the chord waits for Skip; skipped 
 (spec US5).
 
 - [x] T070 [P] [US5] Add `desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/UnsupportedEventsTest.java`: `AUTO_PASS` advances with outcome `AUTO_PASSED`; `MULTI_NOTE` gives no judgement and advances only on Skip; Skip on any event → `SKIPPED`, never `CORRECT` (FR-011–FR-013, FR-025, FR-030, FR-031)
-- [ ] T071 [US5] Implement auto-pass and Skip handling in `PracticeSession.java` and brief auto-pass indications plus the multi-note "not supported in this version" message with Skip, and skipped-event marking, in `PracticeWindow.java` (FR-016)
+- [x] T071 [US5] Implement auto-pass and Skip handling in `PracticeSession.java` and brief auto-pass indications plus the multi-note "not supported in this version" message with Skip, and skipped-event marking, in `PracticeWindow.java` (FR-016)
 - [ ] T072 [US5] Manually execute US5 scenarios; record in `specs/001-interactive-practice-mvp/checklists/acceptance.md`
 
 ---
@@ -204,7 +204,7 @@ step shows that position and practice follows playback order to the end; moving 
 track during the session changes nothing (spec US6).
 
 - [x] T073 [P] [US6] Add start-resolution cases to `PracticeSequenceBuilderTest.java`: cursor on an event, between events, on another track, inside a repeated section (first played occurrence, no rewind) (FR-004–FR-006)
-- [ ] T074 [US6] Implement cursor-based start resolution in `PracticeSequenceBuilder.java` and show the resolved start in the preparation step of `PracticeWindow.java`
+- [x] T074 [US6] Implement cursor-based start resolution in `PracticeSequenceBuilder.java` and show the resolved start in the preparation step of `PracticeWindow.java`. The sequence and its start are computed when the preparation step is shown (cursor position at that time) and reused at Start, so the displayed start is the one practised
 - [ ] T075 [US6] Manually execute US6 scenarios; record in `specs/001-interactive-practice-mvp/checklists/acceptance.md`
 
 ---
