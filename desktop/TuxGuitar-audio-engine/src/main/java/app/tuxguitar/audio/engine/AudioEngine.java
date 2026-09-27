@@ -3,11 +3,13 @@ package app.tuxguitar.audio.engine;
 import java.util.function.IntFunction;
 
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
+import app.tuxguitar.audio.engine.analysis.InputAssessor;
 import app.tuxguitar.audio.engine.analysis.LevelAnalyzer;
 import app.tuxguitar.audio.engine.analysis.PitchEstimator;
 import app.tuxguitar.audio.engine.analysis.TarsosFastYinEstimator;
 import app.tuxguitar.audio.engine.input.CaptureService;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
+import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.input.InputDeviceCatalog;
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
 import app.tuxguitar.util.TGContext;
@@ -43,6 +45,8 @@ public final class AudioEngine {
 	private final CaptureService captureService;
 	private final AnalysisService analysisService;
 	private final IntFunction<PitchEstimator> estimatorFactory;
+	private final InputAssessor assessor;
+	private long checkedInputRevision;
 
 	AudioEngine(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection,
 			int ringBufferCapacity, LevelAnalyzer levelAnalyzer, IntFunction<PitchEstimator> estimatorFactory) {
@@ -55,6 +59,10 @@ public final class AudioEngine {
 				TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE, TarsosFastYinEstimator.DEFAULT_HOP_SIZE);
 		this.captureService = new CaptureService(context, catalog, selection, this.ringBuffer);
 		this.captureService.setFormatListener(format -> rebuildAnalysis(Math.round(format.getSampleRate())));
+		this.assessor = new InputAssessor(new InputAssessor.Parameters(), this::levelCheckCompleted);
+		this.checkedInputRevision = selection.snapshot().getInputRevision();
+		this.selection.addListener(this::selectionChanged);
+		this.captureService.addListener(this::captureEvent);
 	}
 
 	public static AudioEngine getInstance(TGContext context) {
@@ -71,14 +79,31 @@ public final class AudioEngine {
 		});
 	}
 
-	/** Starts capture for this consumer if it is the first one. */
+	/**
+	 * Starts capture for this consumer if it is the first one, and checks a selected input that
+	 * was not checked yet (FR-038).
+	 */
 	public void acquire(String consumerId) {
 		this.captureService.acquire(consumerId);
+		CurrentInputSelection.Snapshot snapshot = this.selection.snapshot();
+		if( snapshot.getInput() != null && snapshot.getAssessment().getStatus() == InputAssessment.Status.UNCHECKED ) {
+			runLevelCheck();
+		}
 	}
 
 	/** Stops capture when the last consumer releases it. */
 	public void release(String consumerId) {
 		this.captureService.release(consumerId);
+	}
+
+	/**
+	 * Starts a quick level check of the selected input while the learner plays (FR-038, also
+	 * used for explicit recalibration, FR-039); the result updates the shared selection.
+	 * Capture must be held by a consumer.
+	 */
+	public void runLevelCheck() {
+		this.assessor.runLevelCheck();
+		this.analysisService.subscribe(this.assessor);
 	}
 
 	public void subscribe(AnalysisService.Listener listener) {
@@ -112,6 +137,33 @@ public final class AudioEngine {
 
 	SampleRingBuffer getRingBuffer() {
 		return this.ringBuffer;
+	}
+
+	private void levelCheckCompleted(InputAssessment assessment) {
+		this.analysisService.unsubscribe(this.assessor);
+		this.selection.updateAssessment(assessment);
+	}
+
+	/** A newly selected input is checked again when capture is running (FR-038, FR-039). */
+	private void selectionChanged(CurrentInputSelection.Snapshot snapshot) {
+		synchronized (this) {
+			if( snapshot.getInputRevision() == this.checkedInputRevision ) {
+				return;
+			}
+			this.checkedInputRevision = snapshot.getInputRevision();
+		}
+		// Without capture no frames arrive; acquire() starts the check then (no cancel here: a
+		// late notification must not cancel a check that acquire() already started).
+		if( snapshot.getInput() != null && this.captureService.getConsumerCount() > 0 ) {
+			runLevelCheck();
+		}
+	}
+
+	private void captureEvent(CaptureService.Event event) {
+		if( (event.getType() == CaptureService.EventType.DEVICE_LOST || event.getType() == CaptureService.EventType.CAPTURE_ERROR)
+				&& this.selection.snapshot().getInput() != null ) {
+			this.assessor.deviceLost();
+		}
 	}
 
 	void rebuildAnalysis(int sampleRate) {

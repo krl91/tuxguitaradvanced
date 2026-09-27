@@ -14,6 +14,7 @@ import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.analysis.LevelAnalyzer;
 import app.tuxguitar.audio.engine.analysis.PitchEstimate;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
+import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.input.InputDeviceCatalog;
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
 import app.tuxguitar.audio.engine.testsupport.SyntheticSignals;
@@ -88,6 +89,31 @@ public class AudioEngineTest {
 			assertTrue(recovered.await(2, TimeUnit.SECONDS));
 			engine.unsubscribe(listener);
 			assertEquals(1000L, engine.getDroppedSampleCount());
+		}
+		finally {
+			TGThreadManager.getInstance(context).dispose();
+		}
+	}
+
+	@Test
+	public void levelCheckPublishesItsResultInTheSharedSelection() throws InterruptedException {
+		TGContext context = newContext();
+		try {
+			AudioEngine engine = newEngine(context, AudioEngine.DEFAULT_RING_BUFFER_CAPACITY);
+			CountDownLatch assessed = new CountDownLatch(1);
+			engine.getSelection().addListener(snapshot -> {
+				if( snapshot.getAssessment().getStatus() == InputAssessment.Status.SUITABLE ) {
+					assessed.countDown();
+				}
+			});
+			engine.runLevelCheck();
+			float[] block = SyntheticSignals.sine(440.0, SAMPLE_RATE, BLOCK, 0.1);
+			SampleRingBuffer buffer = engine.getRingBuffer();
+			for( int i = 0 ; i < 60 && assessed.getCount() > 0 ; i ++ ) {
+				buffer.write(block, 0, block.length);
+				Thread.sleep(21L);
+			}
+			assertTrue(assessed.await(2, TimeUnit.SECONDS));
 		}
 		finally {
 			TGThreadManager.getInstance(context).dispose();
