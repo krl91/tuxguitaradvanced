@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.thread.TGThreadManager;
@@ -85,6 +86,16 @@ public final class SessionLoop<S> {
 		}
 	}
 
+	/**
+	 * Runs a task on the session thread, in order with frames and commands, for other session
+	 * changes (e.g. pausing); the task returns the new snapshot or null. Never waits.
+	 */
+	public void post(Supplier<S> task) {
+		if( this.running ) {
+			this.queue.offer(task);
+		}
+	}
+
 	private void run() {
 		while( true ) {
 			Object event;
@@ -103,6 +114,10 @@ public final class SessionLoop<S> {
 				snapshot = this.handler.onFrame((AnalysisFrame) event);
 			} else if( event instanceof PracticeCommand ) {
 				snapshot = this.handler.onCommand((PracticeCommand) event);
+			} else if( event instanceof Supplier ) {
+				@SuppressWarnings("unchecked")
+				Supplier<S> task = (Supplier<S>) event;
+				snapshot = task.get();
 			}
 			if( snapshot != null ) {
 				this.latestSnapshot.set(snapshot);
