@@ -18,6 +18,7 @@ import app.tuxguitar.graphics.control.TGLayoutHorizontal;
 import app.tuxguitar.graphics.control.TGLayoutStyles;
 import app.tuxguitar.graphics.control.TGLayoutVertical;
 import app.tuxguitar.graphics.control.TGResourceBuffer;
+import app.tuxguitar.player.base.MidiPlayer;
 import app.tuxguitar.player.base.MidiPlayerMode;
 import app.tuxguitar.song.managers.TGSongManager;
 import app.tuxguitar.song.models.TGBeat;
@@ -51,6 +52,11 @@ public class Tablature implements TGController {
 	private TGLayout viewLayout;
 	private EditorKit editorKit;
 	private Float scale;
+	private TGBeat externalBeat;
+	private boolean externalBeatChanged;
+	private List<TGNote> externalNotes;
+	private List<TGNote> externalAcceptedNotes;
+	private TGExternalNoteFramePainter externalNoteFramePainter;
 
 	public Tablature(TGContext context, TGDocumentManager documentManager) {
 		this.context = context;
@@ -216,6 +222,9 @@ public class Tablature implements TGController {
 
 	public void dispose(){
 		this.getCaret().dispose();
+		if( this.externalNoteFramePainter != null ) {
+			this.externalNoteFramePainter.dispose();
+		}
 		this.getViewLayout().disposeLayout();
 		this.getResourceBuffer().disposeAllResources();
 	}
@@ -242,11 +251,68 @@ public class Tablature implements TGController {
 	}
 
 	public boolean isRunning(TGBeat beat) {
+		if( isExternalBeatShown() ) {
+			return (beat == this.externalBeat);
+		}
 		return ( isRunning( beat.getMeasure() ) && TGTransport.getInstance(this.context).getCache().isPlaying(beat.getMeasure(),beat) );
 	}
 
 	public boolean isRunning(TGMeasure measure) {
+		if( isExternalBeatShown() ) {
+			return (measure == this.externalBeat.getMeasure());
+		}
 		return ( measure.getTrack().equals(getCaret().getTrack()) && TGTransport.getInstance(this.context).getCache().isPlaying( measure ) );
+	}
+
+	/** Beat shown through the external beat viewer API (e.g. practice); null for none. */
+	public TGBeat getExternalBeat() {
+		return this.externalBeat;
+	}
+
+	public void setExternalBeat(TGBeat externalBeat) {
+		this.setExternalBeat(externalBeat, null, null);
+	}
+
+	/**
+	 * @param notes notes of the beat framed as expected, or null to highlight the whole beat
+	 * @param acceptedNotes other notes framed as accepted, or null
+	 */
+	public void setExternalBeat(TGBeat externalBeat, List<TGNote> notes, List<TGNote> acceptedNotes) {
+		if( this.externalBeat != externalBeat ) {
+			this.externalBeat = externalBeat;
+			this.externalBeatChanged = true;
+		}
+		this.externalNotes = (externalBeat != null ? notes : null);
+		this.externalAcceptedNotes = (externalBeat != null ? acceptedNotes : null);
+	}
+
+	/** Notes framed as expected, or null when the whole external beat is highlighted. */
+	public List<TGNote> getExternalNotes() {
+		return this.externalNotes;
+	}
+
+	/** Notes framed as accepted, or null. */
+	public List<TGNote> getExternalAcceptedNotes() {
+		return this.externalAcceptedNotes;
+	}
+
+	public TGExternalNoteFramePainter getExternalNoteFramePainter() {
+		if( this.externalNoteFramePainter == null ) {
+			this.externalNoteFramePainter = new TGExternalNoteFramePainter();
+		}
+		return this.externalNoteFramePainter;
+	}
+
+	/** True once after each change of the external beat (the view scrolls to it once). */
+	public boolean consumeExternalBeatChange() {
+		boolean changed = this.externalBeatChanged;
+		this.externalBeatChanged = false;
+		return changed;
+	}
+
+	/** The external beat is highlighted only while the MIDI player is stopped. */
+	public boolean isExternalBeatShown() {
+		return (this.externalBeat != null && !MidiPlayer.getInstance(this.context).isRunning());
 	}
 
 	public boolean isLoopSHeader(TGMeasureHeader measureHeader){

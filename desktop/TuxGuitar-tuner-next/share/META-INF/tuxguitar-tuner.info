@@ -1,0 +1,5 @@
+### Plugin Information ###
+plugin.name=Guitar Tuner
+plugin.description=Guitar tuner with chromatic and guided modes, sharing its pitch detection\nwith Interactive Practice.
+plugin.author=TuxGuitarAdvanced
+plugin.version=0.1

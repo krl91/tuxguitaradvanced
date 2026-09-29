@@ -12,3 +12,32 @@ target/
 android/build-scripts/tuxguitar-android/local.properties
 android/build-scripts/tuxguitar-android/.idea/
 .DS_Store
+
+# AI agent / assistant files (never publish)
+.claude/
+.codex/
+.specify/
+.cursor/
+.mcp.json
+.claude-flow/
+.swarm/
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+specs/
+
+# Secrets / credentials
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.secret.yaml
+secrets/
+credentials*.json
+service-account*.json
+local.properties
+*.jnilib

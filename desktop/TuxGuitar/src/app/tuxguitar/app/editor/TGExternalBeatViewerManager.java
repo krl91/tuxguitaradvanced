@@ -1,9 +1,12 @@
 package app.tuxguitar.app.editor;
 
+import java.util.List;
+
 import app.tuxguitar.editor.TGEditorManager;
 import app.tuxguitar.event.TGEventListener;
 import app.tuxguitar.event.TGEventManager;
 import app.tuxguitar.song.models.TGBeat;
+import app.tuxguitar.song.models.TGNote;
 import app.tuxguitar.util.TGAbstractContext;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.singleton.TGSingletonFactory;
@@ -25,6 +28,19 @@ public class TGExternalBeatViewerManager {
 		this.asyncRunLocked(new Runnable() {
 			public void run() {
 				doShowExternalBeat(beat, context);
+			}
+		});
+	}
+
+	/**
+	 * Shows the beat and frames the given notes in the score and tablature (expected), plus
+	 * optional other notes framed as accepted; views that only know beats show the beat.
+	 */
+	public void showExternalNotes(final TGBeat beat, final List<TGNote> notes, final List<TGNote> acceptedNotes){
+		this.asyncRunLocked(new Runnable() {
+			public void run() {
+				TGEventManager.getInstance(TGExternalBeatViewerManager.this.context).fireEvent(
+						new TGExternalBeatViewerEvent(TGExternalBeatViewerEvent.ACTION_SHOW, beat, notes, acceptedNotes, null));
 			}
 		});
 	}

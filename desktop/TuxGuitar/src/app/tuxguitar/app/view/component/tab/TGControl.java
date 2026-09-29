@@ -12,6 +12,7 @@ import app.tuxguitar.graphics.control.TGLayout;
 import app.tuxguitar.graphics.control.TGMeasureImpl;
 import app.tuxguitar.player.base.MidiPlayer;
 import app.tuxguitar.player.base.MidiPlayerMode;
+import app.tuxguitar.song.models.TGBeat;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UIDisposeEvent;
 import app.tuxguitar.ui.event.UIDisposeListener;
@@ -175,6 +176,14 @@ public class TGControl {
 						this.scrollY = this.vScroll.getValue();
 					}
 				}
+				// scroll once to an externally shown beat when it changes (e.g. practice highlight)
+				if (this.tablature.consumeExternalBeatChange()) {
+					TGMeasureImpl externalMeasure = getDisplayedExternalMeasure();
+					if (externalMeasure != null) {
+						this.jumpTo(externalMeasure, false);
+						moved = true;
+					}
+				}
 			}
 			// performance optimization: while playing, only paint full tablature when needed
 			// i.e. scrolled OR playedMeasure changed OR canvas size changed (window resized, track table visible state changed)
@@ -206,6 +215,24 @@ public class TGControl {
 				if (playedBeat != lastPaintedPLayedBeat) {
 					this.tablature.getViewLayout().paintPlayMode(painter, playedMeasure, playedBeat);
 					this.lastPaintedPLayedBeat = playedBeat;
+				}
+			}
+
+			// highlight an externally shown beat while the player is stopped
+			if (!isPlaying) {
+				TGMeasureImpl externalMeasure = getDisplayedExternalMeasure();
+				if (externalMeasure != null && !externalMeasure.isOutOfBounds()
+						&& this.tablature.getExternalBeat() instanceof TGBeatImpl) {
+					if (this.tablature.getExternalNotes() != null) {
+						// frame the given notes in score and tablature instead of highlighting the whole beat
+						TGExternalNoteFramePainter framePainter = this.tablature.getExternalNoteFramePainter();
+						framePainter.paint(this.tablature.getViewLayout(), painter, this.tablature.getResourceFactory(),
+								this.tablature.getExternalAcceptedNotes(), true, this.tablature.getTrackSelection());
+						framePainter.paint(this.tablature.getViewLayout(), painter, this.tablature.getResourceFactory(),
+								this.tablature.getExternalNotes(), false, this.tablature.getTrackSelection());
+					} else {
+						this.tablature.getViewLayout().paintPlayMode(painter, externalMeasure, (TGBeatImpl) this.tablature.getExternalBeat());
+					}
 				}
 			}
 
@@ -338,6 +365,19 @@ public class TGControl {
 			this.vScroll.setVisible(false);
 			this.scrollY = 0;
 		}
+	}
+
+	/** Measure of the external beat when shown and part of the displayed track(s); else null. */
+	private TGMeasureImpl getDisplayedExternalMeasure() {
+		TGBeat beat = this.tablature.getExternalBeat();
+		if (!this.tablature.isExternalBeatShown() || !(beat.getMeasure() instanceof TGMeasureImpl)) {
+			return null;
+		}
+		int trackSelection = this.tablature.getTrackSelection();
+		if (trackSelection >= 0 && beat.getMeasure().getTrack().getNumber() != trackSelection) {
+			return null;
+		}
+		return (TGMeasureImpl) beat.getMeasure();
 	}
 
 	private void jumpTo(TGMeasureImpl measure, boolean anticipateScrolling) {

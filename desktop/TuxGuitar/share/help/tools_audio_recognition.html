@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link type="text/css" rel="stylesheet" href="style.css" />
+  <title>Audio recognition - TuxGuitar Help</title>
+</head>
+<body>
+  <input type="checkbox" id="check" checked="true" /> <label for="check"><b id="hamburger">☰</b> <b id="cancel">☓</b></label>
+  <div class="header">
+    TuxGuitar Help
+    <p id="version"></p>
+  </div>
+  <div class="title">
+    <h1 id="audio_recognition">Audio recognition (tuner and practice)</h1>
+  </div>
+  <div class="sidebar">
+    <ul class="menu">
+      <li class="menu2"><button title="Back" id="back" onclick="history.back()">&nbsp;</button> <button title="Top" id="top" onclick="window.location.href='index.html';">&nbsp;</button> <button title="Forward" id="forward" onclick="history.forward()">&nbsp;</button></li>
+      <li class="menu1">Introduction</li>
+      <li class="menu2"><a href="about.html">About</a></li>
+      <li class="menu2"><a href="license.html">License</a></li>
+      <li class="menu1">Getting started</li>
+      <li class="menu2"><a href="start_first_steps.html">The first steps</a></li>
+      <li class="menu2"><a href="start_menus_toolbars.html">Menus and Toolbars</a></li>
+      <li class="menu2"><a href="start_playing.html">Playing a song</a></li>
+      <li class="menu1">Editing a song</li>
+      <li class="menu2"><a href="editing_track.html">Editing a track</a></li>
+      <li class="menu2"><a href="editing_song.html">Editing a whole song</a></li>
+      <li class="menu2"><a href="edit_effects.html">Note effects</a></li>
+      <li class="menu2"><a href="edit_chord.html">Chord Editor</a></li>
+      <li class="menu2"><a href="edit_matrix.html">Matrix Editor</a></li>
+      <li class="menu1">Features in detail</li>
+      <li class="menu2"><a href="detail_file_edit.html">File and edit functions</a></li>
+      <li class="menu2"><a href="detail_view.html">View and layout</a></li>
+      <li class="menu2"><a href="detail_composition_track.html">Composition and track</a></li>
+      <li class="menu2"><a href="detail_measure_beat.html">Measure and beat</a></li>
+      <li class="menu2"><a href="detail_markers_player.html">Markers and Player</a></li>
+      <li class="menu1">Tools and settings</li>
+      <li class="menu2"><a href="tools_general.html">Settings dialog</a></li>
+      <li class="menu2"><a href="tools_skin.html">Changing the skin</a></li>
+      <li class="menu2"><a href="tools_sound.html">Sound in TuxGuitar</a></li>
+      <li class="menu2"><strong>Audio recognition</strong></li>
+      <li class="menu2"><a href="tools_audio_recognition_fr.html">Reconnaissance audio (français)</a></li>
+      <li class="menu2"><a href="tools_shortcuts.html">Default shortcuts</a></li>
+      <li class="menu2"><a href="tools_keybinding.html">Shortcut editor</a></li>
+      <li class="menu2"><a href="tools_plugins.html">Plugins dialog</a></li>
+      <li class="menu2"><a href="tools_converter.html">Batch File Converter</a></li>
+      <li class="menu2"><a href="tools_install_conf.html">Installation and configuration</a></li>
+      <li class="menu1"><a href="file_formats.html">Supported file formats</a></li>
+    </ul>
+  </div>
+    <section>
+    <p><a href="tools_audio_recognition_fr.html">Version française de cette page</a></p>
+    <p>The <strong>Audio recognition</strong> page of <strong>Tools → Settings</strong> collects the settings of the evolved tuner and of Interactive Practice. It shows one category at a time: choose it in the <strong>Settings category</strong> list. Every setting appears exactly once, in its category. Sliders show their value and unit, updated while you move them; the recommended value is marked next to it and in the tooltip of each setting (hover over the name). The values are saved and kept after TuxGuitar closes.</p>
+    <h2 id="recommended">Recommended values and the three ways to restore them</h2><p>Every recommended value is the value used before these settings existed, so the recommended configuration behaves exactly like earlier versions. There are three different scopes:</p><ul><li><strong>Restore the recommended values of this category</strong> resets only the category shown. Takes effect with <strong>OK</strong>; <strong>Cancel</strong> discards it.</li><li><strong>Restore all audio recognition settings</strong> resets every category of this page. Takes effect with <strong>OK</strong>; <strong>Cancel</strong> discards it.</li><li>The <strong>Defaults</strong> button at the bottom of the Settings dialog resets <strong>all TuxGuitar settings</strong> (language, style, sound, …), audio recognition included, at once, and closes the dialog.</li></ul>
+    <h2 id="when">When changes apply</h2><ul><li>Nothing changes before <strong>OK</strong>; <strong>Cancel</strong> keeps the previous values.</li><li>Tuner values: at once after OK.</li><li>Practice values (notes, chords, passages): at the next <strong>Start</strong>; a running practice keeps the values it started with.</li><li>Level and attack values: the listening restarts cleanly at once (a fraction of a second), without mixing old and new values.</li><li>The audio input is the exception: it changes as soon as it is chosen in the list, like in the tuner and practice windows.</li></ul>
+    <h2 id="invalid">Invalid or old configuration files</h2><p>Values are checked when they are entered and when the configuration file is read. A value that is missing, empty, not a number, infinite or of the wrong kind is replaced by the recommended value; a number outside its range is brought to the nearest limit. An accepted pitch range smaller than the in-tune range is raised to it. Unknown entries from other versions are ignored and removed at the next save. TuxGuitar never fails to start because of this file.</p>
+    <h2 id="input">Audio input</h2>
+    <p>The input (device and, on multi-channel interfaces, the channel) is shared by the tuner and Interactive Practice. It is the same list as in their windows; a change applies at once and is <strong>not remembered</strong> after TuxGuitar closes. The level values decide when the signal is reported as too low, suitable, too high or clipping; practice only accepts notes at a usable level.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Minimum usable level</td><td>dBFS</td><td>-60</td><td>-25</td><td>-40</td><td>works with a weaker signal, but room noise is listened to as well</td><td>the guitar must be louder; quiet notes are reported as "too low"</td></tr>
+    <tr><td>High level warning</td><td>dBFS</td><td>-20</td><td>-1</td><td>-6</td><td>"too high" is shown earlier</td><td>the warning comes only close to distortion</td></tr>
+    </table>
+    <h2 id="tuner">Tuner</h2>
+    <p>Tuner values apply as soon as the Settings dialog is confirmed, also while the tuner is open.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>In-tune range</td><td>cents</td><td>1</td><td>20</td><td>5</td><td>more precise tuning, harder to reach</td><td>easier to reach, less precise (also used for the tuning colour in the practice palette)</td></tr>
+    <tr><td>Keep the last note</td><td>on/off</td><td>—</td><td>—</td><td>On</td><td>Off: the display goes blank when the string fades</td><td>—</td></tr>
+    </table>
+    <h2 id="notes">Practice — notes</h2>
+    <p>Every note needs a <strong>new attack</strong> (a pluck) and must then sound, on the right pitch and with enough certainty, for the confirmation time. Silence and noise never advance practice. String and fret are never checked: only the pitch is.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Accepted pitch range</td><td>cents</td><td>10</td><td>45</td><td>35</td><td>stricter about tuning and slight bends</td><td>more forgiving; a neighbouring note (100 cents away) is never accepted. Never smaller than the in-tune range: a smaller value is raised to it</td></tr>
+    <tr><td>Minimum certainty</td><td>%</td><td>50</td><td>95</td><td>80</td><td>reacts to weaker or noisier notes, with more wrong judgements</td><td>fewer wrong judgements, but soft notes may not be judged</td></tr>
+    <tr><td>Time to confirm a note</td><td>ms</td><td>50</td><td>300</td><td>107</td><td>faster reaction, more risk from short glitches</td><td>steadier, but slower in fast passages. Rounded to whole analysis steps of 5.3 ms</td></tr>
+    <tr><td>Pick attack sensitivity</td><td>dB</td><td>2</td><td>10</td><td>4.5</td><td>soft attacks are detected, but knocks and noise may count as attacks</td><td>noise is ignored better, soft plucks may be missed</td></tr>
+    <tr><td>Hammer-ons, pull-offs, slides</td><td>choice</td><td>—</td><td>—</td><td>New attack for every note</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="chords">Practice — chords</h2>
+    <p>A chord is checked against the written chord: each string that has overtones of its own must be heard within the strum window. Strings that cannot be told apart by sound (the same note twice, or an octave of a lower string) are shown as "not checked" and never claimed as heard. Extra wrong strings are not checked in this version.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Chord strictness</td><td>%</td><td>20</td><td>80</td><td>33</td><td>weaker strings are accepted, a missing string may be accepted</td><td>stricter, a real but quiet string may be rejected</td></tr>
+    <tr><td>Strum window</td><td>ms</td><td>300</td><td>1500</td><td>600</td><td>needs a quick, even strum</td><td>allows slow, arpeggiated strums</td></tr>
+    <tr><td>Strings required</td><td>choice</td><td>—</td><td>—</td><td>All strings that can be checked</td><td>—</td><td>—</td></tr>
+    <tr><td>Extra wrong strings</td><td>choice</td><td>—</td><td>—</td><td>Not checked yet</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="passages">Passages</h2>
+    <p>The song is cut into passages in playing order (repeats and alternate endings are separate passages). At the end of a passage, if more of its notes and chords were wrong or skipped than the threshold, the passage is played again, up to the maximum. These are the values used when TuxGuitar starts; the Interactive Practice window can change the passage length and threshold for the current run only.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Repeat passages</td><td>choice</td><td>—</td><td>—</td><td>Every 2 measures</td><td>Off plays straight through; 1 or 4 measures give shorter or longer passages</td><td>—</td></tr>
+    <tr><td>Repeat when errors exceed</td><td>%</td><td>25</td><td>75</td><td>50</td><td>25 %: repeats even with a few mistakes</td><td>75 %: repeats only when most notes failed</td></tr>
+    <tr><td>Maximum repeats</td><td></td><td>0</td><td>5</td><td>2</td><td>0 never repeats</td><td>a difficult passage may be played up to 6 times</td></tr>
+    </table>
+    <h2 id="engine">Recognition engine</h2>
+    <p>This version has one pitch detection engine, <strong>FastYin</strong> (TarsosDSP). It finds <strong>one note at a time</strong> (monophonic); chords are checked with a separate spectrum analysis against the written chord (polyphonic, but only for the expected notes). "Automatic" always uses the recommended engine. No other engine is offered because none exists yet.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Pitch detection engine</td><td>choice</td><td>—</td><td>—</td><td>Automatic (FastYin)</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="advanced">Advanced</h2>
+    <p>Technical values of the signal analysis. Change them only when the recommended values do not work with your equipment. The analysis window (2048 samples) and step (256 samples) are fixed, because every time value above depends on them.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Clipping sample level</td><td>%</td><td>90</td><td>100</td><td>99</td><td>more samples count as clipped</td><td>only full-scale samples count</td></tr>
+    <tr><td>Clipping share</td><td>%</td><td>1</td><td>50</td><td>10</td><td>"clipping" is reported sooner</td><td>"clipping" is reported only for heavy distortion</td></tr>
+    <tr><td>Tuner minimum certainty</td><td>%</td><td>50</td><td>95</td><td>80</td><td>the tuner shows weaker notes, with more flicker</td><td>steadier, may stay blank on soft notes</td></tr>
+    <tr><td>Attack detection floor</td><td>dBFS</td><td>-70</td><td>-30</td><td>-50</td><td>very soft attacks are detected, more noise</td><td>quiet noise is ignored</td></tr>
+    <tr><td>Chord overtones per string</td><td></td><td>1</td><td>4</td><td>2</td><td>more strings can be checked, less reliably</td><td>fewer strings can be checked separately</td></tr>
+    <tr><td>Time to confirm a chord</td><td>ms</td><td>20</td><td>150</td><td>43</td><td>chords are accepted faster</td><td>steadier, slower. Rounded to whole analysis steps</td></tr>
+    </table>
+    <h2 id="limits">Limits</h2><p>Recognition is based on pitch only: it cannot tell which string or fret was used, nor recognise techniques. Legato notes (hammer-on, pull-off, slide) have no pick attack and may have to be picked again or skipped; accepting them without an attack and rejecting extra chord strings are proposals still under review, so they are not offered as settings.</p>
+    </section>
+  <script src="init.js"></script>
+</body>
+</html>

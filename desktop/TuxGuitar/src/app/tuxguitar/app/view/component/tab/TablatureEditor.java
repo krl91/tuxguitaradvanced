@@ -3,6 +3,8 @@ package app.tuxguitar.app.view.component.tab;
 import java.util.List;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.editor.TGExternalBeatViewerEvent;
+import app.tuxguitar.app.editor.TGExternalBeatViewerManager;
 import app.tuxguitar.app.system.config.TGConfigKeys;
 import app.tuxguitar.app.system.config.TGConfigManager;
 import app.tuxguitar.document.TGDocumentManager;
@@ -11,9 +13,12 @@ import app.tuxguitar.editor.event.TGUpdateEvent;
 import app.tuxguitar.editor.event.TGUpdateMeasuresEvent;
 import app.tuxguitar.event.TGEvent;
 import app.tuxguitar.event.TGEventListener;
+import app.tuxguitar.song.models.TGBeat;
+import app.tuxguitar.song.models.TGNote;
 import app.tuxguitar.ui.menu.UIPopupMenu;
 import app.tuxguitar.util.TGAbstractContext;
 import app.tuxguitar.util.TGContext;
+import app.tuxguitar.util.TGSynchronizer;
 import app.tuxguitar.util.singleton.TGSingletonFactory;
 import app.tuxguitar.util.singleton.TGSingletonUtil;
 
@@ -45,6 +50,7 @@ public class TablatureEditor implements TGEventListener{
 
 	private void initListener(){
 		TGEditorManager.getInstance(this.context).addUpdateListener( this );
+		TGExternalBeatViewerManager.getInstance(this.context).addBeatViewerListener( this );
 	}
 
 	private void initMenu(){
@@ -79,9 +85,25 @@ public class TablatureEditor implements TGEventListener{
 		}
 	}
 
+	public void processExternalBeatEvent(final TGEvent event) {
+		final boolean show = TGExternalBeatViewerEvent.ACTION_SHOW.equals(event.getAttribute(TGExternalBeatViewerEvent.PROPERTY_ACTION));
+		final TGBeat beat = (show ? (TGBeat) event.getAttribute(TGExternalBeatViewerEvent.PROPERTY_BEAT) : null);
+		final List<TGNote> notes = (show ? event.<List<TGNote>>getAttribute(TGExternalBeatViewerEvent.PROPERTY_NOTES) : null);
+		final List<TGNote> acceptedNotes = (show ? event.<List<TGNote>>getAttribute(TGExternalBeatViewerEvent.PROPERTY_ACCEPTED_NOTES) : null);
+		TGSynchronizer.getInstance(this.context).executeLater(new Runnable() {
+			public void run() {
+				getTablature().setExternalBeat(beat, notes, acceptedNotes);
+				TGEditorManager.getInstance(TablatureEditor.this.context).redraw();
+			}
+		});
+	}
+
 	public void processEvent(final TGEvent event) {
 		if( TGUpdateEvent.EVENT_TYPE.equals(event.getEventType()) ) {
 			this.processUpdateEvent(event);
+		}
+		else if( TGExternalBeatViewerEvent.EVENT_TYPE.equals(event.getEventType()) ) {
+			this.processExternalBeatEvent(event);
 		}
 	}
 
