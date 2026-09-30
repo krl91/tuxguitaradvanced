@@ -29,6 +29,7 @@ import app.tuxguitar.ui.widget.UIControl;
 import app.tuxguitar.ui.widget.UIPanel;
 import app.tuxguitar.ui.widget.UIWindow;
 import app.tuxguitar.util.TGContext;
+import app.tuxguitar.util.TGSynchronizer;
 import app.tuxguitar.util.singleton.TGSingletonFactory;
 import app.tuxguitar.util.singleton.TGSingletonUtil;
 
@@ -50,6 +51,19 @@ public class TGMainToolBar extends TGToolBarModel {
 		if (this.config == null) {
 			this.config = configMgr.getDefaultConfig();
 		}
+		// a plugin adding or removing an item rebuilds the tool bar (on the UI thread)
+		TGMainToolBarItemRegistry.getInstance(context).addChangeListener(new Runnable() {
+			public void run() {
+				TGSynchronizer.getInstance(getContext()).executeLater(new Runnable() {
+					public void run() {
+						if (panel != null && !panel.isDisposed()) {
+							layout();
+							updateItems();
+						}
+					}
+				});
+			}
+		});
 	}
 
 	public void createToolBar(UIWindow parentWindow, boolean visible) {
@@ -72,14 +86,18 @@ public class TGMainToolBar extends TGToolBarModel {
 		List<UIControl> controls = new ArrayList<UIControl>();
 		mainToolBarLayout.set(UITableLayout.MARGIN, 0f);
 		int col = 1;
-		TGMainToolBarConfigMap configMap = new TGMainToolBarConfigMap();
+		TGMainToolBarConfigMap configMap = new TGMainToolBarConfigMap(getContext());
+		// the default layout gets the items plugins ask to place in it; a saved layout is left as it is
+		boolean defaultLayout = "".equals(this.config.getName());
+		TGMainToolBarItemRegistry registry = TGMainToolBarItemRegistry.getInstance(getContext());
 		
 		for (int area : new int[] { LEFT_AREA, CENTER_AREA, RIGHT_AREA }) {
 			TGMainToolBarSection section = null;
 			TGMainToolBarItemConfig lastAddedItemConfig = null;
 			controls.clear();
 
-			for (String toolBarItemName : this.config.getAreaContent(area)) {
+			List<String> areaContent = (defaultLayout ? registry.withDefaultItems(this.config.getAreaContent(area)) : this.config.getAreaContent(area));
+			for (String toolBarItemName : areaContent) {
 				TGMainToolBarItemConfig toolBarItemConfig = configMap.getToolBarItemConfig(toolBarItemName);
 				if (toolBarItemConfig == null) {
 					System.out.printf("toolBarItem name not found (ignored): " + toolBarItemName + "\n");

@@ -185,6 +185,14 @@ public class TGMainToolBarConfigMap {
 	private List<String> groupNames;
 
 	public TGMainToolBarConfigMap() {
+		this(null);
+	}
+
+	/**
+	 * @param context the context whose {@link TGMainToolBarItemRegistry} items are added to the map,
+	 *        or null for the built-in items only
+	 */
+	public TGMainToolBarConfigMap(TGContext context) {
 		this.mapItems = new HashMap<String, TGMainToolBarItemConfig>();
 		this.itemNames = new ArrayList<String>();
 		this.groupNames = new ArrayList<String>();
@@ -828,6 +836,16 @@ public class TGMainToolBarConfigMap {
 		//------- settings --------
 		this.groupName = "settings";
 		registerButton("toolbar.settings", TGOpenMainToolBarSettingsDialogAction.NAME, TGIconManager.SETTINGS, DISABLE_ON_PLAY);
+
+		//------- items added by plugins --------
+		if( context != null ) {
+			for( TGMainToolBarPluginItem item : TGMainToolBarItemRegistry.getInstance(context).items() ) {
+				this.groupName = (item.getGroup() != null ? item.getGroup() : "plugins");
+				registerItem(new TGMainToolBarItemConfig(this.groupName, item.getName(),
+						item.isCheckable() ? TGMainToolBarItem.CHECKABLE_ITEM : TGMainToolBarItem.ACTION_ITEM,
+						TGMainToolBarSection.TYPE_TOOLITEMS, item.getActionName(), item.getIconFileName(), item.getUpdater(), false));
+			}
+		}
 	}
 
 	private TGMainToolBarItemUpdater getDurationUpdater(final int value) {

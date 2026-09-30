@@ -59,7 +59,7 @@ public class TGMainToolBarDialog {
 	private UIButton downButton;
 
 	public TGMainToolBarDialog() {
-		this.configMap = new TGMainToolBarConfigMap();
+		this.configMap = new TGMainToolBarConfigMap(TuxGuitar.getInstance().getContext());
 		this.configMgr = new TGMainToolBarConfigManager();
 		this.iconManager = TuxGuitar.getInstance().getIconManager();
 	}

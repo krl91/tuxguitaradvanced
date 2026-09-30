@@ -162,6 +162,7 @@ public class PracticeWindow {
 				PracticeWindow.this.shared.setPracticeTrack(null);
 				RecognitionSettingsStore.getInstance(PracticeWindow.this.context).removeListener(PracticeWindow.this.settingsListener);
 				PracticeWindow.this.window = null;
+				PracticeWindow.this.plugin.windowStateChanged(PracticeWindow.this.context);
 			}
 		});
 
@@ -182,6 +183,7 @@ public class PracticeWindow {
 
 		showPreparation();
 		TGDialogUtil.openDialog(this.window, TGDialogUtil.OPEN_STYLE_CENTER | TGDialogUtil.OPEN_STYLE_PACK);
+		this.plugin.windowStateChanged(this.context);
 	}
 
 	public void close() {

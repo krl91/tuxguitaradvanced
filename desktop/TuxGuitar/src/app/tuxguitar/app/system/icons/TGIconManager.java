@@ -745,7 +745,12 @@ public class TGIconManager {
 	// Make sure to only use file names defined as static final String in this class
 	// when calling this method. Don't duplicate file names definitions
 	public UIImage getImageByName(String name) {
-		return this.theme.getResource(name);
+		UIImage image = this.theme.getResource(name);
+		if( image == null ) {
+			// an icon shipped by a plugin (for example the Practice button) is loaded on first use
+			image = loadIcon(name);
+		}
+		return image;
 	}
 	
 
