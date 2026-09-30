@@ -150,7 +150,7 @@ public class GP3InputStream extends GTPInputStream {
 
 	private void readMeasures(TGSong song, int measures, int tracks, int tempoValue) throws IOException{
 		TGTempo tempo = getFactory().newTempo();
-		tempo.setQuarterValue(tempoValue);
+		applyTempo(tempo, tempoValue);
 		long start = TGDuration.QUARTER_TIME;
 		for (int i = 0; i < measures; i++) {
 			TGMeasureHeader header = song.getMeasureHeader(i);
@@ -611,7 +611,7 @@ public class GP3InputStream extends GTPInputStream {
 			readByte();
 		}
 		if(tempoValue >= 0){
-			tempo.setQuarterValue(tempoValue);
+			applyTempo(tempo, tempoValue);
 			readByte();
 		}
 	}

@@ -7,6 +7,7 @@ import app.tuxguitar.io.base.TGFileFormatException;
 import app.tuxguitar.io.base.TGSongReader;
 import app.tuxguitar.io.base.TGSongReaderHandle;
 import app.tuxguitar.song.models.TGSong;
+import app.tuxguitar.song.models.TGTempo;
 
 public abstract class GTPInputStream extends GTPFileFormat implements TGSongReader{
 
@@ -34,6 +35,17 @@ public abstract class GTPInputStream extends GTPFileFormat implements TGSongRead
 			throw tgFormatException;
 		} catch (Throwable throwable) {
 			throw new TGFileFormatException(throwable);
+		}
+	}
+
+	/**
+	 * Applies a tempo read from the file. Some files hold a tempo of 0 (initial tempo or tempo change in a
+	 * mix table); it is not a real tempo and would later divide by zero (measure duration, player), so the
+	 * current tempo is kept.
+	 */
+	static void applyTempo(TGTempo tempo, int tempoValue) {
+		if( tempoValue > 0 ) {
+			tempo.setQuarterValue(tempoValue);
 		}
 	}
 

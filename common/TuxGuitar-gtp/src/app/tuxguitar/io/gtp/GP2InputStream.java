@@ -393,7 +393,7 @@ public class GP2InputStream extends GTPInputStream {
 		int flags = readUnsignedByte();
 		// Tempo
 		if ((flags & 0x20) != 0) {
-			tempo.setQuarterValue(readInt());
+			applyTempo(tempo, readInt());
 			readUnsignedByte();
 		}
 		// Reverb
