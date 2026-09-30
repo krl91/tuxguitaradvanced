@@ -198,6 +198,44 @@ public final class PracticeEvent {
 		return this.techniques;
 	}
 
+	/**
+	 * The written techniques of this event with what is needed to judge them (spec 002). For now they
+	 * are derived from the display-only set: slide, vibrato, palm mute and tremolo picking. Hammer-ons
+	 * and pull-offs need the destination note to be told apart, bends and harmonics are still
+	 * auto-passed; later phases fill those in.
+	 */
+	public List<TechniqueTarget> getTechniqueTargets() {
+		List<TechniqueTarget> targets = new ArrayList<TechniqueTarget>();
+		for( Technique technique : this.techniques ) {
+			PlayingTechnique mapped = mapped(technique);
+			if( mapped != null ) {
+				targets.add(TechniqueTarget.of(mapped));
+			}
+		}
+		return Collections.unmodifiableList(targets);
+	}
+
+	private static PlayingTechnique mapped(Technique technique) {
+		switch( technique ) {
+			case SLIDE:
+				return PlayingTechnique.SLIDE;
+			case VIBRATO:
+				return PlayingTechnique.VIBRATO;
+			case PALM_MUTE:
+				return PlayingTechnique.PALM_MUTE;
+			case TREMOLO_PICKING:
+				return PlayingTechnique.TREMOLO_PICKING;
+			case ACCENT:
+				return PlayingTechnique.ACCENT;
+			case LET_RING:
+				return PlayingTechnique.LET_RING;
+			case STACCATO:
+				return PlayingTechnique.STACCATO;
+			default:
+				return null;
+		}
+	}
+
 	/** True when the expected pitch equals the previous expected note's pitch (re-articulation, FR-022). */
 	public boolean isSameAsPrevious() {
 		return this.sameAsPrevious;

@@ -64,6 +64,8 @@
     <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
     <tr><td>Minimum usable level</td><td>dBFS</td><td>-60</td><td>-25</td><td>-40</td><td>works with a weaker signal, but room noise is listened to as well</td><td>the guitar must be louder; quiet notes are reported as "too low"</td></tr>
     <tr><td>High level warning</td><td>dBFS</td><td>-20</td><td>-1</td><td>-6</td><td>"too high" is shown earlier</td><td>the warning comes only close to distortion</td></tr>
+    <tr><td>Reduce background noise</td><td>on/off</td><td>—</td><td>—</td><td>Off</td><td>Off: the input is analysed as it is</td><td>—</td></tr>
+    <tr><td>Suggest an input gain</td><td>on/off</td><td>—</td><td>—</td><td>On</td><td>Off: no gain is suggested, the gain stays manual</td><td>—</td></tr>
     </table>
     <h2 id="tuner">Tuner</h2>
     <p>Tuner values apply as soon as the Settings dialog is confirmed, also while the tuner is open.</p>
@@ -81,6 +83,8 @@
     <tr><td>Time to confirm a note</td><td>ms</td><td>50</td><td>300</td><td>107</td><td>faster reaction, more risk from short glitches</td><td>steadier, but slower in fast passages. Rounded to whole analysis steps of 5.3 ms</td></tr>
     <tr><td>Pick attack sensitivity</td><td>dB</td><td>2</td><td>10</td><td>4.5</td><td>soft attacks are detected, but knocks and noise may count as attacks</td><td>noise is ignored better, soft plucks may be missed</td></tr>
     <tr><td>Hammer-ons, pull-offs, slides</td><td>choice</td><td>—</td><td>—</td><td>New attack for every note</td><td>—</td><td>—</td></tr>
+    <tr><td>Check playing techniques</td><td>on/off</td><td>—</td><td>—</td><td>On</td><td>Off: every technique is shown as not verifiable</td><td>—</td></tr>
+    <tr><td>Timing tolerance (playing at the tempo)</td><td>choice</td><td>—</td><td>—</td><td>Normal</td><td>—</td><td>—</td></tr>
     </table>
     <h2 id="chords">Practice — chords</h2>
     <p>A chord is checked against the written chord: each string that has overtones of its own must be heard within the strum window. Strings that cannot be told apart by sound (the same note twice, or an octave of a lower string) are shown as "not checked" and never claimed as heard. Extra wrong strings are not checked in this version.</p>

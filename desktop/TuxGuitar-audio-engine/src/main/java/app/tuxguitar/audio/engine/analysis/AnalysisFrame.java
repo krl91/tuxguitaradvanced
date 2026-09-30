@@ -1,5 +1,8 @@
 package app.tuxguitar.audio.engine.analysis;
 
+import app.tuxguitar.audio.engine.recognition.TargetEvidence;
+import app.tuxguitar.audio.engine.technique.TechniqueFeatures;
+
 /**
  * Analysis result for one hop of the selected input. Immutable.
  */
@@ -21,6 +24,8 @@ public final class AnalysisFrame {
 	private final double confidence;
 	private final boolean onset;
 	private final SpectrumFrame spectrum;
+	private final TargetEvidence targetEvidence;
+	private final TechniqueFeatures techniqueFeatures;
 
 	/**
 	 * @param timestampNanos capture time of the hop end
@@ -38,6 +43,15 @@ public final class AnalysisFrame {
 
 	/** @param spectrum the polyphonic view of this hop, or null when the spectrum is not enabled */
 	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum) {
+		this(timestampNanos, rmsDbfs, peakDbfs, clippedRatio, levelState, f0Hz, confidence, onset, spectrum, null, null);
+	}
+
+	/**
+	 * @param targetEvidence the expected-pitch verifier's view of this hop, or null when not enabled (spec 002)
+	 * @param techniqueFeatures the technique measurements of this hop, or null when not enabled (spec 002)
+	 */
+	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum,
+			TargetEvidence targetEvidence, TechniqueFeatures techniqueFeatures) {
 		this.timestampNanos = timestampNanos;
 		this.rmsDbfs = rmsDbfs;
 		this.peakDbfs = peakDbfs;
@@ -47,6 +61,8 @@ public final class AnalysisFrame {
 		this.confidence = confidence;
 		this.onset = onset;
 		this.spectrum = spectrum;
+		this.targetEvidence = targetEvidence;
+		this.techniqueFeatures = techniqueFeatures;
 	}
 
 	public long getTimestampNanos() {
@@ -85,5 +101,15 @@ public final class AnalysisFrame {
 	/** Polyphonic view of this hop (plan stage D); null unless the spectrum is enabled. */
 	public SpectrumFrame getSpectrum() {
 		return this.spectrum;
+	}
+
+	/** Expected-pitch evidence of this hop; null unless enabled (spec 002). */
+	public TargetEvidence getTargetEvidence() {
+		return this.targetEvidence;
+	}
+
+	/** Technique measurements of this hop; null unless enabled (spec 002). */
+	public TechniqueFeatures getTechniqueFeatures() {
+		return this.techniqueFeatures;
 	}
 }

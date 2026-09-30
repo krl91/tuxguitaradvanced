@@ -64,6 +64,8 @@
     <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
     <tr><td>Niveau minimal utilisable</td><td>dBFS</td><td>-60</td><td>-25</td><td>-40</td><td>fonctionne avec un signal plus faible, mais écoute aussi le bruit de la pièce</td><td>la guitare doit jouer plus fort ; les notes douces sont signalées « trop faibles »</td></tr>
     <tr><td>Alerte de niveau élevé</td><td>dBFS</td><td>-20</td><td>-1</td><td>-6</td><td>« trop fort » s'affiche plus tôt</td><td>l'alerte ne vient que près de la saturation</td></tr>
+    <tr><td>Réduire le bruit de fond</td><td>on/off</td><td>—</td><td>—</td><td>Désactivé</td><td>Désactivé : l'entrée est analysée telle quelle</td><td>—</td></tr>
+    <tr><td>Suggérer un gain d'entrée</td><td>on/off</td><td>—</td><td>—</td><td>Activé</td><td>Désactivé : aucun gain n'est suggéré, le gain reste manuel</td><td>—</td></tr>
     </table>
     <h2 id="tuner">Accordeur</h2>
     <p>Les réglages de l'accordeur s'appliquent dès la validation de la configuration, même accordeur ouvert.</p>
@@ -81,6 +83,8 @@
     <tr><td>Durée de confirmation d'une note</td><td>ms</td><td>50</td><td>300</td><td>107</td><td>réaction plus rapide, plus de risque dû aux parasites courts</td><td>plus stable, mais plus lent dans les passages rapides. Arrondi à des pas d'analyse entiers de 5,3 ms</td></tr>
     <tr><td>Sensibilité à l'attaque</td><td>dB</td><td>2</td><td>10</td><td>4.5</td><td>détecte les attaques douces, mais les chocs et le bruit peuvent compter</td><td>ignore mieux le bruit, peut manquer les attaques douces</td></tr>
     <tr><td>Liés, tirés-poussés, glissés</td><td>choix</td><td>—</td><td>—</td><td>Nouvelle attaque pour chaque note</td><td>—</td><td>—</td></tr>
+    <tr><td>Vérifier les techniques de jeu</td><td>on/off</td><td>—</td><td>—</td><td>Activé</td><td>Désactivé : toute technique est indiquée comme non vérifiable</td><td>—</td></tr>
+    <tr><td>Tolérance de timing (jeu au tempo)</td><td>choice</td><td>—</td><td>—</td><td>Normal</td><td>—</td><td>—</td></tr>
     </table>
     <h2 id="chords">Pratique — accords</h2>
     <p>Un accord est vérifié par rapport à l'accord écrit : chaque corde qui a des harmoniques propres doit être entendue dans la fenêtre de grattage. Les cordes impossibles à distinguer à l'oreille (même note deux fois, ou octave d'une corde plus grave) sont indiquées « non vérifiées » et jamais déclarées entendues. Les cordes en trop ne sont pas vérifiées dans cette version.</p>

@@ -28,6 +28,10 @@ public final class RecognitionParameters {
 	// ---------------------------------------------------------------- input (shared)
 	public static final Number INPUT_LEVEL_MIN = new Number(PREFIX + "input.level.min", Section.INPUT, "dBFS", -40, -60, -25, true);
 	public static final Number INPUT_LEVEL_MAX = new Number(PREFIX + "input.level.max", Section.INPUT, "dBFS", -6, -20, -1, true);
+	/** Noise gate and noise subtraction on the input (spec 002, FR-064); off by default until the benchmark justifies it (S-B1). */
+	public static final Flag INPUT_NOISE_REDUCTION = new Flag(PREFIX + "input.noise-reduction", Section.INPUT, false);
+	/** Offers a suggested gain after the level check (spec 002, FR-066); the suggestion is never applied without confirmation. */
+	public static final Flag INPUT_GAIN_SUGGESTION = new Flag(PREFIX + "input.gain-suggestion", Section.INPUT, true);
 
 	// ---------------------------------------------------------------- tuner
 	public static final Number TUNER_IN_TUNE = new Number(PREFIX + "tuner.in-tune", Section.TUNER, "cents", 5, 1, 20, true);
@@ -40,6 +44,14 @@ public final class RecognitionParameters {
 	public static final Number NOTE_ATTACK = new Number(PREFIX + "note.attack", Section.NOTES, "dB", 4.5, 2.0, 10.0, false);
 	public static final String LEGATO_STRICT = "strict";
 	public static final Choice NOTE_LEGATO = new Choice(PREFIX + "note.legato", Section.NOTES, LEGATO_STRICT, LEGATO_STRICT);
+	/** Evaluates the written playing techniques (spec 002, FR-020, FR-032); off makes every technique "not verifiable". */
+	public static final Flag NOTE_TECHNIQUE = new Flag(PREFIX + "note.technique", Section.NOTES, true);
+	public static final String TOLERANCE_STRICT = "strict";
+	public static final String TOLERANCE_NORMAL = "normal";
+	public static final String TOLERANCE_LENIENT = "lenient";
+	/** Timing tolerance of the tempo-following mode (spec 002, FR-052); the values behind the presets come from the tempo spike. */
+	public static final Choice TEMPO_TOLERANCE = new Choice(PREFIX + "tempo.tolerance", Section.NOTES, TOLERANCE_NORMAL,
+			TOLERANCE_STRICT, TOLERANCE_NORMAL, TOLERANCE_LENIENT);
 
 	// ---------------------------------------------------------------- practice: chords
 	public static final Number CHORD_EVIDENCE = new Number(PREFIX + "chord.evidence", Section.CHORDS, "%", 1.0 / 3.0, 0.20, 0.80, false, 100.0);
@@ -72,9 +84,9 @@ public final class RecognitionParameters {
 
 	static {
 		List<RecognitionParameter> all = new ArrayList<RecognitionParameter>();
-		Collections.addAll(all, INPUT_LEVEL_MIN, INPUT_LEVEL_MAX,
+		Collections.addAll(all, INPUT_LEVEL_MIN, INPUT_LEVEL_MAX, INPUT_NOISE_REDUCTION, INPUT_GAIN_SUGGESTION,
 				TUNER_IN_TUNE, TUNER_HOLD,
-				NOTE_ACCEPT, NOTE_CONFIDENCE, NOTE_STABILITY, NOTE_ATTACK, NOTE_LEGATO,
+				NOTE_ACCEPT, NOTE_CONFIDENCE, NOTE_STABILITY, NOTE_ATTACK, NOTE_LEGATO, NOTE_TECHNIQUE, TEMPO_TOLERANCE,
 				CHORD_EVIDENCE, CHORD_WINDOW, CHORD_COMPLETENESS, CHORD_FOREIGN,
 				PASSAGE_MEASURES, PASSAGE_THRESHOLD, PASSAGE_RETRIES,
 				ENGINE_PITCH,
