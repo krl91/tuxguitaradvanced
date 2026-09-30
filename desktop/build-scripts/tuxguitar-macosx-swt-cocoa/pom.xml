@@ -17,7 +17,7 @@
 		<project.rootPath>${project.parent.relativePath}</project.rootPath>
 		<project.finalName>tuxguitar-${project.version}-macosx-swt-cocoa.app</project.finalName>
 		<org.eclipse.swt.artifactId>org.eclipse.swt.cocoa.macosx</org.eclipse.swt.artifactId>
-		<macos.microphoneUsageDescription>TuxGuitar uses the microphone to detect notes for the tuner and interactive practice.</macos.microphoneUsageDescription>
+		<macos.microphoneUsageDescription>TuxGuitarAdvanced uses the microphone to detect notes for the tuner and interactive practice.</macos.microphoneUsageDescription>
 	</properties>
 
 	<modules>
@@ -429,6 +429,22 @@
 								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
 									<arg value="-c" />
 									<arg value="Add :NSMicrophoneUsageDescription string ${macos.microphoneUsageDescription}" />
+									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
+								</exec>
+								<!-- the fork's product name (the shared common-macosx Info.plist still says TuxGuitar) -->
+								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
+									<arg value="-c" />
+									<arg value="Set :CFBundleName TuxGuitarAdvanced" />
+									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
+								</exec>
+								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
+									<arg value="-c" />
+									<arg value="Add :CFBundleDisplayName string TuxGuitarAdvanced" />
+									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
+								</exec>
+								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
+									<arg value="-c" />
+									<arg value="Set :CFBundleGetInfoString TuxGuitarAdvanced ${project.version}" />
 									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
 								</exec>
 								<!-- exactly one tuner: legacy and evolved tuners share module id tuxguitar-tuner (research R19) -->

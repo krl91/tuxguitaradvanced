@@ -69,7 +69,9 @@ jobs:
       - name: Zip the app
         run: |
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
-          ditto -c -k --sequesterRsrc --keepParent "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app" "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
+          # the app bundle carries the product name (it is also the top-level folder of the zip)
+          mv "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app" TuxGuitarAdvanced.app
+          ditto -c -k --sequesterRsrc --keepParent TuxGuitarAdvanced.app "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: package-macos-arm64
