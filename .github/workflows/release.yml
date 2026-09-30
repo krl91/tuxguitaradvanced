@@ -12,7 +12,9 @@
 #    contain the Interactive Practice modules.
 #  - The Windows build is cross-compiled on Linux with Mingw-w64 and does not
 #    embed a JRE: Java 17+ must be installed on the target machine.
-#  - The packages are not code-signed / notarized.
+#  - The macOS launcher is signed with a stable self-signed certificate when the secrets
+#    MACOS_CERT_P12_BASE64 / MACOS_CERT_PASSWORD exist (ad hoc otherwise). The packages are
+#    not notarized: the first launch still needs "Open Anyway" in System Settings.
 
 name: Release
 
@@ -54,12 +56,19 @@ jobs:
           mvn -B install:install-file -Dfile=swt.jar -DgroupId=org.eclipse.swt -DartifactId=org.eclipse.swt.cocoa.macosx -Dpackaging=jar -Dversion=${SWT_VERSION}
       - name: Build
         run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B -e clean verify -P native-modules -DskipTests
-      - name: Embed the JRE and zip the app
+      - name: Embed the JRE
         run: |
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
-          APP="tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app"
-          cp -R "$JAVA_HOME" "$APP/Contents/MacOS/jre"
-          ditto -c -k --sequesterRsrc --keepParent "$APP" "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
+          cp -R "$JAVA_HOME" "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app/Contents/MacOS/jre"
+      - name: Sign the launcher (stable self-signed certificate, if the secrets exist)
+        env:
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: .github/scripts/sign-macos-launcher.sh "desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target/tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app"
+      - name: Zip the app
+        run: |
+          cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
+          ditto -c -k --sequesterRsrc --keepParent "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app" "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: package-macos-arm64
