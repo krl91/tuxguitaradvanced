@@ -1092,3 +1092,267 @@ All values stay provisional and configurable until acceptance.
   would remove these readings entirely but would also make notes below A#1 undetectable in the
   "unusual setup" tunings that FR-008 allows; left as a product decision.
 
+
+## R20. Scope expansion 2026-09-27 — what exists, what does not
+
+Inspected on `b7639d4d2`:
+
+- **Single notes are judged and advance.** `PracticeSession.onFrame` accepts an `EXPECTED_NOTE`
+  after reliable, matching (±35 cents), stable (20 hops) readings, plus an onset for a same-pitch
+  note, then advances; `PracticeWindow.startSession` subscribes the engine frames to the session
+  loop; `PracticeSessionTest` covers it. A track whose first practice event is a chord stops
+  there, because `MULTI_NOTE` waits for Skip by design (FR-012) — a likely reason for practice
+  appearing not to advance on a chord-heavy song.
+- **Chords are not recognised.** The engine gives one fundamental per frame (FastYin →
+  `PitchReading`); `MULTI_NOTE` events carry no pitch data (`PracticeEvent.NO_PITCH`).
+- **The practice highlight is beat-level.** It reuses the played-beat style: every note of the
+  beat in the play colour and, with "highlight played beat" on, one rounded rectangle spanning the
+  measure's height (`TGBeatImpl.paint`). No existing API frames single notes, per staff, or in
+  another colour (plan "Core change for stage B").
+
+## R21. Chord detection — method choice (plan stage D/E)
+
+Constraints: deterministic and explainable first (Constitution VIII), no ML in scope, TarsosDSP
+only inside the engine, Java 11. TarsosDSP 2.5 has no polyphonic pitch estimator (its YIN/MPM
+family is monophonic), so the chord analysis is written in the engine.
+
+- **Chosen direction:** per-semitone spectral band magnitudes plus harmonic-sum salience over a
+  longer FFT window, and *score-conditioned* matching in practice (is each expected pitch there,
+  is anything else strong?) rather than unconditioned transcription. Conditioning on the known
+  chord is far more reliable than open-ended multi-pitch estimation.
+- **Frequency resolution:** adjacent semitones near E2 are ≈ 4.9 Hz apart. A Hann window of 8192
+  samples at 48 kHz (≈ 171 ms) has a main lobe of ≈ 11.7 Hz, so low fundamentals are separated
+  mainly through their harmonics; a 16384 window (≈ 341 ms) resolves them directly but smears a
+  strum and adds latency. Provisional 8192, to be measured on real chords (SC-010).
+- **Intrinsic limits (Constitution XIII):** identical pitches on two strings are one pitch
+  (FR-078). A pitch equal to a harmonic of a lower chord pitch (octave, octave + fifth, two
+  octaves) is always "present" when the lower note rings; whether it counts as verified is open
+  question Q1 (proposed: report it as not separately verifiable). Built-in microphones attenuate
+  low fundamentals, which harmonic-sum salience partly compensates.
+- **Evidence:** none yet from real chords; synthetic chords (sums of Karplus–Strong plucks with
+  fixed seeds and strum offsets) for unit tests; owner-recorded strummed chords required before
+  any accuracy claim (SC-010, tasks T094–T095).
+
+### T091 — polyphonic spectrum on synthetic strums (2026-09-27)
+
+Implemented in the engine (`PolyphonicAnalyzer`, `HarmonicComb`, `ChordEvidence`, `SpectrumFrame`,
+own radix-2 FFT; no new `be.tarsos.*` import), opt-in per `AudioEngine.setSpectrumEnabled`, and
+pinned by `PolyphonicAnalyzerTest` / `AnalysisServiceTest`. Findings on Karplus–Strong strums
+(fixed seeds, 10 ms between strings, window ending 250 ms after the first string). Synthetic
+strums are brighter and noisier than a real guitar, so these are method observations, not
+accuracy figures:
+
+- **Method iterations.** A fixed 10-harmonic sum put a lone E2's 6th harmonic (B4) first: high
+  candidates collect a full comb from a low note. Summing every partial to 5 kHz (Klapuri) fixed
+  E2 but not A2 (its 5th harmonic won); a subharmonic preference made every pick drop an octave
+  until it required evidence from the subharmonic's *own* partials (not multiples of k). Wide
+  tolerance windows high up (±35 cents ≈ ±40 Hz at 2 kHz) caught neighbouring partials of other
+  pitches, flattening salience; 12 partials within ±25 cents, on a spectrum keeping only content
+  above twice the local mean, gives: **every single pluck tested (E2, A2, D3, G3, B3, E4, E5) is the
+  first candidate.**
+- **Open-ended chord transcription stays unreliable** (typical outcome: 2–4 of 5–6 chord tones
+  among the first candidates, plus harmonics of chord tones). This confirms that practice must ask
+  score-conditioned questions (`ChordEvidence`) rather than compare transcriptions.
+- **Missing string.** Removing an independent chord tone roughly halves its independent salience
+  (G#3 in E major 0.0051 → 0.0026; G3 in C major 0.0073 → 0.0035; G3 in E minor 0.0057 → 0.0034).
+  Separation is about 2×, so the presence threshold must come from real recordings.
+- **Harmonic-coincident tones (Q1).** A missing E3/B3/E4 in E major, or A3 in A minor, keeps a
+  clear independent salience (e.g. A3 0.0083 → 0.0052), as expected: their presence cannot be
+  established independently. Supports the proposed answer to Q1.
+- **Foreign note (Q2).** An added F3 is named first in the residual for A minor and A major; in
+  other cases the residual names one of its harmonics (e.g. G5 for C3), and a clean chord already
+  leaves a residual of the same order (0.005–0.012) as a foreign note's (0.007–0.014). On synthetic
+  strums foreign-pitch rejection would be weak; a threshold cannot be chosen before real recordings
+  (T094–T095).
+- **Cost.** One analysis (8192 FFT, bands, salience, 6 candidates) measured 0.5–2.5 ms per call in
+  a short un-warmed JVM probe on the development Mac (not a benchmark); it runs only while the
+  spectrum is enabled, i.e. never for the tuner.
+
+### Requirements A (2026-09-28) — fresh onset for every note, usable level, tuner hold
+
+- **Fresh onset for every note.** Previously only a same-pitch note needed a new articulation
+  (FR-022). Now every expected note needs an onset whose transient follows the last reference point
+  (acceptance, Start, Resume, Restart, Skip), and matches count only at a usable level (not
+  TOO_LOW, not CLIPPING). Evidence that this does not block real notes:
+  `AcceptancePreconditionTest` applies the rule with the production analysis to the 15
+  real-guitar reference clips (built-in microphone, one guitar): every clip meets it on its played
+  note. T076 had already shown that a −40 dBFS level floor changes neither correctness nor latency
+  on these clips. Negative signals (digital silence, the recorded silence clip, white noise at −50
+  and −30 dBFS, brown noise, mains hum, room noise with hum, clicks, body knocks) never meet it.
+- **Latency.** The onset is reported 13 hops (≈ 69 ms) after its transient, while the stability
+  window is 20 hops (≈ 107 ms) from the first matching frame, which usually starts at the attack;
+  acceptance therefore still comes when the stability window ends, not later. Not re-measured on the
+  device (T080).
+- **Legato (open, spec Q4-L).** No recording yet shows whether hammer-ons, pull-offs or slides
+  produce an onset; the synthetic S4 cases did not cover them. Under the new rule they may wait
+  for Skip.
+- **Tuner hold.** Display-only change: the last reliable reading stays, marked held, with the
+  reason; covered by `TunerHoldTest`.
+
+### Requirements B (2026-09-28) — chords failing in the real build: diagnosis and fix
+
+- **Diagnosis (from source, not a detector fault).** In the build the owner tested, chords could
+  never be accepted: `PracticeSession.onFrame` judged only `EXPECTED_NOTE`; `EXPECTED_CHORD` waited
+  for Skip by design until T092; and practice never called `AudioEngine.setSpectrumEnabled`, so
+  frames carried no spectrum. Single notes worked because they use FastYin alone.
+- **Evidence weakness found with deterministic tests.** On synthetic strums (7 open chords, every
+  string dropped in turn) the earlier "independent salience" separated a sounding from a missing
+  chord tone by only ≈ 2×, and even the unique-partial *mean amplitude* left a margin of 0.10
+  (missing G3 in E minor) against 0.11 (sounding B2 in G major) — a threshold there would be fitted,
+  not justified. Counting the pitch's **unique partials** (none shared, within ±25 cents, with any
+  partial of another expected or still-sounding pitch) that clearly sound (≥ 5 % of the frame's
+  strongest expected partial, −26 dB) separates structurally: every sounding verifiable pitch had
+  ≥ 2 such partials (≥ 40 % of its unique partials), every missing one ≤ 1. Pitches with fewer than
+  2 unique partials (E3, B3, E4 over E2; A3 and E4 in A minor/major; C4/E4 in C major; G3, B3, G4 in
+  G major; D4 in D major) cannot be verified separately (Q1 answer A).
+- **Matcher and session.** Heard = ≥ 2 clear unique partials and ≥ 1/3 of them; accepted after 8
+  consecutive complete frames (≈ 43 ms, on top of the 171 ms spectrum window) within 600 ms of the
+  strum's attack; otherwise a confirmed wrong chord listing the missing pitches, and a new strum is
+  needed (FR-086). `ChordPracticeTest` runs the whole path (level, articulation and polyphonic
+  analysis as in the engine → evidence → matcher → session) on synthetic strums.
+- **Limits.** Synthetic Karplus–Strong strums only; one fixed strum spacing (10 ms); no real chord
+  recording yet (T094–T095). Foreign pitches (Q2) are neither blocking nor reported. With a built-in
+  microphone, weak low fundamentals may reduce the unique partials of bass strings; to be measured.
+
+### Passages and retries (2026-09-28) — design proposal (superseded in part by the owner's policy, implemented as T100)
+
+Owner handoff item 5 (identified after the truncated message) asks for passage segmentation and a
+retry policy without silently inventing the final product policy. Everything below is a proposal;
+the product decisions are spec.md "Session 2026-09-28" QP1–QP8. No code has been written.
+
+- **What exists (inspected source).** `PracticeSequence` is a flat, immutable list of
+  `PracticeEvent`s in played order, built by `PracticeSequenceBuilder` through
+  `MidiRepeatController`; each event carries `getSequenceIndex()`, `getPlayIndex()` (played
+  measure occurrence), `getMeasureIndex()` and `getBeat()` (hence `TGMeasureHeader.getMarker()`,
+  `isRepeatOpen()`, `getRepeatClose()`, `getRepeatAlternative()`). `PracticeSession` keeps
+  `currentIndex`, a per-index `Outcome` map (ACCEPTED/SKIPPED/AUTO_PASSED), and a `Verdict`
+  (CORRECT/WRONG, FR-087) set by `setVerdict`; `advance()` is the single place where practice moves
+  on; `disarm()` implements the FR-086 reference point. There is no notion of range, loop or count.
+- **Segmentation (QP1).** Derived purely from the sequence, so it needs no core change: walk the
+  events, start a new passage when the played-measure count since the passage start reaches the
+  passage length, when `measureIndex` of consecutive played measures is not +1 (a repeat or
+  alternate-ending jump), when a measure has a marker, and at the start event. Passages whose events
+  are all `AUTO_PASS` merge into the next (or previous, at the end). Measures are the unit because
+  they are visible on the score, stable across tempo and independent of note density; 2 measures
+  is a guess to be tuned with the owner. Markers and jumps are hard boundaries so that a retry
+  never replays a different occurrence of a repeated section.
+- **Mistake signal (QP2).** Reuse FR-087's confirmed WRONG verdict, already designed to fire only
+  for a fresh, reliable, sustained wrong note or an incomplete strum, and never for silence, noise
+  or ringing. Counting events rather than wrong verdicts keeps one troublesome chord from inflating
+  the count. Skip does not force a retry because the detector still has known false waits (legato,
+  Q4-L; chords on the built-in microphone, T094 pending): forcing retries on skips would punish the
+  learner for the application's limits.
+- **Retry decision (QP3, QP4).** Decided when `advance()` leaves the passage's last event:
+  clean → next passage; not clean and attempts < limit → jump to the passage start; otherwise move
+  on and record "not clean". Deciding at the end rather than at the first mistake keeps the end of a
+  hard passage reachable. A limit of 2 retries (3 attempts) bounds frustration; it is a parameter.
+- **Sketch for the plan stage.** `model/PracticePassages` (built from `PracticeSequence` plus the
+  length) → `PracticeSession` gains passage index, attempt number and the set of mistake events;
+  `setVerdict(WRONG)` records `currentIndex`; `advance()` applies the decision; a jump clears the
+  passage's outcomes, calls `disarm()`/`resetMatch()`/`newEvent()` and re-runs
+  `passAutomatically()`; new `PracticeCommand.REPEAT_PASSAGE`; `PracticeSnapshot` exposes passage
+  and attempt data; `PracticePalette` renders it; messages in `share/lang/messages.properties`.
+  Tests in the style of `PracticeSessionTest` with synthetic frames: clean passage advances; one
+  confirmed wrong note → retry from the first event; silence/noise/ringing/skip → no retry; limit
+  reached → moves on, marked not clean; repeat occurrences segmented separately; pause keeps the
+  attempt; the last note ringing does not accept the first note after a jump; Off = current
+  behaviour unchanged.
+- **Risks.** A false WRONG verdict now costs a whole passage instead of a cross, so the WRONG
+  verdict's reliability on real audio (V2, T094–T095) matters more; until measured, the retry
+  limit keeps the damage bounded.
+- **Owner policy and implementation (T100).** Approved with changes: Skip counts as an error;
+  retry only when the error rate is above 50 % (configurable) instead of any mistake; markers,
+  the preparation-window setting and the "Repeat passage" command were not approved and are not
+  implemented. Implemented as described in the sketch above, with `PassagePolicy` as the
+  parameter holder. The error-rate rule softens the risk noted above: one false WRONG verdict no
+  longer repeats a passage unless most of its events already failed. Verified only with scripted
+  analysis frames (`PassagePracticeTest`), not on the device.
+- **Learner choice (T101).** The owner then made the policy a preparation-window choice (Off,
+  1/2/4 measures, 25/50/75 %), kept for the application run in a `TGContext` singleton like
+  `PracticeTunerContext`, never written to the TuxGuitar configuration. Off passes no policy to
+  the session, which is the code path of the practice behaviour before passages existed.
+
+### T102 — Audio-recognition settings: parameter inventory (before coding, 2026-09-28)
+
+Exact current values from source, their consumers, and the proposed safe ranges. **Every default
+is the current hard-coded value** (owner rule: changing musical behaviour is a product decision);
+the ranges only bound what a learner may choose. Keys are stored in the module configuration
+`tuxguitar-audio-recognition` (lib `TGConfigManager`, like the synth/jack plugins).
+
+| Section | Key (`recognition.` +) | Type / unit | Current value (source) | Consumer(s) | Range proposed | Live? |
+|---|---|---|---|---|---|---|
+| Input | `input.level.min` | dBFS | −40 (`AudioEngine.DEFAULT_TOO_LOW_RMS_DBFS`) | `LevelAnalyzer` → level state TOO_LOW: tuner/practice status, practice "usable level" (FR-086) | −60 … −25 | analysis restarted cleanly |
+| Input | `input.level.max` | dBFS | −6 (`AudioEngine.DEFAULT_TOO_HIGH_RMS_DBFS`) | `LevelAnalyzer` → TOO_HIGH | −20 … −1 | idem |
+| Advanced | `advanced.level.clip-sample` | ratio of full scale | 0.99 (`DEFAULT_CLIPPED_SAMPLE_LEVEL`) | `LevelAnalyzer` clipped sample | 0.90 … 1.00 | idem |
+| Advanced | `advanced.level.clip-share` | % of samples | 10 (`DEFAULT_CLIPPING_RATIO` 0.10) | `LevelAnalyzer` CLIPPING state | 1 … 50 | idem |
+| Tuner | `tuner.in-tune` | cents | 5 (`TunerWindow.IN_TUNE_CENTS`, `PracticeWindow.TUNER_IN_TUNE_CENTS`) | tuner "in tune" state and needle colour; practice palette tuning state (`TolerancePolicy` first argument) | 1 … 20 | tuner: next frame; practice: next Start |
+| Tuner | `tuner.hold` | on/off | on (`TunerHold`, FR-085) | `TunerWindow` | — | next frame |
+| Advanced | `advanced.tuner.confidence` | 0–1 | 0.80 (`TunerWindow.CONFIDENCE_GATE`) | tuner `NoteInterpreter` | 0.50 … 0.95 | next tuner open |
+| Notes | `note.accept` | cents | 35 (`PracticeWindow.PRACTICE_ACCEPT_CENTS`) | `TolerancePolicy` second argument (acceptance) | 10 … 45 (`TolerancePolicy` requires < 50) | next Start |
+| Notes | `note.confidence` | 0–1 | 0.80 (`PracticeWindow.CONFIDENCE_GATE`) | practice `NoteInterpreter` | 0.50 … 0.95 | next Start |
+| Notes | `note.stability` | ms | 20 hops = 106.7 ms (`PracticeWindow.STABILITY_HOPS` × 256/48000 s) | `PracticeSession` stability window, also wrong-note confirmation | 50 … 300 ms, converted to whole hops (107 ms → 20 hops, exact) | next Start |
+| Notes | `note.attack` | dB | 4.5 (`ArticulationDetector.DEFAULT_GATE_DB`) | onset detector: level rise needed for a new attack (FR-086 protection) | 2 … 10 | analysis restarted cleanly |
+| Notes | `note.legato` | choice | strict: a new attack for every note (FR-086) | `PracticeSession` | only value implemented; proposal Q4-L documented, not offered | — |
+| Advanced | `advanced.attack.min-level` | dBFS | −50 (`ArticulationDetector.DEFAULT_MIN_LEVEL_DB`) | onset detector ignores quieter frames | −70 … −30 | analysis restarted cleanly |
+| Chords | `chord.evidence` | % of unique partials | 33.3 (`ChordMatcher` `minClearFraction` 1/3) | `ChordMatcher` heard rule | 20 … 80 | next Start |
+| Chords | `chord.window` | ms | 600 (`ChordMatcher` `windowNanos`) | strum window before "wrong chord" | 300 … 1500 | next Start |
+| Chords | `chord.completeness` | choice | every verifiable pitch required (FR-079) | `ChordMatcher`/`PracticeSession` | only value implemented | — |
+| Chords | `chord.foreign` | choice | ignored, not reported (Q2 provisional) | — | only value implemented; proposal Q2 documented, not offered | — |
+| Advanced | `advanced.chord.min-partials` | count | 2 (`minClearPartials`) | `ChordMatcher` verifiability and heard rule | 1 … 4 | next Start |
+| Advanced | `advanced.chord.confirm` | ms | 8 hops = 42.7 ms (`stableHops`) | `ChordMatcher` consecutive complete frames | 20 … 150 ms → whole hops (43 ms → 8, exact) | next Start |
+| Passages | `passage.measures` | choice | 2 (`PassagePolicy.DEFAULT_MEASURES`; 0 = Off) | `PassageSettings` → `PassagePolicy` | 0 (Off), 1, 2, 4 | next Start |
+| Passages | `passage.threshold` | % | 50 (`DEFAULT_MAX_ERROR_RATE`) | idem | 25, 50, 75 | next Start |
+| Passages | `passage.retries` | count | 2 (`DEFAULT_MAX_RETRIES`) | idem | 0 … 5 | next Start |
+| Engine | `engine.pitch` | choice | FastYin (TarsosDSP) — the only estimator in the code | `AudioEngine` estimator factory | "Automatic (FastYin) — recommended" only | next capture |
+
+**Cross-parameter rules (repair, never crash):** `note.accept` ≥ `tuner.in-tune` (the accept
+range is raised to the in-tune range when lower, since `TolerancePolicy` rejects the opposite);
+`input.level.min` < `input.level.max` holds by the disjoint ranges; `passage.threshold` and
+`passage.retries` are kept but unused while `passage.measures` = Off.
+
+**Deliberately not exposed** (documented in the help): FastYin window 2048 / hop 256 samples
+(every time-based setting and the benchmark depend on them), articulation flux constants and
+refractory time, polyphonic analyzer internals and `ChordEvidence.PARTIAL_PRESENCE_RATIO`,
+level-check (`InputAssessor`) shares, ring-buffer size, display timings (verdict 1 s, flash
+250 ms).
+
+**Input device:** stays the shared per-run selection (the rubric reuses the practice input
+selector). Remembering it across launches is out of scope in spec.md; kept as is and proposed.
+
+**Passages:** the Configuration values are the persistent defaults; the preparation-window
+choice (FR-091) overrides them for the current run only, and is reset to them when the
+Configuration is confirmed.
+
+**Architecture:** the Configuration window (`TGSettingsEditor.initOptions`) has a fixed option
+list and no plugin extension; the core cannot depend on the fork's plugin modules. A generic
+extension point is therefore added to the core (`TGSettingsOptionRegistry`: plugins register an
+option factory, the editor appends the registered options). The typed settings, validation and
+persistence live in `TuxGuitar-audio-engine` (shared by the tuner and practice); the rubric UI
+lives in `TuxGuitar-practice`, which already owns the input selector.
+- **Implementation notes (T102).** Implemented as inventoried; no default changed. Two findings
+  while testing: (1) the chord evidence default must stay the exact double 1/3 (a percent
+  33.33 stored and divided by 100 differs in the last bit and would flip the boundary case of 1
+  of 3 unique partials), so fractions are stored as fractions and only shown in %; (2) the
+  stability time is stored in ms but converted to whole hops by rounding (107 ms → 20 hops),
+  which keeps the former 106.67 ms window exactly, where a plain 107 ms would have needed one
+  extra hop. Engine values restart analysis at once through the existing atomic configuration
+  swap of `AnalysisService` (verified by `AudioEngineSettingsTest`: frames switch from old to new
+  values once, never back, timestamps keep increasing, no dropped samples). Practice values apply
+  at the next Start; tuner values at the next frame (UI thread). The rubric lives in the practice
+  plugin, which owns the input selector; if the practice plugin is disabled the page is absent but
+  the saved values still apply to the tuner.
+- **P13 failure (2026-09-28) — root cause.** Not the settings model: the SWT binding. SWT 4.37 cocoa
+  `Scale` (bytecode checked with `javap -c`): `setMinimum(v)` returns without effect when
+  `v < 0` or `v >= maxValue`; `setMaximum(v)` when `v <= minValue`; the default range is 0…100.
+  The page called `setMinimum(-60)` / `setMaximum(-25)` for "Minimum usable level" (and
+  `-20…-1` for "High level warning"): both ignored, so the native range stayed 0…100. Dragging
+  gave positions 0…100, read as 0…100 dBFS, then clamped by validation to −25 (or −1):
+  the value text never changed. After each change the page refreshed every control; the other
+  level slider received a negative position, which the native slider clamps to 0: far left.
+  Other sliders were affected too (e.g. strum window 300…1500 ms: `setMinimum(300)` ignored
+  while the maximum was still 100). Fix: 0-based positions (offset from the minimum, maximum
+  set first), exact value reconstruction, and refresh limited to changed values. A headless
+  toolkit reproducing that `Scale` contract (`SwtContractToolkit`) makes the page tests fail with
+  the old code (5 failures) and pass with the fix; the native SWT test still has to be run in a
+  graphical session.
+

@@ -56,13 +56,20 @@ One step in the practice sequence, in playback order (FR-006, FR-009).
 | `expectedMidi` | `offset + stringValue + fret` (or grace fret) — `EXPECTED_NOTE` only |
 | `isGrace` | true for the grace pitch that precedes its principal note |
 | `techniques` | set of display-only flags (hammer, pull-off, slide, vibrato, palm mute, accent, let ring, staccato, tremolo picking) — never "verified" |
-| `sameAsPrevious` | true when `expectedMidi` equals the previous expected note's pitch (drives FR-022) |
+| `sameAsPrevious` | true when `expectedMidi` equals the previous expected note's pitch (drives FR-022); since 2026-09-27 also when the previous expected event was a chord containing that pitch, and for a chord whose required pitches were all in the previous expected note or chord (let-ring must not validate it) |
+| `notes` | the score notes the event attacks (framed in the score, FR-073) |
+| `chordNotes` | `EXPECTED_CHORD` only (since 2026-09-27): the chord's new pitched notes, each `{stringNumber, fret, midi, note}` — display data; string/fret instructional only |
+| `requiredPitches` | `EXPECTED_CHORD` only: distinct sounding MIDI pitches of `chordNotes`, ascending (duplicates on several strings counted once, FR-078) |
+| `toleratedPitches` | `EXPECTED_CHORD` only: pitches still sounding from earlier beats or tied in; allowed, never required (FR-077) |
 
 **Classification rules** (research R3), evaluated per beat of the selected track, both voices:
 
 1. Rests, empty voices, tied continuations (`TGNote.isTiedNote()`) → no event.
 2. Notes sounding at the same time (same beat, or overlapping across voices by start + duration):
    all dead → `AUTO_PASS/DEAD_ONLY_CHORD`; otherwise → `MULTI_NOTE`.
+   *Since 2026-09-27 (FR-077)*: if no new note carries a bend, harmonic, tremolo bar or trill →
+   `EXPECTED_CHORD` with the new non-dead notes as `chordNotes` (none left → `AUTO_PASS/DEAD`);
+   otherwise `MULTI_NOTE`.
 3. Single note: dead → `AUTO_PASS/DEAD`; bend → `BEND`; harmonic → `HARMONIC`; tremolo bar →
    `TREMOLO_BAR`; trill → `TRILL`; otherwise `EXPECTED_NOTE`.
 4. Grace effect on a single note: emits a preceding event — dead grace → `AUTO_PASS/GRACE_WITHOUT_PITCH`,
@@ -228,6 +235,9 @@ Rules in `RUNNING`:
   `|cents| ≤ practiceAcceptCents`, stable for the stability window, and (if `sameAsPrevious`)
   `articulationArmed`. Then outcome `ACCEPTED`, advance.
 - `MULTI_NOTE`: no judgement; only Skip advances (FR-025, FR-012).
+- `EXPECTED_CHORD`: until chord matching exists (plan stage E), as `MULTI_NOTE`; then accepted
+  per FR-079–FR-081 (chord feedback `WAITING`, `UNCERTAIN`, `INCOMPLETE(missing)`,
+  `FOREIGN(pitch)`, `CORRECT`).
 - `AUTO_PASS`: advance immediately with a brief indication (FR-011, FR-013).
 - Skip: outcome `SKIPPED`, advance (FR-030, FR-031).
 - Suboptimal input: continue, unreliable readings → `UNCERTAIN` (FR-026, FR-043).

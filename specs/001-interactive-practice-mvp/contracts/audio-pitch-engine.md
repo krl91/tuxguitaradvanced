@@ -35,6 +35,18 @@ disappearance, and suspected permission denial (research spike S1) are reported 
 | Estimator | TarsosDSP `FastYin`, 2048-sample window (S3 decision), behind the engine's estimator interface; range at least 60 Hz – 1.4 kHz; confidence/stability gates are provisional parameters |
 | Determinism | given the same sample sequence and parameters, frames are identical (tested) |
 
+## Polyphonic spectrum and candidates (scope expansion 2026-09-27, plan stage D)
+
+| Item | Behaviour |
+|---|---|
+| Window | Hann-windowed FFT over the latest N samples (provisional N = 8192 at 48 kHz, parameter), computed on the analysis thread with preallocated arrays; no new `be.tarsos.*` import. |
+| `AnalysisFrame.getSpectrum()` | Per-semitone band magnitudes for MIDI 28–112 (peak magnitude within ±50 cents of the equal-tempered centre, A4 = 440 Hz); null when the spectrum is disabled. |
+| Candidates | Ranked `{midi, salience, levelDb}` from harmonic-sum salience with iterative suppression of each picked pitch's harmonics; salience relative to the frame's strongest candidate. Not a claim that a pitch was played: consumers condition on the expected pitches. |
+| `ChordEvidence.evaluate(spectrum, expected, tolerated)` | Per distinct expected pitch: salience, independent salience (after removing lower expected pitches' harmonics with spectral smoothness) and whether it lies on a lower expected pitch's harmonic; plus up to three residual pitches once expected and tolerated pitches are explained. Evidence only: acceptance policy stays with the consumer. |
+| Enabling | `AudioEngine.setSpectrumEnabled(boolean)`; off by default (the tuner never needs it). |
+| Determinism | identical input and parameters → identical spectrum and candidates (tested). |
+| Single notes | FastYin, `NoteInterpreter` and `TolerancePolicy` unchanged. |
+
 ## Interpretation
 
 | Function | Behaviour |

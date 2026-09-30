@@ -411,6 +411,48 @@ practice highlight; P8 negative-offset notice; P9 macOS-SWT-only rollout with mi
 verification (research R14) shows they are inert on builds without the practice plugin. No
 macOS-specific build transformation.
 
+## Scope expansion 2026-09-27 — score-first practice and chords (User Story 7)
+
+Explicit expansion beyond the original MVP (spec.md "Session 2026-09-27", FR-073–FR-083, SC-010).
+Chord recognition does not exist yet; the stages below build it without changing how single notes
+are judged (FR-083). Open product questions Q1–Q4 (spec.md) gate only stage E.
+
+**A. Model** (`TuxGuitar-practice`, no core change): `PracticeEvent.Kind.EXPECTED_CHORD` with its
+chord notes (string, fret, sounding MIDI — display data) and the distinct required pitches;
+pitches still sounding from earlier beats are tolerated, not required (FR-077). Until stage E an
+expected chord behaves like the former `MULTI_NOTE` (waits for Skip, no judgement).
+
+**B. Note-level frames in the score** (core, justified below): red frame around the expected
+note, or one frame around all notes of an expected chord, on the score staff and on the
+tablature; green frame for the just-accepted event; scroll on change (FR-073–FR-075).
+
+**C. Compact palette** (`TuxGuitar-practice`): `PracticePalette`, a small non-modal movable
+window replacing the running view; the preparation window is hidden while practice runs and
+comes back on Stop (FR-076).
+
+**D. Engine spectrum and candidates** (`TuxGuitar-audio-engine`, deterministic, Constitution
+VIII): a Hann-windowed FFT over a longer window than FastYin's (provisional 8192 samples at
+48 kHz, parameter) gives per-semitone band magnitudes (MIDI 28–112) and a harmonic-sum salience;
+an iterative pick-and-suppress step turns that into ranked pitch candidates
+`{midi, salience, levelDb}`. Exposed only through the engine API (`AnalysisFrame`); no
+`be.tarsos.*` import is added (own small radix-2 FFT). FastYin and single-note acceptance are
+unchanged.
+
+**E. Score-conditioned chord matching** (`TuxGuitar-practice`, gated by Q1–Q3): `ChordMatcher`
+checks, over a rolling window after an onset, that every verifiable required pitch is present
+and that no sufficiently strong foreign pitch is; provisional parameters with tests on
+synthetic chords; chord feedback *waiting / uncertain / incomplete / foreign / correct*
+(FR-079–FR-082).
+
+**F. Evidence** (physical): owner-recorded strummed chord clips (CC0, manifest, like SC-003),
+chord benchmark and parameter tuning (SC-010). No chord accuracy claim before this.
+
+### Core change for stage B (with evidence)
+
+| Change | Limitation found in source | Smallest change | Effect on other builds |
+|---|---|---|---|
+| `TGExternalBeatViewerEvent`/`Manager`, `TablatureEditor`, `Tablature`, `TGControl` (desktop app) | The external-beat hook (stage "Minimal core changes") can only highlight a whole beat, in the played-beat style (`TGLayout.paintPlayMode` → `TGBeatImpl.paint`: note colour + one rounded rectangle spanning the measure height); nothing can frame individual notes, per staff, or use another colour. All positions needed are public in `TuxGuitar-lib` (`TGNoteImpl.getPosX/getScorePosY/getTabPosY`, `TGBeatImpl.getSpacing`, `TGMeasureImpl.getTs`, `TGMeasureHeaderImpl.getLeftSpacing`). | Optional note set and state (`EXPECTED`/`ACCEPTED`) carried with the external beat; when present, `TGControl` draws red/green frames around those notes on each displayed staff instead of the played-beat highlight. No change in `common/`. | Inert unless a plugin passes notes; the existing beat-only calls (fretboard, piano) behave exactly as before. |
+
 ## Complexity Tracking
 
 | Item | Why needed | Simpler alternative rejected because |

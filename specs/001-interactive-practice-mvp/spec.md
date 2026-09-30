@@ -4,7 +4,8 @@
 
 **Created**: 2026-09-26
 
-**Status**: Draft (revision 4, final product-owner decisions of 2026-09-26 applied)
+**Status**: Draft (revision 5: scope expansion of 2026-09-27 — score-first practice and chords, User Story 7,
+FR-073–FR-092, SC-010. Items marked [NEEDS CLARIFICATION] await the product owner.)
 
 **Input**: User description: "Interactive Practice MVP. A guitar learner can open an existing guitar tablature in TuxGuitar, connect a guitar through an audio input, and practice the selected track note by note. The application identifies the next expected playable note, shows expected note/string/fret, the detected note, pitch deviation, and correct / incorrect / uncertain feedback; the score waits until the expected pitch is detected reliably, then advances. Validation is based on detected pitch only; string and fret are instructional and must not be claimed as verified. Scope: macOS Apple Silicon, single guitar track, monophonic single notes, live guitar input, wait-for-correct-note, immediate visual feedback. Out of scope: chords, string/fret validation, articulation recognition, rhythm/timing scoring, effects, statistics, adaptive exercises, machine learning, cloud services."
 
@@ -24,6 +25,38 @@
 - Q: Should the preparation step warn about unusually large track offsets? → A: Only for negative offsets, and only when the resulting physical open-string targets go below the range covered by TuxGuitar's built-in Guitar / 6-String tuning presets; informational and non-blocking. No threshold for positive offsets.
 - Q: How is the evolved tuner rolled out across TuxGuitar's desktop builds? → A: For the MVP only the validated macOS Apple Silicon + SWT Cocoa build packages the evolved tuner and Interactive Practice (and not the legacy tuner); every other desktop build keeps its existing tuner unchanged and claims neither feature until deliberately validated. Each build exposes exactly one tuner.
 - Q: What can Practice truthfully guarantee for two consecutive identical expected pitches, given the articulation experiment (S4)? → A: A continuously sustained previous note must not by itself validate the next identical pitch; evidence of a new articulation event is required. Detection is biased toward missing weak articulations rather than accepting incidental transients; a strong non-pluck transient (e.g. a body knock) may theoretically be taken for an articulation, and a very weak re-pluck may need to be played again more clearly. No absolute guarantee is claimed.
+
+### Session 2026-09-27 — scope expansion: score-first practice and chords
+
+The product owner corrected the practice experience after using the running MVP. This is an explicit
+expansion beyond the original MVP scope ("monophonic single notes", "Out of scope: chords"); the
+requirements it changes are marked *Superseded* where they stand.
+
+- Q: Where does the learner look while practising? → A: At the score and tablature, which are the primary practice interface. The large practice window MUST NOT cover them during practice; it is replaced, while practice runs, by a compact movable palette.
+- Q: How is the expected event shown? → A: The exact expected note is framed in red directly on both the standard-notation score and the tablature, and the view scrolls to keep it visible. It stays framed until accepted (or skipped). A correct note flashes green briefly, then the red frame moves to the next expected event. A wrong note never advances it.
+- Q: What happens at a chord? → A: The entire chord is framed in red on score and tablature. It is accepted only after all distinct expected sounding pitches are detected within a short rolling window that tolerates normal string-attack spread (strum). Sufficiently strong foreign pitches reject it. It stays framed until accepted or skipped.
+- Q: What about identical pitches on different strings in one chord? → A: They cannot be distinguished acoustically and MUST NOT be claimed as separately verified.
+- Q: What does the palette contain? → A: Only the detected note/chord state, cents, confidence and status, and the practice controls.
+- Q: Does chord recognition already exist? → A: No. The engine is monophonic (one fundamental per frame); chords were unsupported events waiting for Skip. Chord recognition is new work and MUST NOT be presented as existing before it is implemented and measured.
+
+Open questions (asked 2026-09-27, answers pending):
+
+- Q1 [NEEDS CLARIFICATION]: An expected chord pitch whose fundamental coincides with a harmonic of a lower expected pitch of the same chord (octave, octave + fifth, two octaves — e.g. E3, B3, E4 in open E major over E2) is always "present" in the spectrum when the lower note rings. Proposed: verify only the pitches that are not such harmonics and report the others as not separately verifiable, like duplicates (Constitution XIII). Alternatives: require energy beyond the lower note's expected harmonic (strict, timbre-dependent), or count any energy (misleading).
+- Q2 [NEEDS CLARIFICATION]: Proposed foreign-pitch rule: reject while a pitch neither expected nor explained as a harmonic of an expected or still-sounding pitch is at least a provisional fraction of the weakest verified expected pitch's strength for a sustained part of the window. Synthetic strums separate foreign notes only weakly (research.md "T091"), so until real chord recordings exist the proposal is to only name a foreign pitch in the palette, without blocking acceptance.
+- Q3 [NEEDS CLARIFICATION]: Proposed: every chord needs a new attack (strum) after the previous acceptance, not only an identical chord, because let-ring from the previous chord often contains the next chord's pitches.
+- Q4 [NEEDS CLARIFICATION]: Proposed: on acceptance practice advances at once (fast passages are not lost); the accepted event shows green for a short provisional time while the next event is already framed red and listened for.
+
+### Session 2026-09-28
+
+- Q: (confirmed UI bug) After selecting the microphone in Interactive Practice, the following controls moved outside the visible window until it was enlarged by hand. What is required? → A: The practice window and the palette recompute and apply their packed/minimum size after every content or state change, stay fully usable on the current display, and keep all controls visible without manual resizing (FR-084).
+- Q: (requirements A) What does the tuner show when the level drops, and when may practice advance? → A: The tuner keeps the last reliable note and needle, with a clear stale/held visual state, until a new reliable reading, a mode/target change or an input change (FR-085). Practice never advances on silence or low-confidence noise: every expected note needs a fresh onset plus a stable, confident pitch at a usable level; waiting is preferred over a false success (FR-086, extends FR-022 from repeated pitches to every note).
+- Q4-L [NEEDS CLARIFICATION] (raised by the implementation agent): hammer-ons, pull-offs and slides have no pick attack, and there is no evidence yet that the articulation detector reports an onset for them; under FR-086 such notes may never be accepted, which conflicts with User Story 1 scenario 7. Options: (a) keep the fresh-onset rule for every note (strict; legato passages may need Skip or re-picking); (b) for a note marked hammer-on/pull-off/slide, accept a change to a new stable pitch after the previous acceptance as the fresh evidence (never silence or noise); (c) record legato clips first and decide on evidence. Recommended: (c) then (b); (a) is what is implemented now.
+- Q: (requirements B) Chords fail in the tested real build while single notes work — what is required? → A: Treated as a blocking defect, diagnosed with deterministic synthetic tests through the full evidence/matcher path, without masking it by lenient thresholds. Feedback: a reliably correct note or chord shows a clear green check; a reliably wrong played note shows a red cross; silence or low-confidence noise shows neither (FR-087). To unblock, the implementation agent applied the recommended answers provisionally: Q1 = A (pitches without their own partials are "cannot be checked separately"), Q3 = settled by FR-086 (a fresh strum for every chord); Q2 (foreign pitches) is not implemented: they neither block acceptance nor are reported yet. The product owner may still change these.
+- **PLACEHOLDER — owner request not received in full.** The owner's last new-feature sentence of 2026-09-28 was cut off after the word "proposer". It is deliberately not interpreted here; to be completed by the product owner.
+- **PLACEHOLDER — handoff items 1–4 of 2026-09-28 not received as such** ("requirements A" arrived separately and is recorded above; whether it covers some of items 1–4 is not known); their content is not guessed. Item 5 was identified later by the owner as **passage segmentation and retry policy** (its received tail: "…how [things] behave, and how many retries occur. Do not invent a final product policy silently.").
+- Q: (item 5) How is practice cut into passages, and when and how often is a passage repeated? → A (owner, approving the design with changes; accepted as a scope expansion over the former "looping" and "practice statistics" exclusions, limited to what follows): a passage is **2 played measures** in played order, counted from the start event; each played occurrence of a repeated section (repeat or alternate ending) is its own passage. Error = an expected note or chord with a confirmed wrong verdict (FR-087) **or skipped**, counted **once per event** per attempt, a chord once; rests, auto-passed events, silence, noise and uncertain input never count. The decision is taken **at the end of the attempt**: the passage is repeated only when its error rate (errors / judged events of the passage) is **above a configurable 50 %**, at most **2 retries**, then practice moves on. A **memory-only** summary is shown at the end (FR-088–FR-090). The earlier proposal QP1–QP8 is superseded; its parts not approved (markers as boundaries, a preparation-window setting, a "Repeat passage" command, Skip not counting) are not implemented.
+  - Interpretations confirmed by the owner (2026-09-28): unsupported multi-note events (MULTI_NOTE, which can only be skipped) are not judged, so skipping them is not an error; a repeat-open sign also starts a passage; exactly the threshold passes (the rule is "above").
+- Q: (follow-up) Is the passage policy fixed, and can it be turned off? → A: It is chosen by the learner in the preparation window: Off, or passage length 1, 2 or 4 measures (default 2), and error threshold 25, 50 or 75 % (default 50); remembered for the current application run only; Off preserves the behaviour without passages (FR-091). The retry limit stays at 2.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -302,7 +335,8 @@ cannot validate, and a learner can also get stuck on a note. Dead notes, bends, 
 tremolo-bar pitch changes, and trills are passed automatically, with a brief indication where
 practical. Chords and other simultaneous multi-note events are significant musical events, so
 they stay visible: practice stops on them, explains that they are not supported, and waits for
-the learner to Skip. The learner can Skip any current event; skipped events are marked as
+the learner to Skip. *(Since 2026-09-27 chords are validated instead, User Story 7; this story
+still covers multi-note events containing a bend, harmonic, tremolo-bar change or trill.)* The learner can Skip any current event; skipped events are marked as
 skipped and never shown as correct.
 
 **Why this priority**: Needed to practise most real-world tracks end to end, but the core loop is
@@ -368,6 +402,48 @@ playback order to the end of the track.
 
 ---
 
+### User Story 7 - Practise from the score, including chords (Priority: P1, scope expansion 2026-09-27)
+
+The learner keeps their eyes on the score and tablature, where the expected note or chord is
+framed in red and kept in view. A correct note or chord flashes green and the frame moves on; a
+wrong one never advances. A small movable palette shows what is being heard and the controls,
+without covering the music.
+
+**Why this priority**: The product owner found the large practice window obscuring the score,
+and real guitar tracks are full of chords; without chords a typical song stops at almost every
+event.
+
+**Independent Test**: Practise a track mixing single notes and chords. The expected note, and at a
+chord the whole chord, is framed red on both score and tablature and stays visible while the
+view follows it; playing it correctly flashes green and moves the frame; playing a wrong note or
+chord keeps the frame in place; the score is not covered by practice UI.
+
+**Acceptance Scenarios**:
+
+1. **Given** practice is running on an expected note, **When** the learner looks at the score,
+   **Then** exactly that note is framed in red on the standard-notation staff and on the
+   tablature (each staff that is displayed), and the view scrolls so it is visible.
+2. **Given** the framed note is played correctly, **When** it is accepted, **Then** it is shown
+   in green briefly and the red frame moves to the next practice event; **when** a wrong note is
+   played, **then** the frame does not move.
+3. **Given** the current event is a chord, **When** it becomes current, **Then** the whole chord
+   is framed in red on score and tablature and stays framed until it is accepted or skipped.
+4. **Given** a framed chord, **When** the learner strums it and every distinct expected pitch
+   that can be verified (Q1) is detected within the rolling window, **Then** the chord flashes
+   green and practice advances; **when** a pitch is missing, **then** the chord stays framed and
+   the palette says which expected pitches were not heard.
+5. **Given** a framed chord, **When** a sufficiently strong pitch that is not part of the chord is
+   heard, **Then** the chord is not accepted and the palette names the foreign pitch.
+6. **Given** a chord contains the same pitch on two strings, **When** it is shown or accepted,
+   **Then** nothing states that each of those strings was verified.
+7. **Given** practice is running, **When** the learner looks at the screen, **Then** the only
+   practice UI is a compact palette (detected note or chord state, cents, confidence, status,
+   controls) that the learner can move, and the preparation window is not shown.
+8. **Given** practice stops, **When** the palette closes, **Then** the frames disappear and
+   normal rendering is unchanged.
+
+---
+
 ### Edge Cases
 
 - **Rests** and **tied continuations** are not practice events; practice passes over them
@@ -375,7 +451,9 @@ playback order to the end of the track.
 - **Dead/muted notes**, and simultaneous events made up only of dead notes (e.g. a muted strum),
   are passed automatically; the learner is never required to Skip them.
 - **Simultaneous multi-note events** with at least one pitched note (chords, double stops, notes
-  overlapping across voices) are unsupported and wait for Skip.
+  overlapping across voices) are unsupported and wait for Skip. *(Since 2026-09-27 they are
+  expected chords (FR-077) unless a new note carries a bend, harmonic, tremolo-bar change or
+  trill.)*
 - **Bends, harmonics, tremolo-bar pitch changes, and trills** are unsupported and passed
   automatically, briefly indicated where practical; they are never validated, and a note carrying
   a bend is never accepted as if its unbent pitch proved the bend.
@@ -543,7 +621,8 @@ playback order to the end of the track.
 - **FR-012**: Simultaneous multi-note events containing at least one pitched note (including
   events mixing pitched and dead notes) MUST be unsupported practice events that remain visible
   and wait for the learner to Skip. The system MUST NOT select one note from such an event for
-  the learner to play.
+  the learner to play. *(Superseded 2026-09-27 by FR-077 for expected chords; still applies to
+  simultaneous events containing a bend, harmonic, tremolo-bar change or trill.)*
 - **FR-013**: Notes carrying a bend, a harmonic, a tremolo-bar pitch change, or a trill MUST be
   treated as unsupported, MUST be passed automatically without requiring Skip, and MUST never be
   validated or shown as correct. The system SHOULD briefly indicate, where practical, that an
@@ -555,9 +634,11 @@ playback order to the end of the track.
   leave normal rendering unchanged when no practice highlight is active.
 - **FR-015**: For an expected note, the system MUST display its note name with octave and the
   string and fret written in the tablature, labelled as the tablature's instruction.
+  *(Amended 2026-09-27: shown by the framed notes in score and tablature and by the palette's
+  status line, FR-073, FR-076.)*
 - **FR-016**: For a multi-note practice event, the system MUST clearly state that the score
   event is unsupported in this version, say what kind of event it is, and make Skip clearly
-  available.
+  available. *(Since 2026-09-27 only for multi-note events that are not expected chords, FR-077.)*
 
 **Detection, acceptance, and feedback**
 
@@ -598,7 +679,8 @@ playback order to the end of the track.
 - **FR-024**: On acceptance the system MUST show the note as correct and advance to the next
   practice event.
 - **FR-025**: For a multi-note practice event, the system MUST NOT give a correct or incorrect
-  judgement; the live level and detected pitch MAY remain visible.
+  judgement; the live level and detected pitch MAY remain visible. *(Since 2026-09-27 only for
+  multi-note events that are not expected chords; expected chords are judged per FR-079–FR-081.)*
 - **FR-026**: When the signal is too weak, clipping, or otherwise insufficient for a reliable
   pitch, the system MUST show *uncertain* rather than *incorrect*.
 - **FR-027**: The system MUST NOT state or imply that the physical string or fret used, or any
@@ -610,7 +692,9 @@ playback order to the end of the track.
   currently expected score event, highlighted in the tablature; the expected note and octave;
   the tablature string and fret as instructional information; the detected note; its tuning
   deviation; the current feedback state (*waiting*, *uncertain*, *incorrect*, or *correct*); and
-  the current input-level health.
+  the current input-level health. *(Amended 2026-09-27: the expected event, its note and its
+  string/fret are seen in the framed score and tablature (FR-073); the palette shows the rest
+  (FR-076).)*
 - **FR-029**: The learner MUST NOT need to open or switch to the tuner to see which pitch is being
   detected during practice.
 
@@ -821,13 +905,126 @@ playback order to the end of the track.
   the learner does not have to let go of the guitar. How shortcuts are provided is decided during
   technical planning.
 
+**Score-first practice and chords (scope expansion 2026-09-27)**
+
+- **FR-073**: While practice runs, the current practice event MUST be framed directly in the
+  score: an expected note by a frame around exactly that note, an expected chord by one frame
+  around all its notes, on the standard-notation staff and on the tablature, whichever of them
+  are displayed. The frame is red while the event is expected. The view MUST scroll so the frame
+  is visible when the event changes. Frames MUST NOT modify the song and MUST disappear when
+  practice stops (FR-014 still applies).
+- **FR-074**: On acceptance the accepted event MUST be shown in green for a short, provisional,
+  non-configurable time, then the red frame shows the next event (see Q4 for the overlap).
+  Colour MUST be accompanied by a text state in the palette (FR-070).
+- **FR-075**: A wrong, uncertain or missing performance MUST NOT move the frame (FR-007, extended
+  to expected chords).
+- **FR-076**: During practice the preparation window MUST NOT be shown; practice MUST use a
+  compact, movable, non-modal palette limited to: the detected note or chord state, cents,
+  confidence, the feedback/status line (which names the expected note or the missing/foreign
+  pitches), input-level health, and the controls Skip, Stop, Resume, Restart, Tune guitar. The
+  palette MUST keep the practice keyboard shortcuts working while focused (FR-072). Stopping
+  returns to the preparation window.
+- **FR-077**: A simultaneous event whose new pitched notes carry no bend, harmonic, tremolo-bar
+  change or trill MUST be an *expected chord*. Its required pitches are the distinct sounding
+  pitches (offset + open string + fret) of its new, non-dead notes; notes still sounding from
+  earlier beats or tied into it are tolerated but not required. Dead notes in it are ignored. If
+  no pitched new note remains, it is passed automatically (FR-011). A simultaneous event with a
+  new note carrying one of those effects stays an unsupported multi-note event waiting for Skip
+  (FR-012).
+- **FR-078**: The tablature string and fret of every chord note remain instructional only
+  (FR-027). Identical pitches on different strings of one chord count once and MUST NOT be
+  presented as separately verified.
+- **FR-079**: An expected chord MUST be accepted only when every required pitch that can be
+  verified from the audio (Q1) is detected, in the expected octave and within the practice
+  tolerance, within a short rolling window after an attack (Q3), tolerating the normal spread of
+  a strum. Window length, presence and strength thresholds are provisional, configurable
+  engineering parameters, not learner settings.
+- **FR-080**: An expected chord MUST NOT be accepted while a sufficiently strong foreign pitch is
+  detected (Q2). The feedback MUST name the foreign pitch.
+- **FR-081**: While an expected chord is current, feedback MUST be one of *waiting*,
+  *uncertain* (signal present but too weak or unclear to judge), *incomplete* (listing expected
+  pitches not heard), *foreign* (naming the extra pitch), or *correct*. Uncertain input MUST NOT
+  be presented as an error (Constitution XIV).
+- **FR-082**: The palette MUST NOT claim more than the detection establishes: for a chord it
+  lists which expected pitches were heard, which were not, and which are not separately
+  verifiable (duplicates, and harmonic-coincident pitches if Q1 is answered as proposed).
+- **FR-084** *(2026-09-28)*: After every content or state change (input selected or changed, level
+  check result, guidance or feedback text, switching between preparation and practice), the
+  practice window and the practice palette MUST recompute their packed/minimum size and apply it,
+  so that every control stays visible without manual resizing, and MUST stay on the current
+  display. Long texts wrap instead of widening the window.
+- **FR-085** *(2026-09-28)*: When the tuner loses its reliable reading (silence, decaying string,
+  level too low, clipping, low-confidence noise), it MUST keep showing the last reliable note, cents
+  and needle, visibly marked as held (grey still needle and a "held" text stating why there is no
+  live reading, not colour alone), until a new reliable reading replaces it or the mode, target
+  string, tuning or input changes.
+- **FR-086** *(2026-09-28)*: An expected note MUST be accepted only after a fresh articulation (an
+  onset whose attack follows the previous acceptance, Start, Resume, Restart or Skip) and a
+  stable run of reliable readings on the expected note within the practice tolerance at a usable
+  input level (not too low, not clipping) lasting the stability window. Silence, ambient noise,
+  low-confidence readings and transients without a stable matching pitch MUST never advance
+  practice. When the expected pitch is heard without a fresh attack, the feedback asks the learner
+  to pluck again. (Legato notes: see open question Q4-L.)
+- **FR-087** *(2026-09-28)*: The palette MUST show a clear green check (with the word "Correct")
+  when a note or chord is accepted, and a red cross (with the word "Wrong") only for a confirmed
+  wrong attempt: a freshly played note reliably detected as another note for the stability window,
+  or a strum whose chord window ended with verifiable pitches missing (those pitches are named).
+  Silence, low-confidence noise, brief glitches and a previous note still ringing MUST show
+  neither. The symbol is shown for a short provisional time.
+- **FR-083**: Single expected notes keep their existing monophonic detection, acceptance and
+  feedback (FR-017–FR-024); the chord detection MUST NOT change how single notes are judged.
+- **FR-088** *(2026-09-28)*: Unless passage retries are Off (FR-091), practice MUST be divided into passages of 2 played
+  measures (or the length chosen in FR-091) in played order, counted from the start event; a playback jump (repeat, alternate
+  ending) or a repeat-open sign MUST start a new passage, so each played occurrence of a repeated
+  section is a separate passage and a retry repeats only that occurrence.
+- **FR-089** *(2026-09-28)*: An error is an expected note or chord of the passage that received a
+  confirmed wrong verdict (FR-087) or was skipped in the current attempt, counted once per event
+  (a chord once). Rests, auto-passed and unsupported events, silence, noise, uncertain input and
+  pauses MUST NOT count. At the end of each attempt (after its last event), when errors / judged
+  events of the passage is above the chosen limit (FR-091, default 50 %) and fewer than the maximum
+  retries (default 2) were made, practice MUST return to the passage's first event with its
+  outcomes cleared and acceptance disarmed (FR-086); otherwise it moves on. Nothing is decided
+  before the end of the attempt.
+- **FR-090** *(2026-09-28)*: The palette MUST show the current passage (number, measures),
+  attempt (of the maximum) and error count, the last end-of-attempt decision (passed / again /
+  moving on) and, when practice is complete, a summary: passages passed at the first attempt,
+  passed after retries, not passed (with their measures), and the number of retries. This data is
+  kept in memory for the run only, cleared by Restart and Stop, and never saved.
+- **FR-091** *(2026-09-28)*: The preparation window MUST let the learner choose passage retries:
+  Off, or a passage length of 1, 2 or 4 measures (default 2), and an error threshold of 25, 50 or
+  75 % (default 50; FR-089's limit). The choice applies to the next Start, is remembered for the
+  current application run only (not saved, reset on the next launch), and Off practises straight
+  through with no passages, retries, passage line or summary, exactly as without FR-088–FR-090.
+  *(Amended by FR-092: the launch values are the persistent Configuration values, by default 2
+  measures and 50 %; the preparation-window choice itself stays run-only.)*
+- **FR-092** *(2026-09-28, owner task T102)*: TuxGuitar's Configuration window MUST offer an
+  **Audio recognition** page covering the shared input (device/channel, level limits), the tuner
+  (in-tune range, keep the last note), practice notes (acceptance range, minimum certainty,
+  confirmation time, attack sensitivity, legato policy), chords (strictness, strum window,
+  completeness, foreign strings), passages (length or Off, error threshold, maximum repeats), the
+  recognition engine (only engines that exist; today "Automatic (FastYin)") and an Advanced
+  section for raw analysis values. Every value is validated on entry and when read from the saved
+  configuration (missing, invalid, non-finite or out-of-range values are repaired, never fatal),
+  persisted, shared by the tuner, practice and the engine, and its recommended value — the value
+  used before the page existed — is identifiable and restorable per section and globally. The
+  help documents every setting. Choices that would change musical behaviour and are still open
+  (legato without an attack, rejecting foreign chord strings) are shown as the only current option
+  and documented as proposals, not offered. The input device stays a per-run choice (remembering
+  it is out of scope). *(P13, 2026-09-28)*: the page follows TuxGuitar's language (French
+  provided: « Reconnaissance audio », « Catégorie de réglages »); its two restore actions are
+  scoped explicitly (this category / all audio-recognition settings, both applied with OK) and
+  differ from TuxGuitar's « Valeurs par défaut » (every TuxGuitar setting, at once); each slider
+  updates its own value text while moving and never changes another control.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Practice Session**: one run of practice on a track — selected track, original starting
   position, current event, state (running, paused, complete), and which events were accepted or
   skipped. Exists only for the session.
-- **Practice Event**: an event practice stops on, in playback order — an expected note or a
-  simultaneous multi-note event awaiting Skip.
+- **Practice Event**: an event practice stops on, in playback order — an expected note, an
+  expected chord (since 2026-09-27), or a simultaneous multi-note event awaiting Skip.
+- **Expected Chord**: a simultaneous event whose distinct required sounding pitches are
+  validated together (FR-077–FR-082); each note's string and fret are instructional only.
 - **Automatically Passed Event**: a dead note, dead-only simultaneous event, grace note without a
   usable pitch, bend, harmonic, tremolo-bar pitch change, or trill — passed without learner
   action, briefly indicated where practical, never validated.
@@ -905,6 +1102,11 @@ playback order to the end of the track.
 - **SC-007** *(provisional)*: A 30-minute practice session remains responsive and does not crash.
 - **SC-008**: With the feature never used, existing TuxGuitar behaviour and existing automated
   tests are unaffected.
+- **SC-010** *(provisional, scope expansion 2026-09-27)*: On a committed set of real strummed
+  chord recordings (at least open E, A, D, G, C major and E, A minor, plus chords with one wrong
+  or missing string), correct chords are accepted and chords with a wrong or clearly missing
+  verifiable pitch are not; rates are measured and targets proposed before acceptance, per input
+  type, like SC-003. No chord claim is made before this benchmark exists.
 - **SC-009**: A documented product-owner manual acceptance checklist, covering this
   specification's acceptance scenarios, is completed and passed on the validation target before
   the MVP is accepted. It verifies at least that:
@@ -1016,11 +1218,14 @@ Other assumptions:
 - Feedback is visual only; no audible click, tone, or guide playback is produced.
 - Pitch-only validation cannot prove which string, fret, or technique was used, nor that a
   matched pitch came from the guitar (Constitution XIII).
-- Out of scope: validating chords or any multi-note event, validating the physical string or
+- Out of scope: validating multi-note events other than expected chords (chord validation was
+  added by the 2026-09-27 scope expansion, User Story 7), validating the physical string or
   fret, evaluating playing techniques or articulations, bends, harmonics, tremolo-bar pitch
   changes, trills, rhythm scoring and timing grades, attack counting, amp simulation or effects,
-  practice statistics or history, adaptive exercises, machine learning, cloud services,
+  practice statistics or history (except FR-090), adaptive exercises, machine learning, cloud services,
   instruments other than 6-string guitar (including any unvalidated mode for them),
   learner-adjustable tolerance, continuous automatic gain control, hands-free control (e.g. foot
   pedals), recording or saving the learner's audio, remembering the input device
-  across launches, selectable practice ranges, looping, and practising several tracks at once.
+  across launches, selectable practice ranges, looping (except the passage retries of FR-088–FR-089),
+  and practising several tracks at once. Practice statistics are limited to the memory-only passage
+  summary of FR-090.

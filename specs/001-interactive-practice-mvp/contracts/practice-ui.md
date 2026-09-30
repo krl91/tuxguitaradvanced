@@ -34,6 +34,15 @@ Auto-passed events: brief non-blocking indication. Completion: message + Restart
 The score location is shown with a practice highlight separate from the normal cursor, which the
 learner may move freely; the view scrolls to the event when it changes (FR-014, research R18).
 
+*Amended 2026-09-27 (User Story 7, FR-073–FR-076)*: while practice runs the window above is
+hidden and replaced by the **practice palette** — a compact, movable, non-modal window with: the
+detected note (or chord candidates) with cents and confidence; one status line (feedback naming
+the expected note, or for a chord the missing/foreign pitches); input-level health; Skip, Stop,
+Resume, Restart, Tune guitar. Practice shortcuts work while it has focus. Stop closes it and shows
+the preparation window again. The expected event is shown in the score itself: a red frame around
+the note, or around the whole chord, on the score staff and the tablature; the accepted event is
+framed green for a short provisional time; the view scrolls to the framed event.
+
 ## Tuner window (evolved existing tuner, FR-046–FR-060)
 
 Preserved from the existing tuner (FR-059 regression baseline): Tools-menu entry, same tuner
