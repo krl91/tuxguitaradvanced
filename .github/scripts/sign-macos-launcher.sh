@@ -52,7 +52,13 @@ echo "looking for the identity"
 IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | awk 'NR==1 {print $2}')"
 [ -n "$IDENTITY" ] || { echo "no valid code-signing identity in the keychain" >&2; exit 1; }
 
-codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" --identifier app.tuxguitar "$LAUNCHER"
-codesign --verify --strict -v "$LAUNCHER"
+# Sign a standalone copy: inside the .app, codesign would treat the launcher as the main
+# executable of the bundle and try to seal everything next to it (the embedded JRE, lib/,
+# share/ live in Contents/MacOS), which fails. The signature is embedded in the Mach-O file,
+# so copying it back keeps it.
+cp -p "$LAUNCHER" "$WORK/tuxguitar-launcher"
+codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" --identifier app.tuxguitar "$WORK/tuxguitar-launcher"
+codesign --verify --strict -v "$WORK/tuxguitar-launcher"
+cp -p "$WORK/tuxguitar-launcher" "$LAUNCHER"
 codesign -dvv "$LAUNCHER" 2>&1 | grep -E 'Identifier|Authority|Signature'
 codesign -d -r- "$LAUNCHER" 2>&1 | grep designated
