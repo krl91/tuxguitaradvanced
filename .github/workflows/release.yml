@@ -1,0 +1,151 @@
+# Builds TuxGuitar for macOS (Apple Silicon), Linux and Windows and publishes
+# the packages as a GitHub Release.
+#
+# Trigger: push a tag such as v1.0.0, or run the workflow manually
+# (Actions > Release > Run workflow) and give the tag to create.
+#
+# Notes:
+#  - macOS arm64 uses the fork's macOS SWT build, the only variant that
+#    includes the Interactive Practice modules (audio-engine, tuner-next, practice).
+#    A Temurin 21 JRE is embedded in the .app (the build itself does not do it).
+#  - Linux and Windows use the standard upstream build scripts and do NOT
+#    contain the Interactive Practice modules.
+#  - The Windows build is cross-compiled on Linux with Mingw-w64 and does not
+#    embed a JRE: Java 17+ must be installed on the target machine.
+#  - The packages are not code-signed / notarized.
+
+name: Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to create (e.g. v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  SWT_VERSION: '4.37'
+  SWT_DROP: 'R-4.37-202509050730'
+  TG_VERSION: '9.99-SNAPSHOT'
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  build-macos-arm64:
+    runs-on: macos-14   # Apple Silicon
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          architecture: aarch64
+          cache: maven
+      - name: Download and install SWT (cocoa, aarch64)
+        run: |
+          curl -fL -o swt.zip "https://archive.eclipse.org/eclipse/downloads/drops4/${SWT_DROP}/swt-${SWT_VERSION}-cocoa-macosx-aarch64.zip"
+          mkdir swt && cd swt && unzip -q ../swt.zip
+          mvn -B install:install-file -Dfile=swt.jar -DgroupId=org.eclipse.swt -DartifactId=org.eclipse.swt.cocoa.macosx -Dpackaging=jar -Dversion=${SWT_VERSION}
+      - name: Build
+        run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B -e clean verify -P native-modules -DskipTests
+      - name: Embed the JRE and zip the app
+        run: |
+          cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
+          APP="tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app"
+          cp -R "$JAVA_HOME" "$APP/Contents/MacOS/jre"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "$GITHUB_WORKSPACE/TuxGuitar-${RELEASE_TAG}-macos-arm64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-macos-arm64
+          path: TuxGuitar-*-macos-arm64.zip
+          if-no-files-found: error
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip git build-essential libwebkit2gtk-4.1-0 libfluidsynth-dev libjack-jackd2-dev libasound2-dev liblilv-dev libsuil-dev qtbase5-dev
+      - name: Download and install SWT (gtk, linux)
+        run: |
+          ARCH=$(uname -m)
+          curl -fL -o swt.zip "https://archive.eclipse.org/eclipse/downloads/drops4/${SWT_DROP}/swt-${SWT_VERSION}-gtk-linux-${ARCH}.zip"
+          mkdir swt && cd swt && unzip -q ../swt.zip
+          mvn -B install:install-file -Dfile=swt.jar -DgroupId=org.eclipse.swt -DartifactId=org.eclipse.swt.gtk.linux -Dpackaging=jar -Dversion=${SWT_VERSION}
+      - name: Build
+        run: cd desktop/build-scripts/tuxguitar-linux-swt && mvn -B -e clean verify -P native-modules -DskipTests
+      - name: Package
+        run: |
+          cd desktop/build-scripts/tuxguitar-linux-swt/target
+          tar -czf "$GITHUB_WORKSPACE/TuxGuitar-${RELEASE_TAG}-linux-x86_64.tar.gz" "tuxguitar-${TG_VERSION}-linux-swt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-linux
+          path: TuxGuitar-*-linux-*.tar.gz
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: ubuntu-latest   # cross-compiled with Mingw-w64
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip git gcc-mingw-w64-x86-64 g++-mingw-w64-i686-win32
+      - name: Download and install SWT (win32, x86_64)
+        run: |
+          curl -fL -o swt.zip "https://archive.eclipse.org/eclipse/downloads/drops4/${SWT_DROP}/swt-${SWT_VERSION}-win32-win32-x86_64.zip"
+          mkdir swt && cd swt && unzip -q ../swt.zip
+          mvn -B install:install-file -Dfile=swt.jar -DgroupId=org.eclipse.swt -DartifactId=org.eclipse.swt.win32.win32 -Dpackaging=jar -Dversion=${SWT_VERSION}
+      - name: Build
+        run: cd desktop/build-scripts/tuxguitar-windows-swt-x86_64 && mvn -B -e clean verify -P native-modules -P -platform-linux -P platform-windows -DskipTests
+      - name: Package
+        run: |
+          cd desktop/build-scripts/tuxguitar-windows-swt-x86_64/target
+          zip -qr "$GITHUB_WORKSPACE/TuxGuitar-${RELEASE_TAG}-windows-x86_64.zip" "tuxguitar-${TG_VERSION}-windows-swt-x86_64"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-windows
+          path: TuxGuitar-*-windows-*.zip
+          if-no-files-found: error
+
+  release:
+    needs: [build-macos-arm64, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the release and the tag
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -lh dist
+          gh release create "$RELEASE_TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "TuxGuitar $RELEASE_TAG" \
+            --generate-notes
