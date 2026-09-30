@@ -415,7 +415,7 @@
 									<arg value="--sign" />
 									<arg value="-" />
 									<arg value="--identifier" />
-									<arg value="app.tuxguitar" />
+									<arg value="app.tuxguitaradvanced" />
 									<arg value="${project.build.directory}/tuxguitar-launcher" />
 								</exec>
 								<copy file="${project.build.directory}/tuxguitar-launcher"
@@ -432,6 +432,11 @@
 									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
 								</exec>
 								<!-- the fork's product name (the shared common-macosx Info.plist still says TuxGuitar) -->
+								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
+									<arg value="-c" />
+									<arg value="Set :CFBundleIdentifier app.tuxguitaradvanced" />
+									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
+								</exec>
 								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
 									<arg value="-c" />
 									<arg value="Set :CFBundleName TuxGuitarAdvanced" />

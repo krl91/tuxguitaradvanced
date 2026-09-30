@@ -103,7 +103,9 @@ jobs:
       - name: Package
         run: |
           cd desktop/build-scripts/tuxguitar-linux-swt/target
-          tar -czf "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" "tuxguitar-${TG_VERSION}-linux-swt"
+          # the top-level folder carries the product name
+          mv "tuxguitar-${TG_VERSION}-linux-swt" TuxGuitarAdvanced
+          tar -czf "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" TuxGuitarAdvanced
       - uses: actions/upload-artifact@v4
         with:
           name: package-linux
@@ -134,7 +136,8 @@ jobs:
       - name: Package
         run: |
           cd desktop/build-scripts/tuxguitar-windows-swt-x86_64/target
-          zip -qr "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" "tuxguitar-${TG_VERSION}-windows-swt-x86_64"
+          mv "tuxguitar-${TG_VERSION}-windows-swt-x86_64" TuxGuitarAdvanced
+          zip -qr "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" TuxGuitarAdvanced
       - uses: actions/upload-artifact@v4
         with:
           name: package-windows

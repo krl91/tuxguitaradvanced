@@ -57,7 +57,7 @@ IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | awk 'NR==1 {p
 # share/ live in Contents/MacOS), which fails. The signature is embedded in the Mach-O file,
 # so copying it back keeps it.
 cp -p "$LAUNCHER" "$WORK/tuxguitar-launcher"
-codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" --identifier app.tuxguitar "$WORK/tuxguitar-launcher"
+codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" --identifier app.tuxguitaradvanced "$WORK/tuxguitar-launcher"
 codesign --verify --strict -v "$WORK/tuxguitar-launcher"
 cp -p "$WORK/tuxguitar-launcher" "$LAUNCHER"
 codesign -dvv "$LAUNCHER" 2>&1 | grep -E 'Identifier|Authority|Signature'
