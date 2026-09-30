@@ -61,6 +61,7 @@ jobs:
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
           cp -R "$JAVA_HOME" "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app/Contents/MacOS/jre"
       - name: Sign the launcher (stable self-signed certificate, if the secrets exist)
+        timeout-minutes: 10
         env:
           MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}

@@ -27,7 +27,8 @@ KEYCHAIN="$WORK/signing.keychain-db"
 KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
 cleanup() {
   security delete-keychain "$KEYCHAIN" >/dev/null 2>&1 || true
-  sudo security remove-trusted-cert -d "$WORK/cert.pem" >/dev/null 2>&1 || true
+  # the runner is ephemeral: removing the trust there only risks waiting for an authorisation
+  [ -n "${CI:-}" ] || sudo security remove-trusted-cert -d "$WORK/cert.pem" >/dev/null 2>&1 || true
   rm -rf "$WORK"
 }
 trap cleanup EXIT
@@ -41,9 +42,13 @@ security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
 security import "$WORK/cert.p12" -k "$KEYCHAIN" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign >/dev/null
 security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
 security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
-# codesign only uses identities the system trusts for code signing
+# codesign only uses identities the system trusts for code signing. On a CI runner the trust
+# change would otherwise wait for an interactive authorisation, so allow it first.
+echo "adding the certificate to the trust settings"
+sudo security authorizationdb write com.apple.trust-settings.admin allow >/dev/null
 sudo security add-trusted-cert -d -r trustRoot -p codeSign -k "$KEYCHAIN" "$WORK/cert.pem"
 
+echo "looking for the identity"
 IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | awk 'NR==1 {print $2}')"
 [ -n "$IDENTITY" ] || { echo "no valid code-signing identity in the keychain" >&2; exit 1; }
 
