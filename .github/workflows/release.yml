@@ -1,4 +1,4 @@
-# Builds TuxGuitar for macOS (Apple Silicon), Linux and Windows and publishes
+# Builds TuxGuitarAdvanced for macOS (Apple Silicon), Linux and Windows and publishes
 # the packages as a GitHub Release.
 #
 # Trigger: push a tag such as v1.0.0, or run the workflow manually
@@ -59,11 +59,11 @@ jobs:
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
           APP="tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app"
           cp -R "$JAVA_HOME" "$APP/Contents/MacOS/jre"
-          ditto -c -k --sequesterRsrc --keepParent "$APP" "$GITHUB_WORKSPACE/TuxGuitar-${RELEASE_TAG}-macos-arm64.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: package-macos-arm64
-          path: TuxGuitar-*-macos-arm64.zip
+          path: TuxGuitarAdvanced-*-macos-arm64.zip
           if-no-files-found: error
 
   build-linux:
@@ -91,11 +91,11 @@ jobs:
       - name: Package
         run: |
           cd desktop/build-scripts/tuxguitar-linux-swt/target
-          tar -czf "$GITHUB_WORKSPACE/TuxGuitar-${RELEASE_TAG}-linux-x86_64.tar.gz" "tuxguitar-${TG_VERSION}-linux-swt"
+          tar -czf "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" "tuxguitar-${TG_VERSION}-linux-swt"
       - uses: actions/upload-artifact@v4
         with:
           name: package-linux
-          path: TuxGuitar-*-linux-*.tar.gz
+          path: TuxGuitarAdvanced-*-linux-*.tar.gz
           if-no-files-found: error
 
   build-windows:
@@ -122,11 +122,11 @@ jobs:
       - name: Package
         run: |
           cd desktop/build-scripts/tuxguitar-windows-swt-x86_64/target
-          zip -qr "$GITHUB_WORKSPACE/TuxGuitar-${RELEASE_TAG}-windows-x86_64.zip" "tuxguitar-${TG_VERSION}-windows-swt-x86_64"
+          zip -qr "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" "tuxguitar-${TG_VERSION}-windows-swt-x86_64"
       - uses: actions/upload-artifact@v4
         with:
           name: package-windows
-          path: TuxGuitar-*-windows-*.zip
+          path: TuxGuitarAdvanced-*-windows-*.zip
           if-no-files-found: error
 
   release:
@@ -147,5 +147,5 @@ jobs:
           gh release create "$RELEASE_TAG" dist/* \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "TuxGuitar $RELEASE_TAG" \
+            --title "TuxGuitarAdvanced $RELEASE_TAG" \
             --generate-notes
