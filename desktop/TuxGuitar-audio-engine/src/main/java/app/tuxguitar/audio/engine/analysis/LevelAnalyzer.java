@@ -25,6 +25,16 @@ public final class LevelAnalyzer {
 		this.clippingRatioThreshold = clippingRatioThreshold;
 	}
 
+	/** Below this RMS level a frame is TOO_LOW (the "minimum usable level" setting). */
+	public double getTooLowRmsDbfs() {
+		return this.tooLowRmsDbfs;
+	}
+
+	/** Above this RMS level a frame is TOO_HIGH (the "high level warning" setting). */
+	public double getTooHighRmsDbfs() {
+		return this.tooHighRmsDbfs;
+	}
+
 	public LevelMeasurement analyze(float[] samples) {
 		return analyze(samples, 0, samples.length);
 	}

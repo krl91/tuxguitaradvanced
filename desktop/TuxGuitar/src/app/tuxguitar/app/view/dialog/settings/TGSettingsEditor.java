@@ -129,6 +129,9 @@ public class TGSettingsEditor{
 		this.options.add(new LanguageOption(this, toolBar, parent));
 		this.options.add(new SkinOption(this, toolBar, parent));
 		this.options.add(new SoundOption(this, toolBar, parent));
+		for(TGSettingsOptionFactory factory : TGSettingsOptionRegistry.getInstance(this.context.getContext()).getFactories()) {
+			this.options.add(factory.createOption(this, toolBar, parent));
+		}
 
 		for(TGSettingsOption option : this.options) {
 			option.createOption();

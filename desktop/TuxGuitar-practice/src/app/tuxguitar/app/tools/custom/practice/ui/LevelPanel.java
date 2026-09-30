@@ -42,6 +42,7 @@ public final class LevelPanel {
 	private final AtomicBoolean uiPending = new AtomicBoolean();
 	private volatile long lastUiNanos;
 	private boolean connected;
+	private Runnable contentListener;
 
 	public LevelPanel(TGContext context, AudioEngine engine, UIFactory uiFactory, UIContainer parent) {
 		this.context = context;
@@ -57,10 +58,12 @@ public final class LevelPanel {
 		this.levelLabel = uiFactory.createLabel(this.panel);
 		layout.set(this.levelLabel, 1, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 
-		this.statusLabel = uiFactory.createLabel(this.panel);
+		this.statusLabel = uiFactory.createWrapLabel(this.panel);
 		layout.set(this.statusLabel, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
-		this.guidanceLabel = uiFactory.createLabel(this.panel);
+		layout.set(this.statusLabel, UITableLayout.PACKED_WIDTH, InputSelectorPanel.WRAP_WIDTH);
+		this.guidanceLabel = uiFactory.createWrapLabel(this.panel);
 		layout.set(this.guidanceLabel, 3, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		layout.set(this.guidanceLabel, UITableLayout.PACKED_WIDTH, InputSelectorPanel.WRAP_WIDTH);
 
 		UIButton checkAgain = uiFactory.createButton(this.panel);
 		checkAgain.setText(TuxGuitar.getProperty("practice.level.check-again"));
@@ -72,6 +75,11 @@ public final class LevelPanel {
 		layout.set(checkAgain, 4, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false, 1, 2);
 
 		this.frameListener = this::frameReceived;
+	}
+
+	/** Called after the panel's content changed size, so the window can refit (UI thread). */
+	public void setContentListener(Runnable contentListener) {
+		this.contentListener = contentListener;
 	}
 
 	public UIPanel getControl() {
@@ -101,6 +109,9 @@ public final class LevelPanel {
 		boolean needsGuidance = (assessment.getStatus() == InputAssessment.Status.SUBOPTIMAL || assessment.getStatus() == InputAssessment.Status.UNUSABLE);
 		this.guidanceLabel.setText(needsGuidance ? TuxGuitar.getProperty(guidanceKey) : "");
 		this.panel.layout();
+		if( this.contentListener != null ) {
+			this.contentListener.run();
+		}
 	}
 
 	/** Analysis thread: keeps the latest frame and schedules at most ~30 UI updates per second. */

@@ -66,6 +66,16 @@ public final class ArticulationDetector {
 		reset();
 	}
 
+	/** Level rise needed for a new attack (the "pick attack sensitivity" setting). */
+	public double getGateDb() {
+		return this.gateDb;
+	}
+
+	/** Quieter frames are never an attack (the "attack detection floor" setting). */
+	public double getMinLevelDb() {
+		return this.minLevelDb;
+	}
+
 	/** Forgets all history, e.g. after a gap in the input. */
 	public void reset() {
 		this.hop = 0;

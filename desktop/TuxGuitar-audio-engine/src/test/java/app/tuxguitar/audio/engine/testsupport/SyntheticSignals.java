@@ -90,6 +90,31 @@ public final class SyntheticSignals {
 		return signal;
 	}
 
+	/**
+	 * A strummed chord: one Karplus–Strong pluck per MIDI pitch, the i-th starting
+	 * {@code i * strumSpacingSamples} after the first (normal attack spread), each scaled by
+	 * {@code amplitude}. Seeds are fixed per string.
+	 */
+	public static float[] strum(int[] midiPitches, int sampleRate, int sampleCount, int strumSpacingSamples, double amplitude, long seed) {
+		float[] signal = new float[sampleCount];
+		for (int i = 0; i < midiPitches.length; i++) {
+			int onset = i * strumSpacingSamples;
+			float[] pluck = karplusStrong(midiFrequency(midiPitches[i]), sampleRate, sampleCount - onset, seed + i);
+			for (int j = 0; j < pluck.length; j++) {
+				signal[onset + j] += (float) (amplitude * pluck[j]);
+			}
+		}
+		return signal;
+	}
+
+	/** Adds {@code addition} into {@code target} from {@code offset}, returning the target. */
+	public static float[] mix(float[] target, float[] addition, int offset) {
+		for (int i = 0; i < addition.length && offset + i < target.length; i++) {
+			target[offset + i] += addition[i];
+		}
+		return target;
+	}
+
 	public static float[] interleave(float[]... channels) {
 		if (channels.length == 0) {
 			throw new IllegalArgumentException("at least one channel is required");

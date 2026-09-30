@@ -23,27 +23,37 @@ public final class AnalysisService {
 		void analysisFrame(AnalysisFrame frame);
 	}
 
+	/** Everything the worker switches at once, at the top of its loop (never a partial state). */
 	private static final class Configuration {
 		private final int sampleRate;
 		private final PitchEstimator pitchEstimator;
 		private final long discardUntil;
+		private final LevelAnalyzer levelAnalyzer;
+		private final ArticulationDetector articulationDetector;
 
-		private Configuration(int sampleRate, PitchEstimator pitchEstimator, long discardUntil) {
+		private Configuration(int sampleRate, PitchEstimator pitchEstimator, long discardUntil,
+				LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector) {
 			this.sampleRate = sampleRate;
 			this.pitchEstimator = pitchEstimator;
 			this.discardUntil = discardUntil;
+			this.levelAnalyzer = levelAnalyzer;
+			this.articulationDetector = articulationDetector;
 		}
 	}
 
 	private final TGContext context;
 	private final SampleRingBuffer ringBuffer;
-	private final LevelAnalyzer levelAnalyzer;
-	private final ArticulationDetector articulationDetector;
+	/** The analysers of the latest requested configuration (used when only the rate or estimator changes). */
+	private LevelAnalyzer requestedLevelAnalyzer;
+	private ArticulationDetector requestedArticulationDetector;
+	private final Object reconfigureLock = new Object();
 	private final int windowSize;
 	private final int hopSize;
 	private final List<Listener> listeners;
 	private final AtomicReference<Configuration> pendingConfiguration;
 	private Configuration configuration;
+	private volatile boolean spectrumEnabled;
+	private PolyphonicAnalyzer polyphonicAnalyzer;
 	private boolean running;
 	private boolean workerAlive;
 
@@ -60,11 +70,11 @@ public final class AnalysisService {
 		}
 		this.context = context;
 		this.ringBuffer = ringBuffer;
-		this.levelAnalyzer = levelAnalyzer;
-		this.articulationDetector = articulationDetector;
+		this.requestedLevelAnalyzer = levelAnalyzer;
+		this.requestedArticulationDetector = articulationDetector;
 		this.windowSize = windowSize;
 		this.hopSize = hopSize;
-		this.configuration = new Configuration(sampleRate, pitchEstimator, 0L);
+		this.configuration = new Configuration(sampleRate, pitchEstimator, 0L, levelAnalyzer, articulationDetector);
 		this.pendingConfiguration = new AtomicReference<Configuration>();
 		this.listeners = new CopyOnWriteArrayList<Listener>();
 	}
@@ -92,10 +102,52 @@ public final class AnalysisService {
 	 * to the previous configuration and are discarded instead of analysed.
 	 */
 	public void reconfigure(int sampleRate, PitchEstimator pitchEstimator, long discardUntil) {
+		synchronized (this.reconfigureLock) {
+			reconfigure(sampleRate, pitchEstimator, discardUntil, this.requestedLevelAnalyzer, this.requestedArticulationDetector);
+		}
+	}
+
+	/**
+	 * Like {@link #reconfigure(int, PitchEstimator, long)}, also replacing the level analyser and
+	 * the articulation detector (new settings, task T102). The worker switches everything at once
+	 * and restarts its window from {@code discardUntil}: frames are never computed with a mix of
+	 * old and new settings. The caller allocates; the worker only swaps a reference.
+	 */
+	public void reconfigure(int sampleRate, PitchEstimator pitchEstimator, long discardUntil,
+			LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector) {
 		if (sampleRate <= 0) {
 			throw new IllegalArgumentException("invalid sample rate");
 		}
-		this.pendingConfiguration.set(new Configuration(sampleRate, pitchEstimator, discardUntil));
+		if (pitchEstimator == null || levelAnalyzer == null || articulationDetector == null) {
+			throw new IllegalArgumentException("estimator and analysers are required");
+		}
+		synchronized (this.reconfigureLock) {
+			this.requestedLevelAnalyzer = levelAnalyzer;
+			this.requestedArticulationDetector = articulationDetector;
+			this.pendingConfiguration.set(new Configuration(sampleRate, pitchEstimator, discardUntil, levelAnalyzer, articulationDetector));
+		}
+	}
+
+	/** The level analyser of the latest configuration handed to the worker (diagnostics, tests). */
+	public LevelAnalyzer getRequestedLevelAnalyzer() {
+		synchronized (this.reconfigureLock) {
+			return this.requestedLevelAnalyzer;
+		}
+	}
+
+	/** The articulation detector of the latest configuration handed to the worker (diagnostics, tests). */
+	public ArticulationDetector getRequestedArticulationDetector() {
+		synchronized (this.reconfigureLock) {
+			return this.requestedArticulationDetector;
+		}
+	}
+
+	/**
+	 * Adds the polyphonic spectrum ({@link AnalysisFrame#getSpectrum()}) to every frame while
+	 * enabled; it starts from an empty history when enabled. Single-note fields are unaffected.
+	 */
+	public void setSpectrumEnabled(boolean enabled) {
+		this.spectrumEnabled = enabled;
 	}
 
 	private void run() {
@@ -115,7 +167,8 @@ public final class AnalysisService {
 				this.configuration = pending;
 				this.ringBuffer.skipTo(pending.discardUntil);
 				observedDroppedSamples = this.ringBuffer.getDroppedSampleCount();
-				this.articulationDetector.reset();
+				this.configuration.articulationDetector.reset();
+				this.polyphonicAnalyzer = null;
 				windowFill = 0;
 				hopFill = 0;
 			}
@@ -123,7 +176,10 @@ public final class AnalysisService {
 			if (droppedSamples != observedDroppedSamples) {
 				processedSamples += droppedSamples - observedDroppedSamples;
 				observedDroppedSamples = droppedSamples;
-				this.articulationDetector.reset();
+				this.configuration.articulationDetector.reset();
+				if (this.polyphonicAnalyzer != null) {
+					this.polyphonicAnalyzer.reset();
+				}
 				windowFill = 0;
 				hopFill = 0;
 			}
@@ -147,6 +203,7 @@ public final class AnalysisService {
 			}
 			processedSamples += this.hopSize;
 			hopFill = 0;
+			pushSpectrum(hop);
 			if (windowFill == this.windowSize) {
 				long timestampNanos = baseNanos + processedSamples * 1_000_000_000L / this.configuration.sampleRate;
 				publish(analyze(window, timestampNanos));
@@ -154,14 +211,26 @@ public final class AnalysisService {
 		}
 	}
 
+	private void pushSpectrum(float[] hop) {
+		if (!this.spectrumEnabled) {
+			this.polyphonicAnalyzer = null;
+			return;
+		}
+		if (this.polyphonicAnalyzer == null) {
+			this.polyphonicAnalyzer = new PolyphonicAnalyzer(PolyphonicAnalyzer.Parameters.defaults(), this.configuration.sampleRate);
+		}
+		this.polyphonicAnalyzer.push(hop, 0, hop.length);
+	}
+
 	private AnalysisFrame analyze(float[] window, long timestampNanos) {
-		LevelMeasurement level = this.levelAnalyzer.analyze(window);
+		LevelMeasurement level = this.configuration.levelAnalyzer.analyze(window);
 		PitchEstimate pitch = this.configuration.pitchEstimator.estimate(window);
-		boolean onset = this.articulationDetector.process(window);
+		boolean onset = this.configuration.articulationDetector.process(window);
+		SpectrumFrame spectrum = (this.polyphonicAnalyzer != null ? this.polyphonicAnalyzer.analyze() : null);
 		return new AnalysisFrame(timestampNanos, level.getRmsDbfs(), level.getPeakDbfs(),
 				level.getClippedRatio(), level.getLevelState(),
 				pitch.isPitched() ? pitch.getF0Hz() : Double.NaN,
-				pitch.getProbability(), onset);
+				pitch.getProbability(), onset, spectrum);
 	}
 
 	private void publish(AnalysisFrame frame) {

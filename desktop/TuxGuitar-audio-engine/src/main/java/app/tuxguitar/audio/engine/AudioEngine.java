@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.IntFunction;
 
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
+import app.tuxguitar.audio.engine.analysis.ArticulationDetector;
 import app.tuxguitar.audio.engine.analysis.InputAssessor;
 import app.tuxguitar.audio.engine.analysis.LevelAnalyzer;
 import app.tuxguitar.audio.engine.analysis.PitchEstimator;
@@ -14,6 +15,11 @@ import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.input.InputDeviceCatalog;
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
+import app.tuxguitar.audio.engine.settings.PitchEngineCatalog;
+import app.tuxguitar.audio.engine.settings.RecognitionParameter;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
+import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.singleton.TGSingletonFactory;
 import app.tuxguitar.util.singleton.TGSingletonUtil;
@@ -49,14 +55,28 @@ public final class AudioEngine {
 	private final IntFunction<PitchEstimator> estimatorFactory;
 	private final InputAssessor assessor;
 	private long checkedInputRevision;
+	/** Null for engines built without settings (tests); then the analysers never change. */
+	private final RecognitionSettingsStore settingsStore;
+	private volatile int lastSampleRate = INITIAL_SAMPLE_RATE;
 
 	AudioEngine(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection,
 			int ringBufferCapacity, LevelAnalyzer levelAnalyzer, IntFunction<PitchEstimator> estimatorFactory) {
+		this(context, catalog, selection, ringBufferCapacity, levelAnalyzer, new ArticulationDetector(), estimatorFactory, null);
+	}
+
+	/**
+	 * @param settingsStore the recognition settings whose engine values (level thresholds,
+	 *        attack detection, pitch engine) this engine follows, or null
+	 */
+	AudioEngine(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection,
+			int ringBufferCapacity, LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector,
+			IntFunction<PitchEstimator> estimatorFactory, RecognitionSettingsStore settingsStore) {
+		this.settingsStore = settingsStore;
 		this.ringBuffer = new SampleRingBuffer(ringBufferCapacity);
 		this.selection = selection;
 		this.catalog = catalog;
 		this.estimatorFactory = estimatorFactory;
-		this.analysisService = new AnalysisService(context, this.ringBuffer, levelAnalyzer,
+		this.analysisService = new AnalysisService(context, this.ringBuffer, levelAnalyzer, articulationDetector,
 				estimatorFactory.apply(INITIAL_SAMPLE_RATE), INITIAL_SAMPLE_RATE,
 				TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE, TarsosFastYinEstimator.DEFAULT_HOP_SIZE);
 		this.captureService = new CaptureService(context, catalog, selection, this.ringBuffer);
@@ -65,18 +85,22 @@ public final class AudioEngine {
 		this.checkedInputRevision = selection.snapshot().getInputRevision();
 		this.selection.addListener(this::selectionChanged);
 		this.captureService.addListener(this::captureEvent);
+		if( settingsStore != null ) {
+			settingsStore.addListener(this::settingsChanged);
+		}
 	}
 
 	public static AudioEngine getInstance(TGContext context) {
 		return TGSingletonUtil.getInstance(context, AudioEngine.class.getName(), new TGSingletonFactory<AudioEngine>() {
 			@Override
 			public AudioEngine createInstance(TGContext singletonContext) {
+				final RecognitionSettingsStore store = RecognitionSettingsStore.getInstance(singletonContext);
+				RecognitionSettings settings = store.get();
 				return new AudioEngine(singletonContext, new InputDeviceCatalog(),
 						CurrentInputSelection.getInstance(singletonContext), DEFAULT_RING_BUFFER_CAPACITY,
-						new LevelAnalyzer(DEFAULT_TOO_LOW_RMS_DBFS, DEFAULT_TOO_HIGH_RMS_DBFS,
-								DEFAULT_CLIPPED_SAMPLE_LEVEL, DEFAULT_CLIPPING_RATIO),
-						sampleRate -> new TarsosFastYinEstimator(sampleRate,
-								TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE, TarsosFastYinEstimator.DEFAULT_HOP_SIZE));
+						levelAnalyzer(settings), articulationDetector(settings),
+						sampleRate -> PitchEngineCatalog.resolve(store.get().get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate),
+						store);
 			}
 		});
 	}
@@ -110,6 +134,14 @@ public final class AudioEngine {
 
 	public void subscribe(AnalysisService.Listener listener) {
 		this.analysisService.subscribe(listener);
+	}
+
+	/**
+	 * Adds the polyphonic spectrum to analysis frames (plan stage D), for chord practice only;
+	 * the tuner does not need it. Single-note analysis is unaffected.
+	 */
+	public void setSpectrumEnabled(boolean enabled) {
+		this.analysisService.setSpectrumEnabled(enabled);
 	}
 
 	public void unsubscribe(AnalysisService.Listener listener) {
@@ -153,6 +185,16 @@ public final class AudioEngine {
 		return this.catalog;
 	}
 
+	/** The level analyser the analysis uses (from the saved settings); diagnostics and tests only. */
+	public LevelAnalyzer getLevelAnalyzer() {
+		return this.analysisService.getRequestedLevelAnalyzer();
+	}
+
+	/** The articulation detector the analysis uses (from the saved settings); diagnostics and tests only. */
+	public ArticulationDetector getArticulationDetector() {
+		return this.analysisService.getRequestedArticulationDetector();
+	}
+
 	/** Diagnostic for tests and measurements only; never shown to the learner. */
 	public long getDroppedSampleCount() {
 		return this.ringBuffer.getDroppedSampleCount();
@@ -190,7 +232,49 @@ public final class AudioEngine {
 	}
 
 	void rebuildAnalysis(int sampleRate) {
+		this.lastSampleRate = sampleRate;
+		if( this.settingsStore == null ) {
+			this.analysisService.reconfigure(sampleRate, this.estimatorFactory.apply(sampleRate),
+					this.ringBuffer.getWrittenSampleCount());
+			return;
+		}
+		RecognitionSettings settings = this.settingsStore.get();
 		this.analysisService.reconfigure(sampleRate, this.estimatorFactory.apply(sampleRate),
-				this.ringBuffer.getWrittenSampleCount());
+				this.ringBuffer.getWrittenSampleCount(), levelAnalyzer(settings), articulationDetector(settings));
+	}
+
+	/**
+	 * New engine values restart the analysis cleanly at the current rate (from the next samples,
+	 * with fresh detectors), also during capture; other settings do not concern the engine.
+	 */
+	private void settingsChanged(RecognitionSettings previous, RecognitionSettings current) {
+		if( engineValuesDiffer(previous, current) ) {
+			rebuildAnalysis(this.lastSampleRate);
+		}
+	}
+
+	static boolean engineValuesDiffer(RecognitionSettings a, RecognitionSettings b) {
+		RecognitionParameter[] engineParameters = { RecognitionParameters.INPUT_LEVEL_MIN, RecognitionParameters.INPUT_LEVEL_MAX,
+				RecognitionParameters.LEVEL_CLIP_SAMPLE, RecognitionParameters.LEVEL_CLIP_SHARE, RecognitionParameters.NOTE_ATTACK,
+				RecognitionParameters.ATTACK_MIN_LEVEL, RecognitionParameters.ENGINE_PITCH };
+		for( RecognitionParameter parameter : engineParameters ) {
+			if( !a.getValue(parameter).equals(b.getValue(parameter)) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** The level analyser for these settings (defaults: the former hard-coded values). */
+	public static LevelAnalyzer levelAnalyzer(RecognitionSettings settings) {
+		return new LevelAnalyzer(settings.get(RecognitionParameters.INPUT_LEVEL_MIN), settings.get(RecognitionParameters.INPUT_LEVEL_MAX),
+				settings.get(RecognitionParameters.LEVEL_CLIP_SAMPLE), settings.get(RecognitionParameters.LEVEL_CLIP_SHARE));
+	}
+
+	/** The articulation detector for these settings; only the gate and minimum level are settings. */
+	public static ArticulationDetector articulationDetector(RecognitionSettings settings) {
+		return new ArticulationDetector(ArticulationDetector.DEFAULT_FLUX_MEDIAN_FACTOR, ArticulationDetector.DEFAULT_FLUX_OFFSET,
+				settings.get(RecognitionParameters.ATTACK_MIN_LEVEL), ArticulationDetector.DEFAULT_REFRACTORY_HOPS,
+				settings.get(RecognitionParameters.NOTE_ATTACK));
 	}
 }

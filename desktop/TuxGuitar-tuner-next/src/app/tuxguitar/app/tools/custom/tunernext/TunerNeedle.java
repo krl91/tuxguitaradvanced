@@ -26,6 +26,7 @@ public final class TunerNeedle {
 	private double target;
 	private double shown;
 	private boolean active;
+	private boolean held;
 
 	public TunerNeedle(TGContext context, UIFactory uiFactory, UIContainer parent) {
 		this.context = context;
@@ -47,6 +48,15 @@ public final class TunerNeedle {
 	 * @param active false when there is no confident reading
 	 */
 	public void setPosition(double position, boolean active) {
+		setPosition(position, active, false);
+	}
+
+	/** @param held true when the needle shows the last reliable reading, not a live one: drawn grey and still */
+	public void setPosition(double position, boolean active, boolean held) {
+		this.held = held;
+		if( held ) {
+			this.shown = position;
+		}
 		this.active = active;
 		this.target = (active ? position : 0.0);
 		this.shown += SMOOTHING * (this.target - this.shown);
@@ -77,8 +87,8 @@ public final class TunerNeedle {
 
 		if( this.active ) {
 			double angle = angle(this.shown);
-			painter.setForeground(colors.getColor(TGColorManager.COLOR_RED));
-			painter.setLineWidth(3);
+			painter.setForeground(colors.getColor(this.held ? TGColorManager.COLOR_GRAY : TGColorManager.COLOR_RED));
+			painter.setLineWidth(this.held ? 2 : 3);
 			painter.initPath();
 			painter.moveTo(centreX, pivotY);
 			painter.lineTo(centreX + (float) (radius * 0.95 * Math.cos(angle)), pivotY - (float) (radius * 0.95 * Math.sin(angle)));

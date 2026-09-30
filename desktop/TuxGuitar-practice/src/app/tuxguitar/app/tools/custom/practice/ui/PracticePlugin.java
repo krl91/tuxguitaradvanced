@@ -6,6 +6,7 @@ import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.action.TGActionAdapterManager;
 import app.tuxguitar.app.tools.custom.TGToolItemPlugin;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
+import app.tuxguitar.app.view.dialog.settings.TGSettingsOptionRegistry;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.plugin.TGPluginException;
 
@@ -53,6 +54,8 @@ public class PracticePlugin extends TGToolItemPlugin {
 				adapterManager.getKeyBindingActionIds().addActionId(ACTION_IDS[i]);
 				adapterManager.getSyncThreadInterceptor().addActionId(ACTION_IDS[i]);
 			}
+			// "Audio recognition" rubric of the Configuration window (T102)
+			TGSettingsOptionRegistry.getInstance(context).register(AudioRecognitionOption.factory());
 		} catch (Throwable throwable) {
 			throw new TGPluginException(throwable.getMessage(), throwable);
 		}
@@ -64,6 +67,7 @@ public class PracticePlugin extends TGToolItemPlugin {
 			this.window = null;
 		}
 		try {
+			TGSettingsOptionRegistry.getInstance(context).unregister(AudioRecognitionOption.ID);
 			TGActionAdapterManager adapterManager = TGActionAdapterManager.getInstance(context);
 			for( String actionId : ACTION_IDS ) {
 				adapterManager.getSyncThreadInterceptor().removeActionId(actionId);

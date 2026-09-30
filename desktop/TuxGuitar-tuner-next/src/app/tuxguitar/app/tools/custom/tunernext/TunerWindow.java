@@ -17,7 +17,7 @@ import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
-import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
+import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
 import app.tuxguitar.audio.engine.session.PracticeTunerContext;
 import app.tuxguitar.editor.TGEditorManager;
@@ -53,15 +53,14 @@ import app.tuxguitar.util.TGSynchronizer;
 public class TunerWindow {
 
 	/** Provisional, configurable defaults approved 2026-09-26 (refined in tasks T076). */
-	public static final double CONFIDENCE_GATE = 0.80;
-	public static final double IN_TUNE_CENTS = 5.0;
 
 	private static final String CONSUMER_ID = "tuner";
 	private static final long UI_INTERVAL_NANOS = 33_000_000L;
 
 	private final TGContext context;
 	private final TunerSessionState state;
-	private final NoteInterpreter interpreter = new NoteInterpreter(CONFIDENCE_GATE);
+	/** Audio-recognition settings (T102): in-tune range, hold, confidence; read on the UI thread. */
+	private final TunerRecognition recognition;
 	private final AtomicReference<AnalysisFrame> latestFrame = new AtomicReference<AnalysisFrame>();
 	private final AtomicBoolean uiPending = new AtomicBoolean();
 	private volatile long lastUiNanos;
@@ -91,6 +90,7 @@ public class TunerWindow {
 	public TunerWindow(TGContext context) {
 		this.context = context;
 		this.state = TunerSessionState.getInstance(context);
+		this.recognition = new TunerRecognition(RecognitionSettingsStore.getInstance(context));
 	}
 
 	public void open() {
@@ -267,6 +267,7 @@ public class TunerWindow {
 	}
 
 	private void updateTargets() {
+		this.recognition.clearHold();
 		boolean guided = Boolean.TRUE.equals(this.mode.getSelectedValue());
 		int[] targets = this.tuning.getTargets();
 		for( int i = 0 ; i < this.stringButtons.size() ; i ++ ) {
@@ -296,6 +297,7 @@ public class TunerWindow {
 	}
 
 	private void updateInput() {
+		this.recognition.clearHold();
 		if( !isOpen() ) {
 			return;
 		}
@@ -332,14 +334,21 @@ public class TunerWindow {
 			return;
 		}
 		boolean guided = Boolean.TRUE.equals(this.mode.getSelectedValue());
-		PitchReading reading = this.interpreter.interpret(frame.getF0Hz(), frame.getConfidence(), this.engine.getSelection().snapshot().getAssessment());
-		TunerDisplay display = TunerDisplay.of(frame, reading, guided ? this.tuning.getTargets() : null, guided ? this.selectedString : 0, IN_TUNE_CENTS);
+		TunerHold.Shown held = this.recognition.show(frame, this.engine.getSelection().snapshot().getAssessment(),
+				guided ? this.tuning.getTargets() : null, guided ? this.selectedString : 0);
+		TunerDisplay display = held.getDisplay();
 		if( display.isTuning() ) {
 			PitchReading shown = display.getReading();
 			this.noteLabel.setText(shown.getNoteName() + shown.getOctave());
 			String cents = Long.toString(Math.round(Math.abs(display.getDeviationCents())));
 			String target = (guided ? TGMusicKeyUtils.sharpNoteFullName(this.tuning.getTargets()[display.getTargetString() - 1]) : shown.getNoteName() + shown.getOctave());
-			this.stateLabel.setText(TuxGuitar.getProperty("tunernext.state." + display.getState().name(), new String[] { cents, target }));
+			String state = TuxGuitar.getProperty("tunernext.state." + display.getState().name(), new String[] { cents, target });
+			if( held.isHeld() ) {
+				// stale reading: said in text, not only by the grey needle (FR-070)
+				state = TuxGuitar.getProperty("tunernext.held", new String[] { state,
+						TuxGuitar.getProperty("tunernext.held.reason." + held.getLiveState().name()) });
+			}
+			this.stateLabel.setText(state);
 			this.frequencyLabel.setText(String.format("%.1f Hz", display.getFrequencyHz()));
 			this.scale.setPitch(shown.getMidi(), shown.getCents());
 			for( int i = 0 ; guided && this.selectedString == 0 && i < this.stringButtons.size() ; i ++ ) {
@@ -351,7 +360,7 @@ public class TunerWindow {
 			this.frequencyLabel.setText("");
 			this.scale.setPitch(-1, 0);
 		}
-		this.needle.setPosition(display.getNeedlePosition(), display.isTuning());
+		this.needle.setPosition(display.getNeedlePosition(), display.isTuning(), held.isHeld());
 		this.levelLabel.setText(TuxGuitar.getProperty("tunernext.level." + frame.getLevelState().name()));
 	}
 

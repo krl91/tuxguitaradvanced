@@ -1,11 +1,14 @@
 package app.tuxguitar.app.tools.custom.practice.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent.AutoPassReason;
+import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent.ChordNote;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent.Kind;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent.Technique;
 import app.tuxguitar.player.base.MidiRepeatController;
@@ -90,7 +93,8 @@ public final class PracticeSequenceBuilder {
 	private static final class Builder {
 		private final TrackTuning tuning;
 		private final List<PracticeEvent> events;
-		private int previousExpectedMidi = PracticeEvent.NO_PITCH;
+		/** Pitches of the previous expected note or chord (drives {@code sameAsPrevious}, FR-022). */
+		private Set<Integer> previousExpectedPitches = Collections.emptySet();
 
 		private Builder(TrackTuning tuning, List<PracticeEvent> events) {
 			this.tuning = tuning;
@@ -129,17 +133,77 @@ public final class PracticeSequenceBuilder {
 					continue;
 				}
 				if( sounding.size() > 1 ) {
-					boolean allDead = true;
-					for( TGNote note : sounding ) {
-						allDead &= note.getEffect().isDeadNote();
-					}
-					add(allDead ? Kind.AUTO_PASS : Kind.MULTI_NOTE, allDead ? AutoPassReason.DEAD_ONLY_CHORD : null,
-							playIndex, beat, measureIndex, voiceIndex, 0, PracticeEvent.NO_PITCH, PracticeEvent.NO_PITCH,
-							false, EnumSet.noneOf(Technique.class));
+					addSimultaneous(sounding, newNotes, playIndex, beat, measureIndex, voiceIndex);
 				} else {
 					addSingle(newNotes.get(0), playIndex, beat, measureIndex, voiceIndex);
 				}
 			}
+		}
+
+		/**
+		 * Several notes sound together (FR-011, FR-012, FR-077): dead only → auto pass; a new note
+		 * with a pitch-changing effect → multi-note event waiting for Skip; otherwise an expected
+		 * chord whose required pitches are its new non-dead notes, notes still sounding from earlier
+		 * beats being tolerated only.
+		 */
+		private void addSimultaneous(List<TGNote> sounding, List<TGNote> newNotes, int playIndex, TGBeat beat,
+				int measureIndex, int voiceIndex) {
+			boolean allDead = true;
+			for( TGNote note : sounding ) {
+				allDead &= note.getEffect().isDeadNote();
+			}
+			if( allDead ) {
+				add(Kind.AUTO_PASS, AutoPassReason.DEAD_ONLY_CHORD, playIndex, beat, measureIndex, voiceIndex, 0,
+						PracticeEvent.NO_PITCH, PracticeEvent.NO_PITCH, false, EnumSet.noneOf(Technique.class), newNotes);
+				return;
+			}
+			List<ChordNote> chordNotes = new ArrayList<ChordNote>();
+			boolean unsupported = false;
+			for( TGNote note : newNotes ) {
+				TGNoteEffect effect = note.getEffect();
+				if( effect.isDeadNote() ) {
+					continue;
+				}
+				AutoPassReason reason = autoPassReason(effect);
+				unsupported |= (reason != null);
+				chordNotes.add(new ChordNote(note, note.getString(), note.getValue(), checkedMidi(note.getString(), note.getValue())));
+			}
+			if( unsupported ) {
+				add(Kind.MULTI_NOTE, null, playIndex, beat, measureIndex, voiceIndex, 0, PracticeEvent.NO_PITCH,
+						PracticeEvent.NO_PITCH, false, EnumSet.noneOf(Technique.class), newNotes);
+			} else if( chordNotes.isEmpty() ) {
+				add(Kind.AUTO_PASS, AutoPassReason.DEAD, playIndex, beat, measureIndex, voiceIndex, 0,
+						PracticeEvent.NO_PITCH, PracticeEvent.NO_PITCH, false, EnumSet.noneOf(Technique.class), newNotes);
+			} else {
+				Set<Integer> required = new LinkedHashSet<Integer>();
+				for( ChordNote chordNote : chordNotes ) {
+					required.add(chordNote.getMidi());
+				}
+				Set<Integer> tolerated = new LinkedHashSet<Integer>();
+				for( TGNote note : sounding ) {
+					if( !newNotes.contains(note) && !note.getEffect().isDeadNote() ) {
+						int midi = checkedMidi(note.getString(), note.getValue());
+						if( !required.contains(midi) ) {
+							tolerated.add(midi);
+						}
+					}
+				}
+				boolean sameAsPrevious = this.previousExpectedPitches.containsAll(required);
+				// the frame surrounds the whole written chord, dead strings included
+				this.events.add(new PracticeEvent(Kind.EXPECTED_CHORD, null, this.events.size(), playIndex, beat,
+						measureIndex, voiceIndex, 0, PracticeEvent.NO_PITCH, PracticeEvent.NO_PITCH, false,
+						EnumSet.noneOf(Technique.class), sameAsPrevious, newNotes, chordNotes,
+						tolerated.stream().mapToInt(Integer::intValue).sorted().toArray()));
+				this.previousExpectedPitches = required;
+			}
+		}
+
+		private int checkedMidi(int string, int fret) {
+			int midi = this.tuning.expectedMidi(string, fret);
+			if( midi < 0 || midi > 127 ) {
+				throw new IllegalStateException("expected pitch outside MIDI range: " + midi);
+			}
+			return midi;
 		}
 
 		private void addSingle(TGNote note, int playIndex, TGBeat beat, int measureIndex, int voiceIndex) {
@@ -149,33 +213,36 @@ public final class PracticeSequenceBuilder {
 				int graceFret = effect.getGrace().getFret();
 				if( effect.getGrace().isDead() ) {
 					add(Kind.AUTO_PASS, AutoPassReason.GRACE_WITHOUT_PITCH, playIndex, beat, measureIndex, voiceIndex,
-							string, graceFret, PracticeEvent.NO_PITCH, true, EnumSet.noneOf(Technique.class));
+							string, graceFret, PracticeEvent.NO_PITCH, true, EnumSet.noneOf(Technique.class), List.of(note));
 				} else {
 					add(Kind.EXPECTED_NOTE, null, playIndex, beat, measureIndex, voiceIndex, string, graceFret,
-							this.tuning.expectedMidi(string, graceFret), true, EnumSet.noneOf(Technique.class));
+							this.tuning.expectedMidi(string, graceFret), true, EnumSet.noneOf(Technique.class), List.of(note));
 				}
 			}
 			AutoPassReason reason = autoPassReason(effect);
 			int fret = note.getValue();
 			if( reason != null ) {
 				add(Kind.AUTO_PASS, reason, playIndex, beat, measureIndex, voiceIndex, string, fret,
-						PracticeEvent.NO_PITCH, false, techniques(effect));
+						PracticeEvent.NO_PITCH, false, techniques(effect), List.of(note));
 			} else {
 				add(Kind.EXPECTED_NOTE, null, playIndex, beat, measureIndex, voiceIndex, string, fret,
-						this.tuning.expectedMidi(string, fret), false, techniques(effect));
+						this.tuning.expectedMidi(string, fret), false, techniques(effect), List.of(note));
 			}
 		}
 
 		private void add(Kind kind, AutoPassReason reason, int playIndex, TGBeat beat, int measureIndex,
-				int voiceIndex, int string, int fret, int expectedMidi, boolean grace, Set<Technique> techniques) {
+				int voiceIndex, int string, int fret, int expectedMidi, boolean grace, Set<Technique> techniques,
+				List<TGNote> notes) {
 			if( kind == Kind.EXPECTED_NOTE && (expectedMidi < 0 || expectedMidi > 127) ) {
 				throw new IllegalStateException("expected pitch outside MIDI range: " + expectedMidi);
 			}
-			boolean sameAsPrevious = (kind == Kind.EXPECTED_NOTE && expectedMidi == this.previousExpectedMidi);
+			// a note already sounding in the previous expected note or chord needs a new articulation (FR-022)
+			boolean sameAsPrevious = (kind == Kind.EXPECTED_NOTE && this.previousExpectedPitches.contains(expectedMidi));
 			this.events.add(new PracticeEvent(kind, reason, this.events.size(), playIndex, beat, measureIndex,
-					voiceIndex, string, fret, expectedMidi, grace, techniques, sameAsPrevious));
+					voiceIndex, string, fret, expectedMidi, grace, techniques, sameAsPrevious, notes,
+					Collections.<ChordNote>emptyList(), new int[0]));
 			if( kind == Kind.EXPECTED_NOTE ) {
-				this.previousExpectedMidi = expectedMidi;
+				this.previousExpectedPitches = Collections.singleton(expectedMidi);
 			}
 		}
 

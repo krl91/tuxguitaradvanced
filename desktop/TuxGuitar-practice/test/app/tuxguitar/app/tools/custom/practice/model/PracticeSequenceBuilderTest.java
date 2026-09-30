@@ -1,5 +1,6 @@
 package app.tuxguitar.app.tools.custom.practice.model;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,7 +54,7 @@ public class PracticeSequenceBuilderTest {
 	}
 
 	@Test
-	public void noteStillSoundingInAnotherVoiceMakesAMultiNoteEvent() {
+	public void noteOverANoteStillSoundingInAnotherVoiceIsAChordToleratingTheSustainedPitch() {
 		SongFixture fixture = new SongFixture(1);
 		fixture.note(0, 0, 0, 5, 0, TGDuration.HALF);
 		fixture.note(0, 1, 1, 1, 0, TGDuration.QUARTER);
@@ -61,10 +62,114 @@ public class PracticeSequenceBuilderTest {
 
 		List<PracticeEvent> events = fixture.sequence().getEvents();
 
-		assertEquals(List.of(Kind.EXPECTED_NOTE, Kind.MULTI_NOTE, Kind.EXPECTED_NOTE), kinds(events));
+		assertEquals(List.of(Kind.EXPECTED_NOTE, Kind.EXPECTED_CHORD, Kind.EXPECTED_NOTE), kinds(events));
 		assertEquals(45, events.get(0).getExpectedMidi());
 		assertEquals(PracticeEvent.NO_PITCH, events.get(1).getExpectedMidi());
+		assertArrayEquals(new int[] { 64 }, events.get(1).getRequiredPitches());
+		assertArrayEquals(new int[] { 45 }, events.get(1).getToleratedPitches());
 		assertEquals(66, events.get(2).getExpectedMidi());
+	}
+
+	@Test
+	public void anOpenChordRequiresItsDistinctPitchesWithStringAndFretAsInstruction() {
+		SongFixture fixture = new SongFixture(1);
+		// open E major: 0 2 2 1 0 0 from string 6 to string 1
+		int[][] shape = { { 6, 0 }, { 5, 2 }, { 4, 2 }, { 3, 1 }, { 2, 0 }, { 1, 0 } };
+		for( int[] note : shape ) {
+			fixture.quarter(0, 0, note[0], note[1]);
+		}
+
+		PracticeEvent chord = fixture.sequence().getEvents().get(0);
+
+		assertEquals(Kind.EXPECTED_CHORD, chord.getKind());
+		assertArrayEquals(new int[] { 40, 47, 52, 56, 59, 64 }, chord.getRequiredPitches());
+		assertEquals(0, chord.getToleratedPitches().length);
+		assertEquals(6, chord.getChordNotes().size());
+		assertEquals(6, chord.getNotes().size());
+		assertEquals(6, chord.getChordNotes().get(0).getStringNumber());
+		assertEquals(0, chord.getChordNotes().get(0).getFret());
+		assertFalse(chord.hasDuplicatePitches());
+		assertFalse(chord.isSameAsPrevious());
+	}
+
+	@Test
+	public void theSamePitchOnTwoStringsCountsOnce() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.quarter(0, 0, 1, 0);
+		fixture.quarter(0, 0, 2, 5);
+		fixture.quarter(0, 0, 3, 2);
+
+		PracticeEvent chord = fixture.sequence().getEvents().get(0);
+
+		assertArrayEquals(new int[] { 57, 64 }, chord.getRequiredPitches());
+		assertEquals(3, chord.getChordNotes().size());
+		assertTrue(chord.hasDuplicatePitches());
+	}
+
+	@Test
+	public void deadStringsInAChordAreIgnoredAndADeadOnlyRemainderPassesAutomatically() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.quarter(0, 0, 6, 0).getEffect().setDeadNote(true);
+		fixture.quarter(0, 0, 5, 0);
+		fixture.quarter(0, 0, 4, 2);
+		fixture.note(0, 1, 0, 5, 3, TGDuration.HALF);
+		fixture.note(0, 2, 1, 1, 0, TGDuration.QUARTER).getEffect().setDeadNote(true);
+
+		List<PracticeEvent> events = fixture.sequence().getEvents();
+
+		assertEquals(Kind.EXPECTED_CHORD, events.get(0).getKind());
+		assertArrayEquals(new int[] { 45, 52 }, events.get(0).getRequiredPitches());
+		assertEquals(2, events.get(0).getChordNotes().size());
+		assertEquals(3, events.get(0).getNotes().size());
+		assertEquals(Kind.EXPECTED_NOTE, events.get(1).getKind());
+		assertEquals(AutoPassReason.DEAD, events.get(2).getAutoPassReason());
+		assertEquals(3, events.size());
+	}
+
+	@Test
+	public void aChordWithABentNoteStaysAMultiNoteEvent() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.quarter(0, 0, 2, 3);
+		TGEffectBend bend = fixture.factory.newEffectBend();
+		bend.addPoint(0, 0);
+		bend.addPoint(6, 4);
+		fixture.quarter(0, 0, 3, 5).getEffect().setBend(bend);
+
+		PracticeEvent event = fixture.sequence().getEvents().get(0);
+
+		assertEquals(Kind.MULTI_NOTE, event.getKind());
+		assertEquals(0, event.getRequiredPitches().length);
+		assertEquals(2, event.getNotes().size());
+	}
+
+	@Test
+	public void aNoteOrChordAlreadySoundingInThePreviousChordNeedsANewArticulation() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.quarter(0, 0, 1, 0);
+		fixture.quarter(0, 0, 2, 0);
+		fixture.quarter(0, 1, 1, 0);
+		fixture.quarter(0, 2, 1, 0);
+		fixture.quarter(0, 2, 2, 0);
+		fixture.quarter(0, 3, 1, 1);
+
+		List<PracticeEvent> events = fixture.sequence().getEvents();
+
+		assertEquals(List.of(Kind.EXPECTED_CHORD, Kind.EXPECTED_NOTE, Kind.EXPECTED_CHORD, Kind.EXPECTED_NOTE), kinds(events));
+		assertFalse(events.get(0).isSameAsPrevious());
+		assertTrue(events.get(1).isSameAsPrevious());
+		assertFalse(events.get(2).isSameAsPrevious());
+		assertFalse(events.get(3).isSameAsPrevious());
+	}
+
+	@Test
+	public void singleNoteEventsCarryTheirScoreNote() {
+		SongFixture fixture = new SongFixture(1);
+		TGNote note = fixture.quarter(0, 0, 6, 3);
+
+		PracticeEvent event = fixture.sequence().getEvents().get(0);
+
+		assertEquals(List.of(note), event.getNotes());
+		assertEquals(0, event.getChordNotes().size());
 	}
 
 	@Test
@@ -97,8 +202,9 @@ public class PracticeSequenceBuilderTest {
 
 		List<PracticeEvent> events = fixture.sequence().getEvents();
 
-		assertEquals(Kind.MULTI_NOTE, events.get(0).getKind());
+		assertEquals(Kind.EXPECTED_CHORD, events.get(0).getKind());
 		assertEquals(PracticeEvent.NO_PITCH, events.get(0).getExpectedMidi());
+		assertArrayEquals(new int[] { 60, 64 }, events.get(0).getRequiredPitches());
 		assertEquals(AutoPassReason.DEAD, events.get(1).getAutoPassReason());
 		assertEquals(AutoPassReason.DEAD_ONLY_CHORD, events.get(2).getAutoPassReason());
 		assertEquals(AutoPassReason.BEND, events.get(3).getAutoPassReason());
@@ -259,6 +365,7 @@ public class PracticeSequenceBuilderTest {
 			} else {
 				assertEquals(PracticeEvent.NO_PITCH, event.getExpectedMidi());
 			}
+			assertEquals(event.getKind() == Kind.EXPECTED_CHORD, event.getRequiredPitches().length > 0);
 		}
 	}
 

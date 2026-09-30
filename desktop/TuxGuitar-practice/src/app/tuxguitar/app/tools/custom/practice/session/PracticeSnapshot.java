@@ -22,10 +22,20 @@ public final class PracticeSnapshot {
 	private final PracticeEvent lastAccepted;
 	private final PracticeEvent lastPassed;
 	private final PracticeSession.Outcome lastPassedOutcome;
+	private final double confidence;
+	private final ChordFeedback chordFeedback;
+	private final PracticeSession.Verdict verdict;
+	private final PassageStatus passageStatus;
+	private final int acceptedCount;
 
 	PracticeSnapshot(PracticeSession.State state, int currentIndex, int eventCount, PracticeEvent currentEvent,
 			PitchReading reading, Set<PracticeSession.PauseReason> pauseReasons, Feedback feedback,
-			PracticeEvent lastAccepted, PracticeEvent lastPassed, PracticeSession.Outcome lastPassedOutcome) {
+			PracticeEvent lastAccepted, PracticeEvent lastPassed, PracticeSession.Outcome lastPassedOutcome, double confidence,
+			ChordFeedback chordFeedback, PracticeSession.Verdict verdict, PassageStatus passageStatus, int acceptedCount) {
+		this.acceptedCount = acceptedCount;
+		this.passageStatus = passageStatus;
+		this.chordFeedback = chordFeedback;
+		this.verdict = verdict;
 		this.state = state;
 		this.currentIndex = currentIndex;
 		this.eventCount = eventCount;
@@ -37,6 +47,35 @@ public final class PracticeSnapshot {
 		this.lastAccepted = lastAccepted;
 		this.lastPassed = lastPassed;
 		this.lastPassedOutcome = lastPassedOutcome;
+		this.confidence = confidence;
+	}
+
+	/** Feedback for the current expected chord; null for other events. */
+	public ChordFeedback getChordFeedback() {
+		return this.chordFeedback;
+	}
+
+	/** The check / cross to show (NONE for silence, noise or while listening). */
+	public PracticeSession.Verdict getVerdict() {
+		return this.verdict;
+	}
+
+	/**
+	 * Acceptances so far; increases with every acceptance, so the UI can tell a new acceptance of
+	 * the same event (a passage retry) from a repeated snapshot.
+	 */
+	public int getAcceptedCount() {
+		return this.acceptedCount;
+	}
+
+	/** Passage, attempt and summary (FR-088–FR-090); null when the session has no passage policy. */
+	public PassageStatus getPassageStatus() {
+		return this.passageStatus;
+	}
+
+	/** Pitch confidence (0–1) of the latest analysis frame. */
+	public double getConfidence() {
+		return this.confidence;
 	}
 
 	public PracticeSession.State getState() {

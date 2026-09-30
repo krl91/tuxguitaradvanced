@@ -44,7 +44,7 @@ public class UnsupportedEventsTest {
 	}
 
 	@Test
-	public void aMultiNoteEventGivesNoJudgementAndAdvancesOnlyOnSkip() {
+	public void aChordWithoutASpectrumGivesNoJudgementAndAdvancesOnlyOnSkip() {
 		SongFixture fixture = new SongFixture(1);
 		fixture.quarter(0, 0, 1, 0);
 		fixture.quarter(0, 0, 2, 1);
@@ -56,7 +56,7 @@ public class UnsupportedEventsTest {
 			snapshot = session.onFrame(frame(i, 329.63));
 		}
 		assertEquals(0, session.getCurrentIndex());
-		assertEquals(PracticeEvent.Kind.MULTI_NOTE, snapshot.getCurrentEvent().getKind());
+		assertEquals(PracticeEvent.Kind.EXPECTED_CHORD, snapshot.getCurrentEvent().getKind());
 		assertNull(snapshot.getFeedback());
 
 		snapshot = session.onCommand(PracticeCommand.SKIP);
@@ -104,16 +104,21 @@ public class UnsupportedEventsTest {
 		return session;
 	}
 
+	/** Plucks the note (a fresh onset in the first frame) and holds it until accepted. */
 	private static PracticeSnapshot accept(PracticeSession session, double f0Hz) {
 		PracticeSnapshot snapshot = null;
 		int start = session.getCurrentIndex();
 		for( int i = 0 ; i < 100 && session.getCurrentIndex() == start ; i ++ ) {
-			snapshot = session.onFrame(frame(i, f0Hz));
+			snapshot = session.onFrame(frame(i, f0Hz, i == 0));
 		}
 		return snapshot;
 	}
 
 	private static AnalysisFrame frame(int hop, double f0Hz) {
-		return new AnalysisFrame(hop * HOP_NANOS, -20.0, -10.0, 0.0, AnalysisFrame.LevelState.SUITABLE, f0Hz, 0.95, false);
+		return frame(hop, f0Hz, false);
+	}
+
+	private static AnalysisFrame frame(int hop, double f0Hz, boolean onset) {
+		return new AnalysisFrame(hop * HOP_NANOS, -20.0, -10.0, 0.0, AnalysisFrame.LevelState.SUITABLE, f0Hz, 0.95, onset);
 	}
 }

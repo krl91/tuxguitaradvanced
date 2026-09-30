@@ -47,8 +47,8 @@ public final class Feedback {
 	/**
 	 * Feedback for one analysis frame while the expected note is not accepted yet.
 	 *
-	 * @param articulationMissing the expected note repeats the previous one and no new
-	 *        articulation was heard since it was accepted (FR-022)
+	 * @param articulationMissing no fresh articulation (onset) was heard since the previous
+	 *        acceptance or since practice (re)started (FR-022, owner requirement 2026-09-28)
 	 */
 	public static Feedback evaluate(AnalysisFrame frame, PitchReading reading, int expectedMidi,
 			TolerancePolicy tolerance, boolean articulationMissing) {

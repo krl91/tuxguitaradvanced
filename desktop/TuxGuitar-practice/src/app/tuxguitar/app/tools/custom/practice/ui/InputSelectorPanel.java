@@ -27,6 +27,9 @@ import app.tuxguitar.util.TGSynchronizer;
  */
 public final class InputSelectorPanel {
 
+	/** Width at which long hints wrap, so the window never grows sideways off the display. */
+	static final float WRAP_WIDTH = 440f;
+
 	private final TGContext context;
 	private final AudioEngine engine;
 	private final UIPanel panel;
@@ -34,6 +37,7 @@ public final class InputSelectorPanel {
 	private final UILabel hint;
 	private final CurrentInputSelection.Listener selectionListener;
 	private boolean updating;
+	private Runnable contentListener;
 
 	public InputSelectorPanel(TGContext context, AudioEngine engine, UIFactory uiFactory, UIContainer parent) {
 		this.context = context;
@@ -56,8 +60,9 @@ public final class InputSelectorPanel {
 			}
 		});
 
-		this.hint = uiFactory.createLabel(this.panel);
+		this.hint = uiFactory.createWrapLabel(this.panel);
 		layout.set(this.hint, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		layout.set(this.hint, UITableLayout.PACKED_WIDTH, WRAP_WIDTH);
 
 		this.selectionListener = snapshot -> TGSynchronizer.getInstance(this.context).executeLater(() -> {
 			if( !this.panel.isDisposed() ) {
@@ -66,6 +71,11 @@ public final class InputSelectorPanel {
 		});
 		this.engine.getSelection().addListener(this.selectionListener);
 		reload();
+	}
+
+	/** Called after the panel's content changed size, so the window can refit (UI thread). */
+	public void setContentListener(Runnable contentListener) {
+		this.contentListener = contentListener;
 	}
 
 	public UIPanel getControl() {
@@ -94,6 +104,7 @@ public final class InputSelectorPanel {
 		}
 		if( available.isEmpty() ) {
 			this.hint.setText(TuxGuitar.getProperty("practice.input.none"));
+			contentChanged();
 		} else if( current == null ) {
 			AudioInputDescriptor selected = this.engine.selectDefaultInputIfNone();
 			for( AudioInputDescriptor input : available ) {
@@ -121,6 +132,13 @@ public final class InputSelectorPanel {
 		boolean silentChannel = (snapshot.getInput() != null && snapshot.getInput().getChannelCount() > 1
 				&& assessment.isUnusable() && assessment.getReason() == InputAssessment.Reason.NO_SIGNAL);
 		this.hint.setText(silentChannel ? TuxGuitar.getProperty("practice.input.try-another-channel") : "");
+		contentChanged();
+	}
+
+	private void contentChanged() {
 		this.panel.layout();
+		if( this.contentListener != null ) {
+			this.contentListener.run();
+		}
 	}
 }

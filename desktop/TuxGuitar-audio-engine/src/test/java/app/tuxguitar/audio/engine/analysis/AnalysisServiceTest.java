@@ -134,4 +134,47 @@ public class AnalysisServiceTest {
 			TGThreadManager.getInstance(context).dispose();
 		}
 	}
+
+	@Test
+	public void theOptionalSpectrumLeavesSingleNoteFieldsUnchanged() throws InterruptedException {
+		float[] samples = SyntheticSignals.karplusStrong(110.0, 48000, 48000 / 2, 3L);
+		List<AnalysisFrame> plain = frames(samples, false, 20);
+		List<AnalysisFrame> withSpectrum = frames(samples, true, 20);
+
+		for (int i = 0; i < 20; i++) {
+			assertEquals(plain.get(i).getF0Hz(), withSpectrum.get(i).getF0Hz());
+			assertEquals(plain.get(i).getConfidence(), withSpectrum.get(i).getConfidence());
+			assertEquals(plain.get(i).isOnset(), withSpectrum.get(i).isOnset());
+			assertEquals(null, plain.get(i).getSpectrum());
+			assertTrue(withSpectrum.get(i).getSpectrum() != null);
+		}
+		assertEquals(45, withSpectrum.get(19).getSpectrum().getCandidates().get(0).getMidi());
+	}
+
+	private static List<AnalysisFrame> frames(float[] samples, boolean spectrum, int count) throws InterruptedException {
+		TGContext context = new TGContext();
+		TGThreadManager.getInstance(context).setThreadHandler(new TGMultiThreadHandler());
+		try {
+			SampleRingBuffer buffer = new SampleRingBuffer(samples.length);
+			buffer.write(samples, 0, samples.length);
+			AnalysisService service = new AnalysisService(context, buffer, new LevelAnalyzer(-80.0, -1.0, 0.99, 0.1),
+					new TarsosFastYinEstimator(), 48000, TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE, TarsosFastYinEstimator.DEFAULT_HOP_SIZE);
+			service.setSpectrumEnabled(spectrum);
+			List<AnalysisFrame> frames = new CopyOnWriteArrayList<AnalysisFrame>();
+			CountDownLatch latch = new CountDownLatch(count);
+			AnalysisService.Listener listener = frame -> {
+				if (frames.size() < count) {
+					frames.add(frame);
+					latch.countDown();
+				}
+			};
+			service.subscribe(listener);
+			assertTrue(latch.await(5, TimeUnit.SECONDS));
+			service.unsubscribe(listener);
+			return frames;
+		}
+		finally {
+			TGThreadManager.getInstance(context).dispose();
+		}
+	}
 }

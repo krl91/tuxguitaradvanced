@@ -20,6 +20,7 @@ public final class AnalysisFrame {
 	private final double f0Hz;
 	private final double confidence;
 	private final boolean onset;
+	private final SpectrumFrame spectrum;
 
 	/**
 	 * @param timestampNanos capture time of the hop end
@@ -32,6 +33,11 @@ public final class AnalysisFrame {
 	 * @param onset true when a new articulation is detected in this hop
 	 */
 	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset) {
+		this(timestampNanos, rmsDbfs, peakDbfs, clippedRatio, levelState, f0Hz, confidence, onset, null);
+	}
+
+	/** @param spectrum the polyphonic view of this hop, or null when the spectrum is not enabled */
+	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum) {
 		this.timestampNanos = timestampNanos;
 		this.rmsDbfs = rmsDbfs;
 		this.peakDbfs = peakDbfs;
@@ -40,6 +46,7 @@ public final class AnalysisFrame {
 		this.f0Hz = f0Hz;
 		this.confidence = confidence;
 		this.onset = onset;
+		this.spectrum = spectrum;
 	}
 
 	public long getTimestampNanos() {
@@ -73,5 +80,10 @@ public final class AnalysisFrame {
 
 	public boolean isOnset() {
 		return this.onset;
+	}
+
+	/** Polyphonic view of this hop (plan stage D); null unless the spectrum is enabled. */
+	public SpectrumFrame getSpectrum() {
+		return this.spectrum;
 	}
 }

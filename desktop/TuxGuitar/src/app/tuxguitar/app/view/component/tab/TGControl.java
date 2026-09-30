@@ -223,7 +223,16 @@ public class TGControl {
 				TGMeasureImpl externalMeasure = getDisplayedExternalMeasure();
 				if (externalMeasure != null && !externalMeasure.isOutOfBounds()
 						&& this.tablature.getExternalBeat() instanceof TGBeatImpl) {
-					this.tablature.getViewLayout().paintPlayMode(painter, externalMeasure, (TGBeatImpl) this.tablature.getExternalBeat());
+					if (this.tablature.getExternalNotes() != null) {
+						// frame the given notes in score and tablature instead of highlighting the whole beat
+						TGExternalNoteFramePainter framePainter = this.tablature.getExternalNoteFramePainter();
+						framePainter.paint(this.tablature.getViewLayout(), painter, this.tablature.getResourceFactory(),
+								this.tablature.getExternalAcceptedNotes(), true, this.tablature.getTrackSelection());
+						framePainter.paint(this.tablature.getViewLayout(), painter, this.tablature.getResourceFactory(),
+								this.tablature.getExternalNotes(), false, this.tablature.getTrackSelection());
+					} else {
+						this.tablature.getViewLayout().paintPlayMode(painter, externalMeasure, (TGBeatImpl) this.tablature.getExternalBeat());
+					}
 				}
 			}
 

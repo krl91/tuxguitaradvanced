@@ -54,6 +54,9 @@ public class Tablature implements TGController {
 	private Float scale;
 	private TGBeat externalBeat;
 	private boolean externalBeatChanged;
+	private List<TGNote> externalNotes;
+	private List<TGNote> externalAcceptedNotes;
+	private TGExternalNoteFramePainter externalNoteFramePainter;
 
 	public Tablature(TGContext context, TGDocumentManager documentManager) {
 		this.context = context;
@@ -219,6 +222,9 @@ public class Tablature implements TGController {
 
 	public void dispose(){
 		this.getCaret().dispose();
+		if( this.externalNoteFramePainter != null ) {
+			this.externalNoteFramePainter.dispose();
+		}
 		this.getViewLayout().disposeLayout();
 		this.getResourceBuffer().disposeAllResources();
 	}
@@ -264,10 +270,37 @@ public class Tablature implements TGController {
 	}
 
 	public void setExternalBeat(TGBeat externalBeat) {
+		this.setExternalBeat(externalBeat, null, null);
+	}
+
+	/**
+	 * @param notes notes of the beat framed as expected, or null to highlight the whole beat
+	 * @param acceptedNotes other notes framed as accepted, or null
+	 */
+	public void setExternalBeat(TGBeat externalBeat, List<TGNote> notes, List<TGNote> acceptedNotes) {
 		if( this.externalBeat != externalBeat ) {
 			this.externalBeat = externalBeat;
 			this.externalBeatChanged = true;
 		}
+		this.externalNotes = (externalBeat != null ? notes : null);
+		this.externalAcceptedNotes = (externalBeat != null ? acceptedNotes : null);
+	}
+
+	/** Notes framed as expected, or null when the whole external beat is highlighted. */
+	public List<TGNote> getExternalNotes() {
+		return this.externalNotes;
+	}
+
+	/** Notes framed as accepted, or null. */
+	public List<TGNote> getExternalAcceptedNotes() {
+		return this.externalAcceptedNotes;
+	}
+
+	public TGExternalNoteFramePainter getExternalNoteFramePainter() {
+		if( this.externalNoteFramePainter == null ) {
+			this.externalNoteFramePainter = new TGExternalNoteFramePainter();
+		}
+		return this.externalNoteFramePainter;
 	}
 
 	/** True once after each change of the external beat (the view scrolls to it once). */

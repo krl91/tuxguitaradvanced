@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link type="text/css" rel="stylesheet" href="style.css" />
+  <title>Reconnaissance audio - Aide TuxGuitar</title>
+</head>
+<body>
+  <input type="checkbox" id="check" checked="true" /> <label for="check"><b id="hamburger">☰</b> <b id="cancel">☓</b></label>
+  <div class="header">
+    TuxGuitar Help
+    <p id="version"></p>
+  </div>
+  <div class="title">
+    <h1 id="audio_recognition">Reconnaissance audio (accordeur et pratique)</h1>
+  </div>
+  <div class="sidebar">
+    <ul class="menu">
+      <li class="menu2"><button title="Back" id="back" onclick="history.back()">&nbsp;</button> <button title="Top" id="top" onclick="window.location.href='index.html';">&nbsp;</button> <button title="Forward" id="forward" onclick="history.forward()">&nbsp;</button></li>
+      <li class="menu1">Introduction</li>
+      <li class="menu2"><a href="about.html">About</a></li>
+      <li class="menu2"><a href="license.html">License</a></li>
+      <li class="menu1">Getting started</li>
+      <li class="menu2"><a href="start_first_steps.html">The first steps</a></li>
+      <li class="menu2"><a href="start_menus_toolbars.html">Menus and Toolbars</a></li>
+      <li class="menu2"><a href="start_playing.html">Playing a song</a></li>
+      <li class="menu1">Editing a song</li>
+      <li class="menu2"><a href="editing_track.html">Editing a track</a></li>
+      <li class="menu2"><a href="editing_song.html">Editing a whole song</a></li>
+      <li class="menu2"><a href="edit_effects.html">Note effects</a></li>
+      <li class="menu2"><a href="edit_chord.html">Chord Editor</a></li>
+      <li class="menu2"><a href="edit_matrix.html">Matrix Editor</a></li>
+      <li class="menu1">Features in detail</li>
+      <li class="menu2"><a href="detail_file_edit.html">File and edit functions</a></li>
+      <li class="menu2"><a href="detail_view.html">View and layout</a></li>
+      <li class="menu2"><a href="detail_composition_track.html">Composition and track</a></li>
+      <li class="menu2"><a href="detail_measure_beat.html">Measure and beat</a></li>
+      <li class="menu2"><a href="detail_markers_player.html">Markers and Player</a></li>
+      <li class="menu1">Tools and settings</li>
+      <li class="menu2"><a href="tools_general.html">Settings dialog</a></li>
+      <li class="menu2"><a href="tools_skin.html">Changing the skin</a></li>
+      <li class="menu2"><a href="tools_sound.html">Sound in TuxGuitar</a></li>
+      <li class="menu2"><a href="tools_audio_recognition.html">Audio recognition</a></li>
+      <li class="menu2"><strong>Reconnaissance audio</strong></li>
+      <li class="menu2"><a href="tools_shortcuts.html">Default shortcuts</a></li>
+      <li class="menu2"><a href="tools_keybinding.html">Shortcut editor</a></li>
+      <li class="menu2"><a href="tools_plugins.html">Plugins dialog</a></li>
+      <li class="menu2"><a href="tools_converter.html">Batch File Converter</a></li>
+      <li class="menu2"><a href="tools_install_conf.html">Installation and configuration</a></li>
+      <li class="menu1"><a href="file_formats.html">Supported file formats</a></li>
+    </ul>
+  </div>
+    <section>
+    <p><a href="tools_audio_recognition.html">English version of this page</a></p>
+    <p>La page <strong>Reconnaissance audio</strong> de <strong>Outils → Configurer TuxGuitar</strong> rassemble les réglages de l'accordeur évolué et de la pratique interactive. Elle affiche une catégorie à la fois : choisissez-la dans la liste <strong>Catégorie de réglages</strong>. Chaque réglage apparaît une seule fois, dans sa catégorie. Les curseurs affichent leur valeur et leur unité, mises à jour pendant le déplacement ; la valeur recommandée est indiquée à côté et dans l'infobulle de chaque réglage (survolez son nom). Les valeurs sont enregistrées et conservées après la fermeture de TuxGuitar.</p>
+    <h2 id="recommended">Valeurs recommandées et les trois façons de les rétablir</h2><p>Chaque valeur recommandée est celle utilisée avant l'existence de ces réglages : la configuration recommandée se comporte exactement comme les versions précédentes. Il existe trois portées différentes :</p><ul><li><strong>Rétablir les valeurs recommandées de cette catégorie</strong> ne remet à zéro que la catégorie affichée. Pris en compte avec <strong>OK</strong> ; <strong>Annuler</strong> l'abandonne.</li><li><strong>Rétablir tous les réglages de reconnaissance audio</strong> remet à zéro toutes les catégories de cette page. Pris en compte avec <strong>OK</strong> ; <strong>Annuler</strong> l'abandonne.</li><li>Le bouton <strong>Valeurs par défaut</strong> en bas de la fenêtre de configuration remet à zéro <strong>tous les réglages de TuxGuitar</strong> (langue, style, son…), reconnaissance audio comprise, immédiatement, et ferme la fenêtre.</li></ul>
+    <h2 id="when">Quand les modifications s'appliquent</h2><ul><li>Rien ne change avant <strong>OK</strong> ; <strong>Annuler</strong> conserve les valeurs précédentes.</li><li>Accordeur : aussitôt après OK.</li><li>Pratique (notes, accords, passages) : au prochain <strong>Démarrer</strong> ; une pratique en cours garde les valeurs de son démarrage.</li><li>Niveaux et attaque : l'écoute redémarre proprement aussitôt (une fraction de seconde), sans mélanger anciennes et nouvelles valeurs.</li><li>Exception : l'entrée audio change dès qu'elle est choisie dans la liste, comme dans les fenêtres de l'accordeur et de la pratique.</li></ul>
+    <h2 id="invalid">Fichiers de configuration invalides ou anciens</h2><p>Les valeurs sont vérifiées à la saisie et à la lecture du fichier de configuration. Une valeur absente, vide, non numérique, infinie ou d'un mauvais type est remplacée par la valeur recommandée ; un nombre hors de sa plage est ramené à la limite la plus proche. Un écart de hauteur accepté plus petit que l'écart considéré comme juste y est ramené. Les entrées inconnues d'autres versions sont ignorées et supprimées au prochain enregistrement. TuxGuitar ne refuse jamais de démarrer à cause de ce fichier.</p>
+    <h2 id="input">Entrée audio</h2>
+    <p>L'entrée (périphérique et, sur les interfaces multicanal, canal) est partagée par l'accordeur et la pratique interactive. C'est la même liste que dans leurs fenêtres ; un changement s'applique aussitôt et <strong>n'est pas mémorisé</strong> après la fermeture de TuxGuitar. Les niveaux décident quand le signal est trop faible, correct, trop fort ou saturé ; la pratique n'accepte les notes qu'à un niveau utilisable.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Niveau minimal utilisable</td><td>dBFS</td><td>-60</td><td>-25</td><td>-40</td><td>fonctionne avec un signal plus faible, mais écoute aussi le bruit de la pièce</td><td>la guitare doit jouer plus fort ; les notes douces sont signalées « trop faibles »</td></tr>
+    <tr><td>Alerte de niveau élevé</td><td>dBFS</td><td>-20</td><td>-1</td><td>-6</td><td>« trop fort » s'affiche plus tôt</td><td>l'alerte ne vient que près de la saturation</td></tr>
+    </table>
+    <h2 id="tuner">Accordeur</h2>
+    <p>Les réglages de l'accordeur s'appliquent dès la validation de la configuration, même accordeur ouvert.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Écart considéré comme juste</td><td>cents</td><td>1</td><td>20</td><td>5</td><td>accordage plus précis, plus difficile à atteindre</td><td>plus facile à atteindre, moins précis (sert aussi à la couleur de justesse de la palette de pratique)</td></tr>
+    <tr><td>Garder la dernière note</td><td>activé/désactivé</td><td>—</td><td>—</td><td>Activé</td><td>Désactivé : l'affichage s'efface quand la corde s'éteint</td><td>—</td></tr>
+    </table>
+    <h2 id="notes">Pratique — notes</h2>
+    <p>Chaque note demande une <strong>nouvelle attaque</strong> (un pincement) puis doit sonner, à la bonne hauteur et avec assez de certitude, pendant la durée de confirmation. Le silence et le bruit ne font jamais avancer la pratique. La corde et la case ne sont jamais vérifiées : seule la hauteur l'est.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Écart de hauteur accepté</td><td>cents</td><td>10</td><td>45</td><td>35</td><td>plus exigeant sur la justesse et les petits tirés</td><td>plus tolérant ; une note voisine (à 100 cents) n'est jamais acceptée. Jamais plus petit que l'écart considéré comme juste : une valeur plus petite y est ramenée</td></tr>
+    <tr><td>Certitude minimale</td><td>%</td><td>50</td><td>95</td><td>80</td><td>réagit aux notes plus faibles ou bruitées, avec plus d'erreurs de jugement</td><td>moins d'erreurs, mais les notes douces peuvent ne pas être jugées</td></tr>
+    <tr><td>Durée de confirmation d'une note</td><td>ms</td><td>50</td><td>300</td><td>107</td><td>réaction plus rapide, plus de risque dû aux parasites courts</td><td>plus stable, mais plus lent dans les passages rapides. Arrondi à des pas d'analyse entiers de 5,3 ms</td></tr>
+    <tr><td>Sensibilité à l'attaque</td><td>dB</td><td>2</td><td>10</td><td>4.5</td><td>détecte les attaques douces, mais les chocs et le bruit peuvent compter</td><td>ignore mieux le bruit, peut manquer les attaques douces</td></tr>
+    <tr><td>Liés, tirés-poussés, glissés</td><td>choix</td><td>—</td><td>—</td><td>Nouvelle attaque pour chaque note</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="chords">Pratique — accords</h2>
+    <p>Un accord est vérifié par rapport à l'accord écrit : chaque corde qui a des harmoniques propres doit être entendue dans la fenêtre de grattage. Les cordes impossibles à distinguer à l'oreille (même note deux fois, ou octave d'une corde plus grave) sont indiquées « non vérifiées » et jamais déclarées entendues. Les cordes en trop ne sont pas vérifiées dans cette version.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Exigence sur les accords</td><td>%</td><td>20</td><td>80</td><td>33</td><td>accepte les cordes plus faibles, peut accepter une corde absente</td><td>plus strict, peut refuser une corde réelle mais discrète</td></tr>
+    <tr><td>Fenêtre de grattage</td><td>ms</td><td>300</td><td>1500</td><td>600</td><td>demande un grattage rapide et régulier</td><td>permet les grattages lents ou arpégés</td></tr>
+    <tr><td>Cordes exigées</td><td>choix</td><td>—</td><td>—</td><td>Toutes les cordes vérifiables</td><td>—</td><td>—</td></tr>
+    <tr><td>Cordes en trop</td><td>choix</td><td>—</td><td>—</td><td>Pas encore vérifiées</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="passages">Passages</h2>
+    <p>Le morceau est découpé en passages dans l'ordre de jeu (reprises et fins alternatives sont des passages distincts). À la fin d'un passage, si la part de notes et d'accords faux ou passés dépasse le seuil, le passage est rejoué, jusqu'au maximum. Ce sont les valeurs utilisées au démarrage de TuxGuitar ; la fenêtre de pratique interactive peut changer la taille et le seuil pour la session en cours seulement.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Répéter les passages</td><td>choix</td><td>—</td><td>—</td><td>Toutes les 2 mesures</td><td>Désactivé joue d'une traite ; 1 ou 4 mesures donnent des passages plus courts ou plus longs</td><td>—</td></tr>
+    <tr><td>Répéter si les erreurs dépassent</td><td>%</td><td>25</td><td>75</td><td>50</td><td>25 % : répète même avec peu d'erreurs</td><td>75 % : répète seulement si la plupart des notes ont échoué</td></tr>
+    <tr><td>Nombre maximal de répétitions</td><td></td><td>0</td><td>5</td><td>2</td><td>0 ne répète jamais</td><td>un passage difficile peut être joué jusqu'à 6 fois</td></tr>
+    </table>
+    <h2 id="engine">Moteur de reconnaissance</h2>
+    <p>Cette version a un seul moteur de détection de hauteur, <strong>FastYin</strong> (TarsosDSP). Il trouve <strong>une note à la fois</strong> (monophonique) ; les accords sont vérifiés par une analyse de spectre séparée, par rapport à l'accord écrit (polyphonique, mais seulement pour les notes attendues). « Automatique » utilise toujours le moteur recommandé. Aucun autre moteur n'est proposé car aucun n'existe encore.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Moteur de détection de hauteur</td><td>choix</td><td>—</td><td>—</td><td>Automatique (FastYin)</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="advanced">Avancé</h2>
+    <p>Valeurs techniques de l'analyse du signal. À modifier seulement si les valeurs recommandées ne conviennent pas à votre matériel. La fenêtre d'analyse (2048 échantillons) et le pas (256 échantillons) sont fixes, car toutes les durées ci-dessus en dépendent.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Niveau d'échantillon saturé</td><td>%</td><td>90</td><td>100</td><td>99</td><td>plus d'échantillons comptent comme saturés</td><td>seuls les échantillons pleine échelle comptent</td></tr>
+    <tr><td>Part d'échantillons saturés</td><td>%</td><td>1</td><td>50</td><td>10</td><td>la saturation est signalée plus tôt</td><td>la saturation n'est signalée qu'en cas de forte distorsion</td></tr>
+    <tr><td>Certitude minimale de l'accordeur</td><td>%</td><td>50</td><td>95</td><td>80</td><td>l'accordeur affiche les notes plus faibles, avec plus de scintillement</td><td>plus stable, peut rester vide sur les notes douces</td></tr>
+    <tr><td>Seuil de détection d'attaque</td><td>dBFS</td><td>-70</td><td>-30</td><td>-50</td><td>détecte les attaques très douces, plus de bruit</td><td>ignore le bruit faible</td></tr>
+    <tr><td>Harmoniques par corde (accords)</td><td></td><td>1</td><td>4</td><td>2</td><td>plus de cordes vérifiables, de façon moins fiable</td><td>moins de cordes vérifiables séparément</td></tr>
+    <tr><td>Durée de confirmation d'un accord</td><td>ms</td><td>20</td><td>150</td><td>43</td><td>les accords sont acceptés plus vite</td><td>plus stable, plus lent. Arrondi à des pas d'analyse entiers</td></tr>
+    </table>
+    <h2 id="limits">Limites</h2><p>La reconnaissance repose uniquement sur la hauteur : elle ne peut pas savoir quelle corde ou quelle case a été utilisée, ni reconnaître les techniques. Les notes liées (hammer-on, pull-off, glissé) n'ont pas d'attaque au médiator et peuvent devoir être rejouées ou passées ; les accepter sans attaque et refuser les cordes en trop sont des propositions encore à l'étude, elles ne sont donc pas proposées comme réglages.</p>
+    </section>
+  <script src="init.js"></script>
+</body>
+</html>
