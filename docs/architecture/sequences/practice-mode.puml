@@ -1,0 +1,120 @@
+@startuml practice-mode
+title Mode Practice : détection d'une note, d'un accord et d'une technique de jeu
+
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 330
+skinparam noteFontSize 11
+skinparam BoxPadding 8
+autonumber "<b>0"
+
+actor "Guitariste" as G
+participant "PracticeWindow\n(fil interface)" as UI
+participant "AudioEngine\n(partagé avec l'accordeur)" as Eng
+
+box "Fil de capture" #F5F5F5
+participant "CaptureService" as Cap
+end box
+participant "SampleRingBuffer\n(sans verrou)" as Ring
+box "Fil d'analyse" #EAF1FB
+participant "AnalysisService" as Ana
+end box
+box "Fil de session (seul écrivain de l'état)" #EAF6E8
+participant "SessionLoop" as Loop
+participant "PracticeSession" as Sess
+end box
+participant "PracticeHighlight\n(partition)" as HL
+
+== Initialisation ==
+G -> UI : clique sur Practice (bouton ou menu Outils)
+UI -> UI : PracticeSequenceBuilder.build(morceau, piste, accordage)\n→ événements attendus, dans l'ordre de lecture (notes, accords,\névénements auto-passés), répétitions incluses
+UI -> Eng : acquire(consommateur)
+Eng -> Cap : démarre la capture (premier consommateur)
+Eng -> Eng : contrôle de niveau si l'entrée n'a pas encore été vérifiée
+UI -> Sess : crée la session (séquence, interpréteur de hauteur,\ntolérance, fenêtre de stabilité)
+UI -> Loop : crée et démarre la boucle de session
+UI -> Eng : setSpectrumEnabled(la séquence contient des accords)
+UI -> Eng : subscribe(écouteur de trames)
+G -> UI : clique sur Démarrer
+UI -> Loop : commande START
+Loop -> Sess : onCommand(START)
+Sess --> Loop : PREPARING → RUNNING si l'entrée est convenable\net la piste acceptée (sinon reste en attente)
+
+== En continu : du signal à la trame d'analyse ==
+loop tant que la capture est active
+  Cap -> Cap : lit 1024 échantillons (Java Sound), convertit, sélectionne le canal
+  Cap -> Ring : write(échantillons)
+  Ana -> Ring : read(pas de 256 échantillons)
+  Ana -> Ana : fenêtre glissante de 2048 échantillons :\nniveau (RMS, crête, saturation), hauteur (YIN),\nattaque confirmée 13 pas après la transitoire (ArticulationDetector)
+  opt la séquence contient des accords
+    Ana -> Ana : PolyphonicAnalyzer : spectre de la trame (SpectrumFrame)
+  end
+  Ana -> Loop : AnalysisFrame (via l'écouteur de PracticeWindow : postFrame, sans attente)
+end
+
+== Cas d'usage 1 : détection d'une note ==
+Loop -> Sess : onFrame(trame)
+Sess -> Sess : NoteInterpreter.interpret(f0, confiance, niveau)\n→ PitchReading (note MIDI, écart en cents)
+opt la trame porte une attaque plus récente que la dernière acceptation
+  Sess -> Sess : arme l'acceptation (mémorise l'instant de l'attaque)
+end
+alt hauteur attendue dans la tolérance, niveau utilisable, sans interruption\npendant la fenêtre de stabilité, et acceptation armée
+  Sess -> Sess : accepte la note, passe à l'événement suivant\n(les événements auto-passés sont sautés)
+  Sess --> Loop : instantané ✓ (verdict CORRECT)
+else autre note fraîche, fiable et tenue pendant la fenêtre de stabilité
+  Sess --> Loop : instantané ✗ (verdict WRONG : note détectée, écart)
+else silence, bruit, confiance faible ou attaque sans hauteur stable
+  Sess --> Loop : instantané « en attente » (rien n'avance, jamais d'erreur affichée)
+end
+Loop -> UI : instantané, regroupé (au plus un toutes les 33 ms)\nvia TGSynchronizer.executeLater
+UI -> HL : show(événement courant, dernier accepté)
+UI --> G : note attendue (note, corde, case), note détectée,\nécart en cents, ✓ / ✗ / attente
+
+== Cas d'usage 2 : détection d'un accord ==
+Loop -> Sess : onFrame(trame avec spectre)
+Sess -> Sess : ChordMatcher.check(spectre, hauteurs requises, hauteurs tolérées)\n→ entendues / manquantes / non vérifiables\n(on regarde les partiels propres à chaque hauteur)
+alt pas de nouvelle attaque (nouveau coup de médiator requis)
+  Sess --> Loop : instantané « grattez à nouveau » (accord déjà complet)\nou « en attente »
+else attaque fraîche
+  alt 8 trames consécutives avec toutes les hauteurs vérifiables entendues
+    Sess -> Sess : accepte l'accord, événement suivant
+    Sess --> Loop : instantané ✓
+  else 600 ms après l'attaque, accord toujours incomplet
+    Sess --> Loop : instantané ✗ INCOMPLETE (liste des notes manquantes)\nnouvelle attaque requise pour réessayer
+  end
+end
+note right of Sess
+  Une hauteur qui ne se vérifie pas séparément (doublon, ou sur un harmonique
+  d'une note plus grave) est dite « non vérifiable », jamais « entendue ».
+end note
+Loop -> UI : instantané (même chemin d'affichage que pour une note)
+
+== Cas d'usage 3 : effet ou technique de jeu ==
+note over UI, Sess #FFFFFF
+  <b>Existant (MVP)</b> : seule la hauteur écrite est validée.
+  Lecture des effets de la partition (TGNoteEffect) à la construction de la séquence :
+  • hammer-on / pull-off, slide, vibrato, palm mute, accent, let ring, staccato, tremolo picking
+    → affichés comme techniques écrites, jamais vérifiés
+  • bend, harmonique, tremolo bar, trille → événement « auto-passé » : non jugé, la séquence avance
+end note
+G -> UI : joue la note écrite avec sa technique
+Loop -> Sess : onFrame(trame)
+Sess --> Loop : verdict de hauteur seulement (même logique que le cas 1)
+UI --> G : « technique écrite, non vérifiée »
+
+group#D79B00 #FFE6CC Prévu (spec 002, Phases D à F)
+  note over Ana, Sess #FFF2E6
+    <b>Prévu (spec 002, Phases D à F)</b> : les techniques deviennent vérifiables,
+    avec des verdicts honnêtes et sans jamais bloquer la progression.
+  end note
+  Ana -> Ana : TechniqueFeatureExtractor : écart en cents, pente du niveau,\ncentroïde spectral, flux (trames complétées)
+  Ana -> Loop : AnalysisFrame + TechniqueFeatures
+  Loop -> Sess : onFrame(trame)
+  Sess -> Sess : détecteur de la technique écrite (legato, slide, bend, vibrato,\npalm mute, harmonique…) puis TechniqueJudge
+  Sess --> Loop : instantané : verdict de hauteur + verdict de technique\nDETECTED / NOT_DETECTED / UNCERTAIN / NOT_VERIFIABLE
+  Loop -> UI : instantané
+  UI --> G : puce de technique à côté du résultat de hauteur\n(« non vérifiable » tant qu'aucun benchmark ne justifie « vérifié »)
+end
+
+@enduml

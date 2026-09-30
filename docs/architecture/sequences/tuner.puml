@@ -1,0 +1,78 @@
+@startuml tuner
+title Accordeur : du signal de la guitare à l'aiguille
+
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 330
+skinparam noteFontSize 11
+skinparam BoxPadding 8
+autonumber "<b>0"
+
+actor "Guitariste" as G
+participant "TunerWindow\n(fil interface)" as UI
+participant "AudioEngine\n(partagé avec Practice)" as Eng
+box "Fil de capture" #F5F5F5
+participant "CaptureService" as Cap
+end box
+participant "SampleRingBuffer" as Ring
+box "Fil d'analyse" #EAF1FB
+participant "AnalysisService" as Ana
+end box
+participant "TunerRecognition\n(NoteInterpreter + TunerHold)" as Rec
+participant "TunerNeedle / TunerScale" as Needle
+participant "PracticeTunerContext\n(état partagé)" as Shared
+
+== Ouverture ==
+G -> UI : Outils > Accordeur
+UI -> Eng : selectDefaultInputIfNone()
+UI -> Shared : setTunerOpen(true)
+Shared --> Shared : une session Practice en cours se met en pause\n(raison TUNER_OPEN)
+UI -> Eng : subscribe(écouteur de trames)
+UI -> Eng : acquire(consommateur)
+Eng -> Cap : démarre la capture (premier consommateur)
+Eng -> Eng : contrôle de niveau de l'entrée (si non vérifiée)
+Eng --> UI : résultat du niveau (via la sélection d'entrée partagée)
+UI --> G : entrée utilisée, état du niveau (convient / trop faible / saturé)
+
+== En continu : du signal à la trame ==
+loop tant que l'accordeur est ouvert
+  Cap -> Cap : lit 1024 échantillons (Java Sound), convertit, sélectionne le canal
+  Cap -> Ring : write(échantillons)
+  Ana -> Ring : read(pas de 256 échantillons)
+  Ana -> Ana : fenêtre de 2048 : niveau (RMS, crête, saturation) et hauteur (YIN)\n(pas de spectre polyphonique pour l'accordeur)
+  Ana -> UI : AnalysisFrame → frameReceived : garde la dernière trame
+  UI -> UI : au plus une mise à jour d'affichage toutes les ~33 ms\n(TGSynchronizer.executeLater, pas de file qui s'accumule)
+end
+
+== Affichage d'une trame ==
+UI -> Rec : show(trame, évaluation de l'entrée, cibles, corde choisie)
+Rec -> Rec : NoteInterpreter.interpret(f0, confiance, évaluation)\n→ PitchReading (nom de la note, octave, écart en cents)
+Rec -> Rec : TunerDisplay.of(trame, lecture, cibles, corde, plage « juste »)\nmode guidé : corde cible la plus proche si « automatique »\nmode chromatique : note la plus proche, sans cible
+Rec -> Rec : TunerHold : garde la dernière note si « conserver » est activé
+Rec --> UI : affichage (+ indicateur « conservée » et sa raison)
+alt lecture fiable
+  UI -> Needle : position de l'aiguille, hauteur sur l'échelle
+  UI --> G : note et octave, écart en cents par rapport à la cible,\nfréquence en Hz, corde mise en évidence
+else pas de lecture fiable (silence, bruit, confiance faible)
+  UI --> G : « - », état (aucune lecture / trop faible / saturé), aiguille au repos
+else lecture conservée (TunerHold)
+  UI --> G : dernière note en gris, dite « conservée » avec la raison
+end
+
+== Changements en cours d'utilisation ==
+G -> UI : choisit un accordage, une corde cible ou le mode guidé / chromatique
+UI -> Rec : clearHold() puis recalcul des cibles
+G -> UI : change l'entrée audio (réglages)
+UI -> Eng : sélection d'entrée mise à jour → capture relancée, nouveau contrôle de niveau
+Shared -> UI : accordage de la piste de Practice suivi\ntant qu'aucun choix explicite n'est fait
+
+== Fermeture ==
+G -> UI : ferme la fenêtre
+UI -> Eng : unsubscribe(écouteur)
+UI -> Eng : release(consommateur)
+Eng -> Cap : arrête la capture si c'était le dernier consommateur
+UI -> Shared : setTunerOpen(false)
+Shared --> Shared : la pause TUNER_OPEN de Practice est levée\n(il faut alors « Reprendre »)
+
+@enduml
