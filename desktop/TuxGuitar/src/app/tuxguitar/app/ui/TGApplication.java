@@ -12,10 +12,11 @@ import app.tuxguitar.util.TGException;
 import app.tuxguitar.util.TGServiceReader;
 import app.tuxguitar.util.singleton.TGSingletonFactory;
 import app.tuxguitar.util.singleton.TGSingletonUtil;
+import app.tuxguitar.util.TGBranding;
 
 public class TGApplication {
 
-	public static final String NAME = "TuxGuitar";
+	public static final String NAME = TGBranding.NAME;
 
 	private TGContext context;
 	private UIApplication application;

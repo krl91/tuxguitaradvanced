@@ -171,7 +171,7 @@ public class TGMainSingleton {
 	}
 
 	private File getTemporaryFolder() {
-		return new File(System.getProperty("java.io.tmpdir") + File.separator + "tuxguitar" + "-" + System.getProperty("user.name"));
+		return new File(System.getProperty("java.io.tmpdir") + File.separator + "tuxguitaradvanced" + "-" + System.getProperty("user.name"));
 	}
 
 	private File getUrlFolder() {
@@ -179,10 +179,10 @@ public class TGMainSingleton {
 	}
 
 	private File getUrlFile(String hash) {
-		return new File(this.getUrlFolder(), "tuxguitar-url-" + hash + ".url");
+		return new File(this.getUrlFolder(), "tuxguitaradvanced-url-" + hash + ".url");
 	}
 
 	private File getLockFile() {
-		return new File(this.getTemporaryFolder(), "tuxguitar.lock");
+		return new File(this.getTemporaryFolder(), "tuxguitaradvanced.lock");
 	}
 }

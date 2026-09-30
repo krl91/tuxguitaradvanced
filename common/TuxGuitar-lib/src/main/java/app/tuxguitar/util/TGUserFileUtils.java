@@ -11,6 +11,11 @@ public class TGUserFileUtils {
 	private static final String TG_USER_SHARE_PATH = "tuxguitar.user-share.path";
 	private static final String TG_CONFIG_PATH = "tuxguitar.config.path";
 
+	/** Folder name of the user data (config, plugins, cache): the product name in lower case. */
+	private static final String USER_FOLDER_NAME = "tuxguitaradvanced";
+	/** Folder name used by upstream TuxGuitar (and by earlier versions of this fork). */
+	private static final String LEGACY_USER_FOLDER_NAME = "tuxguitar";
+
 	public static final String PATH_HOME = getHomePath();
 	public static final String PATH_USER_DIR = getDefaultUserAppDir();
 	public static final String PATH_USER_CONFIG = getUserConfigDir();
@@ -69,8 +74,15 @@ public class TGUserFileUtils {
 	}
 
 	private static String getDefaultUserAppDir(){
+		String path = getUserAppDirFor(USER_FOLDER_NAME);
+		// first start after the rename: take over the settings the user already has (copy, never move,
+		// so a separately installed upstream TuxGuitar keeps its own)
+		TGUserDirectoryMigration.copyIfMissing(new File(getUserAppDirFor(LEGACY_USER_FOLDER_NAME)), new File(path));
+		return path;
+	}
+
+	private static String getUserAppDirFor(String folderName){
 		String home = System.getProperty("user.home");
-		String folderName = "tuxguitar";
 		String os = System.getProperty("os.name");
 		if (os.equals("Mac OS X")) {
 			return joinPath(home, "Library", "Application Support", folderName);
@@ -117,7 +129,7 @@ public class TGUserFileUtils {
 
 	private static String getDefaultUserSharedPath(){
 		String home = System.getProperty("user.home");
-		String folderName = "tuxguitar";
+		String folderName = USER_FOLDER_NAME;
 		String os = System.getProperty("os.name");
 		if (os.equals("Mac OS X")) {
 			return joinPath(home, "Library", "Caches", folderName);

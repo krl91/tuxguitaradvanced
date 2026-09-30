@@ -42,7 +42,7 @@ public class ArgumentParser {
 		for(int i = 0;i < this.arguments.length;i++){
 			for(int j = 0;j < OPTION_HELP.length;j++){
 				if(this.arguments[i].equals(OPTION_HELP[j])){
-					print("usage: TuxGuitar [file]");
+					print("usage: " + TGApplication.NAME + " [file]");
 					print("Options:");
 					print("	-h, --help                 Show help options");
 					print("	-v, --version              Show version information and exit");

@@ -2,7 +2,10 @@
 
 ## Description
 
-TuxGuitar is an Open Source multitrack tablature editor and player written in Java.
+TuxGuitarAdvanced is an Open Source multitrack tablature editor and player written in Java.
+It is a fork of TuxGuitar (https://github.com/helge17/tuxguitar) that adds interactive practice
+with audio recognition (Tools > Interactive Practice).
+Source code and releases of the fork: https://github.com/krl91/tuxguitaradvanced
 
 ## License
 
@@ -10,6 +13,7 @@ TuxGuitar is released under the GNU Lesser General Public License.
 
 Copyright (C) 2005-2022 Julián Casadesús
               2023-2025 guiv42, helge17
+TuxGuitarAdvanced additions: krl91
 
 ## Third party products
 
@@ -23,13 +27,13 @@ TuxGuitar includes the following third party products:
 
 ## Installation
 
-You can find ready to use installation packages for Linux, Windows, macOS, FreeBSD and Android on
-https://github.com/helge17/tuxguitar/releases/
+You can find ready to use installation packages for Linux, Windows and macOS on
+https://github.com/krl91/tuxguitaradvanced/releases/
 
 To build TuxGuitar from source code, refer to file:
-https://github.com/helge17/tuxguitar/blob/master/INSTALL.md
+https://github.com/krl91/tuxguitaradvanced/blob/master/INSTALL.md
 
 ## Contribute
 
 If you want to contribute to TuxGuitar, you will find a helpful description in file:
-https://github.com/helge17/tuxguitar/blob/master/doc/contribute.md
+https://github.com/krl91/tuxguitaradvanced/blob/master/docs/CONTRIBUTING.md

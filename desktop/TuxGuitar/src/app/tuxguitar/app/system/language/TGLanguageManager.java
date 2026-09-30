@@ -14,6 +14,7 @@ import app.tuxguitar.app.util.TGFileUtils;
 import app.tuxguitar.event.TGEventListener;
 import app.tuxguitar.event.TGEventManager;
 import app.tuxguitar.resource.TGResourceBundle;
+import app.tuxguitar.util.TGBranding;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.TGMessagesManager;
 
@@ -51,7 +52,12 @@ public class TGLanguageManager {
 		try {
 			String baseName = (PACKAGE + "." + PREFIX);
 			Locale locale = getLocale(lang);
-			TGMessagesManager.getInstance().setResources(TGResourceBundle.getBundle(this.context, baseName, locale));
+			// texts inherited from upstream say "TuxGuitar": show the product name (see TGBranding)
+			TGMessagesManager.getInstance().setResources(TGResourceBundle.getBundle(this.context, baseName, locale).mapValues(new TGResourceBundle.ValueMapper() {
+				public String map(String value) {
+					return TGBranding.apply(value);
+				}
+			}));
 			this.fireChanges();
 		} catch (Exception e) {
 			e.printStackTrace();

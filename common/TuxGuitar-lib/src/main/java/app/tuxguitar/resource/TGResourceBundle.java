@@ -32,6 +32,20 @@ public class TGResourceBundle {
 		return this.properties.getProperty(key);
 	}
 
+	/** Rewrites every message (used to apply the product name, see TGBranding). */
+	public interface ValueMapper {
+		String map(String value);
+	}
+
+	/** A copy of this bundle whose messages went through {@code mapper}. */
+	public TGResourceBundle mapValues(ValueMapper mapper) {
+		Properties mapped = new Properties();
+		for(String key : this.properties.stringPropertyNames()) {
+			mapped.setProperty(key, mapper.map(this.properties.getProperty(key)));
+		}
+		return new TGResourceBundle(this.locale, mapped);
+	}
+
 	public static TGResourceBundle getBundle(TGContext context, String baseName, Locale locale){
 		Properties properties = new Properties();
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import app.tuxguitar.resource.TGResourceManager;
+import app.tuxguitar.util.TGBranding;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.TGMessagesManager;
 
@@ -29,7 +30,9 @@ public class TGAboutContentReader {
 			is = TGResourceManager.getInstance(this.context).getResourceAsStream(PREFIX + doc + EXTENSION);
 		}
 		if( is != null){
-			return read(is);
+			StringBuffer content = read(is);
+			// the licence text is reproduced as is
+			return (LICENSE.equals(doc) ? content : new StringBuffer(TGBranding.apply(content.toString())));
 		}
 		return new StringBuffer();
 	}

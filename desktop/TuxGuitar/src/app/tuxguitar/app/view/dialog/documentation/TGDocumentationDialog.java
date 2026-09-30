@@ -1,9 +1,11 @@
 package app.tuxguitar.app.view.dialog.documentation;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.net.URL;
 
 import app.tuxguitar.app.TuxGuitar;
@@ -18,12 +20,13 @@ import app.tuxguitar.ui.resource.UIRectangle;
 import app.tuxguitar.ui.resource.UISize;
 import app.tuxguitar.ui.widget.UIBrowser;
 import app.tuxguitar.ui.widget.UIWindow;
+import app.tuxguitar.util.TGBranding;
 import app.tuxguitar.util.TGException;
 
 public class TGDocumentationDialog {
 
 	private static final String RESOURCE_PATH = "help";
-	private static final String TEMPORAL_PATH = System.getProperty("java.io.tmpdir") + File.separator + "tuxguitar" + "-" + System.getProperty("user.name");
+	private static final String TEMPORAL_PATH = System.getProperty("java.io.tmpdir") + File.separator + "tuxguitaradvanced" + "-" + System.getProperty("user.name");
 
 	private TGViewContext context;
 
@@ -75,7 +78,8 @@ public class TGDocumentationDialog {
 
 	private URL getIndexUrl() throws Throwable{
 		URL url = TGResourceManager.getInstance(this.context.getContext()).getResource(RESOURCE_PATH + "/index.html");
-		if( url != null && !TGFileUtils.isLocalFile( url ) ){
+		// always served from a copy: the pages inherited from upstream say "TuxGuitar" and are branded while copying
+		if( url != null ){
 			String path = TEMPORAL_PATH + File.separator + RESOURCE_PATH;
 			copyTemporalResources(path, RESOURCE_PATH, TGFileUtils.getFileNames(this.context.getContext(), RESOURCE_PATH ));
 			url = new File( path + File.separator + "index.html" ).toURI().toURL();
@@ -92,18 +96,25 @@ public class TGDocumentationDialog {
 				String[] children = TGFileUtils.getFileNames(this.context.getContext(), resource);
 				if( children != null && children.length > 0 ){
 					copyTemporalResources( file.getAbsolutePath(), resource , children );
-				}else if( !file.exists() ){
+				}else{
 					InputStream in = TGResourceManager.getInstance(this.context.getContext()).getResourceAsStream(resource);
 					if( in != null ){
-						OutputStream out = new FileOutputStream( file );
+						ByteArrayOutputStream content = new ByteArrayOutputStream();
 						int len = 0;
 						byte[] buf = new byte[1024];
 						while ((len = in.read(buf)) > 0){
-							out.write(buf, 0, len);
+							content.write(buf, 0, len);
 						}
+						in.close();
+						byte[] bytes = content.toByteArray();
+						String name = resources[i].toLowerCase();
+						if( name.endsWith(".html") || name.endsWith(".htm") ){
+							bytes = TGBranding.apply(new String(bytes, StandardCharsets.UTF_8)).getBytes(StandardCharsets.UTF_8);
+						}
+						OutputStream out = new FileOutputStream( file );
+						out.write(bytes);
 						out.flush();
 						out.close();
-						in.close();
 					}
 				}
 			}
