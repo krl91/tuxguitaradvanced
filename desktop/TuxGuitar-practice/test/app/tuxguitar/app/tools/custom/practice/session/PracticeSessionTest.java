@@ -148,6 +148,32 @@ public class PracticeSessionTest {
 	}
 
 	@Test
+	public void aDifferentPitchAfterAnAcceptedNoteIsAcceptedFromTheStablePitchAlone() {
+		PracticeSession session = running(new int[] { 0, 1 });
+
+		pluck(session, E4, 0.95, STABILITY_NANOS + HOP_NANOS);
+		assertEquals(1, session.getCurrentIndex());
+
+		// the next note: no attack reported (legato, or the attack still being confirmed)
+		play(session, F4, 0.95, STABILITY_NANOS + HOP_NANOS, false);
+		assertEquals(State.COMPLETE, session.getState());
+		assertEquals(Outcome.ACCEPTED, session.getOutcome(1));
+	}
+
+	@Test
+	public void aWrongNeighbourOrTheStillRingingPreviousNoteIsNeverAcceptedWithoutAnAttack() {
+		PracticeSession session = running(new int[] { 0, 2 });
+
+		pluck(session, E4, 0.95, STABILITY_NANOS + HOP_NANOS);
+		assertEquals(1, session.getCurrentIndex());
+
+		play(session, E4, 0.95, 1_000_000_000L, false);
+		play(session, F4, 0.95, 1_000_000_000L, false);
+		assertEquals(1, session.getCurrentIndex());
+		assertEquals(State.RUNNING, session.getState());
+	}
+
+	@Test
 	public void aStableCorrectPitchWithoutAFreshOnsetNeverAdvances() {
 		PracticeSession session = running(new int[] { 0, 1 });
 

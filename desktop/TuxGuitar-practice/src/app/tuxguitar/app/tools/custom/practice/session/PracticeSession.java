@@ -248,6 +248,21 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		return snapshot();
 	}
 
+	/**
+	 * A stable pitch that differs from the note just accepted can only be the new note (research R3
+	 * lever L3): it needs no confirmed attack, which saves the attack confirmation delay in runs and
+	 * is the only way to hear legato notes. The same pitch, the first note and anything after a skip
+	 * or an automatically passed event still need a fresh attack.
+	 */
+	private boolean isPitchChange(PracticeEvent event) {
+		PracticeEvent previous = this.lastAccepted;
+		return previous != null
+				&& previous.getKind() == PracticeEvent.Kind.EXPECTED_NOTE
+				&& previous.getSequenceIndex() == event.getSequenceIndex() - 1
+				&& this.outcomes.get(previous.getSequenceIndex()) == Outcome.ACCEPTED
+				&& previous.getExpectedMidi() != event.getExpectedMidi();
+	}
+
 	private void onNoteFrame(AnalysisFrame frame, PracticeEvent event, boolean usableLevel) {
 		long now = frame.getTimestampNanos();
 		this.feedback = Feedback.evaluate(frame, this.reading, event.getExpectedMidi(), this.tolerance, !this.articulationArmed);
@@ -256,7 +271,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 				this.matchStartNanos = now;
 			}
 			boolean stable = now - this.matchStartNanos >= this.stabilityNanos;
-			if( stable && this.articulationArmed ) {
+			if( stable && (this.articulationArmed || isPitchChange(event)) ) {
 				accept(event, now);
 				return;
 			}
