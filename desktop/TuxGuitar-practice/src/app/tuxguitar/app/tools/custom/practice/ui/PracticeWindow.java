@@ -98,6 +98,9 @@ public class PracticeWindow {
 	private SessionLoop<PracticeSnapshot> loop;
 	private PracticeSession session;
 	private SessionEvents events;
+	/** A one-click start is waiting for the input to become usable (see {@link QuickStart}). */
+	private boolean autoStart;
+	private boolean quickStartRequested;
 	private AnalysisService.Listener frameListener;
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
@@ -118,6 +121,17 @@ public class PracticeWindow {
 				PracticeWindow.this.post(PracticeCommand.STOP);
 			}
 		}, PracticeParameters.of(RecognitionSettingsStore.getInstance(context).get()).tolerance());
+	}
+
+	/**
+	 * The transport-bar button: opens the window and, when the track under the score cursor can be
+	 * practised, starts practising it as soon as the input is usable (no Start press needed). When
+	 * the window is already open it is only brought to the front.
+	 */
+	public void openAndStart() {
+		this.quickStartRequested = !isOpen();
+		open();
+		this.quickStartRequested = false;
 	}
 
 	/** Opens the window, or brings it to the front when it is already open. */
@@ -161,6 +175,7 @@ public class PracticeWindow {
 				PracticeWindow.this.shared.removeListener(PracticeWindow.this.sharedListener);
 				PracticeWindow.this.shared.setPracticeTrack(null);
 				RecognitionSettingsStore.getInstance(PracticeWindow.this.context).removeListener(PracticeWindow.this.settingsListener);
+				PracticeWindow.this.autoStart = false;
 				PracticeWindow.this.window = null;
 				PracticeWindow.this.plugin.windowStateChanged(PracticeWindow.this.context);
 			}
@@ -210,6 +225,8 @@ public class PracticeWindow {
 		layout.set(this.tracks, 1, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.tracks.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
+				// the learner chose a track: no automatic start any more
+				PracticeWindow.this.autoStart = false;
 				updateTuning();
 			}
 		});
@@ -318,6 +335,11 @@ public class PracticeWindow {
 			}
 			this.tracks.addItem(new UISelectItem<PracticeTrackCandidate>(text, candidate));
 		}
+		boolean cursorTrackCanBePractised = false;
+		for( PracticeTrackCandidate candidate : candidates.getCandidates() ) {
+			cursorTrackCanBePractised |= (caretTrack != null && candidate.getTrack() == caretTrack);
+		}
+		this.autoStart = QuickStart.requested(this.quickStartRequested, cursorTrackCanBePractised);
 		if( candidates.getPreselected() != null ) {
 			this.tracks.setSelectedValue(candidates.getPreselected());
 		} else if( !candidates.getCandidates().isEmpty() ) {
@@ -380,9 +402,18 @@ public class PracticeWindow {
 	}
 
 	private void updateStartButton() {
-		InputAssessment.Status status = this.assessment.getStatus();
-		this.startButton.setEnabled(this.tracks.getSelectedValue() != null
-				&& (status == InputAssessment.Status.SUITABLE || status == InputAssessment.Status.SUBOPTIMAL));
+		boolean canStart = QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus());
+		this.startButton.setEnabled(canStart);
+		if( QuickStart.startNow(this.autoStart, canStart) ) {
+			// after the window is shown: the start hides it
+			TGSynchronizer.getInstance(this.context).executeLater(() -> {
+				if( isOpen() && this.autoStart && this.session == null
+						&& QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus()) ) {
+					this.autoStart = false;
+					startSession();
+				}
+			});
+		}
 	}
 
 	// ---------------------------------------------------------------- running practice (FR-073–FR-076)

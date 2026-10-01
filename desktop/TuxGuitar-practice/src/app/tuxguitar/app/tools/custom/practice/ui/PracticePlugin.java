@@ -54,12 +54,19 @@ public class PracticePlugin extends TGToolItemPlugin {
 		this.window.open();
 	}
 
-	/** Closes the practice window when it is open, else opens it (the transport-bar button). */
+	/**
+	 * The transport-bar button: closes the practice window when it is open, else opens it and starts
+	 * practising the track under the score cursor.
+	 */
 	void toggleWindow(TGContext context) {
 		if( isWindowOpen() ) {
 			this.window.close();
 		} else {
-			doAction(context);
+			if( this.window == null ) {
+				this.window = new PracticeWindow(context, this);
+			}
+			// one click: practise the track under the cursor as soon as the input is usable
+			this.window.openAndStart();
 		}
 	}
 
