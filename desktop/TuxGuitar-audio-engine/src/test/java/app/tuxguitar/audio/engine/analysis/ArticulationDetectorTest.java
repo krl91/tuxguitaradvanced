@@ -70,6 +70,56 @@ public class ArticulationDetectorTest {
 		assertOnsets(detect(withNoiseFloor(dropout)), new double[] { 0.5 }, new double[] { 0.5 });
 	}
 
+	/**
+	 * Synthetic gate (1.5 dB): equal re-plucks on a ringing string only add 2-4 dB. On the real
+	 * single-pluck clips the fast detector reports false attacks at every gate up to 4.5 dB
+	 * (research.md R3, builtin-mic-articulation-fast-sweep.csv), so it is opt-in, not the default.
+	 */
+	private static ArticulationDetector fast() {
+		return ArticulationDetector.fast(ArticulationDetector.DEFAULT_MIN_LEVEL_DB, 1.5);
+	}
+
+	/** Equal re-plucks every {@code spacing} seconds from 0.5 s; how many are found. */
+	private static int foundRepeats(ArticulationDetector detector, double spacing, int count) {
+		double[] times = new double[count];
+		double[] gains = new double[count];
+		for( int i = 0 ; i < count ; i ++ ) {
+			times[i] = 0.5 + i * spacing;
+			gains[i] = 1.0;
+		}
+		List<Double> onsets = detect(detector, withNoiseFloor(plucks(0.5 + count * spacing + 0.6, times, gains)));
+		int found = 0;
+		for( double time : times ) {
+			found += (near(onsets, time) ? 1 : 0);
+		}
+		return found;
+	}
+
+	@Test
+	public void theFastDetectorSeparatesIdenticalRepeatsAtEightNotesPerSecond() {
+		assertTrue(foundRepeats(fast(), 0.125, 6) >= 5, "fast detector at 8 notes/s");
+		// the MVP detector stays conservative (documented limit)
+		assertTrue(foundRepeats(new ArticulationDetector(), 0.125, 6) < 6);
+	}
+
+	@Test
+	public void theFastDetectorDecidesEarlierAndKeepsTheMvpRejections() {
+		assertTrue(fast().getDecisionDelayHops() < new ArticulationDetector().getDecisionDelayHops());
+		ArticulationDetector detector = fast();
+		assertOnsets(detect(detector, withNoiseFloor(modulatedTone(30, 5.5, 1.5))), new double[0], new double[] { 0.5 });
+		assertOnsets(detect(fast(), withNoiseFloor(modulatedTone(50, 6.0, 3.0))), new double[0], new double[] { 0.5 });
+		assertOnsets(detect(fast(), withNoiseFloor(beatingTone())), new double[0], new double[] { 0.5 });
+		float[] click = plucks(2.5, new double[] { 0.5 }, new double[] { 1.0 });
+		addNoiseBurst(click, 1.3, 0.015, -18.0);
+		assertOnsets(detect(fast(), withNoiseFloor(click)), new double[] { 0.5 }, new double[] { 0.5 });
+		float[] dropout = plucks(2.5, new double[] { 0.5 }, new double[] { 1.0 });
+		int from = (int) (1.3 * RATE);
+		for( int i = from ; i < from + (int) (0.025 * RATE) ; i ++ ) {
+			dropout[i] *= (float) Math.pow(10, -12.0 / 20.0);
+		}
+		assertOnsets(detect(fast(), withNoiseFloor(dropout)), new double[] { 0.5 }, new double[] { 0.5 });
+	}
+
 	@Test
 	public void resetForgetsHistory() {
 		ArticulationDetector detector = new ArticulationDetector();
@@ -91,7 +141,7 @@ public class ArticulationDetectorTest {
 			System.arraycopy(window, HOP, window, 0, WINDOW - HOP);
 			System.arraycopy(signal, hop * HOP, window, WINDOW - HOP, HOP);
 			if( detector.process(window) ) {
-				int transientHop = hop - ArticulationDetector.DECISION_DELAY_HOPS;
+				int transientHop = hop - detector.getDecisionDelayHops();
 				onsets.add(((transientHop + 1) * HOP - 512) / (double) RATE);
 			}
 		}

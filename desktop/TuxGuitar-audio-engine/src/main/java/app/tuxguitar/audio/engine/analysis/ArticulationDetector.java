@@ -28,11 +28,12 @@ public final class ArticulationDetector {
 
 	private static final int FFT_SIZE = 1024;
 	private static final int MEDIAN_HOPS = 10;
-	private static final int PRE_FIRST = 19;
-	private static final int PRE_LAST = 2;
-	private static final int POST_FIRST = 4;
-	private static final int POST_LAST = DECISION_DELAY_HOPS;
-	private static final int HISTORY = PRE_FIRST + POST_LAST + 2;
+	/** Hops before/after the transient whose levels form the gate (MVP: before 2-19, after 4-13). */
+	private final int preFirst;
+	private final int preLast;
+	private final int postFirst;
+	private final int postLast;
+	private final int history;
 
 	private final double fluxMedianFactor;
 	private final double fluxOffset;
@@ -44,8 +45,8 @@ public final class ArticulationDetector {
 	private final double[] real = new double[FFT_SIZE];
 	private final double[] imaginary = new double[FFT_SIZE];
 	private final double[] previousMagnitude = new double[FFT_SIZE / 2];
-	private final double[] levelDb = new double[HISTORY];
-	private final double[] flux = new double[HISTORY];
+	private final double[] levelDb;
+	private final double[] flux;
 	private final double[] medianScratch = new double[MEDIAN_HOPS];
 	private long hop;
 	private long lastOnsetHop;
@@ -55,6 +56,35 @@ public final class ArticulationDetector {
 	}
 
 	public ArticulationDetector(double fluxMedianFactor, double fluxOffset, double minLevelDb, int refractoryHops, double gateDb) {
+		this(fluxMedianFactor, fluxOffset, minLevelDb, refractoryHops, gateDb, 19, 2, 4, DECISION_DELAY_HOPS);
+	}
+
+	/**
+	 * The fast-run detector (spec 002 T048): the level before the attack is taken over the few hops
+	 * just before it instead of the maximum over 19 (a previous note that is already decaying no
+	 * longer hides an equal re-pluck), the level after it over a shorter window (earlier decision),
+	 * and the refractory is shorter. The MVP detector stays the default; the thresholds are
+	 * provisional until the fast-passage benchmark has measured them.
+	 */
+	public static ArticulationDetector fast(double minLevelDb, double gateDb) {
+		return new ArticulationDetector(DEFAULT_FLUX_MEDIAN_FACTOR, DEFAULT_FLUX_OFFSET, minLevelDb, FAST_REFRACTORY_HOPS, gateDb, 8, 2, 3, FAST_DECISION_DELAY_HOPS);
+	}
+
+	public static final int FAST_REFRACTORY_HOPS = 6;
+	public static final int FAST_DECISION_DELAY_HOPS = 8;
+
+	public ArticulationDetector(double fluxMedianFactor, double fluxOffset, double minLevelDb, int refractoryHops, double gateDb,
+			int preFirst, int preLast, int postFirst, int postLast) {
+		if( preFirst < preLast || preLast < 1 || postFirst < 1 || postLast < postFirst || preFirst > 19 || postLast > DECISION_DELAY_HOPS ) {
+			throw new IllegalArgumentException("invalid gate windows");
+		}
+		this.preFirst = preFirst;
+		this.preLast = preLast;
+		this.postFirst = postFirst;
+		this.postLast = postLast;
+		this.history = preFirst + postLast + 2;
+		this.levelDb = new double[this.history];
+		this.flux = new double[this.history];
 		this.fluxMedianFactor = fluxMedianFactor;
 		this.fluxOffset = fluxOffset;
 		this.minLevelDb = minLevelDb;
@@ -64,6 +94,11 @@ public final class ArticulationDetector {
 			this.hann[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / FFT_SIZE);
 		}
 		reset();
+	}
+
+	/** Hops between a transient and the hop on which it is reported by this detector. */
+	public int getDecisionDelayHops() {
+		return this.postLast;
 	}
 
 	/** Level rise needed for a new attack (the "pick attack sensitivity" setting). */
@@ -112,7 +147,7 @@ public final class ArticulationDetector {
 		int slot = slot(this.hop);
 		this.levelDb[slot] = 10 * Math.log10(energy / FFT_SIZE + 1e-12);
 		this.flux[slot] = (this.hop == 0 ? 0 : currentFlux);
-		boolean onset = decide(this.hop - DECISION_DELAY_HOPS);
+		boolean onset = decide(this.hop - this.postLast);
 		this.hop ++;
 		return onset;
 	}
@@ -128,7 +163,7 @@ public final class ArticulationDetector {
 		if( this.levelDb[slot(candidate)] <= this.minLevelDb || value <= this.fluxMedianFactor * medianBefore(candidate) + this.fluxOffset ) {
 			return false;
 		}
-		if( candidate >= PRE_FIRST && !passesGate(candidate) ) {
+		if( candidate >= this.preFirst && !passesGate(candidate) ) {
 			return false;
 		}
 		this.lastOnsetHop = candidate;
@@ -137,14 +172,14 @@ public final class ArticulationDetector {
 
 	private boolean passesGate(long candidate) {
 		double pre = -Double.MAX_VALUE;
-		for( long k = candidate - PRE_FIRST ; k <= candidate - PRE_LAST ; k ++ ) {
+		for( long k = candidate - this.preFirst ; k <= candidate - this.preLast ; k ++ ) {
 			pre = Math.max(pre, this.levelDb[slot(k)]);
 		}
 		double post = 0;
-		for( long k = candidate + POST_FIRST ; k <= candidate + POST_LAST ; k ++ ) {
+		for( long k = candidate + this.postFirst ; k <= candidate + this.postLast ; k ++ ) {
 			post += this.levelDb[slot(k)];
 		}
-		post /= (POST_LAST - POST_FIRST + 1);
+		post /= (this.postLast - this.postFirst + 1);
 		return (post - pre >= this.gateDb);
 	}
 
@@ -156,8 +191,8 @@ public final class ArticulationDetector {
 		return this.medianScratch[MEDIAN_HOPS / 2];
 	}
 
-	private static int slot(long hop) {
-		return (int) (hop % HISTORY);
+	private int slot(long hop) {
+		return (int) (hop % this.history);
 	}
 
 	private static void fft(double[] re, double[] im) {

@@ -47,6 +47,7 @@ class BenchmarkSweepTest {
 		Files.write(directory.resolve("builtin-mic-articulation.csv"), articulation(fixtures, samples), StandardCharsets.UTF_8);
 		Files.write(directory.resolve("builtin-mic-level-check.csv"), levelCheck(fixtures, samples), StandardCharsets.UTF_8);
 		Files.write(directory.resolve("builtin-mic-articulation-sweep.csv"), articulationSweep(fixtures, samples), StandardCharsets.UTF_8);
+		Files.write(directory.resolve("builtin-mic-articulation-fast-sweep.csv"), fastArticulationSweep(fixtures, samples), StandardCharsets.UTF_8);
 		Files.write(directory.resolve("builtin-mic-cents.csv"), cents(fixtures, samples), StandardCharsets.UTF_8);
 		Files.write(directory.resolve("builtin-mic-silence.csv"), silence(fixtures, samples), StandardCharsets.UTF_8);
 	}
@@ -199,6 +200,40 @@ class BenchmarkSweepTest {
 		return sorted.isEmpty() ? "NaN" : String.format(Locale.ROOT, "%.1f", sorted.get((int) Math.min(sorted.size() - 1, Math.floor(fraction * sorted.size()))));
 	}
 
+	/** The fast-run detector (T048) against the MVP one on the same real clips: false articulations and misses per gate. */
+	private static List<String> fastArticulationSweep(List<BenchmarkFixtures.Fixture> fixtures, List<float[]> samples) {
+		List<String> rows = new ArrayList<>();
+		rows.add("detector,gate_db,clips,expected_onsets,reported_onsets,extra,missed,clips_with_extra");
+		for (boolean fast : new boolean[] { false, true }) {
+			for (double gateDb : new double[] { 1.5, 3.0, 4.5, 6.0 }) {
+				int clips = 0;
+				int expected = 0;
+				int reported = 0;
+				int extra = 0;
+				int missed = 0;
+				int clipsWithExtra = 0;
+				for (int i = 0; i < fixtures.size(); i++) {
+					BenchmarkFixtures.Fixture fixture = fixtures.get(i);
+					if (fixture.expectedOnsets == null || !("reference".equals(fixture.role) || "known-issue".equals(fixture.role))) {
+						continue;
+					}
+					ArticulationDetector detector = (fast ? ArticulationDetector.fast(ArticulationDetector.DEFAULT_MIN_LEVEL_DB, gateDb)
+							: new ArticulationDetector(ArticulationDetector.DEFAULT_FLUX_MEDIAN_FACTOR, ArticulationDetector.DEFAULT_FLUX_OFFSET,
+									ArticulationDetector.DEFAULT_MIN_LEVEL_DB, ArticulationDetector.DEFAULT_REFRACTORY_HOPS, gateDb));
+					int count = onsetTimes(detector, samples.get(i)).size();
+					clips++;
+					expected += fixture.expectedOnsets;
+					reported += count;
+					extra += Math.max(0, count - fixture.expectedOnsets);
+					missed += Math.max(0, fixture.expectedOnsets - count);
+					clipsWithExtra += (count > fixture.expectedOnsets ? 1 : 0);
+				}
+				rows.add((fast ? "fast" : "mvp") + "," + gateDb + "," + clips + "," + expected + "," + reported + "," + extra + "," + missed + "," + clipsWithExtra);
+			}
+		}
+		return rows;
+	}
+
 	private static List<Double> onsetTimes(ArticulationDetector detector, float[] clip) {
 		List<Double> times = new ArrayList<>();
 		float[] window = new float[BenchmarkFixtures.WINDOW_SIZE];
@@ -206,7 +241,7 @@ class BenchmarkSweepTest {
 			System.arraycopy(window, BenchmarkFixtures.HOP_SIZE, window, 0, window.length - BenchmarkFixtures.HOP_SIZE);
 			System.arraycopy(clip, hop * BenchmarkFixtures.HOP_SIZE, window, window.length - BenchmarkFixtures.HOP_SIZE, BenchmarkFixtures.HOP_SIZE);
 			if (detector.process(window)) {
-				int transientHop = hop - ArticulationDetector.DECISION_DELAY_HOPS;
+				int transientHop = hop - detector.getDecisionDelayHops();
 				times.add(((transientHop + 1) * BenchmarkFixtures.HOP_SIZE - 512) / (double) BenchmarkFixtures.SAMPLE_RATE);
 			}
 		}
