@@ -74,6 +74,7 @@ final class TunerGainControl {
 		return this.panel;
 	}
 
+
 	/** Shows the current gain (an input change resets it). */
 	void refresh() {
 		if( this.panel.isDisposed() ) {

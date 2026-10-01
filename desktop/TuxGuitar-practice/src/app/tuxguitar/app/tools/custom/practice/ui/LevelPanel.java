@@ -93,6 +93,7 @@ public final class LevelPanel {
 		return this.panel;
 	}
 
+
 	/** Starts the live meter; the engine's capture must be held by the window. */
 	public void connect() {
 		if( !this.connected ) {

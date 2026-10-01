@@ -115,6 +115,7 @@ public final class GainControl {
 		return this.panel;
 	}
 
+
 	/** Called after the content changed size, so the window can refit (UI thread). */
 	public void setContentListener(Runnable contentListener) {
 		this.contentListener = contentListener;

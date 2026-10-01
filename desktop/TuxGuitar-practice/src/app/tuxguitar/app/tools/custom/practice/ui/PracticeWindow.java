@@ -119,6 +119,10 @@ public class PracticeWindow {
 				PracticeWindow.this.openTuner();
 			}
 
+			public void stop() {
+				PracticeWindow.this.stopNow();
+			}
+
 			public void closed() {
 				PracticeWindow.this.post(PracticeCommand.STOP);
 			}
@@ -465,6 +469,18 @@ public class PracticeWindow {
 			}
 		}
 		return false;
+	}
+
+	/** Ends practice immediately on the UI thread (Stop button): nothing queued can delay or undo it. */
+	private void stopNow() {
+		if( !isOpen() || this.session == null ) {
+			return;
+		}
+		teardownSession();
+		setVisible(this.window, true);
+		showPreparation();
+		refit();
+		this.window.moveToTop();
 	}
 
 	private void post(PracticeCommand command) {
