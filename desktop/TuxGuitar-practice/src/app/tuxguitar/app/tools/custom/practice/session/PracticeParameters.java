@@ -34,7 +34,8 @@ public final class PracticeParameters {
 
 	/** In-tune range (shared with the tuner) and acceptance range; the settings keep in-tune ≤ accept. */
 	public TolerancePolicy tolerance() {
-		return new TolerancePolicy(this.settings.get(RecognitionParameters.TUNER_IN_TUNE), this.settings.get(RecognitionParameters.NOTE_ACCEPT));
+		return new TolerancePolicy(this.settings.get(RecognitionParameters.TUNER_IN_TUNE), this.settings.get(RecognitionParameters.NOTE_ACCEPT),
+				this.settings.get(RecognitionParameters.NOTE_FRET_SHARP));
 	}
 
 	public long stabilityNanos() {

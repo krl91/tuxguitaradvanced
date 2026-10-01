@@ -52,6 +52,12 @@ public final class Feedback {
 	 */
 	public static Feedback evaluate(AnalysisFrame frame, PitchReading reading, int expectedMidi,
 			TolerancePolicy tolerance, boolean articulationMissing) {
+		return evaluate(frame, reading, expectedMidi, 0, tolerance, articulationMissing);
+	}
+
+	/** @param fret the fret of the written note, for the sharp allowance of the tolerance */
+	public static Feedback evaluate(AnalysisFrame frame, PitchReading reading, int expectedMidi, int fret,
+			TolerancePolicy tolerance, boolean articulationMissing) {
 		if( !reading.hasPitch() ) {
 			return (frame.getLevelState() == AnalysisFrame.LevelState.TOO_LOW ? WAITING : UNCERTAIN);
 		}
@@ -59,7 +65,7 @@ public final class Feedback {
 			return UNCERTAIN;
 		}
 		boolean weak = (frame.getLevelState() == AnalysisFrame.LevelState.TOO_LOW);
-		if( tolerance.matches(reading, expectedMidi) ) {
+		if( tolerance.matches(reading, expectedMidi, fret) ) {
 			return (articulationMissing ? WAITING_FOR_ARTICULATION : WAITING);
 		}
 		if( weak ) {

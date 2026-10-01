@@ -265,6 +265,23 @@ public class PracticeSessionTest {
 	}
 
 	@Test
+	public void aSharpFrettedNoteIsAcceptedWithTheFretAllowanceButNotOnAnOpenString() {
+		for( int fret : new int[] { 0, 12 } ) {
+			SongFixture fixture = new SongFixture(1);
+			fixture.quarter(0, 0, 1, fret);
+			PracticeTrackSelection selection = selection(fixture);
+			selection.accept();
+			PracticeSession session = new PracticeSession(selection, fixture.sequence(), new NoteInterpreter(0.8),
+					new TolerancePolicy(5.0, 10.0, 0.5), STABILITY_NANOS, LATENCY_NANOS);
+			session.setAssessment(SUITABLE);
+			session.onCommand(PracticeCommand.START);
+			double played = (fret == 0 ? E4 : 2.0 * E4) * Math.pow(2.0, 12.0 / 1200.0);
+			pluck(session, played, 0.95, STABILITY_NANOS + HOP_NANOS);
+			assertEquals(fret == 12 ? State.COMPLETE : State.RUNNING, session.getState(), "fret " + fret + " at +12 cents (limit 10 + 0.5 per fret)");
+		}
+	}
+
+	@Test
 	public void aStableCorrectPitchWithoutAFreshOnsetNeverAdvances() {
 		PracticeSession session = running(new int[] { 0, 1 });
 

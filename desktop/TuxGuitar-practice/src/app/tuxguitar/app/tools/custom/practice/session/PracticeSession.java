@@ -316,8 +316,8 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 
 	private void onNoteFrame(AnalysisFrame frame, PracticeEvent event, boolean usableLevel) {
 		long now = frame.getTimestampNanos();
-		this.feedback = Feedback.evaluate(frame, this.reading, event.getExpectedMidi(), this.tolerance, !this.articulationArmed);
-		if( usableLevel && this.tolerance.matches(this.reading, event.getExpectedMidi()) ) {
+		this.feedback = Feedback.evaluate(frame, this.reading, event.getExpectedMidi(), event.getFret(), this.tolerance, !this.articulationArmed);
+		if( usableLevel && this.tolerance.matches(this.reading, event.getExpectedMidi(), event.getFret()) ) {
 			if( this.matchStartNanos < 0 ) {
 				this.matchStartNanos = now;
 			}

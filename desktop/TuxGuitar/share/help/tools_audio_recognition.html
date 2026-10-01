@@ -79,6 +79,7 @@
     <table>
     <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
     <tr><td>Accepted pitch range</td><td>cents</td><td>10</td><td>45</td><td>35</td><td>stricter about tuning and slight bends</td><td>more forgiving; a neighbouring note (100 cents away) is never accepted. Never smaller than the in-tune range: a smaller value is raised to it</td></tr>
+    <tr><td>Sharp allowance per fret</td><td>cents</td><td>0</td><td>2</td><td>0.7</td><td>stricter: fretted notes that sound sharp are refused sooner</td><td>more forgiving of the natural sharpness of fretted notes, more so higher up the neck; added on the sharp side only, never above 49 cents in total. 0 switches it off</td></tr>
     <tr><td>Minimum certainty</td><td>%</td><td>50</td><td>95</td><td>80</td><td>reacts to weaker or noisier notes, with more wrong judgements</td><td>fewer wrong judgements, but soft notes may not be judged</td></tr>
     <tr><td>Time to confirm a note</td><td>ms</td><td>50</td><td>300</td><td>107</td><td>faster reaction, more risk from short glitches</td><td>steadier, but slower in fast passages. Rounded to whole analysis steps of 5.3 ms</td></tr>
     <tr><td>Pick attack sensitivity</td><td>dB</td><td>2</td><td>10</td><td>4.5</td><td>soft attacks are detected, but knocks and noise may count as attacks</td><td>noise is ignored better, soft plucks may be missed</td></tr>

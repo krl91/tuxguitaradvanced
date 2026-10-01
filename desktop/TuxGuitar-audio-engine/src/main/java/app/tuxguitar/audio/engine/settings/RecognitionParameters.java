@@ -39,6 +39,8 @@ public final class RecognitionParameters {
 
 	// ---------------------------------------------------------------- practice: notes
 	public static final Number NOTE_ACCEPT = new Number(PREFIX + "note.accept", Section.NOTES, "cents", 35, 10, 45, true);
+	/** Extra sharp cents accepted per fret (fretted strings go sharp, more so higher up); 0 switches it off. */
+	public static final Number NOTE_FRET_SHARP = new Number(PREFIX + "note.fret-sharp", Section.ADVANCED, "cents", 0.7, 0, 2, false);
 	public static final Number NOTE_CONFIDENCE = new Number(PREFIX + "note.confidence", Section.NOTES, "%", 0.80, 0.50, 0.95, false, 100.0);
 	public static final Number NOTE_STABILITY = new Number(PREFIX + "note.stability", Section.NOTES, "ms", 107, 50, 300, true);
 	public static final Number NOTE_ATTACK = new Number(PREFIX + "note.attack", Section.NOTES, "dB", 4.5, 2.0, 10.0, false);
@@ -86,7 +88,7 @@ public final class RecognitionParameters {
 		List<RecognitionParameter> all = new ArrayList<RecognitionParameter>();
 		Collections.addAll(all, INPUT_LEVEL_MIN, INPUT_LEVEL_MAX, INPUT_NOISE_REDUCTION, INPUT_GAIN_SUGGESTION,
 				TUNER_IN_TUNE, TUNER_HOLD,
-				NOTE_ACCEPT, NOTE_CONFIDENCE, NOTE_STABILITY, NOTE_ATTACK, NOTE_LEGATO, NOTE_TECHNIQUE, TEMPO_TOLERANCE,
+				NOTE_ACCEPT, NOTE_FRET_SHARP, NOTE_CONFIDENCE, NOTE_STABILITY, NOTE_ATTACK, NOTE_LEGATO, NOTE_TECHNIQUE, TEMPO_TOLERANCE,
 				CHORD_EVIDENCE, CHORD_WINDOW, CHORD_COMPLETENESS, CHORD_FOREIGN,
 				PASSAGE_MEASURES, PASSAGE_THRESHOLD, PASSAGE_RETRIES,
 				ENGINE_PITCH,
