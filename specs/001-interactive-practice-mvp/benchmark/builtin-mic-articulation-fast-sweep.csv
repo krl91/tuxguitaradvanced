@@ -1,0 +1,9 @@
+detector,gate_db,clips,expected_onsets,reported_onsets,extra,missed,clips_with_extra
+mvp,1.5,17,17,19,2,0,1
+mvp,3.0,17,17,18,1,0,1
+mvp,4.5,17,17,17,0,0,0
+mvp,6.0,17,17,17,0,0,0
+fast,1.5,17,17,21,4,0,2
+fast,3.0,17,17,21,4,0,2
+fast,4.5,17,17,21,4,0,2
+fast,6.0,17,17,19,2,0,1
