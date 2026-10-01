@@ -1,0 +1,16 @@
+file,played_midi,frames,right_margin_ge_0.5,wrong_semitone_ge_0.5,wrong_two_semitones_ge_0.5,wrong_octave_ge_0.5,max_right_margin,max_wrong_margin,right_frames_ge_0.2,wrong_frames_ge_0.2
+builtin-mic/standard/02_E2_open_s6f0.wav,40,649,0,0,0,0,0.23,0.27,58,1
+builtin-mic/standard/03_A2_open_s5f0.wav,45,649,0,0,0,0,0.25,0.08,90,0
+builtin-mic/standard/04_D3_open_s4f0.wav,50,649,0,0,0,0,0.08,0.14,0,0
+builtin-mic/standard/05_G3_open_s3f0.wav,55,649,0,0,0,0,0.13,0.06,0,0
+builtin-mic/standard/06_B3_open_s2f0.wav,59,649,0,0,0,0,0.41,0.06,22,0
+builtin-mic/standard/08_A2_fretted_s6f5.wav,45,555,0,0,0,0,0.24,0.27,9,6
+builtin-mic/standard/09_E3_fretted_s5f7.wav,52,555,0,0,0,0,0.07,0.08,0,0
+builtin-mic/standard/10_G3_fretted_s4f5.wav,55,555,0,0,0,0,0.19,0.31,0,20
+builtin-mic/standard/11_D4_fretted_s3f7.wav,62,555,0,0,0,0,0.09,0.10,0,0
+builtin-mic/standard/12_Fs4_fretted_s2f7.wav,66,555,0,0,0,0,0.12,0.14,0,0
+builtin-mic/standard/13_E4_fretted_s2f5.wav,64,555,0,0,0,0,0.23,0.21,23,1
+builtin-mic/standard/14_B4_fretted_s2f12.wav,71,555,0,0,0,0,0.09,0.05,0,0
+builtin-mic/standard/16_A5_fretted_s1f17.wav,81,555,0,0,0,0,0.08,0.07,0,0
+builtin-mic/standard/17_B5_fretted_s1f19.wav,83,555,0,0,0,0,0.10,0.11,0,0
+builtin-mic/standard/22_D4_repeat-normal_s3f7.wav,62,743,0,0,0,0,0.15,0.04,0,0

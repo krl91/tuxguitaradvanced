@@ -41,6 +41,24 @@ public final class PracticeParameters {
 		return this.settings.getNoteStabilityHops() * HOP_NANOS;
 	}
 
+	/**
+	 * Off: on the real built-in-microphone clips the expected-pitch evidence does not separate the
+	 * played note from a wrong one (margin 0.07-0.41 for the right pitch, up to 0.31 for a wrong
+	 * one; research.md R3, builtin-mic-evidence.csv), so enabling it would bring no gain, or false
+	 * early acceptances. The mechanism is built and tested; switch it on only when a better
+	 * evidence measure or the recorded clips of T053 show a margin that separates them.
+	 */
+	public static final boolean EARLY_STABILITY_ENABLED = false;
+
+	/**
+	 * Confidence-scaled stability (spec 002 T049, research R3 L2), provisional until the recorded
+	 * fast runs of T053: an evidence margin of at least this value over the neighbours...
+	 */
+	public static final double EARLY_STABILITY_MARGIN = 0.5;
+
+	/** ...shortens the stability window to 12 hops (about 64 ms); the standard window stays the fallback. */
+	public static final long EARLY_STABILITY_NANOS = 12 * HOP_NANOS;
+
 	public long articulationLatencyNanos() {
 		return ArticulationDetector.DECISION_DELAY_HOPS * HOP_NANOS;
 	}

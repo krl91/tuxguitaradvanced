@@ -48,6 +48,7 @@ class BenchmarkSweepTest {
 		Files.write(directory.resolve("builtin-mic-level-check.csv"), levelCheck(fixtures, samples), StandardCharsets.UTF_8);
 		Files.write(directory.resolve("builtin-mic-articulation-sweep.csv"), articulationSweep(fixtures, samples), StandardCharsets.UTF_8);
 		Files.write(directory.resolve("builtin-mic-articulation-fast-sweep.csv"), fastArticulationSweep(fixtures, samples), StandardCharsets.UTF_8);
+		Files.write(directory.resolve("builtin-mic-evidence.csv"), evidence(fixtures, samples), StandardCharsets.UTF_8);
 		Files.write(directory.resolve("builtin-mic-cents.csv"), cents(fixtures, samples), StandardCharsets.UTF_8);
 		Files.write(directory.resolve("builtin-mic-silence.csv"), silence(fixtures, samples), StandardCharsets.UTF_8);
 	}
@@ -230,6 +231,61 @@ class BenchmarkSweepTest {
 				}
 				rows.add((fast ? "fast" : "mvp") + "," + gateDb + "," + clips + "," + expected + "," + reported + "," + extra + "," + missed + "," + clipsWithExtra);
 			}
+		}
+		return rows;
+	}
+
+	/**
+	 * Expected-pitch evidence on the real single-pluck clips (T049): frames where the margin of the
+	 * expected pitch is at least the early-acceptance margin, when the expected pitch is the one
+	 * played (useful) and when it is wrong by a semitone, two semitones or an octave (false early
+	 * evidence: must be zero).
+	 */
+	private static List<String> evidence(List<BenchmarkFixtures.Fixture> fixtures, List<float[]> samples) {
+		List<String> rows = new ArrayList<>();
+		rows.add("file,played_midi,frames,right_margin_ge_0.5,wrong_semitone_ge_0.5,wrong_two_semitones_ge_0.5,wrong_octave_ge_0.5,max_right_margin,max_wrong_margin,right_frames_ge_0.2,wrong_frames_ge_0.2");
+		app.tuxguitar.audio.engine.recognition.ExpectedPitchVerifier verifier =
+				new app.tuxguitar.audio.engine.recognition.ExpectedPitchVerifier(BenchmarkFixtures.SAMPLE_RATE);
+		int[][] offsets = { { 0 }, { 1, -1 }, { 2, -2 }, { 12, -12 } };
+		for (int i = 0; i < fixtures.size(); i++) {
+			BenchmarkFixtures.Fixture fixture = fixtures.get(i);
+			if (!"reference".equals(fixture.role) || fixture.manifestMidi == null) {
+				continue;
+			}
+			float[] clip = samples.get(i);
+			float[] window = new float[BenchmarkFixtures.WINDOW_SIZE];
+			int frames = 0;
+			int[] counts = new int[offsets.length];
+			double maxRight = -1;
+			double maxWrong = -1;
+			int rightLow = 0;
+			int wrongLow = 0;
+			for (int offset = 0; offset + window.length <= clip.length; offset += BenchmarkFixtures.HOP_SIZE) {
+				System.arraycopy(clip, offset, window, 0, window.length);
+				frames++;
+				for (int group = 0; group < offsets.length; group++) {
+					boolean hit = false;
+					boolean low = false;
+					for (int delta : offsets[group]) {
+						int expected = fixture.manifestMidi + delta;
+						double margin = verifier.verify(window, expected).marginOver(expected);
+						hit |= margin >= 0.5;
+						low |= margin >= 0.2;
+						if (group == 0) {
+							maxRight = Math.max(maxRight, margin);
+						} else {
+							maxWrong = Math.max(maxWrong, margin);
+						}
+					}
+					counts[group] += (hit ? 1 : 0);
+					if (group == 0) {
+						rightLow += (low ? 1 : 0);
+					} else {
+						wrongLow += (low ? 1 : 0);
+					}
+				}
+			}
+			rows.add(fixture.file + "," + fixture.manifestMidi + "," + frames + "," + counts[0] + "," + counts[1] + "," + counts[2] + "," + counts[3] + "," + String.format(Locale.ROOT, "%.2f", maxRight) + "," + String.format(Locale.ROOT, "%.2f", maxWrong) + "," + rightLow + "," + wrongLow);
 		}
 		return rows;
 	}

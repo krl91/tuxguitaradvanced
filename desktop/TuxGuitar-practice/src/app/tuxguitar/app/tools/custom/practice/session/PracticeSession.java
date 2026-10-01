@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.PracticePassages;
@@ -19,6 +20,7 @@ import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
+import app.tuxguitar.audio.engine.recognition.TargetEvidence;
 
 /**
  * Wait-for-correct-note practice state machine (data-model.md "State machine").
@@ -76,6 +78,10 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private final NoteInterpreter interpreter;
 	private final TolerancePolicy tolerance;
 	private final long stabilityNanos;
+	/** Confidence-scaled stability (research R3 L2): off until {@link #setEarlyStability}. */
+	private double earlyMargin = Double.POSITIVE_INFINITY;
+	private long earlyStabilityNanos;
+	private Consumer<int[]> expectedPitchSink;
 	private final long articulationLatencyNanos;
 	private final Map<Integer, Outcome> outcomes = new HashMap<Integer, Outcome>();
 	private final Set<PauseReason> pauseReasons = EnumSet.noneOf(PauseReason.class);
@@ -162,6 +168,50 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.currentIndex = sequence.getStartIndex();
 	}
 
+	/**
+	 * When the audio's evidence for the expected pitch beats every neighbour by at least
+	 * {@code margin}, the note is accepted after {@code stabilityNanos} instead of the standard
+	 * stability (never longer than it). The standard stability stays the fallback.
+	 */
+	public void setEarlyStability(double margin, long stabilityNanos) {
+		this.earlyMargin = margin;
+		this.earlyStabilityNanos = stabilityNanos;
+	}
+
+	/**
+	 * Receives the pitches expected now (null when none) on every event change, from the session
+	 * thread; the practice window passes them to the audio engine so frames carry the evidence.
+	 */
+	public void setExpectedPitchSink(Consumer<int[]> sink) {
+		this.expectedPitchSink = sink;
+		publishExpectedPitches();
+	}
+
+	private void publishExpectedPitches() {
+		if( this.expectedPitchSink == null ) {
+			return;
+		}
+		PracticeEvent event = currentEvent();
+		int[] pitches = null;
+		if( this.state == State.RUNNING && event != null ) {
+			if( event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ) {
+				pitches = new int[] { event.getExpectedMidi() };
+			} else if( event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD ) {
+				pitches = event.getRequiredPitches();
+			}
+		}
+		this.expectedPitchSink.accept(pitches);
+	}
+
+	private long requiredStabilityNanos(AnalysisFrame frame, PracticeEvent event) {
+		TargetEvidence evidence = frame.getTargetEvidence();
+		if( evidence != null && evidence.of(event.getExpectedMidi()) != null
+				&& evidence.marginOver(event.getExpectedMidi()) >= this.earlyMargin ) {
+			return Math.min(this.stabilityNanos, this.earlyStabilityNanos);
+		}
+		return this.stabilityNanos;
+	}
+
 	/** The latest input assessment; an unusable input is required to pause the session. */
 	public void setAssessment(InputAssessment assessment) {
 		this.assessment = assessment;
@@ -207,6 +257,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			default:
 				return null;
 		}
+		publishExpectedPitches();
 		return snapshot();
 	}
 
@@ -270,7 +321,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			if( this.matchStartNanos < 0 ) {
 				this.matchStartNanos = now;
 			}
-			boolean stable = now - this.matchStartNanos >= this.stabilityNanos;
+			boolean stable = now - this.matchStartNanos >= requiredStabilityNanos(frame, event);
 			if( stable && (this.articulationArmed || isPitchChange(event)) ) {
 				accept(event, now);
 				return;
@@ -417,6 +468,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			this.pauseReasons.add(reason);
 			this.state = State.PAUSED;
 			resetMatch();
+			publishExpectedPitches();
 		}
 		return snapshot();
 	}
@@ -426,6 +478,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.pauseReasons.remove(reason);
 		if( this.state == State.PAUSED && this.pauseReasons.isEmpty() ) {
 			this.state = State.READY_TO_RESUME;
+			publishExpectedPitches();
 		}
 		return snapshot();
 	}
@@ -490,6 +543,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		newEvent();
 		passAutomatically();
 		endAttemptIfLeft();
+		publishExpectedPitches();
 	}
 
 	private void passAutomatically() {
@@ -522,6 +576,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	/** Moving to another event forgets the previous event's wrong strum. */
 	private void newEvent() {
 		this.lastIncomplete = null;
+		publishExpectedPitches();
 	}
 
 	private PracticeEvent currentEvent() {

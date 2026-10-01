@@ -444,6 +444,10 @@ public class PracticeWindow {
 				parameters.stabilityNanos(), parameters.articulationLatencyNanos(),
 				new ChordMatcher(parameters.chordParameters()), PassageSettings.getInstance(this.context).toPolicy());
 		this.session.setAssessment(this.assessment);
+		if( PracticeParameters.EARLY_STABILITY_ENABLED ) {
+			this.session.setEarlyStability(PracticeParameters.EARLY_STABILITY_MARGIN, PracticeParameters.EARLY_STABILITY_NANOS);
+			this.session.setExpectedPitchSink(this.engine::setExpectedPitches);
+		}
 		this.loop = new SessionLoop<PracticeSnapshot>(this.context, this.session, this::render);
 		this.events = new SessionEvents(this.context, this.loop, this.session, this.engine.getSelection(), this.shared);
 		final SessionLoop<PracticeSnapshot> sessionLoop = this.loop;
@@ -515,6 +519,7 @@ public class PracticeWindow {
 			this.plugin.setCommandSink(null);
 			this.engine.unsubscribe(this.frameListener);
 			this.engine.setSpectrumEnabled(false);
+			this.engine.setExpectedPitches(null);
 			this.events.disconnect();
 			this.loop.stop();
 			this.loop = null;

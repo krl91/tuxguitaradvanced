@@ -16,6 +16,7 @@ import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
+import app.tuxguitar.audio.engine.recognition.TargetEvidence;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.audio.engine.session.PracticeTunerContext;
 
@@ -171,6 +172,96 @@ public class PracticeSessionTest {
 		play(session, F4, 0.95, 1_000_000_000L, false);
 		assertEquals(1, session.getCurrentIndex());
 		assertEquals(State.RUNNING, session.getState());
+	}
+
+	private static final long EARLY_NANOS = 12 * HOP_NANOS;
+
+	/** A frame carrying evidence: the expected pitch with the given score, its neighbour with 0.1. */
+	private AnalysisFrame withEvidence(double f0Hz, boolean onset, int expectedMidi, double expectedScore) {
+		TargetEvidence evidence = new TargetEvidence(java.util.Arrays.asList(new TargetEvidence.Hypothesis(expectedMidi, expectedScore),
+				new TargetEvidence.Hypothesis(expectedMidi + 1, 0.1)), 40.0);
+		return new AnalysisFrame(this.now, -20.0, -10.0, 0.0, AnalysisFrame.LevelState.SUITABLE, f0Hz, 0.95, onset, null, evidence, null);
+	}
+
+	/** The attack is reported 13 hops after its transient and the pitch is heard only from the transient: the stability run starts late. */
+	private void silentThenAttack(PracticeSession session) {
+		play(session, Double.NaN, 0.0, LATENCY_NANOS, false);
+		frame(session, E4, 0.95, true);
+	}
+
+	private void playWithEvidence(PracticeSession session, long durationNanos, double expectedScore) {
+		long end = this.now + durationNanos;
+		while( this.now < end ) {
+			this.now += HOP_NANOS;
+			session.onFrame(withEvidence(E4, false, 64, expectedScore));
+		}
+	}
+
+	@Test
+	public void aLargeEvidenceMarginAcceptsAfterTheShortStabilityWindow() {
+		PracticeSession session = running(new int[] { 0, 1 });
+		session.setEarlyStability(0.5, EARLY_NANOS);
+
+		silentThenAttack(session);
+		playWithEvidence(session, EARLY_NANOS + 2 * HOP_NANOS, 0.9);
+		assertEquals(1, session.getCurrentIndex(), "accepted well before the standard " + STABILITY_NANOS / 1_000_000 + " ms window");
+	}
+
+	@Test
+	public void aSmallOrMissingEvidenceMarginKeepsTheStandardStabilityWindow() {
+		PracticeSession small = running(new int[] { 0, 1 });
+		small.setEarlyStability(0.5, EARLY_NANOS);
+		silentThenAttack(small);
+		playWithEvidence(small, EARLY_NANOS + 2 * HOP_NANOS, 0.4);
+		assertEquals(0, small.getCurrentIndex());
+		playWithEvidence(small, STABILITY_NANOS, 0.4);
+		assertEquals(1, small.getCurrentIndex(), "the conservative window still accepts");
+
+		PracticeSession none = running(new int[] { 0, 1 });
+		none.setEarlyStability(0.5, EARLY_NANOS);
+		silentThenAttack(none);
+		play(none, E4, 0.95, EARLY_NANOS + 2 * HOP_NANOS, false);
+		assertEquals(0, none.getCurrentIndex());
+	}
+
+	@Test
+	public void evidenceNeverAcceptsAWrongPitchOrSkipsTheAttackRule() {
+		PracticeSession session = running(new int[] { 0, 0 });
+		session.setEarlyStability(0.5, EARLY_NANOS);
+		pluck(session, E4, 0.95, STABILITY_NANOS + HOP_NANOS);
+		assertEquals(1, session.getCurrentIndex());
+		// identical pitch, strong evidence, but no new attack: still waits
+		playWithEvidence(session, 1_000_000_000L, 0.95);
+		assertEquals(1, session.getCurrentIndex());
+		// strong evidence for the expected pitch while a wrong pitch is heard: nothing is accepted
+		PracticeSession wrong = running(new int[] { 0 });
+		wrong.setEarlyStability(0.5, EARLY_NANOS);
+		pluck(wrong, F4, 0.95, 0L);
+		for( int i = 0 ; i < 40 ; i ++ ) {
+			this.now += HOP_NANOS;
+			wrong.onFrame(withEvidence(F4, false, 64, 0.95));
+		}
+		assertEquals(0, wrong.getCurrentIndex());
+	}
+
+	@Test
+	public void theExpectedPitchesAreHandedOverOnEveryEventChangeAndClearedAtTheEnd() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.quarter(0, 0, 1, 0);
+		fixture.quarter(0, 1, 1, 1);
+		PracticeTrackSelection selection = selection(fixture);
+		selection.accept();
+		PracticeSession session = session(fixture, selection);
+		session.setAssessment(SUITABLE);
+		java.util.List<int[]> seen = new java.util.ArrayList<int[]>();
+		session.setExpectedPitchSink(seen::add);
+		session.onCommand(PracticeCommand.START);
+		assertEquals(64, seen.get(seen.size() - 1)[0]);
+		pluck(session, E4, 0.95, STABILITY_NANOS + HOP_NANOS);
+		assertEquals(65, seen.get(seen.size() - 1)[0]);
+		play(session, F4, 0.95, STABILITY_NANOS + HOP_NANOS, false);
+		assertEquals(State.COMPLETE, session.getState());
+		assertNull(seen.get(seen.size() - 1));
 	}
 
 	@Test
