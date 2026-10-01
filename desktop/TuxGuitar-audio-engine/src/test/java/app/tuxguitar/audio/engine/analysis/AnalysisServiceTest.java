@@ -97,6 +97,47 @@ public class AnalysisServiceTest {
 	}
 
 	@Test
+	public void framesCarryEvidenceOnlyWhileExpectedPitchesAreSet() throws InterruptedException {
+		TGContext context = new TGContext();
+		TGThreadManager.getInstance(context).setThreadHandler(new TGMultiThreadHandler());
+		try {
+			int sampleRate = 44100;
+			float[] samples = SyntheticSignals.karplusStrong(SyntheticSignals.midiFrequency(52), sampleRate, 2048 + 6 * 256, 5L);
+			SampleRingBuffer buffer = new SampleRingBuffer(2 * samples.length);
+			buffer.write(samples, 0, samples.length);
+			AnalysisService service = new AnalysisService(context, buffer, new LevelAnalyzer(-80.0, -1.0, 0.99, 0.1),
+					window -> new PitchEstimate(164.8, 1.0, true), sampleRate, 2048, 256);
+			service.setExpectedPitches(new int[] { 52 });
+			List<AnalysisFrame> frames = new CopyOnWriteArrayList<AnalysisFrame>();
+			CountDownLatch latch = new CountDownLatch(3);
+			AnalysisService.Listener listener = frame -> {
+				frames.add(frame);
+				latch.countDown();
+			};
+			service.subscribe(listener);
+			assertTrue(latch.await(2, TimeUnit.SECONDS));
+			service.unsubscribe(listener);
+			assertTrue(frames.get(0).getTargetEvidence() != null);
+			assertTrue(frames.get(0).getTargetEvidence().marginOver(52) > 0.2);
+
+			service.setExpectedPitches(null);
+			buffer.write(samples, 0, samples.length);
+			CountDownLatch more = new CountDownLatch(2);
+			List<AnalysisFrame> later = new CopyOnWriteArrayList<AnalysisFrame>();
+			AnalysisService.Listener second = frame -> {
+				later.add(frame);
+				more.countDown();
+			};
+			service.subscribe(second);
+			assertTrue(more.await(2, TimeUnit.SECONDS));
+			service.unsubscribe(second);
+			assertTrue(later.get(0).getTargetEvidence() == null);
+		} finally {
+			TGThreadManager.getInstance(context).dispose();
+		}
+	}
+
+	@Test
 	public void rapidResubscriptionNeverRunsTwoConsumersAtOnce() throws InterruptedException {
 		TGContext context = new TGContext();
 		TGThreadManager.getInstance(context).setThreadHandler(new TGMultiThreadHandler());

@@ -153,6 +153,11 @@ public final class AudioEngine {
 		this.analysisService.setSpectrumEnabled(enabled);
 	}
 
+	/** The pitches expected now: frames then carry {@link app.tuxguitar.audio.engine.recognition.TargetEvidence} for them (null: none). */
+	public void setExpectedPitches(int[] midi) {
+		this.analysisService.setExpectedPitches(midi);
+	}
+
 	public void unsubscribe(AnalysisService.Listener listener) {
 		this.analysisService.unsubscribe(listener);
 	}

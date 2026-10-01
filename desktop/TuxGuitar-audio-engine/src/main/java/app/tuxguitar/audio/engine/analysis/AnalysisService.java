@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import app.tuxguitar.audio.engine.frontend.FrontEnd;
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
+import app.tuxguitar.audio.engine.recognition.ExpectedPitchVerifier;
+import app.tuxguitar.audio.engine.recognition.TargetEvidence;
 import app.tuxguitar.thread.TGThreadManager;
 import app.tuxguitar.thread.TGThreadPriority;
 import app.tuxguitar.util.TGContext;
@@ -57,6 +59,9 @@ public final class AnalysisService {
 	private PolyphonicAnalyzer polyphonicAnalyzer;
 	/** Applied to every hop before the analysis (gain, noise reduction); neutral unless set (spec 002). */
 	private final FrontEnd frontEnd = new FrontEnd();
+	private volatile int[] expectedPitches;
+	private ExpectedPitchVerifier verifier;
+	private int verifierRate;
 	private boolean running;
 	private boolean workerAlive;
 
@@ -158,6 +163,14 @@ public final class AnalysisService {
 		this.spectrumEnabled = enabled;
 	}
 
+	/**
+	 * The pitches the learner is expected to play now (null or empty: none). While set, every frame
+	 * carries the {@link TargetEvidence} for them. Read by the analysis worker; never waits.
+	 */
+	public void setExpectedPitches(int[] midi) {
+		this.expectedPitches = (midi == null || midi.length == 0 ? null : midi.clone());
+	}
+
 	private void run() {
 		float[] window = new float[this.windowSize];
 		float[] hop = new float[this.hopSize];
@@ -239,10 +252,19 @@ public final class AnalysisService {
 		PitchEstimate pitch = this.configuration.pitchEstimator.estimate(window);
 		boolean onset = this.configuration.articulationDetector.process(window);
 		SpectrumFrame spectrum = (this.polyphonicAnalyzer != null ? this.polyphonicAnalyzer.analyze() : null);
+		int[] expected = this.expectedPitches;
+		TargetEvidence evidence = null;
+		if( expected != null ) {
+			if( this.verifier == null || this.verifierRate != this.configuration.sampleRate ) {
+				this.verifier = new ExpectedPitchVerifier(this.configuration.sampleRate);
+				this.verifierRate = this.configuration.sampleRate;
+			}
+			evidence = this.verifier.verify(window, expected);
+		}
 		return new AnalysisFrame(timestampNanos, level.getRmsDbfs(), level.getPeakDbfs(),
 				level.getClippedRatio(), level.getLevelState(),
 				pitch.isPitched() ? pitch.getF0Hz() : Double.NaN,
-				pitch.getProbability(), onset, spectrum);
+				pitch.getProbability(), onset, spectrum, evidence, null);
 	}
 
 	private void publish(AnalysisFrame frame) {
