@@ -50,6 +50,10 @@ public final class InputAssessor implements AnalysisService.Listener {
 	private int frames;
 	private int clippingFrames;
 	private int silentFrames;
+	private double playingRmsSumDb;
+	private double playingPeakMaxDb = Double.NEGATIVE_INFINITY;
+	private double quietMinRmsDb = Double.POSITIVE_INFINITY;
+	private LevelCheckStats lastStats;
 
 	public InputAssessor(Parameters parameters, Listener listener) {
 		this.parameters = parameters;
@@ -69,6 +73,21 @@ public final class InputAssessor implements AnalysisService.Listener {
 		this.frames = 0;
 		this.clippingFrames = 0;
 		this.silentFrames = 0;
+		this.playingRmsSumDb = 0.0;
+		this.playingPeakMaxDb = Double.NEGATIVE_INFINITY;
+		this.quietMinRmsDb = Double.POSITIVE_INFINITY;
+	}
+
+	/** What the latest finished level check measured (spec 002, FR-066), or null before any check. */
+	public synchronized LevelCheckStats getLastStats() {
+		return this.lastStats;
+	}
+
+	private LevelCheckStats currentStats() {
+		boolean playing = this.playingFrames > 0;
+		boolean quiet = !Double.isInfinite(this.quietMinRmsDb);
+		return new LevelCheckStats(playing, playing ? this.playingRmsSumDb / this.playingFrames : Double.NaN,
+				playing ? this.playingPeakMaxDb : Double.NaN, quiet, quiet ? this.quietMinRmsDb : Double.NaN);
 	}
 
 	public synchronized void cancel() {
@@ -111,12 +130,19 @@ public final class InputAssessor implements AnalysisService.Listener {
 				}
 				this.lastPlayingNanos = now;
 				this.playingFrames ++;
+				this.playingRmsSumDb += frame.getRmsDbfs();
+				this.playingPeakMaxDb = Math.max(this.playingPeakMaxDb, frame.getPeakDbfs());
 				switch( frame.getLevelState() ) {
 					case CLIPPING: this.playingClipping ++; break;
 					case TOO_HIGH: this.playingTooHigh ++; break;
 					case TOO_LOW: this.playingTooLow ++; break;
 					default: break;
 				}
+			}
+			if( (Double.isNaN(frame.getF0Hz()) || frame.getConfidence() < this.parameters.playingConfidence)
+					&& frame.getRmsDbfs() > this.parameters.digitalSilenceDbfs ) {
+				// a frame without playing: the background (its quietest level stands for the noise floor)
+				this.quietMinRmsDb = Math.min(this.quietMinRmsDb, frame.getRmsDbfs());
 			}
 			if( this.playingNanos >= this.parameters.requiredPlayingNanos ) {
 				result = classifyPlaying();
@@ -125,6 +151,7 @@ public final class InputAssessor implements AnalysisService.Listener {
 			}
 			if( result != null ) {
 				this.checking = false;
+				this.lastStats = currentStats();
 			}
 		}
 		if( result != null ) {

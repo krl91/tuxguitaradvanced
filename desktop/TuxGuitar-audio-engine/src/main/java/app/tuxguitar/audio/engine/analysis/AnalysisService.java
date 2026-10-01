@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import app.tuxguitar.audio.engine.frontend.FrontEnd;
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
 import app.tuxguitar.thread.TGThreadManager;
 import app.tuxguitar.thread.TGThreadPriority;
@@ -54,6 +55,8 @@ public final class AnalysisService {
 	private Configuration configuration;
 	private volatile boolean spectrumEnabled;
 	private PolyphonicAnalyzer polyphonicAnalyzer;
+	/** Applied to every hop before the analysis (gain, noise reduction); neutral unless set (spec 002). */
+	private final FrontEnd frontEnd = new FrontEnd();
 	private boolean running;
 	private boolean workerAlive;
 
@@ -77,6 +80,11 @@ public final class AnalysisService {
 		this.configuration = new Configuration(sampleRate, pitchEstimator, 0L, levelAnalyzer, articulationDetector);
 		this.pendingConfiguration = new AtomicReference<Configuration>();
 		this.listeners = new CopyOnWriteArrayList<Listener>();
+	}
+
+	/** The input front end (gain, noise reduction) applied before the analysis; neutral by default. */
+	public FrontEnd getFrontEnd() {
+		return this.frontEnd;
 	}
 
 	public synchronized void subscribe(Listener listener) {
@@ -169,6 +177,7 @@ public final class AnalysisService {
 				observedDroppedSamples = this.ringBuffer.getDroppedSampleCount();
 				this.configuration.articulationDetector.reset();
 				this.polyphonicAnalyzer = null;
+				this.frontEnd.configure(this.configuration.sampleRate, this.hopSize);
 				windowFill = 0;
 				hopFill = 0;
 			}
@@ -177,6 +186,7 @@ public final class AnalysisService {
 				processedSamples += droppedSamples - observedDroppedSamples;
 				observedDroppedSamples = droppedSamples;
 				this.configuration.articulationDetector.reset();
+				this.frontEnd.reset();
 				if (this.polyphonicAnalyzer != null) {
 					this.polyphonicAnalyzer.reset();
 				}
@@ -192,6 +202,8 @@ public final class AnalysisService {
 			if (hopFill < this.hopSize) {
 				continue;
 			}
+			// gain and noise reduction come first: the level, the pitch, the attack and the spectrum all see the same signal
+			this.frontEnd.process(hop, this.hopSize);
 
 			if (windowFill < this.windowSize) {
 				int copy = Math.min(this.hopSize, this.windowSize - windowFill);

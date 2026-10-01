@@ -5,10 +5,15 @@ import java.util.function.IntFunction;
 
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.analysis.ArticulationDetector;
+import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.InputAssessor;
+import app.tuxguitar.audio.engine.analysis.LevelCheckStats;
 import app.tuxguitar.audio.engine.analysis.LevelAnalyzer;
 import app.tuxguitar.audio.engine.analysis.PitchEstimator;
 import app.tuxguitar.audio.engine.analysis.TarsosFastYinEstimator;
+import app.tuxguitar.audio.engine.frontend.GainSuggester;
+import app.tuxguitar.audio.engine.frontend.GainSuggestion;
+import app.tuxguitar.audio.engine.frontend.InputWarning;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CaptureService;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
@@ -58,6 +63,8 @@ public final class AudioEngine {
 	/** Null for engines built without settings (tests); then the analysers never change. */
 	private final RecognitionSettingsStore settingsStore;
 	private volatile int lastSampleRate = INITIAL_SAMPLE_RATE;
+	/** Revision of the input the current gain was set for (see {@link #syncGainWithInput}). */
+	private long gainInputRevision;
 
 	AudioEngine(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection,
 			int ringBufferCapacity, LevelAnalyzer levelAnalyzer, IntFunction<PitchEstimator> estimatorFactory) {
@@ -83,10 +90,12 @@ public final class AudioEngine {
 		this.captureService.setFormatListener(format -> rebuildAnalysis(Math.round(format.getSampleRate())));
 		this.assessor = new InputAssessor(new InputAssessor.Parameters(), this::levelCheckCompleted);
 		this.checkedInputRevision = selection.snapshot().getInputRevision();
+		this.gainInputRevision = this.checkedInputRevision;
 		this.selection.addListener(this::selectionChanged);
 		this.captureService.addListener(this::captureEvent);
 		if( settingsStore != null ) {
 			settingsStore.addListener(this::settingsChanged);
+			applyFrontEndSettings(settingsStore.get());
 		}
 	}
 
@@ -217,6 +226,8 @@ public final class AudioEngine {
 			}
 			this.checkedInputRevision = snapshot.getInputRevision();
 		}
+		// the gain belongs to one input and one session: a new input starts neutral (spec 002, FR-063)
+		syncGainWithInput();
 		// Without capture no frames arrive; acquire() starts the check then (no cancel here: a
 		// late notification must not cancel a check that acquire() already started).
 		if( snapshot.getInput() != null && this.captureService.getConsumerCount() > 0 ) {
@@ -248,9 +259,91 @@ public final class AudioEngine {
 	 * with fresh detectors), also during capture; other settings do not concern the engine.
 	 */
 	private void settingsChanged(RecognitionSettings previous, RecognitionSettings current) {
+		applyFrontEndSettings(current);
 		if( engineValuesDiffer(previous, current) ) {
 			rebuildAnalysis(this.lastSampleRate);
 		}
+	}
+
+	/** The saved noise-reduction choice reaches the front end at once; it needs no restart of the analysis. */
+	private void applyFrontEndSettings(RecognitionSettings settings) {
+		this.analysisService.getFrontEnd().setNoiseReduction(settings.get(RecognitionParameters.INPUT_NOISE_REDUCTION));
+	}
+
+	// ---------------------------------------------------------------- input gain and noise reduction (spec 002, FR-060…FR-066)
+
+	/** The software gain applied to the input, 1.0 when neutral. In memory only: back to 1.0 when the input changes and at start. */
+	public double getInputGain() {
+		syncGainWithInput();
+		return this.analysisService.getFrontEnd().getGain().getMultiplier();
+	}
+
+	/**
+	 * The gain belongs to one input: when the input changed since it was set, it is back to neutral
+	 * (spec 002, FR-063). Compared by input revision, so it does not depend on when the (asynchronous)
+	 * selection notification arrives.
+	 */
+	private synchronized void syncGainWithInput() {
+		long revision = this.selection.snapshot().getInputRevision();
+		if( revision != this.gainInputRevision ) {
+			this.analysisService.getFrontEnd().getGain().resetToNeutral();
+			this.gainInputRevision = revision;
+		}
+	}
+
+	/** Sets the gain (limited to the allowed range) and returns the value that was set. The level meter and the recognition follow at once. */
+	public double setInputGain(double multiplier) {
+		syncGainWithInput();
+		return this.analysisService.getFrontEnd().getGain().setMultiplier(multiplier);
+	}
+
+	public synchronized void resetInputGain() {
+		this.analysisService.getFrontEnd().getGain().resetToNeutral();
+		this.gainInputRevision = this.selection.snapshot().getInputRevision();
+	}
+
+	/** Whether the saved setting asks for the noise gate. */
+	public boolean isNoiseReductionEnabled() {
+		return this.analysisService.getFrontEnd().isNoiseReduction();
+	}
+
+	/** What the last level check measured, or null before any check. */
+	public LevelCheckStats getLevelCheckStats() {
+		return this.assessor.getLastStats();
+	}
+
+	/**
+	 * A gain proposed from the last level check, or empty when the suggestion is switched off in the
+	 * settings or the check heard no playing. It never changes the gain: the learner confirms it.
+	 */
+	public java.util.Optional<GainSuggestion> suggestGain() {
+		if( this.settingsStore != null && !this.settingsStore.get().get(RecognitionParameters.INPUT_GAIN_SUGGESTION) ) {
+			return java.util.Optional.empty();
+		}
+		return java.util.Optional.ofNullable(GainSuggester.suggest(this.assessor.getLastStats(), getInputGain()));
+	}
+
+	/**
+	 * A warning about the raised gain, from the last level check and the latest frame: the boost mostly
+	 * amplifies noise, or it makes the signal clip (FR-062).
+	 */
+	public InputWarning getInputWarning(AnalysisFrame latest) {
+		if( getInputGain() <= 1.0 ) {
+			return InputWarning.NONE;
+		}
+		if( latest != null && latest.getLevelState() == AnalysisFrame.LevelState.CLIPPING ) {
+			return InputWarning.BOOST_CAUSES_CLIPPING;
+		}
+		LevelCheckStats stats = this.assessor.getLastStats();
+		if( stats != null && stats.hasPlaying() && GainSuggester.isNoiseDominated(stats) ) {
+			return InputWarning.BOOST_AMPLIFIES_NOISE;
+		}
+		return InputWarning.NONE;
+	}
+
+	/** Delay added by the front end's stages in use, in milliseconds (counted in the latency budget, FR-065). */
+	public double getFrontEndLatencyMillis() {
+		return this.analysisService.getFrontEnd().latencyHops() * TarsosFastYinEstimator.DEFAULT_HOP_SIZE * 1000.0 / this.lastSampleRate;
 	}
 
 	static boolean engineValuesDiffer(RecognitionSettings a, RecognitionSettings b) {

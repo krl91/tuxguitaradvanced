@@ -22,8 +22,9 @@ import app.tuxguitar.util.TGSynchronizer;
 
 /**
  * Live input level and level-check result (FR-037, FR-038) with manual gain guidance and an
- * explicit "check again" (FR-039, FR-040). Never changes the input gain (FR-041, FR-042): Java
- * Sound exposes no usable gain control on the validated setup (research S2).
+ * explicit "check again" (FR-039, FR-040). The operating-system gain is never changed (FR-041,
+ * FR-042): Java Sound exposes no usable gain control on the validated setup (research S2). Since
+ * spec 002 the panel also hosts the software input gain ({@link GainControl}).
  */
 public final class LevelPanel {
 
@@ -37,6 +38,7 @@ public final class LevelPanel {
 	private final UILabel levelLabel;
 	private final UILabel statusLabel;
 	private final UILabel guidanceLabel;
+	private final GainControl gainControl;
 	private final AnalysisService.Listener frameListener;
 	private final AtomicReference<AnalysisFrame> latestFrame = new AtomicReference<AnalysisFrame>();
 	private final AtomicBoolean uiPending = new AtomicBoolean();
@@ -74,12 +76,17 @@ public final class LevelPanel {
 		});
 		layout.set(checkAgain, 4, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false, 1, 2);
 
+		// the in-application input gain, shared with the tuner (spec 002, FR-060)
+		this.gainControl = new GainControl(context, engine, uiFactory, this.panel);
+		layout.set(this.gainControl.getControl(), 5, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+
 		this.frameListener = this::frameReceived;
 	}
 
 	/** Called after the panel's content changed size, so the window can refit (UI thread). */
 	public void setContentListener(Runnable contentListener) {
 		this.contentListener = contentListener;
+		this.gainControl.setContentListener(contentListener);
 	}
 
 	public UIPanel getControl() {
@@ -90,6 +97,7 @@ public final class LevelPanel {
 	public void connect() {
 		if( !this.connected ) {
 			this.connected = true;
+			this.gainControl.connect();
 			this.engine.subscribe(this.frameListener);
 		}
 	}
@@ -97,12 +105,15 @@ public final class LevelPanel {
 	public void disconnect() {
 		if( this.connected ) {
 			this.connected = false;
+			this.gainControl.disconnect();
 			this.engine.unsubscribe(this.frameListener);
 		}
 	}
 
 	/** Shows the level-check result with guidance (UI thread). */
 	public void setAssessment(InputAssessment assessment) {
+		// a new input resets the gain: show it
+		this.gainControl.refresh();
 		String reason = TuxGuitar.getProperty("practice.input.reason." + assessment.getReason().name());
 		this.statusLabel.setText(TuxGuitar.getProperty("practice.input.status." + assessment.getStatus().name(), new String[] { reason }));
 		String guidanceKey = "practice.level.guidance." + assessment.getReason().name();
@@ -133,5 +144,6 @@ public final class LevelPanel {
 		int value = (int) Math.round(Math.max(METER_FLOOR_DB, Math.min(0.0, frame.getRmsDbfs())) - METER_FLOOR_DB);
 		this.meter.setValue(value);
 		this.levelLabel.setText(TuxGuitar.getProperty("practice.level." + frame.getLevelState().name()));
+		this.gainControl.showWarning(frame);
 	}
 }

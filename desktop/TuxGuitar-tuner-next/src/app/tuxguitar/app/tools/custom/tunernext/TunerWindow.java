@@ -81,6 +81,7 @@ public class TunerWindow {
 	private UILabel frequencyLabel;
 	private UILabel inputLabel;
 	private UILabel levelLabel;
+	private TunerGainControl gainControl;
 	private TunerNeedle needle;
 	private TunerScale scale;
 	private UIFont noteFont;
@@ -168,6 +169,10 @@ public class TunerWindow {
 		bottomLayout.set(this.levelLabel, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		button(uiFactory, bottom, bottomLayout, 1, 2, "tunernext.settings", () -> new TunerSettingsDialog(this.context, this.window, this.engine).open());
 		button(uiFactory, bottom, bottomLayout, 1, 3, "close", () -> close());
+
+		// the input gain, shared with the practice window (spec 002, FR-060)
+		this.gainControl = new TunerGainControl(this.engine, uiFactory, this.window);
+		layout.set(this.gainControl.getControl(), 7, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 
 		KeyBindingActionManager keyBindings = KeyBindingActionManager.getInstance(this.context);
 		keyBindings.appendListenersTo(top);
@@ -301,6 +306,8 @@ public class TunerWindow {
 		if( !isOpen() ) {
 			return;
 		}
+		// a new input resets the gain: show it
+		this.gainControl.refresh();
 		CurrentInputSelection.Snapshot snapshot = this.engine.getSelection().snapshot();
 		AudioInputDescriptor input = snapshot.getInput();
 		this.inputLabel.setText(TuxGuitar.getProperty("tunernext.input", new String[] {
@@ -362,6 +369,9 @@ public class TunerWindow {
 		}
 		this.needle.setPosition(display.getNeedlePosition(), display.isTuning(), held.isHeld());
 		this.levelLabel.setText(TuxGuitar.getProperty("tunernext.level." + frame.getLevelState().name()));
+		if( this.gainControl.showWarning(frame) ) {
+			this.window.layout();
+		}
 	}
 
 	private UIPanel panel(UIFactory uiFactory, UITableLayout parentLayout, int row) {
