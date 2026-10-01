@@ -118,7 +118,10 @@ public class SessionEvents implements TGEventListener {
 			}
 		} else if( TGUpdateEvent.EVENT_TYPE.equals(event.getEventType()) ) {
 			int type = ((Integer) event.getAttribute(TGUpdateEvent.PROPERTY_UPDATE_MODE)).intValue();
-			if( type == TGUpdateEvent.MEASURE_UPDATED || type == TGUpdateEvent.SONG_UPDATED || type == TGUpdateEvent.SONG_LOADED ) {
+			// Practice stops only when the learner asks (Stop) or when another song replaces this one. Measure
+			// and song update events are NOT a reason to stop: the application fires them on its own (for
+			// example when the measure-errors dialog moves the cursor), which used to cut practice off.
+			if( type == TGUpdateEvent.SONG_LOADED ) {
 				this.loop.postCommand(PracticeCommand.STOP);
 			}
 		}

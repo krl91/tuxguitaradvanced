@@ -80,12 +80,37 @@ public class SessionEventsTest {
 	}
 
 	@Test
-	public void selectionChangesAreIgnoredAndSongChangesStop() throws InterruptedException {
+	public void practiceNeverStopsOnItsOwnBecauseOfScoreUpdateEvents() throws InterruptedException {
 		this.events.processEvent(new TGUpdateEvent(TGUpdateEvent.SELECTION, null));
 		this.loop.postCommand(PracticeCommand.RESUME);
 		assertEquals(State.RUNNING, next());
 
-		this.events.processEvent(new TGUpdateEvent(TGUpdateEvent.MEASURE_UPDATED, null));
+		// the application fires these on its own (for example when the measure-errors dialog moves the
+		// cursor): they used to stop practice, now the session stays running
+		for( int i = 0 ; i < 5 ; i ++ ) {
+			this.events.processEvent(new TGUpdateEvent(TGUpdateEvent.MEASURE_UPDATED, null));
+			this.events.processEvent(new TGUpdateEvent(TGUpdateEvent.SONG_UPDATED, null));
+		}
+		// any later command is answered by a snapshot: it shows the state after those events
+		this.loop.postCommand(PracticeCommand.RESUME);
+		assertEquals(State.RUNNING, next());
+	}
+
+	@Test
+	public void loadingAnotherSongStopsPracticeBecauseItsSongIsGone() throws InterruptedException {
+		this.loop.postCommand(PracticeCommand.RESUME);
+		assertEquals(State.RUNNING, next());
+
+		this.events.processEvent(new TGUpdateEvent(TGUpdateEvent.SONG_LOADED, null));
+		assertEquals(State.STOPPED, next());
+	}
+
+	@Test
+	public void theLearnerStopsPracticeWithTheStopCommand() throws InterruptedException {
+		this.loop.postCommand(PracticeCommand.RESUME);
+		assertEquals(State.RUNNING, next());
+
+		this.loop.postCommand(PracticeCommand.STOP);
 		assertEquals(State.STOPPED, next());
 	}
 

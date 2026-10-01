@@ -101,6 +101,8 @@ public class PracticeWindow {
 	/** A one-click start is waiting for the input to become usable (see {@link QuickStart}). */
 	private boolean autoStart;
 	private boolean quickStartRequested;
+	/** The "starting at measure..." text, to which the quick-start waiting hint is added while it applies. */
+	private String startBase = "";
 	private AnalysisService.Listener frameListener;
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
@@ -358,6 +360,7 @@ public class PracticeWindow {
 		if( candidate == null ) {
 			this.tuningLabel.setText("");
 			this.unusualLabel.setText("");
+			this.startBase = "";
 			this.startLabel.setText("");
 			this.preparedSequence = null;
 			updateStartButton();
@@ -366,7 +369,8 @@ public class PracticeWindow {
 		TrackTuning tuning = tuning(candidate.getTrack());
 		Caret caret = TuxGuitar.getInstance().getTablatureEditor().getTablature().getCaret();
 		this.preparedSequence = PracticeSequenceBuilder.build(this.song, candidate.getTrack(), tuning, caret.getMeasure(), caret.getPosition());
-		this.startLabel.setText(startText(this.preparedSequence));
+		this.startBase = startText(this.preparedSequence);
+		this.startLabel.setText(this.startBase);
 		String strings = noteNames(tuning.getOpenStringMidi());
 		String text = TuxGuitar.getProperty("practice.tuning", new String[] { strings });
 		switch( tuning.getRealization() ) {
@@ -404,6 +408,9 @@ public class PracticeWindow {
 	private void updateStartButton() {
 		boolean canStart = QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus());
 		this.startButton.setEnabled(canStart);
+		// a one-click start is waiting for the guitar: say so instead of leaving a greyed button unexplained
+		boolean waiting = (this.autoStart && !canStart && this.tracks.getSelectedValue() != null);
+		this.startLabel.setText(waiting ? this.startBase + "\n" + TuxGuitar.getProperty("practice.quickstart.waiting") : this.startBase);
 		if( QuickStart.startNow(this.autoStart, canStart) ) {
 			// after the window is shown: the start hides it
 			TGSynchronizer.getInstance(this.context).executeLater(() -> {
