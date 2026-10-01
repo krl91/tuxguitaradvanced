@@ -52,9 +52,13 @@ public final class LauncherState {
 		return this.reason;
 	}
 
-	/** An open window stays reachable even if the song changed; otherwise only when there is something to practise. */
+	/**
+	 * Only a missing song disables the button. A song with nothing to practise leaves it enabled: the
+	 * practice window opens and explains why (a greyed icon would just look like a missing button),
+	 * while the tooltip already says it.
+	 */
 	public boolean isEnabled() {
-		return this.kind != Kind.UNAVAILABLE;
+		return this.reason != Reason.NO_SONG;
 	}
 
 	public boolean isChecked() {

@@ -34,10 +34,12 @@ public class LauncherStateTest {
 	}
 
 	@Test
-	public void aSongWithoutAPracticeTrackIsUnavailableWithItsOwnReason() {
+	public void aSongWithoutAPracticeTrackSaysWhyButStaysUsable() {
 		LauncherState state = LauncherState.of(false, true, false);
 		assertEquals(LauncherState.Reason.NO_GUITAR_TRACK, state.getReason());
-		assertFalse(state.isEnabled());
+		// still clickable: the practice window explains what is missing instead of a greyed, easily missed button
+		assertTrue(state.isEnabled());
+		assertFalse(state.isChecked());
 		assertEquals(ITEM + ".no-track", state.tooltipKey(ITEM));
 	}
 
