@@ -1,0 +1,9 @@
+ 0 chord [45, 59]: rank 1/7 (min-salience score of each candidate chord)
+ 8 chord [43, 59]: rank 2/7 (min-salience score of each candidate chord)
+13 chord [40, 55]: rank 1/7 (min-salience score of each candidate chord)
+18 chord [41, 55]: rank 3/7 (min-salience score of each candidate chord)
+22 chord [45, 60]: rank 1/7 (min-salience score of each candidate chord)
+27 chord [43, 62]: rank 2/7 (min-salience score of each candidate chord)
+32 chord [40, 55]: rank 1/7 (min-salience score of each candidate chord)
+37 chord [43, 55]: rank 1/7 (min-salience score of each candidate chord)
+chords: ranked 1st 5/8, top-2 7/8 among 7 distinct chords

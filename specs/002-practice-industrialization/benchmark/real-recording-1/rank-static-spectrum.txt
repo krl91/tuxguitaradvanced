@@ -1,0 +1,35 @@
+ 1 C4   expected rank  1/12  top: C4=0,70 E3=0,59 B3=0,50 A2=0,42 
+ 2 A3   expected rank  2/12  top: C4=0,72 A3=0,54 A2=0,51 E3=0,49 
+ 3 E3   expected rank  1/12  top: E3=0,72 A2=0,63 C4=0,54 G3=0,49 
+ 4 B3   expected rank  2/12  top: E3=0,56 B3=0,49 A3=0,44 E2=0,42 
+ 5 C4   expected rank  5/12  top: E3=0,61 B3=0,47 A2=0,47 E2=0,42 
+ 6 B3   expected rank  2/12  top: E3=0,74 B3=0,71 A2=0,50 E2=0,49 
+ 7 A3   expected rank  8/12  top: E3=0,71 B3=0,61 E2=0,50 A2=0,46 
+ 9 A3   expected rank  2/12  top: D3=0,72 A3=0,67 A2=0,59 B3=0,59 
+10 G2   expected rank 10/12  top: D3=0,71 D4=0,62 B3=0,57 A2=0,54 
+11 G3   expected rank  4/12  top: D4=0,73 D3=0,68 B3=0,63 G3=0,55 
+12 G2   expected rank  4/12  top: D3=0,69 D4=0,66 B3=0,63 G2=0,52 
+14 E3   expected rank  3/12  top: G3=0,75 E2=0,66 E3=0,59 G2=0,55 
+15 B2   expected rank  7/12  top: G3=0,85 E2=0,64 G2=0,58 D3=0,55 
+16 G3   expected rank  2/12  top: E2=0,72 G3=0,69 E3=0,63 B3=0,62 
+17 E2   expected rank  3/12  top: G3=0,85 E3=0,85 E2=0,74 A3=0,66 
+19 A3   expected rank  1/12  top: A3=0,83 A2=0,63 F2=0,62 C4=0,55 
+20 D3   expected rank  1/12  top: D4=0,77 D3=0,77 A3=0,64 C4=0,51 
+21 A2   expected rank  6/12  top: D4=0,71 D3=0,65 C4=0,64 B3=0,56 
+23 A3   expected rank  1/12  top: A3=0,85 C4=0,76 E3=0,71 A2=0,54 
+24 E3   expected rank  1/12  top: E3=0,70 A3=0,69 A2=0,64 C4=0,50 
+25 D4   expected rank  1/12  top: D4=0,85 E3=0,68 D3=0,66 A3=0,59 
+26 E2   expected rank  9/12  top: D4=0,84 E3=0,73 D3=0,66 G3=0,54 
+28 G2   expected rank  4/12  top: D4=0,76 D3=0,55 A3=0,49 G2=0,45 
+29 B3   expected rank  1/12  top: B3=0,79 D3=0,57 D4=0,56 G3=0,53 
+30 G3   expected rank  3/12  top: B3=0,80 D4=0,75 G3=0,64 G2=0,61 
+31 E2   expected rank  7/12  top: B3=0,79 D4=0,71 D3=0,62 B2=0,52 
+33 E3   expected rank  3/12  top: E2=0,78 G3=0,69 E3=0,61 B3=0,44 
+34 B2   expected rank  2/12  top: G3=0,77 B2=0,63 E2=0,62 E3=0,58 
+35 G3   expected rank 11/12  top: E3=0,55 E2=0,52 A3=0,50 D4=0,44 
+36 B3   expected rank  1/12  top: B3=0,79 B2=0,67 D4=0,58 A3=0,56 
+38 D3   expected rank  1/12  top: D3=0,85 B3=0,74 D4=0,67 G3=0,67 
+39 B2   expected rank  2/12  top: D3=0,78 B2=0,78 G2=0,64 D4=0,59 
+40 D4   expected rank  1/12  top: D4=0,87 D3=0,82 B2=0,69 G2=0,63 
+41 A2   expected rank  6/12  top: D4=0,95 D3=0,65 E3=0,64 G2=0,60 
+notes: expected pitch ranked 1st 11/34, top-2 18/34, top-3 22/34 among 12 candidate pitches

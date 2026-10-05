@@ -1,0 +1,48 @@
+Constant-tempo fit to the detected attacks: scale 1,215 (99 bpm), offset 0,47s, 32/42 tab events within 40 ms of a detected attack (48 attacks detected)
+idx | expected | time | gap to next | accepted? (latency) | false accepts when another event is expected
+ 0 | chord A2 B3            |  0,47s | 0,30s | NO | -
+ 1 | note C4 (fret 1)       |  0,77s | 0,30s | NO | -
+ 2 | note A3 (fret 2)       |  1,08s | 0,30s | NO | -
+ 3 | note E3 (fret 2)       |  1,38s | 0,30s | NO | -
+ 4 | note B3 (fret 0)       |  1,68s | 0,10s | NO | -
+ 5 | note C4 (fret 1)       |  1,79s | 0,10s | NO | -
+ 6 | note B3 (fret 0)       |  1,89s | 0,10s | NO | -
+ 7 | note A3 (fret 2)       |  1,99s | 0,30s | NO | -
+ 8 | chord G2 B3            |  2,29s | 0,61s | yes (326 ms) | 1/4 : note G2 (fret 3); 
+ 9 | note A3 (fret 2)       |  2,90s | 0,30s | NO | -
+10 | note G2 (fret 3)       |  3,20s | 0,30s | NO | -
+11 | note G3 (fret 0)       |  3,51s | 0,30s | NO | -
+12 | note G2 (fret 3)       |  3,81s | 0,30s | yes (154 ms) | -
+13 | chord E2 G3            |  4,11s | 0,61s | NO | -
+14 | note E3 (fret 2)       |  4,72s | 0,30s | NO | -
+15 | note B2 (fret 2)       |  5,03s | 0,30s | NO | -
+16 | note G3 (fret 0)       |  5,33s | 0,30s | NO | -
+17 | note E2 (fret 0)       |  5,63s | 0,30s | NO | -
+18 | chord F2 G3            |  5,94s | 0,30s | yes (135 ms) | -
+19 | note A3 (fret 2)       |  6,24s | 0,30s | NO | -
+20 | note D3 (fret 0)       |  6,54s | 0,61s | NO | -
+21 | note A2 (fret 0)       |  7,15s | 0,61s | NO | -
+22 | chord A2 C4            |  7,76s | 0,61s | yes (506 ms) | -
+23 | note A3 (fret 2)       |  8,37s | 0,30s | NO | -
+24 | note E3 (fret 2)       |  8,67s | 0,30s | NO | -
+25 | note D4 (fret 3)       |  8,97s | 0,30s | NO | -
+26 | note E2 (fret 0)       |  9,28s | 0,30s | NO | -
+27 | chord G2 D4            |  9,58s | 0,61s | yes (77 ms) | 1/4 : note G2 (fret 3); 
+28 | note G2 (fret 3)       | 10,19s | 0,30s | yes (166 ms) | 1/4 : chord G2 D4; 
+29 | note B3 (fret 0)       | 10,49s | 0,30s | NO | -
+30 | note G3 (fret 0)       | 10,80s | 0,30s | NO | -
+31 | note E2 (fret 0)       | 11,10s | 0,30s | NO | -
+32 | chord E2 G3            | 11,40s | 0,61s | NO | -
+33 | note E3 (fret 2)       | 12,01s | 0,30s | NO | -
+34 | note B2 (fret 2)       | 12,32s | 0,30s | NO | -
+35 | note G3 (fret 0)       | 12,62s | 0,30s | NO | -
+36 | note B3 (fret 0)       | 12,92s | 0,30s | NO | -
+37 | chord G2 G3            | 13,23s | 0,61s | yes (107 ms) | -
+38 | note D3 (fret 0)       | 13,83s | 0,30s | NO | -
+39 | note B2 (fret 2)       | 14,14s | 0,30s | NO | -
+40 | note D4 (fret 3)       | 14,44s | 0,30s | NO | -
+41 | note A2 (fret 0)       | 14,75s | 1,50s | NO | -
+
+BILAN (defaults)
+ notes : 2/34 recognised (6%), median latency 166 ms, false accepts 1/126 tests
+ chords: 5/8 recognised (63%), median latency 135 ms, false accepts 2/30 tests
