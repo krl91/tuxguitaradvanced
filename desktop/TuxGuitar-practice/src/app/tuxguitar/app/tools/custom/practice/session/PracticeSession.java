@@ -14,6 +14,8 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.PracticePassages;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
+import app.tuxguitar.app.tools.custom.practice.model.TechniqueResult;
+import app.tuxguitar.app.tools.custom.practice.model.TechniqueTarget;
 import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.SpectrumFrame;
 import app.tuxguitar.audio.engine.input.InputAssessment;
@@ -21,6 +23,7 @@ import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
 import app.tuxguitar.audio.engine.recognition.TargetEvidence;
+import app.tuxguitar.audio.engine.technique.NoteSegment;
 
 /**
  * Wait-for-correct-note practice state machine (data-model.md "State machine").
@@ -88,6 +91,20 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private static final double NEIGHBOUR_CONFIDENCE = 0.8;
 	private long neighbourHeardNanos = Long.MIN_VALUE;
 	private final long articulationLatencyNanos;
+	/** Judges the written techniques of the accepted notes (spec 002); null: no technique line. */
+	private TechniqueJudge techniqueJudge;
+	private static final int RECENT_FRAMES = 64;
+	private static final long TECHNIQUE_WINDOW_NANOS = 1_500_000_000L;
+	/** How far before the acceptance a note's segment may start (acceptance follows the attack by about 100 ms). */
+	private static final long TECHNIQUE_LEAD_NANOS = 150L * 1_000_000L;
+	/** The last hops (timestamp, MIDI pitch or NaN, level, onset) so a note's segment can start at its attack. */
+	private final java.util.ArrayDeque<double[]> recentFrames = new java.util.ArrayDeque<double[]>();
+	private PracticeEvent pendingEvent;
+	private List<TechniqueTarget> pendingTargets;
+	private final List<double[]> pendingFrames = new ArrayList<double[]>();
+	private long pendingStartNanos;
+	private PracticeEvent techniqueEvent;
+	private List<TechniqueResult> techniqueResults = java.util.Collections.<TechniqueResult>emptyList();
 	private final Map<Integer, Outcome> outcomes = new HashMap<Integer, Outcome>();
 	private final Set<PauseReason> pauseReasons = EnumSet.noneOf(PauseReason.class);
 
@@ -189,6 +206,14 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	 */
 	public void setPolyphonicAcceptance(PolyphonicAcceptance acceptance) {
 		this.polyphonic = acceptance;
+	}
+
+	/**
+	 * Judges the written techniques of the notes accepted from now on and reports the results in the
+	 * snapshots; they never change what is accepted (FR-030). Null stops judging.
+	 */
+	public void setTechniqueJudge(TechniqueJudge judge) {
+		this.techniqueJudge = judge;
 	}
 
 	/**
@@ -323,6 +348,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.reading = this.interpreter.interpret(frame.getF0Hz(), frame.getConfidence(), this.assessment);
 		this.confidence = frame.getConfidence();
 		this.lastFrameNanos = frame.getTimestampNanos();
+		collectTechniqueFrame(frame);
 		if( this.state != State.RUNNING ) {
 			return snapshot();
 		}
@@ -599,6 +625,10 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.lastAccepted = null;
 		this.lastPassed = null;
 		this.lastPassedOutcome = null;
+		this.pendingEvent = null;
+		this.pendingFrames.clear();
+		this.techniqueEvent = null;
+		this.techniqueResults = java.util.Collections.<TechniqueResult>emptyList();
 		resetMatch();
 		passAutomatically();
 		this.passageResults.clear();
@@ -607,7 +637,93 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		beginPassage();
 	}
 
+	private void collectTechniqueFrame(AnalysisFrame frame) {
+		if( this.techniqueJudge == null ) {
+			return;
+		}
+		double f0 = frame.getF0Hz();
+		double midi = (Double.isFinite(f0) && f0 > 0.0 && frame.getConfidence() >= 0.8 ? 69.0 + 12.0 * Math.log(f0 / 440.0) / Math.log(2.0) : Double.NaN);
+		double[] hop = new double[] { frame.getTimestampNanos(), midi, frame.getRmsDbfs(), frame.isOnset() ? 1.0 : 0.0 };
+		this.recentFrames.addLast(hop);
+		if( this.recentFrames.size() > RECENT_FRAMES ) {
+			this.recentFrames.removeFirst();
+		}
+		if( this.pendingEvent != null ) {
+			this.pendingFrames.add(hop);
+			if( frame.getTimestampNanos() - this.pendingStartNanos > TECHNIQUE_WINDOW_NANOS ) {
+				finishTechniques();
+			}
+		}
+	}
+
+	/** The note of the pending event is over (or has lasted long enough): judge its techniques. */
+	private void finishTechniques() {
+		if( this.pendingEvent == null ) {
+			return;
+		}
+		NoteSegment segment = null;
+		int n = this.pendingFrames.size();
+		if( n >= 2 ) {
+			double[] midi = new double[n];
+			double[] level = new double[n];
+			boolean[] onset = new boolean[n];
+			for( int i = 0 ; i < n ; i ++ ) {
+				double[] hop = this.pendingFrames.get(i);
+				midi[i] = hop[1];
+				level[i] = hop[2];
+				onset[i] = hop[3] > 0.0;
+			}
+			double hopSeconds = (this.pendingFrames.get(n - 1)[0] - this.pendingFrames.get(0)[0]) / (n - 1) / 1e9;
+			if( hopSeconds > 0.0 ) {
+				segment = new NoteSegment(midi, level, onset, hopSeconds);
+			}
+		}
+		this.techniqueEvent = this.pendingEvent;
+		this.techniqueResults = this.techniqueJudge.judge(this.pendingTargets, segment);
+		this.pendingEvent = null;
+		this.pendingTargets = null;
+		this.pendingFrames.clear();
+	}
+
+	/** A newly accepted note: judges the previous one, then starts collecting this one's techniques. */
+	private void beginTechniques(PracticeEvent event, long timestampNanos) {
+		if( this.techniqueJudge == null ) {
+			return;
+		}
+		finishTechniques();
+		List<TechniqueTarget> targets = new ArrayList<TechniqueTarget>();
+		boolean needsMeasure = false;
+		for( TechniqueTarget target : this.sequence.targetsOf(event.getSequenceIndex()) ) {
+			if( target.getTechnique().isJudged() ) {
+				targets.add(target);
+				needsMeasure |= !this.techniqueJudge.isNeverVerdict(target.getTechnique());
+			}
+		}
+		if( targets.isEmpty() ) {
+			// no technique on this note: the result of the note just judged (if any) stays shown
+			return;
+		}
+		if( !needsMeasure ) {
+			// nothing to measure: the answer is known now ("not verifiable") and shown with the acceptance
+			this.techniqueEvent = event;
+			this.techniqueResults = this.techniqueJudge.judge(targets, null);
+			return;
+		}
+		this.techniqueEvent = null;
+		this.techniqueResults = java.util.Collections.<TechniqueResult>emptyList();
+		this.pendingEvent = event;
+		this.pendingTargets = targets;
+		this.pendingStartNanos = timestampNanos;
+		// the note began with its attack: its segment starts there (or at the oldest hop kept)
+		for( double[] hop : this.recentFrames ) {
+			if( hop[0] >= Math.max(this.armTransientNanos, timestampNanos - TECHNIQUE_LEAD_NANOS) ) {
+				this.pendingFrames.add(hop);
+			}
+		}
+	}
+
 	private void accept(PracticeEvent event, long timestampNanos) {
+		beginTechniques(event, timestampNanos);
 		if( PracticeTrace.enabled() ) {
 			PracticeTrace.accepted(timestampNanos, event.getSequenceIndex());
 		}
@@ -682,7 +798,8 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private PracticeSnapshot snapshot() {
 		return new PracticeSnapshot(this.state, this.currentIndex, this.sequence.getEvents().size(), currentEvent(),
 				this.reading, this.pauseReasons, this.feedback, this.lastAccepted, this.lastPassed, this.lastPassedOutcome,
-				this.confidence, this.chordFeedback, this.verdict, passageStatus(), this.acceptedCount);
+				this.confidence, this.chordFeedback, this.verdict, passageStatus(), this.acceptedCount,
+				this.techniqueEvent, this.techniqueResults);
 	}
 
 	private PassageStatus passageStatus() {

@@ -1,10 +1,12 @@
 package app.tuxguitar.app.tools.custom.practice.session;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.EnumSet;
 import java.util.Set;
 
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
+import app.tuxguitar.app.tools.custom.practice.model.TechniqueResult;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
 
 /**
@@ -27,11 +29,16 @@ public final class PracticeSnapshot {
 	private final PracticeSession.Verdict verdict;
 	private final PassageStatus passageStatus;
 	private final int acceptedCount;
+	private final PracticeEvent techniqueEvent;
+	private final List<TechniqueResult> techniqueResults;
 
 	PracticeSnapshot(PracticeSession.State state, int currentIndex, int eventCount, PracticeEvent currentEvent,
 			PitchReading reading, Set<PracticeSession.PauseReason> pauseReasons, Feedback feedback,
 			PracticeEvent lastAccepted, PracticeEvent lastPassed, PracticeSession.Outcome lastPassedOutcome, double confidence,
-			ChordFeedback chordFeedback, PracticeSession.Verdict verdict, PassageStatus passageStatus, int acceptedCount) {
+			ChordFeedback chordFeedback, PracticeSession.Verdict verdict, PassageStatus passageStatus, int acceptedCount,
+			PracticeEvent techniqueEvent, List<TechniqueResult> techniqueResults) {
+		this.techniqueEvent = techniqueEvent;
+		this.techniqueResults = techniqueResults;
 		this.acceptedCount = acceptedCount;
 		this.passageStatus = passageStatus;
 		this.chordFeedback = chordFeedback;
@@ -48,6 +55,19 @@ public final class PracticeSnapshot {
 		this.lastPassed = lastPassed;
 		this.lastPassedOutcome = lastPassedOutcome;
 		this.confidence = confidence;
+	}
+
+	/** The event whose techniques {@link #getTechniqueResults()} judge (the last one whose note is over), or null. */
+	public PracticeEvent getTechniqueEvent() {
+		return this.techniqueEvent;
+	}
+
+	/**
+	 * One result per judged written technique of {@link #getTechniqueEvent()}: shown beside the pitch
+	 * result, never part of it (FR-030). Empty when that event has no judged technique.
+	 */
+	public List<TechniqueResult> getTechniqueResults() {
+		return this.techniqueResults;
 	}
 
 	/** Feedback for the current expected chord; null for other events. */

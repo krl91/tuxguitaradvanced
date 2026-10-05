@@ -149,6 +149,8 @@ Commit only when the owner asks; never push without approval (CLAUDE.md "Git Saf
 
 ---
 
+> **Status 2026-10-06 (Phases 6–8, first pass).** Done: the judge, catalogue, per-note collection in the session, the technique line of the palette (strings EN/FR), `PracticeSequence.targetsOf` (hammer-on / pull-off with partner), and the vibrato, bend, slide and legato detectors, benchmarked on IDMT-SMT-Guitar dataset 2 (`benchmark/technique-benchmark-2026-10-06.txt`, rerun with `-Dgroups=dataset`). Choices recorded: the engine has its own `DetectableTechnique` / `TechniqueEvidence` (no dependency on the practice module); detectors are stateless over a `NoteSegment` instead of a streaming `push`; their thresholds are a `Parameters` class per detector, not yet `RecognitionParameters` ADVANCED entries; the per-hop `TechniqueFeatureExtractor` (T057, T059) was not needed by these detectors and stays open. **No technique is verified**: vibrato 59 %, bend 82 %, slide 48 % of the annotated notes detected (target 85 %), legato has no labelled recording; every written technique therefore shows "cannot be checked yet" (T074). Still open: T057, T059, T063 (per-technique counts in the passage summary), T065 manual check, T073 legato part, T075, T076 (bend against the written path), T078–T085.
+
 ## Phase 6: User Story 7 - Honest technique feedback (Priority: P1)
 
 **Goal**: the framework every technique uses: separate technique verdicts shown next to the pitch result, honest "not verifiable" (spec US7, FR-020, FR-028…032; contracts/technique-detection.md; research R4).
@@ -157,18 +159,18 @@ Commit only when the owner asks; never push without approval (CLAUDE.md "Git Saf
 
 ### Tests for User Story 7
 
-- [ ] T056 [P] [US7] `PRACTICE-TEST/session/TechniqueJudgeTest.java`: `NOT_VERIFIABLE` when no detector is registered, when detection is switched off (FR-032) and when the technique's `verified` flag is false; a detector cannot emit `NOT_VERIFIABLE`; borderline evidence gives `UNCERTAIN`; a technique verdict never changes the pitch verdict or progression (FR-030)
+- [x] T056 [P] [US7] `PRACTICE-TEST/session/TechniqueJudgeTest.java`: `NOT_VERIFIABLE` when no detector is registered, when detection is switched off (FR-032) and when the technique's `verified` flag is false; a detector cannot emit `NOT_VERIFIABLE`; borderline evidence gives `UNCERTAIN`; a technique verdict never changes the pitch verdict or progression (FR-030)
 - [ ] T057 [P] [US7] `ENGINE-TEST/technique/TechniqueFeaturesTest.java`: per-hop features on synthetic signals (f0 cents track, level slope, spectral centroid, high-frequency ratio, flatness, flux) are stable and deterministic; disabling the feature block leaves frames unchanged
 
 ### Implementation for User Story 7
 
-- [ ] T058 [P] [US7] Create `ENGINE/technique/TechniqueDetector.java` (`technique()`, `push(TechniqueFeatures)`, `evaluate(TechniqueTarget, NoteSegment)`, `reset()`), `TechniqueEvidence.java` (`technique`, `verdict`, `confidence` 0–1, named `measurements`, `explanationKey`) and `NoteSegment.java`; the engine-side `Technique`/`TechniqueVerdict` types are the ones of T008 moved or mirrored without a dependency from the engine on the practice module (record the choice)
+- [x] T058 [P] [US7] Create `ENGINE/technique/TechniqueDetector.java` (`technique()`, `push(TechniqueFeatures)`, `evaluate(TechniqueTarget, NoteSegment)`, `reset()`), `TechniqueEvidence.java` (`technique`, `verdict`, `confidence` 0–1, named `measurements`, `explanationKey`) and `NoteSegment.java`; the engine-side `Technique`/`TechniqueVerdict` types are the ones of T008 moved or mirrored without a dependency from the engine on the practice module (record the choice)
 - [ ] T059 [US7] Implement the per-hop feature extractor `ENGINE/technique/TechniqueFeatureExtractor.java` and enable it from `ENGINE/analysis/AnalysisService.java` with a `setTechniqueFeaturesEnabled` switch (same pattern as `setSpectrumEnabled`; off for the tuner)
-- [ ] T060 [US7] Create `ENGINE/technique/TechniqueCatalog.java`: the single table of technique → detector + `verified` flag + the benchmark result that justifies it (all flags false at this point); `PRACTICE/session/TechniqueJudge.java` turning `TechniqueTarget` + `TechniqueEvidence` into a `TechniqueResult` (`technique`, `TechniqueVerdict`, `confidence`, `detail` key + numbers)
-- [ ] T061 [US7] Integrate in `PRACTICE/session/PracticeSession.java`: collect evidence per note segment, produce `NoteEventResult` (`pitchVerdict`, `techniqueResults`); extend `PRACTICE/session/PracticeSnapshot.java` and `Feedback.java`; progression is unchanged
-- [ ] T062 [US7] Show one technique chip per written technique next to the pitch line in `PRACTICE/ui/PracticePalette.java` and `PracticeWindow.java` (detected / not detected / uncertain / not verifiable with a short localized explanation; visually distinct from the pitch result); the "technique detection" switch (T007) in `RecognitionSettingsPanel.java` makes every result `NOT_VERIFIABLE`
+- [x] T060 [US7] Create `ENGINE/technique/TechniqueCatalog.java`: the single table of technique → detector + `verified` flag + the benchmark result that justifies it (all flags false at this point); `PRACTICE/session/TechniqueJudge.java` turning `TechniqueTarget` + `TechniqueEvidence` into a `TechniqueResult` (`technique`, `TechniqueVerdict`, `confidence`, `detail` key + numbers)
+- [x] T061 [US7] Integrate in `PRACTICE/session/PracticeSession.java`: collect evidence per note segment, produce `NoteEventResult` (`pitchVerdict`, `techniqueResults`); extend `PRACTICE/session/PracticeSnapshot.java` and `Feedback.java`; progression is unchanged
+- [x] T062 [US7] Show one technique chip per written technique next to the pitch line in `PRACTICE/ui/PracticePalette.java` and `PracticeWindow.java` (detected / not detected / uncertain / not verifiable with a short localized explanation; visually distinct from the pitch result); the "technique detection" switch (T007) in `RecognitionSettingsPanel.java` makes every result `NOT_VERIFIABLE`
 - [ ] T063 [US7] Extend `PRACTICE/session/PassageStatus.java` summary with per-technique counts (detected, not detected, uncertain, not verifiable) and show them in the end-of-passage text; tests in `PRACTICE-TEST/session/PassagePracticeTest.java`
-- [ ] T064 [P] [US7] Strings `practice.technique.<name>.<verdict>` and the summary texts in `share/lang/messages.properties` + `messages_fr.properties`
+- [x] T064 [P] [US7] Strings `practice.technique.<name>.<verdict>` and the summary texts in `share/lang/messages.properties` + `messages_fr.properties`
 - [ ] T065 [US7] Phase D1 verification: full build with tests green; with no detector yet every written technique shows "not verifiable" and nothing else changes (manual check)
 
 **Checkpoint**: framework in place; all techniques honestly "not verifiable" until a detector is benchmarked.
@@ -183,18 +185,18 @@ Commit only when the owner asks; never push without approval (CLAUDE.md "Git Saf
 
 ### Tests for User Story 3
 
-- [ ] T066 [P] [US3] `ENGINE-TEST/technique/LegatoDetectorTest.java`: synthetic hammer-on and pull-off steps without attack give `DETECTED`; the picked version gives `NOT_DETECTED`; a borderline level rise gives `UNCERTAIN`
-- [ ] T067 [P] [US3] `ENGINE-TEST/technique/SlideDetectorTest.java`: a monotone glide through intermediate pitches gives `DETECTED`, a direct picked jump `NOT_DETECTED`
-- [ ] T068 [P] [US3] Extend `PRACTICE-TEST/model/PracticeSequenceBuilderTest.java`: a written hammer is classified `HAMMER_ON` when the destination is higher and `PULL_OFF` when lower, with `partnerEventIndex`; a slide carries its partner
+- [x] T066 [P] [US3] `ENGINE-TEST/technique/LegatoDetectorTest.java`: synthetic hammer-on and pull-off steps without attack give `DETECTED`; the picked version gives `NOT_DETECTED`; a borderline level rise gives `UNCERTAIN`
+- [x] T067 [P] [US3] `ENGINE-TEST/technique/SlideDetectorTest.java`: a monotone glide through intermediate pitches gives `DETECTED`, a direct picked jump `NOT_DETECTED`
+- [x] T068 [P] [US3] Extend `PRACTICE-TEST/model/PracticeSequenceBuilderTest.java`: a written hammer is classified `HAMMER_ON` when the destination is higher and `PULL_OFF` when lower, with `partnerEventIndex`; a slide carries its partner
 
 ### Implementation for User Story 3
 
-- [ ] T069 [US3] Derive `HAMMER_ON` vs `PULL_OFF` and the partner event in `PRACTICE/model/PracticeSequenceBuilder.java` from `TGNoteEffect.isHammer()`/`isSlide()` and the next note's pitch
-- [ ] T070 [P] [US3] Create `ENGINE/technique/LegatoDetector.java`: pitch step between two stable segments with no confirmed attack (level rise below the attack gate) and continuous sustain; pull-off: lower pitch with level not above the previous note; wide `UNCERTAIN` band between the plain and the technique thresholds (parameters in `RecognitionParameters` ADVANCED)
-- [ ] T071 [P] [US3] Create `ENGINE/technique/SlideDetector.java`: monotone f0 glide through intermediate pitches over at least X ms (parameter) with no attack at arrival
-- [ ] T072 [US3] Wire both detectors into `ENGINE/technique/TechniqueCatalog.java` and use them from `PRACTICE/session/PracticeSession.java` for the destination note (acceptance rule already in T049)
+- [x] T069 [US3] Derive `HAMMER_ON` vs `PULL_OFF` and the partner event in `PRACTICE/model/PracticeSequenceBuilder.java` from `TGNoteEffect.isHammer()`/`isSlide()` and the next note's pitch
+- [x] T070 [P] [US3] Create `ENGINE/technique/LegatoDetector.java`: pitch step between two stable segments with no confirmed attack (level rise below the attack gate) and continuous sustain; pull-off: lower pitch with level not above the previous note; wide `UNCERTAIN` band between the plain and the technique thresholds (parameters in `RecognitionParameters` ADVANCED)
+- [x] T071 [P] [US3] Create `ENGINE/technique/SlideDetector.java`: monotone f0 glide through intermediate pitches over at least X ms (parameter) with no attack at arrival
+- [x] T072 [US3] Wire both detectors into `ENGINE/technique/TechniqueCatalog.java` and use them from `PRACTICE/session/PracticeSession.java` for the destination note (acceptance rule already in T049)
 - [ ] T073 [SPIKE] [US3] S-F1: record the legato and slide clips (T006) on both inputs and compute the candidate features offline; publish per-technique separability (detected-vs-plain rates) in `BENCH/` and `research.md` R4
-- [ ] T074 [US3] Set the `verified` flag in `TechniqueCatalog` for a technique only if the T073 result meets SC-005 (≥ 85% correct verdict, < 10% false "detected" on plain notes, provisional); otherwise leave it false and record why
+- [x] T074 [US3] Set the `verified` flag in `TechniqueCatalog` for a technique only if the T073 result meets SC-005 (≥ 85% correct verdict, < 10% false "detected" on plain notes, provisional); otherwise leave it false and record why
 - [ ] T075 [US3] Phase D2 verification: full build with tests green; manual legato/slide play-through per quickstart "Phases D/F"
 
 ---
@@ -208,7 +210,7 @@ Commit only when the owner asks; never push without approval (CLAUDE.md "Git Saf
 ### Tests for User Story 4
 
 - [ ] T076 [P] [US4] `ENGINE-TEST/technique/BendDetectorTest.java`: a bend reaching +1 semitone reports on pitch; +0.5 reports under; +1.5 over; release and pre-bend follow the path; the static-note tolerance is not applied while the pitch moves toward a written target
-- [ ] T077 [P] [US4] `ENGINE-TEST/technique/VibratoDetectorTest.java`: modulation at 4–8 Hz with depth ≥ about 10 cents over at least about 400 ms is `DETECTED`; a steady pitch is `NOT_DETECTED`; the sustained pitch is still accepted as the written note
+- [x] T077 [P] [US4] `ENGINE-TEST/technique/VibratoDetectorTest.java`: modulation at 4–8 Hz with depth ≥ about 10 cents over at least about 400 ms is `DETECTED`; a steady pitch is `NOT_DETECTED`; the sustained pitch is still accepted as the written note
 - [ ] T078 [P] [US4] Extend `PRACTICE-TEST/model/PracticeSequenceBuilderTest.java`: a bend note is an `EXPECTED_NOTE` (no longer `AutoPassReason.BEND`) with a `PitchPath` built from `TGEffectBend` points; tremolo-bar and trill stay auto-pass
 
 ### Implementation for User Story 4

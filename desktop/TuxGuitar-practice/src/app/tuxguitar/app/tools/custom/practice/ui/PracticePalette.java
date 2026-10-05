@@ -3,6 +3,7 @@ package app.tuxguitar.app.tools.custom.practice.ui;
 import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
+import app.tuxguitar.app.tools.custom.practice.model.TechniqueResult;
 import app.tuxguitar.app.tools.custom.practice.session.ChordFeedback;
 import app.tuxguitar.app.tools.custom.practice.session.Feedback;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
@@ -64,6 +65,7 @@ public class PracticePalette {
 	private UIColor wrongColor;
 	private UILabel detectedLabel;
 	private UILabel statusLabel;
+	private UILabel techniqueLabel;
 	private UILabel outcomeLabel;
 	private UILabel passageLabel;
 	private UILabel inputLabel;
@@ -99,20 +101,21 @@ public class PracticePalette {
 		this.wrongColor = uiFactory.createColor(210, 0, 0);
 		this.detectedLabel = label(uiFactory, layout, 2);
 		this.statusLabel = label(uiFactory, layout, 3);
-		this.outcomeLabel = label(uiFactory, layout, 4);
-		this.passageLabel = label(uiFactory, layout, 5);
-		this.inputLabel = label(uiFactory, layout, 6);
+		this.techniqueLabel = label(uiFactory, layout, 4);
+		this.outcomeLabel = label(uiFactory, layout, 5);
+		this.passageLabel = label(uiFactory, layout, 6);
+		this.inputLabel = label(uiFactory, layout, 7);
 
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel buttons = uiFactory.createPanel(this.window, false);
 		buttons.setLayout(buttonsLayout);
-		layout.set(buttons, 7, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(buttons, 8, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.skipButton = button(uiFactory, buttons, buttonsLayout, 1, "practice.skip", () -> this.controller.post(PracticeCommand.SKIP));
 		this.resumeButton = button(uiFactory, buttons, buttonsLayout, 2, "practice.resume", () -> this.controller.post(PracticeCommand.RESUME));
 		this.restartButton = button(uiFactory, buttons, buttonsLayout, 3, "practice.restart", () -> this.controller.post(PracticeCommand.RESTART));
 		UIButton stopButton = button(uiFactory, buttons, buttonsLayout, 4, "practice.stop", () -> this.controller.stop());
 		listenKeys(this.window, buttons, this.skipButton, this.resumeButton, this.restartButton, stopButton,
-				this.detectedLabel, this.statusLabel, this.outcomeLabel, this.passageLabel, this.inputLabel);
+				this.detectedLabel, this.statusLabel, this.techniqueLabel, this.outcomeLabel, this.passageLabel, this.inputLabel);
 
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
@@ -162,6 +165,7 @@ public class PracticePalette {
 		renderVerdict(snapshot.getVerdict());
 		this.detectedLabel.setText(detectedText(snapshot));
 		this.statusLabel.setText(statusText(snapshot));
+		this.techniqueLabel.setText(techniqueText(snapshot));
 		this.outcomeLabel.setText(lastOutcomeText(snapshot));
 		this.passageLabel.setText(passageText(snapshot.getPassageStatus()));
 		setInput(assessment);
@@ -223,6 +227,19 @@ public class PracticePalette {
 		}
 		String confidence = Long.toString(Math.round(snapshot.getConfidence() * 100));
 		return text + " " + TuxGuitar.getProperty("practice.detected.confidence", new String[] { confidence });
+	}
+
+	/**
+	 * The written techniques of the last finished note and what was heard of each: detected, not detected,
+	 * uncertain, or not verifiable. It sits apart from the pitch result and never changes it (FR-030).
+	 */
+	private String techniqueText(PracticeSnapshot snapshot) {
+		StringBuilder text = new StringBuilder();
+		for( TechniqueResult result : snapshot.getTechniqueResults() ) {
+			text.append(text.length() > 0 ? " · " : "").append(TuxGuitar.getProperty("practice.technique.name." + result.getTechnique().name()))
+					.append(": ").append(TuxGuitar.getProperty("practice.technique.verdict." + result.getVerdict().name()));
+		}
+		return text.length() == 0 ? " " : text.toString();
 	}
 
 	/** The feedback line for the current event, or the session state when there is none to give. */

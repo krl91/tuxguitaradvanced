@@ -1,5 +1,6 @@
 package app.tuxguitar.app.tools.custom.practice.model;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,6 +30,25 @@ public final class PracticeSequence {
 
 	public TrackTuning getTrackTuning() {
 		return this.trackTuning;
+	}
+
+	/**
+	 * The written techniques to judge on an event. Besides the event's own (slide, vibrato...), a note that
+	 * follows a note carrying a hammer-on / pull-off mark is its destination: it is a hammer-on when it is
+	 * higher than the origin and a pull-off when it is lower, with the origin as its partner (spec 002 T069).
+	 */
+	public List<TechniqueTarget> targetsOf(int index) {
+		PracticeEvent event = this.events.get(index);
+		List<TechniqueTarget> targets = new ArrayList<TechniqueTarget>(event.getTechniqueTargets());
+		if( index > 0 && event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ) {
+			PracticeEvent origin = this.events.get(index - 1);
+			if( origin.getKind() == PracticeEvent.Kind.EXPECTED_NOTE && origin.getTechniques().contains(PracticeEvent.Technique.HAMMER_ON_PULL_OFF)
+					&& origin.getExpectedMidi() != event.getExpectedMidi() ) {
+				targets.add(TechniqueTarget.withPartner(event.getExpectedMidi() > origin.getExpectedMidi() ? PlayingTechnique.HAMMER_ON : PlayingTechnique.PULL_OFF,
+						event.getExpectedMidi(), index - 1));
+			}
+		}
+		return Collections.unmodifiableList(targets);
 	}
 
 	public boolean isEmpty() {

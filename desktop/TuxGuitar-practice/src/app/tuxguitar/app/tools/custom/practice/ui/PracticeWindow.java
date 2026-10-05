@@ -15,6 +15,7 @@ import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
 import app.tuxguitar.app.tools.custom.practice.session.AttackCandidates;
 import app.tuxguitar.app.tools.custom.practice.session.ChordMatcher;
 import app.tuxguitar.app.tools.custom.practice.session.PolyphonicAcceptance;
+import app.tuxguitar.app.tools.custom.practice.session.TechniqueJudge;
 import app.tuxguitar.app.tools.custom.practice.session.PassageSettings;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeParameters;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
@@ -31,7 +32,10 @@ import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
+import app.tuxguitar.audio.engine.technique.TechniqueCatalog;
 import app.tuxguitar.audio.engine.session.PracticeTunerContext;
 import app.tuxguitar.editor.action.TGActionProcessor;
 import app.tuxguitar.song.helpers.tuning.TuningManager;
@@ -480,12 +484,15 @@ public class PracticeWindow {
 		selection.accept();
 		PracticeSequence sequence = this.preparedSequence;
 		// the validated audio-recognition settings (T102), fixed for this session
-		PracticeParameters parameters = PracticeParameters.of(RecognitionSettingsStore.getInstance(this.context).get());
+		RecognitionSettings recognition = RecognitionSettingsStore.getInstance(this.context).get();
+		PracticeParameters parameters = PracticeParameters.of(recognition);
 		this.palette.setDisplayTolerance(parameters.tolerance());
 		this.session = new PracticeSession(selection, sequence, parameters.noteInterpreter(), parameters.tolerance(),
 				parameters.stabilityNanos(), parameters.articulationLatencyNanos(),
 				new ChordMatcher(parameters.chordParameters()), PassageSettings.getInstance(this.context).toPolicy());
 		this.session.setAssessment(this.assessment);
+		// the written techniques are judged beside the pitch, never instead of it (spec 002); off: every technique is "not verifiable"
+		this.session.setTechniqueJudge(new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)));
 		// notes and chords are also judged from what each attack adds to the sound (spec 004): works over strings that keep ringing
 		this.session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
 		this.engine.setAttackCandidates(AttackCandidates.of(sequence));
