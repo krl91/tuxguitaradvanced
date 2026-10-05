@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-05
 
-**Status**: Draft
+**Status**: In progress (2026-10-06): recognition delivered and measured (notes 99.8 %, chords with a note missing refused 96-98 %); learner messages for "not separately verifiable" and the speed limit, and the weak chord cases, are open (see tasks.md)
 
 **Input**: User description: "Reconnaissance polyphonique par écart de spectre à l'attaque pour le mode Practice. Sur un enregistrement réel de guitare acoustique en fingerstyle (basse qui sonne sous la mélodie) joué avec la partition `tests/1/_TEST_.tg` (34 notes + 8 accords, 99 bpm), le Practice par défaut ne reconnaît que 2/34 notes et 5/8 accords, avec des fausses acceptations. L'écart de spectre à l'attaque classe la note attendue en 1er dans 27/34 cas et l'accord en 1er dans 5/8. Objectif : reconnaissance de 100 % des 42 événements de ce morceau avec 0 fausse acceptation, dans un test automatique rejouant l'audio (non redistribué, test ignoré s'il est absent), latence annoncée et mesurée, sans enregistrer d'audio, déterministe, honnête sur ce qui n'est pas vérifiable, textes en français et anglais, configuration par défaut déduite des mesures."
 
