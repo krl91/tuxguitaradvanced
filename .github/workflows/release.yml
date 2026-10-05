@@ -5,11 +5,9 @@
 # (Actions > Release > Run workflow) and give the tag to create.
 #
 # Notes:
-#  - macOS arm64 uses the fork's macOS SWT build, the only variant that
-#    includes the Interactive Practice modules (audio-engine, tuner-next, practice).
-#    A Temurin 21 JRE is embedded in the .app (the build itself does not do it).
-#  - Linux and Windows use the standard upstream build scripts and do NOT
-#    contain the Interactive Practice modules.
+#  - All three packages include the Interactive Practice modules (audio-engine, tuner-next,
+#    practice). macOS arm64 embeds a Temurin 21 JRE in the .app (the build itself does not do it).
+#  - Linux and Windows use the SWT build scripts of the same name.
 #  - The Windows build is cross-compiled on Linux with Mingw-w64 and does not
 #    embed a JRE: Java 17+ must be installed on the target machine.
 #  - The macOS launcher is signed with a stable self-signed certificate when the secrets

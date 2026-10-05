@@ -6,7 +6,7 @@ Interactive Practice listens to your guitar and checks, note by note and chord b
 
 ## What you need
 
-* macOS on Apple Silicon (the practice modules are part of the macOS package for now).
+* macOS (Apple Silicon), Linux or Windows: the practice modules are part of the three packages. Microphone access and audio-input behaviour depend on the system's Java Sound support.
 * A guitar sound on an input: the built-in microphone works for clean playing; an audio interface with a direct guitar signal is better. Headphones are recommended if the score also plays through the speakers.
 * A score with a guitar track (standard tuning or any tuning written in the score).
 

@@ -6,7 +6,7 @@ Le mode Practice écoute votre guitare et vérifie, note par note et accord par 
 
 ## Ce qu'il faut
 
-* macOS sur Apple Silicon (les modules de pratique sont dans le paquet macOS pour l'instant).
+* macOS (Apple Silicon), Linux ou Windows : les modules de pratique sont dans les trois paquets. L'accès au micro et le comportement des entrées audio dépendent de la prise en charge de Java Sound par le système.
 * Un son de guitare sur une entrée : le micro intégré convient pour un jeu clair ; une interface audio avec le signal direct de la guitare est préférable. Un casque est conseillé si la partition joue aussi dans les haut-parleurs.
 * Une partition avec une piste de guitare (accordage standard ou tout accordage écrit dans la partition).
 
