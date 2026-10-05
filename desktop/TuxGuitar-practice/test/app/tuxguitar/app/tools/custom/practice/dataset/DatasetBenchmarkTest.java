@@ -159,6 +159,86 @@ public class DatasetBenchmarkTest {
 		return out;
 	}
 
+	/**
+	 * Notes played one after the other, the previous one still ringing when the next is struck (as a learner plays them): two
+	 * single-note recordings of the same guitar and effect are mixed, the second starting 0.35 s after the first. Practice expecting
+	 * the two notes must accept both in order, and must not accept a second note that is wrong.
+	 */
+	private static List<Outcome> successiveNotes(List<DatasetCase> cases) {
+		List<Outcome> out = new ArrayList<Outcome>();
+		List<DatasetCase> singles = cases.stream().filter(c -> c.kind == DatasetCase.Kind.SINGLE_NOTE && playable(c.played)).collect(Collectors.toList());
+		java.util.Map<String, List<DatasetCase>> byGroup = singles.stream().collect(Collectors.groupingBy(c -> c.dataset + " | " + c.group, TreeMap::new, Collectors.toList()));
+		int[] distances = { 1, 2, 3, 5, 7, -1, -2, -3, -5, -7 };
+		java.util.List<Runnable> jobs = new ArrayList<Runnable>();
+		ConcurrentLinkedQueue<Outcome> collected = new ConcurrentLinkedQueue<Outcome>();
+		for( List<DatasetCase> group : byGroup.values() ) {
+			int paired = 0;
+			for( DatasetCase first : group ) {
+				for( int distance : distances ) {
+					DatasetCase second = null;
+					for( DatasetCase candidate : group ) {
+						if( candidate.played[0] == first.played[0] + distance ) {
+							second = candidate;
+							break;
+						}
+					}
+					if( second == null || paired >= 12 ) {
+						continue;
+					}
+					paired ++;
+					final DatasetCase a = first;
+					final DatasetCase b = second;
+					final int d = distance;
+					jobs.add(() -> {
+						RecordedAudio x = RecordedAudio.load(a.audio);
+						RecordedAudio y = RecordedAudio.load(b.audio);
+						if( x == null || y == null || x.sampleRate != y.sampleRate ) {
+							return;
+						}
+						int offset = (int) (0.35 * x.sampleRate);
+						float[] mix = new float[Math.max(x.samples.length, offset + y.samples.length)];
+						System.arraycopy(x.samples, 0, mix, 0, x.samples.length);
+						for( int i = 0 ; i < y.samples.length ; i ++ ) {
+							mix[offset + i] += y.samples[i];
+						}
+						RecordedAudio audio = RecordedAudio.of(mix, x.sampleRate);
+						String test = "second note recognised while the first still rings (" + (Math.abs(d) <= 2 ? "close pitch" : "other pitch") + ")";
+						int ok = DatasetJudge.acceptedSteps(audio, new int[][] { a.played, b.played });
+						collected.add(new Outcome(a, test, ok == 2 ? Status.OK : Status.KO, ok == 2 ? "" : "accepted " + ok + " of 2 (" + a.played[0] + " then " + b.played[0] + ")"));
+						// simulated hammer-on / pull-off: the first note is damped as the second begins, whose pluck is replaced by a soft start
+						if( Math.abs(d) <= 7 ) {
+							// the first note is held for 0.6 s before the hammer-on / pull-off
+							int held = (int) (0.6 * x.sampleRate);
+							
+							int fade = (int) (0.04 * x.sampleRate);
+							int soft = (int) (0.08 * x.sampleRate);
+							float[] legato = new float[Math.max(x.samples.length, held + y.samples.length)];
+							for( int i = 0 ; i < x.samples.length ; i ++ ) {
+								double gain = (i < held ? 1.0 : Math.max(0.0, 1.0 - (double) (i - held) / fade));
+								legato[i] += (float) (x.samples[i] * gain);
+							}
+							for( int i = 0 ; i < y.samples.length ; i ++ ) {
+								double gain = (i < soft ? 0.15 + 0.85 * i / soft : 1.0);
+								legato[held + i] += (float) (y.samples[i] * gain);
+							}
+							int legatoOk = DatasetJudge.acceptedSteps(RecordedAudio.of(legato, x.sampleRate), new int[][] { a.played, b.played });
+							collected.add(new Outcome(a, "legato (simulated hammer-on or pull-off): second note recognised", legatoOk == 2 ? Status.OK : Status.KO,
+									legatoOk == 2 ? "" : "accepted " + legatoOk + " of 2 (" + a.played[0] + " then " + b.played[0] + "; first alone " + DatasetJudge.acceptedSteps(RecordedAudio.of(legato, x.sampleRate), new int[][] { a.played }) + ")"));
+						}
+						int[] wrong = { b.played[0] + (d > 0 ? 3 : -3) };
+						if( playable(wrong) && wrong[0] != a.played[0] ) {
+							int w = DatasetJudge.acceptedSteps(audio, new int[][] { a.played, wrong });
+							collected.add(new Outcome(a, "wrong second note refused while the first still rings", w < 2 ? Status.OK : Status.KO, w < 2 ? "" : "wrong second note accepted (" + a.played[0] + " then " + wrong[0] + ")"));
+						}
+					});
+				}
+			}
+		}
+		jobs.parallelStream().forEach(Runnable::run);
+		out.addAll(collected);
+		return out;
+	}
+
 	@Test
 	public void practiceRecognisesTheAnnotatedRecordingsOfThePublicDatasets() throws IOException {
 		Path root = root();
@@ -177,6 +257,7 @@ public class DatasetBenchmarkTest {
 				outcomes.add(new Outcome(c, "recognised when played", Status.NOT_RUN, "error while analysing: " + exception));
 			}
 		});
+		outcomes.addAll(successiveNotes(cases));
 		List<Outcome> all = new ArrayList<Outcome>(outcomes);
 		String report = report(cases.size(), all);
 		System.out.println(report);

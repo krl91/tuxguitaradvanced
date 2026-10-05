@@ -24,6 +24,10 @@ public final class RecordedAudio {
 		this.sampleRate = sampleRate;
 	}
 
+	public static RecordedAudio of(float[] samples, int sampleRate) {
+		return new RecordedAudio(samples, sampleRate);
+	}
+
 	/** @return the audio, or null when it cannot be read here (missing file, no converter) */
 	public static RecordedAudio load(Path file) {
 		try {

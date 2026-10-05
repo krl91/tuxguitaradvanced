@@ -225,6 +225,11 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		return (distance == 1 || distance == 2) && Math.abs(cents) <= this.tolerance.getPracticeAcceptCents();
 	}
 
+	/** True when the attack evidence shows the pitch as one that has just been struck, not one still ringing. */
+	private static boolean newlyStruck(app.tuxguitar.audio.engine.analysis.AttackEvidence evidence, int midi) {
+		return evidence.getMaximum() > 0.0 && evidence.amplitudeOf(midi) >= 0.5 * evidence.getMaximum();
+	}
+
 	/** The fret of each pitch of {@link #expectedPitchesOf(PracticeEvent)} (0 when unknown). */
 	private static int[] expectedFretsOf(PracticeEvent event, int[] pitches) {
 		int[] frets = new int[pitches.length];
@@ -336,6 +341,9 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			this.verdict = Verdict.NONE;
 		}
 		PracticeEvent event = currentEvent();
+		if( PracticeTrace.enabled() ) {
+			PracticeTrace.frame(frame, this.currentIndex, event == null ? null : expectedPitchesOf(event), this.verdict + "/" + this.articulationArmed);
+		}
 		this.feedback = null;
 		this.chordFeedback = null;
 		// a match counts only at a usable level: near-silence can give confident sub-guitar
@@ -402,6 +410,12 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		// a wrong note is reported only when it is a freshly played, reliable note held for the
 		// stability window: a note still ringing, a glitch or noise shows no cross (prefer waiting)
 		if( this.feedback.getKind() == Feedback.Kind.INCORRECT ) {
+			// a note that rings on from the previous one is not a wrong note: with attack evidence, a wrong note must be a newly struck one
+			if( this.polyphonic != null && frame.getAttackEvidence() != null && !newlyStruck(frame.getAttackEvidence(), this.feedback.getDetectedMidi()) ) {
+				this.wrongMidi = -1;
+				this.feedback = Feedback.WAITING;
+				return;
+			}
 			if( !this.articulationArmed ) {
 				this.wrongMidi = -1;
 				this.feedback = Feedback.WAITING;
@@ -594,6 +608,9 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	}
 
 	private void accept(PracticeEvent event, long timestampNanos) {
+		if( PracticeTrace.enabled() ) {
+			PracticeTrace.accepted(timestampNanos, event.getSequenceIndex());
+		}
 		this.neighbourHeardNanos = Long.MIN_VALUE;
 		this.outcomes.put(event.getSequenceIndex(), Outcome.ACCEPTED);
 		this.lastAccepted = event;

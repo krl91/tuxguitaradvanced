@@ -86,6 +86,38 @@ final class DatasetJudge {
 		return false;
 	}
 
+	/**
+	 * Practice expecting {@code steps} one after the other (one note or chord per step) over {@code audio}:
+	 * how many of them it accepts, in order. The audio is fed as one stream, so a step is judged while the sound of the previous one still rings.
+	 */
+	static int acceptedSteps(RecordedAudio audio, int[][] steps) {
+		SongFixture fixture = new SongFixture(1);
+		for( int step = 0 ; step < steps.length ; step ++ ) {
+			int[] strings = strings(steps[step]);
+			for( int i = 0 ; i < steps[step].length ; i ++ ) {
+				fixture.quarter(0, step, strings[i], steps[step][i] - OPEN_STRINGS[strings[i] - 1]);
+			}
+		}
+		PracticeSequence sequence = fixture.sequence();
+		PracticeTrackSelection selection = new PracticeTrackSelection(fixture.song,
+				PracticeTrackCandidates.evaluate(fixture.song, fixture.track()).getPreselected(), PracticeTunerContext.getInstance(new TGContext()));
+		selection.accept();
+		PracticeParameters parameters = PracticeParameters.of(RecognitionSettings.defaults());
+		PracticeSession session = new PracticeSession(selection, sequence, parameters.noteInterpreter(), parameters.tolerance(), parameters.stabilityNanos(),
+				parameters.articulationLatencyNanos(), new ChordMatcher(parameters.chordParameters()), null);
+		session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
+		session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
+		session.onCommand(PracticeCommand.START);
+		float[] samples = new float[audio.samples.length + audio.sampleRate / 2];
+		System.arraycopy(audio.samples, 0, samples, audio.sampleRate / 2, audio.samples.length);
+		List<AnalysisFrame> frames = OfflineAnalysis.analyze(samples, audio.sampleRate, RecognitionSettings.defaults(), false, AttackCandidates.of(sequence));
+		int accepted = 0;
+		for( AnalysisFrame frame : frames ) {
+			accepted = Math.max(accepted, session.onFrame(frame).getAcceptedCount());
+		}
+		return accepted;
+	}
+
 	static List<Integer> list(int[] values) {
 		List<Integer> result = new ArrayList<Integer>();
 		for( int value : values ) {
