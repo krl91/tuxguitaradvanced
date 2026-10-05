@@ -27,7 +27,7 @@ Une petite palette reste à l'écran et la note ou l'accord attendu est encadré
 * **croix rouge** : une autre note a été entendue (affichée seulement pour une note qui vient d'être frappée, pas pour la note précédente qui résonne encore) ;
 * rien ne se passe sur du silence ou du bruit, et une note qui résonne n'est jamais prise pour la suivante ;
 * un accord est accepté quand ses notes sont entendues ensemble ; les notes manquantes sont nommées si l'accord est incomplet ;
-* **Passer** saute la note, **Reprendre** continue après une pause (ouverture de l'accordeur, lecture, entrée inutilisable), **Recommencer** reprend le passage, **Stop** termine la pratique immédiatement et ramène la fenêtre de préparation, **Accorder la guitare** ouvre l'accordeur.
+* **Passer** saute la note, **Reprendre** continue après une pause (lecture, entrée inutilisable), **Recommencer** reprend le passage, **Stop** termine la pratique immédiatement et ramène la fenêtre de préparation.
 
 La pratique peut aussi se faire **par passages** : quelques mesures à la fois, répétées jusqu'à atteindre la part de notes justes que vous avez fixée.
 
@@ -35,7 +35,7 @@ Ce qui est vérifié, c'est la **hauteur**. La corde et la case utilisées ne pe
 
 ## Gain d'entrée, réduction du bruit et gain suggéré
 
-Sous la jauge de niveau de la fenêtre de pratique, et dans l'accordeur, un curseur **Gain d'entrée** renforce ou baisse le signal dans l'application (de -6 à +18 dB) ; **Réinitialiser** revient à 0 dB. Le gain n'est jamais mémorisé : il revient à 0 dB quand l'entrée change et à chaque démarrage. Si l'amplification n'amplifie surtout que le bruit de fond, ou fait saturer le signal, un avertissement le dit et conseille d'augmenter plutôt le gain de l'interface audio.
+Sous la jauge de niveau de la fenêtre de pratique, et dans l'accordeur, un curseur **Gain d'entrée** renforce ou baisse le signal dans l'application (de -6 à +18 dB) ; **Remise à zéro** revient à 0 dB. Le gain n'est jamais mémorisé : il revient à 0 dB quand l'entrée change et à chaque démarrage. Si l'amplification n'amplifie surtout que le bruit de fond, ou fait saturer le signal, un avertissement le dit et conseille d'augmenter plutôt le gain de l'interface audio.
 
 Réglages (*Réglages de reconnaissance* dans la fenêtre de pratique) : un **noise gate / soustraction du bruit de fond** optionnel et un **gain suggéré** après le contrôle de niveau ; les deux peuvent être désactivés.
 
@@ -54,7 +54,14 @@ Chaque réglage a une valeur recommandée et un bouton *Restaurer*. Ceux que vou
 
 ## L'accordeur
 
-*Outils > Accordeur de guitare* ouvre un accordeur chromatique et un accordeur guidé pour les six cordes. Il partage la détection de hauteur du mode Practice. L'aiguille montre la **médiane des mesures sûres du dernier quart de seconde** : une mesure aberrante ne peut pas la déplacer, une courte interruption ne la fige pas, une nouvelle note remplace l'ancienne en quelques mesures. Une aiguille grise immobile signifie que la corde est silencieuse : rejouez-la. Le curseur de **Gain d'entrée** est sous le niveau.
+*Outils > Accordeur de guitare* ouvre l'accordeur. Il partage sa détection de hauteur avec le mode pratique.
+
+* **Deux modes** : *Guidé (6 cordes)* vous fait passer par les cordes d'un accordage, *Chromatique* affiche la note la plus proche de ce que vous jouez.
+* **Accordage** : un préréglage, *Personnalisé...* (une note par corde) ou l'accordage d'une piste de la partition ouverte (« Accordage de la piste N »).
+* **L'aiguille** affiche la **médiane des mesures fiables du dernier quart de seconde** : un parasite ne la bouge pas, un trou court ne la fige pas, une nouvelle note remplace l'ancienne en quelques mesures. Le texte dessous dit quoi faire : « Trop bas : 12 cents en dessous de Mi2. Montez la corde. », « Juste », « Trop haut... ».
+* **Une aiguille grise figée** (« Dernière mesure (figée) ») signifie que la corde est silencieuse ou trop faible maintenant : rejouez-la.
+* **Entrée** : l'entrée choisie et son niveau (« bon / trop faible / trop fort / saturation »), un bouton **Vérifier à nouveau le niveau**, et le curseur **Gain d'entrée** (-6 à +18 dB) avec son bouton **Remise à zéro**, comme dans la fenêtre de pratique.
+* **Pas pendant la pratique** : l'accordeur refuse de s'ouvrir tant que la fenêtre de pratique est ouverte (ils partagent le micro) ; fermez d'abord la fenêtre de pratique.
 
 ## Analyse de la partition (mesures invalides)
 

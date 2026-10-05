@@ -27,7 +27,7 @@ A small palette stays on screen and the expected note or chord is framed on the 
 * **red cross**: another note was heard (shown only for a note that was just struck, not for the previous note still ringing);
 * nothing happens on silence or noise, and a note that rings on is never taken for the next one;
 * a chord is accepted when its notes are heard together; the missing notes are named when the chord is incomplete;
-* **Skip** passes the note, **Resume** continues after a pause (the tuner opening, a playback, an unusable input), **Restart** starts the passage again, **Stop** ends the practice immediately and brings the preparation window back, **Tune guitar** opens the tuner.
+* **Skip** passes the note, **Resume** continues after a pause (a playback, an unusable input), **Restart** starts the passage again, **Stop** ends the practice immediately and brings the preparation window back.
 
 Practice can also work **by passages**: a few measures at a time, repeated until you reach the share of correct notes you set.
 
@@ -54,7 +54,14 @@ Every setting has a recommended value and a *Restore* button. The ones you may w
 
 ## The tuner
 
-*Tools > Guitar Tuner* opens a chromatic tuner and a guided tuner for the six strings. It shares the pitch detection of the practice mode. The needle shows the **median of the confident readings of the last quarter second**: a glitch cannot move it, a short gap does not freeze it, a new note replaces the old one within a few readings. A frozen grey needle means the string is silent: play it again. The **Input gain** slider is under the level.
+*Tools > Guitar Tuner* opens the tuner. It shares its pitch detection with the practice mode.
+
+* **Two modes**: *Guided (6 strings)* walks you through the strings of a tuning, *Chromatic* shows the nearest note of whatever you play.
+* **Tuning**: a preset, *Custom...* (one note per string), or the tuning of a track of the open score ("Tuning from track N").
+* **The needle** shows the **median of the confident readings of the last quarter second**: a glitch cannot move it, a short gap does not freeze it, a new note replaces the old one within a few readings. The text under it says what to do: "Too low: 12 cents flat of E2. Tune up", "In tune", "Too high... Tune down".
+* **A frozen grey needle** (shown as "Last reading (held)") means the string is silent or too quiet now: play it again.
+* **Input**: the selected input and its level ("good / too low / too high / clipping"), a **Check level again** button, and the **Input gain** slider (-6 to +18 dB) with its **Reset** button, as in the practice window.
+* **Not while practising**: the tuner refuses to open while the practice window is open (they share the microphone); close the practice window first.
 
 ## Score analysis (invalid measures)
 
