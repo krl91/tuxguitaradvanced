@@ -14,10 +14,10 @@ import javax.sound.sampled.AudioSystem;
  * file (the reference recording is an .m4a) is converted to a temporary .wav with the macOS
  * {@code afconvert} tool when it exists. Nothing is written next to the audio and nothing is kept.
  */
-final class RecordedAudio {
+public final class RecordedAudio {
 
-	final float[] samples;
-	final int sampleRate;
+	public final float[] samples;
+	public final int sampleRate;
 
 	private RecordedAudio(float[] samples, int sampleRate) {
 		this.samples = samples;
@@ -25,7 +25,7 @@ final class RecordedAudio {
 	}
 
 	/** @return the audio, or null when it cannot be read here (missing file, no converter) */
-	static RecordedAudio load(Path file) {
+	public static RecordedAudio load(Path file) {
 		try {
 			if( !Files.isRegularFile(file) ) {
 				return null;
@@ -46,21 +46,27 @@ final class RecordedAudio {
 				}
 				wav = temporary;
 			}
-			try( AudioInputStream in = AudioSystem.getAudioInputStream(new File(wav.toString())) ) {
-				int channels = in.getFormat().getChannels();
-				int rate = (int) in.getFormat().getSampleRate();
-				byte[] bytes = in.readAllBytes();
-				int frames = bytes.length / (2 * channels);
-				float[] mono = new float[frames];
-				for( int i = 0 ; i < frames ; i ++ ) {
-					double sum = 0.0;
-					for( int c = 0 ; c < channels ; c ++ ) {
-						int at = 2 * (i * channels + c);
-						sum += ((short) ((bytes[at + 1] << 8) | (bytes[at] & 0xff))) / 32768.0;
+			try( AudioInputStream raw = AudioSystem.getAudioInputStream(new File(wav.toString())) ) {
+				// any PCM depth (16 or 24 bit) is read as 16 bit little-endian
+				javax.sound.sampled.AudioFormat source = raw.getFormat();
+				javax.sound.sampled.AudioFormat target = new javax.sound.sampled.AudioFormat(javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED,
+						source.getSampleRate(), 16, source.getChannels(), 2 * source.getChannels(), source.getSampleRate(), false);
+				try( AudioInputStream in = (source.matches(target) ? raw : AudioSystem.getAudioInputStream(target, raw)) ) {
+					int channels = target.getChannels();
+					int rate = (int) target.getSampleRate();
+					byte[] bytes = in.readAllBytes();
+					int frames = bytes.length / (2 * channels);
+					float[] mono = new float[frames];
+					for( int i = 0 ; i < frames ; i ++ ) {
+						double sum = 0.0;
+						for( int c = 0 ; c < channels ; c ++ ) {
+							int at = 2 * (i * channels + c);
+							sum += ((short) ((bytes[at + 1] << 8) | (bytes[at] & 0xff))) / 32768.0;
+						}
+						mono[i] = (float) (sum / channels);
 					}
-					mono[i] = (float) (sum / channels);
+					return new RecordedAudio(mono, rate);
 				}
-				return new RecordedAudio(mono, rate);
 			} finally {
 				if( temporary != null ) {
 					Files.deleteIfExists(temporary);
