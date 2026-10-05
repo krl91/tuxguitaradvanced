@@ -12,6 +12,9 @@ Le mode Practice écoute votre guitare et vérifie, note par note et accord par 
 
 ## Démarrer
 
+<img src="images/features/practice-setup.png" width="460" alt="La fenêtre de préparation de la pratique">
+
+
 | Comment | Ce qui se passe |
 |---|---|
 | **Bouton Practice** <img src="images/features/practice.png" width="18" alt="Practice"> à côté du bouton Play | Pratique la piste sous le curseur de la partition, à partir du curseur, dès que l'entrée est utilisable. Un seul clic. |
@@ -20,6 +23,9 @@ Le mode Practice écoute votre guitare et vérifie, note par note et accord par 
 La première fois (ou après un changement d'entrée), la fenêtre **vérifie le niveau d'entrée** : jouez une corde et regardez la jauge. Si elle indique *trop bas* ou *saturation*, rapprochez-vous ou réglez le gain (voir plus bas).
 
 ## Pendant la pratique
+
+<img src="images/features/practice-window.png" width="380" alt="La fenêtre de pratique pendant qu'un accord est attendu">
+
 
 Une petite palette reste à l'écran et la note ou l'accord attendu est encadré sur la partition :
 
@@ -41,6 +47,9 @@ Réglages (*Réglages de reconnaissance* dans la fenêtre de pratique) : un **no
 
 ## Réglages de reconnaissance
 
+<img src="images/features/practice-settings.png" width="560" alt="La page Reconnaissance audio de la configuration">
+
+
 Chaque réglage a une valeur recommandée et un bouton *Restaurer*. Ceux que vous pouvez vouloir changer :
 
 | Réglage | Effet |
@@ -53,6 +62,9 @@ Chaque réglage a une valeur recommandée et un bouton *Restaurer*. Ceux que vou
 | Réglages des accords | Avec quelle rigueur les notes d'un accord sont vérifiées et combien de temps peut durer un grattage. |
 
 ## L'accordeur
+
+<img src="images/features/tuner.png" width="380" alt="L'accordeur guidé">
+
 
 *Outils > Accordeur de guitare* ouvre l'accordeur. Il partage sa détection de hauteur avec le mode pratique.
 

@@ -12,6 +12,9 @@ Interactive Practice listens to your guitar and checks, note by note and chord b
 
 ## Starting
 
+<img src="images/features/practice-setup.png" width="460" alt="The preparation window of Interactive Practice">
+
+
 | How | What happens |
 |---|---|
 | **Practice button** <img src="images/features/practice.png" width="18" alt="Practice"> next to the Play button | Practises the track under the score cursor, from the cursor, as soon as the input is usable. One click. |
@@ -20,6 +23,9 @@ Interactive Practice listens to your guitar and checks, note by note and chord b
 The first time (or after changing the input) the window checks your **input level**: play a string and read the meter. If it says *too low* or *clipping*, move closer or adjust the gain (below).
 
 ## While you practise
+
+<img src="images/features/practice-window.png" width="380" alt="The practice window while a chord is expected">
+
 
 A small palette stays on screen and the expected note or chord is framed on the score:
 
@@ -41,6 +47,9 @@ Settings (*Recognition settings* in the practice window): an optional **noise ga
 
 ## Recognition settings
 
+<img src="images/features/practice-settings.png" width="560" alt="The audio recognition page of the configuration">
+
+
 Every setting has a recommended value and a *Restore* button. The ones you may want to change:
 
 | Setting | Effect |
@@ -53,6 +62,9 @@ Every setting has a recommended value and a *Restore* button. The ones you may w
 | Chord settings | How strictly the notes of a chord are checked and how long a strum may take. |
 
 ## The tuner
+
+<img src="images/features/tuner.png" width="380" alt="The guided tuner">
+
 
 *Tools > Guitar Tuner* opens the tuner. It shares its pitch detection with the practice mode.
 
