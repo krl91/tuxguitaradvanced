@@ -17,6 +17,7 @@ import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
 import app.tuxguitar.audio.engine.session.PracticeTunerContext;
@@ -83,6 +84,8 @@ public class TunerWindow {
 	private UILabel levelLabel;
 	private TunerGainControl gainControl;
 	private TunerNeedle needle;
+	/** Steady pitch from the confident readings of the last quarter second (every analysis hop, not only the one drawn). */
+	private final TunerSmoother smoother = new TunerSmoother();
 	private TunerScale scale;
 	private UIFont noteFont;
 	private TunerTuning tuning;
@@ -273,6 +276,7 @@ public class TunerWindow {
 
 	private void updateTargets() {
 		this.recognition.clearHold();
+		this.smoother.clear();
 		boolean guided = Boolean.TRUE.equals(this.mode.getSelectedValue());
 		int[] targets = this.tuning.getTargets();
 		for( int i = 0 ; i < this.stringButtons.size() ; i ++ ) {
@@ -303,6 +307,7 @@ public class TunerWindow {
 
 	private void updateInput() {
 		this.recognition.clearHold();
+		this.smoother.clear();
 		if( !isOpen() ) {
 			return;
 		}
@@ -317,6 +322,7 @@ public class TunerWindow {
 
 	/** Analysis thread: keeps the latest frame and schedules at most ~30 UI updates per second. */
 	private void frameReceived(AnalysisFrame frame) {
+		this.smoother.offer(frame, RecognitionSettingsStore.getInstance(this.context).get().get(RecognitionParameters.TUNER_CONFIDENCE));
 		this.latestFrame.set(frame);
 		long now = System.nanoTime();
 		if( now - this.lastUiNanos >= UI_INTERVAL_NANOS && this.uiPending.compareAndSet(false, true) ) {
@@ -340,6 +346,7 @@ public class TunerWindow {
 			this.scale.setPitch(-1, 0);
 			return;
 		}
+		frame = this.smoother.smooth(frame);
 		boolean guided = Boolean.TRUE.equals(this.mode.getSelectedValue());
 		TunerHold.Shown held = this.recognition.show(frame, this.engine.getSelection().snapshot().getAssessment(),
 				guided ? this.tuning.getTargets() : null, guided ? this.selectedString : 0);

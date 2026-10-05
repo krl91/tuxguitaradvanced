@@ -19,7 +19,8 @@ import app.tuxguitar.util.TGContext;
 public final class TunerNeedle {
 
 	private static final float MARGIN = 14f;
-	private static final double SMOOTHING = 0.45;
+	/** Time constant of the needle (seconds): it settles in about a quarter of a second instead of shaking with every reading. */
+	private static final double TIME_CONSTANT_SECONDS = 0.12;
 
 	private final TGContext context;
 	private final UICanvas canvas;
@@ -27,6 +28,7 @@ public final class TunerNeedle {
 	private double shown;
 	private boolean active;
 	private boolean held;
+	private long lastNanos;
 
 	public TunerNeedle(TGContext context, UIFactory uiFactory, UIContainer parent) {
 		this.context = context;
@@ -59,7 +61,11 @@ public final class TunerNeedle {
 		}
 		this.active = active;
 		this.target = (active ? position : 0.0);
-		this.shown += SMOOTHING * (this.target - this.shown);
+		long now = System.nanoTime();
+		double elapsed = (this.lastNanos == 0L ? 0.1 : Math.min(0.5, (now - this.lastNanos) / 1e9));
+		this.lastNanos = now;
+		// independent of how often the readings arrive
+		this.shown += (1.0 - Math.exp(-elapsed / TIME_CONSTANT_SECONDS)) * (this.target - this.shown);
 		if( !this.canvas.isDisposed() ) {
 			this.canvas.redraw();
 		}
