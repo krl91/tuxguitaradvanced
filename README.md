@@ -1,29 +1,60 @@
-# TuxGuitar
+# TuxGuitarAdvanced
 
-## Description
+**TuxGuitarAdvanced** is an advanced version of [TuxGuitar](https://www.tuxguitar.app/), the open source multitrack tablature editor and player written in Java. It keeps everything TuxGuitar does (editing, playback, Guitar Pro / MIDI / MusicXML import and export...) and adds a **practice mode that listens to your guitar**, a **steadier tuner**, and tools to check your scores.
 
-TuxGuitar is an open source multitrack tablature editor and player written in Java.
+> Practise any track of any score with your real guitar: TuxGuitarAdvanced listens through your microphone or audio interface, tells you note by note and chord by chord whether you played what is written, and waits for you.
+
+## What is new
+
+| | Feature | In short |
+|---|---|---|
+| <img src="docs/images/features/practice.png" width="44" alt="Practice button"> | **Interactive Practice** | One click on the Practice button next to Play: the track under the score cursor is practised, note by note and chord by chord, with immediate feedback. [User guide](docs/PRACTICE.md) |
+| | **Polyphonic recognition** | Notes and chords are recognised from what each attack adds to the sound, so a note is found even over a string that still rings (fingerstyle, arpeggios, bass under a melody). |
+| | **Steady tuner** | The needle shows the median of the confident readings of the last quarter second: no shaking, no freezing on a fading string. |
+| | **Input gain and noise reduction** | A gain slider (-6 to +18 dB) in the practice window and in the tuner, an optional noise gate / background-noise subtraction and a suggested gain. |
+| <img src="docs/images/features/analyse-score.png" width="44" alt="Analyse the score"> | **Score analysis** | A score that opens is no longer interrupted by a dialog. *Edit > Display invalid measures* (or the toolbar icon) lists every problem of the song, with a one-click fix. |
+| | **Diagnostic trace** | An optional text trace (numbers only, no audio) to understand why a note was or was not recognised. |
+
+## Interactive Practice in 30 seconds
+
+1. Open a score and put the cursor on the measure where you want to start.
+2. Click the **Practice** button (<img src="docs/images/features/practice.png" width="18" alt="">) next to the Play button, or choose it in the *Tools* menu.
+3. The first time, choose your audio input and play a string: the level meter tells you if the signal is good. Adjust the **Input gain** slider if needed.
+4. Play what is shown. The next note or chord is framed on the score; a green tick means it was heard, a red cross means another note was heard, and nothing advances on silence or noise. **Stop** ends the practice at once.
+
+What is verified: **pitch** (and every note of a chord). String and fret are never claimed from audio, and techniques (bends, vibrato, slides...) are shown as written but not judged. Details, settings and limits: [docs/PRACTICE.md](docs/PRACTICE.md) (English), [docs/PRACTICE-FR.md](docs/PRACTICE-FR.md) (français).
+
+## Tuned and tested on real recordings
+
+The recognition was not tuned on synthetic sounds only. It was measured and adjusted on **more than 1,200 annotated recordings of real guitars** (single notes, intervals and chords, clean and with 11 audio effects such as distortion, overdrive, chorus, flanger, phaser, delay, reverb), plus recordings of an acoustic guitar played fingerstyle on a real score.
+
+On that benchmark (6,178 automatic tests):
+
+* single notes: **99.8 %** recognised, and **no wrong note** (a semitone or a tone away) accepted in more than 2,300 tests;
+* intervals and triads with effects: 87 % recognised, chords of clean guitars: 95 %;
+* chords with a note missing refused 96 to 98 % of the time.
+
+Known limits are documented and measured, not hidden: chords whose bass note is G2 can be confused with the chord a whole tone higher, four-note seventh chords are recognised less often, and notes less than 0.15 s apart cannot be told apart. See [docs/PRACTICE.md](docs/PRACTICE.md#measured-quality-and-limits).
+
+The default build runs **479 automatic tests**; the benchmark on recordings is an extra test you can run yourself (see the user guide). No audio of the benchmark is stored in this repository.
 
 ## Download and installation
 
-The official website for TuxGuitar is https://www.tuxguitar.app/.
+Packages for macOS (Apple Silicon), Linux and Windows are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; Linux and Windows builds do not include the Interactive Practice modules yet (macOS only for now).
 
-You can find ready to use installation packages for Linux, Windows, macOS, FreeBSD and Android here: [releases](https://github.com/helge17/tuxguitar/releases/).
+To build from source, refer to [INSTALL.md](INSTALL.md) and, for the practice modules, the build notes in [CLAUDE.md](CLAUDE.md#build).
 
-Please download TuxGuitar only from the website or the GitHub link provided above.
+## Documentation
 
-To build TuxGuitar from source code, refer to the [INSTALL.md](INSTALL.md) file.
+* [Interactive Practice, user guide](docs/PRACTICE.md) - [Guide en français](docs/PRACTICE-FR.md)
+* [Architecture: CESAM views and sequence diagrams](docs/architecture/README.md)
+* [INSTALL.md](INSTALL.md), [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
 
-## Contribute
+## Credits and license
 
-If you want to contribute to TuxGuitar, you will find a helpful description in the [CONTRIBUTING.md](docs/CONTRIBUTING.md) file.
+TuxGuitarAdvanced is a fork of TuxGuitar and is released under the GNU Lesser General Public License, like TuxGuitar.
 
-## License
-
-TuxGuitar is released under the GNU Lesser General Public License.
-
-Copyright (C) 2005-2022 Julián Casadesús
-              2023-2025 guiv42, helge17
+Copyright (C) 2005-2022 Julián Casadesús, 2023-2025 guiv42, helge17 (TuxGuitar). The additions of this fork are by the TuxGuitarAdvanced contributors.
 
 ## Third party products
 
@@ -34,3 +65,4 @@ TuxGuitar includes the following third party products:
 * Gervill (Java Software Synthesizer)
 * iText (Free Java-PDF library): https://itextpdf.com/
 * Magic Sound Font v2.0 - Contributed by Dennis Deutschmann
+* TarsosDSP (pitch detection, GPL-3.0), used inside the audio engine of the practice mode
