@@ -30,6 +30,12 @@
 					<release>11</release>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<!-- JUnit 5 and the group filters need surefire 3 (older Maven releases default to 2.12.4) -->
+				<version>3.2.5</version>
+			</plugin>
 		</plugins>
 	</build>
 
