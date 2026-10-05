@@ -74,7 +74,10 @@ final class DatasetJudge {
 		session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
 		session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		session.onCommand(PracticeCommand.START);
-		List<AnalysisFrame> frames = OfflineAnalysis.analyze(audio.samples, audio.sampleRate, RecognitionSettings.defaults(), expected.length > 1, AttackCandidates.of(sequence));
+		// the recording starts on the note itself; a learner presses Start, then plays: half a second of silence first
+		float[] samples = new float[audio.samples.length + audio.sampleRate / 2];
+		System.arraycopy(audio.samples, 0, samples, audio.sampleRate / 2, audio.samples.length);
+		List<AnalysisFrame> frames = OfflineAnalysis.analyze(samples, audio.sampleRate, RecognitionSettings.defaults(), expected.length > 1, AttackCandidates.of(sequence));
 		for( AnalysisFrame frame : frames ) {
 			if( session.onFrame(frame).getAcceptedCount() > 0 ) {
 				return true;

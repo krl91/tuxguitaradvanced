@@ -44,7 +44,7 @@ public final class PolyphonicAcceptance {
 
 		/** Values chosen on the replay of the reference recording (spec 004 research R8). */
 		public static Parameters defaults() {
-			return new Parameters(0.30, 0.0, 0.7, 6, 0.0, 0.0, 220_000_000L);
+			return new Parameters(0.30, 0.10, 0.7, 6, 0.0, 0.0, 220_000_000L);
 		}
 	}
 
@@ -178,15 +178,52 @@ public final class PolyphonicAcceptance {
 				}
 			}
 		}
-		// Known limit (spec 004, research R8): a chord with one note missing cannot be told from the whole chord when
-		// that note is partly explained by the others' partials (G2 + B3: B3's partials 2 and 4 are G2's 5th and 10th),
-		// and the genuine chords of the reference recording show weak upper notes down to 6 % of the bass, so no
-		// balance threshold separates them: minBalance stays 0 and the replay test reports these cases.
-		boolean balanced = (weakest >= this.parameters.minBalance * strongest);
+		// Completeness of a chord (spec FR-003), measured on the public datasets (research R9): every note of the chord must
+		// show some growth of its own, minBalance (10 %) of the strongest, shared among the notes. On the reference recording the
+		// genuine chords show upper notes down to 6 % of the bass, hence the known-limit count in its replay test.
+		// Only the notes audio can tell from a lower note of the chord are compared (an octave or a twelfth is
+		// a partial of the lower note: spec FR-004); the more of them, the weaker the weakest even when all sound, so the threshold is shared among them.
+		boolean balanced = true;
+		int[] separable = separable(expected);
+		if( separable.length > 1 ) {
+			double weakestOwn = Double.MAX_VALUE;
+			double strongestOwn = 0.0;
+			for( int pitch : separable ) {
+				double amplitude = evidence.amplitudeOf(pitch);
+				weakestOwn = Math.min(weakestOwn, amplitude);
+				strongestOwn = Math.max(strongestOwn, amplitude);
+			}
+			double balance = this.parameters.minBalance / separable.length;
+			balanced = (weakestOwn >= balance * strongestOwn);
+		}
 		boolean heard = settled && inTune && dominant && balanced && (sum / evidence.getTotal() >= this.parameters.minShare)
 				&& (strongest >= this.parameters.minPeakRatio * evidence.getMaximum());
 		this.run = (heard ? this.run + 1 : (DECAY > 0 ? Math.max(0, this.run - DECAY) : 0));
 		return (this.run >= this.parameters.hops);
+	}
+
+	private static final int[] HARMONIC_INTERVALS = { 12, 19, 24, 28, 31, 34, 36 };
+
+	/** The expected pitches that are not a harmonic (octave, twelfth...) of a lower expected pitch. */
+	static int[] separable(int[] expected) {
+		int[] sorted = expected.clone();
+		java.util.Arrays.sort(sorted);
+		int[] kept = new int[sorted.length];
+		int count = 0;
+		for( int i = 0 ; i < sorted.length ; i ++ ) {
+			boolean harmonic = false;
+			for( int j = 0 ; j < i ; j ++ ) {
+				int distance = sorted[i] - sorted[j];
+				for( int interval : HARMONIC_INTERVALS ) {
+					harmonic |= (distance == interval);
+				}
+				harmonic |= (distance == 0);
+			}
+			if( !harmonic ) {
+				kept[count ++] = sorted[i];
+			}
+		}
+		return java.util.Arrays.copyOf(kept, count);
 	}
 
 	private static boolean contains(int[] pitches, int pitch) {

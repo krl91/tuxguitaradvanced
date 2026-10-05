@@ -190,6 +190,28 @@ public class DatasetBenchmarkTest {
 		}
 		Files.write(target.resolve("outcomes.csv"), csv, java.nio.charset.StandardCharsets.UTF_8);
 		assertTrue(all.stream().anyMatch(o -> o.status != Status.NOT_RUN), report);
+		// regression guards (measured 2026-10-05, research R9): a result must not fall below these shares
+		guard(all, "recognised when played", "single note", 0.97, report);
+		guard(all, "wrong note", null, 0.995, report);
+		guard(all, "recognised when played", "poly", 0.85, report);
+		guard(all, "incomplete chord", null, 0.90, report);
+	}
+
+	/** The share of OK among the run tests of one kind (test name prefix; label or dataset filter) must be at least {@code minimum}. */
+	private static void guard(List<Outcome> all, String testPrefix, String filter, double minimum, String report) {
+		long ok = 0;
+		long total = 0;
+		for( Outcome o : all ) {
+			boolean selected = o.test.startsWith(testPrefix) && o.status != Status.NOT_RUN
+					&& (filter == null || o.label.equals(filter) || (filter.equals("poly") && o.dataset.endsWith("poly")));
+			if( selected ) {
+				total ++;
+				ok += (o.status == Status.OK ? 1 : 0);
+			}
+		}
+		if( total >= 30 ) {
+			assertTrue((double) ok / total >= minimum, testPrefix + " " + filter + ": " + ok + "/" + total + " < " + minimum + "\n" + report);
+		}
 	}
 
 	private static String q(String value) {
