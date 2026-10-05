@@ -12,7 +12,9 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidate;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
+import app.tuxguitar.app.tools.custom.practice.session.AttackCandidates;
 import app.tuxguitar.app.tools.custom.practice.session.ChordMatcher;
+import app.tuxguitar.app.tools.custom.practice.session.PolyphonicAcceptance;
 import app.tuxguitar.app.tools.custom.practice.session.PassageSettings;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeParameters;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
@@ -444,6 +446,9 @@ public class PracticeWindow {
 				parameters.stabilityNanos(), parameters.articulationLatencyNanos(),
 				new ChordMatcher(parameters.chordParameters()), PassageSettings.getInstance(this.context).toPolicy());
 		this.session.setAssessment(this.assessment);
+		// notes and chords are also judged from what each attack adds to the sound (spec 004): works over strings that keep ringing
+		this.session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
+		this.engine.setAttackCandidates(AttackCandidates.of(sequence));
 		if( PracticeParameters.EARLY_STABILITY_ENABLED ) {
 			this.session.setEarlyStability(PracticeParameters.EARLY_STABILITY_MARGIN, PracticeParameters.EARLY_STABILITY_NANOS);
 			this.session.setExpectedPitchSink(this.engine::setExpectedPitches);
@@ -520,6 +525,7 @@ public class PracticeWindow {
 			this.engine.unsubscribe(this.frameListener);
 			this.engine.setSpectrumEnabled(false);
 			this.engine.setExpectedPitches(null);
+			this.engine.setAttackCandidates(null);
 			this.events.disconnect();
 			this.loop.stop();
 			this.loop = null;

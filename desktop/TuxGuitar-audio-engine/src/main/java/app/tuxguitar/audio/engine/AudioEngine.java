@@ -158,6 +158,11 @@ public final class AudioEngine {
 		this.analysisService.setExpectedPitches(midi);
 	}
 
+	/** The pitches the attack analysis explains the sound with (null: off); frames then carry {@link app.tuxguitar.audio.engine.analysis.AttackEvidence}. */
+	public void setAttackCandidates(int[] pitches) {
+		this.analysisService.setAttackCandidates(pitches);
+	}
+
 	public void unsubscribe(AnalysisService.Listener listener) {
 		this.analysisService.unsubscribe(listener);
 	}

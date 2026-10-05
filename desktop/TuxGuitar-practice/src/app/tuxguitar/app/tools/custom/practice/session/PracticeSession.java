@@ -82,6 +82,11 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private double earlyMargin = Double.POSITIVE_INFINITY;
 	private long earlyStabilityNanos;
 	private Consumer<int[]> expectedPitchSink;
+	/** Attack-difference acceptance (spec 004); null: the f0 and chord rules judge. */
+	private PolyphonicAcceptance polyphonic;
+	private static final long NEIGHBOUR_VETO_NANOS = 120L * 1_000_000L;
+	private static final double NEIGHBOUR_CONFIDENCE = 0.8;
+	private long neighbourHeardNanos = Long.MIN_VALUE;
 	private final long articulationLatencyNanos;
 	private final Map<Integer, Outcome> outcomes = new HashMap<Integer, Outcome>();
 	private final Set<PauseReason> pauseReasons = EnumSet.noneOf(PauseReason.class);
@@ -179,6 +184,14 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	}
 
 	/**
+	 * Judges notes and chords from the attack evidence of the frames (spec 004) instead of the single
+	 * pitch and the chord spectrum, whenever frames carry it; null goes back to those rules.
+	 */
+	public void setPolyphonicAcceptance(PolyphonicAcceptance acceptance) {
+		this.polyphonic = acceptance;
+	}
+
+	/**
 	 * Receives the pitches expected now (null when none) on every event change, from the session
 	 * thread; the practice window passes them to the audio engine so frames carry the evidence.
 	 */
@@ -192,15 +205,54 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			return;
 		}
 		PracticeEvent event = currentEvent();
-		int[] pitches = null;
-		if( this.state == State.RUNNING && event != null ) {
-			if( event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ) {
-				pitches = new int[] { event.getExpectedMidi() };
-			} else if( event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD ) {
-				pitches = event.getRequiredPitches();
-			}
+		this.expectedPitchSink.accept(this.state == State.RUNNING && event != null ? expectedPitchesOf(event) : null);
+	}
+
+	/**
+	 * A reliable single pitch a semitone or a whole tone from the expected note says that neighbour was
+	 * played: the attack evidence cannot tell such close pitches apart at low frequencies, the pitch
+	 * estimate can (spec 004). Anything else the estimate says (a ringing bass) is ignored.
+	 */
+	private boolean closeNeighbourHeard(AnalysisFrame frame, int expectedMidi) {
+		double f0 = frame.getF0Hz();
+		if( !Double.isFinite(f0) || f0 <= 0.0 || !(frame.getConfidence() >= NEIGHBOUR_CONFIDENCE) ) {
+			return false;
 		}
-		this.expectedPitchSink.accept(pitches);
+		double exact = 69.0 + 12.0 * Math.log(f0 / 440.0) / Math.log(2.0);
+		int midi = (int) Math.round(exact);
+		double cents = (exact - midi) * 100.0;
+		int distance = Math.abs(midi - expectedMidi);
+		return (distance == 1 || distance == 2) && Math.abs(cents) <= this.tolerance.getPracticeAcceptCents();
+	}
+
+	/** The fret of each pitch of {@link #expectedPitchesOf(PracticeEvent)} (0 when unknown). */
+	private static int[] expectedFretsOf(PracticeEvent event, int[] pitches) {
+		int[] frets = new int[pitches.length];
+		if( event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ) {
+			frets[0] = Math.max(0, event.getFret());
+			return frets;
+		}
+		for( int i = 0 ; i < pitches.length ; i ++ ) {
+			int fret = Integer.MAX_VALUE;
+			for( PracticeEvent.ChordNote note : event.getChordNotes() ) {
+				if( note.getMidi() == pitches[i] ) {
+					fret = Math.min(fret, note.getFret());
+				}
+			}
+			frets[i] = (fret == Integer.MAX_VALUE ? 0 : fret);
+		}
+		return frets;
+	}
+
+	/** The pitches to hear for a note or a chord; null for any other event. */
+	private static int[] expectedPitchesOf(PracticeEvent event) {
+		if( event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ) {
+			return new int[] { event.getExpectedMidi() };
+		}
+		if( event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD ) {
+			return event.getRequiredPitches();
+		}
+		return null;
 	}
 
 	private long requiredStabilityNanos(AnalysisFrame frame, PracticeEvent event) {
@@ -291,6 +343,23 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		// changed neither correctness nor latency on the real-guitar clips)
 		boolean usableLevel = (frame.getLevelState() == AnalysisFrame.LevelState.SUITABLE
 				|| frame.getLevelState() == AnalysisFrame.LevelState.TOO_HIGH);
+		if( this.polyphonic != null && frame.getAttackEvidence() != null ) {
+			if( event != null && (event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE || event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD) ) {
+				int[] pitches = expectedPitchesOf(event);
+				if( pitches.length == 1 && closeNeighbourHeard(frame, pitches[0]) ) {
+					this.neighbourHeardNanos = now;
+				}
+				// the pitch estimate is unreliable during the attack itself: the veto outlasts the reading
+				boolean vetoed = (this.neighbourHeardNanos != Long.MIN_VALUE && now - this.neighbourHeardNanos < NEIGHBOUR_VETO_NANOS);
+				// a quiet note is still a note (a low string under a loud one): only clipping, which distorts the spectrum, stops the judgement
+				if( this.polyphonic.offer((!vetoed && frame.getLevelState() != AnalysisFrame.LevelState.CLIPPING ? frame.getAttackEvidence() : null), now, pitches,
+						expectedFretsOf(event, pitches), this.tolerance) ) {
+					accept(event, now);
+					return snapshot();
+				}
+				// the single-pitch and chord rules keep judging too: they are the safe path for a clean single note (spec 004, SC-004)
+			}
+		}
 		if( event != null && event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ) {
 			onNoteFrame(frame, event, usableLevel);
 		} else if( event != null && event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD ) {
@@ -525,6 +594,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	}
 
 	private void accept(PracticeEvent event, long timestampNanos) {
+		this.neighbourHeardNanos = Long.MIN_VALUE;
 		this.outcomes.put(event.getSequenceIndex(), Outcome.ACCEPTED);
 		this.lastAccepted = event;
 		this.acceptedCount ++;
@@ -532,6 +602,9 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.chordFeedback = null;
 		this.armReferenceNanos = timestampNanos;
 		this.articulationArmed = false;
+		if( this.polyphonic != null ) {
+			this.polyphonic.rearm(timestampNanos);
+		}
 		setVerdict(Verdict.CORRECT, timestampNanos);
 		resetMatch();
 		advance();
@@ -564,6 +637,9 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private void disarm() {
 		this.articulationArmed = false;
 		this.armReferenceNanos = this.lastFrameNanos;
+		if( this.polyphonic != null ) {
+			this.polyphonic.rearmAtNextFrame();
+		}
 	}
 
 	/** Clears the per-event attempt state (single-note match, wrong-note run, chord run). */

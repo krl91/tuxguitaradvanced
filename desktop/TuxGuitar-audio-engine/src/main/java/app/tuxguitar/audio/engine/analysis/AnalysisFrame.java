@@ -26,6 +26,7 @@ public final class AnalysisFrame {
 	private final SpectrumFrame spectrum;
 	private final TargetEvidence targetEvidence;
 	private final TechniqueFeatures techniqueFeatures;
+	private final AttackEvidence attackEvidence;
 
 	/**
 	 * @param timestampNanos capture time of the hop end
@@ -52,6 +53,13 @@ public final class AnalysisFrame {
 	 */
 	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum,
 			TargetEvidence targetEvidence, TechniqueFeatures techniqueFeatures) {
+		this(timestampNanos, rmsDbfs, peakDbfs, clippedRatio, levelState, f0Hz, confidence, onset, spectrum, targetEvidence, techniqueFeatures, null);
+	}
+
+	/** @param attackEvidence what the hop added to the sound, explained by pitches, or null when not enabled (spec 004) */
+	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum,
+			TargetEvidence targetEvidence, TechniqueFeatures techniqueFeatures, AttackEvidence attackEvidence) {
+		this.attackEvidence = attackEvidence;
 		this.timestampNanos = timestampNanos;
 		this.rmsDbfs = rmsDbfs;
 		this.peakDbfs = peakDbfs;
@@ -63,6 +71,11 @@ public final class AnalysisFrame {
 		this.spectrum = spectrum;
 		this.targetEvidence = targetEvidence;
 		this.techniqueFeatures = techniqueFeatures;
+	}
+
+	/** What this hop added to the sound, explained by pitches; null unless attack candidates are set (spec 004). */
+	public AttackEvidence getAttackEvidence() {
+		return this.attackEvidence;
 	}
 
 	public long getTimestampNanos() {

@@ -60,6 +60,10 @@ public final class AnalysisService {
 	/** Applied to every hop before the analysis (gain, noise reduction); neutral unless set (spec 002). */
 	private final FrontEnd frontEnd = new FrontEnd();
 	private volatile int[] expectedPitches;
+	private volatile int[] attackCandidates;
+	private AttackAnalyzer attackAnalyzer;
+	private int[] attackAnalyzerCandidates;
+	private int attackAnalyzerRate;
 	private ExpectedPitchVerifier verifier;
 	private int verifierRate;
 	private boolean running;
@@ -171,6 +175,30 @@ public final class AnalysisService {
 		this.expectedPitches = (midi == null || midi.length == 0 ? null : midi.clone());
 	}
 
+	/**
+	 * The pitches the attack analysis explains the sound with (null or empty: off). While set, every
+	 * frame carries the {@link AttackEvidence}; the practice window passes the pitches of the track
+	 * and their neighbours (spec 004).
+	 */
+	public void setAttackCandidates(int[] pitches) {
+		this.attackCandidates = (pitches == null || pitches.length == 0 ? null : pitches.clone());
+	}
+
+	private AttackEvidence pushAttack(float[] hop) {
+		int[] candidates = this.attackCandidates;
+		if( candidates == null ) {
+			this.attackAnalyzer = null;
+			return null;
+		}
+		if( this.attackAnalyzer == null || this.attackAnalyzerCandidates != candidates || this.attackAnalyzerRate != this.configuration.sampleRate ) {
+			this.attackAnalyzer = new AttackAnalyzer(AttackAnalyzer.Parameters.defaults(), this.configuration.sampleRate, this.hopSize, candidates);
+			this.attackAnalyzerCandidates = candidates;
+			this.attackAnalyzerRate = this.configuration.sampleRate;
+		}
+		this.attackAnalyzer.push(hop, 0, this.hopSize);
+		return this.attackAnalyzer.analyze();
+	}
+
 	private void run() {
 		float[] window = new float[this.windowSize];
 		float[] hop = new float[this.hopSize];
@@ -190,6 +218,7 @@ public final class AnalysisService {
 				observedDroppedSamples = this.ringBuffer.getDroppedSampleCount();
 				this.configuration.articulationDetector.reset();
 				this.polyphonicAnalyzer = null;
+				this.attackAnalyzer = null;
 				this.frontEnd.configure(this.configuration.sampleRate, this.hopSize);
 				windowFill = 0;
 				hopFill = 0;
@@ -203,6 +232,7 @@ public final class AnalysisService {
 				if (this.polyphonicAnalyzer != null) {
 					this.polyphonicAnalyzer.reset();
 				}
+				this.attackAnalyzer = null;
 				windowFill = 0;
 				hopFill = 0;
 			}
@@ -229,9 +259,10 @@ public final class AnalysisService {
 			processedSamples += this.hopSize;
 			hopFill = 0;
 			pushSpectrum(hop);
+			AttackEvidence attack = pushAttack(hop);
 			if (windowFill == this.windowSize) {
 				long timestampNanos = baseNanos + processedSamples * 1_000_000_000L / this.configuration.sampleRate;
-				publish(analyze(window, timestampNanos));
+				publish(analyze(window, timestampNanos, attack));
 			}
 		}
 	}
@@ -247,7 +278,7 @@ public final class AnalysisService {
 		this.polyphonicAnalyzer.push(hop, 0, hop.length);
 	}
 
-	private AnalysisFrame analyze(float[] window, long timestampNanos) {
+	private AnalysisFrame analyze(float[] window, long timestampNanos, AttackEvidence attack) {
 		LevelMeasurement level = this.configuration.levelAnalyzer.analyze(window);
 		PitchEstimate pitch = this.configuration.pitchEstimator.estimate(window);
 		boolean onset = this.configuration.articulationDetector.process(window);
@@ -264,7 +295,7 @@ public final class AnalysisService {
 		return new AnalysisFrame(timestampNanos, level.getRmsDbfs(), level.getPeakDbfs(),
 				level.getClippedRatio(), level.getLevelState(),
 				pitch.isPitched() ? pitch.getF0Hz() : Double.NaN,
-				pitch.getProbability(), onset, spectrum, evidence, null);
+				pitch.getProbability(), onset, spectrum, evidence, null, attack);
 	}
 
 	private void publish(AnalysisFrame frame) {

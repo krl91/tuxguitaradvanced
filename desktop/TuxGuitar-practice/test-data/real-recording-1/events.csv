@@ -1,0 +1,43 @@
+index,time_s,source,expected
+0,0.488,attack,45 59
+1,0.774,tempo-fit,60
+2,1.074,attack,57
+3,1.382,attack,52
+4,1.678,attack,59
+5,1.786,tempo-fit,60
+6,1.894,tempo-fit,59
+7,1.985,attack,57
+8,2.287,attack,43 59
+9,2.862,attack,57
+10,3.199,attack,43
+11,3.512,attack,55
+12,3.796,attack,43
+13,4.133,attack,40 55
+14,4.714,attack,52
+15,5.033,attack,47
+16,5.312,attack,55
+17,5.634,tempo-fit,40
+18,5.939,attack,41 55
+19,6.241,tempo-fit,57
+20,6.583,attack,50
+21,7.163,attack,45
+22,7.744,attack,45 60
+23,8.368,tempo-fit,57
+24,8.649,attack,52
+25,8.951,attack,62
+26,9.265,attack,45 57
+27,9.555,attack,43 62
+28,10.199,attack,43
+29,10.494,tempo-fit,59
+30,10.809,attack,55
+31,11.088,attack,43 55
+32,11.389,attack,40 55
+33,12.005,attack,52
+34,12.289,attack,47
+35,12.603,attack,55
+36,12.924,tempo-fit,59
+37,13.206,attack,43 55
+38,13.833,attack,50
+39,14.139,tempo-fit,47
+40,14.443,tempo-fit,62
+41,14.721,attack,45
