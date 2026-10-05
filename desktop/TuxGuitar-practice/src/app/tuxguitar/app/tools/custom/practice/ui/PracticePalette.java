@@ -42,8 +42,6 @@ public class PracticePalette {
 	public interface Controller {
 		void post(PracticeCommand command);
 
-		void openTuner();
-
 		/** The Stop button: practice ends at once, without waiting behind queued analysis frames. */
 		void stop();
 
@@ -113,8 +111,7 @@ public class PracticePalette {
 		this.resumeButton = button(uiFactory, buttons, buttonsLayout, 2, "practice.resume", () -> this.controller.post(PracticeCommand.RESUME));
 		this.restartButton = button(uiFactory, buttons, buttonsLayout, 3, "practice.restart", () -> this.controller.post(PracticeCommand.RESTART));
 		UIButton stopButton = button(uiFactory, buttons, buttonsLayout, 4, "practice.stop", () -> this.controller.stop());
-		UIButton tuneButton = button(uiFactory, buttons, buttonsLayout, 5, "practice.tune-guitar", () -> this.controller.openTuner());
-		listenKeys(this.window, buttons, this.skipButton, this.resumeButton, this.restartButton, stopButton, tuneButton,
+		listenKeys(this.window, buttons, this.skipButton, this.resumeButton, this.restartButton, stopButton,
 				this.detectedLabel, this.statusLabel, this.outcomeLabel, this.passageLabel, this.inputLabel);
 
 		this.window.addDisposeListener(new UIDisposeListener() {

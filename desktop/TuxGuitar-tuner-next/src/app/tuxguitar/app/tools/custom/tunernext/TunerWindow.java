@@ -102,6 +102,11 @@ public class TunerWindow {
 			this.window.moveToTop();
 			return;
 		}
+		if( PracticeTunerContext.getInstance(this.context).getPracticeTrack() != null ) {
+			// Interactive Practice is open: both listen to the same input, so the tuner stays closed until it ends
+			app.tuxguitar.app.util.TGMessageDialogUtil.infoMessage(this.context, TuxGuitar.getProperty("tuner.tuner"), TuxGuitar.getProperty("tunernext.unavailable-during-practice"));
+			return;
+		}
 		this.engine = AudioEngine.getInstance(this.context);
 		this.engine.selectDefaultInputIfNone();
 		this.stringButtons.clear();

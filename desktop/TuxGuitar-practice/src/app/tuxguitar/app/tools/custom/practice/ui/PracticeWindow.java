@@ -103,6 +103,9 @@ public class PracticeWindow {
 	/** A one-click start is waiting for the input to become usable (see {@link QuickStart}). */
 	private boolean autoStart;
 	private boolean quickStartRequested;
+	/** False while a one-click start has not needed the preparation window (it exists but was never shown). */
+	private boolean windowShown;
+	private static final long QUICK_START_PATIENCE_MILLIS = 2500L;
 	/** The "starting at measure..." text, to which the quick-start waiting hint is added while it applies. */
 	private String startBase = "";
 	private AnalysisService.Listener frameListener;
@@ -115,10 +118,6 @@ public class PracticeWindow {
 		this.palette = new PracticePalette(context, new PracticePalette.Controller() {
 			public void post(PracticeCommand command) {
 				PracticeWindow.this.post(command);
-			}
-
-			public void openTuner() {
-				PracticeWindow.this.openTuner();
 			}
 
 			public void stop() {
@@ -204,9 +203,48 @@ public class PracticeWindow {
 		this.engine.acquire(CONSUMER_ID);
 		this.assessment = this.engine.getSelection().snapshot().getAssessment();
 
+		this.windowShown = false;
 		showPreparation();
-		TGDialogUtil.openDialog(this.window, TGDialogUtil.OPEN_STYLE_CENTER | TGDialogUtil.OPEN_STYLE_PACK);
+		if( this.autoStart ) {
+			// one click on the Practice button: straight to the practice, the configuration window only appears if the learner has to act
+			watchQuickStart();
+		} else {
+			showWindow();
+		}
 		this.plugin.windowStateChanged(this.context);
+	}
+
+	/** Shows the preparation window (once opened it is only hidden and shown again). */
+	private void showWindow() {
+		if( !isOpen() ) {
+			return;
+		}
+		if( !this.windowShown ) {
+			this.windowShown = true;
+			TGDialogUtil.openDialog(this.window, TGDialogUtil.OPEN_STYLE_CENTER | TGDialogUtil.OPEN_STYLE_PACK);
+		} else {
+			setVisible(this.window, true);
+			this.window.moveToTop();
+		}
+	}
+
+	/** A one-click start that cannot go on by itself (no usable input after a short wait) shows the window so the learner can choose the input. */
+	private void watchQuickStart() {
+		Thread watchdog = new Thread(() -> {
+			try {
+				Thread.sleep(QUICK_START_PATIENCE_MILLIS);
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
+				return;
+			}
+			TGSynchronizer.getInstance(this.context).executeLater(() -> {
+				if( isOpen() && !this.windowShown && this.session == null ) {
+					showWindow();
+				}
+			});
+		}, "practice-quick-start");
+		watchdog.setDaemon(true);
+		watchdog.start();
 	}
 
 	public void close() {
@@ -258,8 +296,7 @@ public class PracticeWindow {
 		createPassageSettings(uiFactory, panel, layout);
 
 		layout.set(startPanel, 13, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
-		button(uiFactory, startPanel, startLayout, 1, "practice.tune-guitar", () -> openTuner());
-		this.startButton = button(uiFactory, startPanel, startLayout, 2, "practice.start", () -> startSession());
+		this.startButton = button(uiFactory, startPanel, startLayout, 1, "practice.start", () -> startSession());
 		listenKeys(panel, this.tracks, this.passageMeasures, this.passageThreshold, startPanel, this.startButton);
 		return panel;
 	}
@@ -404,6 +441,9 @@ public class PracticeWindow {
 		}
 		this.palette.setInput(this.assessment);
 		this.levelPanel.setAssessment(this.assessment);
+		if( !this.windowShown && this.session == null && this.assessment.getStatus() == InputAssessment.Status.UNUSABLE ) {
+			showWindow();
+		}
 		AudioInputDescriptor input = snapshot.getInput();
 		boolean headphones = (input != null && input.getKind() != AudioInputDescriptor.Kind.INSTRUMENT);
 		this.headphoneLabel.setText(headphones ? TuxGuitar.getProperty("practice.headphones") : "");
@@ -486,10 +526,9 @@ public class PracticeWindow {
 			return;
 		}
 		teardownSession();
-		setVisible(this.window, true);
 		showPreparation();
+		showWindow();
 		refit();
-		this.window.moveToTop();
 	}
 
 	private void post(PracticeCommand command) {
@@ -506,10 +545,9 @@ public class PracticeWindow {
 		PracticeSession.State state = snapshot.getState();
 		if( state == PracticeSession.State.STOPPED ) {
 			teardownSession();
-			setVisible(this.window, true);
 			showPreparation();
+			showWindow();
 			refit();
-			this.window.moveToTop();
 			return;
 		}
 		this.palette.render(snapshot, this.assessment);
@@ -534,11 +572,6 @@ public class PracticeWindow {
 			this.frameListener = null;
 		}
 		this.palette.close();
-	}
-
-	/** Opens the tuner through its action id: no dependency on the tuner plugin (FR-047, FR-058). */
-	private void openTuner() {
-		new TGActionProcessor(this.context, "tuner.tuner").process();
 	}
 
 	/** Non-blocking warning when the tuner guides another tuning than the Practice Track (FR-062). */
