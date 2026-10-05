@@ -29,7 +29,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write   # create the draft release and attach the packages
 
 env:
   SWT_VERSION: '4.37'
@@ -38,7 +38,20 @@ env:
   RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
+  # The packages are attached to a draft release straight from each build job: no intermediate
+  # artifact storage (its quota was hit), the draft is published once all builds succeeded.
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft \
+            --target "$GITHUB_SHA" --title "TuxGuitarAdvanced $RELEASE_TAG" --generate-notes
+
   build-macos-arm64:
+    needs: create-release
     runs-on: macos-14   # Apple Silicon
     steps:
       - uses: actions/checkout@v5
@@ -72,14 +85,13 @@ jobs:
           # the app bundle carries the product name (it is also the top-level folder of the zip)
           mv "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app" TuxGuitarAdvanced.app
           ditto -c -k --sequesterRsrc --keepParent TuxGuitarAdvanced.app "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: package-macos-arm64
-          path: TuxGuitarAdvanced-*-macos-arm64.zip
-          if-no-files-found: error
-          retention-days: 1
+      - name: Attach the package to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-macos-arm64.zip --repo "$GITHUB_REPOSITORY" --clobber
 
   build-linux:
+    needs: create-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -107,14 +119,13 @@ jobs:
           # the top-level folder carries the product name
           mv "tuxguitar-${TG_VERSION}-linux-swt" TuxGuitarAdvanced
           tar -czf "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" TuxGuitarAdvanced
-      - uses: actions/upload-artifact@v4
-        with:
-          name: package-linux
-          path: TuxGuitarAdvanced-*-linux-*.tar.gz
-          if-no-files-found: error
-          retention-days: 1
+      - name: Attach the package to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-linux-*.tar.gz --repo "$GITHUB_REPOSITORY" --clobber
 
   build-windows:
+    needs: create-release
     runs-on: ubuntu-latest   # cross-compiled with Mingw-w64
     steps:
       - uses: actions/checkout@v5
@@ -140,30 +151,18 @@ jobs:
           cd desktop/build-scripts/tuxguitar-windows-swt-x86_64/target
           mv "tuxguitar-${TG_VERSION}-windows-swt-x86_64" TuxGuitarAdvanced
           zip -qr "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" TuxGuitarAdvanced
-      - uses: actions/upload-artifact@v4
-        with:
-          name: package-windows
-          path: TuxGuitarAdvanced-*-windows-*.zip
-          if-no-files-found: error
-          retention-days: 1
+      - name: Attach the package to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-windows-*.zip --repo "$GITHUB_REPOSITORY" --clobber
 
   release:
     needs: [build-macos-arm64, build-linux, build-windows]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # create the release and the tag
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-      - name: Create the GitHub Release
+      - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ls -lh dist
-          gh release create "$RELEASE_TAG" dist/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "TuxGuitarAdvanced $RELEASE_TAG" \
-            --generate-notes
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name'
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false
