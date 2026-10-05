@@ -77,6 +77,7 @@ jobs:
           name: package-macos-arm64
           path: TuxGuitarAdvanced-*-macos-arm64.zip
           if-no-files-found: error
+          retention-days: 1
 
   build-linux:
     runs-on: ubuntu-latest
@@ -111,6 +112,7 @@ jobs:
           name: package-linux
           path: TuxGuitarAdvanced-*-linux-*.tar.gz
           if-no-files-found: error
+          retention-days: 1
 
   build-windows:
     runs-on: ubuntu-latest   # cross-compiled with Mingw-w64
@@ -143,6 +145,7 @@ jobs:
           name: package-windows
           path: TuxGuitarAdvanced-*-windows-*.zip
           if-no-files-found: error
+          retention-days: 1
 
   release:
     needs: [build-macos-arm64, build-linux, build-windows]
