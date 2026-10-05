@@ -41,3 +41,6 @@ credentials*.json
 service-account*.json
 local.properties
 *.jnilib
+
+# local copies of third-party datasets (CC BY-NC-ND / BY-NC licences: never redistributed)
+/datasets/
