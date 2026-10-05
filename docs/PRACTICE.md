@@ -49,6 +49,8 @@ Settings (*Recognition settings* in the practice window): an optional **noise ga
 
 <img src="images/features/practice-settings.png" width="560" alt="The audio recognition page of the configuration">
 
+<img src="images/features/practice-settings-notes.png" width="560" alt="The note settings of the audio recognition page">
+
 
 Every setting has a recommended value and a *Restore* button. The ones you may want to change:
 

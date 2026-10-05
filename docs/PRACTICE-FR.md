@@ -49,6 +49,8 @@ Réglages (*Réglages de reconnaissance* dans la fenêtre de pratique) : un **no
 
 <img src="images/features/practice-settings.png" width="560" alt="La page Reconnaissance audio de la configuration">
 
+<img src="images/features/practice-settings-notes.png" width="560" alt="La catégorie « Pratique — notes » de la page Reconnaissance audio">
+
 
 Chaque réglage a une valeur recommandée et un bouton *Restaurer*. Ceux que vous pouvez vouloir changer :
 
