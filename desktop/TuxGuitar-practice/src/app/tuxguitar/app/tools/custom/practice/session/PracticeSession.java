@@ -121,6 +121,15 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private boolean articulationArmed;
 	/** Attack time of the onset that armed the current attempt. */
 	private long armTransientNanos;
+	/**
+	 * A new attack this soon after an acceptance is the learner playing faster than recognition follows (the acceptance comes about
+	 * 0.1 s after its attack and the evidence of that attack is ignored for 0.22 s: about 0.3 s between notes, research R11).
+	 */
+	private static final long SPEED_WINDOW_NANOS = 200L * 1_000_000L;
+	/** The limit is only shown when the note that followed has still not been recognised after this long. */
+	private static final long SPEED_SHOW_NANOS = 600L * 1_000_000L;
+	private long lastAcceptNanos = Long.MIN_VALUE;
+	private long speedHitNanos = Long.MIN_VALUE;
 	private Feedback feedback;
 	private PracticeEvent lastAccepted;
 	private PracticeEvent lastPassed;
@@ -353,6 +362,12 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			return snapshot();
 		}
 		long now = frame.getTimestampNanos();
+		if( frame.isOnset() && this.lastAcceptNanos != Long.MIN_VALUE ) {
+			long transient_ = now - this.articulationLatencyNanos;
+			if( transient_ > this.lastAcceptNanos - 20_000_000L && transient_ - this.lastAcceptNanos < SPEED_WINDOW_NANOS && this.speedHitNanos == Long.MIN_VALUE ) {
+				this.speedHitNanos = now;
+			}
+		}
 		if( frame.isOnset() && now - this.articulationLatencyNanos > this.armReferenceNanos ) {
 			if( !this.articulationArmed ) {
 				this.armTransientNanos = now - this.articulationLatencyNanos;
@@ -626,6 +641,8 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.lastPassed = null;
 		this.lastPassedOutcome = null;
 		this.pendingEvent = null;
+		this.lastAcceptNanos = Long.MIN_VALUE;
+		this.speedHitNanos = Long.MIN_VALUE;
 		this.pendingFrames.clear();
 		this.techniqueEvent = null;
 		this.techniqueResults = java.util.Collections.<TechniqueResult>emptyList();
@@ -728,6 +745,8 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			PracticeTrace.accepted(timestampNanos, event.getSequenceIndex());
 		}
 		this.neighbourHeardNanos = Long.MIN_VALUE;
+		this.lastAcceptNanos = timestampNanos;
+		this.speedHitNanos = Long.MIN_VALUE;
 		this.outcomes.put(event.getSequenceIndex(), Outcome.ACCEPTED);
 		this.lastAccepted = event;
 		this.acceptedCount ++;
@@ -799,7 +818,12 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		return new PracticeSnapshot(this.state, this.currentIndex, this.sequence.getEvents().size(), currentEvent(),
 				this.reading, this.pauseReasons, this.feedback, this.lastAccepted, this.lastPassed, this.lastPassedOutcome,
 				this.confidence, this.chordFeedback, this.verdict, passageStatus(), this.acceptedCount,
-				this.techniqueEvent, this.techniqueResults);
+				this.techniqueEvent, this.techniqueResults, speedLimit());
+	}
+
+	/** True when the learner struck a note faster than recognition follows and it is still waiting: shown as a limit, never as an error. */
+	private boolean speedLimit() {
+		return this.state == State.RUNNING && this.speedHitNanos != Long.MIN_VALUE && this.lastFrameNanos - this.speedHitNanos >= SPEED_SHOW_NANOS;
 	}
 
 	private PassageStatus passageStatus() {

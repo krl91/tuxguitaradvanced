@@ -56,6 +56,14 @@ public class IncompleteChordTest {
 	}
 
 	@Test
+	public void theNotesNotCheckedSeparatelyAreTheOnesTheAcceptanceRuleSkips() {
+		assertArrayEquals(new int[] { 57 }, PolyphonicAcceptance.notSeparable(CHORD));
+		assertArrayEquals(new int[] { 52, 64 }, PolyphonicAcceptance.notSeparable(new int[] { 40, 47, 52, 64 }));
+		assertArrayEquals(new int[0], PolyphonicAcceptance.notSeparable(new int[] { 40, 47, 55 }));
+		assertArrayEquals(new int[0], PolyphonicAcceptance.notSeparable(new int[] { 45, 45, 52 }), "the same pitch twice is one pitch, which is checked");
+	}
+
+	@Test
 	public void theCompleteChordIsAccepted() {
 		assertTrue(accepted(CHORD, evidence(CHORD, new double[] { LOUD, LOUD, LOUD })));
 	}

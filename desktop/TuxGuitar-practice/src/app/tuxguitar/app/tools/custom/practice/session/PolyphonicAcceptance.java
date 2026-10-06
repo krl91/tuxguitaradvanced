@@ -228,6 +228,21 @@ public final class PolyphonicAcceptance {
 		return java.util.Arrays.copyOf(kept, count);
 	}
 
+	/** The expected pitches audio cannot tell from the others (an octave or a harmonic of a lower expected pitch, or the same pitch): shown as "not checked separately", never as heard or missing (spec 004 FR-004). */
+	public static int[] notSeparable(int[] expected) {
+		int[] separable = separable(expected);
+		int[] result = new int[expected.length];
+		int count = 0;
+		int[] sorted = expected.clone();
+		java.util.Arrays.sort(sorted);
+		for( int pitch : sorted ) {
+			if( !contains(separable, pitch) && (count == 0 || result[count - 1] != pitch) ) {
+				result[count ++] = pitch;
+			}
+		}
+		return java.util.Arrays.copyOf(result, count);
+	}
+
 	private static boolean contains(int[] pitches, int pitch) {
 		for( int value : pitches ) {
 			if( value == pitch ) {

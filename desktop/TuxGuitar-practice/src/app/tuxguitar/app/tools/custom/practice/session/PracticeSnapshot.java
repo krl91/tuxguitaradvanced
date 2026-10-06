@@ -30,13 +30,15 @@ public final class PracticeSnapshot {
 	private final PassageStatus passageStatus;
 	private final int acceptedCount;
 	private final PracticeEvent techniqueEvent;
+	private final boolean speedLimit;
 	private final List<TechniqueResult> techniqueResults;
 
 	PracticeSnapshot(PracticeSession.State state, int currentIndex, int eventCount, PracticeEvent currentEvent,
 			PitchReading reading, Set<PracticeSession.PauseReason> pauseReasons, Feedback feedback,
 			PracticeEvent lastAccepted, PracticeEvent lastPassed, PracticeSession.Outcome lastPassedOutcome, double confidence,
 			ChordFeedback chordFeedback, PracticeSession.Verdict verdict, PassageStatus passageStatus, int acceptedCount,
-			PracticeEvent techniqueEvent, List<TechniqueResult> techniqueResults) {
+			PracticeEvent techniqueEvent, List<TechniqueResult> techniqueResults, boolean speedLimit) {
+		this.speedLimit = speedLimit;
 		this.techniqueEvent = techniqueEvent;
 		this.techniqueResults = techniqueResults;
 		this.acceptedCount = acceptedCount;
@@ -55,6 +57,14 @@ public final class PracticeSnapshot {
 		this.lastPassed = lastPassed;
 		this.lastPassedOutcome = lastPassedOutcome;
 		this.confidence = confidence;
+	}
+
+	/**
+	 * True when a note was struck faster than recognition follows (about 0.3 s after the previous one) and the expected note is still
+	 * waiting: a limit of the recognition to show as such, never as a mistake of the learner (spec 004 FR-008).
+	 */
+	public boolean isSpeedLimit() {
+		return this.speedLimit;
 	}
 
 	/** The event whose techniques {@link #getTechniqueResults()} judge (the last one whose note is over), or null. */

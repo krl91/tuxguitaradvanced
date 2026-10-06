@@ -6,7 +6,9 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.TechniqueResult;
 import app.tuxguitar.app.tools.custom.practice.session.ChordFeedback;
 import app.tuxguitar.app.tools.custom.practice.session.Feedback;
+import app.tuxguitar.app.tools.custom.practice.session.PolyphonicAcceptance;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
+import app.tuxguitar.app.tools.custom.practice.session.PracticeParameters;
 import app.tuxguitar.app.tools.custom.practice.session.PassageStatus;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeSession;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeSnapshot;
@@ -242,10 +244,18 @@ public class PracticePalette {
 		return text.length() == 0 ? " " : text.toString();
 	}
 
+	/** The measured closest spacing of followed notes, in seconds with one decimal, in the language of the application. */
+	static String speedLimitText() {
+		return String.format(java.util.Locale.getDefault(), "%.1f", PracticeParameters.MEASURED_SPEED_LIMIT_SECONDS);
+	}
+
 	/** The feedback line for the current event, or the session state when there is none to give. */
 	private String statusText(PracticeSnapshot snapshot) {
 		PracticeSession.State state = snapshot.getState();
 		PracticeEvent event = snapshot.getCurrentEvent();
+		if( state == PracticeSession.State.RUNNING && event != null && snapshot.isSpeedLimit() ) {
+			return TuxGuitar.getProperty("practice.speed-limit", new String[] { speedLimitText() });
+		}
 		if( state == PracticeSession.State.RUNNING && event != null ) {
 			switch( event.getKind() ) {
 				case EXPECTED_NOTE:
@@ -291,7 +301,11 @@ public class PracticePalette {
 				text = TuxGuitar.getProperty("practice.chord.waiting", new String[] { chord });
 				break;
 		}
-		if( feedback != null && feedback.getUnverifiable().length > 0 ) {
+		// the notes audio cannot tell from the others are the ones the acceptance rule itself does not check separately (spec 004 FR-004)
+		int[] notSeparable = PolyphonicAcceptance.notSeparable(event.getRequiredPitches());
+		if( notSeparable.length > 0 ) {
+			text += " " + TuxGuitar.getProperty("practice.chord.unverifiable", new String[] { names(notSeparable) });
+		} else if( feedback != null && feedback.getUnverifiable().length > 0 ) {
 			text += " " + TuxGuitar.getProperty("practice.chord.unverifiable", new String[] { names(feedback.getUnverifiable()) });
 		}
 		return text;

@@ -15,6 +15,15 @@ import app.tuxguitar.audio.engine.settings.RecognitionSettings;
  */
 public final class PracticeParameters {
 
+	/**
+	 * What recognition measured, shown to the learner without more precision than measured (spec 004 SC-003, FR-008): the delay between a
+	 * note and its recognition on the reference recording and on the benchmark clips (median 105 ms, 90th percentile 169-172 ms), and the
+	 * closest picked notes that are followed (about 0.3 s: research R11, note spacing benchmark).
+	 */
+	public static final long MEASURED_DELAY_MEDIAN_MILLIS = 105;
+	public static final long MEASURED_DELAY_P90_MILLIS = 172;
+	public static final double MEASURED_SPEED_LIMIT_SECONDS = 0.3;
+
 	/** One analysis hop at the reference rate, as practice has always computed it. */
 	public static final long HOP_NANOS = TarsosFastYinEstimator.DEFAULT_HOP_SIZE * 1_000_000_000L / 48000L;
 

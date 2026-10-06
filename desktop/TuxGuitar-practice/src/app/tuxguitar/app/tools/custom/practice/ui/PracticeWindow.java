@@ -85,6 +85,7 @@ public class PracticeWindow {
 	private InputSelectorPanel inputSelector;
 	private LevelPanel levelPanel;
 	private UILabel headphoneLabel;
+	private UILabel delayLabel;
 	private UIDropDownSelect<PracticeTrackCandidate> tracks;
 	private UILabel trackNotice;
 	private UILabel tuningLabel;
@@ -301,6 +302,9 @@ public class PracticeWindow {
 
 		layout.set(startPanel, 13, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.startButton = button(uiFactory, startPanel, startLayout, 1, "practice.start", () -> startSession());
+		// what recognition measured: said as measured, with no more precision (spec 004 T009, SC-003, FR-008)
+		this.delayLabel = label(uiFactory, panel, layout, 14);
+		this.delayLabel.setText(delayInfo());
 		listenKeys(panel, this.tracks, this.passageMeasures, this.passageThreshold, startPanel, this.startButton);
 		return panel;
 	}
@@ -453,6 +457,15 @@ public class PracticeWindow {
 		this.headphoneLabel.setText(headphones ? TuxGuitar.getProperty("practice.headphones") : "");
 		updateStartButton();
 		refit();
+	}
+
+	/** The measured delay and the closest notes that are followed, rounded so as not to claim more precision than measured. */
+	static String delayInfo() {
+		java.util.Locale locale = java.util.Locale.getDefault();
+		String typical = String.format(locale, "%.1f", Math.round(PracticeParameters.MEASURED_DELAY_MEDIAN_MILLIS / 100.0) / 10.0);
+		String most = String.format(locale, "%.1f", Math.ceil(PracticeParameters.MEASURED_DELAY_P90_MILLIS / 50.0) * 50.0 / 1000.0);
+		String closest = String.format(locale, "%.1f", PracticeParameters.MEASURED_SPEED_LIMIT_SECONDS);
+		return TuxGuitar.getProperty("practice.delay.info", new String[] { typical, most, closest });
 	}
 
 	private void updateStartButton() {
