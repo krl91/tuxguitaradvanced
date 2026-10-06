@@ -152,6 +152,49 @@ final class DatasetJudge {
 		return accepted;
 	}
 
+	/**
+	 * Like {@link #acceptedSteps}, with the time of each acceptance: seconds from the start of {@code audio} (a second of silence is added
+	 * before it, as for the other judgements), in the order of the steps; NaN for a step that was never accepted in its turn.
+	 */
+	static double[] acceptanceTimes(RecordedAudio audio, int[][] steps) {
+		return acceptanceTimes(audio, steps, PolyphonicAcceptance.Parameters.defaults());
+	}
+
+	/** Like {@link #acceptanceTimes(RecordedAudio, int[][])} with the given acceptance parameters (to measure what a setting would change). */
+	static double[] acceptanceTimes(RecordedAudio audio, int[][] steps, PolyphonicAcceptance.Parameters acceptance) {
+		SongFixture fixture = new SongFixture(1);
+		for( int step = 0 ; step < steps.length ; step ++ ) {
+			int[] strings = strings(steps[step]);
+			for( int i = 0 ; i < steps[step].length ; i ++ ) {
+				fixture.quarter(0, step, strings[i], steps[step][i] - OPEN_STRINGS[strings[i] - 1]);
+			}
+		}
+		PracticeSequence sequence = fixture.sequence();
+		PracticeTrackSelection selection = new PracticeTrackSelection(fixture.song,
+				PracticeTrackCandidates.evaluate(fixture.song, fixture.track()).getPreselected(), PracticeTunerContext.getInstance(new TGContext()));
+		selection.accept();
+		PracticeParameters parameters = PracticeParameters.of(RecognitionSettings.defaults());
+		PracticeSession session = new PracticeSession(selection, sequence, parameters.noteInterpreter(), parameters.tolerance(), parameters.stabilityNanos(),
+				parameters.articulationLatencyNanos(), new ChordMatcher(parameters.chordParameters()), null);
+		session.setPolyphonicAcceptance(new PolyphonicAcceptance(acceptance));
+		session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
+		session.onCommand(PracticeCommand.START);
+		int pad = audio.sampleRate / 2;
+		float[] samples = new float[audio.samples.length + pad];
+		System.arraycopy(audio.samples, 0, samples, pad, audio.samples.length);
+		List<AnalysisFrame> frames = OfflineAnalysis.analyze(samples, audio.sampleRate, RecognitionSettings.defaults(), false, AttackCandidates.of(sequence));
+		double[] times = new double[steps.length];
+		java.util.Arrays.fill(times, Double.NaN);
+		int accepted = 0;
+		for( AnalysisFrame frame : frames ) {
+			int now = session.onFrame(frame).getAcceptedCount();
+			while( accepted < now && accepted < times.length ) {
+				times[accepted ++] = frame.getTimestampNanos() / 1e9 - 0.5;
+			}
+		}
+		return times;
+	}
+
 	static List<Integer> list(int[] values) {
 		List<Integer> result = new ArrayList<Integer>();
 		for( int value : values ) {
