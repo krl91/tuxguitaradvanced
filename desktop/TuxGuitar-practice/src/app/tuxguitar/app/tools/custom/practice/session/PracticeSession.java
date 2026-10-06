@@ -129,6 +129,8 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	/** The limit is only shown when the note that followed has still not been recognised after this long. */
 	private static final long SPEED_SHOW_NANOS = 600L * 1_000_000L;
 	private long lastAcceptNanos = Long.MIN_VALUE;
+	/** The level the learner plays at, for the "input too weak for fast recognition" message (FR-015). */
+	private final InputQuality inputQuality = new InputQuality(PracticeParameters.WEAK_FAST_DBFS);
 	private long speedHitNanos = Long.MIN_VALUE;
 	private Feedback feedback;
 	private PracticeEvent lastAccepted;
@@ -358,6 +360,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.confidence = frame.getConfidence();
 		this.lastFrameNanos = frame.getTimestampNanos();
 		collectTechniqueFrame(frame);
+		this.inputQuality.offer(frame);
 		if( this.state != State.RUNNING ) {
 			return snapshot();
 		}
@@ -643,6 +646,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.pendingEvent = null;
 		this.lastAcceptNanos = Long.MIN_VALUE;
 		this.speedHitNanos = Long.MIN_VALUE;
+		this.inputQuality.reset();
 		this.pendingFrames.clear();
 		this.techniqueEvent = null;
 		this.techniqueResults = java.util.Collections.<TechniqueResult>emptyList();
@@ -818,7 +822,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		return new PracticeSnapshot(this.state, this.currentIndex, this.sequence.getEvents().size(), currentEvent(),
 				this.reading, this.pauseReasons, this.feedback, this.lastAccepted, this.lastPassed, this.lastPassedOutcome,
 				this.confidence, this.chordFeedback, this.verdict, passageStatus(), this.acceptedCount,
-				this.techniqueEvent, this.techniqueResults, speedLimit());
+				this.techniqueEvent, this.techniqueResults, speedLimit(), this.state == State.RUNNING && this.inputQuality.isPoor(), this.inputQuality.getPlayedLevelDbfs());
 	}
 
 	/** True when the learner struck a note faster than recognition follows and it is still waiting: shown as a limit, never as an error. */

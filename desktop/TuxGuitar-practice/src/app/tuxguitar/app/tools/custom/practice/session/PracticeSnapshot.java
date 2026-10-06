@@ -31,14 +31,18 @@ public final class PracticeSnapshot {
 	private final int acceptedCount;
 	private final PracticeEvent techniqueEvent;
 	private final boolean speedLimit;
+	private final boolean inputTooWeak;
+	private final double playedLevelDbfs;
 	private final List<TechniqueResult> techniqueResults;
 
 	PracticeSnapshot(PracticeSession.State state, int currentIndex, int eventCount, PracticeEvent currentEvent,
 			PitchReading reading, Set<PracticeSession.PauseReason> pauseReasons, Feedback feedback,
 			PracticeEvent lastAccepted, PracticeEvent lastPassed, PracticeSession.Outcome lastPassedOutcome, double confidence,
 			ChordFeedback chordFeedback, PracticeSession.Verdict verdict, PassageStatus passageStatus, int acceptedCount,
-			PracticeEvent techniqueEvent, List<TechniqueResult> techniqueResults, boolean speedLimit) {
+			PracticeEvent techniqueEvent, List<TechniqueResult> techniqueResults, boolean speedLimit, boolean inputTooWeak, double playedLevelDbfs) {
 		this.speedLimit = speedLimit;
+		this.inputTooWeak = inputTooWeak;
+		this.playedLevelDbfs = playedLevelDbfs;
 		this.techniqueEvent = techniqueEvent;
 		this.techniqueResults = techniqueResults;
 		this.acceptedCount = acceptedCount;
@@ -57,6 +61,19 @@ public final class PracticeSnapshot {
 		this.lastPassed = lastPassed;
 		this.lastPassedOutcome = lastPassedOutcome;
 		this.confidence = confidence;
+	}
+
+	/**
+	 * True when the notes the learner plays are too weak for reliable fast recognition (spec 002 FR-015): to be shown with what to do, never as
+	 * a mistake. Slow playing may still be recognised.
+	 */
+	public boolean isInputTooWeak() {
+		return this.inputTooWeak;
+	}
+
+	/** The median level of the last attacks in dBFS, or NaN while it is not known. */
+	public double getPlayedLevelDbfs() {
+		return this.playedLevelDbfs;
 	}
 
 	/**

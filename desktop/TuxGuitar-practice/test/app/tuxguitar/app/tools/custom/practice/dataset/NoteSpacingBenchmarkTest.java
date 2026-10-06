@@ -117,6 +117,11 @@ public class NoteSpacingBenchmarkTest {
 	}
 
 	static Result run(Triple triple, double spacing, PolyphonicAcceptance.Parameters acceptance) {
+		return run(triple, spacing, acceptance, a -> a);
+	}
+
+	/** @param condition applied to the mixed audio before it is judged (a level and noise, for the weak input measurement) */
+	static Result run(Triple triple, double spacing, PolyphonicAcceptance.Parameters acceptance, java.util.function.UnaryOperator<RecordedAudio> condition) {
 		RecordedAudio[] clips = new RecordedAudio[3];
 		for( int i = 0 ; i < 3 ; i ++ ) {
 			clips[i] = RecordedAudio.load(triple.notes[i].audio);
@@ -147,7 +152,7 @@ public class NoteSpacingBenchmarkTest {
 				mix[offset + k] += clips[i].samples[k];
 			}
 		}
-		RecordedAudio audio = RecordedAudio.of(mix, rate);
+		RecordedAudio audio = condition.apply(RecordedAudio.of(mix, rate));
 		int[][] steps = { triple.notes[0].played, triple.notes[1].played, triple.notes[2].played };
 		double[] times = DatasetJudge.acceptanceTimes(audio, steps, acceptance);
 		double[] delays = new double[3];

@@ -171,6 +171,9 @@ public class PracticePalette {
 		this.outcomeLabel.setText(lastOutcomeText(snapshot));
 		this.passageLabel.setText(passageText(snapshot.getPassageStatus()));
 		setInput(assessment);
+		if( snapshot.isInputTooWeak() ) {
+			this.inputLabel.setText(TuxGuitar.getProperty("practice.input.too-weak", new String[] { Long.toString(Math.round(snapshot.getPlayedLevelDbfs())) }));
+		}
 		this.skipButton.setEnabled(state == PracticeSession.State.RUNNING);
 		this.resumeButton.setEnabled(state == PracticeSession.State.READY_TO_RESUME);
 		this.restartButton.setEnabled(state == PracticeSession.State.COMPLETE);

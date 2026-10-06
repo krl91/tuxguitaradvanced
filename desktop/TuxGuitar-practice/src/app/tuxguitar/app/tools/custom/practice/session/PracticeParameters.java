@@ -24,6 +24,12 @@ public final class PracticeParameters {
 	public static final long MEASURED_DELAY_P90_MILLIS = 172;
 	public static final double MEASURED_SPEED_LIMIT_SECONDS = 0.3;
 
+	/**
+	 * The level the notes are played at (RMS of the strongest window after an attack, dBFS) below which fast recognition is not reliable (spec 002
+	 * FR-015): 100 % of three-note runs followed from -25, 95 % at -30, 80 to 90 % at -35, 10 % at -40 (research R3, weak input benchmark).
+	 */
+	public static final double WEAK_FAST_DBFS = -30.0;
+
 	/** One analysis hop at the reference rate, as practice has always computed it. */
 	public static final long HOP_NANOS = TarsosFastYinEstimator.DEFAULT_HOP_SIZE * 1_000_000_000L / 48000L;
 
