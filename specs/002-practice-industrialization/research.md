@@ -290,3 +290,42 @@ So the real limit of the default is **about 0.3 s between picked notes**, not th
 **The reference recording**: the four events that are less than 0.15 s from a neighbour (events 4 to 7: B3, C4, B3, A3, spaced 108, 108 and 91 ms) are the written hammer-on / pull-off run; two of them (events 5 and 6) have no pick attack in the recording at all (their times are tempo-fit, not attacks). The attack-difference method cannot see a note that has no attack, whatever the re-arm; legato is the subject of the technique detectors (spec 002, Phase 7). **42 of 42 is therefore not reachable on this recording by this method**, and SC-001 is not changed here.
 
 **Decision of the owner (2026-10-06): the limit of about 0.3 s between picked notes is validated as a provisional measured limit, not as a final goal; the re-arm is not reduced globally until the risk of counting one attack twice is solved; hammer-ons and pull-offs without a new attack belong to the technique-recognition phase.** The statement shown to the learner is: "about 0.3 s between picked notes (about 3 notes per second); faster runs are not followed, Practice waits and never marks them wrong". Optional, to be decided separately: a shorter re-arm of 120 to 160 ms (the limit would become about 0.15 to 0.2 s) at the price of 1 in 240 repeated pitches counted twice.
+
+## R3 closing — fast passages, weak input and the targets SC-002 to SC-004 (T050, T051, T054, 2026-10-06)
+
+**Data**: IDMT-SMT-Guitar V2 dataset 1, plain single notes (CC BY-NC-ND 4.0, outside the repository), real notes mixed so that each rings under the next; judged by the real practice session. Reports: `benchmark/fast-passages-2026-10-06.txt` (`FastPassageBenchmarkTest`, revision `4c5b739a2`), `benchmark/weak-input-2026-10-06.txt` (`WeakInputBenchmarkTest`), `benchmark/builtin-mic-latency.csv` (T004). The T005 baseline (`benchmark/baseline.md`) measured the single-note pitch rule on the built-in microphone clips, not the session on fast passages: there is no earlier figure to compare with, these are the first.
+
+**Fast passages** (four notes in order, 236 passages of 4 guitars; notes recognised in their turn / passages followed in full; wrong last note accepted):
+
+| Rate | different pitches | the same pitch four times | semitone neighbours alternating |
+|---|---|---|---|
+| 4 / s (250 ms) | 67.2 % / 48.8 % ; 0 of 80 | 91.9 % / 80.0 % ; 0 of 80 | 79.9 % / 55.3 % ; 0 of 76 |
+| 6 / s | 30.6 % / 0 % ; 0 of 80 | 59.4 % / 1.3 % ; 0 of 80 | 50.3 % / 0 % ; 0 of 76 |
+| 8 / s (125 ms) | 24.7 % / 0 % ; 0 of 80 | 49.7 % / 0 % ; 0 of 80 | 44.4 % / 0 % ; 0 of 76 |
+| 10 / s | 24.1 % / 0 % ; 0 of 80 | 47.2 % / 0 % ; 0 of 80 | 43.1 % / 0 % ; 0 of 76 |
+| 12 / s (83 ms) | 23.8 % / 0 % ; 0 of 80 | 44.4 % / 0 % ; 0 of 80 | 36.5 % / 0 % ; 0 of 76 |
+
+Delay of a recognised note: median 107 to 165 ms, 95th percentile 113 to 190 ms for different pitches (up to 430 ms for repeats and neighbours).
+
+**Comparison with the targets, none changed here (T054)**:
+
+| Target | Measured | Met |
+|---|---|---|
+| SC-002: at least 95 % of the notes recognised at 8 notes per second, 90 % at 12 | 24.7 % at 8 / s, 23.8 % at 12 / s (different pitches) | **no** |
+| SC-002: false accepts under 1 % | 0 of 80, 0 of 76 at every rate | yes |
+| SC-003: median delay under 150 ms, 95th percentile under 250 ms | median 107 ms, 95th percentile 113 to 190 ms for the notes recognised (built-in microphone single notes: p50 171 ms, p95 288 ms with the 20-frame pitch rule) | yes for the session on real notes, **no** for the microphone single-note rule at p95 |
+| SC-004: identical repeats at 8 notes per second separated in at least 95 % of the passages | 0 % of the passages followed in full, 49.7 % of the notes | **no** |
+
+The cause is the one of research R11: after each acceptance the evidence of that attack is ignored for 220 ms, and the owner (2026-10-06) keeps that setting until the risk of counting one attack twice is solved. **Proposal of revised targets, for the owner's approval** (nothing applied): SC-002 at 3 notes per second (about 0.33 s) at least 90 % of the notes recognised and under 1 % false accepts (measured today: 90.6 % of three-note runs followed in full at 0.35 s, 0 false accepts); SC-004 at 4 notes per second at least 80 % of the identical repeats followed in full (measured 80.0 %); the faster targets stay as the goal of the new method of T007 and of the re-arm work, not as a promise.
+
+**Weak input (T050, FR-015)**. Real notes scaled so that the strongest 2048-sample window reaches a level, with white room noise added; the share recognised:
+
+| Signal level | one note, no noise | one note, noise -40 dBFS | three notes 0.35 s apart, no noise | three notes 0.35 s apart, noise -40 dBFS |
+|---|---|---|---|---|
+| -25 dBFS | 100 % | 100 % | 100 % | 100 % |
+| -30 dBFS | 100 % | 96 % | 95 % | 95 % |
+| -35 dBFS | 100 % | 100 % | 80 % | 85 % |
+| -40 dBFS | 96 % | 100 % | 10 % | 40 % |
+| -45 dBFS | 0 % | 0 % | 0 % | 0 % |
+
+The level the learner plays at decides, and the 100 % to 95 % to 80 % slope for runs starts at -30 dBFS; white noise up to -40 dBFS did not change the result measurably (it is not a criterion, and the noise floor and the evidence margin did not discriminate in this data). The warning therefore follows the level the notes are played at (median of the strongest level in the 200 ms after each of the last three attacks, over the last 8 s) and appears below **-30 dBFS** (`PracticeParameters.WEAK_FAST_DBFS`), with what to do (raise the gain, play closer). Limits of this measurement: 48 notes of 4 guitars and 20 triples, white noise only (no hum, no room reverberation), one microphone type through the dataset.
