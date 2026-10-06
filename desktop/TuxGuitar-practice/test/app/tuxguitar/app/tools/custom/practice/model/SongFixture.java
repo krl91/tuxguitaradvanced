@@ -71,6 +71,59 @@ public final class SongFixture {
 	}
 
 	/** Adds a note at {@code quarterOffset} quarters into the measure; returns it for effects. */
+	// ---------------------------------------------------------------- builders for the situations the functional tests need (spec 002 T129)
+
+	/**
+	 * A hammer-on or a pull-off: {@code fromFret} on {@code string} carrying the legato mark, then {@code toFret} on the same string one
+	 * quarter later (the destination, higher for a hammer-on, lower for a pull-off). Returns the destination note.
+	 */
+	public TGNote legatoPair(int measureIndex, int quarterOffset, int string, int fromFret, int toFret) {
+		quarter(measureIndex, quarterOffset, string, fromFret).getEffect().setHammer(true);
+		return quarter(measureIndex, quarterOffset + 1, string, toFret);
+	}
+
+	/** A chord strum: the notes of {@code strings[i]} at {@code frets[i]}, all on one beat of one quarter. Returns the notes in order. */
+	public TGNote[] chord(int measureIndex, int quarterOffset, int[] strings, int[] frets) {
+		TGNote[] notes = new TGNote[strings.length];
+		for( int i = 0 ; i < strings.length ; i ++ ) {
+			notes[i] = quarter(measureIndex, quarterOffset, strings[i], frets[i]);
+		}
+		return notes;
+	}
+
+	/** A note bent up by {@code semitones} (whole numbers, at most 12): the pitch rises over the first half of the note and holds. */
+	public TGNote bend(int measureIndex, int quarterOffset, int string, int fret, int semitones) {
+		TGNote note = quarter(measureIndex, quarterOffset, string, fret);
+		app.tuxguitar.song.models.effects.TGEffectBend bend = this.factory.newEffectBend();
+		bend.addPoint(0, 0);
+		bend.addPoint(app.tuxguitar.song.models.effects.TGEffectBend.MAX_POSITION_LENGTH / 2, semitones * app.tuxguitar.song.models.effects.TGEffectBend.SEMITONE_LENGTH);
+		bend.addPoint(app.tuxguitar.song.models.effects.TGEffectBend.MAX_POSITION_LENGTH, semitones * app.tuxguitar.song.models.effects.TGEffectBend.SEMITONE_LENGTH);
+		note.getEffect().setBend(bend);
+		return note;
+	}
+
+	/** A natural harmonic on the given string and fret (the sounding pitch is not the fretted one). */
+	public TGNote naturalHarmonic(int measureIndex, int quarterOffset, int string, int fret) {
+		TGNote note = quarter(measureIndex, quarterOffset, string, fret);
+		app.tuxguitar.song.models.effects.TGEffectHarmonic harmonic = this.factory.newEffectHarmonic();
+		harmonic.setType(app.tuxguitar.song.models.effects.TGEffectHarmonic.TYPE_NATURAL);
+		note.getEffect().setHarmonic(harmonic);
+		return note;
+	}
+
+	/** The tempo (quarters per minute) of a measure and of the following ones until another change. */
+	public void tempoChange(int measureIndex, int quartersPerMinute) {
+		for( int i = measureIndex ; i < this.song.countMeasureHeaders() ; i ++ ) {
+			header(i).getTempo().setQuarterValue(quartersPerMinute);
+		}
+	}
+
+	/** A repeated section: the repeat opens at {@code firstMeasure} and closes at {@code lastMeasure}, played {@code times} times in all. */
+	public void repeat(int firstMeasure, int lastMeasure, int times) {
+		header(firstMeasure).setRepeatOpen(true);
+		header(lastMeasure).setRepeatClose(times - 1);
+	}
+
 	TGNote note(int measureIndex, int quarterOffset, int voice, int string, int fret, int durationValue) {
 		return note(track(), measureIndex, quarterOffset, voice, string, fret, durationValue);
 	}
