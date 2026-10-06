@@ -316,7 +316,7 @@ Delay of a recognised note: median 107 to 165 ms, 95th percentile 113 to 190 ms 
 | SC-003: median delay under 150 ms, 95th percentile under 250 ms | median 107 ms, 95th percentile 113 to 190 ms for the notes recognised (built-in microphone single notes: p50 171 ms, p95 288 ms with the 20-frame pitch rule) | yes for the session on real notes, **no** for the microphone single-note rule at p95 |
 | SC-004: identical repeats at 8 notes per second separated in at least 95 % of the passages | 0 % of the passages followed in full, 49.7 % of the notes | **no** |
 
-The cause is the one of research R11: after each acceptance the evidence of that attack is ignored for 220 ms, and the owner (2026-10-06) keeps that setting until the risk of counting one attack twice is solved. **Proposal of revised targets, for the owner's approval** (nothing applied): SC-002 at 3 notes per second (about 0.33 s) at least 90 % of the notes recognised and under 1 % false accepts (measured today: 90.6 % of three-note runs followed in full at 0.35 s, 0 false accepts); SC-004 at 4 notes per second at least 80 % of the identical repeats followed in full (measured 80.0 %); the faster targets stay as the goal of the new method of T007 and of the re-arm work, not as a promise.
+The cause is the one of research R11: after each acceptance the evidence of that attack is ignored for 220 ms, and the owner (2026-10-06) keeps that setting until the risk of counting one attack twice is solved. **Decision of the owner (2026-10-06): SC-002 and SC-004 keep their original values as product goals not yet met; the figures below are documented as the current measured performance, not as new requirements.** Figures measured today and first proposed as revised targets (not adopted): SC-002 at 3 notes per second (about 0.33 s) at least 90 % of the notes recognised and under 1 % false accepts (measured today: 90.6 % of three-note runs followed in full at 0.35 s, 0 false accepts); SC-004 at 4 notes per second at least 80 % of the identical repeats followed in full (measured 80.0 %); the faster targets stay as the goal of the new method of T007 and of the re-arm work, not as a promise.
 
 **Weak input (T050, FR-015)**. Real notes scaled so that the strongest 2048-sample window reaches a level, with white room noise added; the share recognised:
 
@@ -329,3 +329,20 @@ The cause is the one of research R11: after each acceptance the evidence of that
 | -45 dBFS | 0 % | 0 % | 0 % | 0 % |
 
 The level the learner plays at decides, and the 100 % to 95 % to 80 % slope for runs starts at -30 dBFS; white noise up to -40 dBFS did not change the result measurably (it is not a criterion, and the noise floor and the evidence margin did not discriminate in this data). The warning therefore follows the level the notes are played at (median of the strongest level in the 200 ms after each of the last three attacks, over the last 8 s) and appears below **-30 dBFS** (`PracticeParameters.WEAK_FAST_DBFS`), with what to do (raise the gain, play closer). Limits of this measurement: 48 notes of 4 guitars and 20 triples, white noise only (no hum, no room reverberation), one microphone type through the dataset.
+
+## R12 — Weak and noisy input through the front end (T135, 2026-10-06)
+
+`WeakInputBenchmarkTest#weakAndNoisyNotesThroughTheFrontEnd` (`benchmark/weak-input-frontend-2026-10-06.txt`): 48 real notes (IDMT-SMT-Guitar dataset 1, outside the repository) at a weak level with white noise added, through the real input front end (gain, noise gate, spectral subtraction). Share recognised:
+
+| Condition | -45 dBFS | -40 dBFS | -35 dBFS |
+|---|---|---|---|
+| no front end, no noise | 0 % | 96 % | 100 % |
+| gain +6 dB, noise -50 dBFS | **100 %** | 98 % | 100 % |
+| gain +12 dB, noise -50 dBFS | 100 % | 98 % | 100 % |
+| gate, noise -50 dBFS | 0 % | 98 % | 100 % |
+| gate + subtraction, noise -50 dBFS | 0 % | 98 % | 100 % |
+| gain +12 dB + gate + subtraction, noise -50 dBFS | 10 % | 98 % | 100 % |
+| gain +12 dB, noise -40 dBFS | 75 % | 100 % | 100 % |
+| gain +12 dB + gate + subtraction, noise -40 dBFS | **0 %** | **0 %** | **10 %** |
+
+Raising the input gain is the remedy for a weak input and the advice of the warning (T050) is right: +6 dB takes the notes at -45 dBFS from 0 % to 100 %. The noise gate and the spectral subtraction do **not** help weak notes, and with strong noise (signal-to-noise ratio of 0 dB or worse, -40 dBFS noise) they remove the notes: 0 % to 10 % recognised where the gain alone gives 75 to 100 %. This agrees with the defaults (noise reduction off, research R3 / T042); it also says the option must not be recommended for a weak and noisy input. Limits: white noise only, 48 notes of 4 guitars, the gate learning from 1.5 s of the same noise before the notes (a learner who presses Start and waits).

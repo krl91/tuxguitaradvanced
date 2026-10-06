@@ -125,4 +125,83 @@ public class WeakInputBenchmarkTest {
 		Files.write(target.resolve("weak-input-report.txt"), report.getBytes(StandardCharsets.UTF_8));
 		assertTrue(report.length() > 0);
 	}
+
+	/** The same weak notes through the input front end the application applies before the analysis (gain, then optionally the noise gate and subtraction). */
+	static RecordedAudio throughFrontEnd(RecordedAudio audio, double gainDb, boolean noiseReduction, boolean subtraction, double noiseDb, long seed) {
+		int rate = audio.sampleRate;
+		// the gate learns the background noise from the start of the input: 1.5 s of the same noise first (the learner presses Start, then plays)
+		int lead = (int) (1.5 * rate);
+		float[] samples = new float[lead + audio.samples.length];
+		Random random = new Random(seed + 5);
+		double noise = Math.pow(10.0, noiseDb / 20.0);
+		for( int i = 0 ; i < lead ; i ++ ) {
+			samples[i] = (float) (noise * random.nextGaussian());
+		}
+		System.arraycopy(audio.samples, 0, samples, lead, audio.samples.length);
+		app.tuxguitar.audio.engine.frontend.FrontEnd frontEnd = new app.tuxguitar.audio.engine.frontend.FrontEnd();
+		frontEnd.configure(rate, 256);
+		frontEnd.getGain().setMultiplier(Math.pow(10.0, gainDb / 20.0));
+		frontEnd.setNoiseReduction(noiseReduction);
+		frontEnd.setSubtraction(subtraction);
+		float[] hop = new float[256];
+		for( int start = 0 ; start + 256 <= samples.length ; start += 256 ) {
+			System.arraycopy(samples, start, hop, 0, 256);
+			frontEnd.process(hop, 256);
+			System.arraycopy(hop, 0, samples, start, 256);
+		}
+		return RecordedAudio.of(samples, rate);
+	}
+
+	/** Spec 002 T135: what raising the input gain, and the noise gate and subtraction, do for weak and noisy notes (the remedy the warning proposes). */
+	@Test
+	public void weakAndNoisyNotesThroughTheFrontEnd() throws IOException {
+		Path root = Paths.get(System.getProperty("tuxguitar.datasets", System.getProperty("user.home") + "/tuxguitar-datasets"));
+		List<DatasetCase> singles = DatasetLoaders.idmtGuitar(root, 12).stream().filter(c -> c.kind == DatasetCase.Kind.SINGLE_NOTE && c.played[0] >= 40 && c.played[0] <= 86).collect(Collectors.toList());
+		assumeTrue(!singles.isEmpty(), "IDMT-SMT-Guitar dataset 1 not found under " + root.toAbsolutePath());
+		StringBuilder text = new StringBuilder();
+		text.append("WEAK AND NOISY NOTES THROUGH THE INPUT FRONT END (spec 002 T135): share of ").append(singles.size()).append(" real notes recognised\n");
+		text.append("Data: IDMT-SMT-Guitar V2 dataset 1, plain single notes (CC BY-NC-ND 4.0, kept outside the repository); level = RMS of the strongest 2048-sample window before the front end, white noise added before it; the gain is the application's input gain (-6 to +18 dB).\n\n");
+		text.append(String.format("%-34s %12s %12s %12s%n", "condition", "-45 dBFS", "-40 dBFS", "-35 dBFS"));
+		double[] levels = { -45, -40, -35 };
+		Object[][] conditions = {
+				{ "no front end, no noise", 0.0, false, false, null },
+				{ "gain +0 dB, noise -50 dBFS", 0.0, false, false, -50.0 },
+				{ "gain +6 dB, noise -50 dBFS", 6.0, false, false, -50.0 },
+				{ "gain +12 dB, noise -50 dBFS", 12.0, false, false, -50.0 },
+				{ "gain +18 dB, noise -50 dBFS", 18.0, false, false, -50.0 },
+				{ "gate, noise -50 dBFS", 0.0, true, false, -50.0 },
+				{ "gate + subtraction, noise -50 dBFS", 0.0, true, true, -50.0 },
+				{ "gain +12 dB + gate + subtraction", 12.0, true, true, -50.0 },
+				{ "gain +12 dB, noise -40 dBFS", 12.0, false, false, -40.0 },
+				{ "gain +12 dB + gate + subtraction, noise -40 dBFS", 12.0, true, true, -40.0 } };
+		for( Object[] condition : conditions ) {
+			text.append(String.format("%-34s", condition[0]));
+			for( double level : levels ) {
+				AtomicInteger ok = new AtomicInteger();
+				AtomicInteger total = new AtomicInteger();
+				Double noise = (Double) condition[4];
+				singles.parallelStream().forEach(c -> {
+					RecordedAudio clip = RecordedAudio.load(c.audio);
+					if( clip == null ) {
+						return;
+					}
+					total.incrementAndGet();
+					RecordedAudio weak = condition(clip, level, noise, 31);
+					RecordedAudio processed = (noise == null && (Double) condition[1] == 0.0 && !(Boolean) condition[2]) ? weak
+							: throughFrontEnd(weak, (Double) condition[1], (Boolean) condition[2], (Boolean) condition[3], noise == null ? -90.0 : noise, 31);
+					if( DatasetJudge.accepts(processed, c.played) ) {
+						ok.incrementAndGet();
+					}
+				});
+				text.append(String.format(java.util.Locale.ROOT, "%11.0f%%", 100.0 * ok.get() / Math.max(1, total.get())));
+			}
+			text.append("\n");
+		}
+		String report = text.toString();
+		System.out.println(report);
+		Path target = Paths.get("target/dataset-benchmark");
+		Files.createDirectories(target);
+		Files.write(target.resolve("weak-input-frontend-report.txt"), report.getBytes(StandardCharsets.UTF_8));
+		assertTrue(report.length() > 0);
+	}
 }
