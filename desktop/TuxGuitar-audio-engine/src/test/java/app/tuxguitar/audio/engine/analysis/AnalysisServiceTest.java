@@ -9,6 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
@@ -96,42 +97,99 @@ public class AnalysisServiceTest {
 		}
 	}
 
-	@Test
+	/** Frames made of {@code windowSize + HOPS * hopSize} samples: the window fills once, then one frame per hop. */
+	private static final int HOPS = 6;
+	private static final int FRAMES = HOPS + 1;
+	/** Only an upper bound against a hung worker: the tests wait on frames, never on time. */
+	private static final long LIMIT_SECONDS = 10;
+
+	/**
+	 * The expected pitches are read by the worker for each frame it computes, so a change applies to the
+	 * samples written after it. The test therefore changes them only once the first batch has been entirely
+	 * consumed (every one of its frames received): frames of a batch left over in the buffer would be computed
+	 * with whichever pitches are set at that moment, which is not what the test is about. Waiting on all the
+	 * frames of the batch, not on a delay, makes the outcome the same on any machine.
+	 */
+	@RepeatedTest(20)
 	public void framesCarryEvidenceOnlyWhileExpectedPitchesAreSet() throws InterruptedException {
 		TGContext context = new TGContext();
 		TGThreadManager.getInstance(context).setThreadHandler(new TGMultiThreadHandler());
 		try {
 			int sampleRate = 44100;
-			float[] samples = SyntheticSignals.karplusStrong(SyntheticSignals.midiFrequency(52), sampleRate, 2048 + 6 * 256, 5L);
+			float[] samples = SyntheticSignals.karplusStrong(SyntheticSignals.midiFrequency(52), sampleRate, 2048 + HOPS * 256, 5L);
 			SampleRingBuffer buffer = new SampleRingBuffer(2 * samples.length);
 			buffer.write(samples, 0, samples.length);
 			AnalysisService service = new AnalysisService(context, buffer, new LevelAnalyzer(-80.0, -1.0, 0.99, 0.1),
 					window -> new PitchEstimate(164.8, 1.0, true), sampleRate, 2048, 256);
 			service.setExpectedPitches(new int[] { 52 });
+
 			List<AnalysisFrame> frames = new CopyOnWriteArrayList<AnalysisFrame>();
-			CountDownLatch latch = new CountDownLatch(3);
+			CountDownLatch firstBatch = new CountDownLatch(FRAMES);
 			AnalysisService.Listener listener = frame -> {
 				frames.add(frame);
-				latch.countDown();
+				firstBatch.countDown();
 			};
 			service.subscribe(listener);
-			assertTrue(latch.await(2, TimeUnit.SECONDS));
+			assertTrue(firstBatch.await(LIMIT_SECONDS, TimeUnit.SECONDS));
 			service.unsubscribe(listener);
-			assertTrue(frames.get(0).getTargetEvidence() != null);
-			assertTrue(frames.get(0).getTargetEvidence().marginOver(52) > 0.2);
+			// the buffer is empty now: nothing computed with the old pitches can still arrive
+			assertEquals(FRAMES, frames.size());
+			assertEquals(0, buffer.availableToRead());
+			for (AnalysisFrame frame : frames) {
+				assertTrue(frame.getTargetEvidence() != null);
+				assertTrue(frame.getTargetEvidence().marginOver(52) > 0.2);
+			}
 
 			service.setExpectedPitches(null);
 			buffer.write(samples, 0, samples.length);
-			CountDownLatch more = new CountDownLatch(2);
 			List<AnalysisFrame> later = new CopyOnWriteArrayList<AnalysisFrame>();
+			CountDownLatch secondBatch = new CountDownLatch(FRAMES);
 			AnalysisService.Listener second = frame -> {
 				later.add(frame);
-				more.countDown();
+				secondBatch.countDown();
 			};
 			service.subscribe(second);
-			assertTrue(more.await(2, TimeUnit.SECONDS));
+			assertTrue(secondBatch.await(LIMIT_SECONDS, TimeUnit.SECONDS));
 			service.unsubscribe(second);
-			assertTrue(later.get(0).getTargetEvidence() == null);
+			for (AnalysisFrame frame : later) {
+				assertTrue(frame.getTargetEvidence() == null);
+			}
+		} finally {
+			TGThreadManager.getInstance(context).dispose();
+		}
+	}
+
+	/**
+	 * Pitches set while the worker is already running and idle (empty buffer) apply to every frame of the
+	 * samples written after them: the worker reads them when it computes each frame, so there is no frame
+	 * computed with the previous state once the buffer was empty at the time of the change.
+	 */
+	@RepeatedTest(20)
+	public void pitchesSetOnARunningIdleWorkerApplyToEveryFrameWrittenAfterwards() throws InterruptedException {
+		TGContext context = new TGContext();
+		TGThreadManager.getInstance(context).setThreadHandler(new TGMultiThreadHandler());
+		try {
+			int sampleRate = 44100;
+			float[] samples = SyntheticSignals.karplusStrong(SyntheticSignals.midiFrequency(52), sampleRate, 2048 + HOPS * 256, 5L);
+			SampleRingBuffer buffer = new SampleRingBuffer(2 * samples.length);
+			AnalysisService service = new AnalysisService(context, buffer, new LevelAnalyzer(-80.0, -1.0, 0.99, 0.1),
+					window -> new PitchEstimate(164.8, 1.0, true), sampleRate, 2048, 256);
+			List<AnalysisFrame> frames = new CopyOnWriteArrayList<AnalysisFrame>();
+			CountDownLatch all = new CountDownLatch(FRAMES);
+			AnalysisService.Listener listener = frame -> {
+				frames.add(frame);
+				all.countDown();
+			};
+			service.subscribe(listener);
+			// the worker is running with nothing to read; the pitches are set, then the samples written
+			service.setExpectedPitches(new int[] { 52 });
+			buffer.write(samples, 0, samples.length);
+			assertTrue(all.await(LIMIT_SECONDS, TimeUnit.SECONDS));
+			service.unsubscribe(listener);
+			assertEquals(FRAMES, frames.size());
+			for (AnalysisFrame frame : frames) {
+				assertTrue(frame.getTargetEvidence() != null);
+			}
 		} finally {
 			TGThreadManager.getInstance(context).dispose();
 		}
