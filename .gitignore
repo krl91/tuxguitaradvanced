@@ -22,6 +22,7 @@ android/build-scripts/tuxguitar-android/.idea/
 .claude-flow/
 .swarm/
 CLAUDE.md
+CLAUDE.local.md
 AGENTS.md
 GEMINI.md
 specs/
