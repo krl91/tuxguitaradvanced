@@ -275,6 +275,16 @@ public class GuitarSetChordBenchmarkTest {
 		return out;
 	}
 
+	/** The style letters of a GuitarSet file name such as 00_BN1-129-Eb_comp: BN, Funk, Jazz, Rock or SS. */
+	private static String style(String recording) {
+		String name = recording.substring(recording.indexOf('_') + 1);
+		int end = 0;
+		while( end < name.length() && Character.isLetter(name.charAt(end)) ) {
+			end ++;
+		}
+		return name.substring(0, end);
+	}
+
 	private static String percent(int part, int total) {
 		return total == 0 ? "-" : String.format(java.util.Locale.ROOT, "%.1f%%", 100.0 * part / total);
 	}
@@ -335,10 +345,20 @@ public class GuitarSetChordBenchmarkTest {
 				text.append(String.format("    %-14s %-52s accepted %3d / %3d (%s)%n", e.getKey(), kind.text, e.getValue()[1] - e.getValue()[0], e.getValue()[1], percent(e.getValue()[1] - e.getValue()[0], e.getValue()[1])));
 			}
 		}
+		text.append("  complete chords by style of the recording (the part of the file name after the player number, e.g. BN1, Funk2, Jazz3, Rock1, SS2):\n");
+		for( Kind kind : new Kind[] { Kind.COMPLETE_HEXAPHONIC, Kind.COMPLETE_MICROPHONE } ) {
+			for( Map.Entry<String, int[]> e : tally(all.stream().filter(r -> r.kind == kind).collect(Collectors.toList()), r -> style(r.recording)).entrySet() ) {
+				text.append(String.format("    %-6s %-52s accepted %3d / %3d (%s)%n", e.getKey(), kind.text, e.getValue()[1] - e.getValue()[0], e.getValue()[1], percent(e.getValue()[1] - e.getValue()[0], e.getValue()[1])));
+			}
+		}
 		List<Row> verifiable = all.stream().filter(r -> r.kind == Kind.MISSING_VERIFIABLE).collect(Collectors.toList());
 		int refused = (int) verifiable.stream().filter(r -> r.right).count();
 		text.append("\nIncomplete chords, one separately verifiable note removed (must be refused):\n");
 		text.append(String.format("  refused %d / %d (%s); FALSE ACCEPTANCES %d%n", refused, verifiable.size(), percent(refused, verifiable.size()), verifiable.size() - refused));
+		text.append("  false acceptances by style of the recording:\n");
+		for( Map.Entry<String, int[]> e : tally(verifiable, r -> style(r.recording)).entrySet() ) {
+			text.append(String.format("    %-8s %3d / %3d accepted wrongly (%s)%n", e.getKey(), e.getValue()[0], e.getValue()[1], percent(e.getValue()[0], e.getValue()[1])));
+		}
 		text.append("  false acceptances by chord family (instructed label quality):\n");
 		for( Map.Entry<String, int[]> e : tally(verifiable, r -> r.family).entrySet() ) {
 			text.append(String.format("    %-8s %3d / %3d accepted wrongly (%s)%n", e.getKey(), e.getValue()[0], e.getValue()[1], percent(e.getValue()[0], e.getValue()[1])));
