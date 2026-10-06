@@ -205,9 +205,20 @@ public class NoteSpacingBenchmarkTest {
 		assertTrue(!results.isEmpty(), report);
 	}
 
+	private static String revision() {
+		try {
+			String head = new String(new ProcessBuilder("git", "rev-parse", "--short", "HEAD").redirectErrorStream(true).start().getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+			boolean dirty = !new String(new ProcessBuilder("git", "status", "--porcelain", "--untracked-files=no").redirectErrorStream(true).start().getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim().isEmpty();
+			return head + (dirty ? " (+ uncommitted changes)" : "");
+		} catch (IOException exception) {
+			return "unknown";
+		}
+	}
+
 	private static String report(List<Triple> triples, List<Result> results) {
 		StringBuilder text = new StringBuilder();
 		text.append("NOTE SPACING BENCHMARK (spec 004 T010): three notes in order, each struck while the previous ones ring\n");
+		text.append("Code revision: ").append(revision()).append("\n");
 		text.append("Data: IDMT-SMT-Guitar V2 dataset 1, plain single notes (CC BY-NC-ND 4.0, evaluation only, kept outside the repository); ").append(triples.size()).append(" triples of notes of ")
 				.append(triples.stream().map(t -> t.group).distinct().count()).append(" guitars, ascending and descending, notes at least 3 semitones apart.\n");
 		text.append("Settings: RecognitionSettings.defaults(), PolyphonicAcceptance.Parameters.defaults(). A note counts as recognised when accepted in its turn between 50 ms before and ")
