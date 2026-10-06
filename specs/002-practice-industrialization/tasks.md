@@ -211,7 +211,7 @@ Commit only when the owner asks; never push without approval (project rule: no p
 
 ### Tests for User Story 4
 
-- [ ] T076 [P] [US4] `ENGINE-TEST/technique/BendDetectorTest.java`: a bend reaching +1 semitone reports on pitch; +0.5 reports under; +1.5 over; release and pre-bend follow the path; the static-note tolerance is not applied while the pitch moves toward a written target
+- [x] T076 [P] [US4] `ENGINE-TEST/technique/BendDetectorTest.java`: a bend reaching +1 semitone reports on pitch; +0.5 reports under; +1.5 over; release and pre-bend follow the path; the static-note tolerance is not applied while the pitch moves toward a written target **Done 2026-10-06 (engine side): `BendDetectorTest` (9 tests: on pitch, under, over, never happens, not made before the target, bend and release, pre-bend, quarter tone, too few hops), with `BendPath` and `BendDetector.evaluate(segment, baseMidi, path)`; the static-note tolerance part is the session's (T081).**
 - [x] T077 [P] [US4] `ENGINE-TEST/technique/VibratoDetectorTest.java`: modulation at 4–8 Hz with depth ≥ about 10 cents over at least about 400 ms is `DETECTED`; a steady pitch is `NOT_DETECTED`; the sustained pitch is still accepted as the written note
 - [ ] T078 [P] [US4] Extend `PRACTICE-TEST/model/PracticeSequenceBuilderTest.java`: a bend note is an `EXPECTED_NOTE` (no longer `AutoPassReason.BEND`) with a `PitchPath` built from `TGEffectBend` points; tremolo-bar and trill stay auto-pass
 
