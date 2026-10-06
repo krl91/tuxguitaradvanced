@@ -33,6 +33,7 @@ Une petite palette reste à l'écran et la note ou l'accord attendu est encadré
 * **croix rouge** : une autre note a été entendue (affichée seulement pour une note qui vient d'être frappée, pas pour la note précédente qui résonne encore) ;
 * rien ne se passe sur du silence ou du bruit, et une note qui résonne n'est jamais prise pour la suivante ;
 * un accord est accepté quand ses notes sont entendues ensemble ; les notes manquantes sont nommées si l'accord est incomplet ;
+* une **note avec bend** est vérifiée sur la note de départ (un pré-bend, sur sa hauteur déjà montée) ; pendant que vous faites le bend, le relâché ou le pré-bend comme écrit, aucune hauteur intermédiaire n'est une fausse note, la hauteur atteinte par le bend n'est pas prise pour la note suivante (qui demande son propre coup de médiator) et rien n'attend un bend que vous ne jouez pas. Savoir si le bend a atteint sa cible est un résultat de technique, qui dit pour l'instant *pas encore vérifiable* ;
 * **Passer** saute la note, **Reprendre** continue après une pause (lecture, entrée inutilisable), **Recommencer** reprend le passage, **Stop** termine la pratique immédiatement et ramène la fenêtre de préparation.
 
 La pratique peut aussi se faire **par passages** : quelques mesures à la fois, répétées jusqu'à atteindre la part de notes justes que vous avez fixée.

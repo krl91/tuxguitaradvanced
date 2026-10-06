@@ -33,6 +33,7 @@ Una pequeña paleta se queda en pantalla y la nota o el acorde esperado aparece 
 * **cruz roja**: se oyó otra nota (solo se muestra para una nota que acaba de tocarse, no para la nota anterior que aún suena);
 * no pasa nada con el silencio o el ruido, y una nota que sigue sonando nunca se toma por la siguiente;
 * un acorde se acepta cuando sus notas se oyen juntas; si el acorde está incompleto, se nombran las notas que faltan;
+* una **nota con bend** se comprueba en la nota de partida (un pre-bend, en su altura ya subida); mientras haces el bend, la liberación o el pre-bend como está escrito, ninguna altura intermedia es una nota incorrecta, la altura que alcanza el bend no se toma por la nota siguiente (que necesita su propia púa) y nada espera un bend que no tocas. Si el bend alcanzó su objetivo es un resultado de técnica, que por ahora dice *aún no se puede comprobar*;
 * **Saltar** pasa la nota, **Reanudar** continúa tras una pausa (una reproducción, una entrada inutilizable), **Reiniciar** vuelve a empezar el pasaje, **Detener** termina la práctica de inmediato y vuelve a mostrar la ventana de preparación.
 
 La práctica también puede funcionar **por pasajes**: unos pocos compases cada vez, repetidos hasta que alcances la proporción de notas correctas que hayas fijado.
