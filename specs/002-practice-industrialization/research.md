@@ -218,3 +218,43 @@ Production code path (OfflineAnalysis -> AttackAnalyzer -> PracticeSession with 
 - Incomplete chords refused: 96-98 % (the completeness rule: every separable note of a chord must show growth, minBalance 10 % shared among the notes; octaves and twelfths are not compared). Before: 33 %.
 - Weak points: chords a whole tone higher accepted 15 % of the time (all with the lowest note G2: a whole tone is about one 4096-FFT bin there); dominant and minor seventh chords (4 notes) 8-50 % recognised; open A major and E major 55-73 %; the reference recording loses 3 chords with a quiet upper note (events 8, 13, 32) to this completeness rule.
 - Not run (reasons): octave tests (not separable by audio, FR-004), subset-of-played chords (tolerated by design), notes not playable on six strings or outside E2-E6, and everything of the datasets not integrated yet (IDMT dataset 2-4 multi-note pieces, GuitarSet, bass, the second guitar series).
+
+## R10 — Complete versus incomplete chords on an independent dataset (spec 004 T007, 2026-10-06)
+
+**Data**: GuitarSet 1.0.1 (Xi, Bittner, Pauwels, Ye, Bello, ISMIR 2018; Zenodo 10.5281/zenodo.1422265; licence **CC BY-NC 4.0**, read from the official record), the 180 "comp" recordings: six hexaphonic string channels (`audio_hex-pickup_debleeded`), the microphone (`audio_mic`) and the per-string note annotations (JAMS). Kept outside the repository; only counts and file names are published (`specs/004-attack-difference-recognition/benchmark/guitarset-chords-2026-10-06.txt`). Provenance manifest: `desktop/TuxGuitar-practice/test-data/datasets/README.md`. Run: `GuitarSetChordBenchmarkTest` (tag `dataset`, not in the default suite), revision `797eec4fb`.
+
+**Method**. A strummed chord is found in the annotation: at least 3 strings struck within 120 ms. It is kept only if the annotation can be trusted; the others are excluded with a reason, never silently: 6,383 strikes had another strike within 0.4 s (comping patterns are dense), 875 had a note shorter than 0.2 s, 770 contained a note outside the instructed chord (annotation disagreement), 73 had a previous strike within 0.15 s, 13 had two strings on the same pitch, 5 had a silent string channel at its annotated note. 702 chords remain (3 to 6 notes: major, minor, dominant seventh and half-diminished). The excerpt runs from 0.35 s before the strum (the previous strike still rings) to 0.40 s after it. Practice, expecting the chord, hears: the sum of the six channels (positive), the same sum with one string removed, one string at a time (a chord with a note missing: 1,937 cases where that note can be told apart from the others by audio, 640 where it cannot: an octave or a harmonic of a lower note, FR-004; reported apart, not counted), and the microphone (positive).
+
+**Result with the default settings** (revision `797eec4fb`):
+
+| Test | Result |
+|---|---|
+| complete chord, six channels summed, accepted | **418 / 702 (59.5 %)**, delay median 97 ms, p90 172 ms, max 358 ms; 15 accepted before the strum |
+| complete chord, microphone, accepted | **326 / 702 (46.4 %)**, delay median 126 ms, p90 230 ms, max 376 ms; 14 accepted before the strum |
+| incomplete chord (one separately verifiable note removed), refused | **1,682 / 1,937 (86.8 %); 255 false acceptances (13.2 %)** |
+| false acceptances by position of the missing note | bass 201 / 702 (28.6 %), inner 42 / 876 (4.8 %), top 12 / 359 (3.3 %) |
+| by chord family | seven 20 / 175, half-diminished 0 / 144, major 145 / 1,196, minor 90 / 422 |
+| by style | Rock 23.1 %, SS 12.6 %, Funk 6.8 %, Jazz 6.6 %, BN 5.2 % |
+| complete chords, none of their notes ringing / some ringing (six channels) | 61.5 % (353 / 574) / 50.8 % (65 / 128) |
+
+These figures are much below the reference recording (35 of 38 judged recognised, 2 of 12 incomplete chords accepted), and the two recordings do not ask the same thing: GuitarSet comping is a dense rhythmic pattern in which strings are struck again while they ring, the reference recording is a slow exercise. The result is a measurement of the software on independent real material, not a verdict on the reference.
+
+**Where the limit is**. Switching off the criteria one by one on the 702 complete chords: with all of them off 94.3 % are accepted; the balance criterion (the weakest separable note must reach a share of the strongest) costs 24 points (84.3 % → 60 %), the peak ratio 6, the share none. The same criterion is what refuses incomplete chords (85 % → 13.6 % of them accepted). **It is a trade-off, not a tuning slip** (before the correction below, 180 recordings, share 0.30, peak ratio 0.7, 6 hops):
+
+| Setting | complete accepted (six channels / microphone) | incomplete accepted (all / bass missing) |
+|---|---|---|
+| balance 0.05 | 60.5 % / 46.7 % | 14.7 % / 31.3 % |
+| **balance 0.10 (default)** | 59.8 % / 46.4 % | 13.6 % / 29.5 % |
+| balance 0.25 | 56.7 % / 45.2 % | 12.1 % / 25.9 % |
+| balance 0.50 | 53.3 % / 42.7 % | 9.9 % / 20.7 % |
+| balance 1.00 | 46.4 % / 39.2 % | 6.2 % / 11.8 % |
+| balance off | 84.3 % / 72.1 % | 85.2 % / 87.7 % |
+| all criteria off | 94.3 % / 91.9 % | 90.7 % / 94.4 % |
+| neighbour ratio 1.5 + balance 0.10 | 51.4 % / 41.3 % | 10.5 % / 22.4 % |
+| neighbour ratio 3 + balance 0.10 | 45.2 % / 36.8 % | 6.8 % / 12.7 % |
+
+The neighbour ratio (the note must dominate its semitone and whole-tone neighbours), already in the code and off by default, moves along the same curve. A different measure of the same evidence does not separate better either: the increase of the NNLS residual when a note is left out ("what this note alone explains") has an area under the ROC curve of 0.69 for complete versus one-note-removed chords, against 0.68 for the balance used today (60 recordings, 203 complete chords, 558 chords with a note removed).
+
+**One correction made** (found by a unit test, `IncompleteChordTest`): the balance of a chord was read against the strongest of its separable notes only, so when every separable note carried nothing but leakage they were all equally weak and passed as balanced (a chord heard as a single octave note was accepted). It is now read against the strongest of all the expected notes. Measured effect: 13.6 % → 13.2 % false acceptances, 59.8 % → 59.5 % complete accepted; the reference recording (35 / 38, 0 / 98, 2 / 12, 105 ms / 169 ms) and the IDMT benchmark are unchanged.
+
+**Decision for the owner (not taken here)**. No threshold of the current evidence reaches both "complete chords recognised" and "incomplete chords refused": the default favours accepting a complete chord (and lets 29 % of the chords without their bass through), a stricter balance refuses more incomplete chords and also more complete ones. Options: (1) keep the default and publish these figures as the measured limits; (2) choose a stricter setting for the practice mode (for example balance 0.50: 53 % / 10 % on this dataset), accepting that more correct chords wait; (3) research another way to tell a missing string (for example per-string onset evidence), which is a new method, not a threshold. The behaviour contract (FR-003, SC-001) is not met either way until (3).

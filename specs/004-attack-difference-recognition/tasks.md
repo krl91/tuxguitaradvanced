@@ -6,7 +6,7 @@
 - [x] T004 `PolyphonicAcceptance` (+ tests), `AttackCandidates`, `PracticeSession.setPolyphonicAcceptance` (hybrid with the existing rules), window wiring (on by default).
 - [x] T005 `RecordedPracticeReplayTest` (skipped without `tests/1`), event-time fixture `test-data/real-recording-1/events.csv`.
 - [x] T006 `MonophonicRegressionReplayTest` (SC-004).
-- [ ] T007 FR-003: reject a chord with a note missing (4 of 12 still accepted, research R8).
+- [ ] T007 FR-003: reject a chord with a note missing (4 of 12 still accepted, research R8). **Measured on an independent dataset (research R10, 2026-10-06): GuitarSet, 702 chords, 255 of 1,937 chords with a separately verifiable note removed are accepted (13.2 %, 28.6 % when the bass is missing) and only 59.5 % of the complete chords are accepted; the trade-off between the two is measured and no threshold fixes both. Benchmark, manifest, unit tests and one logic correction delivered; the task stays open pending the owner's decision (research R10).**
 - [ ] T008 FR-004/FR-008 learner messages (not separately verifiable; speed limit), fr + en.
 - [ ] T009 SC-003 report of delay in the app (measured in the test: median 107 ms, p90 169 ms).
 - [ ] T010 Triplets (events within 0.15 s): measure the real limit.
