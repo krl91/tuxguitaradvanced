@@ -1,0 +1,7 @@
+condition,input,clips,correct_stable_note,stable_note_clips,median_stable_latency_ms,median_from_clip_start_ms,added_latency_ms
+NONE,builtin-mic,21,19,19,171,736,0.0
+GATE,builtin-mic,21,19,19,171,736,0.0
+GATE_AND_SUBTRACTION,builtin-mic,21,19,19,171,741,5.3
+NONE,builtin-mic+hum+noise,21,19,19,2693,736,0.0
+GATE,builtin-mic+hum+noise,21,19,19,2693,736,0.0
+GATE_AND_SUBTRACTION,builtin-mic+hum+noise,21,19,19,171,741,5.3
