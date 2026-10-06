@@ -53,6 +53,64 @@ class BenchmarkSweepTest {
 		Files.write(directory.resolve("builtin-mic-silence.csv"), silence(fixtures, samples), StandardCharsets.UTF_8);
 	}
 
+	/**
+	 * Latency report (spec 002 T004): for every reference clip, the time from the energy onset to the first accepted note (the same
+	 * stable-note rule as the sweep, default parameters), then the p50, p95 and maximum over the clips whose accepted note is the right one,
+	 * per input type. Written to the spec 002 benchmark folder as {@code builtin-mic-latency.csv}. A report, not an assertion.
+	 */
+	@Test
+	void writeLatencyReport() throws Exception {
+		List<BenchmarkFixtures.Fixture> fixtures = BenchmarkFixtures.readManifest();
+		List<String> rows = new ArrayList<>();
+		rows.add("file,input_type,fixture_role,played_note,onset_s,accepted_s,latency_s,accepted_note_is_right");
+		java.util.Map<String, List<Double>> byInput = new java.util.TreeMap<>();
+		for (BenchmarkFixtures.Fixture fixture : fixtures) {
+			if (!"reference".equals(fixture.role)) {
+				continue;
+			}
+			BenchmarkFixtures.Result result = BenchmarkFixtures.analyze(BenchmarkFixtures.readRecording(fixture));
+			boolean accepted = result.stableFrame >= 0;
+			boolean right = accepted && fixture.manifestMidi != null && result.stableMidi == fixture.manifestMidi;
+			double onset = result.onsetFrame < 0 ? Double.NaN : result.onsetFrame * BenchmarkFixtures.HOP_SIZE / (double) BenchmarkFixtures.SAMPLE_RATE;
+			double at = accepted ? result.stableFrame * BenchmarkFixtures.HOP_SIZE / (double) BenchmarkFixtures.SAMPLE_RATE : Double.NaN;
+			rows.add(String.join(",", fixture.file, fixture.inputType, fixture.role, fixture.playedNote, seconds(onset), seconds(at), seconds(result.stableLatencySeconds()), Boolean.toString(right)));
+			if (right) {
+				byInput.computeIfAbsent(fixture.inputType, k -> new ArrayList<>()).add(result.stableLatencySeconds());
+			}
+		}
+		rows.add("");
+		rows.add("input_type,clips_with_the_right_note,p50_s,p95_s,max_s");
+		for (java.util.Map.Entry<String, List<Double>> entry : byInput.entrySet()) {
+			List<Double> values = entry.getValue();
+			values.sort(null);
+			rows.add(String.join(",", entry.getKey(), Integer.toString(values.size()), seconds(rank(values, 0.50)), seconds(rank(values, 0.95)), seconds(values.get(values.size() - 1))));
+		}
+		Path directory = specBenchmarkDirectory();
+		Files.write(directory.resolve("builtin-mic-latency.csv"), rows, StandardCharsets.UTF_8);
+		assertFalse(byInput.isEmpty(), "no clip with the right accepted note: no latency to report");
+	}
+
+	/** Nearest-rank percentile of a sorted list. */
+	private static double rank(List<Double> sorted, double fraction) {
+		return sorted.get(Math.min(sorted.size() - 1, (int) Math.ceil(fraction * sorted.size()) - 1));
+	}
+
+	private static String seconds(double value) {
+		return Double.isNaN(value) ? "NaN" : String.format(Locale.ROOT, "%.3f", value);
+	}
+
+	private static Path specBenchmarkDirectory() throws Exception {
+		for (Path path = Paths.get(System.getProperty("user.dir")).toAbsolutePath(); path != null; path = path.getParent()) {
+			if (Files.isDirectory(path.resolve("specs/002-practice-industrialization"))) {
+				Path directory = path.resolve("specs/002-practice-industrialization/benchmark");
+				Files.createDirectories(directory);
+				return directory;
+			}
+		}
+		assertFalse(true, "could not locate repository root for benchmark reports");
+		return null;
+	}
+
 	private static List<String> sweep(List<BenchmarkFixtures.Fixture> fixtures, List<float[]> samples) {
 		List<String> rows = new ArrayList<>();
 		rows.add("confidence_gate,stable_frames,pitch_floor_dbfs,references,first_stable_correct,wrong_octave_stable,other_wrong_stable,no_stable,median_latency_s,max_latency_s,silence_stable_midi");
