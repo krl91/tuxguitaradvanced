@@ -120,12 +120,19 @@ On a benchmark of 1,208 annotated recordings of real guitars (clean and with 11 
 * **intervals and triads with effects recognised**: 87 %; **chords of clean guitars**: 95 %;
 * **chords with a note missing refused**: 96 to 98 %;
 * **notes played one after the other, the previous one still ringing**: 97 to 100 % recognised;
-* **delay** between playing a note and its recognition: about 0.1 s (median) on a real recording.
+* **delay** between playing a note and its recognition: about 0.1 s (median 105 ms, 90 % within 170 ms) on a real recording; the practice preparation window states it.
+
+On an **independent dataset** (GuitarSet, 180 recordings of rhythmic comping on an acoustic guitar, 702 strummed chords whose annotation could be trusted, with the previous strings still ringing), the result is much lower than above:
+
+* **complete chords recognised**: 60 % (six pickup channels summed), 46 % through the microphone;
+* **chords with one note removed accepted by mistake**: 13 % (29 % when the missing note is the bass, 5 % an inner note, 3 % the top note);
+* no setting fixes both at once: a stricter one refuses more incomplete chords and also more complete ones (details and table in the specification research notes, R10).
 
 Limits, measured and not hidden:
 
+* **notes close together**: about 0.3 s between picked notes are followed (91 % of three-note runs at 0.35 s, 67 % at 0.25 s); faster, only the first note of a run is recognised and Practice waits for you, it never marks a wrong note (0 of 92 tests). The practice window says so when it happens;
+
 * chords whose lowest note is G2 are sometimes accepted a whole tone higher (the two chords are one frequency step apart at that pitch);
 * four-note seventh chords and some open chords (A major, E major) are recognised less often;
-* notes less than about 0.15 s apart (fast triplets) cannot be told apart by audio: Practice waits for you, it does not skip them;
 * an octave, or a note that is a harmonic of a lower chord note, cannot be verified separately from it;
 * the settings were tuned on the recordings above; another guitar or microphone may call for another gain or sensitivity.

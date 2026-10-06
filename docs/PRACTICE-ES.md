@@ -120,12 +120,19 @@ En un banco de pruebas de 1 208 grabaciones anotadas de guitarras reales (limpia
 * **intervalos y tríadas con efectos reconocidos**: 87 %; **acordes de guitarras limpias**: 95 %;
 * **acordes con una nota ausente rechazados**: 96 a 98 %;
 * **notas tocadas una tras otra, con la anterior aún sonando**: 97 a 100 % reconocidas;
-* **retraso** entre tocar una nota y su reconocimiento: unos 0,1 s (mediana) en una grabación real.
+* **retraso** entre tocar una nota y su reconocimiento: unos 0,1 s (mediana 105 ms, 90 % en menos de 170 ms) en una grabación real; la ventana de preparación de la práctica lo indica.
+
+En un **conjunto de datos independiente** (GuitarSet, 180 grabaciones de acompañamiento rítmico con guitarra acústica, 702 acordes rasgueados cuya anotación era fiable, con las cuerdas anteriores aún sonando), el resultado es mucho más bajo:
+
+* **acordes completos reconocidos**: 60 % (seis canales de pastilla sumados), 46 % con el micrófono;
+* **acordes a los que falta una nota aceptados por error**: 13 % (29 % cuando la nota que falta es el bajo, 5 % una nota interior, 3 % la nota aguda);
+* ningún ajuste corrige ambas cosas a la vez: uno más estricto rechaza más acordes incompletos y también más acordes completos (detalles y tabla en las notas de investigación de la especificación, R10).
 
 Límites, medidos y no ocultos:
 
+* **notas muy juntas**: se siguen unos 0,3 s entre dos notas tocadas con púa (91 % de las series de tres notas a 0,35 s, 67 % a 0,25 s); más rápido, solo se reconoce la primera nota de una serie y la práctica te espera, sin marcar nunca una nota incorrecta (0 de 92 pruebas). La ventana de práctica lo indica cuando ocurre;
+
 * los acordes cuya nota más grave es G2 a veces se aceptan un tono más alto (los dos acordes están a un solo paso de frecuencia a esa altura);
 * los acordes de séptima de cuatro notas y algunos acordes abiertos (La mayor, Mi mayor) se reconocen con menos frecuencia;
-* las notas separadas por menos de unos 0,15 s (tresillos rápidos) no se pueden distinguir por audio: la práctica te espera, no las salta;
 * una octava, o una nota que es un armónico de una nota grave del acorde, no se puede verificar por separado de ella;
 * los ajustes se afinaron con las grabaciones anteriores; otra guitarra u otro micrófono pueden pedir otra ganancia u otra sensibilidad.

@@ -120,12 +120,19 @@ Sur un banc d'essai de 1 208 enregistrements annotés de vraies guitares (claire
 * **intervalles et accords de trois notes avec effets reconnus** : 87 % ; **accords de guitares claires** : 95 % ;
 * **accords auxquels il manque une note refusés** : 96 à 98 % ;
 * **notes jouées l'une après l'autre, la précédente résonnant encore** : 97 à 100 % reconnues ;
-* **délai** entre le jeu d'une note et sa reconnaissance : environ 0,1 s (médiane) sur un vrai enregistrement.
+* **délai** entre le jeu d'une note et sa reconnaissance : environ 0,1 s (médiane 105 ms, 90 % en moins de 170 ms) sur un vrai enregistrement ; la fenêtre de préparation de la pratique l'indique.
+
+Sur un **jeu de données indépendant** (GuitarSet, 180 enregistrements d'accompagnement rythmique à la guitare acoustique, 702 accords plaqués dont l'annotation était fiable, les cordes précédentes sonnant encore), le résultat est nettement plus bas :
+
+* **accords complets reconnus** : 60 % (six canaux de micros de chevalet sommés), 46 % au micro ;
+* **accords auxquels il manque une note acceptés à tort** : 13 % (29 % quand la note manquante est la basse, 5 % une note intérieure, 3 % la note aiguë) ;
+* aucun réglage ne corrige les deux à la fois : un réglage plus strict refuse plus d'accords incomplets et aussi plus d'accords complets (détails et tableau dans les notes de recherche de la spécification, R10).
 
 Limites, mesurées et non cachées :
 
+* **notes rapprochées** : environ 0,3 s entre deux notes jouées au médiator sont suivies (91 % des suites de trois notes à 0,35 s, 67 % à 0,25 s) ; plus vite, seule la première note d'une suite est reconnue et la pratique vous attend, sans jamais compter une note fausse (0 sur 92 tests). La fenêtre de pratique le dit quand cela arrive ;
+
 * les accords dont la note la plus grave est Sol2 sont parfois acceptés un ton plus haut (les deux accords ne sont séparés que d'un pas de fréquence à cette hauteur) ;
 * les accords de septième à quatre notes et certains accords ouverts (La majeur, Mi majeur) sont moins souvent reconnus ;
-* des notes séparées de moins d'environ 0,15 s (triolets rapides) ne se distinguent pas par le son : Practice vous attend, il ne les saute pas ;
 * une octave, ou une note qui est un harmonique d'une note plus grave de l'accord, ne peut pas être vérifiée séparément de celle-ci ;
 * les réglages ont été ajustés sur les enregistrements ci-dessus : une autre guitare ou un autre micro peut demander un autre gain ou une autre sensibilité.
