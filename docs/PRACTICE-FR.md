@@ -43,6 +43,8 @@ Ce qui est vérifié, c'est la **hauteur**. La corde et la case utilisées ne pe
 
 Sous la jauge de niveau de la fenêtre de pratique, et dans l'accordeur, un curseur **Gain d'entrée** renforce ou baisse le signal dans l'application (de -6 à +18 dB) ; **Remise à zéro** revient à 0 dB. Le gain n'est jamais mémorisé : il revient à 0 dB quand l'entrée change et à chaque démarrage. Si l'amplification n'amplifie surtout que le bruit de fond, ou fait saturer le signal, un avertissement le dit et conseille d'augmenter plutôt le gain de l'interface audio.
 
+Pendant que vous jouez, si vos notes sont trop faibles pour une reconnaissance rapide fiable (en dessous d'environ -30 dBFS, mesuré), la fenêtre de pratique le dit et vous indique d'augmenter le gain ou de jouer plus près ; un jeu lent peut rester reconnu.
+
 Réglages (*Réglages de reconnaissance* dans la fenêtre de pratique) : un **noise gate / soustraction du bruit de fond** optionnel et un **gain suggéré** après le contrôle de niveau ; les deux peuvent être désactivés.
 
 ## Réglages de reconnaissance

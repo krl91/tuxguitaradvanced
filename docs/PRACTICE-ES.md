@@ -43,6 +43,8 @@ Lo que se verifica es la **altura**. La cuerda y el traste que has usado no se p
 
 Bajo el medidor de nivel de la ventana de práctica, y en el afinador, un control deslizante de **Ganancia de entrada** sube o baja la señal dentro de la aplicación (de -6 a +18 dB), y **Restablecer** vuelve a 0 dB. La ganancia nunca se recuerda: vuelve a 0 dB al cambiar la entrada y en cada inicio. Si la amplificación sube sobre todo el ruido de fondo, o hace que la señal sature, un aviso lo dice y te indica que subas la ganancia de la interfaz de audio.
 
+Mientras tocas, si tus notas son demasiado débiles para un reconocimiento rápido fiable (por debajo de unos -30 dBFS, medido), la ventana de práctica lo dice y te indica que subas la ganancia o toques más cerca; el juego lento puede seguir reconociéndose.
+
 Ajustes (*Reconocimiento de audio* en la configuración): una **puerta de ruido / sustracción del ruido de fondo** opcional y una **ganancia sugerida** tras la comprobación del nivel; ambas se pueden desactivar.
 
 ## Ajustes de reconocimiento

@@ -43,6 +43,8 @@ What is verified is **pitch**. The string and fret you used cannot be known from
 
 Under the level meter of the practice window, and in the tuner, an **Input gain** slider boosts or lowers the signal inside the application (-6 to +18 dB), and **Reset** returns to 0 dB. The gain is never remembered: it returns to 0 dB when the input changes and at each start. If the boost mostly amplifies background noise, or makes the signal clip, a warning says so and tells you to raise the gain on the audio interface instead.
 
+While you play, if the notes you play are too weak for reliable fast recognition (below about -30 dBFS, measured), the practice window says so and tells you to raise the gain or play closer; slow playing may still be recognised.
+
 Settings (*Recognition settings* in the practice window): an optional **noise gate / background-noise subtraction** and a **suggested gain** after the level check; both can be switched off.
 
 ## Recognition settings
