@@ -26,7 +26,7 @@
 
 - [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
-- [x] Feature meets measurable outcomes defined in Success Criteria
+- [ ] Feature meets measurable outcomes defined in Success Criteria — NOT met: on the reference recording 35 of 38 judged events are recognised and 4 events are outside the measured speed limit (SC-001 asks 42 of 42), and 2 of 12 chords with a note missing are still accepted (FR-003); SC-002 to SC-005 are met. The replay test still contains these explicit exceptions.
 - [x] No implementation details leak into specification
 
 ## Notes

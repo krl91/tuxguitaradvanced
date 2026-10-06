@@ -26,7 +26,7 @@
 
 - [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
-- [x] Feature meets measurable outcomes defined in Success Criteria
+- [ ] Feature meets measurable outcomes defined in Success Criteria — NOT met: several outcomes were never measured (30-minute endurance SC-007, perceived response SC-002, multichannel input, direct USB interface) and the manual acceptance checklist (T082) is not complete; see STATUS.md.
 - [x] No implementation details leak into specification
 
 ## Notes
