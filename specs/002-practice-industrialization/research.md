@@ -372,3 +372,27 @@ The earlier use of (6) as proof of a correct playback was wrong: a file with 8 m
 * Effect: printed in the log, in a background thread; the application goes on, the default instruments of the replaced song are simply not loaded. No crash, no loop, no division by zero.
 * Fixed on 2026-10-06, in a commit of its own (`a79936151`, an upstream race, not a Practice change): one life cycle lock in `GervillProcessor`; each load gets a generation, captures the exact synthesizer and its own copy of the program (the thread that builds the soundbank used to receive the processor's mutable program); `close()` invalidates the earlier answers; an answer loads only if its generation is current, its synthesizer is still the processor's and open, otherwise it is ignored; `loadProgram()` compares and copies under the same lock; a closed processor stays closed. Nine deterministic tests (`GervillProcessorLifecycleTest`, no sleep; three of them hold an answer inside the processor with latches and check that `close()`, an older answer and a new program wait for it). Each protection (lock, generation, program copy, locked `loadProgram`) was removed in turn and at least one test failed. A first version of the close test passed without the lock, because the instrument was held inside the synthesizer's own monitor: it now holds only the processor's call.
 * In the application after the fix (copy of the `.app` with trace lines, scratch only): `(4)`, `(6)` and `...And Justice For All` opened from a clean start, 0 `NullPointerException`, 0 `ConcurrentModificationException`; the two answers of the replaced song are reported as stale and ignored, and the instruments of the new song are loaded (8, 3 and 8, one per track of each file).
+
+## R14 — Hammer-on, pull-off and slide: what Phase 7 delivers and what it does not know (2026-10-06)
+
+**Delivered (code, tests on synthetic signals):** a written hammer-on or pull-off is classified from the destination pitch and carries its partner (`PracticeSequence.targetsOf`); its destination note is accepted from the pitch step alone, no new attack required (acceptance rule of T049); the legato and slide detectors exist and are in `TechniqueCatalog` with `verified = false`, so the technique line says *cannot be checked yet* and never *heard*. A technique verdict never changes the pitch verdict or the progression.
+
+**Measured on synthetic signals** (`LegatoFunctionalTest`, a pitch step of a continuing tone with no attack, and the same two notes picked; real input chain, default settings):
+
+| Pair | Legato step | Picked |
+|---|---|---|
+| hammer-on E4 to F#4 (2 semitones) | accepted, +143 ms after the step | accepted, +153 ms |
+| hammer-on E4 to G4, E4 to A4 | accepted, +105 ms | accepted, +100 ms |
+| pull-off G4 to E4, A4 to E4 | accepted, +105 ms | accepted, +100 ms |
+| pull-off F#4 to E4 | accepted, +148 ms | accepted, +153 ms |
+
+Run of four legato notes on one string (frets 0, 2, 4, 2), notes accepted in all, by spacing: **90 ms: 2 of 4; 110 ms: 2 of 4; 150 ms and slower: 4 of 4**. The destination of a legato step is as quick as a picked one (about 0.1 s), because it waits for the same stable pitch.
+
+**Known limits, not hidden:**
+
+* a legato run spaced by less than about 150 ms is followed for two notes and then Practice waits (synthetic signal; a real run, with its own noise and decay, may differ in either direction);
+* the speed-limit message (research R11) is triggered by attacks, so a too fast legato run, which has none, gets **no message** and Practice waits without saying why. A message from the pitch steps was not added: a written bend or slide also moves the pitch, and without a real recording of a fast legato run the rule would be a guess (the owner's rule: implement only the real gaps; the delay of the recognition was not shortened, see the decision on re-arm);
+* no real legato clip exists in any dataset available here (IDMT dataset 2 annotates bends, slides, vibrato; GuitarSet and the reference recording annotate none), so the legato detector has **never met real audio**; the slide detector reached 48 % on IDMT (target 85 %);
+* T073 (recordings) and the manual play-through T075 stay open; nothing has been changed in the thresholds.
+
+**What would close it:** the clips of `benchmark/recording-plan.md` (hammer-on up, pull-off down, slides up and down, a fast legato run), on the direct interface and on the built-in microphone, which T053 defers.

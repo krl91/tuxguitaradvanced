@@ -196,8 +196,10 @@ Commit only when the owner asks; never push without approval (project rule: no p
 - [x] T071 [P] [US3] Create `ENGINE/technique/SlideDetector.java`: monotone f0 glide through intermediate pitches over at least X ms (parameter) with no attack at arrival
 - [x] T072 [US3] Wire both detectors into `ENGINE/technique/TechniqueCatalog.java` and use them from `PRACTICE/session/PracticeSession.java` for the destination note (acceptance rule already in T049)
 - [ ] T073 [SPIKE] [US3] S-F1: record the legato and slide clips (T006) on both inputs and compute the candidate features offline; publish per-technique separability (detected-vs-plain rates) in `BENCH/` and `research.md` R4
+  > **Status 2026-10-06:** open, blocked by the recordings (T053 is deferred by the owner, no new recording is requested). What exists: slide measured on IDMT-SMT-Guitar dataset 2 (48 % of the annotated notes, `benchmark/technique-benchmark-2026-10-06.txt`); **no real legato clip at all**: neither IDMT, GuitarSet nor the reference recording (`tests/1`, whose score has no hammer-on or slide) annotates hammer-ons or pull-offs. Synthetic baseline in research R14.
 - [x] T074 [US3] Set the `verified` flag in `TechniqueCatalog` for a technique only if the T073 result meets SC-005 (≥ 85% correct verdict, < 10% false "detected" on plain notes, provisional); otherwise leave it false and record why
 - [ ] T075 [US3] Phase D2 verification: full build with tests green; manual legato/slide play-through per quickstart "Phases D/F"
+  > **Status 2026-10-06:** build with tests green (full macOS SWT build 2026-10-06, 4:23, BUILD SUCCESS; `LegatoFunctionalTest` 2/2, `LegatoDetectorTest`, `SlideDetectorTest`, `PracticeSequenceBuilderTest` in it). The manual play-through with a guitar (legato and slide, quickstart "Phases D/F") is **not done** and stays open until the owner has played it.
 
 ---
 
