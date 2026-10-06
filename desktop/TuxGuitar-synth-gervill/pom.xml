@@ -14,11 +14,20 @@
 
 	<build>
 		<sourceDirectory>src</sourceDirectory>
+		<testSourceDirectory>test</testSourceDirectory>
 		<resources>
 			<resource>
 				<directory>share</directory>
 			</resource>
 		</resources>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<!-- JUnit 5 needs surefire 3 (older Maven releases default to 2.12.4) -->
+				<version>3.2.5</version>
+			</plugin>
+		</plugins>
 	</build>
 
 	<dependencies>
@@ -46,6 +55,12 @@
 			<groupId>media.sound</groupId>
 			<artifactId>gervill</artifactId>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>5.9.2</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

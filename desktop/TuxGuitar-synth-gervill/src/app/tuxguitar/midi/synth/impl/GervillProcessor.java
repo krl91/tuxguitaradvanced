@@ -28,6 +28,14 @@ public class GervillProcessor implements TGMidiProcessor {
 	private static final String SYNTH_MIDI_CHANNELS_PARAM = "midi channels";
 
 	private TGContext context;
+	/**
+	 * Guards the life cycle: the soundbank of an instrument is built on another thread, so its
+	 * answer can come back after {@link #close()} or after a newer {@link #loadInstrument()}.
+	 * {@code generation} identifies the current synthesizer session; an answer of an older one
+	 * is ignored.
+	 */
+	private final Object lifecycle = new Object();
+	private int generation;
 	private AudioSynthesizer synth;
 	private AudioInputStream stream;
 	private Receiver receiver;
@@ -37,10 +45,15 @@ public class GervillProcessor implements TGMidiProcessor {
 	private float[][] outputs;
 
 	public GervillProcessor(TGContext context) {
+		this(context, new GervillSoundbankFactory());
+	}
+
+	/** Test point: the factory decides when, and if, the instrument is created. */
+	GervillProcessor(TGContext context, GervillSoundbankFactory soundbankFactory) {
 		this.context = context;
 		this.synth = new SoftSynthesizer();
 		this.program = new GervillProgram();
-		this.soundbankFactory = new GervillSoundbankFactory();
+		this.soundbankFactory = soundbankFactory;
 		this.buffer = new byte[TGAudioBuffer.CHANNELS * TGAudioBuffer.BUFFER_SIZE];
 		this.outputs = new float[TGAudioBuffer.CHANNELS][TGAudioBuffer.BUFFER_SIZE / 2];
 		for(int i = 0; i < this.outputs.length; i++) {
@@ -50,16 +63,19 @@ public class GervillProcessor implements TGMidiProcessor {
 	}
 
 	public void close() {
-		if( this.receiver != null ){
-			this.receiver.close();
+		synchronized (this.lifecycle) {
+			this.generation ++;
+			if( this.receiver != null ){
+				this.receiver.close();
+			}
+			if( this.synth != null && this.synth.isOpen() ){
+				this.synth.close();
+			}
+			this.stream = null;
+			this.receiver = null;
+			this.synth = null;
+			this.buffer = null;
 		}
-		if( this.synth != null && this.synth.isOpen() ){
-			this.synth.close();
-		}
-		this.stream = null;
-		this.receiver = null;
-		this.synth = null;
-		this.buffer = null;
 	}
 
 	public boolean isOpen() {
@@ -85,36 +101,74 @@ public class GervillProcessor implements TGMidiProcessor {
 	}
 
 	public void loadProgram(GervillProgram program) {
-		if(!this.program.equals(program)) {
-			this.program.copyFrom(program);
-			this.loadInstrument();
+		synchronized (this.lifecycle) {
+			if(!this.program.equals(program)) {
+				this.program.copyFrom(program);
+				this.loadInstrument();
+			}
 		}
 	}
 
 	public void loadInstrument() {
-		try {
-			if( this.synth.isOpen()) {
-				this.synth.close();
+		synchronized (this.lifecycle) {
+			if( this.synth == null ) {
+				// closed: a closed processor stays closed
+				return;
 			}
-			this.stream = this.synth.openStream(TGAudioLine.AUDIO_FORMAT, this.createSynthInfo());
-			this.receiver = this.synth.getReceiver();
-
-			this.soundbankFactory.create(this.context, this.program, new GervillSoundbankCallback() {
-				public void onCreate(Instrument instrument) {
-					GervillProcessor.this.loadInstrument(instrument);
+			try {
+				// session + synthesizer + program stay together: the thread that builds the soundbank
+				// gets its own copy, the program of this processor changes with the next request
+				final int session = ++ this.generation;
+				final AudioSynthesizer target = this.synth;
+				final GervillProgram requested = new GervillProgram();
+				requested.copyFrom(this.program);
+				if( target.isOpen()) {
+					target.close();
 				}
-			});
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+				this.stream = target.openStream(TGAudioLine.AUDIO_FORMAT, this.createSynthInfo());
+				this.receiver = target.getReceiver();
+
+				this.soundbankFactory.create(this.context, requested, new GervillSoundbankCallback() {
+					public void onCreate(Instrument instrument) {
+						GervillProcessor.this.loadInstrument(instrument, session, target);
+					}
+				});
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
 	public void loadInstrument(Instrument instrument) {
-		this.synth.loadInstrument(instrument);
+		synchronized (this.lifecycle) {
+			if( this.synth != null ) {
+				this.loadInstrument(instrument, this.generation, this.synth);
+			}
+		}
+	}
 
-		Patch patch = instrument.getPatch();
-		for(MidiChannel midiChannel : this.synth.getChannels()) {
-			midiChannel.programChange(patch.getBank(), patch.getProgram());
+	/**
+	 * Loads the instrument only if the session that asked for it is still the current one, on the
+	 * same synthesizer, still open. A stale answer (closed processor, newer program) is ignored.
+	 */
+	void loadInstrument(Instrument instrument, int session, AudioSynthesizer target) {
+		synchronized (this.lifecycle) {
+			if( session != this.generation || target != this.synth || this.synth == null || !this.synth.isOpen() ) {
+				return;
+			}
+			this.synth.loadInstrument(instrument);
+
+			Patch patch = instrument.getPatch();
+			for(MidiChannel midiChannel : this.synth.getChannels()) {
+				midiChannel.programChange(patch.getBank(), patch.getProgram());
+			}
+		}
+	}
+
+	/** Test point: what the synthesizer holds now (nothing once closed). */
+	Instrument[] loadedInstruments() {
+		synchronized (this.lifecycle) {
+			return (this.synth != null ? this.synth.getLoadedInstruments() : new Instrument[0]);
 		}
 	}
 
