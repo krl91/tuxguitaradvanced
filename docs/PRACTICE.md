@@ -2,7 +2,7 @@
 
 Interactive Practice listens to your guitar and checks, note by note and chord by chord, that you play what the score says. It does not play the score for you and it never records audio: only numbers derived from the sound (pitch, level, which notes were heard) live in memory while it runs.
 
-*Français : [PRACTICE-FR.md](PRACTICE-FR.md).*
+*Français : [PRACTICE-FR.md](PRACTICE-FR.md). Español: [PRACTICE-ES.md](PRACTICE-ES.md).*
 
 ## What you need
 
@@ -37,7 +37,7 @@ A small palette stays on screen and the expected note or chord is framed on the 
 
 Practice can also work **by passages**: a few measures at a time, repeated until you reach the share of correct notes you set.
 
-What is verified is **pitch**. The string and fret you used cannot be known from audio, and written techniques (bends, vibrato, slides, hammer-ons, pull-offs...) are shown but not judged: a hammer-on or pull-off note is accepted from its pitch.
+What is verified is **pitch**. The string and fret you used cannot be known from audio. For each written technique (hammer-on, pull-off, slide, bend, vibrato) a line under the pitch result says what was heard: *heard*, *not heard*, *uncertain* or *cannot be checked yet*. No technique is verified yet (measured detection: vibrato 59 %, bend 82 %, slide 48 % of annotated notes, target 85 %), so for now the line says *cannot be checked yet*. It never blocks the exercise: a hammer-on or pull-off note is accepted from its pitch.
 
 ## Input gain, noise reduction and suggested gain
 

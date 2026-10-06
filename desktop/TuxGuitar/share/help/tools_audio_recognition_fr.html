@@ -44,6 +44,7 @@
       <li class="menu2"><a href="tools_sound.html">Sound in TuxGuitar</a></li>
       <li class="menu2"><a href="tools_audio_recognition.html">Audio recognition</a></li>
       <li class="menu2"><strong>Reconnaissance audio</strong></li>
+      <li class="menu2"><a href="tools_audio_recognition_es.html">Reconocimiento de audio (español)</a></li>
       <li class="menu2"><a href="tools_shortcuts.html">Default shortcuts</a></li>
       <li class="menu2"><a href="tools_keybinding.html">Shortcut editor</a></li>
       <li class="menu2"><a href="tools_plugins.html">Plugins dialog</a></li>
@@ -53,7 +54,7 @@
     </ul>
   </div>
     <section>
-    <p><a href="tools_audio_recognition.html">English version of this page</a></p>
+    <p><a href="tools_audio_recognition.html">English version of this page</a> · <a href="tools_audio_recognition_es.html">Versión en español</a></p>
     <p>La page <strong>Reconnaissance audio</strong> de <strong>Outils → Configurer TuxGuitar</strong> rassemble les réglages de l'accordeur évolué et de la pratique interactive. Elle affiche une catégorie à la fois : choisissez-la dans la liste <strong>Catégorie de réglages</strong>. Chaque réglage apparaît une seule fois, dans sa catégorie. Les curseurs affichent leur valeur et leur unité, mises à jour pendant le déplacement ; la valeur recommandée est indiquée à côté et dans l'infobulle de chaque réglage (survolez son nom). Les valeurs sont enregistrées et conservées après la fermeture de TuxGuitar.</p>
     <h2 id="recommended">Valeurs recommandées et les trois façons de les rétablir</h2><p>Chaque valeur recommandée est celle utilisée avant l'existence de ces réglages : la configuration recommandée se comporte exactement comme les versions précédentes. Il existe trois portées différentes :</p><ul><li><strong>Rétablir les valeurs recommandées de cette catégorie</strong> ne remet à zéro que la catégorie affichée. Pris en compte avec <strong>OK</strong> ; <strong>Annuler</strong> l'abandonne.</li><li><strong>Rétablir tous les réglages de reconnaissance audio</strong> remet à zéro toutes les catégories de cette page. Pris en compte avec <strong>OK</strong> ; <strong>Annuler</strong> l'abandonne.</li><li>Le bouton <strong>Valeurs par défaut</strong> en bas de la fenêtre de configuration remet à zéro <strong>tous les réglages de TuxGuitar</strong> (langue, style, son…), reconnaissance audio comprise, immédiatement, et ferme la fenêtre.</li></ul>
     <h2 id="when">Quand les modifications s'appliquent</h2><ul><li>Rien ne change avant <strong>OK</strong> ; <strong>Annuler</strong> conserve les valeurs précédentes.</li><li>Accordeur : aussitôt après OK.</li><li>Pratique (notes, accords, passages) : au prochain <strong>Démarrer</strong> ; une pratique en cours garde les valeurs de son démarrage.</li><li>Niveaux et attaque : l'écoute redémarre proprement aussitôt (une fraction de seconde), sans mélanger anciennes et nouvelles valeurs.</li><li>Exception : l'entrée audio change dès qu'elle est choisie dans la liste, comme dans les fenêtres de l'accordeur et de la pratique.</li></ul>
@@ -121,7 +122,7 @@
     <tr><td>Harmoniques par corde (accords)</td><td></td><td>1</td><td>4</td><td>2</td><td>plus de cordes vérifiables, de façon moins fiable</td><td>moins de cordes vérifiables séparément</td></tr>
     <tr><td>Durée de confirmation d'un accord</td><td>ms</td><td>20</td><td>150</td><td>43</td><td>les accords sont acceptés plus vite</td><td>plus stable, plus lent. Arrondi à des pas d'analyse entiers</td></tr>
     </table>
-    <h2 id="limits">Limites</h2><p>La reconnaissance repose uniquement sur la hauteur : elle ne peut pas savoir quelle corde ou quelle case a été utilisée, ni reconnaître les techniques. Les notes liées (hammer-on, pull-off, glissé) n'ont pas d'attaque au médiator et peuvent devoir être rejouées ou passées ; les accepter sans attaque et refuser les cordes en trop sont des propositions encore à l'étude, elles ne sont donc pas proposées comme réglages.</p>
+    <h2 id="limits">Limites</h2><p>La reconnaissance repose uniquement sur la hauteur : elle ne peut pas savoir quelle corde ou quelle case a été utilisée. Les techniques écrites dans la partition (hammer-on, pull-off, slide, bend, vibrato) sont écoutées, mais aucune n'est encore vérifiée : la pratique les affiche « pas encore vérifiable » plutôt que de deviner. Les notes liées (hammer-on, pull-off, glissé) n'ont pas d'attaque au médiator et peuvent devoir être rejouées ou passées ; les accepter sans attaque et refuser les cordes en trop sont des propositions encore à l'étude, elles ne sont donc pas proposées comme réglages.</p>
     </section>
   <script src="init.js"></script>
 </body>

@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link type="text/css" rel="stylesheet" href="style.css" />
+  <title>Reconocimiento de audio - Ayuda de TuxGuitar</title>
+</head>
+<body>
+  <input type="checkbox" id="check" checked="true" /> <label for="check"><b id="hamburger">☰</b> <b id="cancel">☓</b></label>
+  <div class="header">
+    TuxGuitar Help
+    <p id="version"></p>
+  </div>
+  <div class="title">
+    <h1 id="audio_recognition">Reconocimiento de audio (afinador y práctica)</h1>
+  </div>
+  <div class="sidebar">
+    <ul class="menu">
+      <li class="menu2"><button title="Back" id="back" onclick="history.back()">&nbsp;</button> <button title="Top" id="top" onclick="window.location.href='index.html';">&nbsp;</button> <button title="Forward" id="forward" onclick="history.forward()">&nbsp;</button></li>
+      <li class="menu1">Introduction</li>
+      <li class="menu2"><a href="about.html">About</a></li>
+      <li class="menu2"><a href="license.html">License</a></li>
+      <li class="menu1">Getting started</li>
+      <li class="menu2"><a href="start_first_steps.html">The first steps</a></li>
+      <li class="menu2"><a href="start_menus_toolbars.html">Menus and Toolbars</a></li>
+      <li class="menu2"><a href="start_playing.html">Playing a song</a></li>
+      <li class="menu1">Editing a song</li>
+      <li class="menu2"><a href="editing_track.html">Editing a track</a></li>
+      <li class="menu2"><a href="editing_song.html">Editing a whole song</a></li>
+      <li class="menu2"><a href="edit_effects.html">Note effects</a></li>
+      <li class="menu2"><a href="edit_chord.html">Chord Editor</a></li>
+      <li class="menu2"><a href="edit_matrix.html">Matrix Editor</a></li>
+      <li class="menu1">Features in detail</li>
+      <li class="menu2"><a href="detail_file_edit.html">File and edit functions</a></li>
+      <li class="menu2"><a href="detail_view.html">View and layout</a></li>
+      <li class="menu2"><a href="detail_composition_track.html">Composition and track</a></li>
+      <li class="menu2"><a href="detail_measure_beat.html">Measure and beat</a></li>
+      <li class="menu2"><a href="detail_markers_player.html">Markers and Player</a></li>
+      <li class="menu1">Tools and settings</li>
+      <li class="menu2"><a href="tools_general.html">Settings dialog</a></li>
+      <li class="menu2"><a href="tools_skin.html">Changing the skin</a></li>
+      <li class="menu2"><a href="tools_sound.html">Sound in TuxGuitar</a></li>
+      <li class="menu2"><a href="tools_audio_recognition.html">Audio recognition</a></li>
+      <li class="menu2"><a href="tools_audio_recognition_fr.html">Reconnaissance audio (français)</a></li>
+      <li class="menu2"><strong>Reconocimiento de audio</strong></li>
+      <li class="menu2"><a href="tools_shortcuts.html">Default shortcuts</a></li>
+      <li class="menu2"><a href="tools_keybinding.html">Shortcut editor</a></li>
+      <li class="menu2"><a href="tools_plugins.html">Plugins dialog</a></li>
+      <li class="menu2"><a href="tools_converter.html">Batch File Converter</a></li>
+      <li class="menu2"><a href="tools_install_conf.html">Installation and configuration</a></li>
+      <li class="menu1"><a href="file_formats.html">Supported file formats</a></li>
+    </ul>
+  </div>
+    <section>
+    <p><a href="tools_audio_recognition.html">English version of this page</a> · <a href="tools_audio_recognition_fr.html">Version française</a></p>
+    <p>La página <strong>Reconocimiento de audio</strong> de <strong>Herramientas → Configurar TuxGuitar</strong> reúne los ajustes del afinador avanzado y de la práctica interactiva. Muestra una categoría cada vez: elígela en la lista <strong>Categoría de ajustes</strong>. Cada ajuste aparece una sola vez, en su categoría. Los controles deslizantes muestran su valor y su unidad, actualizados mientras los mueves; el valor recomendado se indica al lado y en la información emergente de cada ajuste (pasa el ratón sobre su nombre). Los valores se guardan y se conservan al cerrar TuxGuitar.</p>
+    <h2 id="recommended">Valores recomendados y las tres formas de restablecerlos</h2><p>Cada valor recomendado es el que se usaba antes de que existieran estos ajustes: la configuración recomendada se comporta exactamente como las versiones anteriores. Hay tres alcances distintos:</p><ul><li><strong>Restablecer los valores recomendados de esta categoría</strong> solo restablece la categoría que se muestra. Se aplica con <strong>Aceptar</strong>; <strong>Cancelar</strong> lo descarta.</li><li><strong>Restablecer todos los ajustes de reconocimiento de audio</strong> restablece todas las categorías de esta página. Se aplica con <strong>Aceptar</strong>; <strong>Cancelar</strong> lo descarta.</li><li>El botón <strong>Valores predeterminados</strong> de la parte inferior de la ventana de configuración restablece <strong>todos los ajustes de TuxGuitar</strong> (idioma, estilo, sonido…), incluido el reconocimiento de audio, de inmediato, y cierra la ventana.</li></ul>
+    <h2 id="when">Cuándo se aplican los cambios</h2><ul><li>Nada cambia antes de <strong>Aceptar</strong>; <strong>Cancelar</strong> conserva los valores anteriores.</li><li>Afinador: justo después de Aceptar.</li><li>Práctica (notas, acordes, pasajes): en el siguiente <strong>Inicio</strong>; una práctica en curso conserva los valores con los que empezó.</li><li>Niveles y ataque: la escucha se reinicia limpiamente al instante (una fracción de segundo), sin mezclar valores antiguos y nuevos.</li><li>Excepción: la entrada de audio cambia en cuanto se elige en la lista, igual que en las ventanas del afinador y de la práctica.</li></ul>
+    <h2 id="invalid">Archivos de configuración no válidos o antiguos</h2><p>Los valores se comprueban al introducirlos y al leer el archivo de configuración. Un valor ausente, vacío, no numérico, infinito o de tipo incorrecto se sustituye por el valor recomendado; un número fuera de su intervalo se lleva al límite más cercano. Un margen de altura aceptado menor que el margen de afinación se lleva a este último. Las entradas desconocidas de otras versiones se ignoran y se eliminan en el siguiente guardado. TuxGuitar nunca se niega a arrancar por culpa de este archivo.</p>
+    <h2 id="input">Entrada de audio</h2>
+    <p>La entrada (dispositivo y, en las interfaces multicanal, canal) la comparten el afinador y la práctica interactiva. Es la misma lista que en sus ventanas; un cambio se aplica al instante y <strong>no se recuerda</strong> al cerrar TuxGuitar. Los niveles deciden cuándo la señal es demasiado débil, correcta, demasiado fuerte o saturada; la práctica solo acepta notas a un nivel utilizable.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Nivel mínimo utilizable</td><td>dBFS</td><td>-60</td><td>-25</td><td>-40</td><td>funciona con una señal más débil, pero también escucha el ruido de la sala</td><td>la guitarra debe sonar más fuerte; las notas suaves se indican como «demasiado bajas»</td></tr>
+    <tr><td>Aviso de nivel alto</td><td>dBFS</td><td>-20</td><td>-1</td><td>-6</td><td>«demasiado alto» aparece antes</td><td>el aviso solo llega cerca de la saturación</td></tr>
+    <tr><td>Reducir el ruido de fondo</td><td>sí/no</td><td>—</td><td>—</td><td>Desactivado</td><td>Desactivado: la entrada se analiza tal cual</td><td>—</td></tr>
+    <tr><td>Sugerir una ganancia de entrada</td><td>sí/no</td><td>—</td><td>—</td><td>Activado</td><td>Desactivado: no se sugiere ninguna ganancia, la ganancia sigue siendo manual</td><td>—</td></tr>
+    </table>
+    <h2 id="tuner">Afinador</h2>
+    <p>Los ajustes del afinador se aplican en cuanto se valida la configuración, incluso con el afinador abierto.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Margen de afinación</td><td>cents</td><td>1</td><td>20</td><td>5</td><td>afinación más precisa, más difícil de lograr</td><td>más fácil de lograr, menos precisa (también sirve para el color de afinación de la paleta de práctica)</td></tr>
+    <tr><td>Conservar la última nota</td><td>activado/desactivado</td><td>—</td><td>—</td><td>Activado</td><td>Desactivado: la pantalla se borra cuando la cuerda se apaga</td><td>—</td></tr>
+    </table>
+    <h2 id="notes">Práctica — notas</h2>
+    <p>Cada nota exige un <strong>nuevo ataque</strong> (una pulsación) y después debe sonar, con la altura correcta y suficiente certeza, durante el tiempo de confirmación. El silencio y el ruido nunca hacen avanzar la práctica. La cuerda y el traste nunca se comprueban: solo se comprueba la altura.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Margen de altura aceptado</td><td>cents</td><td>10</td><td>45</td><td>35</td><td>más exigente con la afinación y los bends pequeños</td><td>más permisivo; una nota vecina (a 100 cents) nunca se acepta. Nunca menor que el margen de afinación: un valor menor se lleva a este último</td></tr>
+    <tr><td>Tolerancia de agudo por traste</td><td>cents</td><td>0</td><td>2</td><td>0.7</td><td>más estricto: las notas del mástil que suenan demasiado agudas se rechazan antes</td><td>más tolerante con la entonación natural de las notas del mástil, más hacia los agudos; se añade solo del lado agudo, nunca por encima de 49 cents en total. 0 lo desactiva</td></tr>
+    <tr><td>Certeza mínima</td><td>%</td><td>50</td><td>95</td><td>80</td><td>reacciona a notas más débiles o ruidosas, con más errores de juicio</td><td>menos errores, pero las notas suaves pueden quedar sin juzgar</td></tr>
+    <tr><td>Tiempo para confirmar una nota</td><td>ms</td><td>50</td><td>300</td><td>107</td><td>reacción más rápida, más riesgo por parásitos breves</td><td>más estable, pero más lento en pasajes rápidos. Se redondea a pasos de análisis enteros de 5,3 ms</td></tr>
+    <tr><td>Sensibilidad al ataque</td><td>dB</td><td>2</td><td>10</td><td>4.5</td><td>detecta ataques suaves, pero los golpes y el ruido pueden contar</td><td>ignora mejor el ruido, puede perder ataques suaves</td></tr>
+    <tr><td>Hammer-ons, pull-offs, slides</td><td>opción</td><td>—</td><td>—</td><td>Nuevo ataque para cada nota</td><td>—</td><td>—</td></tr>
+    <tr><td>Comprobar las técnicas de ejecución</td><td>sí/no</td><td>—</td><td>—</td><td>Activado</td><td>Desactivado: toda técnica se indica como no verificable</td><td>—</td></tr>
+    <tr><td>Tolerancia de tiempo (tocar al tempo)</td><td>opción</td><td>—</td><td>—</td><td>Normal</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="chords">Práctica — acordes</h2>
+    <p>Un acorde se comprueba frente al acorde escrito: cada cuerda que tiene armónicos propios debe oírse dentro de la ventana de rasgueo. Las cuerdas imposibles de distinguir al oído (la misma nota dos veces, o la octava de una cuerda más grave) se indican «no comprobadas» y nunca se declaran oídas. Las cuerdas de más no se comprueban en esta versión.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Exigencia en los acordes</td><td>%</td><td>20</td><td>80</td><td>33</td><td>acepta cuerdas más débiles, puede aceptar una cuerda ausente</td><td>más estricto, puede rechazar una cuerda real pero discreta</td></tr>
+    <tr><td>Ventana de rasgueo</td><td>ms</td><td>300</td><td>1500</td><td>600</td><td>exige un rasgueo rápido y uniforme</td><td>permite rasgueos lentos o en arpegio</td></tr>
+    <tr><td>Cuerdas exigidas</td><td>opción</td><td>—</td><td>—</td><td>Todas las cuerdas comprobables</td><td>—</td><td>—</td></tr>
+    <tr><td>Cuerdas de más</td><td>opción</td><td>—</td><td>—</td><td>Todavía no se comprueban</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="passages">Pasajes</h2>
+    <p>La canción se divide en pasajes en el orden de interpretación (las repeticiones y los finales alternativos son pasajes distintos). Al final de un pasaje, si la parte de notas y acordes incorrectos o saltados supera el umbral, el pasaje se vuelve a tocar, hasta el máximo. Son los valores que se usan al iniciar TuxGuitar; la ventana de práctica interactiva puede cambiar el tamaño y el umbral solo para la sesión en curso.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Repetir pasajes</td><td>opción</td><td>—</td><td>—</td><td>Cada 2 compases</td><td>Desactivado toca de seguido; 1 o 4 compases dan pasajes más cortos o más largos</td><td>—</td></tr>
+    <tr><td>Repetir cuando los errores superen</td><td>%</td><td>25</td><td>75</td><td>50</td><td>25 %: repite incluso con pocos errores</td><td>75 %: repite solo si la mayoría de las notas fallaron</td></tr>
+    <tr><td>Máximo de repeticiones</td><td></td><td>0</td><td>5</td><td>2</td><td>0 nunca repite</td><td>un pasaje difícil puede tocarse hasta 6 veces</td></tr>
+    </table>
+    <h2 id="engine">Motor de reconocimiento</h2>
+    <p>Esta versión tiene un solo motor de detección de altura, <strong>FastYin</strong> (TarsosDSP). Encuentra <strong>una nota cada vez</strong> (monofónico); los acordes se comprueban con un análisis de espectro aparte, frente al acorde escrito (polifónico, pero solo para las notas esperadas). «Automático» siempre usa el motor recomendado. No se ofrece ningún otro motor porque todavía no existe ninguno.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Motor de detección de altura</td><td>opción</td><td>—</td><td>—</td><td>Automático (FastYin)</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="advanced">Avanzado</h2>
+    <p>Valores técnicos del análisis de la señal. Modifícalos solo si los valores recomendados no convienen a tu equipo. La ventana de análisis (2048 muestras) y el paso (256 muestras) son fijos, porque todas las duraciones anteriores dependen de ellos.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Nivel de muestra saturada</td><td>%</td><td>90</td><td>100</td><td>99</td><td>más muestras cuentan como saturadas</td><td>solo cuentan las muestras a plena escala</td></tr>
+    <tr><td>Proporción de saturación</td><td>%</td><td>1</td><td>50</td><td>10</td><td>la saturación se indica antes</td><td>la saturación solo se indica con una distorsión fuerte</td></tr>
+    <tr><td>Certeza mínima del afinador</td><td>%</td><td>50</td><td>95</td><td>80</td><td>el afinador muestra notas más débiles, con más parpadeo</td><td>más estable, puede quedarse en blanco con notas suaves</td></tr>
+    <tr><td>Umbral de detección de ataque</td><td>dBFS</td><td>-70</td><td>-30</td><td>-50</td><td>detecta ataques muy suaves, más ruido</td><td>ignora el ruido débil</td></tr>
+    <tr><td>Armónicos por cuerda en acordes</td><td></td><td>1</td><td>4</td><td>2</td><td>más cuerdas comprobables, de forma menos fiable</td><td>menos cuerdas comprobables por separado</td></tr>
+    <tr><td>Tiempo para confirmar un acorde</td><td>ms</td><td>20</td><td>150</td><td>43</td><td>los acordes se aceptan antes</td><td>más estable, más lento. Se redondea a pasos de análisis enteros</td></tr>
+    </table>
+    <h2 id="limits">Límites</h2><p>El reconocimiento se basa solo en la altura: no puede saber qué cuerda o qué traste se usó. Las técnicas escritas (hammer-on, pull-off, slide, bend, vibrato) se intentan oír, pero ninguna está todavía verificada: la práctica las muestra como «todavía no verificable» en lugar de adivinar. Las notas ligadas no tienen ataque de púa y puede que haya que tocarlas de nuevo o saltarlas; aceptarlas sin ataque y rechazar las cuerdas de más son propuestas aún en estudio, por eso no se ofrecen como ajustes.</p>
+    </section>
+  <script src="init.js"></script>
+</body>
+</html>

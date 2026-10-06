@@ -44,6 +44,7 @@
       <li class="menu2"><a href="tools_sound.html">Sound in TuxGuitar</a></li>
       <li class="menu2"><strong>Audio recognition</strong></li>
       <li class="menu2"><a href="tools_audio_recognition_fr.html">Reconnaissance audio (français)</a></li>
+      <li class="menu2"><a href="tools_audio_recognition_es.html">Reconocimiento de audio (español)</a></li>
       <li class="menu2"><a href="tools_shortcuts.html">Default shortcuts</a></li>
       <li class="menu2"><a href="tools_keybinding.html">Shortcut editor</a></li>
       <li class="menu2"><a href="tools_plugins.html">Plugins dialog</a></li>
@@ -121,7 +122,7 @@
     <tr><td>Chord overtones per string</td><td></td><td>1</td><td>4</td><td>2</td><td>more strings can be checked, less reliably</td><td>fewer strings can be checked separately</td></tr>
     <tr><td>Time to confirm a chord</td><td>ms</td><td>20</td><td>150</td><td>43</td><td>chords are accepted faster</td><td>steadier, slower. Rounded to whole analysis steps</td></tr>
     </table>
-    <h2 id="limits">Limits</h2><p>Recognition is based on pitch only: it cannot tell which string or fret was used, nor recognise techniques. Legato notes (hammer-on, pull-off, slide) have no pick attack and may have to be picked again or skipped; accepting them without an attack and rejecting extra chord strings are proposals still under review, so they are not offered as settings.</p>
+    <h2 id="limits">Limits</h2><p>Recognition is based on pitch only: it cannot tell which string or fret was used. The techniques written in the score (hammer-on, pull-off, slide, bend, vibrato) are listened for, but none is verified yet: practice shows them as "cannot be checked yet" instead of guessing. Legato notes (hammer-on, pull-off, slide) have no pick attack and may have to be picked again or skipped; accepting them without an attack and rejecting extra chord strings are proposals still under review, so they are not offered as settings.</p>
     </section>
   <script src="init.js"></script>
 </body>

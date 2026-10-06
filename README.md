@@ -22,7 +22,7 @@
 3. The first time, choose your audio input and play a string: the level meter tells you if the signal is good. Adjust the **Input gain** slider if needed.
 4. Play what is shown. The next note or chord is framed on the score; a green tick means it was heard, a red cross means another note was heard, and nothing advances on silence or noise. **Stop** ends the practice at once.
 
-What is verified: **pitch** (and every note of a chord). String and fret are never claimed from audio, and techniques (bends, vibrato, slides...) are shown as written but not judged. Details, settings and limits: [docs/PRACTICE.md](docs/PRACTICE.md) (English), [docs/PRACTICE-FR.md](docs/PRACTICE-FR.md) (français).
+What is verified: **pitch** (and every note of a chord). String and fret are never claimed from audio, and the written techniques (hammer-on, pull-off, slide, bend, vibrato) are shown with what was heard, or "cannot be checked yet" while no detector meets its quality target. Details, settings and limits: [docs/PRACTICE.md](docs/PRACTICE.md) (English), [docs/PRACTICE-FR.md](docs/PRACTICE-FR.md) (français), [docs/PRACTICE-ES.md](docs/PRACTICE-ES.md) (español).
 
 ## Tuned and tested on real recordings
 
@@ -46,7 +46,7 @@ To build from source, refer to [INSTALL.md](INSTALL.md) and, for the practice mo
 
 ## Documentation
 
-* [Interactive Practice, user guide](docs/PRACTICE.md) - [Guide en français](docs/PRACTICE-FR.md)
+* [Interactive Practice, user guide](docs/PRACTICE.md) - [Guide en français](docs/PRACTICE-FR.md) - [Guía en español](docs/PRACTICE-ES.md)
 * [Architecture: CESAM views and sequence diagrams](docs/architecture/README.md)
 * [INSTALL.md](INSTALL.md), [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
 

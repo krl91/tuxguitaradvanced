@@ -2,7 +2,7 @@
 
 Le mode Practice écoute votre guitare et vérifie, note par note et accord par accord, que vous jouez ce que dit la partition. Il ne joue pas la partition à votre place et il n'enregistre jamais le son : seuls des chiffres calculés à partir du son (hauteur, niveau, notes entendues) existent en mémoire pendant son fonctionnement.
 
-*English: [PRACTICE.md](PRACTICE.md).*
+*English: [PRACTICE.md](PRACTICE.md). Español: [PRACTICE-ES.md](PRACTICE-ES.md).*
 
 ## Ce qu'il faut
 
@@ -37,7 +37,7 @@ Une petite palette reste à l'écran et la note ou l'accord attendu est encadré
 
 La pratique peut aussi se faire **par passages** : quelques mesures à la fois, répétées jusqu'à atteindre la part de notes justes que vous avez fixée.
 
-Ce qui est vérifié, c'est la **hauteur**. La corde et la case utilisées ne peuvent pas être connues par le son, et les techniques écrites (bends, vibrato, glissés, hammer-ons, pull-offs...) sont affichées mais pas jugées : une note de hammer-on ou de pull-off est acceptée d'après sa hauteur.
+Ce qui est vérifié, c'est la **hauteur**. La corde et la case utilisées ne peuvent pas être connues par le son. Pour chaque technique écrite (hammer-on, pull-off, slide, bend, vibrato), une ligne sous le résultat de hauteur dit ce qui a été entendu : *entendu*, *non entendu*, *incertain* ou *pas encore vérifiable*. Aucune technique n'est encore vérifiée (détection mesurée : vibrato 59 %, bend 82 %, slide 48 % des notes annotées, objectif 85 %) : pour l'instant la ligne indique donc *pas encore vérifiable*. Elle ne bloque jamais l'exercice : une note de hammer-on ou de pull-off est acceptée d'après sa hauteur.
 
 ## Gain d'entrée, réduction du bruit et gain suggéré
 
