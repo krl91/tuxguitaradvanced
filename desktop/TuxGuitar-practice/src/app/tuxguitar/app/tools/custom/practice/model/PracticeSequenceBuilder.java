@@ -19,6 +19,7 @@ import app.tuxguitar.song.models.TGNoteEffect;
 import app.tuxguitar.song.models.TGSong;
 import app.tuxguitar.song.models.TGTrack;
 import app.tuxguitar.song.models.TGVoice;
+import app.tuxguitar.song.models.effects.TGEffectBend;
 
 /**
  * Builds the practice sequence of one track in playback order, using TuxGuitar's own
@@ -26,6 +27,9 @@ import app.tuxguitar.song.models.TGVoice;
  * data-model.md "PracticeEvent" (research R3).
  */
 public final class PracticeSequenceBuilder {
+
+	/** A written bend value is a quarter of a whole tone, 0.5 semitone (TGEffectBend.SEMITONE_LENGTH notwithstanding, research R5 addendum). */
+	private static final double SEMITONES_PER_BEND_VALUE = 0.5;
 
 	private PracticeSequenceBuilder() {
 	}
@@ -221,13 +225,55 @@ public final class PracticeSequenceBuilder {
 			}
 			AutoPassReason reason = autoPassReason(effect);
 			int fret = note.getValue();
-			if( reason != null ) {
+			if( reason == AutoPassReason.BEND && effect.getBend().getPoints().isEmpty() ) {
+				// a bend mark without any point says nothing to follow: a plain note
+				add(Kind.EXPECTED_NOTE, null, playIndex, beat, measureIndex, voiceIndex, string, fret,
+						this.tuning.expectedMidi(string, fret), false, techniques(effect), List.of(note));
+			} else if( reason == AutoPassReason.BEND ) {
+				addBent(note, playIndex, beat, measureIndex, voiceIndex);
+			} else if( reason != null ) {
 				add(Kind.AUTO_PASS, reason, playIndex, beat, measureIndex, voiceIndex, string, fret,
 						PracticeEvent.NO_PITCH, false, techniques(effect), List.of(note));
 			} else {
 				add(Kind.EXPECTED_NOTE, null, playIndex, beat, measureIndex, voiceIndex, string, fret,
 						this.tuning.expectedMidi(string, fret), false, techniques(effect), List.of(note));
 			}
+		}
+
+		/**
+		 * A bent note is expected (research R5 addendum): the pitch to hear first is the fretted pitch, or for a
+		 * pre-bend the fretted pitch plus the first point of the path (rounded to the nearest semitone); the path
+		 * (a value is a quarter of a whole tone, a position a twelfth of the note) is kept for the session and the judge.
+		 */
+		private void addBent(TGNote note, int playIndex, TGBeat beat, int measureIndex, int voiceIndex) {
+			int string = note.getString();
+			int fret = note.getValue();
+			int base = checkedMidi(string, fret);
+			double[] pairs = new double[2 * note.getEffect().getBend().getPoints().size()];
+			int i = 0;
+			double previousTime = -1.0;
+			for( TGEffectBend.BendPoint point : note.getEffect().getBend().getPoints() ) {
+				double time = point.getPosition() / (double) TGEffectBend.MAX_POSITION_LENGTH;
+				if( time <= previousTime ) {
+					// two points at the same position: the later one wins
+					i -= 2;
+				}
+				pairs[i ++] = time;
+				pairs[i ++] = point.getValue() * SEMITONES_PER_BEND_VALUE;
+				previousTime = time;
+			}
+			PitchPath path = PitchPath.of(java.util.Arrays.copyOf(pairs, i));
+			int expected = (int) Math.round(base + path.getPoints().get(0).getSemitones());
+			if( expected < 0 || expected > 127 ) {
+				throw new IllegalStateException("expected pitch outside MIDI range: " + expected);
+			}
+			TGVoice voice = beat.getVoice(voiceIndex);
+			double seconds = (voice == null ? 0.0 : beat.getMeasure().getTempo().getTicksInMillis(voice.getDuration().getTime()) / 1000.0);
+			boolean sameAsPrevious = this.previousExpectedPitches.contains(expected);
+			this.events.add(new PracticeEvent(Kind.EXPECTED_NOTE, null, this.events.size(), playIndex, beat, measureIndex,
+					voiceIndex, string, fret, expected, false, techniques(note.getEffect()), sameAsPrevious, List.of(note),
+					Collections.<ChordNote>emptyList(), new int[0], path, base, seconds));
+			this.previousExpectedPitches = Collections.singleton(expected);
 		}
 
 		private void add(Kind kind, AutoPassReason reason, int playIndex, TGBeat beat, int measureIndex,

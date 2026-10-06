@@ -103,6 +103,9 @@ public final class PracticeEvent {
 	private final List<ChordNote> chordNotes;
 	private final int[] requiredPitches;
 	private final int[] toleratedPitches;
+	private final PitchPath bendPath;
+	private final int bendBaseMidi;
+	private final double bendWrittenSeconds;
 
 	PracticeEvent(Kind kind, AutoPassReason autoPassReason, int sequenceIndex, int playIndex, TGBeat beat,
 			int measureIndex, int voiceIndex, int stringNumber, int fret, int expectedMidi, boolean grace,
@@ -121,6 +124,22 @@ public final class PracticeEvent {
 			int measureIndex, int voiceIndex, int stringNumber, int fret, int expectedMidi, boolean grace,
 			Set<Technique> techniques, boolean sameAsPrevious, List<TGNote> notes, List<ChordNote> chordNotes,
 			int[] toleratedPitches) {
+		this(kind, autoPassReason, sequenceIndex, playIndex, beat, measureIndex, voiceIndex, stringNumber, fret, expectedMidi, grace,
+				techniques, sameAsPrevious, notes, chordNotes, toleratedPitches, null, NO_PITCH, 0.0);
+	}
+
+	/**
+	 * @param bendPath the written pitch path of a bent note (semitones above the fretted pitch), or null
+	 * @param bendBaseMidi the fretted pitch the path is relative to ({@link #NO_PITCH} without a path)
+	 * @param bendWrittenSeconds the written length of the bent note at the tempo of its measure
+	 */
+	PracticeEvent(Kind kind, AutoPassReason autoPassReason, int sequenceIndex, int playIndex, TGBeat beat,
+			int measureIndex, int voiceIndex, int stringNumber, int fret, int expectedMidi, boolean grace,
+			Set<Technique> techniques, boolean sameAsPrevious, List<TGNote> notes, List<ChordNote> chordNotes,
+			int[] toleratedPitches, PitchPath bendPath, int bendBaseMidi, double bendWrittenSeconds) {
+		this.bendPath = bendPath;
+		this.bendBaseMidi = bendBaseMidi;
+		this.bendWrittenSeconds = bendWrittenSeconds;
 		this.kind = kind;
 		this.autoPassReason = autoPassReason;
 		this.sequenceIndex = sequenceIndex;
@@ -200,9 +219,9 @@ public final class PracticeEvent {
 
 	/**
 	 * The written techniques of this event with what is needed to judge them (spec 002). For now they
-	 * are derived from the display-only set: slide, vibrato, palm mute and tremolo picking. Hammer-ons
-	 * and pull-offs need the destination note to be told apart, bends and harmonics are still
-	 * auto-passed; later phases fill those in.
+	 * are derived from the display-only set: slide, vibrato, palm mute and tremolo picking, and from the
+	 * written bend: a bend, a pre-bend and a release each with the path. Hammer-ons and pull-offs need
+	 * the destination note to be told apart (PracticeSequence.targetsOf); harmonics are still auto-passed.
 	 */
 	public List<TechniqueTarget> getTechniqueTargets() {
 		List<TechniqueTarget> targets = new ArrayList<TechniqueTarget>();
@@ -210,6 +229,22 @@ public final class PracticeEvent {
 			PlayingTechnique mapped = mapped(technique);
 			if( mapped != null ) {
 				targets.add(TechniqueTarget.of(mapped));
+			}
+		}
+		if( this.bendPath != null ) {
+			int targetMidi = (int) Math.round(this.bendBaseMidi + this.bendPath.getPeakSemitones());
+			List<PlayingTechnique> bends = new ArrayList<PlayingTechnique>();
+			if( this.bendPath.getPoints().get(0).getSemitones() > 0.0 ) {
+				bends.add(PlayingTechnique.PRE_BEND);
+			}
+			if( this.bendPath.getPeakSemitones() > this.bendPath.getPoints().get(0).getSemitones() ) {
+				bends.add(PlayingTechnique.BEND);
+			}
+			if( this.bendPath.getTargetSemitones() < this.bendPath.getPeakSemitones() ) {
+				bends.add(PlayingTechnique.RELEASE);
+			}
+			for( PlayingTechnique bend : bends ) {
+				targets.add(TechniqueTarget.withBend(bend, this.bendBaseMidi, targetMidi, this.bendPath));
 			}
 		}
 		return Collections.unmodifiableList(targets);
@@ -234,6 +269,16 @@ public final class PracticeEvent {
 			default:
 				return null;
 		}
+	}
+
+	/** The written pitch path of a bent note (semitones above the fretted pitch, research R5 addendum); null for the other events. */
+	public PitchPath getBendPath() {
+		return this.bendPath;
+	}
+
+	/** The written length of a bent note in seconds at the tempo of its measure (the observation window follows it); 0 without a bend. */
+	public double getBendWrittenSeconds() {
+		return this.bendWrittenSeconds;
 	}
 
 	/** True when the expected pitch equals the previous expected note's pitch (re-articulation, FR-022). */

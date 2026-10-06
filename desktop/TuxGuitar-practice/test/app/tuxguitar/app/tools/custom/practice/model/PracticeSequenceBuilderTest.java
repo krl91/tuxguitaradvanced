@@ -3,9 +3,12 @@ package app.tuxguitar.app.tools.custom.practice.model;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -207,7 +210,9 @@ public class PracticeSequenceBuilderTest {
 		assertArrayEquals(new int[] { 60, 64 }, events.get(0).getRequiredPitches());
 		assertEquals(AutoPassReason.DEAD, events.get(1).getAutoPassReason());
 		assertEquals(AutoPassReason.DEAD_ONLY_CHORD, events.get(2).getAutoPassReason());
-		assertEquals(AutoPassReason.BEND, events.get(3).getAutoPassReason());
+		// a single bent note is no longer passed automatically (T080): it is expected, with its written path
+		assertEquals(Kind.EXPECTED_NOTE, events.get(3).getKind());
+		assertNull(events.get(3).getAutoPassReason());
 		assertEquals(AutoPassReason.HARMONIC, events.get(4).getAutoPassReason());
 		assertEquals(AutoPassReason.TREMOLO_BAR, events.get(5).getAutoPassReason());
 		assertEquals(AutoPassReason.TRILL, events.get(6).getAutoPassReason());
@@ -399,5 +404,124 @@ public class PracticeSequenceBuilderTest {
 			indexes.add(event.getPlayIndex());
 		}
 		return indexes;
+	}
+
+	// ------------------------------------------------------------------ bends (spec 002 T078, research R5 addendum)
+
+	private static List<PlayingTechnique> techniquesOf(PracticeEvent event) {
+		List<PlayingTechnique> techniques = new ArrayList<PlayingTechnique>();
+		for( TechniqueTarget target : event.getTechniqueTargets() ) {
+			techniques.add(target.getTechnique());
+		}
+		return techniques;
+	}
+
+	@Test
+	public void aBentNoteIsAnExpectedNoteAtTheFrettedPitchWithItsWrittenPath() {
+		SongFixture fixture = new SongFixture(1);
+		// string 3 (G3 = 55) fret 7 = D4 (62); a whole tone bend: points (0, 0), (6, 4), (12, 4), a value being a quarter of a tone
+		fixture.bend(0, 0, 3, 7, 2);
+
+		PracticeEvent event = fixture.sequence().getEvents().get(0);
+
+		assertEquals(Kind.EXPECTED_NOTE, event.getKind());
+		assertNull(event.getAutoPassReason());
+		assertEquals(62, event.getExpectedMidi());
+		PitchPath path = event.getBendPath();
+		assertEquals(3, path.getPoints().size());
+		assertEquals(0.0, path.getPoints().get(0).getRelativeTime(), 1e-9);
+		assertEquals(0.0, path.getPoints().get(0).getSemitones(), 1e-9);
+		assertEquals(0.5, path.getPoints().get(1).getRelativeTime(), 1e-9);
+		assertEquals(2.0, path.getPoints().get(1).getSemitones(), 1e-9);
+		assertEquals(2.0, path.getTargetSemitones(), 1e-9);
+		assertEquals(Collections.singletonList(PlayingTechnique.BEND), techniquesOf(event));
+		TechniqueTarget target = event.getTechniqueTargets().get(0);
+		assertEquals(62, target.getBaseMidi());
+		assertEquals(64, target.getTargetMidi());
+		assertSame(path, target.getPitchPath());
+	}
+
+	@Test
+	public void aBendValueIsAQuarterOfAToneAndAPositionATwelfthOfTheNote() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 0, 3, 2, 12, 2);
+		fixture.bendPoints(0, 1, 3, 7, 0, 0, 12, 1);
+		fixture.bendPoints(0, 2, 3, 7, 0, 0, 12, 12);
+
+		List<PracticeEvent> events = fixture.sequence().getEvents();
+
+		assertEquals(1.0, events.get(0).getBendPath().getTargetSemitones(), 1e-9);
+		assertEquals(0.25, events.get(0).getBendPath().getPoints().get(1).getRelativeTime(), 1e-9);
+		assertEquals(0.5, events.get(1).getBendPath().getTargetSemitones(), 1e-9);
+		assertEquals(6.0, events.get(2).getBendPath().getTargetSemitones(), 1e-9);
+	}
+
+	@Test
+	public void aBendWithItsReleaseCarriesBothTechniques() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 0, 3, 4, 6, 4, 10, 0, 12, 0);
+
+		PracticeEvent event = fixture.sequence().getEvents().get(0);
+
+		assertEquals(62, event.getExpectedMidi());
+		assertEquals(java.util.Arrays.asList(PlayingTechnique.BEND, PlayingTechnique.RELEASE), techniquesOf(event));
+	}
+
+	@Test
+	public void aPreBendIsExpectedAtTheBentPitchAndItsReleaseFollowsItsPath() {
+		SongFixture fixture = new SongFixture(1);
+		// the string is bent a whole tone before it is struck, held, then released
+		fixture.bendPoints(0, 0, 3, 7, 0, 4, 6, 4, 12, 0);
+		fixture.bendPoints(0, 1, 3, 7, 0, 4, 12, 4);
+
+		List<PracticeEvent> events = fixture.sequence().getEvents();
+
+		// the first pitch heard is the fretted pitch plus the pre-bend, not the fretted pitch
+		assertEquals(64, events.get(0).getExpectedMidi());
+		assertEquals(62, events.get(0).getTechniqueTargets().get(0).getBaseMidi());
+		assertEquals(java.util.Arrays.asList(PlayingTechnique.PRE_BEND, PlayingTechnique.RELEASE), techniquesOf(events.get(0)));
+		// a pre-bend that is only held has no release
+		assertEquals(64, events.get(1).getExpectedMidi());
+		assertEquals(Collections.singletonList(PlayingTechnique.PRE_BEND), techniquesOf(events.get(1)));
+	}
+
+	@Test
+	public void aQuarterToneBendHasNoSemitoneNameButAPathInSemitones() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 0, 12, 1);
+		// a quarter tone pre-bend: the pitch to expect is the nearest semitone, the path keeps the quarter tone
+		fixture.bendPoints(0, 1, 3, 7, 0, 1, 12, 1);
+
+		List<PracticeEvent> events = fixture.sequence().getEvents();
+
+		assertEquals(62, events.get(0).getExpectedMidi());
+		assertEquals(0.5, events.get(0).getBendPath().getTargetSemitones(), 1e-9);
+		assertEquals(63, events.get(1).getExpectedMidi());
+		assertEquals(0.5, events.get(1).getBendPath().getPoints().get(0).getSemitones(), 1e-9);
+	}
+
+	@Test
+	public void theWrittenDurationOfABendFollowsTheTempoOfTheScore() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bend(0, 0, 3, 7, 1);
+		// a quarter note at 120 beats per minute lasts half a second
+		assertEquals(0.5, fixture.sequence().getEvents().get(0).getBendWrittenSeconds(), 0.01);
+	}
+
+	@Test
+	public void aBentNoteOnThePitchOfThePreviousNoteStillNeedsANewArticulation() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.quarter(0, 0, 3, 7);
+		fixture.bend(0, 1, 3, 7, 1);
+
+		assertTrue(fixture.sequence().getEvents().get(1).isSameAsPrevious());
+	}
+
+	@Test
+	public void aNoteWithoutABendHasNoPath() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.quarter(0, 0, 3, 7);
+
+		assertNull(fixture.sequence().getEvents().get(0).getBendPath());
 	}
 }

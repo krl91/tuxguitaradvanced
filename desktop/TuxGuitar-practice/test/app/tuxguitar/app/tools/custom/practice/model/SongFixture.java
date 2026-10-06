@@ -19,6 +19,7 @@ import app.tuxguitar.song.models.TGMeasureHeader;
 import app.tuxguitar.song.models.TGNote;
 import app.tuxguitar.song.models.TGSong;
 import app.tuxguitar.song.models.TGTrack;
+import app.tuxguitar.song.models.effects.TGEffectBend;
 
 /**
  * Builds small songs in code for practice tests: one six-string standard-tuning track
@@ -91,13 +92,21 @@ public final class SongFixture {
 		return notes;
 	}
 
-	/** A note bent up by {@code semitones} (whole numbers, at most 12): the pitch rises over the first half of the note and holds. */
+	/**
+	 * A note bent up by {@code semitones} (whole numbers, at most 6): the pitch rises over the first half of the note and holds. A bend
+	 * point value is in quarter tones, {@code TGEffectBend.SEMITONE_LENGTH} notwithstanding (research R5 addendum): one semitone is 2.
+	 */
 	public TGNote bend(int measureIndex, int quarterOffset, int string, int fret, int semitones) {
+		return bendPoints(measureIndex, quarterOffset, string, fret, 0, 0, TGEffectBend.MAX_POSITION_LENGTH / 2, semitones * 2, TGEffectBend.MAX_POSITION_LENGTH, semitones * 2);
+	}
+
+	/** A note with the written bend points, as (position 0 to 12, value in quarter tones) pairs. */
+	public TGNote bendPoints(int measureIndex, int quarterOffset, int string, int fret, int... positionValuePairs) {
 		TGNote note = quarter(measureIndex, quarterOffset, string, fret);
-		app.tuxguitar.song.models.effects.TGEffectBend bend = this.factory.newEffectBend();
-		bend.addPoint(0, 0);
-		bend.addPoint(app.tuxguitar.song.models.effects.TGEffectBend.MAX_POSITION_LENGTH / 2, semitones * app.tuxguitar.song.models.effects.TGEffectBend.SEMITONE_LENGTH);
-		bend.addPoint(app.tuxguitar.song.models.effects.TGEffectBend.MAX_POSITION_LENGTH, semitones * app.tuxguitar.song.models.effects.TGEffectBend.SEMITONE_LENGTH);
+		TGEffectBend bend = this.factory.newEffectBend();
+		for( int i = 0 ; i < positionValuePairs.length ; i += 2 ) {
+			bend.addPoint(positionValuePairs[i], positionValuePairs[i + 1]);
+		}
 		note.getEffect().setBend(bend);
 		return note;
 	}

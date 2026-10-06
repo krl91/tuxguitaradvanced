@@ -36,14 +36,14 @@ public class SongFixtureBuildersTest {
 	}
 
 	@Test
-	public void aBendAndANaturalHarmonicAreNotJudgedAsPlainNotes() {
+	public void aBendIsAnExpectedNoteWithAPathAndANaturalHarmonicIsStillPassed() {
 		SongFixture fixture = new SongFixture(1);
 		fixture.bend(0, 0, 2, 7, 1);
 		fixture.naturalHarmonic(0, 1, 3, 12);
 		List<PracticeEvent> events = fixture.sequence().getEvents();
 		assertEquals(2, events.size());
-		assertEquals(PracticeEvent.Kind.AUTO_PASS, events.get(0).getKind());
-		assertEquals(PracticeEvent.AutoPassReason.BEND, events.get(0).getAutoPassReason());
+		assertEquals(PracticeEvent.Kind.EXPECTED_NOTE, events.get(0).getKind());
+		assertEquals(1.0, events.get(0).getBendPath().getTargetSemitones(), 1e-9);
 		assertEquals(PracticeEvent.Kind.AUTO_PASS, events.get(1).getKind());
 		assertEquals(PracticeEvent.AutoPassReason.HARMONIC, events.get(1).getAutoPassReason());
 	}
