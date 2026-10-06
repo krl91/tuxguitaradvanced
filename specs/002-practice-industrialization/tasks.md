@@ -224,8 +224,11 @@ Commit only when the owner asks; never push without approval (project rule: no p
 - [ ] T083 [US4] Wire both into `ENGINE/technique/TechniqueCatalog.java` and show reached/target semitones and vibrato width in the technique chip detail (`PRACTICE/ui/PracticePalette.java`, strings en + fr)
   > **Status 2026-10-06:** `TechniqueJudge` already judges a bend, a pre-bend and a release each against its part of the path (the catalogue wiring existed). The detail in the chip (reached / target semitones, vibrato width) and its strings are **not done on purpose**: bend and vibrato stay *cannot be checked yet* until T084, so such a detail would be dead text; to do with T085.
 - [ ] T084 [SPIKE] [US4] S-F1 for bend and vibrato: record clips on both inputs, publish separability and bend-accuracy in `BENCH/` and `research.md` R4
+  > **Status 2026-10-07:** open, blocked by the recordings (T053 deferred, none requested). Available: bend 82 % and vibrato 59 % of the annotated notes on IDMT-SMT-Guitar dataset 2 for presence only, **no measurement of the bend accuracy against a written target** (the dataset gives no written path). The path-aware detector is therefore tested on synthetic trajectories only.
 - [ ] T085 [US4] Set `verified` flags in `TechniqueCatalog` per T084 against SC-005, otherwise leave false and record why
+  > **Status 2026-10-07:** nothing to change: `bend` and `vibrato` stay `verified = false`, so the interface says *cannot be checked yet* and never *heard* (owner's contract of 2026-10-06).
 - [ ] T086 [US4] Phase D3 verification: full build with tests green; manual bend/vibrato play-through; record results exactly as run
+  > **Status 2026-10-07:** build with tests green (full macOS SWT build 2026-10-07, 4:26, BUILD SUCCESS: practice 269, engine 264, tuner 23, Gervill 9, lib 67, gtp 10 with 1 skipped); the manual bend and vibrato play-through with a guitar is **not done** and stays open for the owner.
 
 **Checkpoint (Phase D)**: P1 techniques recognised or honestly "not verifiable".
 
