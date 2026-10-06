@@ -144,6 +144,27 @@ From the MVP research (`specs/001-interactive-practice-mvp/research.md`, benchma
 
 **Contract (owner's validation, 2026-10-06):** pitch and technique stay two separate results; while the pitch moves along the written path no intermediate pitch gives a wrong note, and a pitch change toward a pitch of the path (for instance the target of the bend, which can be the next written note) is not taken for the next note without a fresh attack; the bend is not reported as made before the target is reached; target reached: technique detected with *under / on pitch / over* from the tolerance; target not reached at the end of the window: `NOT_DETECTED` or `UNCERTAIN`, never a block; a pitch outside the path and its tolerances remains a real pitch error; in the tempo-following mode the timeline of the score has priority and does not stop for a wrong technique; pre-bend and release follow their own written paths; as long as T084 has no validation on real recordings, bend and vibrato stay *cannot be checked yet* in the interface and nothing says *heard*.
 
+### R5 second addendum — the owner's four bend scores replayed on rendered audio (2026-10-07)
+
+**Material.** Four scores written for the manual check (`tests/2/*.tg` and `.gp4`, 60 bpm, 8 notes each, identical once read back from Guitar Pro 4) and the audio the owner rendered from them with a notation program (`tests/2/*.mp3`, 8.05 s, clean synthesised guitar). **This is not a played guitar**: no string noise, no human timing, no attack variation; it replays through the same chain as the real recordings (`BendRecordedReplayTest`, skipped when the files are absent). The render starts at its first sample, so half a second of silence is put before it (as when a learner presses Start first); without it the first note has no attack and is not accepted, which is a property of that file, not of the practice.
+
+**Defect found by this audio and fixed.** In the first score the bend leaves the fretted pitch at once (62.2 to 64.0 in 0.5 s, 400 cents a second) and the practice stopped at the third note: the pitch stayed within 25 cents of the fretted pitch for about 20 ms, never for the 100 ms stability window, so the bent note was not accepted and, 2 s later, the next bend was shown as a wrong note. The rule was wrong, not the audio: **a bent note whose run began on its written pitch now goes on along the written path** (`PracticeSession.onNoteFrame`, `alongPath`), and a run that does not start on the written pitch is not accepted along the path (the target played straight is not the bend). Tests `BendSessionTest.aBendThatStartsMovingAtOnceIsStillAccepted` and `aRunThatDoesNotStartOnTheWrittenPitchIsNotAcceptedAlongThePath` (red before, green after).
+
+**Result on this audio, default settings** (notes accepted, and the delay after the start of each note: 0.15 to 0.21 s):
+
+| Score | Notes accepted | Wrong note shown | Technique line (detectors unverified) |
+|---|---|---|---|
+| 1 whole tone bend then the pitch it reaches | 8 of 8 | none | cannot be checked yet |
+| 2 semitone bend then the pitch it reaches | 8 of 8 | none | cannot be checked yet |
+| 3 pre-bend, pre-bend and release | 8 of 8 | none | cannot be checked yet |
+| 4 bend, vibrato, hammer-on, slide | 8 of 8 | **one, at 7.03 s, during the slide** | cannot be checked yet |
+
+With the bend detector counted as verified, for the report only: BEND `DETECTED`, outcome on pitch (0), on scores 1 and 2; PRE_BEND and RELEASE `DETECTED`, on pitch, on score 3. That is a measurement on clean rendered audio, **not a validation**: the flags stay false.
+
+**Important about score 2.** Its render contains the semitone bends actually played (the program plays what is written). It is therefore **not** the "bend not played" case; that case (playing the base note without bending) is only covered by synthetic signals (`BendFunctionalTest`, `BendSessionTest`) until the owner plays it.
+
+**Finding, not fixed (needs the owner's decision): a slide is not followed like a bend.** The render plays the slide of score 4 as a staircase, C4, then C#4 held for about 160 ms, then D4. Practice shows C#4 as a wrong note (7.03 s) although it is the middle of the written slide. The same corridor idea as for a bend (from the slide's origin pitch to its destination, the next written note, for the observation window) would remove it; it is a change of Phase 7 behaviour that the owner has not validated. A played glide may differ from this staircase.
+
 ## R6. Tempo-following clock (Phase E)
 
 **Inspected**: `MidiPlayer` exposes `getTickPosition`, `setTickPosition`, `getCurrentTempo`, `isMetronomeEnabled`, `getMode()` (with percent settings), `getCountDown()` (count-in: `MidiPlayerCountDown`), player events (`MidiPlayerEvent.NOTIFY_STARTED/STOPPED`), per-track mute through the sequencer. `SessionEvents` currently pauses practice on `NOTIFY_STARTED` with `PauseReason.PLAYBACK`. Analysis frames are timestamped in **stream time** (`AnalysisService`: `baseNanos + processedSamples…`), not wall-clock time; `CaptureService` reads 1024 frames (≈ 21 ms at 48 kHz) per call with a line buffer of 4 reads.

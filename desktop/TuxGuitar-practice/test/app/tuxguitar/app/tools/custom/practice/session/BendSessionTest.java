@@ -292,4 +292,26 @@ public class BendSessionTest {
 		assertTrue(this.wrongSeen);
 		assertEquals(1, this.session.getCurrentIndex());
 	}
+
+	@Test
+	public void aBendThatStartsMovingAtOnceIsStillAccepted() {
+		start(wholeToneBendThenE4(), false);
+
+		// the string is bent from the first moment: the pitch leaves the fretted pitch (25 cents) in about 20 ms, long before the stability window is over
+		pluck(D4, 0);
+		glide(D4, E4, millis(150));
+		hold(E4, millis(300));
+
+		assertEquals(1, this.session.getCurrentIndex(), "a bend that leaves the base pitch at once was never accepted");
+		assertFalse(this.wrongSeen);
+	}
+
+	@Test
+	public void aRunThatDoesNotStartOnTheWrittenPitchIsNotAcceptedAlongThePath() {
+		start(wholeToneBendThenE4(), false);
+
+		// E4 played straight: it is on the path (the target) but it did not start on the fretted pitch
+		pluck(E4, STABILITY_NANOS + millis(200));
+		assertEquals(0, this.session.getCurrentIndex(), "the target pitch played straight was accepted for the bend");
+	}
 }

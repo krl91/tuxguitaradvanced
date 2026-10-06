@@ -515,7 +515,10 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private void onNoteFrame(AnalysisFrame frame, PracticeEvent event, boolean usableLevel) {
 		long now = frame.getTimestampNanos();
 		this.feedback = Feedback.evaluate(frame, this.reading, event.getExpectedMidi(), event.getFret(), this.tolerance, !this.articulationArmed);
-		if( usableLevel && this.tolerance.matches(this.reading, event.getExpectedMidi(), event.getFret()) ) {
+		// a bent note whose run began on its written pitch goes on along the written path: a bend that leaves the fretted pitch at once
+		// (400 cents a second is 25 cents in 60 ms) would never hold the pitch for the stability window
+		boolean alongPath = (usableLevel && event.getBendPath() != null && this.matchStartNanos >= 0 && onPath(corridorOf(event)));
+		if( usableLevel && (alongPath || this.tolerance.matches(this.reading, event.getExpectedMidi(), event.getFret())) ) {
 			if( this.matchStartNanos < 0 ) {
 				this.matchStartNanos = now;
 			}
