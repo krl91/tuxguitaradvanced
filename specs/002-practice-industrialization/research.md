@@ -346,3 +346,16 @@ The level the learner plays at decides, and the 100 % to 95 % to 80 % slope for 
 | gain +12 dB + gate + subtraction, noise -40 dBFS | **0 %** | **0 %** | **10 %** |
 
 Raising the input gain is the remedy for a weak input and the advice of the warning (T050) is right: +6 dB takes the notes at -45 dBFS from 0 % to 100 %. The noise gate and the spectral subtraction do **not** help weak notes, and with strong noise (signal-to-noise ratio of 0 dB or worse, -40 dBFS noise) they remove the notes: 0 % to 10 % recognised where the gain alone gives 75 to 100 %. This agrees with the defaults (noise reduction off, research R3 / T042); it also says the option must not be recommended for a weak and noisy input. Limits: white noise only, 48 notes of 4 guitars, the gate learning from 1.5 s of the same noise before the notes (a learner who presses Start and waits).
+
+## R13 — Guitar Pro playback: normal file versus defective file (T144, 2026-10-06)
+
+The two files are in the owner's private MySongBook Database folder and are never added to the repository; tests read them only through `TG_GP_CORPUS` and skip when it is absent.
+
+| File | Role | Headless result (`TestGPCorpusSmoke`) | Application |
+|---|---|---|---|
+| `Metallica - To Live Is To Die (4).gp4` | **normal reference**: open, render, MIDI generation, playback without exception | read; 8 tracks, 258 measures, 1 measure error; MIDI sequence of 9085 notes; no exception | opened and rendered; Play and Stop pressed; application alive |
+| `Metallica - To Live Is To Die (6).gp4` | **defective file, negative case only**: must not crash nor divide by zero; refusal with a clear message or degraded opening are both acceptable; its musical content is not required to be correct | read in degraded mode; 3 tracks, 42 measures, 8 measure errors; MIDI sequence of 792 notes; no exception, no division by zero | not opened |
+
+The earlier use of (6) as proof of a correct playback was wrong: a file with 8 measure errors out of 42 is not a valid musical reference. The tempo-0 fix (`GTPInputStream.applyTempo`) is what keeps such a file from dividing by zero.
+
+Observation, not analysed further: during playback of (4) the application log shows two `java.lang.NullPointerException` (`this.synth` is null in `GervillProcessor.loadInstrument`, called from `GervillSoundbankFactory`'s thread). It is not a division by zero and playback went on. The application started without any file and without playback produces none (0 in the log), so it comes with the playback of a file, not with the startup. Whether it exists upstream is unknown; it is a finding to decide on, not a fix made here.

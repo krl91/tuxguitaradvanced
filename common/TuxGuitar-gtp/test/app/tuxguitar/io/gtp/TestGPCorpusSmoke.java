@@ -45,21 +45,32 @@ public class TestGPCorpusSmoke {
 		List<String> failures = new ArrayList<String>();
 		for( Path file : files ) {
 			TGSong song;
+			boolean detail = files.size() <= 5;
 			try {
 				String name = file.getFileName().toString().toLowerCase();
 				song = GtpTestSupport.read(Files.readAllBytes(file), name.substring(name.lastIndexOf('.') + 1));
 				new TGSongManager().updatePreciseStart(song);
 			} catch (Throwable throwable) {
 				notRead ++;
+				if( detail ) {
+					System.out.println("  " + file.getFileName() + ": NOT READ (" + throwable + ")");
+				}
 				continue;
 			}
 			read ++;
-			if( !new TGSongManager().getMeasureErrors(song).isEmpty() ) {
+			int errorCount = new TGSongManager().getMeasureErrors(song).size();
+			if( errorCount > 0 ) {
 				withErrors ++;
 			}
 			try {
-				GtpTestSupport.midiNotes(song);
+				int notes = GtpTestSupport.midiNotes(song);
+				if( detail ) {
+					System.out.println("  " + file.getFileName() + ": read, " + song.countTracks() + " tracks, " + song.countMeasureHeaders() + " measures, " + errorCount + " measure errors, MIDI sequence of " + notes + " notes");
+				}
 			} catch (Throwable throwable) {
+				if( detail ) {
+					System.out.println("  " + file.getFileName() + ": read, " + errorCount + " measure errors, MIDI sequence FAILED (" + throwable + ")");
+				}
 				noSequence ++;
 				if( failures.size() < 10 ) {
 					failures.add(file.getFileName() + ": " + throwable);
