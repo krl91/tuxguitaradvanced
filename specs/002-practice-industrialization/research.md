@@ -258,3 +258,35 @@ The neighbour ratio (the note must dominate its semitone and whole-tone neighbou
 **One correction made** (found by a unit test, `IncompleteChordTest`): the balance of a chord was read against the strongest of its separable notes only, so when every separable note carried nothing but leakage they were all equally weak and passed as balanced (a chord heard as a single octave note was accepted). It is now read against the strongest of all the expected notes. Measured effect: 13.6 % → 13.2 % false acceptances, 59.8 % → 59.5 % complete accepted; the reference recording (35 / 38, 0 / 98, 2 / 12, 105 ms / 169 ms) and the IDMT benchmark are unchanged.
 
 **Decision for the owner (not taken here)**. No threshold of the current evidence reaches both "complete chords recognised" and "incomplete chords refused": the default favours accepting a complete chord (and lets 29 % of the chords without their bass through), a stricter balance refuses more incomplete chords and also more complete ones. Options: (1) keep the default and publish these figures as the measured limits; (2) choose a stricter setting for the practice mode (for example balance 0.50: 53 % / 10 % on this dataset), accepting that more correct chords wait; (3) research another way to tell a missing string (for example per-string onset evidence), which is a new method, not a threshold. The behaviour contract (FR-003, SC-001) is not met either way until (3).
+
+## R11 — The closest notes Practice can follow (spec 004 T010, 2026-10-06)
+
+**Data and method**: IDMT-SMT-Guitar V2 dataset 1 (CC BY-NC-ND 4.0, outside the repository), 96 triples of plain single notes from 4 guitars, mixed one after the other so that the onsets (read from the annotation) are one spacing apart, each note ringing while the next is struck; Practice expects the three in order. `NoteSpacingBenchmarkTest`, revision `f1460f051` (`specs/004-attack-difference-recognition/benchmark/note-spacing-2026-10-06.txt`).
+
+**Result with the default settings** (re-arm of the acceptance rule 220 ms):
+
+| Spacing | all 3 notes followed in order | notes recognised | wrong third note accepted | delay (median / p90 / max) |
+|---|---|---|---|---|
+| 50 ms | 0 % | 4.9 % | 0 / 92 | 107 / 111 / 307 ms |
+| 100 ms | 0 % | 33.0 % | 0 / 92 | 107 / 113 / 355 ms |
+| 150 ms | 0 % | 35.8 % | 0 / 92 | 107 / 113 / 160 ms |
+| 200 ms | 1.0 % | 49.0 % | 0 / 92 | 111 / 159 / 209 ms |
+| 250 ms | 66.7 % | 81.9 % | 0 / 92 | 157 / 171 / 206 ms |
+| 350 ms | 90.6 % | 94.4 % | 0 / 92 | 109 / 113 / 210 ms |
+
+So the real limit of the default is **about 0.3 s between picked notes**, not the provisional 0.15 s: below 0.2 s only the first note of a run is recognised (a third of the notes), the others wait. **At no spacing is a wrong note accepted** (0 of 92): the limit makes Practice wait, never wrong, as the specification requires. Cause: after each acceptance the evidence of that attack is ignored for 220 ms (`PolyphonicAcceptance.Parameters.rearmNanos`) so that one pluck cannot validate two notes; the acceptance itself comes about 107 ms after the onset.
+
+**What a shorter re-arm would change** (same data; not applied, a setting of the acceptance rule):
+
+| Re-arm | all 3 followed at 125 / 150 / 200 / 250 ms | a single pluck accepted as two notes (240 clips): same pitch / octave above / fifth / semitone |
+|---|---|---|
+| 220 ms (default) | 0 / 0 / 1 / 67 % | 0 / 7 / 0 / 0 |
+| 160 ms | 0 / 10 / 74 / 86 % | 1 / 7 / 0 / 0 |
+| 120 ms | 51 / 74 / 83 / 89 % | 1 / 7 / 0 / 0 |
+| 90 ms | 60 / 88 / 86 / 90 % | 1 / 7 / 0 / 0 |
+
+(Wrong third note accepted: 0 of 92 at every re-arm and every spacing.) A shorter re-arm follows faster playing but lets one clip in 240 count a repeated pitch twice; the octave case (7 of 240 at every re-arm, including the default) is the known FR-004 limit: an octave cannot be told from a partial of the note just played.
+
+**The reference recording**: the four events that are less than 0.15 s from a neighbour (events 4 to 7: B3, C4, B3, A3, spaced 108, 108 and 91 ms) are the written hammer-on / pull-off run; two of them (events 5 and 6) have no pick attack in the recording at all (their times are tempo-fit, not attacks). The attack-difference method cannot see a note that has no attack, whatever the re-arm; legato is the subject of the technique detectors (spec 002, Phase 7). **42 of 42 is therefore not reachable on this recording by this method**, and SC-001 is not changed here.
+
+**Proposal for the owner's approval (nothing applied)**: state the limit to the learner as "about 0.3 s between picked notes (about 3 notes per second); faster runs are not followed, Practice waits and never marks them wrong". Optional, to be decided separately: a shorter re-arm of 120 to 160 ms (the limit would become about 0.15 to 0.2 s) at the price of 1 in 240 repeated pitches counted twice.
