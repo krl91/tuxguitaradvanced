@@ -87,6 +87,40 @@ final class DatasetJudge {
 	}
 
 	/**
+	 * When a session expecting {@code expected}, each pitch on the string given (1 = high E; the fret follows from it), accepts what is
+	 * heard in {@code samples}: the time of the acceptance in seconds from the start of the samples, or NaN when it never accepts. The
+	 * samples are fed as they are (no silence is added): the excerpt itself carries the sound that rings before the strum.
+	 */
+	static double acceptanceSeconds(float[] samples, int sampleRate, int[] expected, int[] strings) {
+		return acceptanceSeconds(samples, sampleRate, expected, strings, PolyphonicAcceptance.Parameters.defaults());
+	}
+
+	/** Like {@link #acceptanceSeconds(float[], int, int[], int[])} with the given acceptance parameters (to measure what a setting would change). */
+	static double acceptanceSeconds(float[] samples, int sampleRate, int[] expected, int[] strings, PolyphonicAcceptance.Parameters acceptance) {
+		SongFixture fixture = new SongFixture(1);
+		for( int i = 0 ; i < expected.length ; i ++ ) {
+			fixture.quarter(0, 0, strings[i], expected[i] - OPEN_STRINGS[strings[i] - 1]);
+		}
+		PracticeSequence sequence = fixture.sequence();
+		PracticeTrackSelection selection = new PracticeTrackSelection(fixture.song,
+				PracticeTrackCandidates.evaluate(fixture.song, fixture.track()).getPreselected(), PracticeTunerContext.getInstance(new TGContext()));
+		selection.accept();
+		PracticeParameters parameters = PracticeParameters.of(RecognitionSettings.defaults());
+		PracticeSession session = new PracticeSession(selection, sequence, parameters.noteInterpreter(), parameters.tolerance(), parameters.stabilityNanos(),
+				parameters.articulationLatencyNanos(), new ChordMatcher(parameters.chordParameters()), null);
+		session.setPolyphonicAcceptance(new PolyphonicAcceptance(acceptance));
+		session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
+		session.onCommand(PracticeCommand.START);
+		List<AnalysisFrame> frames = OfflineAnalysis.analyze(samples, sampleRate, RecognitionSettings.defaults(), expected.length > 1, AttackCandidates.of(sequence));
+		for( AnalysisFrame frame : frames ) {
+			if( session.onFrame(frame).getAcceptedCount() > 0 ) {
+				return frame.getTimestampNanos() / 1e9;
+			}
+		}
+		return Double.NaN;
+	}
+
+	/**
 	 * Practice expecting {@code steps} one after the other (one note or chord per step) over {@code audio}:
 	 * how many of them it accepts, in order. The audio is fed as one stream, so a step is judged while the sound of the previous one still rings.
 	 */

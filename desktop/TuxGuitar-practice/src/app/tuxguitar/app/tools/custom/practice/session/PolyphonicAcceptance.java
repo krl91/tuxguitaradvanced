@@ -194,7 +194,9 @@ public final class PolyphonicAcceptance {
 				strongestOwn = Math.max(strongestOwn, amplitude);
 			}
 			double balance = this.parameters.minBalance / separable.length;
-			balanced = (weakestOwn >= balance * strongestOwn);
+			// the reference is the strongest of all the expected notes (an octave included), not only of the separable ones: when every separable
+			// note carries nothing but leakage they are all equally weak, which must not pass as balanced (a chord heard as one octave only)
+			balanced = (weakestOwn >= balance * Math.max(strongestOwn, strongest));
 		}
 		boolean heard = settled && inTune && dominant && balanced && (sum / evidence.getTotal() >= this.parameters.minShare)
 				&& (strongest >= this.parameters.minPeakRatio * evidence.getMaximum());
@@ -204,8 +206,8 @@ public final class PolyphonicAcceptance {
 
 	private static final int[] HARMONIC_INTERVALS = { 12, 19, 24, 28, 31, 34, 36 };
 
-	/** The expected pitches that are not a harmonic (octave, twelfth...) of a lower expected pitch. */
-	static int[] separable(int[] expected) {
+	/** The expected pitches that are not a harmonic (octave, twelfth...) of a lower expected pitch: the only ones audio can tell from the other notes of the chord. */
+	public static int[] separable(int[] expected) {
 		int[] sorted = expected.clone();
 		java.util.Arrays.sort(sorted);
 		int[] kept = new int[sorted.length];
