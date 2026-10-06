@@ -3,7 +3,6 @@ package app.tuxguitar.app.tools.custom.practice.ui;
 import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
-import app.tuxguitar.app.tools.custom.practice.model.TechniqueResult;
 import app.tuxguitar.app.tools.custom.practice.session.ChordFeedback;
 import app.tuxguitar.app.tools.custom.practice.session.Feedback;
 import app.tuxguitar.app.tools.custom.practice.session.PolyphonicAcceptance;
@@ -239,12 +238,7 @@ public class PracticePalette {
 	 * uncertain, or not verifiable. It sits apart from the pitch result and never changes it (FR-030).
 	 */
 	private String techniqueText(PracticeSnapshot snapshot) {
-		StringBuilder text = new StringBuilder();
-		for( TechniqueResult result : snapshot.getTechniqueResults() ) {
-			text.append(text.length() > 0 ? " · " : "").append(TuxGuitar.getProperty("practice.technique.name." + result.getTechnique().name()))
-					.append(": ").append(TuxGuitar.getProperty("practice.technique.verdict." + result.getVerdict().name()));
-		}
-		return text.length() == 0 ? " " : text.toString();
+		return TechniqueLine.of(snapshot.getTechniqueResults(), TuxGuitar::getProperty);
 	}
 
 	/** The measured closest spacing of followed notes, in seconds with one decimal, in the language of the application. */
