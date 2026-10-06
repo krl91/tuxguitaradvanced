@@ -77,6 +77,19 @@ public final class BendDetector implements TechniqueDetector {
 	 * @param baseMidi the fretted pitch the path is relative to
 	 */
 	public TechniqueEvidence evaluate(NoteSegment segment, double baseMidi, BendPath path) {
+		return evaluate(segment, baseMidi, path, Part.WHOLE);
+	}
+
+	/** Which written part of a path is judged: the whole path, the rise (a bend), the start (a pre-bend) or the fall (a release). */
+	public enum Part {
+		WHOLE,
+		RISE,
+		START,
+		FALL
+	}
+
+	/** As {@link #evaluate(NoteSegment, double, BendPath)}, for one part of the path only (a bend and its release are two written techniques). */
+	public TechniqueEvidence evaluate(NoteSegment segment, double baseMidi, BendPath path, Part part) {
 		Map<String, Double> m = new LinkedHashMap<String, Double>();
 		double[] voiced = new double[segment.size()];
 		int count = 0;
@@ -109,16 +122,16 @@ public final class BendDetector implements TechniqueDetector {
 		double confidence = 1.0;
 
 		double riseWritten = writtenPeak - writtenStart;
-		if( riseWritten >= this.parameters.minWrittenMoveCents ) {
+		if( (part == Part.WHOLE || part == Part.RISE) && riseWritten >= this.parameters.minWrittenMoveCents ) {
 			double riseObserved = (peakObserved - startObserved) * 100.0;
 			m.put("riseCents", riseObserved);
 			m.put("targetRiseCents", riseWritten);
-			int[] part = judgePart(riseObserved, riseWritten);
-			rank = Math.min(rank, part[0]);
-			outcome = part[1];
+			int[] judged = judgePart(riseObserved, riseWritten);
+			rank = Math.min(rank, judged[0]);
+			outcome = judged[1];
 			outcomeSet = true;
 		}
-		if( writtenStart >= this.parameters.minWrittenMoveCents ) {
+		if( (part == Part.WHOLE || part == Part.START) && writtenStart >= this.parameters.minWrittenMoveCents ) {
 			double startError = (startObserved - (baseMidi + path.startSemitones())) * 100.0;
 			m.put("startErrorCents", startError);
 			if( Math.abs(startError) > this.parameters.startToleranceCents ) {
@@ -131,14 +144,14 @@ public final class BendDetector implements TechniqueDetector {
 			}
 		}
 		double fallWritten = writtenPeak - writtenEnd;
-		if( fallWritten >= this.parameters.minWrittenMoveCents ) {
+		if( (part == Part.WHOLE || part == Part.FALL) && fallWritten >= this.parameters.minWrittenMoveCents ) {
 			double fallObserved = (peakObserved - endObserved) * 100.0;
 			m.put("fallCents", fallObserved);
 			m.put("targetFallCents", fallWritten);
-			int[] part = judgePart(fallObserved, fallWritten);
-			rank = Math.min(rank, part[0]);
+			int[] judged = judgePart(fallObserved, fallWritten);
+			rank = Math.min(rank, judged[0]);
 			if( !outcomeSet ) {
-				outcome = part[1];
+				outcome = judged[1];
 				outcomeSet = true;
 			}
 		}

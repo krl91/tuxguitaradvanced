@@ -39,6 +39,10 @@ final class FunctionalRun {
 	/** Events Practice judges (notes and chords); the others (bend, harmonic...) it passes automatically. */
 	final int eventCount;
 	final int autoPassed;
+	/** True when the practice showed a wrong note at any moment. */
+	boolean wrongSeen;
+	/** Seconds from the start of the signal at which a technique result first appeared (NaN: none). */
+	double firstResultAt = Double.NaN;
 
 	private FunctionalRun(int accepted, int eventCount, int autoPassed) {
 		this.accepted = accepted;
@@ -48,6 +52,11 @@ final class FunctionalRun {
 
 	/** Half a second of silence, the signal, and two seconds of silence (for the technique verdict to be given). */
 	static FunctionalRun of(SongFixture fixture, float[] signal) {
+		return of(fixture, signal, TechniqueCatalog.defaults());
+	}
+
+	/** The same with the given technique catalogue (a verified detector, to see what the line says when a technique is verified). */
+	static FunctionalRun of(SongFixture fixture, float[] signal, TechniqueCatalog catalog) {
 		PracticeSequence sequence = fixture.sequence();
 		PracticeTrackSelection selection = new PracticeTrackSelection(fixture.song, PracticeTrackCandidates.evaluate(fixture.song, fixture.track()).getPreselected(),
 				PracticeTunerContext.getInstance(new TGContext()));
@@ -57,7 +66,7 @@ final class FunctionalRun {
 		PracticeSession session = new PracticeSession(selection, sequence, parameters.noteInterpreter(), parameters.tolerance(), parameters.stabilityNanos(),
 				parameters.articulationLatencyNanos(), new ChordMatcher(parameters.chordParameters()), null);
 		session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
-		session.setTechniqueJudge(new TechniqueJudge(TechniqueCatalog.defaults(), true));
+		session.setTechniqueJudge(new TechniqueJudge(catalog, true));
 		session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		session.onCommand(PracticeCommand.START);
 		float[] samples = new float[RATE / 2 + signal.length + 2 * RATE];
@@ -66,8 +75,14 @@ final class FunctionalRun {
 		List<Double> times = new ArrayList<Double>();
 		List<TechniqueResult> results = new ArrayList<TechniqueResult>();
 		int accepted = 0;
+		boolean wrong = false;
+		double firstResult = Double.NaN;
 		for( AnalysisFrame frame : OfflineAnalysis.analyze(samples, RATE, settings, false, AttackCandidates.of(sequence)) ) {
 			PracticeSnapshot snapshot = session.onFrame(frame);
+			wrong |= (snapshot.getVerdict() == PracticeSession.Verdict.WRONG);
+			if( Double.isNaN(firstResult) && !snapshot.getTechniqueResults().isEmpty() ) {
+				firstResult = frame.getTimestampNanos() / 1e9 - 0.5;
+			}
 			while( accepted < snapshot.getAcceptedCount() ) {
 				accepted ++;
 				times.add(frame.getTimestampNanos() / 1e9 - 0.5);
@@ -82,6 +97,8 @@ final class FunctionalRun {
 			auto += (event.getKind() == app.tuxguitar.app.tools.custom.practice.model.PracticeEvent.Kind.AUTO_PASS ? 1 : 0);
 		}
 		run = new FunctionalRun(accepted, sequence.getEvents().size() - auto, auto);
+		run.wrongSeen = wrong;
+		run.firstResultAt = firstResult;
 		run.acceptedAt.addAll(times);
 		run.techniqueResults.addAll(results);
 		return run;

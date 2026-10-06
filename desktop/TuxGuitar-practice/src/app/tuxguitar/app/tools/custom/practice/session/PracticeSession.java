@@ -95,10 +95,22 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private TechniqueJudge techniqueJudge;
 	private static final int RECENT_FRAMES = 64;
 	private static final long TECHNIQUE_WINDOW_NANOS = 1_500_000_000L;
+	/**
+	 * A bent note is observed from its acceptance for its written length at the score tempo, never less than 1.0 s (a learner in
+	 * wait mode does not play at the score tempo) and never more than 2.5 s (about the longest a guitar note sustains), research R5 addendum.
+	 */
+	private static final long BEND_WINDOW_MIN_NANOS = 1_000_000_000L;
+	private static final long BEND_WINDOW_MAX_NANOS = 2_500_000_000L;
+	/** A pitch within this many semitones of the written path counts as on the path: a bend is never exact. */
+	private static final double BEND_PATH_MARGIN_SEMITONES = 0.5;
 	/** How far before the acceptance a note's segment may start (acceptance follows the attack by about 100 ms). */
 	private static final long TECHNIQUE_LEAD_NANOS = 150L * 1_000_000L;
 	/** The last hops (timestamp, MIDI pitch or NaN, level, onset) so a note's segment can start at its attack. */
 	private final java.util.ArrayDeque<double[]> recentFrames = new java.util.ArrayDeque<double[]>();
+	private long pendingWindowNanos = TECHNIQUE_WINDOW_NANOS;
+	/** The bent note whose observation window is open (null: none) and when it ends. */
+	private PracticeEvent bendEvent;
+	private long bendWindowEndNanos;
 	private PracticeEvent pendingEvent;
 	private List<TechniqueTarget> pendingTargets;
 	private final List<double[]> pendingFrames = new ArrayList<double[]>();
@@ -404,7 +416,10 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 				// the pitch estimate is unreliable during the attack itself: the veto outlasts the reading
 				boolean vetoed = (this.neighbourHeardNanos != Long.MIN_VALUE && now - this.neighbourHeardNanos < NEIGHBOUR_VETO_NANOS);
 				// a quiet note is still a note (a low string under a loud one): only clipping, which distorts the spectrum, stops the judgement
-				if( this.polyphonic.offer((!vetoed && frame.getLevelState() != AnalysisFrame.LevelState.CLIPPING ? frame.getAttackEvidence() : null), now, pitches,
+				// an expected pitch on the path of the bend just played cannot be told from the bend by its spectrum: it waits for its own attack
+				boolean bentPitch = (pitches.length == 1 && this.bendEvent != null && now < this.bendWindowEndNanos && !this.articulationArmed
+						&& pitches[0] >= corridorOf(this.bendEvent)[0] && pitches[0] <= corridorOf(this.bendEvent)[1]);
+				if( !bentPitch && this.polyphonic.offer((!vetoed && frame.getLevelState() != AnalysisFrame.LevelState.CLIPPING ? frame.getAttackEvidence() : null), now, pitches,
 						expectedFretsOf(event, pitches), this.tolerance) ) {
 					accept(event, now);
 					return snapshot();
@@ -420,6 +435,55 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		return snapshot();
 	}
 
+	private static long bendWindowNanos(PracticeEvent event) {
+		long written = (long) (event.getBendWrittenSeconds() * 1e9);
+		return Math.max(BEND_WINDOW_MIN_NANOS, Math.min(BEND_WINDOW_MAX_NANOS, written));
+	}
+
+	/** The pitches (MIDI, fractional) a bent note covers: from the lowest to the highest point of its path, with the margin. */
+	private static double[] corridorOf(PracticeEvent event) {
+		double low = Double.POSITIVE_INFINITY;
+		double high = Double.NEGATIVE_INFINITY;
+		double base = bendBase(event);
+		for( app.tuxguitar.app.tools.custom.practice.model.PitchPath.Point point : event.getBendPath().getPoints() ) {
+			low = Math.min(low, point.getSemitones());
+			high = Math.max(high, point.getSemitones());
+		}
+		return new double[] { base + low - BEND_PATH_MARGIN_SEMITONES, base + high + BEND_PATH_MARGIN_SEMITONES };
+	}
+
+	/** The fretted pitch of a bent note: the base carried by the targets of its path. */
+	private static double bendBase(PracticeEvent event) {
+		for( TechniqueTarget target : event.getTechniqueTargets() ) {
+			if( target.getBaseMidi() != TechniqueTarget.NONE ) {
+				return target.getBaseMidi();
+			}
+		}
+		return event.getExpectedMidi();
+	}
+
+	private boolean onPath(double[] corridor) {
+		if( corridor == null || !this.reading.hasPitch() ) {
+			return false;
+		}
+		double midi = this.reading.getMidi() + this.reading.getCents() / 100.0;
+		return midi >= corridor[0] && midi <= corridor[1];
+	}
+
+	/**
+	 * The corridor in which a pitch is a bend moving along its written path, and not a wrong note: the path of the current
+	 * event while it is expected, and the path of the bent note just accepted while its observation window is open.
+	 */
+	private double[] activeCorridor(PracticeEvent event, long now) {
+		if( event != null && event.getBendPath() != null ) {
+			return corridorOf(event);
+		}
+		if( this.bendEvent != null && now < this.bendWindowEndNanos ) {
+			return corridorOf(this.bendEvent);
+		}
+		return null;
+	}
+
 	/**
 	 * A stable pitch that differs from the note just accepted can only be the new note (research R3
 	 * lever L3): it needs no confirmed attack, which saves the attack confirmation delay in runs and
@@ -432,7 +496,20 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 				&& previous.getKind() == PracticeEvent.Kind.EXPECTED_NOTE
 				&& previous.getSequenceIndex() == event.getSequenceIndex() - 1
 				&& this.outcomes.get(previous.getSequenceIndex()) == Outcome.ACCEPTED
-				&& previous.getExpectedMidi() != event.getExpectedMidi();
+				&& previous.getExpectedMidi() != event.getExpectedMidi()
+				&& !onBentPathOf(previous, event);
+	}
+
+	/**
+	 * The pitch of the expected note is on the written path of the bent note before it: the bend itself reaching it is not a new note,
+	 * which needs its own attack (a hammer-on is a pitch change without attack, a bend is not).
+	 */
+	private static boolean onBentPathOf(PracticeEvent previous, PracticeEvent event) {
+		if( previous.getBendPath() == null ) {
+			return false;
+		}
+		double[] corridor = corridorOf(previous);
+		return event.getExpectedMidi() >= corridor[0] && event.getExpectedMidi() <= corridor[1];
 	}
 
 	private void onNoteFrame(AnalysisFrame frame, PracticeEvent event, boolean usableLevel) {
@@ -454,6 +531,12 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		// a wrong note is reported only when it is a freshly played, reliable note held for the
 		// stability window: a note still ringing, a glitch or noise shows no cross (prefer waiting)
 		if( this.feedback.getKind() == Feedback.Kind.INCORRECT ) {
+			// a pitch moving along a written bend path is the bend, not a wrong note
+			if( onPath(activeCorridor(event, now)) ) {
+				this.wrongMidi = -1;
+				this.feedback = Feedback.WAITING;
+				return;
+			}
 			// a note that rings on from the previous one is not a wrong note: with attack evidence, a wrong note must be a newly struck one
 			if( this.polyphonic != null && frame.getAttackEvidence() != null && !newlyStruck(frame.getAttackEvidence(), this.feedback.getDetectedMidi()) ) {
 				this.wrongMidi = -1;
@@ -644,6 +727,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.lastPassed = null;
 		this.lastPassedOutcome = null;
 		this.pendingEvent = null;
+		this.bendEvent = null;
 		this.lastAcceptNanos = Long.MIN_VALUE;
 		this.speedHitNanos = Long.MIN_VALUE;
 		this.inputQuality.reset();
@@ -671,7 +755,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		}
 		if( this.pendingEvent != null ) {
 			this.pendingFrames.add(hop);
-			if( frame.getTimestampNanos() - this.pendingStartNanos > TECHNIQUE_WINDOW_NANOS ) {
+			if( frame.getTimestampNanos() - this.pendingStartNanos > this.pendingWindowNanos ) {
 				finishTechniques();
 			}
 		}
@@ -735,6 +819,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.pendingEvent = event;
 		this.pendingTargets = targets;
 		this.pendingStartNanos = timestampNanos;
+		this.pendingWindowNanos = (event.getBendPath() != null ? bendWindowNanos(event) : TECHNIQUE_WINDOW_NANOS);
 		// the note began with its attack: its segment starts there (or at the oldest hop kept)
 		for( double[] hop : this.recentFrames ) {
 			if( hop[0] >= Math.max(this.armTransientNanos, timestampNanos - TECHNIQUE_LEAD_NANOS) ) {
@@ -745,6 +830,12 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 
 	private void accept(PracticeEvent event, long timestampNanos) {
 		beginTechniques(event, timestampNanos);
+		if( event.getBendPath() != null ) {
+			this.bendEvent = event;
+			this.bendWindowEndNanos = timestampNanos + bendWindowNanos(event);
+		} else {
+			this.bendEvent = null;
+		}
 		if( PracticeTrace.enabled() ) {
 			PracticeTrace.accepted(timestampNanos, event.getSequenceIndex());
 		}

@@ -7,6 +7,9 @@ import app.tuxguitar.app.tools.custom.practice.model.PlayingTechnique;
 import app.tuxguitar.app.tools.custom.practice.model.TechniqueResult;
 import app.tuxguitar.app.tools.custom.practice.model.TechniqueTarget;
 import app.tuxguitar.app.tools.custom.practice.model.TechniqueVerdict;
+import app.tuxguitar.app.tools.custom.practice.model.PitchPath;
+import app.tuxguitar.audio.engine.technique.BendDetector;
+import app.tuxguitar.audio.engine.technique.BendPath;
 import app.tuxguitar.audio.engine.technique.DetectableTechnique;
 import app.tuxguitar.audio.engine.technique.NoteSegment;
 import app.tuxguitar.audio.engine.technique.TechniqueCatalog;
@@ -70,10 +73,28 @@ public final class TechniqueJudge {
 				results.add(TechniqueResult.notVerifiable(technique));
 				continue;
 			}
-			TechniqueEvidence evidence = this.catalog.entry(detectable(technique)).getDetector().evaluate(segment);
+			TechniqueEvidence evidence = evidenceOf(target, segment);
 			results.add(new TechniqueResult(technique, verdictOf(evidence.getVerdict()), evidence.getConfidence(), evidence.getMeasurements()));
 		}
 		return results;
+	}
+
+	/** A written bend, pre-bend or release is judged against its path (one part of it each); every other technique by its detector alone. */
+	private TechniqueEvidence evidenceOf(TechniqueTarget target, NoteSegment segment) {
+		PlayingTechnique technique = target.getTechnique();
+		Object detector = this.catalog.entry(detectable(technique)).getDetector();
+		if( detector instanceof BendDetector && target.getPitchPath() != null && target.getBaseMidi() != TechniqueTarget.NONE ) {
+			PitchPath path = target.getPitchPath();
+			double[] pairs = new double[2 * path.getPoints().size()];
+			for( int i = 0 ; i < path.getPoints().size() ; i ++ ) {
+				pairs[2 * i] = path.getPoints().get(i).getRelativeTime();
+				pairs[2 * i + 1] = path.getPoints().get(i).getSemitones();
+			}
+			BendDetector.Part part = (technique == PlayingTechnique.PRE_BEND ? BendDetector.Part.START
+					: technique == PlayingTechnique.RELEASE ? BendDetector.Part.FALL : BendDetector.Part.RISE);
+			return ((BendDetector) detector).evaluate(segment, target.getBaseMidi(), BendPath.of(pairs), part);
+		}
+		return this.catalog.entry(detectable(technique)).getDetector().evaluate(segment);
 	}
 
 	private static TechniqueVerdict verdictOf(TechniqueEvidence.Verdict verdict) {
