@@ -56,6 +56,14 @@ public abstract class TGToolBarModel implements TGEventListener {
 		});
 	}
 
+	/**
+	 * Updates the items once no other thread holds the editor lock: the items read the song, and
+	 * the song is being loaded or edited under that lock (same path as the update events).
+	 */
+	public void updateItemsLocked() {
+		this.updateItemsProcess.process();
+	}
+
 	public void updateItems() {
 		if(!this.isDisposed()) {
 			for(TGToolBarSection section : this.sections) {

@@ -58,7 +58,7 @@ public class TGMainToolBar extends TGToolBarModel {
 					public void run() {
 						if (panel != null && !panel.isDisposed()) {
 							layout();
-							updateItems();
+							updateItemsLocked();
 						}
 					}
 				});
