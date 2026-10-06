@@ -45,6 +45,7 @@ jobs:
       with:
         name: Package-MacOS-${{ matrix.os }}
         path: desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target/tuxguitar-9.99-SNAPSHOT-macosx-${{ env.TUX_ARCH }}-swt-cocoa.app
+        retention-days: 1
 
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
