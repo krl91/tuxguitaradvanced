@@ -24,7 +24,7 @@
 Build/verify command for every phase (quickstart.md), with `JAVA_HOME=$(/usr/libexec/java_home -v 21)`:
 `cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -e clean verify -P native-modules`
 
-Commit only when the owner asks; never push without approval (CLAUDE.md "Git Safety").
+Commit only when the owner asks; never push without approval (project rule: no push without approval).
 
 ---
 

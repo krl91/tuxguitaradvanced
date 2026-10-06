@@ -675,7 +675,7 @@ same capture from a throw-away app bundle whose executable is a shell script sta
   (`DirectAudioDevice.getLine`); Java Sound does not up-mix or expose virtual channels.
 - Open + start: 2.36 s on the first open after a while, then ≈ 104–107 ms on repeated opens.
 - Permission: the shell capture ran under iTerm2 (process ancestry `iTerm2 → login → zsh →
-  claude → zsh → java`), which already has microphone access, so data flowed. The TCC database
+  coding assistant → zsh → java`), which already has microphone access, so data flowed. The TCC database
   could not be read (`authorization denied`). The script-launched bundle **without**
   `NSMicrophoneUsageDescription` opened the line without error, no prompt appeared, no crash —
   and delivered **100 % exact-zero samples** (−240 dBFS) for the whole capture.

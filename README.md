@@ -40,9 +40,14 @@ The default build runs **479 automatic tests**; the benchmark on recordings is a
 
 ## Download and installation
 
-Packages for macOS (Apple Silicon), Linux and Windows are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; Linux and Windows builds do not include the Interactive Practice modules yet (macOS only for now).
+Packages for macOS (Apple Silicon), Linux and Windows are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; the three packages include the Interactive Practice modules.
 
-To build from source, refer to [INSTALL.md](INSTALL.md) and, for the practice modules, the build notes in [CLAUDE.md](CLAUDE.md#build).
+To build from source, refer to [INSTALL.md](INSTALL.md). The practice modules need a few more things:
+
+* JDK 17 or later (Temurin 21 is the version the project is built and tested with) and Maven; SWT installed into the local Maven repository as described in [INSTALL.md](INSTALL.md);
+* the build is run from the folder of your platform: `cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa` (or `tuxguitar-linux-swt`, `tuxguitar-windows-swt-x86_64`), then `mvn -e clean verify -P native-modules` (add `-DskipTests` to skip the tests);
+* the audio engine uses TarsosDSP, which is fetched from `https://mvn.0110.be/releases` (it is not on Maven Central), so the first build needs network access;
+* on macOS, the launcher is compiled and signed with `clang` and `codesign`: install the Xcode Command Line Tools (`xcode-select --install`). The build does not embed a Java runtime in the `.app`: link or copy one into `Contents/MacOS/jre` to run it from the build folder.
 
 ## Documentation
 

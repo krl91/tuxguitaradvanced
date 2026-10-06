@@ -19,7 +19,7 @@ mvn -e clean verify -P native-modules
 ```
 
 Local run of the development `.app` needs `Contents/MacOS/jre` linked to the local JDK (local
-workaround only, see `CLAUDE.md`).
+workaround only, see the build notes in the README).
 
 ## Automated tests
 
