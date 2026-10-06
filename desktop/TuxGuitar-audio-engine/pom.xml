@@ -34,6 +34,18 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<!-- the engine's test support (synthetic signals, fake audio input) is reused by the practice module's tests; never packaged into the application -->
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<!-- JUnit 5 and the group filters need surefire 3 (older Maven releases default to 2.12.4) -->
 				<version>3.2.5</version>

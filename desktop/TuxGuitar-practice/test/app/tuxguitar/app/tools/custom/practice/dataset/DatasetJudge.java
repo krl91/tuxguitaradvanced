@@ -22,7 +22,7 @@ import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.util.TGContext;
 
 /** Asks "would Practice, expecting these pitches, accept this recording?" with the production rules. */
-final class DatasetJudge {
+public final class DatasetJudge {
 
 	private static final int[] OPEN_STRINGS = { 64, 59, 55, 50, 45, 40 };
 	private static final int MAX_FRET = 24;
@@ -31,7 +31,7 @@ final class DatasetJudge {
 	}
 
 	/** Strings (1 = high E) for each pitch, each on its own string, or null when a standard 6-string guitar cannot play them together. */
-	static int[] strings(int[] pitches) {
+	public static int[] strings(int[] pitches) {
 		int[] chosen = new int[pitches.length];
 		boolean[] used = new boolean[OPEN_STRINGS.length];
 		return assign(pitches, 0, chosen, used) ? chosen : null;
@@ -124,7 +124,7 @@ final class DatasetJudge {
 	 * Practice expecting {@code steps} one after the other (one note or chord per step) over {@code audio}:
 	 * how many of them it accepts, in order. The audio is fed as one stream, so a step is judged while the sound of the previous one still rings.
 	 */
-	static int acceptedSteps(RecordedAudio audio, int[][] steps) {
+	public static int acceptedSteps(RecordedAudio audio, int[][] steps) {
 		SongFixture fixture = new SongFixture(1);
 		for( int step = 0 ; step < steps.length ; step ++ ) {
 			int[] strings = strings(steps[step]);
@@ -156,7 +156,7 @@ final class DatasetJudge {
 	 * Like {@link #acceptedSteps}, with the time of each acceptance: seconds from the start of {@code audio} (a second of silence is added
 	 * before it, as for the other judgements), in the order of the steps; NaN for a step that was never accepted in its turn.
 	 */
-	static double[] acceptanceTimes(RecordedAudio audio, int[][] steps) {
+	public static double[] acceptanceTimes(RecordedAudio audio, int[][] steps) {
 		return acceptanceTimes(audio, steps, PolyphonicAcceptance.Parameters.defaults());
 	}
 
