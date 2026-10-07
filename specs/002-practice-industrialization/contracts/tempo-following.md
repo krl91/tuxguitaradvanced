@@ -21,3 +21,10 @@ final class FollowSession implements SessionLoop.Handler<PracticeSnapshot> { /* 
 ## Clock (subject to spike S-T1)
 
 Recommended: TuxGuitar player as clock and backing track (practice track muted player-side only), frames related to the player position by a measured stream-time ↔ `System.nanoTime` mapping plus the latency offset. Fallback: practice-owned nanoTime scheduler and click. The contract above is identical for both; only `TempoClock` (an interface with `nowNanos()` and `songPositionFor(nanos)`) differs.
+
+## Clock and route (decided 2026-10-07, research R6c)
+
+* The clock is the **player's**: ticks from `MidiPlayer.getTickPosition()` interpolated with `System.nanoTime()` between two changes (`TempoClock`, `TickInterpolator`); the capture is dated by **sample count** and related to the wall clock by the lower envelope of the arrival lag (`CaptureClock`), never by the arrival time of a read.
+* One **latency offset** (output + input), calibrated by the learner, is kept per **input + output + audio format/profile** and dropped or asked again when any of them changes (FR-058). Inputs and outputs are never filtered by name or transport, Bluetooth included (FR-057).
+* No calibration, or an unstable route: the practice says **"reduced rhythmic precision"** in every mode that judges rhythm, warns of a high or unstable latency, and never blocks; the tuner and the wait mode do not depend on it.
+* Calibration sounds are announced with their approximate duration and a Cancel button (FR-059).
