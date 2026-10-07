@@ -28,8 +28,16 @@ public final class FollowTimeline {
 	private final long[] targetTicks;
 	private final long[] beatNanos;
 	private final long durationNanos;
+	/** The played measures: start tick, start time and quarter note length, to turn any tick into a time. */
+	private final long[] measureStartTicks;
+	private final long[] measureStartNanos;
+	private final double[] measureQuarterNanos;
 
-	private FollowTimeline(int percent, long[] targetNanos, long[] targetTicks, long[] beatNanos, long durationNanos) {
+	private FollowTimeline(int percent, long[] targetNanos, long[] targetTicks, long[] beatNanos, long durationNanos,
+			long[] measureStartTicks, long[] measureStartNanos, double[] measureQuarterNanos) {
+		this.measureStartTicks = measureStartTicks;
+		this.measureStartNanos = measureStartNanos;
+		this.measureQuarterNanos = measureQuarterNanos;
 		this.percent = percent;
 		this.targetNanos = targetNanos;
 		this.targetTicks = targetTicks;
@@ -88,7 +96,15 @@ public final class FollowTimeline {
 			targetTicks[i] = occurrence.startTicks + offsetTicks;
 			beatNanos[i] = Math.round(occurrence.quarterNanos);
 		}
-		return new FollowTimeline(percent, targetNanos, targetTicks, beatNanos, nanos);
+		long[] startTicks = new long[played.size()];
+		long[] startNanos = new long[played.size()];
+		double[] quarters = new double[played.size()];
+		for (int i = 0; i < played.size(); i++) {
+			startTicks[i] = played.get(i).startTicks;
+			startNanos[i] = played.get(i).startNanos;
+			quarters[i] = played.get(i).quarterNanos;
+		}
+		return new FollowTimeline(percent, targetNanos, targetTicks, beatNanos, nanos, startTicks, startNanos, quarters);
 	}
 
 	public int percent() {
@@ -112,6 +128,24 @@ public final class FollowTimeline {
 	/** The local beat (a quarter note) in nanoseconds, at the tempo of the event's measure and the percentage. */
 	public long beatNanos(int eventIndex) {
 		return this.beatNanos[eventIndex];
+	}
+
+	/**
+	 * The time of any expanded tick (from the first played measure), measure by measure at the tempo of each: the same scale as
+	 * {@link #targetNanos}. Before the first measure and after the last one the tempo of the nearest measure goes on.
+	 */
+	public long nanosAtTick(long ticks) {
+		if (this.measureStartTicks.length == 0) {
+			return 0L;
+		}
+		int at = 0;
+		for (int i = this.measureStartTicks.length - 1; i >= 0; i--) {
+			if (this.measureStartTicks[i] <= ticks) {
+				at = i;
+				break;
+			}
+		}
+		return this.measureStartNanos[at] + Math.round((ticks - this.measureStartTicks[at]) * this.measureQuarterNanos[at] / TGDuration.QUARTER_TIME);
 	}
 
 	/** The whole played length, the empty measures included. */

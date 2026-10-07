@@ -157,4 +157,23 @@ public class FollowTimelineTest {
 		assertThrows(IllegalArgumentException.class, () -> FollowTimeline.build(fixture.song, sequence, -50));
 		assertTrue(FollowTimeline.build(fixture.song, sequence, 25).targetNanos(0) == 0);
 	}
+
+	@Test
+	public void anyTickIsTurnedIntoATimeMeasureByMeasure() {
+		SongFixture fixture = new SongFixture(3);
+		fixture.tempoChange(1, 60);
+		fixture.quarter(0, 0, 1, 0);
+		fixture.quarter(1, 2, 1, 1);
+		FollowTimeline timeline = FollowTimeline.build(fixture.song, sequence(fixture), 100);
+
+		// the ticks of the events give their own times back
+		assertEquals(timeline.targetNanos(0), timeline.nanosAtTick(timeline.targetTicks(0)));
+		assertEquals(timeline.targetNanos(1), timeline.nanosAtTick(timeline.targetTicks(1)));
+		// half a quarter into measure 0 (120 beats a minute) and into measure 1 (60 beats a minute)
+		assertEquals(250 * MS, timeline.nanosAtTick(480));
+		assertEquals(2000 * MS + 500 * MS, timeline.nanosAtTick(3840 + 480));
+		// before the start and after the end the nearest tempo goes on
+		assertEquals(-500 * MS, timeline.nanosAtTick(-960));
+		assertEquals(2000 * MS + 4000 * MS + 4000 * MS, timeline.nanosAtTick(3840 + 3840 + 3840), "after the last measure (tempo 60 goes on in measure 2)");
+	}
 }
