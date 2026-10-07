@@ -60,6 +60,8 @@ public class MidiPlayer{
 	private Long selectionStartTick = null;
 	private long loopSPosition;
 	private boolean anySolo;
+	// tracks silenced in the player only (never in the song): see setPlayerOnlyMute
+	private final java.util.Set<Integer> playerOnlyMutedTracks = new java.util.HashSet<Integer>();
 	protected long tickLength;
 	protected long tickPosition;
 	private boolean tryOpenFistDevice;
@@ -103,6 +105,7 @@ public class MidiPlayer{
 		try {
 			this.lock();
 
+			this.playerOnlyMutedTracks.clear();
 			this.closeSequencer();
 			this.closeOutputPort();
 		} catch (MidiPlayerException e) {
@@ -782,7 +785,7 @@ public class MidiPlayer{
 		try{
 			this.lock();
 
-			this.getSequencer().setMute(track.getNumber(),track.isMute());
+			this.getSequencer().setMute(track.getNumber(),(track.isMute() || this.playerOnlyMutedTracks.contains(track.getNumber())));
 			this.getSequencer().setSolo(track.getNumber(),track.isSolo());
 		}catch (MidiPlayerException e) {
 			e.printStackTrace();
@@ -801,6 +804,59 @@ public class MidiPlayer{
 			e.printStackTrace();
 		} finally {
 			this.unlock();
+		}
+	}
+
+	/**
+	 * Silences a track in the player only, for example the track a learner plays along (spec 002): the song, its tracks and the undo
+	 * stack are not touched, and the mute of the track in the song is left as it is. It is kept by {@link #updateTracks()}, which
+	 * {@link #play()} and every edit of the tracks call and which rewrites the mutes of the sequencer from the song, until it is
+	 * removed (or {@link #clearPlayerOnlyMutes()}, or {@link #close()}). Events already sent are not taken back: notes ringing when the
+	 * mute is set keep ringing, so mute before playing.
+	 *
+	 * @param trackNumber {@link TGTrack#getNumber()} of the track
+	 */
+	public void setPlayerOnlyMute(int trackNumber, boolean muted) {
+		try {
+			this.lock();
+
+			boolean changed = (muted ? this.playerOnlyMutedTracks.add(trackNumber) : this.playerOnlyMutedTracks.remove(trackNumber));
+			if( changed ) {
+				this.applyPlayerOnlyMutes();
+			}
+		} finally {
+			this.unlock();
+		}
+	}
+
+	/** Gives every track back to the song: the tracks muted in the player only sound again unless the song mutes them. */
+	public void clearPlayerOnlyMutes() {
+		try {
+			this.lock();
+
+			if( !this.playerOnlyMutedTracks.isEmpty() ) {
+				this.playerOnlyMutedTracks.clear();
+				this.applyPlayerOnlyMutes();
+			}
+		} finally {
+			this.unlock();
+		}
+	}
+
+	public boolean isPlayerOnlyMuted(int trackNumber) {
+		try {
+			this.lock();
+
+			return this.playerOnlyMutedTracks.contains(trackNumber);
+		} finally {
+			this.unlock();
+		}
+	}
+
+	private void applyPlayerOnlyMutes() {
+		// nothing to apply before a sequencer and a song exist: the next updateTracks() does it
+		if( this.getSequencer() != null && this.getSong() != null ) {
+			this.updateTracks();
 		}
 	}
 
