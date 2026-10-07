@@ -42,9 +42,16 @@ Play each technique and its plain counterpart on the written notes; expect detec
 
 ## Phase E: tempo following
 
-1. Choose tempo-following, tolerance Normal, 70% speed: count-in, play along; notes are marked on time/early/late/missed; make a deliberate mistake and confirm the following notes are still judged.
-2. Raise to 100%; verify the summary. Adjust/calibrate the latency offset with a click test; repeat with the built-in mic.
-3. Switch back to wait mode: MVP behaviour unchanged.
+Needs the guitar (or the built-in microphone) and the application built by the checkpoint. Nothing here is ticked until it was done by a person.
+
+1. Preparation window: choose **Follow the tempo**, tolerance **Normal**, **70 %**, track with the guitar. The start button reads "Follow the tempo of this track". Start: a count-in, the practised track is silent, the others play; notes are marked on time / early (with ms) / late / missed; a note not in the score is "extra".
+2. A deliberate mistake (a wrong note, or a note skipped): it is marked, and the notes after it are still judged on their own time.
+3. A chord and a written technique (a bend): the chord is judged as a chord; the technique line is apart and a bend not made does not stop anything.
+4. Pause and resume: unplug the input or open the tuner; the run says it is paused, the notes that go by are "not judged", then Resume.
+5. Raise to **100 %**: the summary at the end lists on time / early / late / wrong / missed / extra / not judged, and the techniques apart.
+6. Calibration with the **built-in microphone**: "Calibrate…" announces 8 clicks and about 10 seconds; play one note on each click; Cancel stops the clicks at once. Without a calibration the window says "Reduced rhythmic precision" and still works; adjust the delay by hand to see the same. The tuner and the wait mode do not depend on it.
+7. Play the score by hand during a run: the run stops with a message and the normal playback goes on.
+8. Back to **Wait for the right note**: unchanged.
 
 ## Regression (every phase)
 
