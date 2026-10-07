@@ -339,6 +339,13 @@ public class PracticePalette {
 			}
 			case WAITING:
 			default:
+				if( feedback.needsBend() ) {
+					int target = 0;
+					for( app.tuxguitar.app.tools.custom.practice.model.TechniqueTarget technique : event.getTechniqueTargets() ) {
+						target = Math.max(target, technique.getTargetMidi());
+					}
+					return TuxGuitar.getProperty("practice.feedback.bend-up", new String[] { expected, noteName(target) });
+				}
 				return TuxGuitar.getProperty(feedback.needsArticulation() ? "practice.feedback.play-again" : "practice.feedback.waiting",
 						new String[] { expected });
 		}

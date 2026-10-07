@@ -85,13 +85,12 @@ public class BendFunctionalTest {
 	}
 
 	@Test
-	public void aBendThatNeverHappensDoesNotBlockThePracticeAndIsNotDetected() {
+	public void aBendThatNeverHappensKeepsThePracticeWaitingWithoutAWrongNote() {
+		// the owner's decision of 2026-10-07: the note is accepted when its bend reaches the target; Skip is the way out (BendSessionTest)
 		FunctionalRun run = FunctionalRun.of(wholeToneBendThenE4(), bendThenPickedNext(0.0, 0.0, 3.0, 0.0), BEND_VERIFIED);
 
-		assertEquals(2, run.accepted, "the practice waited for a bend that was not played");
+		assertEquals(0, run.accepted, "the note was accepted without its bend");
 		assertFalse(run.wrongSeen);
-		TechniqueResult bend = resultFor(run, PlayingTechnique.BEND);
-		assertEquals(TechniqueVerdict.NOT_DETECTED, bend.getVerdict());
 	}
 
 	@Test
@@ -106,13 +105,11 @@ public class BendFunctionalTest {
 	}
 
 	@Test
-	public void aBendThatStopsHalfWayIsReportedUnderAndNotDetected() {
+	public void aBendThatStopsHalfWayIsNotAccepted() {
 		FunctionalRun run = FunctionalRun.of(wholeToneBendThenE4(), bendThenPickedNext(0.0, 0.0, 0.15, 0.0, 0.40, 1.0), BEND_VERIFIED);
 
-		assertEquals(2, run.accepted);
-		TechniqueResult bend = resultFor(run, PlayingTechnique.BEND);
-		assertNotEquals(TechniqueVerdict.DETECTED, bend.getVerdict());
-		assertEquals(-1.0, bend.getMeasurements().get("outcome"), 0.001);
+		assertEquals(0, run.accepted, "the bend stopped halfway and the note was accepted");
+		assertFalse(run.wrongSeen);
 	}
 
 	@Test

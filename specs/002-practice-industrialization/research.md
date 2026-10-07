@@ -165,6 +165,21 @@ With the bend detector counted as verified, for the report only: BEND `DETECTED`
 
 **Finding, not fixed (needs the owner's decision): a slide is not followed like a bend.** The render plays the slide of score 4 as a staircase, C4, then C#4 held for about 160 ms, then D4. Practice shows C#4 as a wrong note (7.03 s) although it is the middle of the written slide. The same corridor idea as for a bend (from the slide's origin pitch to its destination, the next written note, for the observation window) would remove it; it is a change of Phase 7 behaviour that the owner has not validated. A played glide may differ from this staircase.
 
+### R5 third addendum — the bend is required for the note (owner's decision of 2026-10-07)
+
+**Decision.** The owner played the application with a bend and found that it only detected the attack and did not listen to the pitch rise. Asked what to show, the owner chose to **require the bend to validate the note**. This replaces the rule of 2026-10-06 "a bend that is absent never blocks the progression": a bend that is not made now keeps the practice waiting on that note, and **Skip is the only way out** (no timeout). Palette text `practice.feedback.bend-up` (en, fr, es): "X is heard: now bend it up to Y".
+
+**Rule (`PracticeSession`).** A written bend that rises by at least 25 cents (`BendDetector.Parameters.minWrittenMoveCents`) is accepted when: (1) its run began on the written pitch, as before, and went on along the written path; (2) the pitch has reached the target, within the detector's tolerance below (the larger of 30 cents and 15 % of the written rise) and the path margin above (0.5 semitone), and held it for the stability time. The attack-difference acceptance (spec 004) does not accept such a note on the spectrum of its base note. A pre-bend alone (nothing rises after its start) and a release are not made a condition: the pre-bend start is the expected pitch, the release stays a technique result.
+
+**Two defects of the rule found on the owner's rendered audio and fixed, each with a test written first:**
+
+* a dropout of the signal during the bend (a level too low to be judged, a pitch not read, both frequent on a decaying note) ended the run and, the pitch no longer being the base pitch, the bend could never start again: the note stayed blocked. Now only a pitch that is read and is off the written path ends the run (`aDropoutOfTheSignalDuringTheBendDoesNotLoseIt`, `aPitchThatLeavesThePathEndsTheRunEvenWithADropout`);
+* the technique segment of a bend must start where its run starts, and no longer 150 ms earlier: after a higher note that still rings, the start pitch measured was the previous note's and the bend was reported as not made (`riseCents = 0`) (`aBendAfterAHigherNoteIsMeasuredFromItsOwnStart`).
+
+**Measured** on the owner's four rendered scores (`BendRecordedReplayTest`): 8 of 8 notes accepted on scores 1 to 3 (and on score 4, whose slide staircase still shows a wrong note, see the second addendum), no wrong note on a bend; with the bend detector counted as verified, for the report only, every bend, pre-bend and release is on pitch. The flags stay `false`.
+
+**What this does not settle.** The check of a bend actually played on a guitar (slow bends, bends that stop short, vibrato in the bend, string noise) remains the owner's manual check T086; a learner who cannot reach the target is blocked until Skip, which is the owner's choice.
+
 ## R6. Tempo-following clock (Phase E)
 
 **Inspected**: `MidiPlayer` exposes `getTickPosition`, `setTickPosition`, `getCurrentTempo`, `isMetronomeEnabled`, `getMode()` (with percent settings), `getCountDown()` (count-in: `MidiPlayerCountDown`), player events (`MidiPlayerEvent.NOTIFY_STARTED/STOPPED`), per-track mute through the sequencer. `SessionEvents` currently pauses practice on `NOTIFY_STARTED` with `PauseReason.PLAYBACK`. Analysis frames are timestamped in **stream time** (`AnalysisService`: `baseNanos + processedSamples…`), not wall-clock time; `CaptureService` reads 1024 frames (≈ 21 ms at 48 kHz) per call with a line buffer of 4 reads.

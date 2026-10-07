@@ -25,11 +25,12 @@ import app.tuxguitar.audio.engine.technique.TechniqueCatalog;
 import app.tuxguitar.util.TGContext;
 
 /**
- * Bends against the session rules with scripted analysis frames (spec 002 T081, contract of 2026-10-06): a written bend of a whole
- * tone on D4 followed by E4, the pitch the bend reaches. The base note starts the observation and the practice moves on; the pitch
- * moving along the written path is never a wrong note; the pitch the bend reaches is not the next note, which needs its own attack
- * (also after the observation window); a bend that never happens does not block; a pitch outside the path is a real error; the
- * technique is not reported before the target is reached.
+ * Bends against the session rules with scripted analysis frames (spec 002 T081, contract of 2026-10-06, changed by the owner on
+ * 2026-10-07): a written bend of a whole tone on D4 followed by E4, the pitch the bend reaches. The base note starts the run, the
+ * note is accepted only when the bend has reached its target (a bend that is not made keeps the practice waiting, Skip passes it);
+ * the pitch moving along the written path is never a wrong note; the pitch the bend reaches is not the next note, which needs its
+ * own attack (also after the observation window); a pitch outside the path is a real error; the technique is not reported
+ * before the end of the observation.
  */
 public class BendSessionTest {
 
@@ -91,6 +92,16 @@ public class BendSessionTest {
 		hold(midi, holdNanos);
 	}
 
+	/** The level falls too low to be judged for a while (a decaying note), the pitch reading going on or not. */
+	private void dropout(double midi, boolean voiced, long nanos) {
+		long end = this.now + nanos;
+		while( this.now < end ) {
+			this.now += HOP_NANOS;
+			this.last = this.session.onFrame(new AnalysisFrame(this.now, -20.0, -10.0, 0.0, AnalysisFrame.LevelState.TOO_LOW, voiced ? hz(midi) : 0.0, voiced ? 0.95 : 0.0, false));
+			this.wrongSeen |= (this.last.getVerdict() == PracticeSession.Verdict.WRONG);
+		}
+	}
+
 	/** The pitch glides linearly (in semitones) from one pitch to another, no onset. */
 	private void glide(double from, double to, long nanos) {
 		long steps = Math.max(1, nanos / HOP_NANOS);
@@ -104,16 +115,19 @@ public class BendSessionTest {
 	}
 
 	@Test
-	public void theBaseNoteIsAcceptedAndTheBendAlongItsPathIsNeverAWrongNote() {
+	public void theNoteIsAcceptedWhenTheBendReachesItsTargetAndNeverWrongOnTheWay() {
 		start(wholeToneBendThenE4(), false);
 
 		pluck(D4, millis(150));
-		assertEquals(1, this.session.getCurrentIndex(), "the base note starts the bend and the practice moves on");
-		glide(D4, E4, millis(250));
-		hold(E4, millis(600));
+		assertEquals(0, this.session.getCurrentIndex(), "the base note alone was accepted: the bend is required");
+		assertTrue(this.last.getFeedback().needsBend(), "the learner is told to bend");
+		glide(D4, D4 + 1, millis(150));
+		assertEquals(0, this.session.getCurrentIndex(), "accepted halfway to the target");
+		glide(D4 + 1, E4, millis(150));
+		hold(E4, millis(300));
 
 		assertFalse(this.wrongSeen, "a pitch on the written path was shown as a wrong note");
-		assertEquals(1, this.session.getCurrentIndex(), "the pitch the bend reaches was taken for the next note");
+		assertEquals(1, this.session.getCurrentIndex(), "the bend reached its target and was not accepted");
 	}
 
 	@Test
@@ -122,6 +136,8 @@ public class BendSessionTest {
 
 		pluck(D4, millis(150));
 		glide(D4, E4, millis(250));
+		hold(E4, millis(300));
+		assertEquals(1, this.session.getCurrentIndex());
 		// longer than the longest observation window (2.5 s)
 		hold(E4, millis(3200));
 		assertEquals(1, this.session.getCurrentIndex());
@@ -134,19 +150,20 @@ public class BendSessionTest {
 	}
 
 	@Test
-	public void aBendThatNeverHappensDoesNotBlockThePractice() {
+	public void aBendThatIsNotMadeKeepsThePracticeWaitingAndSkipPassesIt() {
 		start(wholeToneBendThenE4(), true);
 
 		pluck(D4, millis(150));
-		hold(D4, millis(1500));
-		assertEquals(1, this.session.getCurrentIndex());
+		hold(D4, millis(3000));
+		assertEquals(0, this.session.getCurrentIndex(), "the note was accepted without its bend");
+		assertFalse(this.wrongSeen, "waiting for the bend is not an error");
+		assertTrue(this.last.getFeedback().needsBend());
 
+		// the way out: Skip passes the note, the practice goes on with the next one
+		this.session.onCommand(PracticeCommand.SKIP);
+		assertEquals(1, this.session.getCurrentIndex());
 		pluck(E4, STABILITY_NANOS + millis(60));
-		assertEquals(2, this.session.getCurrentIndex(), "the practice waited for a bend that was not played");
-		assertFalse(this.wrongSeen);
-		TechniqueResult bend = this.last.getTechniqueResults().isEmpty() ? null : this.last.getTechniqueResults().get(0);
-		assertEquals(PlayingTechnique.BEND, bend.getTechnique());
-		assertEquals(TechniqueVerdict.NOT_DETECTED, bend.getVerdict());
+		assertEquals(2, this.session.getCurrentIndex());
 	}
 
 	@Test
@@ -212,19 +229,18 @@ public class BendSessionTest {
 	}
 
 	@Test
-	public void theTechniqueIsNotReportedBeforeTheTargetIsReachedThenDetectedOnPitch() {
+	public void theTechniqueIsReportedAtTheEndOfTheObservationAndDetectedOnPitch() {
 		start(wholeToneBendThenE4(), true);
 
 		pluck(D4, millis(150));
-		assertEquals(1, this.session.getCurrentIndex());
-		// the bend is under way, halfway to its target: nothing is said yet
-		glide(D4, D4 + 1, millis(120));
+		glide(D4, D4 + 1, millis(150));
 		assertTrue(this.last.getTechniqueResults().isEmpty(), "reported while the pitch was still moving");
-		glide(D4 + 1, E4, millis(120));
+		glide(D4 + 1, E4, millis(150));
 		hold(E4, millis(300));
+		assertEquals(1, this.session.getCurrentIndex(), "the bend reached its target");
 		assertTrue(this.last.getTechniqueResults().isEmpty(), "reported before the end of the observation window");
 
-		// the observation window of a note written at 0.5 s lasts 1.0 s; the next note ends it earlier
+		// the next note ends the observation at once; the whole bend, from the base note, was measured
 		pluck(E4, STABILITY_NANOS + millis(60));
 		assertEquals(2, this.session.getCurrentIndex());
 		List<TechniqueResult> results = this.last.getTechniqueResults();
@@ -234,63 +250,33 @@ public class BendSessionTest {
 	}
 
 	@Test
-	public void aBendThatStopsHalfWayIsUnderAndNotDetected() {
+	public void aBendThatStopsHalfWayIsNotAcceptedAndTheLearnerIsToldToBendOn() {
 		start(wholeToneBendThenE4(), true);
 
 		pluck(D4, millis(150));
 		glide(D4, D4 + 1, millis(200));
-		hold(D4 + 1, millis(800));
-		pluck(E4, STABILITY_NANOS + millis(60));
+		hold(D4 + 1, millis(1500));
 
-		assertEquals(2, this.session.getCurrentIndex());
-		TechniqueResult bend = this.last.getTechniqueResults().get(0);
-		assertNotEquals(TechniqueVerdict.DETECTED, bend.getVerdict());
-		assertEquals(-1.0, bend.getMeasurements().get("outcome"), 0.001);
+		assertEquals(0, this.session.getCurrentIndex());
+		assertFalse(this.wrongSeen, "a pitch on the written path was shown as a wrong note");
+		assertTrue(this.last.getFeedback().needsBend());
 	}
 
 	@Test
-	public void theResultOfAnUnfinishedBendComesWhenTheObservationWindowEnds() {
+	public void theResultOfAnAcceptedBendComesWhenTheObservationWindowEnds() {
 		SongFixture fixture = new SongFixture(1);
 		fixture.bend(0, 0, 3, 7, 2);
 		start(fixture, true);
 
 		pluck(D4, millis(150));
 		glide(D4, E4, millis(250));
-		hold(E4, millis(500));
+		hold(E4, millis(300));
+		assertEquals(1, this.session.getCurrentIndex());
 		assertTrue(this.last.getTechniqueResults().isEmpty());
 		// the note written at 0.5 s is observed for 1.0 s after its acceptance, whatever comes next
 		hold(E4, millis(900));
 		assertEquals(1, this.last.getTechniqueResults().size());
 		assertEquals(TechniqueVerdict.DETECTED, this.last.getTechniqueResults().get(0).getVerdict());
-	}
-
-	@Test
-	public void anOnsetHeardWhileTheBendIsMovingDoesNotMakeThePathAWrongNote() {
-		start(wholeToneBendThenE4(), false);
-
-		pluck(D4, millis(150));
-		assertEquals(1, this.session.getCurrentIndex());
-		// the level change of the bend is taken for an attack in the middle of the glide, and the pitch stays there for a while
-		glide(D4, D4 + 1, millis(120));
-		frame(D4 + 1, true);
-		hold(D4 + 1, STABILITY_NANOS + millis(200));
-		glide(D4 + 1, E4, millis(120));
-
-		assertFalse(this.wrongSeen, "a pitch on the written path was shown as a wrong note");
-		assertEquals(1, this.session.getCurrentIndex());
-	}
-
-	@Test
-	public void afterTheWindowAWrongNoteIsReportedAgain() {
-		start(wholeToneBendThenE4(), false);
-
-		pluck(D4, millis(150));
-		glide(D4, E4, millis(250));
-		hold(E4, millis(2800));
-		// well after the observation window of the bend: a struck note far from E4 and from the path is a real error
-		pluck(E4 + 3, STABILITY_NANOS + millis(100));
-		assertTrue(this.wrongSeen);
-		assertEquals(1, this.session.getCurrentIndex());
 	}
 
 	@Test
@@ -313,5 +299,63 @@ public class BendSessionTest {
 		// E4 played straight: it is on the path (the target) but it did not start on the fretted pitch
 		pluck(E4, STABILITY_NANOS + millis(200));
 		assertEquals(0, this.session.getCurrentIndex(), "the target pitch played straight was accepted for the bend");
+	}
+
+	@Test
+	public void aDropoutOfTheSignalDuringTheBendDoesNotLoseIt() {
+		start(wholeToneBendThenE4(), false);
+
+		pluck(D4, millis(150));
+		glide(D4, D4 + 1, millis(150));
+		// the note decays: the level is too low to be judged for a while, then the pitch is not read at all for a moment
+		dropout(D4 + 1, true, millis(150));
+		glide(D4 + 1, E4, millis(150));
+		dropout(E4, false, millis(60));
+		hold(E4, millis(300));
+
+		assertEquals(1, this.session.getCurrentIndex(), "a dropout of the signal ended the bend and it could not start again");
+		assertFalse(this.wrongSeen);
+	}
+
+	@Test
+	public void aPitchThatLeavesThePathEndsTheRunEvenWithADropout() {
+		start(wholeToneBendThenE4(), false);
+
+		pluck(D4, millis(150));
+		glide(D4, D4 + 1, millis(150));
+		dropout(D4 + 1, true, millis(100));
+		// back below the fretted pitch: off the path, the run is over; E4 played straight afterwards is not the bend
+		glide(D4 + 1, D4 - 1.5, millis(100));
+		hold(D4 - 1.5, millis(200));
+		// the pitch jumps to E4 without passing through the fretted pitch
+		hold(E4, millis(400));
+
+		assertEquals(0, this.session.getCurrentIndex(), "a run that left the path was taken up again");
+	}
+
+	@Test
+	public void aBendAfterAHigherNoteIsMeasuredFromItsOwnStart() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bend(0, 0, 3, 7, 2);
+		fixture.quarter(0, 1, 3, 9);
+		fixture.bend(0, 2, 3, 7, 2);
+		start(fixture, true);
+
+		pluck(D4, millis(150));
+		glide(D4, E4, millis(250));
+		hold(E4, millis(300));
+		pluck(E4, STABILITY_NANOS + millis(60));
+		assertEquals(2, this.session.getCurrentIndex());
+		// E4 rings on, then D4 is struck and bent up to E4: the hops of the previous note are not part of this bend
+		hold(E4, millis(600));
+		pluck(D4, 0);
+		glide(D4, E4, millis(250));
+		hold(E4, millis(300));
+		assertEquals(3, this.session.getCurrentIndex());
+		hold(E4, millis(1200));
+
+		TechniqueResult bend = this.last.getTechniqueResults().get(0);
+		assertEquals(TechniqueVerdict.DETECTED, bend.getVerdict(), "the second bend was measured from the previous note: " + bend.getMeasurements());
+		assertEquals(0.0, bend.getMeasurements().get("outcome"), 0.001);
 	}
 }
