@@ -15,6 +15,8 @@ import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
  * a click that rings is cut, the frames that follow are ignored and nothing is kept. Only an attack with a pitch that begins with it is a note: the
  * click itself, which the microphone may hear, has none, and a note that was already ringing is not the attack of the click heard over it.
  * <p>
+ * Frames come from the analysis thread and the window reads the state: the methods are synchronized.
+ * <p>
  * Limit: a note played less than about 65 ms after the click that the microphone hears again cannot be told from it by the attack alone (the
  * attack is reported that long after its transient); the learner who plays on the click with a speaker next to the microphone may be measured on
  * the click. A wired input or headphones do not have this.
@@ -69,12 +71,12 @@ public final class CalibrationRun {
 	private final double[] tapOffsetMillis;
 	private final List<Candidate> candidates = new ArrayList<Candidate>();
 
-	private State state = State.ANNOUNCED;
+	private volatile State state = State.ANNOUNCED;
 	private long pitchRunStart = Long.MIN_VALUE;
 	private double pitchRunMidi = Double.NaN;
 	private long firstClickAt = Long.MIN_VALUE;
-	private int played;
-	private CalibrationTaps.Result result;
+	private volatile int played;
+	private volatile CalibrationTaps.Result result;
 
 	/** @param articulationLatencyNanos how long after the transient the onset of a frame is reported */
 	public CalibrationRun(ClickPlayer clicks, long articulationLatencyNanos) {
@@ -105,7 +107,7 @@ public final class CalibrationRun {
 	}
 
 	/** How many clicks have a note so far. */
-	public int notesHeard() {
+	public synchronized int notesHeard() {
 		int heard = 0;
 		for (double offset : this.tapOffsetMillis) {
 			heard += (Double.isNaN(offset) ? 0 : 1);
@@ -134,14 +136,14 @@ public final class CalibrationRun {
 	}
 
 	/** Starts at the next frame. */
-	public void start() {
+	public synchronized void start() {
 		if (this.state == State.ANNOUNCED) {
 			this.state = State.RUNNING;
 		}
 	}
 
 	/** Stops now, whatever the state of the run; nothing is kept. Calling it again does nothing. */
-	public void cancel() {
+	public synchronized void cancel() {
 		if (this.state == State.ANNOUNCED || this.state == State.RUNNING) {
 			this.state = State.CANCELLED;
 			this.candidates.clear();
@@ -153,7 +155,7 @@ public final class CalibrationRun {
 	 * @param frame a frame of the analysis
 	 * @param frameWall its wall time (the scale of {@code System.nanoTime()}); {@link Long#MIN_VALUE} when it cannot be dated
 	 */
-	public void onFrame(AnalysisFrame frame, long frameWall) {
+	public synchronized void onFrame(AnalysisFrame frame, long frameWall) {
 		if (this.state != State.RUNNING || frameWall == Long.MIN_VALUE) {
 			return;
 		}
@@ -200,6 +202,8 @@ public final class CalibrationRun {
 			}
 			this.result = taps.evaluate();
 			this.state = State.FINISHED;
+			// nothing more will sound: the clicks give back what they hold
+			this.clicks.silence();
 		}
 	}
 
