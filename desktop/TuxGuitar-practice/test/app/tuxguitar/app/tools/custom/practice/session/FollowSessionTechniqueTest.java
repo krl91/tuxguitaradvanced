@@ -36,7 +36,6 @@ import app.tuxguitar.audio.engine.testsupport.TechniqueSignals;
  * bend above all, never blocks the timeline. The frames come from the real analysis of synthetic audio (plucks, strums, bends, legato steps), with the
  * fake clocks of the harness: no wait. As the onset of real audio is dated by the analysis, the timing is checked with a margin, and not to the millisecond.
  */
-@Disabled("T095: the session is not implemented yet; the contract is written first")
 public class FollowSessionTechniqueTest {
 
 	private static final int RATE = 48000;
@@ -77,11 +76,12 @@ public class FollowSessionTechniqueTest {
 	}
 
 	private static List<AnalysisFrame> analyse(FollowHarness harness, float[] signal) {
-		return OfflineAnalysis.analyze(signal, RATE, RecognitionSettings.defaults(), false, AttackCandidates.of(harness.sequence));
+		return OfflineAnalysis.analyze(signal, RATE, RecognitionSettings.defaults(), true, AttackCandidates.of(harness.sequence));
 	}
 
 	private static FollowHarness harness(SongFixture fixture) {
 		FollowHarness harness = new FollowHarness(fixture, 100, LATENCY);
+		harness.session.setPolyphonicAcceptance(() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
 		harness.session.start();
 		return harness;
 	}
@@ -251,17 +251,17 @@ public class FollowSessionTechniqueTest {
 	@Test
 	public void aBendMadeSlowlyOrTooFarDoesNotMoveTheNextNotes() {
 		FollowHarness harness = harness(bendThenTwoNotes());
-		float[] signal = silence(harness);
-		// a slow bend that is still under way when the next note is played, and goes past its target
-		add(signal, TechniqueSignals.bend(62, RATE, (int) (0.9 * RATE), 0.0, 0.0, 0.2, 0.0, 0.8, 3.0), harness.target(0), 1.0f);
-		pluck(signal, harness.target(1), 67, 40L);
-		pluck(signal, harness.target(2), 69, 41L);
-		harness.feed(analyse(harness, signal));
+		// a slow bend that is still under way when its window closes, and goes past its target; the next notes are played on their beats
+		harness.playMoving(harness.target(0), 450 * MS, seconds -> 62.0 + 2.5 * Math.min(1.0, Math.max(0.0, (seconds - 0.2) / 0.24)));
+		harness.play(harness.target(1), 67, 400 * MS);
+		harness.play(harness.target(2), 69, 400 * MS);
+		harness.runAll();
 
 		assertEquals(Status.MATCHED, result(harness, 0).status());
 		assertEquals(Status.MATCHED, result(harness, 1).status());
 		assertEquals(Status.MATCHED, result(harness, 2).status());
-		assertEquals(TimingVerdict.ON_TIME, result(harness, 1).timing());
+		assertEquals(TimingVerdict.ON_TIME, result(harness, 1).timing(), "offset " + result(harness, 1).offsetNanos() / MS + " ms");
+		assertEquals(TimingVerdict.ON_TIME, result(harness, 2).timing());
 	}
 
 	// ------------------------------------------------------------------ hammer-on and pull-off: the arrival note has no attack

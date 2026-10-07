@@ -26,7 +26,6 @@ import app.tuxguitar.song.models.effects.TGEffectGrace;
  * <p>
  * At 120 beats a minute (a beat of 500 ms) the NORMAL preset has a tight window of 75 ms and an outer window of 200 ms each side of the target.
  */
-@Disabled("T095: the session is not implemented yet; the contract is written first")
 public class FollowSessionTest {
 
 	/** Five quarter notes of 64, 65, 66, 67 (measure 0) and 68 (measure 1), on the first string. */
