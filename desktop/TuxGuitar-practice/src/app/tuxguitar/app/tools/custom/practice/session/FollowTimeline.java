@@ -27,13 +27,14 @@ public final class FollowTimeline {
 	private final long[] targetNanos;
 	private final long[] targetTicks;
 	private final long[] beatNanos;
+	private final long[] playStartTicks;
 	private final long durationNanos;
 	/** The played measures: start tick, start time and quarter note length, to turn any tick into a time. */
 	private final long[] measureStartTicks;
 	private final long[] measureStartNanos;
 	private final double[] measureQuarterNanos;
 
-	private FollowTimeline(int percent, long[] targetNanos, long[] targetTicks, long[] beatNanos, long durationNanos,
+	private FollowTimeline(int percent, long[] targetNanos, long[] targetTicks, long[] beatNanos, long[] playStartTicks, long durationNanos,
 			long[] measureStartTicks, long[] measureStartNanos, double[] measureQuarterNanos) {
 		this.measureStartTicks = measureStartTicks;
 		this.measureStartNanos = measureStartNanos;
@@ -42,6 +43,7 @@ public final class FollowTimeline {
 		this.targetNanos = targetNanos;
 		this.targetTicks = targetTicks;
 		this.beatNanos = beatNanos;
+		this.playStartTicks = playStartTicks;
 		this.durationNanos = durationNanos;
 	}
 
@@ -88,6 +90,7 @@ public final class FollowTimeline {
 		long[] targetNanos = new long[events.size()];
 		long[] targetTicks = new long[events.size()];
 		long[] beatNanos = new long[events.size()];
+		long[] playStartTicks = new long[events.size()];
 		for (int i = 0; i < events.size(); i++) {
 			PracticeEvent event = events.get(i);
 			Occurrence occurrence = played.get(event.getPlayIndex());
@@ -95,6 +98,7 @@ public final class FollowTimeline {
 			targetNanos[i] = occurrence.startNanos + Math.round(offsetTicks * occurrence.quarterNanos / TGDuration.QUARTER_TIME);
 			targetTicks[i] = occurrence.startTicks + offsetTicks;
 			beatNanos[i] = Math.round(occurrence.quarterNanos);
+			playStartTicks[i] = occurrence.startTicks;
 		}
 		long[] startTicks = new long[played.size()];
 		long[] startNanos = new long[played.size()];
@@ -104,7 +108,7 @@ public final class FollowTimeline {
 			startNanos[i] = played.get(i).startNanos;
 			quarters[i] = played.get(i).quarterNanos;
 		}
-		return new FollowTimeline(percent, targetNanos, targetTicks, beatNanos, nanos, startTicks, startNanos, quarters);
+		return new FollowTimeline(percent, targetNanos, targetTicks, beatNanos, playStartTicks, nanos, startTicks, startNanos, quarters);
 	}
 
 	public int percent() {
@@ -123,6 +127,11 @@ public final class FollowTimeline {
 	/** The expanded tick of the event, from the first played measure (the player's own offset of its first measure is not included). */
 	public long targetTicks(int eventIndex) {
 		return this.targetTicks[eventIndex];
+	}
+
+	/** The expanded tick (from the first played measure) at which the played measure of the event begins: where the player starts to practise from it. */
+	public long playStartTicks(int eventIndex) {
+		return this.playStartTicks[eventIndex];
 	}
 
 	/** The local beat (a quarter note) in nanoseconds, at the tempo of the event's measure and the percentage. */
