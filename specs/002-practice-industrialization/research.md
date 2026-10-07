@@ -525,3 +525,27 @@ Run of four legato notes on one string (frets 0, 2, 4, 2), notes accepted in all
 * T073 (recordings) and the manual play-through T075 stay open; nothing has been changed in the thresholds.
 
 **What would close it:** the clips of `benchmark/recording-plan.md` (hammer-on up, pull-off down, slides up and down, a fast legato run), on the direct interface and on the built-in microphone, which T053 defers.
+
+## R15 — Tempo-following benchmark (T101, 2026-10-08)
+
+**What was run.** `FollowBenchmarkTest` (tag `benchmark`, out of the normal build): whole runs of `FollowSession` on a fake player and its fake clock (`FakeMidiPlayer`, `FakeTempoClock`), fed with the analysis of audio by the real chain, normal tolerance, **no latency compensation**. Synthetic audio: plucked-string synthesis (Karplus-Strong), gain 0.3, each note ringing 0.9 s under the next; a 16-event scale (chords: 8 events), every note played within +-25 ms of its time, 12 runs per cell (seeds 1000 to 1011), 2 to 8 notes a second at the score tempo. A match counts as right when the event is MATCHED and its offset is within 60 ms of the time the note was played. Reports: `benchmark/follow-benchmark-synthetic-2026-10-08.txt` and `benchmark/follow-benchmark-recorded-2026-10-08.txt`. Command: `mvn test -pl ../../TuxGuitar-practice -am -Dgroups=benchmark -DexcludedGroups= -Dtest=FollowBenchmarkTest -Dsurefire.failIfNoSpecifiedTests=false` from the macOS SWT build directory. The targets of SC-009 and SC-004 were **not changed**.
+
+**Synthetic results** (right matches over all events of the 12 runs):
+
+| Notes a second | scale in time | one pitch repeated | with one deliberate mistake: events after it right | runs resynchronised |
+|---|---|---|---|---|
+| 2 | 100 % (192/192) | 99 % (191/192), 11 of 12 runs separated | 100 % (97/97) | 12/12 |
+| 4 | 86 % (165/192) | 41 % (78/192), 56 false matches, 0 of 12 runs | 86 % (83/97) | 2/12 |
+| 6 | 44 % (84/192) | 30 % (58/192), 0 of 12 | 42 % (41/97) | 0/12 |
+| 8 | 22 % (43/192) | 15 % (28/192), 0 of 12 | 23 % (22/97) | 0/12 |
+
+Chords (E major and A major shapes alternating): 98 % right at 1 chord a second, 92 % at 2 (7 wrong chords out of 96). Mean offset error of the matches +24 ms at 2 and 4 notes a second (the detection bias: the pitch is seen after the transient; it is what a calibration of the route absorbs together with the latency of the route, and the benchmark is run without one). Two runs of the same seed give the same matches.
+
+**Recorded result** (the real recording of the repository, `tests/1`, 34 notes and 8 chords, not redistributed): the player is not at 99 beats a minute (laid on the written tempo with the median distance nil, only 3 of 42 events were inside their window: the recording is not to a click and the player's tempo differs). Laid on the recording with the tempo percentage that fits the annotated times best (**82 %**, first measure at 471 ms), **35 of 42 events matched (83 %)**: 33 on time, 2 early, 0 late; 0 wrong pitch, 0 extra note, 7 missed with the note inside its window; 2 of the matches have an offset more than 60 ms from the annotated time.
+
+**What it says, without rounding it up.**
+
+* **SC-009 is not met** (95 % of correctly played notes matched, up to 8 notes a second): 100 % at 2 notes a second, 86 % at 4, 44 % at 6 and 22 % at 8 on this audio. The loss follows the limit already measured for the wait mode (R11: notes about 0.3 s apart are followed, faster ones lose their attacks): a note whose attack is not seen is MISSED in its own window and never moves the others.
+* **The second part of SC-009 (staying synchronised after a mistake) cannot be told from the first on this audio**: the events after the mistake are right as often as in the clean run of the same rate (86 % against 86 % at 4 notes a second, 100 % against 100 % at 2); the mistake itself does not add losses. The runs counted "resynchronised" require *every* later event right, so they fall with the detection rate, not with the mistake. At 2 notes a second 12 of 12 runs stay synchronised, with the four kinds of mistake (wrong note, skipped note, stray note, doubled note) cycling.
+* **SC-004 is not met** (repeated identical notes at 8 a second): 15 % at 8 a second, and already **41 % at 4 a second with 56 false matches**: with the same pitch twice, an attack seen late is matched to a neighbouring event and reported LATE. The matching is by window and pitch; it has no rule against taking, for an event, the attack that belongs to the next identical one. That is a weakness of the session, not only of the detector. Nothing was changed for this benchmark; a rule (an event whose neighbour is still unmatched does not take an attack closer to the neighbour's time) is a candidate, to be specified before it is made.
+* Not covered: techniques (the detectors have their own benchmark, `technique-benchmark-2026-10-06.txt`, and the session tests pin that a technique never changes the timing); a real guitar at 4 notes a second and more (no annotated recording of fast passages exists here); the effect of a calibration (the benchmark runs without one); synthetic notes are cleaner than real ones in the attack and not in the decay.

@@ -21,6 +21,7 @@ import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
+import app.tuxguitar.song.models.TGSong;
 
 /**
  * A whole tempo-following run on the fakes (spec 002 T137): the {@link FollowPlayback} starts the {@link FakeMidiPlayer}, whose count-down and
@@ -33,6 +34,7 @@ final class FakePlayerRun {
 	static final int TRACK = 1;
 
 	final SongFixture fixture;
+	final long lead;
 	final PracticeSequence sequence;
 	final FollowTimeline timeline;
 	final FakeTempoClock clock;
@@ -56,9 +58,24 @@ final class FakePlayerRun {
 	}
 
 	FakePlayerRun(SongFixture fixture, int percent, long articulationLatency) {
+		this(fixture, percent, articulationLatency, LEAD);
+	}
+
+	/** @param leadNanos the count-down: the first measure of the score begins this long after the first frame */
+	FakePlayerRun(SongFixture fixture, int percent, long articulationLatency, long leadNanos) {
+		this(fixture, fixture.song, fixture.sequence(), percent, articulationLatency, leadNanos);
+	}
+
+	/** A run on a song that is not a fixture (a score read from a file): the sequence is the one of its track. */
+	FakePlayerRun(TGSong song, PracticeSequence sequence, int percent, long articulationLatency, long leadNanos) {
+		this(null, song, sequence, percent, articulationLatency, leadNanos);
+	}
+
+	private FakePlayerRun(SongFixture fixture, TGSong song, PracticeSequence sequence, int percent, long articulationLatency, long leadNanos) {
+		this.lead = leadNanos;
 		this.fixture = fixture;
-		this.sequence = fixture.sequence();
-		this.timeline = FollowTimeline.build(fixture.song, this.sequence, percent);
+		this.sequence = sequence;
+		this.timeline = FollowTimeline.build(song, this.sequence, percent);
 		long length = 0;
 		while (this.timeline.nanosAtTick(length) < this.timeline.durationNanos()) {
 			length += 960;
@@ -69,7 +86,7 @@ final class FakePlayerRun {
 			return this.timeline.nanosAtTick(whole) * (1.0 - part) + this.timeline.nanosAtTick(whole + 1) * part;
 		}, BASE_TICK, length);
 		this.clock.setNow(T0);
-		this.player = new FakeMidiPlayer(this.clock).withInitialState(100, false, true).countDownNanos(LEAD);
+		this.player = new FakeMidiPlayer(this.clock).withInitialState(100, false, true).countDownNanos(leadNanos);
 		this.playback = new FollowPlayback(this.player, TRACK, percent, BASE_TICK + this.timeline.playStartTicks(0), this.ends::add);
 		TimingTolerance tolerance = new TimingTolerance(Preset.NORMAL);
 		this.session = new FollowSession(this.sequence, this.timeline, BASE_TICK, this.clock, frame -> {
@@ -91,7 +108,7 @@ final class FakePlayerRun {
 	}
 
 	long target(int eventIndex) {
-		return T0 + LEAD + this.timeline.targetNanos(eventIndex);
+		return T0 + this.lead + this.timeline.targetNanos(eventIndex);
 	}
 
 	Note play(long wallStart, int midi, long duration) {
@@ -122,7 +139,7 @@ final class FakePlayerRun {
 	}
 
 	FollowSession.Snapshot runAll() {
-		return runUntil(T0 + LEAD + this.timeline.durationNanos() + 1_500 * FollowHarness.MS);
+		return runUntil(T0 + this.lead + this.timeline.durationNanos() + 1_500 * FollowHarness.MS);
 	}
 
 	/** Frames from the analysis of audio (stream times), the player moving to each one. */
