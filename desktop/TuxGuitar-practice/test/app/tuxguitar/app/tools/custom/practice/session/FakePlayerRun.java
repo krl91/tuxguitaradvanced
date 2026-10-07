@@ -44,6 +44,8 @@ final class FakePlayerRun {
 	final Set<Note> flagged = new HashSet<Note>();
 
 	boolean captureReady = true;
+	/** The dating of a frame throws: the session fails. */
+	volatile boolean failDating;
 	long now = T0;
 	FollowSession.Snapshot last;
 
@@ -68,7 +70,12 @@ final class FakePlayerRun {
 		this.player = new FakeMidiPlayer(this.clock).withInitialState(100, false, true).countDownNanos(LEAD);
 		this.playback = new FollowPlayback(this.player, TRACK, percent, BASE_TICK + this.timeline.playStartTicks(0), this.ends::add);
 		TimingTolerance tolerance = new TimingTolerance(Preset.NORMAL);
-		this.session = new FollowSession(this.sequence, this.timeline, BASE_TICK, this.clock, frame -> T0 + frame.getTimestampNanos(),
+		this.session = new FollowSession(this.sequence, this.timeline, BASE_TICK, this.clock, frame -> {
+					if (this.failDating) {
+						throw new IllegalStateException("the session fails");
+					}
+					return T0 + frame.getTimestampNanos();
+				},
 				() -> new TimingContext(tolerance, LatencyCompensation.calibrated(0.0), new ClockUncertainty(5.0), this.captureReady, this.clock.isReady()),
 				new NoteInterpreter(0.8), new TolerancePolicy(5.0, 25.0), new ChordMatcher(ChordMatcher.Parameters.defaults()), STABILITY, articulationLatency);
 		this.session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
