@@ -51,6 +51,16 @@ public final class PracticeSequence {
 		return Collections.unmodifiableList(targets);
 	}
 
+	/**
+	 * The events from the given one on, as a sequence of their own that starts at its first event: what a run of the tempo-following mode judges when
+	 * the learner starts in the middle of the score. The events keep their measure and their play index, so their times still come from the song; the
+	 * destination of a legato ({@link #targetsOf}) is looked for in the events kept, so a note whose origin is before the start is judged as a plain note.
+	 */
+	public PracticeSequence startingAt(int index) {
+		int from = Math.max(0, Math.min(index, this.events.size()));
+		return new PracticeSequence(new ArrayList<PracticeEvent>(this.events.subList(from, this.events.size())), 0, this.trackTuning);
+	}
+
 	public boolean isEmpty() {
 		return this.events.isEmpty();
 	}
