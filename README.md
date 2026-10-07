@@ -1,5 +1,15 @@
 # TuxGuitarAdvanced
 
+*English · [Français](docs/README-FR.md) · [Español](docs/README-ES.md)*
+
+TuxGuitarAdvanced turns a free score and tablature editor into a complete environment for learning guitar interactively. You can open and edit your own pieces, then use a real guitar to move forward note by note, work at tempo and get precise feedback on the notes, the chords, the rhythm and the written techniques.
+
+Its main strengths are the freedom to work with your own scores and tablatures, local operation with no subscription and no imposed catalogue, feedback built directly into the score, and detailed verification of techniques such as bends, slides, hammer-ons and pull-offs. Users keep control of their files, their audio devices, their settings and their progress.
+
+### Where it stands today
+
+Available now (version 0.4.6): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **In progress, not available yet:** the tempo-following mode (working at the tempo of the score, with early, late and missed notes told apart) and a verdict *heard / not heard* for each technique: the technique detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet". The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
+
 **TuxGuitarAdvanced** is an advanced version of [TuxGuitar](https://www.tuxguitar.app/), the open source multitrack tablature editor and player written in Java. It keeps everything TuxGuitar does (editing, playback, Guitar Pro / MIDI / MusicXML import and export...) and adds a **practice mode that listens to your guitar**, a **steadier tuner**, and tools to check your scores.
 
 > Practise any track of any score with your real guitar: TuxGuitarAdvanced listens through your microphone or audio interface, tells you note by note and chord by chord whether you played what is written, and waits for you.
