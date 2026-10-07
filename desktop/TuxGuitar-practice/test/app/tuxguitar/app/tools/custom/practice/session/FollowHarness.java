@@ -99,13 +99,17 @@ final class FollowHarness {
 	FollowSession.Snapshot last;
 
 	FollowHarness(SongFixture fixture, int percent) {
+		this(fixture, percent, LATENCY);
+	}
+
+	FollowHarness(SongFixture fixture, int percent, long articulationLatency) {
 		this.fixture = fixture;
 		this.sequence = fixture.sequence();
 		this.timeline = FollowTimeline.build(fixture.song, this.sequence, percent);
 		this.clock = new FakeClock(this.timeline);
 		this.session = new FollowSession(this.sequence, this.timeline, FIRST_TICK, this.clock, frame -> T0 + frame.getTimestampNanos(),
 				() -> new TimingContext(this.tolerance, this.compensation, new ClockUncertainty(this.spreadMillis), this.captureReady, this.playerReady),
-				new NoteInterpreter(0.8), new TolerancePolicy(5.0, 25.0), new ChordMatcher(ChordMatcher.Parameters.defaults()), STABILITY, LATENCY);
+				new NoteInterpreter(0.8), new TolerancePolicy(5.0, 25.0), new ChordMatcher(ChordMatcher.Parameters.defaults()), STABILITY, articulationLatency);
 		this.session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		this.session.setTrackAccepted(true);
 	}
@@ -147,6 +151,14 @@ final class FollowHarness {
 	/** Runs the whole performance: up to the end of the timeline and a second more. */
 	FollowSession.Snapshot runAll() {
 		return runUntil(T0 + LEAD + this.timeline.durationNanos() + 1_500 * MS);
+	}
+
+	/** Feeds frames that come from real analysis of an audio signal (their timestamps are stream times: the wall time is {@link #T0} plus them). */
+	FollowSession.Snapshot feed(java.util.List<AnalysisFrame> frames) {
+		for( AnalysisFrame frame : frames ) {
+			this.last = this.session.onFrame(frame);
+		}
+		return this.last;
 	}
 
 	private AnalysisFrame frameAt(long wall) {
