@@ -302,6 +302,54 @@ public class FollowSessionTechniqueTest {
 		assertEquals(TimingVerdict.ON_TIME, result(harness, 2).timing());
 	}
 
+	// ------------------------------------------------------------------ a bend that goes on sounding under the next event (scripted frames)
+
+	/** A bend D4 to E4, then E4 and A4 picked: the bent note is the same pitch as the next event. */
+	private static SongFixture bendThenItsTargetThenNote() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bend(0, 0, 3, 7, 2);
+		fixture.quarter(0, 1, 1, 0);
+		fixture.quarter(0, 2, 1, 5);
+		return fixture;
+	}
+
+	/** The bend is made in 0.3 s and held for a second: its tail sounds through the window of the next event. */
+	private static double[] bentAndHeld(double seconds) {
+		return new double[] { 62.0 + 2.0 * Math.min(1.0, Math.max(0.0, (seconds - 0.1) / 0.2)) };
+	}
+
+	@Test
+	public void theTailOfABendNeverValidatesTheNextEventNorCreatesAnExtra() {
+		FollowHarness harness = harness(bendThenItsTargetThenNote());
+		harness.playMoving(harness.target(0), 1_300 * MS, seconds -> bentAndHeld(seconds)[0]);
+		// the next event, E4, is never picked: only the tail of the bend sounds at its pitch inside its window
+		harness.play(harness.target(2), harness.sequence.getEvents().get(2).getExpectedMidi(), 400 * MS);
+		harness.runAll();
+
+		assertEquals(Status.MATCHED, result(harness, 0).status());
+		assertEquals(Status.MISSED, result(harness, 1).status(), "a pitch that goes on sounding is not a new note");
+		assertEquals(PitchResult.NONE, result(harness, 1).pitch());
+		assertEquals(0, harness.last.counts().extra(), "the tail of the bend is not an extra note");
+		assertEquals(Status.MATCHED, result(harness, 2).status());
+		assertEquals(TimingVerdict.ON_TIME, result(harness, 2).timing());
+	}
+
+	@Test
+	public void aRealAttackOnTheNextEventStaysDetectedWhileTheBendTailSoundsTheSamePitch() {
+		FollowHarness harness = harness(bendThenItsTargetThenNote());
+		harness.playMoving(harness.target(0), 600 * MS, seconds -> bentAndHeld(seconds)[0]);
+		harness.play(harness.target(1) + 20 * MS, harness.sequence.getEvents().get(1).getExpectedMidi(), 400 * MS);
+		harness.play(harness.target(2), harness.sequence.getEvents().get(2).getExpectedMidi(), 400 * MS);
+		harness.runAll();
+
+		assertEquals(Status.MATCHED, result(harness, 0).status());
+		assertEquals(Status.MATCHED, result(harness, 1).status());
+		assertEquals(TimingVerdict.ON_TIME, result(harness, 1).timing());
+		assertTrue(Math.abs(result(harness, 1).offsetNanos() - 20 * MS) <= FollowHarness.HOP, "the offset is that of the new attack, to the 5 ms grid of the frames: " + result(harness, 1).offsetNanos() / MS + " ms");
+		assertEquals(Status.MATCHED, result(harness, 2).status());
+		assertEquals(0, harness.last.counts().extra());
+	}
+
 	// ------------------------------------------------------------------ hammer-on and pull-off: the arrival note has no attack
 
 	private static SongFixture hammerOnThenNote() {
