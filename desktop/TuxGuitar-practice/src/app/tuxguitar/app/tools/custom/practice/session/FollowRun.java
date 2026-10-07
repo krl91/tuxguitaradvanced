@@ -26,7 +26,9 @@ public final class FollowRun {
 		/** The player stopped (the end of the song, or Stop of the transport). */
 		PLAYER_STOPPED,
 		/** The session or the display threw: the run ended and everything was given back. */
-		FAILED
+		FAILED,
+		/** A Stop command of the learner (a shortcut) or a new song ended it: the window goes back to the preparation without a message. */
+		COMMAND
 	}
 
 	private final SessionLoop<FollowSession.Snapshot> loop;
@@ -48,7 +50,7 @@ public final class FollowRun {
 		this.session = session;
 		this.endListener = endListener;
 		this.uiExecutor = uiExecutor;
-		FollowHandler handler = new FollowHandler(session, player, restart, exception -> failed());
+		FollowHandler handler = new FollowHandler(session, player, restart, exception -> failed(), this::commanded);
 		this.loop = new SessionLoop<FollowSession.Snapshot>(context, handler, snapshot -> {
 			try {
 				uiSink.accept(snapshot);
@@ -101,6 +103,12 @@ public final class FollowRun {
 	public void stop() {
 		this.playback.stop();
 		ended(Ended.STOPPED, this.uiExecutor);
+	}
+
+	/** The Stop command reached the session: the whole run ends, the player does not go on without it. */
+	private void commanded() {
+		this.playback.stop();
+		ended(Ended.COMMAND, this.uiExecutor);
 	}
 
 	private void failed() {

@@ -13,12 +13,16 @@ public final class FollowHandler implements SessionLoop.Handler<FollowSession.Sn
 	private final FollowPlayer player;
 	private final Runnable restart;
 	private final java.util.function.Consumer<RuntimeException> failure;
+	private final Runnable stopped;
 
 	/**
 	 * @param restart what a Restart of the learner does (it ends this run and starts another: not this thread's to do); may be null
 	 * @param failure told when the session throws: the run must end, the player must not go on without it; may be null
+	 * @param stopped told after a Stop command: the run ends as a whole; may be null
 	 */
-	public FollowHandler(FollowSession session, FollowPlayer player, Runnable restart, java.util.function.Consumer<RuntimeException> failure) {
+	public FollowHandler(FollowSession session, FollowPlayer player, Runnable restart, java.util.function.Consumer<RuntimeException> failure,
+			Runnable stopped) {
+		this.stopped = stopped;
 		this.session = session;
 		this.player = player;
 		this.restart = restart;
@@ -61,6 +65,9 @@ public final class FollowHandler implements SessionLoop.Handler<FollowSession.Sn
 				break;
 			case STOP:
 				this.session.stop();
+				if (this.stopped != null) {
+					this.stopped.run();
+				}
 				break;
 			case RESTART:
 				if (this.restart != null) {

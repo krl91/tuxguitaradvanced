@@ -306,4 +306,71 @@ public class FollowRunTest {
 		assertNotNull(this.events);
 		assertGivenBack(new FakeMidiPlayerView(this.fake));
 	}
+
+	// ------------------------------------------------------------------ the commands and the events that stop a run
+
+	@Test
+	public void theStopCommandEndsTheWholeRunNotOnlyTheSession() throws InterruptedException {
+		FollowRun run = newRun(this.fake);
+		run.start();
+		await(snapshot -> snapshot.state() == State.COUNT_IN);
+
+		run.postCommand(PracticeCommand.STOP);
+		awaitEnd();
+
+		assertEquals(List.of(Ended.COMMAND), this.ends);
+		assertGivenBack(new FakeMidiPlayerView(this.fake));
+		assertFalse(this.fake.player.isRunning(), "the player does not go on playing without a session");
+		assertTrue(run.isFinished());
+	}
+
+	@Test
+	public void loadingAnotherSongEndsTheWholeRunAndGivesTheStateBack() throws InterruptedException {
+		FollowRun run = newRun(this.fake);
+		run.start();
+		this.fake.player.advance(3_000 * MS);
+		await(snapshot -> snapshot.state() == State.COUNT_IN || snapshot.state() == State.FOLLOWING);
+
+		this.events.processEvent(new app.tuxguitar.editor.event.TGUpdateEvent(app.tuxguitar.editor.event.TGUpdateEvent.SONG_LOADED, null));
+		awaitEnd();
+
+		assertEquals(List.of(Ended.COMMAND), this.ends);
+		assertGivenBack(new FakeMidiPlayerView(this.fake));
+		assertFalse(this.fake.player.isRunning());
+	}
+
+	@Test
+	public void theOtherEventsOfTheScoreNeverEndARun() throws InterruptedException {
+		FollowRun run = newRun(this.fake);
+		run.start();
+		await(snapshot -> snapshot.state() == State.COUNT_IN);
+
+		for (int i = 0; i < 5; i++) {
+			this.events.processEvent(new app.tuxguitar.editor.event.TGUpdateEvent(app.tuxguitar.editor.event.TGUpdateEvent.MEASURE_UPDATED, null));
+			this.events.processEvent(new app.tuxguitar.editor.event.TGUpdateEvent(app.tuxguitar.editor.event.TGUpdateEvent.SELECTION, null));
+		}
+		run.postCommand(PracticeCommand.RESUME);
+		FollowSession.Snapshot after = await(snapshot -> true);
+
+		assertEquals(State.COUNT_IN, after.state());
+		assertEquals(0, this.ends.size());
+		run.stop();
+	}
+
+	@Test
+	public void aRestartAsksTheWindowForANewRunAndNeverStartsOneByItself() throws InterruptedException {
+		int[] restarts = new int[1];
+		FollowRun run = new FollowRun(this.context, this.fake.session, this.fake.player, FakePlayerRun.TRACK, 100, FakePlayerRun.BASE_TICK, this.snapshots::add,
+				Runnable::run, this::ended, null, () -> restarts[0]++);
+		run.start();
+		run.postCommand(PracticeCommand.RESTART);
+		await(snapshot -> snapshot.state() == State.COUNT_IN);
+		run.postCommand(PracticeCommand.RESUME);
+		await(snapshot -> true);
+
+		assertEquals(1, restarts[0]);
+		assertEquals(0, this.ends.size(), "the run goes on until the window ends it and starts another");
+		assertTrue(this.fake.player.isRunning());
+		run.stop();
+	}
 }

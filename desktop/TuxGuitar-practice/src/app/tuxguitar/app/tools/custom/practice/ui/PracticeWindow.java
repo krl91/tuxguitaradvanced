@@ -693,9 +693,11 @@ public class PracticeWindow {
 		teardownSession();
 		showPreparation();
 		showWindow();
-		String key = (reason == FollowRun.Ended.MANUAL_PLAY ? "practice.follow.ended.manual-play"
-				: reason == FollowRun.Ended.FAILED ? "practice.follow.ended.failed" : "practice.follow.ended.player-stopped");
-		this.followPanel.message(TuxGuitar.getProperty(key));
+		if( reason != FollowRun.Ended.COMMAND ) {
+			String key = (reason == FollowRun.Ended.MANUAL_PLAY ? "practice.follow.ended.manual-play"
+					: reason == FollowRun.Ended.FAILED ? "practice.follow.ended.failed" : "practice.follow.ended.player-stopped");
+			this.followPanel.message(TuxGuitar.getProperty(key));
+		}
 		refit();
 	}
 
