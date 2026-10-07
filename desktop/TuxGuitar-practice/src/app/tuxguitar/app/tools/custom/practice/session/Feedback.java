@@ -32,20 +32,24 @@ public final class Feedback {
 	public static final Feedback CORRECT = new Feedback(Kind.CORRECT, -1, false, false);
 	private static final Feedback WAITING_FOR_ARTICULATION = new Feedback(Kind.WAITING, -1, false, true);
 	/** The base note of a written bend is heard and the bend has not reached its target yet. */
-	public static final Feedback WAITING_FOR_BEND = new Feedback(Kind.WAITING, -1, false, false, true);
+	public static final Feedback WAITING_FOR_BEND = new Feedback(Kind.WAITING, -1, false, false, true, false);
+	/** The bend (or the pre-bend) is made and its written release has not reached its end yet. */
+	public static final Feedback WAITING_FOR_RELEASE = new Feedback(Kind.WAITING, -1, false, false, false, true);
 
 	private final Kind kind;
 	private final int detectedMidi;
 	private final boolean octaveOnly;
 	private final boolean needsArticulation;
 	private final boolean needsBend;
+	private final boolean needsRelease;
 
 	private Feedback(Kind kind, int detectedMidi, boolean octaveOnly, boolean needsArticulation) {
-		this(kind, detectedMidi, octaveOnly, needsArticulation, false);
+		this(kind, detectedMidi, octaveOnly, needsArticulation, false, false);
 	}
 
-	private Feedback(Kind kind, int detectedMidi, boolean octaveOnly, boolean needsArticulation, boolean needsBend) {
+	private Feedback(Kind kind, int detectedMidi, boolean octaveOnly, boolean needsArticulation, boolean needsBend, boolean needsRelease) {
 		this.needsBend = needsBend;
+		this.needsRelease = needsRelease;
 		this.kind = kind;
 		this.detectedMidi = detectedMidi;
 		this.octaveOnly = octaveOnly;
@@ -103,6 +107,11 @@ public final class Feedback {
 	/** The base note of a written bend is heard: the bend up to its target is what is still expected. */
 	public boolean needsBend() {
 		return this.needsBend;
+	}
+
+	/** The written release of a bend is what is still expected: the pitch must come down to its end. */
+	public boolean needsRelease() {
+		return this.needsRelease;
 	}
 
 	/** The expected note is heard but must be played again (FR-022). */

@@ -210,7 +210,7 @@ public class BendSessionTest {
 	}
 
 	@Test
-	public void aReleaseFallsAlongItsPathWithoutAWrongNoteOrAnEarlyNextNote() {
+	public void aReleaseIsRequiredAndFallsAlongItsPathWithoutAWrongNoteOrAnEarlyNextNote() {
 		SongFixture fixture = new SongFixture(1);
 		// pre-bent a whole tone, held, then released to the fretted pitch; the next note is the fretted pitch D4
 		fixture.bendPoints(0, 0, 3, 7, 0, 4, 6, 4, 12, 0);
@@ -218,14 +218,89 @@ public class BendSessionTest {
 		start(fixture, false);
 
 		pluck(E4, STABILITY_NANOS + millis(60));
-		assertEquals(1, this.session.getCurrentIndex());
+		assertEquals(0, this.session.getCurrentIndex(), "the pre-bent note alone was accepted: its release is required");
+		assertTrue(this.last.getFeedback().needsRelease(), "the learner is told to release");
 		glide(E4, D4, millis(250));
-		hold(D4, millis(800));
+		hold(D4, millis(300));
 		assertFalse(this.wrongSeen);
-		assertEquals(1, this.session.getCurrentIndex(), "the pitch the release falls to was taken for the next note");
+		assertEquals(1, this.session.getCurrentIndex(), "the release reached its end and was not accepted");
 
+		// D4 reached by the release is not the next note: it needs its own attack
+		hold(D4, millis(800));
+		assertEquals(1, this.session.getCurrentIndex(), "the pitch the release falls to was taken for the next note");
 		pluck(D4, STABILITY_NANOS + millis(60));
 		assertEquals(2, this.session.getCurrentIndex());
+		assertFalse(this.wrongSeen);
+	}
+
+	@Test
+	public void aReleaseThatIsNotMadeKeepsThePracticeWaitingAndSkipPassesIt() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 4, 6, 4, 12, 0);
+		fixture.quarter(0, 1, 3, 7);
+		start(fixture, false);
+
+		pluck(E4, STABILITY_NANOS + millis(60));
+		hold(E4, millis(3000));
+		assertEquals(0, this.session.getCurrentIndex());
+		assertFalse(this.wrongSeen, "waiting for the release is not an error");
+		assertTrue(this.last.getFeedback().needsRelease());
+
+		this.session.onCommand(PracticeCommand.SKIP);
+		assertEquals(1, this.session.getCurrentIndex());
+	}
+
+	@Test
+	public void aReleaseThatStopsHalfWayIsNotAccepted() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 4, 6, 4, 12, 0);
+		fixture.quarter(0, 1, 3, 7);
+		start(fixture, false);
+
+		pluck(E4, STABILITY_NANOS + millis(60));
+		glide(E4, D4 + 1, millis(200));
+		hold(D4 + 1, millis(1500));
+		assertEquals(0, this.session.getCurrentIndex());
+		assertFalse(this.wrongSeen);
+		assertTrue(this.last.getFeedback().needsRelease());
+	}
+
+	@Test
+	public void aBendWithItsReleaseNeedsTheRiseThenTheFall() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 0, 3, 4, 6, 4, 10, 0, 12, 0);
+		fixture.quarter(0, 1, 3, 9);
+		start(fixture, true);
+
+		pluck(D4, millis(150));
+		glide(D4, E4, millis(200));
+		hold(E4, millis(300));
+		assertEquals(0, this.session.getCurrentIndex(), "accepted at the top of the bend: the release is required too");
+		assertTrue(this.last.getFeedback().needsRelease(), "after the rise the learner is told to release");
+		glide(E4, D4, millis(200));
+		hold(D4, millis(300));
+		assertEquals(1, this.session.getCurrentIndex());
+		assertFalse(this.wrongSeen);
+
+		// the whole bend and its release were measured, from the base note
+		hold(D4, millis(1200));
+		assertEquals(2, this.last.getTechniqueResults().size());
+		for( TechniqueResult result : this.last.getTechniqueResults() ) {
+			assertEquals(TechniqueVerdict.DETECTED, result.getVerdict(), result.getTechnique() + " " + result.getMeasurements());
+		}
+	}
+
+	@Test
+	public void aBendWithItsReleaseDoesNotAcceptTheFallBeforeTheRise() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 0, 3, 4, 6, 4, 10, 0, 12, 0);
+		fixture.quarter(0, 1, 3, 9);
+		start(fixture, false);
+
+		// the fretted pitch is the end of the release, but the rise was not made: playing the base note is not the bend and its release
+		pluck(D4, millis(1500));
+		assertEquals(0, this.session.getCurrentIndex());
+		assertTrue(this.last.getFeedback().needsBend(), "the rise comes first");
 	}
 
 	@Test

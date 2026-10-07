@@ -117,6 +117,8 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private final List<double[]> bendFrames = new ArrayList<double[]>();
 	private boolean bendCollecting;
 	private long bendTargetStartNanos = -1;
+	/** The pitch has touched the written peak of the bend (the rise is made): the release, if written, is what is left. */
+	private boolean bendPeakReached;
 	private static final int BEND_FRAMES_MAX = 800;
 	/** The bent note whose observation window is open (null: none) and when it ends. */
 	private PracticeEvent bendEvent;
@@ -428,7 +430,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 				// a quiet note is still a note (a low string under a loud one): only clipping, which distorts the spectrum, stops the judgement
 				// an expected pitch on the path of the bend just played cannot be told from the bend by its spectrum: it waits for its own attack
 				// a note whose bend is required is accepted when the bend reaches its target, not on the spectrum of its base note
-				boolean bendRequired = requiresBend(event);
+				boolean bendRequired = requiresMovement(event);
 				boolean bentPitch = bendRequired || (pitches.length == 1 && this.bendEvent != null && now < this.bendWindowEndNanos && !this.articulationArmed
 						&& pitches[0] >= corridorOf(this.bendEvent)[0] && pitches[0] <= corridorOf(this.bendEvent)[1]);
 				if( !bentPitch && this.polyphonic.offer((!vetoed && frame.getLevelState() != AnalysisFrame.LevelState.CLIPPING ? frame.getAttackEvidence() : null), now, pitches,
@@ -454,6 +456,33 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		}
 		double rise = (event.getBendPath().getPeakSemitones() - event.getBendPath().getPoints().get(0).getSemitones()) * 100.0;
 		return rise >= BEND_DETECTOR.minWrittenMoveCents;
+	}
+
+	/** True for a written release (the pitch falls by at least 25 cents from the peak to the end of the path): its note needs the release made. */
+	private static boolean requiresRelease(PracticeEvent event) {
+		if( event.getBendPath() == null ) {
+			return false;
+		}
+		double fall = (event.getBendPath().getPeakSemitones() - event.getBendPath().getTargetSemitones()) * 100.0;
+		return fall >= BEND_DETECTOR.minWrittenMoveCents;
+	}
+
+	/** A written bend or release: the note is accepted when the movement is made, not on its first pitch. */
+	private static boolean requiresMovement(PracticeEvent event) {
+		return requiresBend(event) || requiresRelease(event);
+	}
+
+	/** True when the pitch has come down to the written end of the release (within the detector's tolerance, and the path margin below). */
+	private boolean onReleaseEnd(PracticeEvent event) {
+		if( !this.reading.hasPitch() ) {
+			return false;
+		}
+		double base = bendBase(event);
+		double end = event.getBendPath().getTargetSemitones();
+		double fall = (event.getBendPath().getPeakSemitones() - end) * 100.0;
+		double tolerance = Math.max(BEND_DETECTOR.onToleranceCents, BEND_DETECTOR.onToleranceShare * fall) / 100.0;
+		double midi = this.reading.getMidi() + this.reading.getCents() / 100.0;
+		return midi >= base + end - BEND_PATH_MARGIN_SEMITONES && midi <= base + end + tolerance;
 	}
 
 	/** True when the pitch has reached the written target of the bend (within the detector's tolerance) and has not gone past the path. */
@@ -555,7 +584,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		if( usableLevel && (alongPath || this.tolerance.matches(this.reading, event.getExpectedMidi(), event.getFret())) ) {
 			if( this.matchStartNanos < 0 ) {
 				this.matchStartNanos = now;
-				if( requiresBend(event) && this.techniqueJudge != null ) {
+				if( requiresMovement(event) && this.techniqueJudge != null ) {
 					// the bend starts here: its hops are kept from the first one of its run (not from before: the previous note may still ring)
 					this.bendFrames.clear();
 					for( double[] hop : this.recentFrames ) {
@@ -567,9 +596,14 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 				}
 			}
 			boolean stable;
-			if( requiresBend(event) ) {
-				// the written bend is required: the note is accepted when the pitch has reached the target and held it
-				if( onBendTarget(event) ) {
+			if( requiresMovement(event) ) {
+				// the written bend, then its written release, are required: the note is accepted when the last of them is made and held
+				if( requiresBend(event) && !this.bendPeakReached && onBendTarget(event) ) {
+					this.bendPeakReached = true;
+				}
+				boolean riseMade = !requiresBend(event) || this.bendPeakReached;
+				boolean inZone = (requiresRelease(event) ? riseMade && onReleaseEnd(event) : onBendTarget(event));
+				if( inZone ) {
 					if( this.bendTargetStartNanos < 0 ) {
 						this.bendTargetStartNanos = now;
 					}
@@ -578,8 +612,8 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 				}
 				stable = this.bendTargetStartNanos >= 0 && now - this.bendTargetStartNanos >= requiredStabilityNanos(frame, event);
 				if( !stable && (this.feedback.getKind() == Feedback.Kind.WAITING || this.feedback.getKind() == Feedback.Kind.INCORRECT) ) {
-					// along the path the pitch is no longer the written note, and it is not an error: the bend is what is expected
-					this.feedback = Feedback.WAITING_FOR_BEND;
+					// along the path the pitch is no longer the written note, and it is not an error: the bend, then the release, is what is expected
+					this.feedback = (riseMade ? Feedback.WAITING_FOR_RELEASE : Feedback.WAITING_FOR_BEND);
 				}
 			} else {
 				stable = now - this.matchStartNanos >= requiredStabilityNanos(frame, event);
@@ -597,6 +631,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			if( !dropout ) {
 				this.matchStartNanos = -1;
 				this.bendTargetStartNanos = -1;
+				this.bendPeakReached = false;
 				this.bendCollecting = false;
 				this.bendFrames.clear();
 			}
@@ -977,6 +1012,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private void resetMatch() {
 		this.matchStartNanos = -1;
 		this.bendTargetStartNanos = -1;
+		this.bendPeakReached = false;
 		this.bendCollecting = false;
 		this.bendFrames.clear();
 		this.wrongMidi = -1;

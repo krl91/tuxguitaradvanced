@@ -180,6 +180,14 @@ With the bend detector counted as verified, for the report only: BEND `DETECTED`
 
 **What this does not settle.** The check of a bend actually played on a guitar (slow bends, bends that stop short, vibrato in the bend, string noise) remains the owner's manual check T086; a learner who cannot reach the target is blocked until Skip, which is the owner's choice.
 
+### R5 fourth addendum — the release is required too (owner's decision of 2026-10-07)
+
+After the bend was required, the owner found that a pre-bend with a release (`tests/2/3-pre-bend.tg`, measure 2) was not right: the note was accepted as soon as the pre-bent pitch was held, the release being only a technique result. Asked, the owner chose to **require the release like the rise**.
+
+**Rule.** The written movement is made in two stages, in this order: the rise (the pitch touches the written peak: `bendPeakReached`), then the release (the pitch comes down to the written end, within the detector's tolerance and the path margin below). A path with a rise and no release, as before, is accepted when the target is held. A pre-bend with a release starts on the bent pitch (the rise is trivially made) and is accepted when the release has reached its end and held it. A pre-bend alone (nothing after its start) is still accepted on its start pitch. A bend with a release does not accept the fall before the rise: playing the base note, which is the end of the release, is not the bend and its release. Texts `practice.feedback.release-down` (en, fr, es): "X is heard: now release the bend down to Y"; Skip passes the note; no timeout. As for the rise, a dropout of the signal does not end the run, and the pitch the release falls to is not the next note (it needs its own attack).
+
+**Tests** (`BendSessionTest`, red before, mutations of the release requirement and of the order each fail 4 and 5 tests): the release required and followed without a wrong note or an early next note; not made keeps waiting, Skip passes it; stopped halfway is not accepted; a bend with its release needs the rise then the fall, and both techniques are measured from the base note; the fall before the rise is not accepted. The owner's rendered audio of the four scores is still followed 8 of 8 (`BendRecordedReplayTest`).
+
 ## R6. Tempo-following clock (Phase E)
 
 **Inspected**: `MidiPlayer` exposes `getTickPosition`, `setTickPosition`, `getCurrentTempo`, `isMetronomeEnabled`, `getMode()` (with percent settings), `getCountDown()` (count-in: `MidiPlayerCountDown`), player events (`MidiPlayerEvent.NOTIFY_STARTED/STOPPED`), per-track mute through the sequencer. `SessionEvents` currently pauses practice on `NOTIFY_STARTED` with `PauseReason.PLAYBACK`. Analysis frames are timestamped in **stream time** (`AnalysisService`: `baseNanos + processedSamples…`), not wall-clock time; `CaptureService` reads 1024 frames (≈ 21 ms at 48 kHz) per call with a line buffer of 4 reads.
