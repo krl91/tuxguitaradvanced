@@ -68,6 +68,11 @@ public final class PlayerTempoClock implements TempoClock {
 	}
 
 	@Override
+	public boolean isReady() {
+		return this.interpolator.isReady();
+	}
+
+	@Override
 	public boolean isStalled(long wallNanos) {
 		return this.interpolator.isStalled(wallNanos);
 	}

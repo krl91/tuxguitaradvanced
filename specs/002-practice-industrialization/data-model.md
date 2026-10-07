@@ -53,10 +53,19 @@ Existing types referenced (inspected): `PracticeEvent`, `PracticeSequence`, `Pra
 `ON_TIME`, `EARLY`, `LATE`, `MISSED`, `EXTRA` (an onset matching no event), with `offsetMillis` for early/late.
 
 ### **TimingTolerance**
-`preset` (STRICT/NORMAL/LENIENT), `earlyFractionOfBeat`, `lateFractionOfBeat`, `floorMillis`, `latencyOffsetMillis` (audio-chain offset, learner-adjustable or calibrated). Persisted: the preset only; the offset is per session unless spike S-T1 shows it is stable (then decided with the owner).
+`preset` (STRICT/NORMAL/LENIENT) giving, as a fraction of the local beat with a floor and a ceiling in milliseconds, the half-width of the tight window (ON_TIME) and of the outer window (EARLY / LATE); the outer window is cut at the middle of the gap to the neighbouring events. Persisted: the preset only. **It no longer holds the latency offset** (decided 2026-10-07): that is `LatencyCompensation`.
+
+### **LatencyCompensation**
+`offsetMillis` (audio-chain offset of the route, positive or negative, within +-1000 ms) and `source` (NONE / MANUAL / CALIBRATED). Subtracted from the observed time of an onset; never added to a window. NONE means 0 and "not calibrated". Kept per input + output + audio format/profile (FR-058); it is the offset of one route, not a property of a device name.
+
+### **ClockUncertainty**
+`captureLagSpreadMillis` from the capture clock: a route whose arrival lag spreads over 80 ms or more (provisional) is called unstable. Never widens a window.
+
+### **TimingContext**
+`TimingTolerance` + `LatencyCompensation` + `ClockUncertainty` + whether the capture clock and the player clock are ready. `mayJudge()` (both clocks ready: before that **no** EARLY, LATE, MISSED, EXTRA or WRONG), `precision()` (NOT_READY / REDUCED / NORMAL) and its reasons (CLOCKS_NOT_READY, NOT_CALIBRATED, UNSTABLE_ROUTE), reported separately.
 
 ### **FollowTimeline**
-Ordered list of (`eventIndex`, `targetTimeNanos`) for a tempo percentage; built from the `PracticeSequence` and the song's tempo map. Immutable per session start; rebuilt when the percentage changes.
+Ordered list of (`eventIndex`, `targetTimeNanos`, `targetTick`, local beat) for a tempo percentage; built from the song (its tempo per measure, repeats and alternate endings in `MidiRepeatController` order) and the `PracticeSequence`. The tick is the expanded position the player will reach (the player's own repeats are expanded), which the player clock turns into wall time. Immutable per session start; rebuilt when the percentage changes.
 
 ### **FollowSession** (state machine)
 States: `PREPARING`, `COUNT_IN`, `FOLLOWING`, `PAUSED`, `COMPLETE`, `STOPPED`.

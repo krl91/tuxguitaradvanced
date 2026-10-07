@@ -24,7 +24,17 @@ Recommended: TuxGuitar player as clock and backing track (practice track muted p
 
 ## Clock and route (decided 2026-10-07, research R6c)
 
-* The clock is the **player's**: ticks from `MidiPlayer.getTickPosition()` interpolated with `System.nanoTime()` between two changes (`TempoClock`, `TickInterpolator`); the capture is dated by **sample count** and related to the wall clock by the lower envelope of the arrival lag (`CaptureClock`), never by the arrival time of a read.
+* The clock is the **player's**: the position of the player's **sequencer** (`MidiPlayer.getSequencer().getTickPosition()`, polled by the frames: `PlayerTempoClock`) interpolated with `System.nanoTime()` between two changes (`TempoClock`, `TickInterpolator`). It is **not** `MidiPlayer.getTickPosition()`, which is a copy of the sequencer's position refreshed by a second 10 ms timer and would add a second staircase (research R6c); the capture is dated by **sample count** and related to the wall clock by the lower envelope of the arrival lag (`CaptureClock`), never by the arrival time of a read.
 * One **latency offset** (output + input), calibrated by the learner, is kept per **input + output + audio format/profile** and dropped or asked again when any of them changes (FR-058). Inputs and outputs are never filtered by name or transport, Bluetooth included (FR-057).
 * No calibration, or an unstable route: the practice says **"reduced rhythmic precision"** in every mode that judges rhythm, warns of a high or unstable latency, and never blocks; the tuner and the wait mode do not depend on it.
 * Calibration sounds are announced with their approximate duration and a Cancel button (FR-059).
+
+## Timing: three separate things (decided 2026-10-07, T094)
+
+The tolerance the learner chose, the latency compensation that was calibrated, and the uncertainty of the clocks are **three different things and are never added or merged silently**:
+
+* **`TimingTolerance`** (the learner's choice: STRICT / NORMAL / LENIENT): the windows around the target time of an event, as a fraction of the local beat with a floor (and a ceiling) in milliseconds. The tight window gives ON_TIME, the outer window EARLY or LATE; the outer window is cut at the middle of the gap to the neighbouring events, so two windows never overlap. The numbers are provisional until the benchmark T101 and real validation.
+* **`LatencyCompensation`** (the route's, calibrated or adjusted by hand, positive or negative): subtracted from the **observed** time of an onset, never added to a window. No calibration means an offset of 0 **and** a flag `not calibrated`.
+* **`ClockUncertainty`** (what the clocks say about themselves: the spread of the capture lag): never widens a window. It only decides whether the precision is shown as reduced and whether a route warning is given.
+* **`TimingContext`** puts the three side by side and answers `mayJudge()`, `precision()` and the reasons separately. **Rule for T095: no frame received before both clocks are ready (`CaptureClock.isReady()` and `TempoClock.isReady()`) may produce a verdict EARLY, LATE, MISSED, EXTRA or WRONG;** the gate is `TimingContext.mayJudge()` and every verdict goes through it.
+* Nothing here reads the name or the transport of a device: Bluetooth is never refused and no latency is deduced from a name (FR-057).

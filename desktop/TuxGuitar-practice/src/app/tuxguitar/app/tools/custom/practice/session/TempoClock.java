@@ -15,6 +15,9 @@ public interface TempoClock {
 	/** The wall time at which the player reaches the tick; {@link Long#MIN_VALUE} when the clock cannot say. */
 	long wallNanosAt(double tick);
 
+	/** True once the clock can date the player's position: before that no timing verdict may be given (see {@code TimingContext}). */
+	boolean isReady();
+
 	/** True when the player is not advancing (stopped or paused). */
 	boolean isStalled(long wallNanos);
 }
