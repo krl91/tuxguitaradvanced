@@ -79,6 +79,11 @@ public final class PolyphonicAcceptance {
 		return this.parameters;
 	}
 
+	/** The stream time at which the attack the last {@link #offer} answered {@code true} for began to grow (not when it was recognised). */
+	public long getOnsetNanos() {
+		return this.onsetNanos;
+	}
+
 	/** Evidence older than the attack of what has just been accepted, started or skipped must not count. */
 	public void rearm(long nowNanos) {
 		this.ignoreUntilNanos = nowNanos + this.parameters.rearmNanos;
