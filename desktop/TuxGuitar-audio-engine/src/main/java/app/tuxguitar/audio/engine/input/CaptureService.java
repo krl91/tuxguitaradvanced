@@ -73,6 +73,13 @@ public final class CaptureService {
 	private volatile TargetDataLine activeLine;
 	private volatile FormatListener formatListener;
 
+	private final CaptureClock captureClock = new CaptureClock(0);
+
+	/** Relates the samples of the capture to the wall clock (spec 002 T093); not ready until a stream has delivered enough reads. */
+	public CaptureClock getCaptureClock() {
+		return this.captureClock;
+	}
+
 	public CaptureService(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection, SampleRingBuffer ringBuffer) {
 		this.context = context;
 		this.catalog = catalog;
@@ -164,6 +171,8 @@ public final class CaptureService {
 				}
 				this.activeLine = line;
 			}
+			// a new stream: the clock starts again at this rate
+			this.captureClock.configure(Math.round(format.getSampleRate()));
 			line.start();
 			fire(new Event(EventType.STARTED, format, null));
 			captureSamples(line, format, snapshot.getInput(), workerGeneration);
@@ -198,10 +207,13 @@ public final class CaptureService {
 		float[] interleaved = new float[FRAMES_PER_READ * format.getChannels()];
 		float[] selected = new float[FRAMES_PER_READ];
 		int selectedChannel = input.getChannelIndex().orElse(0);
+		long droppedSeen = this.ringBuffer.getDroppedSampleCount();
 		while (isCurrent(workerGeneration) && line.isOpen()) {
 			int byteCount;
+			long arrivalNanos;
 			try {
 				byteCount = line.read(bytes, 0, bytes.length);
+				arrivalNanos = System.nanoTime();
 			} catch (RuntimeException exception) {
 				if (isCurrent(workerGeneration)) {
 					fire(new Event(EventType.DEVICE_LOST, format, exception));
@@ -219,6 +231,13 @@ public final class CaptureService {
 			int frameCount = sampleCount / format.getChannels();
 			ChannelDeinterleaver.deinterleave(interleaved, frameCount, format.getChannels(), selectedChannel, selected);
 			this.ringBuffer.write(selected, 0, frameCount);
+			long droppedNow = this.ringBuffer.getDroppedSampleCount();
+			if (droppedNow != droppedSeen) {
+				// samples were lost: the index of the stream no longer follows time, the estimate starts again
+				droppedSeen = droppedNow;
+				this.captureClock.reset();
+			}
+			this.captureClock.onSamples(arrivalNanos, this.ringBuffer.getWrittenSampleCount());
 		}
 	}
 

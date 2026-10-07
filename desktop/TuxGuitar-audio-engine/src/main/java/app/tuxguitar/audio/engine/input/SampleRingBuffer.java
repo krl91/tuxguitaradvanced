@@ -117,6 +117,14 @@ public final class SampleRingBuffer {
 	}
 
 	/**
+	 * Returns the cumulative number of samples read (consumer side): with the written count, the index of the stream the consumer is at,
+	 * which the capture clock turns into a wall clock time.
+	 */
+	public long getReadSampleCount() {
+		return this.readSequence;
+	}
+
+	/**
 	 * Consumer only: discards unread samples written before the given written-sample
 	 * count, without waiting. Samples written after that mark stay readable.
 	 *

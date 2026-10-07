@@ -262,7 +262,7 @@ public final class AnalysisService {
 			AttackEvidence attack = pushAttack(hop);
 			if (windowFill == this.windowSize) {
 				long timestampNanos = baseNanos + processedSamples * 1_000_000_000L / this.configuration.sampleRate;
-				publish(analyze(window, timestampNanos, attack));
+				publish(analyze(window, timestampNanos, attack, this.ringBuffer.getReadSampleCount()));
 			}
 		}
 	}
@@ -278,7 +278,7 @@ public final class AnalysisService {
 		this.polyphonicAnalyzer.push(hop, 0, hop.length);
 	}
 
-	private AnalysisFrame analyze(float[] window, long timestampNanos, AttackEvidence attack) {
+	private AnalysisFrame analyze(float[] window, long timestampNanos, AttackEvidence attack, long captureSampleEnd) {
 		LevelMeasurement level = this.configuration.levelAnalyzer.analyze(window);
 		PitchEstimate pitch = this.configuration.pitchEstimator.estimate(window);
 		boolean onset = this.configuration.articulationDetector.process(window);
@@ -295,7 +295,7 @@ public final class AnalysisService {
 		return new AnalysisFrame(timestampNanos, level.getRmsDbfs(), level.getPeakDbfs(),
 				level.getClippedRatio(), level.getLevelState(),
 				pitch.isPitched() ? pitch.getF0Hz() : Double.NaN,
-				pitch.getProbability(), onset, spectrum, evidence, null, attack);
+				pitch.getProbability(), onset, spectrum, evidence, null, attack, captureSampleEnd);
 	}
 
 	private void publish(AnalysisFrame frame) {

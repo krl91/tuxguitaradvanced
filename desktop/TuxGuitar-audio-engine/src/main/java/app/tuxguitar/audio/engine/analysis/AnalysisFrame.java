@@ -15,6 +15,9 @@ public final class AnalysisFrame {
 		CLIPPING
 	}
 
+	/** Value of {@link #getCaptureSampleEnd()} for a frame that does not come from the live capture. */
+	public static final long NO_CAPTURE_SAMPLE = -1L;
+
 	private final long timestampNanos;
 	private final double rmsDbfs;
 	private final double peakDbfs;
@@ -27,6 +30,7 @@ public final class AnalysisFrame {
 	private final TargetEvidence targetEvidence;
 	private final TechniqueFeatures techniqueFeatures;
 	private final AttackEvidence attackEvidence;
+	private final long captureSampleEnd;
 
 	/**
 	 * @param timestampNanos capture time of the hop end
@@ -59,6 +63,13 @@ public final class AnalysisFrame {
 	/** @param attackEvidence what the hop added to the sound, explained by pitches, or null when not enabled (spec 004) */
 	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum,
 			TargetEvidence targetEvidence, TechniqueFeatures techniqueFeatures, AttackEvidence attackEvidence) {
+		this(timestampNanos, rmsDbfs, peakDbfs, clippedRatio, levelState, f0Hz, confidence, onset, spectrum, targetEvidence, techniqueFeatures, attackEvidence, NO_CAPTURE_SAMPLE);
+	}
+
+	/** @param captureSampleEnd the index in the capture stream of the last sample of this hop (see {@code CaptureClock}), or {@link #NO_CAPTURE_SAMPLE} */
+	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum,
+			TargetEvidence targetEvidence, TechniqueFeatures techniqueFeatures, AttackEvidence attackEvidence, long captureSampleEnd) {
+		this.captureSampleEnd = captureSampleEnd;
 		this.attackEvidence = attackEvidence;
 		this.timestampNanos = timestampNanos;
 		this.rmsDbfs = rmsDbfs;
@@ -74,6 +85,11 @@ public final class AnalysisFrame {
 	}
 
 	/** What this hop added to the sound, explained by pitches; null unless attack candidates are set (spec 004). */
+	/** The index in the capture stream of the last sample of this hop, to be dated by the capture clock; {@link #NO_CAPTURE_SAMPLE} when unknown (offline analysis, tests). */
+	public long getCaptureSampleEnd() {
+		return this.captureSampleEnd;
+	}
+
 	public AttackEvidence getAttackEvidence() {
 		return this.attackEvidence;
 	}

@@ -215,6 +215,22 @@ public final class AudioEngine {
 	}
 
 	/** Diagnostic for tests and measurements only; never shown to the learner. */
+	/** The clock that dates the samples of the capture on the wall clock (spec 002 T093). */
+	public app.tuxguitar.audio.engine.input.CaptureClock getCaptureClock() {
+		return this.captureService.getCaptureClock();
+	}
+
+	/**
+	 * The wall clock time ({@code System.nanoTime()} scale) at which the last sample of this frame is taken to be available to the application,
+	 * or {@link app.tuxguitar.audio.engine.input.CaptureClock#NOT_READY} when the frame does not come from the live capture or the clock is not ready.
+	 */
+	public long wallNanosOf(app.tuxguitar.audio.engine.analysis.AnalysisFrame frame) {
+		if( frame.getCaptureSampleEnd() == app.tuxguitar.audio.engine.analysis.AnalysisFrame.NO_CAPTURE_SAMPLE ) {
+			return app.tuxguitar.audio.engine.input.CaptureClock.NOT_READY;
+		}
+		return this.getCaptureClock().wallNanosOf(frame.getCaptureSampleEnd());
+	}
+
 	public long getDroppedSampleCount() {
 		return this.ringBuffer.getDroppedSampleCount();
 	}
