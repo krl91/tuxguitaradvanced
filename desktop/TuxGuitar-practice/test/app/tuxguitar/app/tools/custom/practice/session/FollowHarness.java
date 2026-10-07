@@ -103,13 +103,17 @@ final class FollowHarness {
 	}
 
 	FollowHarness(SongFixture fixture, int percent, long articulationLatency) {
+		this(fixture, percent, articulationLatency, ChordMatcher.Parameters.defaults());
+	}
+
+	FollowHarness(SongFixture fixture, int percent, long articulationLatency, ChordMatcher.Parameters chordParameters) {
 		this.fixture = fixture;
 		this.sequence = fixture.sequence();
 		this.timeline = FollowTimeline.build(fixture.song, this.sequence, percent);
 		this.clock = new FakeClock(this.timeline);
 		this.session = new FollowSession(this.sequence, this.timeline, FIRST_TICK, this.clock, frame -> T0 + frame.getTimestampNanos(),
 				() -> new TimingContext(this.tolerance, this.compensation, new ClockUncertainty(this.spreadMillis), this.captureReady, this.playerReady),
-				new NoteInterpreter(0.8), new TolerancePolicy(5.0, 25.0), new ChordMatcher(ChordMatcher.Parameters.defaults()), STABILITY, articulationLatency);
+				new NoteInterpreter(0.8), new TolerancePolicy(5.0, 25.0), new ChordMatcher(chordParameters), STABILITY, articulationLatency);
 		this.session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		this.session.setTrackAccepted(true);
 	}

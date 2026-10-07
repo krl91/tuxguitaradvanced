@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Disabled;
@@ -135,6 +136,43 @@ public class FollowSessionTechniqueTest {
 		assertTrue(Math.abs(chord.offsetNanos()) <= 60 * MS, "the offset of the strum is that of its first string: " + chord.offsetNanos() / MS + " ms");
 		assertEquals(Status.MATCHED, result(harness, 1).status());
 		assertEquals(Status.MATCHED, result(harness, 2).status());
+	}
+
+	/** The index of the frame on which the chord becomes MATCHED, and of the first frame on which the chord matcher alone finds it complete. */
+	private static int[] chordMatchedAt(int stableHops) {
+		ChordMatcher.Parameters parameters = new ChordMatcher.Parameters(2, 1.0 / 3.0, stableHops, 600_000_000L);
+		FollowHarness harness = new FollowHarness(chordThenTwoNotes(), 100, LATENCY, parameters);
+		harness.session.start();
+		float[] signal = silence(harness);
+		strum(signal, harness.target(0), E_MAJOR_PITCHES, 11L);
+		List<AnalysisFrame> frames = analyse(harness, signal);
+		ChordMatcher alone = new ChordMatcher(parameters);
+		int firstComplete = -1;
+		int matchedAt = -1;
+		for( int i = 0 ; i < frames.size() ; i ++ ) {
+			AnalysisFrame frame = frames.get(i);
+			if( firstComplete < 0 && T0 + frame.getTimestampNanos() >= harness.target(0) && frame.getSpectrum() != null
+					&& alone.check(frame.getSpectrum(), harness.sequence.getEvents().get(0).getRequiredPitches(), harness.sequence.getEvents().get(0).getToleratedPitches()).isComplete() ) {
+				firstComplete = i;
+			}
+			harness.last = harness.session.onFrame(frame);
+			if( matchedAt < 0 && harness.last.results().get(0).status() == Status.MATCHED ) {
+				matchedAt = i;
+			}
+		}
+		return new int[] { firstComplete, matchedAt };
+	}
+
+	@Test
+	public void aChordIsNeverAcceptedBeforeTheConfiguredNumberOfStableHops() {
+		int[] few = chordMatchedAt(8);
+		int[] many = chordMatchedAt(40);
+		assertTrue(few[0] >= 0 && few[1] >= 0 && many[1] >= 0, "the chord is heard with both settings: " + Arrays.toString(few) + " " + Arrays.toString(many));
+		// the strum is complete on the same frame for both: what separates the two acceptances is the number of stable hops asked for
+		assertEquals(few[0], many[0]);
+		assertTrue(few[1] - few[0] >= 8 - 1, "acceptance after fewer than 8 stable hops: " + Arrays.toString(few));
+		assertTrue(many[1] - many[0] >= 40 - 1, "acceptance after fewer than 40 stable hops: " + Arrays.toString(many));
+		assertTrue(many[1] - few[1] >= 30, "forty hops cannot be accepted as soon as eight: " + Arrays.toString(few) + " " + Arrays.toString(many));
 	}
 
 	@Test
