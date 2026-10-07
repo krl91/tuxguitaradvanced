@@ -486,11 +486,17 @@ public final class FollowSession {
 		return Collections.unmodifiableSet(EnumSet.copyOf(this.pauseReasons));
 	}
 
+	/**
+	 * Ends the session. A session that already completed stays complete: its results and its summary are what the learner looks at, and the end of the
+	 * player that comes after it must not turn them into a stop.
+	 */
 	public void stop() {
-		if (this.state != State.STOPPED) {
+		if (this.state != State.STOPPED && this.state != State.COMPLETE) {
 			finalizeCollectors(Long.MAX_VALUE);
 			this.state = State.STOPPED;
 			this.pending.clear();
+		} else if (this.state == State.COMPLETE) {
+			finalizeCollectors(Long.MAX_VALUE);
 		}
 	}
 

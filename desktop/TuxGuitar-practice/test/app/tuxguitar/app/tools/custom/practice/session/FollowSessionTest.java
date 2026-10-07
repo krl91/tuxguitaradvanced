@@ -566,4 +566,25 @@ public class FollowSessionTest {
 		harness.session.resume(null);
 		assertEquals(State.FOLLOWING, harness.session.snapshot().state());
 	}
+
+	@Test
+	public void aSessionThatCompletedStaysCompleteWhenItIsStoppedAfterwardsAndOneThatDidNotBecomesStopped() {
+		FollowHarness complete = started();
+		for( int i = 0 ; i < 5 ; i ++ ) {
+			complete.playEvent(i, 0);
+		}
+		complete.runAll();
+		assertEquals(State.COMPLETE, complete.last.state());
+
+		complete.session.stop();
+
+		assertEquals(State.COMPLETE, complete.session.snapshot().state(), "the end of the player after the end of the score is not a stop");
+		assertEquals(5, complete.session.snapshot().counts().onTime());
+
+		FollowHarness running = started();
+		running.playEvent(0, 0);
+		running.runUntil(running.target(1) - 100 * MS);
+		running.session.stop();
+		assertEquals(State.STOPPED, running.session.snapshot().state());
+	}
 }
