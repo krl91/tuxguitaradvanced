@@ -50,6 +50,8 @@ public final class FollowSession {
 		COUNT_IN,
 		FOLLOWING,
 		PAUSED,
+		/** Every cause of the pause is resolved: the learner resumes explicitly, as in the wait mode. */
+		READY_TO_RESUME,
 		COMPLETE,
 		STOPPED
 	}
@@ -201,9 +203,10 @@ public final class FollowSession {
 		private final TimingContext.RhythmPrecision precision;
 		private final Set<TimingContext.PrecisionReason> precisionReasons;
 		private final int openEvent;
+		private final Set<PracticeSession.PauseReason> pauseReasons;
 
 		Snapshot(State state, List<EventResult> results, List<Extra> extras, Counts counts, TimingContext.RhythmPrecision precision,
-				Set<TimingContext.PrecisionReason> precisionReasons, int openEvent) {
+				Set<TimingContext.PrecisionReason> precisionReasons, int openEvent, Set<PracticeSession.PauseReason> pauseReasons) {
 			this.state = state;
 			this.results = results;
 			this.extras = extras;
@@ -211,6 +214,7 @@ public final class FollowSession {
 			this.precision = precision;
 			this.precisionReasons = precisionReasons;
 			this.openEvent = openEvent;
+			this.pauseReasons = pauseReasons;
 		}
 
 		public State state() { return this.state; }
@@ -221,6 +225,8 @@ public final class FollowSession {
 		public Set<TimingContext.PrecisionReason> precisionReasons() { return this.precisionReasons; }
 		/** Index of the first event not resolved yet, or -1 when all are. */
 		public int openEvent() { return this.openEvent; }
+		/** The causes of the pause now (empty unless PAUSED, and READY_TO_RESUME when they are all resolved). */
+		public Set<PracticeSession.PauseReason> pauseReasons() { return this.pauseReasons; }
 	}
 
 	// ------------------------------------------------------------------------------------------------------------- internals
@@ -335,6 +341,7 @@ public final class FollowSession {
 	private boolean trackAccepted;
 	private State state = State.PREPARING;
 	private State stateBeforePause = State.FOLLOWING;
+	private final Set<PracticeSession.PauseReason> pauseReasons = EnumSet.noneOf(PracticeSession.PauseReason.class);
 	private boolean judging;
 	/** Since when (compensated wall time) the frames are judged without a break: a window that began before was not seen whole. */
 	private long judgingSince;
@@ -442,20 +449,41 @@ public final class FollowSession {
 		return this.state;
 	}
 
+	/** Pauses for a cause: nothing is judged while any cause stands, and an event whose window closes meanwhile is not judged. */
 	public void pause(PracticeSession.PauseReason reason) {
 		if (this.state == State.FOLLOWING || this.state == State.COUNT_IN) {
 			this.stateBeforePause = this.state;
-			this.state = State.PAUSED;
-			this.judging = false;
-			this.pending.clear();
-			this.history.clear();
+		} else if (this.state != State.PAUSED && this.state != State.READY_TO_RESUME) {
+			return;
+		}
+		this.pauseReasons.add(reason);
+		this.state = State.PAUSED;
+		this.judging = false;
+		this.pending.clear();
+		this.history.clear();
+	}
+
+	/** A cause of the pause is over (the input is usable again): when none is left the session waits for an explicit {@link #resume}. */
+	public void resolve(PracticeSession.PauseReason reason) {
+		this.pauseReasons.remove(reason);
+		if (this.state == State.PAUSED && this.pauseReasons.isEmpty()) {
+			this.state = State.READY_TO_RESUME;
 		}
 	}
 
+	/** Ends the cause and goes on when none is left; the explicit resume of the learner passes the cause it resolves or none. */
 	public void resume(PracticeSession.PauseReason reason) {
-		if (this.state == State.PAUSED) {
+		if (reason != null) {
+			this.pauseReasons.remove(reason);
+		}
+		if ((this.state == State.PAUSED || this.state == State.READY_TO_RESUME) && this.pauseReasons.isEmpty()) {
 			this.state = this.stateBeforePause;
 		}
+	}
+
+	/** The causes of the pause now. */
+	public Set<PracticeSession.PauseReason> pauseReasons() {
+		return Collections.unmodifiableSet(EnumSet.copyOf(this.pauseReasons));
 	}
 
 	public void stop() {
@@ -488,7 +516,7 @@ public final class FollowSession {
 			}
 		}
 		return new Snapshot(this.state, Collections.unmodifiableList(Arrays.asList(this.results.clone())), Collections.unmodifiableList(new ArrayList<Extra>(this.extras)),
-				new Counts(onTime, early, late, wrong, missed, this.extras.size(), notJudged, auto), context.precision(), context.precisionReasons(), openIndex);
+				new Counts(onTime, early, late, wrong, missed, this.extras.size(), notJudged, auto), context.precision(), context.precisionReasons(), openIndex, pauseReasons());
 	}
 
 	// ------------------------------------------------------------------------------------------------------------- frames
@@ -496,8 +524,8 @@ public final class FollowSession {
 	public Snapshot onFrame(AnalysisFrame frame) {
 		TimingContext context = this.contextSupplier.get();
 		this.lastContext = context;
-		if (this.state == State.PREPARING || this.state == State.COMPLETE || this.state == State.STOPPED || this.state == State.PAUSED) {
-			if (this.state == State.PAUSED) {
+		if (this.state == State.PREPARING || this.state == State.COMPLETE || this.state == State.STOPPED || this.state == State.PAUSED || this.state == State.READY_TO_RESUME) {
+			if (this.state == State.PAUSED || this.state == State.READY_TO_RESUME) {
 				this.judging = false;
 			}
 			return snapshot(context);

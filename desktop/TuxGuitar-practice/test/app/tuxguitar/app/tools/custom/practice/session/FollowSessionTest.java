@@ -520,4 +520,50 @@ public class FollowSessionTest {
 		assertEquals(TimingVerdict.ON_TIME, result(harness, 1).timing());
 		assertEquals(0, harness.last.counts().extra());
 	}
+
+	// ------------------------------------------------------------------ the causes of a pause
+
+	@Test
+	public void aPauseWaitsForEveryCauseToBeResolvedThenForAnExplicitResume() {
+		FollowHarness harness = started();
+		harness.playEvent(0, 0);
+		harness.runUntil(harness.target(1) - 100 * MS);
+
+		harness.session.pause(PracticeSession.PauseReason.INPUT_UNUSABLE);
+		harness.session.pause(PracticeSession.PauseReason.TUNER_OPEN);
+		assertEquals(State.PAUSED, harness.session.snapshot().state());
+		assertEquals(java.util.EnumSet.of(PracticeSession.PauseReason.INPUT_UNUSABLE, PracticeSession.PauseReason.TUNER_OPEN), harness.session.snapshot().pauseReasons());
+
+		harness.session.resolve(PracticeSession.PauseReason.INPUT_UNUSABLE);
+		assertEquals(State.PAUSED, harness.session.snapshot().state(), "a cause is still there");
+		harness.session.resume(null);
+		assertEquals(State.PAUSED, harness.session.snapshot().state(), "an explicit resume does not override a cause that stands");
+
+		harness.session.resolve(PracticeSession.PauseReason.TUNER_OPEN);
+		assertEquals(State.READY_TO_RESUME, harness.session.snapshot().state());
+		assertTrue(harness.session.snapshot().pauseReasons().isEmpty());
+		harness.runUntil(harness.target(2) + 300 * MS);
+		assertEquals(State.READY_TO_RESUME, harness.last.state(), "nothing is judged until the learner resumes");
+		assertEquals(0, harness.last.counts().extra());
+
+		harness.session.resume(null);
+		assertEquals(State.FOLLOWING, harness.session.snapshot().state());
+	}
+
+	@Test
+	public void anInputThatBecomesUnusableAgainWhileReadyToResumePausesAgain() {
+		FollowHarness harness = started();
+		harness.playEvent(0, 0);
+		harness.runUntil(harness.target(1) - 100 * MS);
+		harness.session.pause(PracticeSession.PauseReason.INPUT_UNUSABLE);
+		harness.session.resolve(PracticeSession.PauseReason.INPUT_UNUSABLE);
+		assertEquals(State.READY_TO_RESUME, harness.session.snapshot().state());
+
+		harness.session.pause(PracticeSession.PauseReason.INPUT_CHANGED);
+
+		assertEquals(State.PAUSED, harness.session.snapshot().state());
+		harness.session.resolve(PracticeSession.PauseReason.INPUT_CHANGED);
+		harness.session.resume(null);
+		assertEquals(State.FOLLOWING, harness.session.snapshot().state());
+	}
 }
