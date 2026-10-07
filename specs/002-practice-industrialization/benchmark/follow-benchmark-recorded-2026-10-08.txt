@@ -1,0 +1,6 @@
+Tempo-following benchmark on the real recording of the repository (tests/1, 99 beats a minute, 34 notes and 8 chords), run of 2026-10-08.
+The recording is not played to a click, nor at the written tempo: the score is laid on it with the tempo percentage that fits the annotated times best (82 %, first measure at 471 ms), normal tolerance, no latency compensation. What is reported is how the session sees the human timing of the player around that tempo.
+The audio is not redistributed and is not in the repository; the times of the played events come from test-data/real-recording-1/events.csv.
+events 42 | matched 35 (83%) | on time 33, early 2, late 0 | wrong pitch 0 | missed 7 | not judged 0 | extra notes 0 | matched with an offset more than 60 ms from the annotated time 2
+Of the 42 events whose annotated time lies inside the outer window of the score (the player is near the written tempo there): matched 35 (83%). Missed with the note inside its window: 7. Missed with the note outside its window (the player's tempo differs from the score's, which no recognition can change): 0.
+State at the end: COMPLETE
