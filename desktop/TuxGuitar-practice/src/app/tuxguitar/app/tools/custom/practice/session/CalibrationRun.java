@@ -115,7 +115,16 @@ public final class CalibrationRun {
 
 	/** The duration to announce to the learner, rounded up to a whole second: the lead, the clicks and the time to hear the last note. */
 	public int approximateSeconds() {
-		long nanos = LEAD_NANOS + (this.clickCount - 1) * this.periodNanos + LATE_WINDOW_NANOS + 200_000_000L;
+		return secondsOf(this.clickCount, this.periodNanos);
+	}
+
+	/** The duration of a calibration with the standard clicks, to announce it before there is a run. */
+	public static int announcedSeconds() {
+		return secondsOf(CalibrationTaps.CLICKS, PERIOD_NANOS);
+	}
+
+	private static int secondsOf(int clickCount, long periodNanos) {
+		long nanos = LEAD_NANOS + (clickCount - 1) * periodNanos + LATE_WINDOW_NANOS + 200_000_000L;
 		return (int) ((nanos + 999_999_999L) / 1_000_000_000L);
 	}
 

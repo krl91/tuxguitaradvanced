@@ -1,0 +1,489 @@
+package app.tuxguitar.app.tools.custom.practice.ui;
+
+import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
+import app.tuxguitar.app.tools.custom.practice.session.CalibrationRun;
+import app.tuxguitar.app.tools.custom.practice.session.CalibrationTaps;
+import app.tuxguitar.app.tools.custom.practice.session.ClockUncertainty;
+import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
+import app.tuxguitar.app.tools.custom.practice.session.LatencyCompensation;
+import app.tuxguitar.app.tools.custom.practice.session.RouteCalibrations;
+import app.tuxguitar.app.tools.custom.practice.session.TimingTolerance;
+import app.tuxguitar.ui.UIFactory;
+import app.tuxguitar.ui.event.UISelectionEvent;
+import app.tuxguitar.ui.event.UISelectionListener;
+import app.tuxguitar.ui.layout.UITableLayout;
+import app.tuxguitar.ui.widget.UIButton;
+import app.tuxguitar.ui.widget.UIContainer;
+import app.tuxguitar.ui.widget.UIDropDownSelect;
+import app.tuxguitar.ui.widget.UILabel;
+import app.tuxguitar.ui.widget.UIPanel;
+import app.tuxguitar.ui.widget.UISelectItem;
+import app.tuxguitar.ui.widget.UISpinner;
+
+/**
+ * The part of the preparation window that is about the tempo-following mode (spec 002 T097, T098, FR-051, FR-052, FR-054, FR-057 to FR-059): the
+ * mode, the percentage of the written tempo, the timing tolerance, the rhythm calibration of the route and the mention "reduced rhythmic precision".
+ * <p>
+ * What it shows is what {@link FollowSettings} holds, and what it changes is only that: the three values are separate, and changing one never
+ * moves another. The calibration is announced all the time with its duration and a Cancel that stops the clicks at once; it never blocks anything,
+ * and the wait mode does not depend on it. UI thread only.
+ */
+public final class FollowPanel {
+
+	/** What the panel needs of the application: the route, its calibration, and the clicks of the calibration. */
+	public interface Backend {
+		/** The route now, or null when no input is selected yet. */
+		AudioRoute route();
+
+		RouteCalibrations calibrations();
+
+		/** The spread of the arrival lag of the capture in milliseconds, or NaN while it is not known. */
+		double lagSpreadMillis();
+
+		/** A calibration on the clicks of the player, or null when there is no usable input. */
+		CalibrationRun newCalibration();
+
+		/** Feeds the run with the frames until it ends; {@code changed} is called on the UI thread when its state or progress changed. */
+		void begin(CalibrationRun run, Runnable changed);
+
+		/** Stops feeding the run. */
+		void end(CalibrationRun run);
+	}
+
+	private final FollowSettings settings;
+	private final Backend backend;
+	private final UIPanel panel;
+	private final UIDropDownSelect<FollowSettings.Mode> mode;
+	private final UILabel modeHint;
+	private final UILabel percentLabel;
+	private final UISpinner percent;
+	private final UILabel percentHint;
+	private final UILabel toleranceLabel;
+	private final UIDropDownSelect<TimingTolerance.Preset> tolerance;
+	private final UILabel toleranceHint;
+	private final UILabel calibrationTitle;
+	private final UILabel calibrationState;
+	private final UILabel calibrationRoute;
+	private final UILabel manualLabel;
+	private final UISpinner manual;
+	private final UIButton manualApply;
+	private final UIButton manualForget;
+	private final UILabel manualHint;
+	private final UIButton calibrate;
+	private final UIButton cancel;
+	private final UILabel announce;
+	private final UILabel progress;
+	private final UILabel precision;
+	private boolean updating;
+	private CalibrationRun running;
+	private Runnable contentListener;
+	private Runnable modeListener;
+
+	public FollowPanel(UIFactory uiFactory, UIContainer parent, FollowSettings settings, Backend backend) {
+		this.settings = settings;
+		this.backend = backend;
+		this.panel = uiFactory.createPanel(parent, false);
+		UITableLayout layout = new UITableLayout();
+		this.panel.setLayout(layout);
+
+		UILabel modeLabel = uiFactory.createLabel(this.panel);
+		modeLabel.setText(TuxGuitar.getProperty("practice.mode"));
+		layout.set(modeLabel, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.mode = uiFactory.createDropDownSelect(this.panel);
+		this.mode.addItem(new UISelectItem<FollowSettings.Mode>(TuxGuitar.getProperty("practice.mode.wait"), FollowSettings.Mode.WAIT));
+		this.mode.addItem(new UISelectItem<FollowSettings.Mode>(TuxGuitar.getProperty("practice.mode.follow"), FollowSettings.Mode.FOLLOW));
+		layout.set(this.mode, 1, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.modeHint = wrap(uiFactory, layout, 2);
+
+		this.percentLabel = uiFactory.createLabel(this.panel);
+		this.percentLabel.setText(TuxGuitar.getProperty("practice.follow.percent"));
+		layout.set(this.percentLabel, 3, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.percent = uiFactory.createSpinner(this.panel);
+		this.percent.setMinimum(FollowSettings.MIN_PERCENT);
+		this.percent.setMaximum(FollowSettings.MAX_PERCENT);
+		this.percent.setIncrement(5);
+		layout.set(this.percent, 3, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.percentHint = wrap(uiFactory, layout, 4);
+		this.percentHint.setText(TuxGuitar.getProperty("practice.follow.percent.hint",
+				new String[] { Integer.toString(FollowSettings.MIN_PERCENT), Integer.toString(FollowSettings.MAX_PERCENT) }));
+
+		this.toleranceLabel = uiFactory.createLabel(this.panel);
+		this.toleranceLabel.setText(TuxGuitar.getProperty("practice.follow.tolerance"));
+		layout.set(this.toleranceLabel, 5, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.tolerance = uiFactory.createDropDownSelect(this.panel);
+		for (TimingTolerance.Preset preset : TimingTolerance.Preset.values()) {
+			this.tolerance.addItem(new UISelectItem<TimingTolerance.Preset>(TuxGuitar.getProperty("practice.follow.tolerance." + preset.name().toLowerCase()), preset));
+		}
+		layout.set(this.tolerance, 5, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.toleranceHint = wrap(uiFactory, layout, 6);
+		this.toleranceHint.setText(TuxGuitar.getProperty("practice.follow.tolerance.hint"));
+
+		this.calibrationTitle = uiFactory.createLabel(this.panel);
+		this.calibrationTitle.setText(TuxGuitar.getProperty("practice.follow.calibration"));
+		layout.set(this.calibrationTitle, 7, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.calibrationState = uiFactory.createLabel(this.panel);
+		layout.set(this.calibrationState, 7, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.calibrationRoute = wrap(uiFactory, layout, 8);
+		this.calibrationRoute.setText(TuxGuitar.getProperty("practice.follow.calibration.route"));
+
+		this.manualLabel = uiFactory.createLabel(this.panel);
+		this.manualLabel.setText(TuxGuitar.getProperty("practice.follow.calibration.manual"));
+		layout.set(this.manualLabel, 9, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		UITableLayout manualLayout = new UITableLayout(0f);
+		UIPanel manualRow = uiFactory.createPanel(this.panel, false);
+		manualRow.setLayout(manualLayout);
+		layout.set(manualRow, 9, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.manual = uiFactory.createSpinner(manualRow);
+		this.manual.setMinimum((int) -LatencyCompensation.LIMIT_MILLIS);
+		this.manual.setMaximum((int) LatencyCompensation.LIMIT_MILLIS);
+		this.manual.setIncrement(5);
+		manualLayout.set(this.manual, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.manualApply = uiFactory.createButton(manualRow);
+		this.manualApply.setText(TuxGuitar.getProperty("practice.follow.calibration.manual.apply"));
+		manualLayout.set(this.manualApply, 1, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.manualForget = uiFactory.createButton(manualRow);
+		this.manualForget.setText(TuxGuitar.getProperty("practice.follow.calibration.manual.clear"));
+		manualLayout.set(this.manualForget, 1, 3, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.manualHint = wrap(uiFactory, layout, 10);
+		this.manualHint.setText(TuxGuitar.getProperty("practice.follow.calibration.manual.hint",
+				new String[] { Integer.toString((int) -LatencyCompensation.LIMIT_MILLIS), Integer.toString((int) LatencyCompensation.LIMIT_MILLIS) }));
+
+		this.announce = wrap(uiFactory, layout, 11);
+		this.announce.setText(TuxGuitar.getProperty("practice.follow.calibration.announce",
+				new String[] { Integer.toString(CalibrationTaps.CLICKS), Integer.toString(CalibrationRun.announcedSeconds()) }));
+		UITableLayout buttonsLayout = new UITableLayout(0f);
+		UIPanel buttons = uiFactory.createPanel(this.panel, false);
+		buttons.setLayout(buttonsLayout);
+		layout.set(buttons, 12, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		this.calibrate = uiFactory.createButton(buttons);
+		this.calibrate.setText(TuxGuitar.getProperty("practice.follow.calibration.start"));
+		buttonsLayout.set(this.calibrate, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.cancel = uiFactory.createButton(buttons);
+		this.cancel.setText(TuxGuitar.getProperty("practice.follow.calibration.cancel"));
+		buttonsLayout.set(this.cancel, 1, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.progress = wrap(uiFactory, layout, 13);
+		this.precision = wrap(uiFactory, layout, 14);
+
+		this.mode.addSelectionListener(selected(() -> {
+			FollowSettings.Mode chosen = this.mode.getSelectedValue();
+			if (chosen != null) {
+				this.settings.setMode(chosen);
+				refresh();
+				if (this.modeListener != null) {
+					this.modeListener.run();
+				}
+			}
+		}));
+		this.percent.addSelectionListener(selected(() -> {
+			int value = this.settings.setPercent(this.percent.getValue());
+			if (value != this.percent.getValue()) {
+				this.updating = true;
+				this.percent.setValue(value);
+				this.updating = false;
+			}
+		}));
+		this.tolerance.addSelectionListener(selected(() -> {
+			TimingTolerance.Preset chosen = this.tolerance.getSelectedValue();
+			if (chosen != null) {
+				this.settings.setTolerance(chosen);
+			}
+		}));
+		this.manualApply.addSelectionListener(selected(this::applyManual));
+		this.manualForget.addSelectionListener(selected(this::forget));
+		this.calibrate.addSelectionListener(selected(this::startCalibration));
+		this.cancel.addSelectionListener(selected(this::cancelCalibration));
+		refresh();
+	}
+
+	private UILabel wrap(UIFactory uiFactory, UITableLayout layout, int row) {
+		UILabel label = uiFactory.createWrapLabel(this.panel);
+		layout.set(label, row, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		layout.set(label, UITableLayout.PACKED_WIDTH, InputSelectorPanel.WRAP_WIDTH);
+		return label;
+	}
+
+	private UISelectionListener selected(Runnable action) {
+		return new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				if (!FollowPanel.this.updating) {
+					action.run();
+				}
+			}
+		};
+	}
+
+	public UIPanel getControl() {
+		return this.panel;
+	}
+
+	/** Called after the content changed size, so the window can refit. */
+	public void setContentListener(Runnable contentListener) {
+		this.contentListener = contentListener;
+	}
+
+	/** Called after the learner chose another mode (the window changes the text of its start button). */
+	public void setModeListener(Runnable modeListener) {
+		this.modeListener = modeListener;
+	}
+
+	/** Shows what the settings and the route say now: after a mode change, an input change, or a calibration. */
+	public void refresh() {
+		if (this.panel.isDisposed()) {
+			return;
+		}
+		this.updating = true;
+		try {
+			boolean follow = this.settings.isFollow();
+			this.mode.setSelectedValue(this.settings.getMode());
+			this.percent.setValue(this.settings.getPercent());
+			this.tolerance.setSelectedValue(this.settings.getTolerance());
+			this.modeHint.setText(TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
+			boolean idle = (this.running == null);
+			this.percentLabel.setVisible(follow);
+			this.percent.setVisible(follow);
+			this.percentHint.setVisible(follow);
+			this.toleranceLabel.setVisible(follow);
+			this.tolerance.setVisible(follow);
+			this.toleranceHint.setVisible(follow);
+			this.calibrationTitle.setVisible(follow);
+			this.calibrationState.setVisible(follow);
+			this.calibrationRoute.setVisible(follow);
+			this.manualLabel.setVisible(follow);
+			this.manual.setVisible(follow);
+			this.manualApply.setVisible(follow);
+			this.manualForget.setVisible(follow);
+			this.manualHint.setVisible(follow);
+			this.announce.setVisible(follow);
+			this.calibrate.setVisible(follow);
+			this.cancel.setVisible(follow);
+			this.progress.setVisible(follow);
+			this.precision.setVisible(follow);
+			this.mode.setEnabled(idle);
+			this.percent.setEnabled(idle);
+			this.tolerance.setEnabled(idle);
+			this.manual.setEnabled(idle);
+			AudioRoute route = this.backend.route();
+			LatencyCompensation compensation = this.backend.calibrations().forRoute(route);
+			this.calibrationState.setText(stateText(compensation));
+			if (compensation.isCalibrated()) {
+				this.manual.setValue((int) Math.round(compensation.offsetNanos() / 1e6));
+			}
+			this.manualApply.setEnabled(idle && route != null);
+			this.manualForget.setEnabled(idle && route != null && compensation.isCalibrated());
+			this.calibrate.setEnabled(idle && route != null);
+			this.cancel.setEnabled(!idle);
+			this.precision.setText(precisionText(compensation, route));
+		} finally {
+			this.updating = false;
+		}
+		this.panel.layout();
+		if (this.contentListener != null) {
+			this.contentListener.run();
+		}
+	}
+
+	private static String stateText(LatencyCompensation compensation) {
+		String millis = Long.toString(Math.round(compensation.offsetNanos() / 1e6));
+		switch (compensation.source()) {
+			case CALIBRATED:
+				return TuxGuitar.getProperty("practice.follow.calibration.state.calibrated", new String[] { millis });
+			case MANUAL:
+				return TuxGuitar.getProperty("practice.follow.calibration.state.manual", new String[] { millis });
+			default:
+				return TuxGuitar.getProperty("practice.follow.calibration.state.none");
+		}
+	}
+
+	/** "Reduced rhythmic precision" while the route is not calibrated, and the warning of an unstable delay: never a block. */
+	private String precisionText(LatencyCompensation compensation, AudioRoute route) {
+		StringBuilder text = new StringBuilder();
+		if (!compensation.isCalibrated()) {
+			text.append(TuxGuitar.getProperty("practice.follow.precision.reduced")).append(". ")
+					.append(TuxGuitar.getProperty("practice.follow.precision.reason.NOT_CALIBRATED"));
+		}
+		double spread = this.backend.lagSpreadMillis();
+		if (!Double.isNaN(spread) && new ClockUncertainty(spread).isUnstable()) {
+			if (text.length() == 0) {
+				text.append(TuxGuitar.getProperty("practice.follow.precision.reduced")).append(". ");
+			} else {
+				text.append("\n");
+			}
+			text.append(TuxGuitar.getProperty("practice.follow.precision.reason.UNSTABLE_ROUTE"));
+		}
+		return text.toString();
+	}
+
+	private void applyManual() {
+		AudioRoute route = this.backend.route();
+		if (route == null) {
+			return;
+		}
+		int millis = Math.max((int) -LatencyCompensation.LIMIT_MILLIS, Math.min((int) LatencyCompensation.LIMIT_MILLIS, this.manual.getValue()));
+		this.backend.calibrations().set(route, LatencyCompensation.manual(millis));
+		this.progress.setText("");
+		refresh();
+	}
+
+	private void forget() {
+		AudioRoute route = this.backend.route();
+		if (route != null) {
+			this.backend.calibrations().forget(route);
+			this.progress.setText("");
+			refresh();
+		}
+	}
+
+	private void startCalibration() {
+		if (this.running != null || this.backend.route() == null) {
+			return;
+		}
+		CalibrationRun run = this.backend.newCalibration();
+		if (run == null) {
+			this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.no-input"));
+			relayout();
+			return;
+		}
+		this.running = run;
+		run.start();
+		this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.running", new String[] { "0", Integer.toString(run.clickCount()) }));
+		refresh();
+		this.backend.begin(run, this::calibrationChanged);
+	}
+
+	/** The run moved (UI thread). */
+	void calibrationChanged() {
+		CalibrationRun run = this.running;
+		if (run == null || this.panel.isDisposed()) {
+			return;
+		}
+		switch (run.state()) {
+			case FINISHED:
+				finish(run);
+				break;
+			case FAILED:
+				this.backend.end(run);
+				this.running = null;
+				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.no-input"));
+				refresh();
+				break;
+			case CANCELLED:
+				break;
+			default:
+				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.running",
+						new String[] { Integer.toString(run.clicksPlayed()), Integer.toString(run.clickCount()) }));
+				relayout();
+				break;
+		}
+	}
+
+	private void finish(CalibrationRun run) {
+		this.backend.end(run);
+		this.running = null;
+		CalibrationTaps.Result result = run.result();
+		AudioRoute route = this.backend.route();
+		switch (result.status()) {
+			case CALIBRATED:
+				if (route != null) {
+					this.backend.calibrations().set(route, result.compensation());
+				}
+				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.done",
+						new String[] { Long.toString(Math.round(result.medianMillis())), Integer.toString(result.used()) }));
+				break;
+			case UNSTABLE:
+			case OUT_OF_RANGE:
+				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.unstable", new String[] { Long.toString(Math.round(result.spreadMillis())) }));
+				break;
+			default:
+				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.too-few",
+						new String[] { Integer.toString(result.used()), Integer.toString(result.total()) }));
+				break;
+		}
+		refresh();
+	}
+
+	/** Cancel: the clicks stop at once and nothing is kept. */
+	private void cancelCalibration() {
+		CalibrationRun run = this.running;
+		if (run == null) {
+			return;
+		}
+		run.cancel();
+		this.backend.end(run);
+		this.running = null;
+		this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.cancelled"));
+		refresh();
+	}
+
+	/** Whether a calibration is running now. */
+	public boolean isCalibrating() {
+		return this.running != null;
+	}
+
+	/** The window closes: a calibration that runs stops at once. */
+	public void dispose() {
+		CalibrationRun run = this.running;
+		if (run != null) {
+			run.cancel();
+			this.backend.end(run);
+			this.running = null;
+		}
+	}
+
+	private void relayout() {
+		this.panel.layout();
+		if (this.contentListener != null) {
+			this.contentListener.run();
+		}
+	}
+
+	// ------------------------------------------------------------------ for the tests of the panel
+
+	UIDropDownSelect<FollowSettings.Mode> modeSelect() {
+		return this.mode;
+	}
+
+	UISpinner percentSpinner() {
+		return this.percent;
+	}
+
+	UIDropDownSelect<TimingTolerance.Preset> toleranceSelect() {
+		return this.tolerance;
+	}
+
+	UISpinner manualSpinner() {
+		return this.manual;
+	}
+
+	UIButton manualApplyButton() {
+		return this.manualApply;
+	}
+
+	UIButton manualForgetButton() {
+		return this.manualForget;
+	}
+
+	UIButton calibrateButton() {
+		return this.calibrate;
+	}
+
+	UIButton cancelButton() {
+		return this.cancel;
+	}
+
+	UILabel calibrationStateLabel() {
+		return this.calibrationState;
+	}
+
+	UILabel progressLabel() {
+		return this.progress;
+	}
+
+	UILabel precisionLabel() {
+		return this.precision;
+	}
+
+	UILabel announceLabel() {
+		return this.announce;
+	}
+}
