@@ -14,6 +14,12 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
 import app.tuxguitar.app.tools.custom.practice.session.AttackCandidates;
 import app.tuxguitar.app.tools.custom.practice.session.ChordMatcher;
+import app.tuxguitar.app.tools.custom.practice.session.FollowEvents;
+import app.tuxguitar.app.tools.custom.practice.session.FollowPlayback;
+import app.tuxguitar.app.tools.custom.practice.session.FollowRun;
+import app.tuxguitar.app.tools.custom.practice.session.FollowSession;
+import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
+import app.tuxguitar.app.tools.custom.practice.session.FollowStarter;
 import app.tuxguitar.app.tools.custom.practice.session.PolyphonicAcceptance;
 import app.tuxguitar.app.tools.custom.practice.session.TechniqueJudge;
 import app.tuxguitar.app.tools.custom.practice.session.PassageSettings;
@@ -114,6 +120,14 @@ public class PracticeWindow {
 	/** The "starting at measure..." text, to which the quick-start waiting hint is added while it applies. */
 	private String startBase = "";
 	private AnalysisService.Listener frameListener;
+	// ---- the tempo-following mode (spec 002 T096-T099): a run beside the wait-mode session, never together with it
+	private FollowPanel followPanel;
+	private EngineFollowAdapter followAdapter;
+	private FollowStarter.Plan followPlan;
+	private AnalysisService.Listener followFrameListener;
+	private FollowSession.Snapshot followLast;
+	private int followShownEvent = -1;
+	private int followShownExtras;
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
 		this.context = context;
@@ -157,6 +171,7 @@ public class PracticeWindow {
 			return;
 		}
 		this.engine = AudioEngine.getInstance(this.context);
+		this.followAdapter = new EngineFollowAdapter(this.context, this.engine);
 		UIFactory uiFactory = TGApplication.getInstance(this.context).getFactory();
 		UIWindow uiParent = TGWindow.getInstance(this.context).getWindow();
 		UITableLayout windowLayout = new UITableLayout();
@@ -180,6 +195,7 @@ public class PracticeWindow {
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
 				teardownSession();
+				PracticeWindow.this.followPanel.dispose();
 				PracticeWindow.this.inputSelector.dispose();
 				PracticeWindow.this.levelPanel.disconnect();
 				PracticeWindow.this.engine.getSelection().removeListener(PracticeWindow.this.selectionListener);
@@ -300,10 +316,16 @@ public class PracticeWindow {
 		startPanel.setLayout(startLayout);
 		createPassageSettings(uiFactory, panel, layout);
 
-		layout.set(startPanel, 13, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		// the mode, and for the tempo-following mode the tempo, the tolerance and the rhythm calibration (spec 002 T097, T098)
+		this.followPanel = new FollowPanel(uiFactory, panel, FollowSettings.getInstance(this.context), this.followAdapter);
+		layout.set(this.followPanel.getControl(), 13, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		this.followPanel.setContentListener(this::refit);
+		this.followPanel.setModeListener(this::updateStartButton);
+
+		layout.set(startPanel, 14, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.startButton = button(uiFactory, startPanel, startLayout, 1, "practice.start", () -> startSession());
 		// what recognition measured: said as measured, with no more precision (spec 004 T009, SC-003, FR-008)
-		this.delayLabel = label(uiFactory, panel, layout, 14);
+		this.delayLabel = label(uiFactory, panel, layout, 15);
 		this.delayLabel.setText(delayInfo());
 		listenKeys(panel, this.tracks, this.passageMeasures, this.passageThreshold, startPanel, this.startButton);
 		return panel;
@@ -452,6 +474,7 @@ public class PracticeWindow {
 		if( !this.windowShown && this.session == null && this.assessment.getStatus() == InputAssessment.Status.UNUSABLE ) {
 			showWindow();
 		}
+		this.followPanel.refresh();
 		AudioInputDescriptor input = snapshot.getInput();
 		boolean headphones = (input != null && input.getKind() != AudioInputDescriptor.Kind.INSTRUMENT);
 		this.headphoneLabel.setText(headphones ? TuxGuitar.getProperty("practice.headphones") : "");
@@ -471,6 +494,7 @@ public class PracticeWindow {
 	private void updateStartButton() {
 		boolean canStart = QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus());
 		this.startButton.setEnabled(canStart);
+		this.startButton.setText(TuxGuitar.getProperty(FollowSettings.getInstance(this.context).isFollow() ? "practice.start.follow" : "practice.start"));
 		// a one-click start is waiting for the guitar: say so instead of leaving a greyed button unexplained
 		boolean waiting = (this.autoStart && !canStart && this.tracks.getSelectedValue() != null);
 		this.startLabel.setText(waiting ? this.startBase + "\n" + TuxGuitar.getProperty("practice.quickstart.waiting") : this.startBase);
@@ -491,6 +515,10 @@ public class PracticeWindow {
 	private void startSession() {
 		PracticeTrackCandidate candidate = this.tracks.getSelectedValue();
 		if( candidate == null ) {
+			return;
+		}
+		if( FollowSettings.getInstance(this.context).isFollow() ) {
+			startFollow(candidate);
 			return;
 		}
 		PracticeTrackSelection selection = new PracticeTrackSelection(this.song, candidate, this.shared);
@@ -542,7 +570,7 @@ public class PracticeWindow {
 
 	/** Ends practice immediately on the UI thread (Stop button): nothing queued can delay or undo it. */
 	private void stopNow() {
-		if( !isOpen() || this.session == null ) {
+		if( !isOpen() || (this.session == null && this.followPlan == null) ) {
 			return;
 		}
 		teardownSession();
@@ -552,7 +580,9 @@ public class PracticeWindow {
 	}
 
 	private void post(PracticeCommand command) {
-		if( this.loop != null ) {
+		if( this.followPlan != null ) {
+			this.followPlan.run().postCommand(command);
+		} else if( this.loop != null ) {
 			this.loop.postCommand(command);
 		}
 	}
@@ -576,7 +606,137 @@ public class PracticeWindow {
 				snapshot.getAcceptedCount());
 	}
 
+	// ---------------------------------------------------------------- the tempo-following mode (spec 002 T096-T099)
+
+	/**
+	 * Starts a run of the tempo-following mode: the score plays on the player (the practised track silent in the player only), after a count-in,
+	 * and each note is judged on its time. The wait-mode session is not touched: the two are never running together.
+	 */
+	private void startFollow(PracticeTrackCandidate candidate) {
+		PracticeTrackSelection selection = new PracticeTrackSelection(this.song, candidate, this.shared);
+		selection.accept();
+		RecognitionSettings recognition = RecognitionSettingsStore.getInstance(this.context).get();
+		PracticeParameters parameters = PracticeParameters.of(recognition);
+		this.palette.setDisplayTolerance(parameters.tolerance());
+		FollowStarter.Plan plan = FollowStarter.prepare(this.context, this.song, this.preparedSequence, candidate.getTrack().getNumber(),
+				FollowSettings.getInstance(this.context), parameters,
+				new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
+				() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()), this.followAdapter, this::renderFollow,
+				runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), this::followEnded,
+				(loop, handler) -> new FollowEvents(this.context, loop, handler, this.engine.getSelection(), this.shared),
+				() -> TGSynchronizer.getInstance(this.context).executeLater(this::restartFollow));
+		this.followPlan = plan;
+		this.followLast = null;
+		this.followShownEvent = -1;
+		this.followShownExtras = 0;
+		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
+		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
+		final FollowRun run = plan.run();
+		this.followFrameListener = run::postFrame;
+		this.engine.subscribe(this.followFrameListener);
+		this.plugin.setCommandSink(run::postCommand);
+		this.palette.setFollowMode(true);
+		FollowPlayback.Result result = run.start();
+		if( result != FollowPlayback.Result.STARTED ) {
+			teardownFollow();
+			this.followPanel.message(TuxGuitar.getProperty(result == FollowPlayback.Result.ALREADY_PLAYING ? "practice.follow.player-busy" : "practice.follow.start-failed"));
+			refit();
+			return;
+		}
+		// the score is the practice interface: only the compact palette stays on screen (FR-076)
+		this.palette.open();
+		setVisible(this.window, false);
+	}
+
+	/** A snapshot of the run (UI thread). */
+	private void renderFollow(FollowSession.Snapshot snapshot) {
+		FollowStarter.Plan plan = this.followPlan;
+		if( !isOpen() || plan == null ) {
+			return;
+		}
+		this.followLast = snapshot;
+		FollowView view = FollowView.of(snapshot, plan.sequence().getEvents(), this.followShownEvent, this.followShownExtras, PracticeWindow::followText);
+		this.followShownEvent = view.latestEvent();
+		this.followShownExtras = view.latestExtras();
+		this.palette.renderFollow(view, snapshot.state(), this.assessment);
+		int open = snapshot.openEvent();
+		boolean running = (snapshot.state() == FollowSession.State.FOLLOWING || snapshot.state() == FollowSession.State.COUNT_IN);
+		PracticeEvent current = (running && open >= 0 ? plan.sequence().getEvents().get(open) : null);
+		PracticeEvent lastRight = null;
+		int right = 0;
+		for( FollowSession.EventResult result : snapshot.results() ) {
+			if( result.status() == FollowSession.Status.MATCHED ) {
+				lastRight = plan.sequence().getEvents().get(result.eventIndex());
+				right++;
+			}
+		}
+		this.highlight.show(current, lastRight, right);
+	}
+
+	private static String followText(String key, String... arguments) {
+		return arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
+	}
+
+	/**
+	 * The run ended without the window asking (UI thread). The end of the song after a complete run keeps the palette and its summary; a play of the
+	 * learner, a stopped player or a failure bring the preparation window back with the reason. Follow is never restarted by itself.
+	 */
+	private void followEnded(FollowRun.Ended reason) {
+		if( !isOpen() || this.followPlan == null || reason == FollowRun.Ended.STOPPED ) {
+			return;
+		}
+		boolean complete = (this.followLast != null && this.followLast.state() == FollowSession.State.COMPLETE);
+		if( reason == FollowRun.Ended.PLAYER_STOPPED && complete ) {
+			releaseFollowHooks();
+			return;
+		}
+		teardownSession();
+		showPreparation();
+		showWindow();
+		String key = (reason == FollowRun.Ended.MANUAL_PLAY ? "practice.follow.ended.manual-play"
+				: reason == FollowRun.Ended.FAILED ? "practice.follow.ended.failed" : "practice.follow.ended.player-stopped");
+		this.followPanel.message(TuxGuitar.getProperty(key));
+		refit();
+	}
+
+	/** Restart of the learner: this run ends and a new one begins, once. */
+	private void restartFollow() {
+		if( !isOpen() || this.followPlan == null ) {
+			return;
+		}
+		PracticeTrackCandidate candidate = this.tracks.getSelectedValue();
+		teardownFollow();
+		if( candidate != null ) {
+			startFollow(candidate);
+		}
+	}
+
+	/** Stops listening to the engine for the run; the run itself is untouched. */
+	private void releaseFollowHooks() {
+		if( this.followFrameListener != null ) {
+			this.engine.unsubscribe(this.followFrameListener);
+			this.followFrameListener = null;
+			this.engine.setSpectrumEnabled(false);
+			this.engine.setAttackCandidates(null);
+		}
+		this.plugin.setCommandSink(null);
+	}
+
+	/** Ends the run if there is one, gives everything back, and forgets it: calling it again does nothing. */
+	private void teardownFollow() {
+		FollowStarter.Plan plan = this.followPlan;
+		if( plan == null ) {
+			return;
+		}
+		this.followPlan = null;
+		this.followLast = null;
+		plan.run().stop();
+		releaseFollowHooks();
+		this.palette.setFollowMode(false);
+	}
+
 	private void teardownSession() {
+		teardownFollow();
 		this.highlight.hide();
 		if( this.loop != null ) {
 			this.plugin.setCommandSink(null);

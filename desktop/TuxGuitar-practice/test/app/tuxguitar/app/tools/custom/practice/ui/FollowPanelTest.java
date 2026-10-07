@@ -29,9 +29,9 @@ public class FollowPanelTest {
 	private static final long MS = 1_000_000L;
 	private static final long HOP = 5 * MS;
 	private static final long LATENCY = 65 * MS;
-	private static final AudioRoute ROUTE = new AudioRoute("microphone", "speakers", 48000, "1ch 16bit");
+	static final AudioRoute ROUTE = new AudioRoute("microphone", "speakers", 48000, "1ch 16bit");
 
-	private static final class FakeClicks implements ClickPlayer {
+	static final class FakeClicks implements ClickPlayer {
 		long now;
 		int clicks;
 		int silenced;
@@ -46,7 +46,7 @@ public class FollowPanelTest {
 		}
 	}
 
-	private static final class FakeBackend implements FollowPanel.Backend {
+	static final class FakeBackend implements FollowPanel.Backend {
 		AudioRoute route = ROUTE;
 		final RouteCalibrations calibrations = new RouteCalibrations();
 		double lagSpread = Double.NaN;
@@ -88,7 +88,7 @@ public class FollowPanelTest {
 	private final FakeBackend backend = new FakeBackend();
 	private FollowPanel panel;
 
-	private static FollowSettings settings() {
+	static FollowSettings settings() {
 		try {
 			java.lang.reflect.Constructor<FollowSettings> constructor = FollowSettings.class.getDeclaredConstructor();
 			constructor.setAccessible(true);

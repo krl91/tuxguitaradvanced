@@ -5,6 +5,7 @@ import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.session.ChordFeedback;
 import app.tuxguitar.app.tools.custom.practice.session.Feedback;
+import app.tuxguitar.app.tools.custom.practice.session.FollowSession;
 import app.tuxguitar.app.tools.custom.practice.session.PolyphonicAcceptance;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeParameters;
@@ -73,6 +74,7 @@ public class PracticePalette {
 	private UIButton skipButton;
 	private UIButton resumeButton;
 	private UIButton restartButton;
+	private boolean followMode;
 
 	public PracticePalette(TGContext context, Controller controller, TolerancePolicy displayTolerance) {
 		this.context = context;
@@ -129,9 +131,62 @@ public class PracticePalette {
 				}
 			}
 		});
+		this.skipButton.setVisible(!this.followMode);
 		this.window.pack();
 		placeWindow(parent);
 		this.window.open();
+		refit();
+	}
+
+	/**
+	 * The palette of the tempo-following mode: the same window, without the Skip button (an event passes by itself, there is nothing to skip).
+	 * Set before {@link #open()}, or after to change it.
+	 */
+	public void setFollowMode(boolean follow) {
+		this.followMode = follow;
+		if( isOpen() ) {
+			this.skipButton.setVisible(!follow);
+			refit();
+		}
+	}
+
+	/**
+	 * Renders a snapshot of the tempo-following mode (spec 002 T098, T099): the symbol and words of the latest event, the state and the next event,
+	 * the techniques apart, the counts, the precision and, at the end, the summary.
+	 */
+	public void renderFollow(FollowView view, FollowSession.State state, InputAssessment assessment) {
+		if( !isOpen() ) {
+			return;
+		}
+		switch( view.tone() ) {
+			case GOOD:
+				this.verdictLabel.setFgColor(this.correctColor);
+				this.verdictLabel.setText("✓");
+				break;
+			case BAD:
+				this.verdictLabel.setFgColor(this.wrongColor);
+				this.verdictLabel.setText("✗");
+				break;
+			case NEUTRAL:
+				this.verdictLabel.setText("–");
+				break;
+			default:
+				this.verdictLabel.setText(" ");
+				break;
+		}
+		this.detectedLabel.setText(view.latest());
+		this.statusLabel.setText(view.next().isEmpty() ? view.state() : view.state() + "\n" + view.next());
+		this.techniqueLabel.setText(view.techniques());
+		this.outcomeLabel.setText(view.counts());
+		StringBuilder extra = new StringBuilder(view.precision());
+		if( !view.summary().isEmpty() ) {
+			extra.append(extra.length() > 0 ? "\n" : "").append(view.summary());
+		}
+		this.passageLabel.setText(extra.toString());
+		setInput(assessment);
+		this.skipButton.setVisible(false);
+		this.resumeButton.setEnabled(state == FollowSession.State.READY_TO_RESUME);
+		this.restartButton.setEnabled(state == FollowSession.State.COMPLETE || state == FollowSession.State.FOLLOWING);
 		refit();
 	}
 

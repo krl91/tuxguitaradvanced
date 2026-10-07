@@ -41,8 +41,13 @@ public final class FollowPanel {
 		/** The spread of the arrival lag of the capture in milliseconds, or NaN while it is not known. */
 		double lagSpreadMillis();
 
-		/** A calibration on the clicks of the player, or null when there is no usable input. */
+		/** A calibration on the clicks of the player, or null when there is no usable input or the player is playing. */
 		CalibrationRun newCalibration();
+
+		/** True when the player is playing: the calibration would sound over it, so it waits. */
+		default boolean playerBusy() {
+			return false;
+		}
 
 		/** Feeds the run with the frames until it ends; {@code changed} is called on the UI thread when its state or progress changed. */
 		void begin(CalibrationRun run, Runnable changed);
@@ -67,6 +72,8 @@ public final class FollowPanel {
 	private final UILabel calibrationRoute;
 	private final UILabel manualLabel;
 	private final UISpinner manual;
+	private final UIPanel manualRow;
+	private final UIPanel buttonsRow;
 	private final UIButton manualApply;
 	private final UIButton manualForget;
 	private final UILabel manualHint;
@@ -85,6 +92,8 @@ public final class FollowPanel {
 		this.backend = backend;
 		this.panel = uiFactory.createPanel(parent, false);
 		UITableLayout layout = new UITableLayout();
+		// what is hidden takes no room: the wait mode shows the choice of the mode and nothing else
+		layout.set(UITableLayout.IGNORE_INVISIBLE, Boolean.TRUE);
 		this.panel.setLayout(layout);
 
 		UILabel modeLabel = uiFactory.createLabel(this.panel);
@@ -131,18 +140,19 @@ public final class FollowPanel {
 		this.manualLabel.setText(TuxGuitar.getProperty("practice.follow.calibration.manual"));
 		layout.set(this.manualLabel, 9, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		UITableLayout manualLayout = new UITableLayout(0f);
-		UIPanel manualRow = uiFactory.createPanel(this.panel, false);
-		manualRow.setLayout(manualLayout);
-		layout.set(manualRow, 9, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
-		this.manual = uiFactory.createSpinner(manualRow);
+		manualLayout.set(UITableLayout.IGNORE_INVISIBLE, Boolean.TRUE);
+		this.manualRow = uiFactory.createPanel(this.panel, false);
+		this.manualRow.setLayout(manualLayout);
+		layout.set(this.manualRow, 9, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.manual = uiFactory.createSpinner(this.manualRow);
 		this.manual.setMinimum((int) -LatencyCompensation.LIMIT_MILLIS);
 		this.manual.setMaximum((int) LatencyCompensation.LIMIT_MILLIS);
 		this.manual.setIncrement(5);
 		manualLayout.set(this.manual, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
-		this.manualApply = uiFactory.createButton(manualRow);
+		this.manualApply = uiFactory.createButton(this.manualRow);
 		this.manualApply.setText(TuxGuitar.getProperty("practice.follow.calibration.manual.apply"));
 		manualLayout.set(this.manualApply, 1, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
-		this.manualForget = uiFactory.createButton(manualRow);
+		this.manualForget = uiFactory.createButton(this.manualRow);
 		this.manualForget.setText(TuxGuitar.getProperty("practice.follow.calibration.manual.clear"));
 		manualLayout.set(this.manualForget, 1, 3, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		this.manualHint = wrap(uiFactory, layout, 10);
@@ -153,13 +163,14 @@ public final class FollowPanel {
 		this.announce.setText(TuxGuitar.getProperty("practice.follow.calibration.announce",
 				new String[] { Integer.toString(CalibrationTaps.CLICKS), Integer.toString(CalibrationRun.announcedSeconds()) }));
 		UITableLayout buttonsLayout = new UITableLayout(0f);
-		UIPanel buttons = uiFactory.createPanel(this.panel, false);
-		buttons.setLayout(buttonsLayout);
-		layout.set(buttons, 12, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
-		this.calibrate = uiFactory.createButton(buttons);
+		buttonsLayout.set(UITableLayout.IGNORE_INVISIBLE, Boolean.TRUE);
+		this.buttonsRow = uiFactory.createPanel(this.panel, false);
+		this.buttonsRow.setLayout(buttonsLayout);
+		layout.set(this.buttonsRow, 12, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		this.calibrate = uiFactory.createButton(this.buttonsRow);
 		this.calibrate.setText(TuxGuitar.getProperty("practice.follow.calibration.start"));
 		buttonsLayout.set(this.calibrate, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
-		this.cancel = uiFactory.createButton(buttons);
+		this.cancel = uiFactory.createButton(this.buttonsRow);
 		this.cancel.setText(TuxGuitar.getProperty("practice.follow.calibration.cancel"));
 		buttonsLayout.set(this.cancel, 1, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		this.progress = wrap(uiFactory, layout, 13);
@@ -250,11 +261,13 @@ public final class FollowPanel {
 			this.calibrationState.setVisible(follow);
 			this.calibrationRoute.setVisible(follow);
 			this.manualLabel.setVisible(follow);
+			this.manualRow.setVisible(follow);
 			this.manual.setVisible(follow);
 			this.manualApply.setVisible(follow);
 			this.manualForget.setVisible(follow);
 			this.manualHint.setVisible(follow);
 			this.announce.setVisible(follow);
+			this.buttonsRow.setVisible(follow);
 			this.calibrate.setVisible(follow);
 			this.cancel.setVisible(follow);
 			this.progress.setVisible(follow);
@@ -340,7 +353,7 @@ public final class FollowPanel {
 		}
 		CalibrationRun run = this.backend.newCalibration();
 		if (run == null) {
-			this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.no-input"));
+			this.progress.setText(TuxGuitar.getProperty(this.backend.playerBusy() ? "practice.follow.player-busy" : "practice.follow.calibration.no-input"));
 			relayout();
 			return;
 		}
@@ -413,6 +426,14 @@ public final class FollowPanel {
 		this.running = null;
 		this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.cancelled"));
 		refresh();
+	}
+
+	/** A message of the run (why it ended, why it did not start) under the controls, in the language of the learner. */
+	public void message(String text) {
+		if (!this.panel.isDisposed()) {
+			this.progress.setText(text);
+			relayout();
+		}
 	}
 
 	/** Whether a calibration is running now. */
