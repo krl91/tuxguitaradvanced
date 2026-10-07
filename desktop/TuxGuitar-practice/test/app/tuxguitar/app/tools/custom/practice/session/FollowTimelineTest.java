@@ -176,4 +176,18 @@ public class FollowTimelineTest {
 		assertEquals(-500 * MS, timeline.nanosAtTick(-960));
 		assertEquals(2000 * MS + 4000 * MS + 4000 * MS, timeline.nanosAtTick(3840 + 3840 + 3840), "after the last measure (tempo 60 goes on in measure 2)");
 	}
+
+	@Test
+	public void thePlayStartTickIsWhereTheMeasureOfTheEventBeginsInTheExpandedTicks() {
+		SongFixture fixture = new SongFixture(2);
+		fixture.quarter(0, 2, 1, 0);
+		fixture.quarter(1, 1, 1, 1);
+		fixture.repeat(0, 1, 2);
+		FollowTimeline timeline = FollowTimeline.build(fixture.song, sequence(fixture), 100);
+
+		assertEquals(0L, timeline.playStartTicks(0));
+		assertEquals(3840L, timeline.playStartTicks(1));
+		assertEquals(3840L * 2, timeline.playStartTicks(2), "the repeat plays measure 0 again, further in the expanded ticks");
+		assertEquals(timeline.targetTicks(1) - 960L, timeline.playStartTicks(1));
+	}
 }
