@@ -44,6 +44,8 @@ final class FakePlayerRun {
 	final Set<Note> flagged = new HashSet<Note>();
 
 	boolean captureReady = true;
+	LatencyCompensation compensation = LatencyCompensation.calibrated(0.0);
+	double spreadMillis = 5.0;
 	/** The dating of a frame throws: the session fails. */
 	volatile boolean failDating;
 	long now = T0;
@@ -76,7 +78,7 @@ final class FakePlayerRun {
 					}
 					return T0 + frame.getTimestampNanos();
 				},
-				() -> new TimingContext(tolerance, LatencyCompensation.calibrated(0.0), new ClockUncertainty(5.0), this.captureReady, this.clock.isReady()),
+				() -> new TimingContext(tolerance, this.compensation, new ClockUncertainty(this.spreadMillis), this.captureReady, this.clock.isReady()),
 				new NoteInterpreter(0.8), new TolerancePolicy(5.0, 25.0), new ChordMatcher(ChordMatcher.Parameters.defaults()), STABILITY, articulationLatency);
 		this.session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		this.session.setTrackAccepted(true);
