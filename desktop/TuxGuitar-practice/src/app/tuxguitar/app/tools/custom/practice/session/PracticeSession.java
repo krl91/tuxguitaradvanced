@@ -472,6 +472,23 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		return requiresBend(event) || requiresRelease(event);
 	}
 
+	/**
+	 * True for a pre-bend (the string is bent before it is struck): the pitch the note starts at is not the fretted pitch but a bent one, and
+	 * a bent pitch is made by hand, so its zone is the one of the target of a bend: the tolerance below, half a semitone above.
+	 */
+	private boolean onPreBendStart(PracticeEvent event) {
+		if( event.getBendPath() == null || !this.reading.hasPitch() ) {
+			return false;
+		}
+		double start = event.getBendPath().getPoints().get(0).getSemitones();
+		if( start * 100.0 < BEND_DETECTOR.minWrittenMoveCents ) {
+			return false;
+		}
+		double tolerance = Math.max(BEND_DETECTOR.onToleranceCents, BEND_DETECTOR.onToleranceShare * start * 100.0) / 100.0;
+		double midi = this.reading.getMidi() + this.reading.getCents() / 100.0;
+		return midi >= bendBase(event) + start - tolerance && midi <= bendBase(event) + start + BEND_PATH_MARGIN_SEMITONES;
+	}
+
 	/** True when the pitch has come down to the written end of the release (within the detector's tolerance, and the path margin below). */
 	private boolean onReleaseEnd(PracticeEvent event) {
 		if( !this.reading.hasPitch() ) {
@@ -479,10 +496,10 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		}
 		double base = bendBase(event);
 		double end = event.getBendPath().getTargetSemitones();
-		double fall = (event.getBendPath().getPeakSemitones() - end) * 100.0;
-		double tolerance = Math.max(BEND_DETECTOR.onToleranceCents, BEND_DETECTOR.onToleranceShare * fall) / 100.0;
 		double midi = this.reading.getMidi() + this.reading.getCents() / 100.0;
-		return midi >= base + end - BEND_PATH_MARGIN_SEMITONES && midi <= base + end + tolerance;
+		// the end of the release is the written note, read as such: half a semitone on each side (a fretted note reads 30 to 50 cents sharp on
+		// the owner's guitar, and a plain note already gets a sharp allowance by fret that the end of a release must not be stricter than)
+		return midi >= base + end - BEND_PATH_MARGIN_SEMITONES && midi <= base + end + BEND_PATH_MARGIN_SEMITONES;
 	}
 
 	/** True when the pitch has reached the written target of the bend (within the detector's tolerance) and has not gone past the path. */
@@ -581,7 +598,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		// a bent note whose run began on its written pitch goes on along the written path: a bend that leaves the fretted pitch at once
 		// (400 cents a second is 25 cents in 60 ms) would never hold the pitch for the stability window
 		boolean alongPath = (usableLevel && event.getBendPath() != null && this.matchStartNanos >= 0 && onPath(corridorOf(event)));
-		if( usableLevel && (alongPath || this.tolerance.matches(this.reading, event.getExpectedMidi(), event.getFret())) ) {
+		if( usableLevel && (alongPath || this.tolerance.matches(this.reading, event.getExpectedMidi(), event.getFret()) || onPreBendStart(event)) ) {
 			if( this.matchStartNanos < 0 ) {
 				this.matchStartNanos = now;
 				if( requiresMovement(event) && this.techniqueJudge != null ) {

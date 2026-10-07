@@ -433,4 +433,46 @@ public class BendSessionTest {
 		assertEquals(TechniqueVerdict.DETECTED, bend.getVerdict(), "the second bend was measured from the previous note: " + bend.getMeasurements());
 		assertEquals(0.0, bend.getMeasurements().get("outcome"), 0.001);
 	}
+
+	@Test
+	public void aReleaseThatEndsAFewTensOfCentsSharpIsStillTheWrittenEnd() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 4, 6, 4, 12, 0);
+		fixture.quarter(0, 1, 3, 7);
+		start(fixture, false);
+
+		// measured on the owner's guitar: a fretted D4 reads 30 to 50 cents sharp, so does the end of the release
+		pluck(E4, STABILITY_NANOS + millis(60));
+		glide(E4, D4 + 0.45, millis(250));
+		hold(D4 + 0.45, millis(300));
+
+		assertEquals(1, this.session.getCurrentIndex(), "a release ending 45 cents sharp of its written end was not accepted");
+		assertFalse(this.wrongSeen);
+	}
+
+	@Test
+	public void aPreBendThatStartsAFewTensOfCentsSharpIsAccepted() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 4, 12, 4);
+		fixture.quarter(0, 1, 3, 5);
+		start(fixture, false);
+
+		pluck(E4 + 0.40, STABILITY_NANOS + millis(100));
+
+		assertEquals(1, this.session.getCurrentIndex(), "a pre-bend 40 cents sharp of the bent pitch was not accepted");
+		assertFalse(this.wrongSeen);
+	}
+
+	@Test
+	public void aPreBendThatIsAlmostAQuarterToneShortIsNotAccepted() {
+		SongFixture fixture = new SongFixture(1);
+		fixture.bendPoints(0, 0, 3, 7, 0, 4, 12, 4);
+		fixture.quarter(0, 1, 3, 5);
+		start(fixture, false);
+
+		// the string was bent 1.3 semitones instead of 2 (measured on the owner's guitar): not the written pre-bend
+		pluck(D4 + 1.3, STABILITY_NANOS + millis(300));
+
+		assertEquals(0, this.session.getCurrentIndex(), "a pre-bend 70 cents short was accepted");
+	}
 }
