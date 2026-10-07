@@ -166,16 +166,21 @@ final class FollowHarness {
 	}
 
 	private AnalysisFrame frameAt(long wall) {
+		return frameOf(this.notes, this.flagged, wall);
+	}
+
+	/** The frame of the scripted notes at the wall time: the last note sounding gives the pitch, a note is flagged as an onset {@link #LATENCY} after its start. */
+	static AnalysisFrame frameOf(List<Note> notes, Set<Note> flagged, long wall) {
 		Note sounding = null;
-		for( Note note : this.notes ) {
+		for( Note note : notes ) {
 			if( note.start <= wall && wall < note.start + note.duration ) {
 				sounding = note;
 			}
 		}
 		boolean onset = false;
-		for( Note note : this.notes ) {
-			if( !this.flagged.contains(note) && wall >= note.start + LATENCY ) {
-				this.flagged.add(note);
+		for( Note note : notes ) {
+			if( !flagged.contains(note) && wall >= note.start + LATENCY ) {
+				flagged.add(note);
 				onset = true;
 			}
 		}

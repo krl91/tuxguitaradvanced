@@ -849,6 +849,8 @@ public final class FollowSession {
 
 	private void finishMatch(int index, TimingOutcome outcome, long transient_) {
 		this.soundAt[index] = transient_;
+		// the notes before this sound end here, whether this one has techniques to judge or not
+		cutCollectors(transient_);
 		EventResult previous = this.results[index];
 		this.results[index] = previous.with(Status.MATCHED, PitchResult.CORRECT, outcome.verdict(), outcome.offsetNanos(), new int[0]).withAttempts(previous.attempts() + 1);
 		startTechniques(index, transient_);
@@ -1041,8 +1043,6 @@ public final class FollowSession {
 		if (event.getBendPath() != null) {
 			window = Math.max(BEND_WINDOW_MIN_NANOS, Math.min(BEND_WINDOW_MAX_NANOS, (long) (event.getBendWrittenSeconds() * 1e9)));
 		}
-		// the note before it is judged now: its segment ends where this one begins
-		finalizeCollectors(transient_);
 		Collector collector = new Collector(index, transient_, transient_ + window, targets);
 		for (Seen past : this.history) {
 			if (past.wall >= transient_) {
@@ -1052,16 +1052,25 @@ public final class FollowSession {
 		this.collectors.add(collector);
 	}
 
-	/** Judges the techniques of the collectors whose window has ended (or all of them, at {@link Long#MAX_VALUE}). */
+	/** Judges the techniques of the collectors whose observation window has ended, on the hops of that window only. */
 	private void finalizeCollectors(long wall) {
 		for (Collector collector : new ArrayList<Collector>(this.collectors)) {
-			if (wall == Long.MAX_VALUE || wall >= collector.endWall || wall <= collector.transient_) {
-				if (wall <= collector.transient_ && wall != Long.MAX_VALUE) {
-					// a later note begins: this segment ends here, hops from that moment on are not part of it
-					collector.hops.removeIf(h -> h[0] >= wall);
-				} else if (wall != Long.MAX_VALUE) {
-					collector.hops.removeIf(h -> h[0] > collector.endWall);
-				}
+			if (wall == Long.MAX_VALUE || wall >= collector.endWall) {
+				collector.hops.removeIf(h -> h[0] > collector.endWall);
+				this.collectors.remove(collector);
+				judgeCollector(collector);
+			}
+		}
+	}
+
+	/**
+	 * A new sound began at the wall time: the techniques of the notes before it are judged on what they sounded until then. What comes after
+	 * (the next note, whatever its pitch) is not part of them: a bend that was not made is not made by the note that follows it.
+	 */
+	private void cutCollectors(long soundWall) {
+		for (Collector collector : new ArrayList<Collector>(this.collectors)) {
+			if (collector.transient_ < soundWall) {
+				collector.hops.removeIf(h -> h[0] >= soundWall);
 				this.collectors.remove(collector);
 				judgeCollector(collector);
 			}
