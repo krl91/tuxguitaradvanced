@@ -29,14 +29,17 @@ public final class ArcadeRun {
 		private final int points;
 		private final int streakAfter;
 		private final List<TechniqueResult> techniques;
+		private final int[] missingPitches;
 
-		EventState(int eventIndex, ArcadeVerdict verdict, long offsetNanos, int points, int streakAfter, List<TechniqueResult> techniques) {
+		public EventState(int eventIndex, ArcadeVerdict verdict, long offsetNanos, int points, int streakAfter, List<TechniqueResult> techniques,
+				int[] missingPitches) {
 			this.eventIndex = eventIndex;
 			this.verdict = verdict;
 			this.offsetNanos = offsetNanos;
 			this.points = points;
 			this.streakAfter = streakAfter;
 			this.techniques = techniques;
+			this.missingPitches = missingPitches.clone();
 		}
 
 		public int eventIndex() {
@@ -64,6 +67,11 @@ public final class ArcadeRun {
 		public List<TechniqueResult> techniques() {
 			return this.techniques;
 		}
+
+		/** The pitches (MIDI) of a chord that the session named as not heard, in its order; empty otherwise. Shown by name, at chord level only. */
+		public int[] missingPitches() {
+			return this.missingPitches.clone();
+		}
 	}
 
 	/** The state of a run at a snapshot. Immutable. */
@@ -75,7 +83,7 @@ public final class ArcadeRun {
 		private final int extras;
 		private final int judged;
 
-		View(List<EventState> states, int score, int streak, int bestStreak, int extras, int judged) {
+		public View(List<EventState> states, int score, int streak, int bestStreak, int extras, int judged) {
 			this.states = Collections.unmodifiableList(states);
 			this.score = score;
 			this.streak = streak;
@@ -142,7 +150,7 @@ public final class ArcadeRun {
 				best = Math.max(best, streak);
 			}
 			states.add(new EventState(i, verdict, verdict == ArcadeVerdict.EARLY || verdict == ArcadeVerdict.LATE || verdict == ArcadeVerdict.ON_TIME ? result.offsetNanos() : 0L,
-					points, streak, result.techniques()));
+					points, streak, result.techniques(), result.missingPitches()));
 		}
 		return new View(states, score, streak, best, snapshot.extras().size(), judged);
 	}

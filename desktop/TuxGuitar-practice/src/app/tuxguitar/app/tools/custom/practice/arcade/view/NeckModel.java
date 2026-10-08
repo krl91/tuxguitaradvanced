@@ -112,6 +112,11 @@ public final class NeckModel {
 		return markers;
 	}
 
+	/** The open pitch (MIDI, with the track's offset) of the string of a row, 0 being the lowest. */
+	public int openMidi(int row) {
+		return this.openMidiByRow[row];
+	}
+
 	/** The diameter of the string at a row (0 is the lowest), in millimetres: from the pitch of the open string, thicker for lower strings. */
 	public double gauge(int row) {
 		return 0.25 + (64 - this.openMidiByRow[row]) * 0.0375;
