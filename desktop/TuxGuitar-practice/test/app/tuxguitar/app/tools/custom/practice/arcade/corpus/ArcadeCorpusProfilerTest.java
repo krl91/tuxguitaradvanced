@@ -154,10 +154,16 @@ public class ArcadeCorpusProfilerTest {
 		List<String> failures = new ArrayList<String>();
 		int[] scenes = { 0 };
 		int tracksChecked = 0;
+		java.util.EnumMap<app.tuxguitar.app.tools.custom.practice.arcade.view.ChordNameResolver.Source, Integer> identities = new java.util.EnumMap<app.tuxguitar.app.tools.custom.practice.arcade.view.ChordNameResolver.Source, Integer>(app.tuxguitar.app.tools.custom.practice.arcade.view.ChordNameResolver.Source.class);
 		List<CorpusScenes.Prepared> prepared = new ArrayList<CorpusScenes.Prepared>();
 		for (Case c : first.cases) {
 			CorpusScenes.Prepared p = CorpusScenes.prepare(reader, root, c);
 			prepared.add(p);
+			for (app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent event : p.events) {
+				if (event.display() != null) {
+					identities.merge(event.display().source(), 1, Integer::sum);
+				}
+			}
 			failures.addAll(CorpusScenes.checkAll(p, scenes));
 			tracksChecked++;
 		}
@@ -270,6 +276,7 @@ public class ArcadeCorpusProfilerTest {
 		for (String failure : failures.subList(0, Math.min(failures.size(), 20))) {
 			report.append("  - ").append(failure.replaceAll("[^ -~]", "?")).append('\n');
 		}
+		report.append("- identity shown for every chord event of the ").append(tracksChecked).append(" tracks (FR-061): ").append(identities).append(" (written name, name derived from the written notes, list of notes); no chord shows a bare generic word (asserted)\n");
 		report.append(String.format(Locale.ROOT, "\n## Images (T063)\n\n- %d images written locally (FULL and PERFORMANCE of %d cases), each with an active target; the contact sheet is a local file for the owner's review (T044), never committed.\n", imagesWritten, imagesWritten / 2));
 		report.append("\n## Reproducibility (T065)\n\n- the selection was made twice, the second time from nothing (every file read and measured again): the anonymous identifiers, categories and metrics of the ")
 				.append(first.cases.size()).append(" cases are identical.\n");

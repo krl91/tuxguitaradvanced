@@ -13,7 +13,7 @@ Produced by `ArcadeCorpusProfilerTest` from a folder of Guitar Pro 3 and 4 files
 - negative cases:
   - the file (4): DEGRADED, 7 playable tracks
   - the known defective file (6): DEGRADED, 3 playable tracks
-- duration: profile of the sample 11.9 s (from the cache of an earlier pass: 2200 of 2200 files), second pass from nothing 20.5 s, structural check of the cases 1.0 s, in all 35.6 s
+- duration: profile of the sample 13.2 s (from the cache of an earlier pass: 2200 of 2200 files), second pass from nothing 74.0 s, structural check of the cases 2.0 s, in all 91.7 s
 
 ## Playable tracks of the files read cleanly: 2288
 
@@ -50,6 +50,7 @@ Total 64 cases (at least 60 and five in each category: met); no folder or artist
 ## Structural check (T062)
 
 - 64 tracks, 2400 scenes (two anchors, five moments, FULL and PERFORMANCE, colour and monochrome), failures: 0
+- identity shown for every chord event of the 64 tracks (FR-061): {WRITTEN=56, DERIVED=9999, PITCH_SET=2176} (written name, name derived from the written notes, list of notes); no chord shows a bare generic word (asserted)
 
 ## Images (T063)
 

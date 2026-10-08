@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.PaintRecorder;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeVerdict;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeScene;
@@ -239,7 +240,11 @@ public final class CorpusScenes {
 		// FR-061: the name of the expanded chord, the generic word otherwise, nothing on a note
 		for (SceneItem name : scene.withRole(Role.CARTOUCHE_NAME)) {
 			ArcadeRenderEvent event = p.events.get(name.eventIndex());
-			String expected = event.kind() != ArcadeRenderEvent.Kind.CHORD ? null : event.chordName() != null ? event.chordName() : "Chord";
+			String expected = event.kind() != ArcadeRenderEvent.Kind.CHORD ? null : event.display().source() == app.tuxguitar.app.tools.custom.practice.arcade.view.ChordNameResolver.Source.PITCH_SET
+					? SceneFixture.ENGLISH.pitchSet(event.display().text()) : event.display().text();
+			if (event.kind() == ArcadeRenderEvent.Kind.CHORD && (name.text().equals("Chord") || name.text().equals("Accord") || name.text().trim().isEmpty())) {
+				failures.add(where + ": a chord with notes shows only a generic word");
+			}
 			if (expected == null || !expected.equals(name.text())) {
 				failures.add(where + ": chord name \"" + name.text() + "\" for an event of kind " + event.kind());
 			}
@@ -285,6 +290,74 @@ public final class CorpusScenes {
 		}
 		if (digestOf(p.events) != p.timelineDigest) {
 			failures.add(where + ": the timeline changed");
+		}
+		// FR-066: what the painter is really asked to draw for the incoming notes
+		failures.addAll(checkAlignment(p, scene, now, tier, where));
+		return failures;
+	}
+
+	private static double distanceToSegment(double px, double py, double x1, double y1, double x2, double y2) {
+		double dx = x2 - x1;
+		double dy = y2 - y1;
+		double length2 = dx * dx + dy * dy;
+		double t = length2 == 0 ? 0 : Math.max(0.0, Math.min(1.0, ((px - x1) * dx + (py - y1) * dy) / length2));
+		return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+	}
+
+	/**
+	 * The markers of the notes against the segments of their approach as sent to the painter by the selected renderer (and by the fallback, in the cheapest tier):
+	 * every marker is on the segment drawn for it, inside the cell of its fret, and the segment ends on the hit line at the x of the disk of the neck.
+	 */
+	static List<String> checkAlignment(Prepared p, Scene scene, long now, QualityTier tier, String where) {
+		List<String> failures = new ArrayList<String>();
+		PaintRecorder recorder = PaintRecorder.record(tier == QualityTier.PERFORMANCE ? PaintRecorder.fallback() : PaintRecorder.selected(), scene, tier);
+		IsometricProjection projection = new IsometricProjection(SCREEN);
+		app.tuxguitar.app.tools.custom.practice.arcade.view.Camera camera = p.camera.at(now);
+		long look = p.camera.settings().lookAheadNanos;
+		for (SceneItem marker : scene.items()) {
+			if ((marker.role() != Role.MARKER && marker.role() != Role.PREVIEW) || marker.eventIndex() < 0) {
+				continue;
+			}
+			ArcadeRenderEvent event = p.events.get(marker.eventIndex());
+			int fret = event.positions().get(0).fret();
+			double progress = RenderState.progress(event.onsetNanos(), now, look);
+			double x = p.neck.fretCentreX(fret);
+			ScreenPoint at = projection.approach(x, progress, camera);
+			if (Math.abs(at.x() - marker.value(0)) > 0.5 || Math.abs(at.y() - marker.value(1)) > 0.5) {
+				failures.add(where + ": the marker of event " + marker.eventIndex() + " is not at the projected centre of its cell");
+			}
+			double left = projection.approach(p.neck.cellLeftX(fret), progress, camera).x();
+			double right = projection.approach(p.neck.cellRightX(fret), progress, camera).x();
+			if (marker.value(0) < Math.min(left, right) - 1e-6 || marker.value(0) > Math.max(left, right) + 1e-6) {
+				failures.add(where + ": the marker of event " + marker.eventIndex() + " is outside its fret cell");
+			}
+			for (SceneItem trajectory : scene.forEvent(marker.eventIndex(), Role.TRAJECTORY)) {
+				boolean sent = false;
+				for (PaintRecorder.Segment segment : recorder.segments) {
+					if (Math.abs(segment.x1 - trajectory.value(0)) < 0.01 && Math.abs(segment.y1 - trajectory.value(1)) < 0.01 && Math.abs(segment.x2 - trajectory.value(2)) < 0.01
+							&& Math.abs(segment.y2 - trajectory.value(3)) < 0.01) {
+						sent = true;
+						if (distanceToSegment(marker.value(0), marker.value(1), segment.x1, segment.y1, segment.x2, segment.y2) > 0.5) {
+							failures.add(where + ": the marker of event " + marker.eventIndex() + " leaves its trajectory");
+						}
+						if (Math.abs(segment.y2 - projection.hitLineY()) > 0.01) {
+							failures.add(where + ": the trajectory of event " + marker.eventIndex() + " does not end on the hit line");
+						}
+					}
+				}
+				if (!sent) {
+					failures.add(where + ": the trajectory of event " + marker.eventIndex() + " was not sent to the painter");
+				}
+			}
+			for (SceneItem disk : scene.forEvent(marker.eventIndex(), Role.TARGET_DISK)) {
+				SceneItem landing = scene.forEvent(marker.eventIndex(), Role.TRAJECTORY).isEmpty() ? null : scene.forEvent(marker.eventIndex(), Role.TRAJECTORY).get(0);
+				if (landing != null && Math.abs(landing.value(2) - disk.value(0)) > 0.5) {
+					failures.add(where + ": the landing point and the target of event " + marker.eventIndex() + " are not at the same x");
+				}
+				if (scene.forEvent(marker.eventIndex(), Role.TARGET_LINK).isEmpty()) {
+					failures.add(where + ": no link from the hit line to the target of event " + marker.eventIndex());
+				}
+			}
 		}
 		return failures;
 	}
