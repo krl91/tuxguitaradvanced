@@ -10,11 +10,11 @@ import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
 import app.tuxguitar.app.tools.custom.practice.session.FollowTimeline;
 
 /** A song, its events as the view sees them, and the scene built on them, for the scene tests. */
-final class SceneFixture {
+public final class SceneFixture {
 
-	static final long MS = 1_000_000L;
+	public static final long MS = 1_000_000L;
 
-	static final SceneLabels ENGLISH = new SceneLabels() {
+	public static final SceneLabels ENGLISH = new SceneLabels() {
 		@Override
 		public String verdict(ArcadeVerdict verdict) {
 			switch (verdict) {
@@ -75,13 +75,13 @@ final class SceneFixture {
 		}
 	};
 
-	final SongFixture song;
-	final List<ArcadeRenderEvent> events;
-	final NeckModel neck;
-	final StringColours colours;
-	final CameraTrack camera;
+	public final SongFixture song;
+	public final List<ArcadeRenderEvent> events;
+	public final NeckModel neck;
+	public final StringColours colours;
+	public final CameraTrack camera;
 
-	SceneFixture(SongFixture song, TrackTuning tuning, int percent) {
+	public SceneFixture(SongFixture song, TrackTuning tuning, int percent) {
 		this.song = song;
 		FollowTimeline timeline = FollowTimeline.build(song.song, song.sequence(), percent);
 		List<PracticeEvent> practice = song.sequence().getEvents();
@@ -94,15 +94,15 @@ final class SceneFixture {
 		this.camera = CameraTrack.build(this.events, this.neck, CameraTrack.Settings.standard());
 	}
 
-	static TrackTuning sixStrings() {
+	public static TrackTuning sixStrings() {
 		return new TrackTuning(new int[] { 64, 59, 55, 50, 45, 40 }, 0, null);
 	}
 
-	ArcadeScene scene(boolean monochrome) {
+	public ArcadeScene scene(boolean monochrome) {
 		return new ArcadeScene(this.events, this.neck, this.colours, this.camera, ENGLISH, monochrome);
 	}
 
-	long onset(int index) {
+	public long onset(int index) {
 		return this.events.get(index).onsetNanos();
 	}
 }

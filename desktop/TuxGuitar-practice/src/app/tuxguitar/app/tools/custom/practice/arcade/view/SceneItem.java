@@ -15,8 +15,13 @@ public final class SceneItem {
 		DISC,
 		/** Centre x, centre y, radius x, radius y; only the outline. */
 		RING,
-		/** Left x, baseline-centre y, font height in pixels; text centred on x when {@link #centred()}. */
+		/** x (see {@link #align()}), middle y, font height in pixels. */
 		TEXT
+	}
+
+	/** How a text sits on its x. */
+	public enum Align {
+		LEFT, CENTRE, RIGHT
 	}
 
 	public enum Role {
@@ -44,9 +49,9 @@ public final class SceneItem {
 	private final String text;
 	private final int eventIndex;
 	private final int tgString;
-	private final boolean centred;
+	private final Align align;
 
-	SceneItem(Shape shape, Role role, double[] values, int colour, double alpha, double lineWidth, String text, int eventIndex, int tgString, boolean centred) {
+	SceneItem(Shape shape, Role role, double[] values, int colour, double alpha, double lineWidth, String text, int eventIndex, int tgString, Align align) {
 		this.shape = shape;
 		this.role = role;
 		this.values = values;
@@ -56,7 +61,7 @@ public final class SceneItem {
 		this.text = text;
 		this.eventIndex = eventIndex;
 		this.tgString = tgString;
-		this.centred = centred;
+		this.align = align;
 	}
 
 	public Shape shape() {
@@ -104,8 +109,8 @@ public final class SceneItem {
 		return this.tgString;
 	}
 
-	public boolean centred() {
-		return this.centred;
+	public Align align() {
+		return this.align;
 	}
 
 	/** The colour channels equal (0xRRGGBB with R = G = B). */

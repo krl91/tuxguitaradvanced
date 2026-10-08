@@ -220,7 +220,7 @@ public final class ArcadeScene {
 			double y = projection.stringY(row, count);
 			int colour = this.colours.of(tgString);
 			out.line(Role.STRING, 0, y, w, y, colour, 0.9, 1.0 + this.neck.gauge(row) * 1.2, -1, tgString);
-			out.text(Role.STRING_LABEL, PitchNames.of(this.neck.openMidi(row)), w * 0.028, y, h * 0.026, colour, 1.0, -1, tgString);
+			out.text(Role.STRING_LABEL, PitchNames.of(this.neck.openMidi(row)), w * 0.028, y, h * 0.026, colour, 1.0, -1, tgString, SceneItem.Align.LEFT);
 		}
 		out.line(Role.HIT_LINE, 0, projection.hitLineY(), w, projection.hitLineY(), HIT_COLOUR, 1.0, 2.0, -1, 0);
 	}
@@ -457,9 +457,9 @@ public final class ArcadeScene {
 	private void drawHud(Out out, Viewport viewport, ArcadeRun.View run, int speedPercent) {
 		double h = viewport.height();
 		if (run != null) {
-			out.text(Role.HUD_STREAK, this.labels.streak(run.streak()), viewport.width() * 0.03, h * 0.05, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, false);
+			out.text(Role.HUD_STREAK, this.labels.streak(run.streak()), viewport.width() * 0.03, h * 0.05, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, SceneItem.Align.LEFT);
 		}
-		out.text(Role.HUD_SPEED, this.labels.speed(speedPercent), viewport.width() * 0.97, h * 0.05, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, false);
+		out.text(Role.HUD_SPEED, this.labels.speed(speedPercent), viewport.width() * 0.97, h * 0.05, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, SceneItem.Align.RIGHT);
 	}
 
 	/** Collects the items, removing the colour when the scene is monochrome. */
@@ -480,27 +480,27 @@ public final class ArcadeScene {
 		}
 
 		void line(Role role, double x1, double y1, double x2, double y2, int colour, double alpha, double width, int event, int string) {
-			this.items.add(new SceneItem(Shape.LINE, role, new double[] { x1, y1, x2, y2 }, colour(colour), alpha, width, null, event, string, false));
+			this.items.add(new SceneItem(Shape.LINE, role, new double[] { x1, y1, x2, y2 }, colour(colour), alpha, width, null, event, string, null));
 		}
 
 		void quad(Role role, double[] corners, int colour, double alpha, int event, int string) {
-			this.items.add(new SceneItem(Shape.QUAD, role, corners, colour(colour), alpha, 0.0, null, event, string, false));
+			this.items.add(new SceneItem(Shape.QUAD, role, corners, colour(colour), alpha, 0.0, null, event, string, null));
 		}
 
 		void disc(Role role, double cx, double cy, double rx, double ry, int colour, double alpha, int event, int string) {
-			this.items.add(new SceneItem(Shape.DISC, role, new double[] { cx, cy, rx, ry }, colour(colour), alpha, 0.0, null, event, string, false));
+			this.items.add(new SceneItem(Shape.DISC, role, new double[] { cx, cy, rx, ry }, colour(colour), alpha, 0.0, null, event, string, null));
 		}
 
 		void ring(Role role, double cx, double cy, double rx, double ry, int colour, double alpha, double width, int event, int string) {
-			this.items.add(new SceneItem(Shape.RING, role, new double[] { cx, cy, rx, ry }, colour(colour), alpha, width, null, event, string, false));
+			this.items.add(new SceneItem(Shape.RING, role, new double[] { cx, cy, rx, ry }, colour(colour), alpha, width, null, event, string, null));
 		}
 
 		void text(Role role, String text, double x, double y, double size, int colour, double alpha, int event, int string) {
-			text(role, text, x, y, size, colour, alpha, event, string, true);
+			text(role, text, x, y, size, colour, alpha, event, string, SceneItem.Align.CENTRE);
 		}
 
-		void text(Role role, String text, double x, double y, double size, int colour, double alpha, int event, int string, boolean centred) {
-			this.items.add(new SceneItem(Shape.TEXT, role, new double[] { x, y, size }, colour(colour), alpha, 0.0, text, event, string, centred));
+		void text(Role role, String text, double x, double y, double size, int colour, double alpha, int event, int string, SceneItem.Align align) {
+			this.items.add(new SceneItem(Shape.TEXT, role, new double[] { x, y, size }, colour(colour), alpha, 0.0, text, event, string, align));
 		}
 	}
 }
