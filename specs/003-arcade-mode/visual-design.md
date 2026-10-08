@@ -209,6 +209,27 @@ If an unusually wide chord or fast jump cannot fit at normal zoom, zoom out with
 - HUD: speed and streak; never the numerical score during play.
 - Verdict badge: beside or above the impacted event, never covering the next event.
 
+## Rendering budget and adaptive quality
+
+The reference images define the visual grammar, not a pixel-resolution target. The renderer follows this order of importance at all times:
+
+1. uninterrupted capture, recognition, MIDI playback and optional live monitoring;
+2. correct musical clock and stable frame pacing;
+3. legibility of the hit line, current and upcoming notes/chords, string/fret targets, camera look-ahead, essential HUD and verdicts;
+4. decorative polish.
+
+Use deterministic quality tiers so tests and diagnostics can name the active state:
+
+| Tier | Preserved | Allowed reduction |
+|---|---|---|
+| `FULL` | all gameplay and accessibility information | approved glow, trails, soft shadows and highest antialias quality |
+| `BALANCED` | identical gameplay geometry and overlays | fewer particles/trails, simpler glow/shadow, lower antialias cost |
+| `PERFORMANCE` | identical hit timing, targets, chord cartouche, camera and verdicts | minimalist materials, no decorative effects, reduced internal 3D-field resolution/detail, then upscale |
+
+Quality may fall quickly when measured frame cost threatens the budget and recover slowly with hysteresis so it does not oscillate. It is driven by recent render durations, never by changing the musical clock. A frame that cannot be presented on time is skipped; it is never queued, and the next paint rebuilds from the current clock. Text, controls, the hit line, target rings, chord diagrams and verdict symbols should remain at native UI resolution even when the world field is rendered lower on a high-density display.
+
+The scene model is backend-neutral. The first implementation uses the existing toolkit renderer. An accelerated renderer may replace only the replay layer after an Apple Silicon benchmark demonstrates a material complete-workload benefit; the same scene and tests must also run through the software/toolkit fallback. No render preparation, paint call, asset upload or quality decision may execute on or hold a lock needed by capture, recognition, MIDI playback or live monitoring. Geometry and reusable assets are prepared or cached outside the steady-state audio path.
+
 ## Required deterministic tests
 
 1. **String mapping**: 4-, 6- and 7-string tracks map TuxGuitar string 1 to the high-string side and never swap colours.
@@ -223,6 +244,10 @@ If an unusually wide chord or fast jump cannot fit at normal zoom, zoom out with
 10. **Camera look-ahead**: single notes, wide chords and large fret jumps are already fully visible before spawn; camera output is continuous and deterministic.
 11. **Accessibility**: a monochrome render still identifies string, fret, chord timing and verdict.
 12. **Resize/performance**: resizes preserve minimum cartouche size; rendering does not block playback, judgement or the real-time audio path.
+13. **Quality tiers**: every tier preserves the same hit times, visible playable events, target string/fret, chord grouping, camera window, accessibility cues and verdict semantics; only the documented decoration/detail changes.
+14. **Frame replacement**: an intentionally delayed paint never creates a backlog; the next scene is built from the newest clock value and reaches the same written onset.
+15. **Backend parity**: the selected accelerated path (if any) and the forced software/toolkit fallback produce the same structural scene for fixed fixtures.
+16. **Concurrent stress**: dense notes, chord cartouches and camera movement run with MIDI and recognition, plus monitoring when available; report frame percentiles and prove no audio drop, capture overrun or judgement-digest change.
 
 ## Do not infer
 
