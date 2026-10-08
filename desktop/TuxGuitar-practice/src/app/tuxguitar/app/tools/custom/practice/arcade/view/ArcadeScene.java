@@ -306,6 +306,7 @@ public final class ArcadeScene {
 		out.quad(Role.NECK_BODY, new double[] { 0, top, w, top, w, bottom, 0, bottom }, NECK_COLOUR, 1.0, -1, 0);
 		double wireTop = projection.stringY(count - 1, count) - h * 0.012;
 		double wireBottom = projection.stringY(0, count) + h * 0.012;
+		double lastNumberRight = -1000.0;
 		for (int n = 0; n <= this.neck.fretCount(); n++) {
 			double x = this.neck.fretX(n);
 			if (!cam.shows(x, 0.0)) {
@@ -314,8 +315,14 @@ public final class ArcadeScene {
 			double px = projection.neckX(x, cam);
 			out.line(n == 0 ? Role.NUT : Role.FRET_WIRE, px, wireTop, px, wireBottom, WIRE_COLOUR, 1.0, n == 0 ? 4.0 : 1.5, -1, 0);
 			if (n >= 1) {
+				// a number is drawn only whole: the wire of a fret may be on the screen while its middle, where the number goes, is not
 				double centre = projection.neckX(this.neck.fretCentreX(n), cam);
-				out.text(Role.FRET_NUMBER, Integer.toString(n), centre, h * 0.905, h * 0.022, WIRE_COLOUR, 1.0, -1, 0);
+				double half = Integer.toString(n).length() * h * 0.022 * 0.33;
+				// and only where it does not touch the one before: in a wide view of high frets the numbers are close, and some are left out
+				if (centre - half >= 0 && centre + half <= w && centre - half >= lastNumberRight + GAP) {
+					out.text(Role.FRET_NUMBER, Integer.toString(n), centre, h * 0.905, h * 0.022, WIRE_COLOUR, 1.0, -1, 0);
+					lastNumberRight = centre + half;
+				}
 			}
 		}
 		double middle = (wireTop + wireBottom) / 2.0;

@@ -100,6 +100,18 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
+		<!-- the Guitar Pro readers, to read real scores in the optional corpus validation of Arcade (spec 003 T060 to T065); test scope only -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>tuxguitar-gtp</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- the real javax.sound sequencer behind the real MidiPlayer, for the long Arcade stress run (spec 003 T047); test scope only -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>tuxguitar-jsa</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>

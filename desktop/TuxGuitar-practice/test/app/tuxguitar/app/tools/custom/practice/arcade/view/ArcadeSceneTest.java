@@ -221,4 +221,29 @@ public class ArcadeSceneTest {
 		assertFalse(picture.withRole(Role.FRET_NUMBER).isEmpty(), "the fret numbers are under the neck");
 		assertNotEquals(0, picture.withRole(Role.FRET_WIRE).size());
 	}
+
+	@Test
+	public void theNumbersOfTheNeckAreWholeAndApartWhateverPartOfTheNeckIsInView() {
+		for (int[] frets : new int[][] { { 0, 1, 2 }, { 2, 3, 5 }, { 14, 17, 19 }, { 20, 22, 24 }, { 0, 12, 24 } }) {
+			SongFixture song = new SongFixture(2);
+			for (int i = 0; i < frets.length; i++) {
+				song.quarter(1, i, 1 + i, frets[i]);
+			}
+			SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+			for (Viewport viewport : new Viewport[] { SCREEN, new Viewport(480, 320), new Viewport(2560, 1440) }) {
+				for (long offset = -2500; offset <= 400; offset += 100) {
+					Scene scene = fixture.scene(false).build(fixture.onset(0) + offset * MS, viewport, null, 100);
+					List<SceneBoxes.Box> boxes = new ArrayList<SceneBoxes.Box>();
+					for (SceneItem number : scene.withRole(Role.FRET_NUMBER)) {
+						SceneBoxes.Box box = SceneBoxes.ofText(number);
+						assertTrue(box.x1 >= 0 && box.x2 <= viewport.width(), "a fret number cut by the window: " + box);
+						for (SceneBoxes.Box other : boxes) {
+							assertFalse(box.overlaps(other), "two fret numbers touch: " + box + " and " + other);
+						}
+						boxes.add(box);
+					}
+				}
+			}
+		}
+	}
 }
