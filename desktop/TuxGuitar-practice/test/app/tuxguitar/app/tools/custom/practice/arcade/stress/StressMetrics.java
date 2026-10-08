@@ -34,6 +34,64 @@ public final class StressMetrics implements ArcadeCanvas.FrameObserver {
 	private long pendingRequests;
 	private long slots;
 	private long worstRunAt;
+	/** The tasks posted to the UI thread and not yet run: the real queue of the event loop. */
+	private final java.util.concurrent.atomic.AtomicInteger uiQueued = new java.util.concurrent.atomic.AtomicInteger();
+	private final java.util.concurrent.atomic.AtomicInteger uiQueuedMax = new java.util.concurrent.atomic.AtomicInteger();
+	private volatile long lostRequests;
+	private volatile long skippedByScheduler;
+	/** What the UI thread was doing, sampled every few milliseconds: (wall nanos, the top frames of its stack). */
+	private final java.util.concurrent.ConcurrentLinkedQueue<Object[]> samples = new java.util.concurrent.ConcurrentLinkedQueue<Object[]>();
+
+	/** A task was posted to the UI thread. */
+	public void postedToUi() {
+		this.uiQueuedMax.accumulateAndGet(this.uiQueued.incrementAndGet(), Math::max);
+	}
+
+	/** A posted task ran on the UI thread. */
+	public void ranOnUi() {
+		this.uiQueued.decrementAndGet();
+	}
+
+	public int maxUiQueue() {
+		return this.uiQueuedMax.get();
+	}
+
+	public void schedulerFigures(long lost, long skipped) {
+		this.lostRequests = lost;
+		this.skippedByScheduler = skipped;
+	}
+
+	public void sampleUiThread(long nanos, String where) {
+		this.samples.add(new Object[] { nanos, where });
+	}
+
+	/** What the UI thread was doing during each gap between two paints of more than this many milliseconds: the three most frequent places of its stack. */
+	public synchronized String explainGaps(long thresholdMillis) {
+		StringBuilder text = new StringBuilder();
+		for (int i = 1; i < this.paintEnds.size() && text.length() < 3000; i++) {
+			long from = this.paintEnds.get(i - 1);
+			long to = this.paintEnds.get(i);
+			if (to - from <= thresholdMillis * 1_000_000L) {
+				continue;
+			}
+			java.util.Map<String, Integer> where = new java.util.TreeMap<String, Integer>();
+			int count = 0;
+			for (Object[] sample : this.samples) {
+				long at = (Long) sample[0];
+				if (at > from && at < to) {
+					where.merge((String) sample[1], 1, Integer::sum);
+					count++;
+				}
+			}
+			java.util.List<java.util.Map.Entry<String, Integer>> sorted = new java.util.ArrayList<java.util.Map.Entry<String, Integer>>(where.entrySet());
+			sorted.sort((a, b) -> b.getValue() - a.getValue());
+			text.append(String.format(Locale.ROOT, "%n    gap %.0f ms at %.1f s, %d samples of the UI thread:", (to - from) / 1e6, (to - this.runStart) / 1e9, count));
+			for (int k = 0; k < Math.min(3, sorted.size()); k++) {
+				text.append(" [").append(sorted.get(k).getValue()).append("x ").append(sorted.get(k).getKey()).append(']');
+			}
+		}
+		return text.length() == 0 ? "no gap longer than " + thresholdMillis + " ms" : text.toString();
+	}
 
 	/** The run begins now: the frames painted so far (the window opening and warming up) are not part of it. */
 	public synchronized void beginRun(long nanos) {
@@ -54,6 +112,9 @@ public final class StressMetrics implements ArcadeCanvas.FrameObserver {
 		this.maxQueued = 0;
 		this.pendingRequests = 0;
 		this.lastRequestedTick = -1;
+		this.samples.clear();
+		this.uiQueued.set(0);
+		this.uiQueuedMax.set(0);
 	}
 
 	@Override
@@ -174,7 +235,7 @@ public final class StressMetrics implements ArcadeCanvas.FrameObserver {
 
 	/** The most frames asked for and not yet painted at any moment: more than one would be a queue. */
 	public synchronized long maxQueuedFrames() {
-		return this.maxQueued;
+		return this.uiQueuedMax.get();
 	}
 
 	public synchronized long allocationP(double p) {
@@ -194,8 +255,8 @@ public final class StressMetrics implements ArcadeCanvas.FrameObserver {
 		return String.format(Locale.ROOT,
 				"%d frames painted in %d deadline slots of 16.7 ms (timer ticks skipped because a frame was pending: %d, which is not a miss); paint cost p50 %.2f p95 %.2f p99 %.2f max %.2f ms;"
 						+ " interval between paints p50 %.2f p95 %.2f p99 %.2f ms; missed deadline slots %d, longest run of consecutive misses %d (began %.1f s into the run);"
-						+ " most frames pending at once %d; allocation per paint p50 %d p99 %d KB; paints longer than two frames: %s; gaps of more than 50 ms between two paints: %s",
+						+ " most tasks waiting in the UI thread's queue at once %d; requests the scheduler took as lost %d, ticks it skipped %d; allocation per paint p50 %d p99 %d KB; paints longer than two frames: %s; gaps of more than 50 ms between two paints: %s",
 				frames(), this.slots, this.skippedTicks, costP(0.50), costP(0.95), costP(0.99), costMax(), intervalP(0.50), intervalP(0.95), intervalP(0.99), this.missed,
-				this.worstRun, this.worstRunAt / 1e9, this.maxQueued, allocationP(0.50) / 1024, allocationP(0.99) / 1024, this.longPaints.isEmpty() ? "none" : this.longPaints, this.gaps.isEmpty() ? "none" : this.gaps);
+				this.worstRun, this.worstRunAt / 1e9, this.uiQueuedMax.get(), this.lostRequests, this.skippedByScheduler, allocationP(0.50) / 1024, allocationP(0.99) / 1024, this.longPaints.isEmpty() ? "none" : this.longPaints, this.gaps.isEmpty() ? "none" : this.gaps);
 	}
 }

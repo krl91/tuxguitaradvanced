@@ -69,6 +69,8 @@ public final class StressRun {
 		public int height = 720;
 		/** True to force the fallback renderer path of the canvas (T048). */
 		public boolean fallback;
+		/** True to ask the system to paint at once after each request (an experiment of T047: the toolkit does not offer it, the harness reaches the native control). */
+		public boolean updateAtOnce;
 		/** Events of the scene that can be asked for before the run starts (T045 and T048 vary them). */
 		public double scale = 1.0;
 	}
@@ -237,8 +239,8 @@ public final class StressRun {
 				if (frozen) {
 					while (next < this.strikes.size() && zeroWall + this.strikes.get(next).nanos < now + 1_500_000_000L) {
 						StressScore.Strike strike = this.strikes.get(next);
-						long wall = zeroWall + strike.nanos - (strike.strum ? CHORD_EARLY_NANOS : LEARNER_EARLY_NANOS);
-						active.add(new Active(Math.max(blockStart, (wall - start) * StressInput.SAMPLE_RATE / 1_000_000_000L), strike.midis, strike.strum));
+						long strikeNanos = strike.nanos - (strike.strum ? CHORD_EARLY_NANOS : LEARNER_EARLY_NANOS);
+						active.add(new Active(Math.max(blockStart, StrikePlacement.startSample(start, zeroWall, strikeNanos)), strike.midis, strike.strum));
 						next++;
 					}
 				}
@@ -376,6 +378,8 @@ public final class StressRun {
 
 		StressMetrics metrics = new StressMetrics();
 		ArcadeCanvas canvas = null;
+		final ArcadeCanvas[] holder = new ArcadeCanvas[1];
+		Thread probe = null;
 		UIWindow window = null;
 		QualityController quality = new QualityController(ArcadeCanvas.FRAME_NANOS);
 		ArcadeRun arcadeRun = new ArcadeRun(plan.sequence(), ArcadeScoring.standard());
@@ -404,12 +408,25 @@ public final class StressRun {
 			final Method asyncExec = this.display.getClass().getMethod("asyncExec", Runnable.class);
 			final Object display = this.display;
 			canvas = new ArcadeCanvas(this.factory, window, source, task -> {
+				metrics.postedToUi();
 				try {
-					asyncExec.invoke(display, task);
+					asyncExec.invoke(display, (Runnable) () -> {
+						metrics.ranOnUi();
+						task.run();
+						if (this.config.updateAtOnce && holder[0] != null && !holder[0].getControl().isDisposed()) {
+							try {
+								Object nativeCanvas = holder[0].getControl().getClass().getMethod("getControl").invoke(holder[0].getControl());
+								Class.forName("org.eclipse.swt.widgets.Control").getMethod("update").invoke(nativeCanvas);
+							} catch (ReflectiveOperationException exception) {
+								throw new AssertionError(exception);
+							}
+						}
+					});
 				} catch (ReflectiveOperationException exception) {
 					throw new AssertionError(exception);
 				}
 			}, System::nanoTime, "Sans", this.config.fallback);
+			holder[0] = canvas;
 			((UITableLayout) window.getLayout()).set(canvas.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1,
 					(float) this.config.width, (float) this.config.height, 0f);
 			window.pack();
@@ -435,6 +452,26 @@ public final class StressRun {
 				}
 			}
 			metrics.beginRun(System.nanoTime());
+			// what the UI thread is doing, every 4 ms: only to explain a gap between two paints, if there is one
+			final Thread uiThread = Thread.currentThread();
+			final StressMetrics watched = metrics;
+			if (ArcadeStressTest.setting("tuxguitar.arcade.stress.probe", "").isEmpty()) {
+				// the probe stops the UI thread to read its stack: it is a diagnostic, never part of the acceptance run
+			} else {
+			probe = new Thread(() -> {
+				while (sampling.get() == 1) {
+					StackTraceElement[] stack = uiThread.getStackTrace();
+					StringBuilder where = new StringBuilder();
+					for (int i = 0; i < Math.min(3, stack.length); i++) {
+						where.append(i == 0 ? "" : " < ").append(stack[i].getClassName().replaceAll(".*\\.", "")).append('.').append(stack[i].getMethodName());
+					}
+					watched.sampleUiThread(System.nanoTime(), where.toString());
+					LockSupport.parkNanos(4_000_000L);
+				}
+			}, "stress-ui-probe");
+			probe.setDaemon(true);
+			probe.start();
+			}
 		}
 		FollowPlayback.Result started = run.start();
 		if (started != FollowPlayback.Result.STARTED) {
@@ -454,6 +491,7 @@ public final class StressRun {
 		boolean finished = ended.getCount() == 0;
 		if (canvas != null) {
 			canvas.stop();
+			metrics.schedulerFigures(canvas.scheduler().lost(), canvas.scheduler().skipped());
 		}
 		input.engine().unsubscribe(listener);
 		feeder.stop = true;

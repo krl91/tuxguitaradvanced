@@ -61,6 +61,7 @@ public class ArcadeStressTest {
 		text.append(String.format(Locale.ROOT, "- JVM: %d collections, %d ms in total%n", r.gcCount, r.gcMillis));
 		if (r.metrics.frames() > 0) {
 			text.append("- frames: ").append(r.metrics.describe()).append('\n');
+			text.append("- what the UI thread was doing in each gap of more than 40 ms between two paints:").append(r.metrics.explainGaps(40)).append('\n');
 			text.append("- renderer path: ").append(r.renderer).append('\n');
 			text.append("- quality tier at the end: ").append(r.tier).append(", ").append(r.tierChanges).append(" changes during the run\n");
 		}
@@ -79,6 +80,7 @@ public class ArcadeStressTest {
 				config.noteRate = Double.parseDouble(setting("tuxguitar.arcade.stress.noteRate", "3"));
 				config.render = plan[r].startsWith("render");
 				config.fallback = plan[r].equals("render-fallback");
+				config.updateAtOnce = plan[r].equals("render-update");
 				results[r] = new StressRun(config, display, factory).run();
 			}
 		});
