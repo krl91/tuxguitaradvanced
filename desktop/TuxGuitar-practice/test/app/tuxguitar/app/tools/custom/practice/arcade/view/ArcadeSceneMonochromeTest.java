@@ -64,7 +64,7 @@ public class ArcadeSceneMonochromeTest {
 		}
 		assertEquals(6, labels.size(), "six labels, one per string");
 		assertEquals(6, rows.size(), "six rows");
-		SceneItem ring = picture.forEvent(1, Role.TARGET_RING).get(0);
+		SceneItem ring = picture.forEvent(1, Role.TARGET_DISK).get(0);
 		SceneItem string = null;
 		for (SceneItem item : picture.withRole(Role.STRING_LABEL)) {
 			if (item.tgString() == 3) {

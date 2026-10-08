@@ -93,14 +93,14 @@ public class ArcadeSceneChordTest {
 		SceneFixture fixture = a5();
 		ArcadeScene scene = fixture.scene(false);
 		for (long offset : new long[] { -2900, -1000, -100, 100 }) {
-			List<SceneItem> ghosts = scene.build(fixture.onset(0) + offset * MS, SCREEN, null, 100).forEvent(0, Role.GHOST);
+			List<SceneItem> ghosts = scene.build(fixture.onset(0) + offset * MS, SCREEN, null, 100).forEvent(0, Role.TARGET_DISK);
 			assertEquals(3, ghosts.size(), "the three positions of the active chord, at " + offset + " ms");
 			assertEquals(fixture.colours.of(6), colourOfString(ghosts, 6));
 			assertEquals(fixture.colours.of(4), colourOfString(ghosts, 4));
 		}
 		Scene afterIt = scene.build(fixture.onset(0) - 100 * MS, SCREEN, ArcadeSceneTest.viewOf(ArcadeVerdict.ON_TIME, ArcadeVerdict.WAITING), 100);
-		assertTrue(afterIt.forEvent(0, Role.GHOST).isEmpty(), "completed: no longer on the neck");
-		assertEquals(1, afterIt.forEvent(1, Role.TARGET_RING).size(), "the following note takes its place");
+		assertTrue(afterIt.forEvent(0, Role.TARGET_DISK).isEmpty(), "completed: no longer on the neck");
+		assertEquals(1, afterIt.forEvent(1, Role.TARGET_DISK).size(), "the following note takes its place");
 	}
 
 	@Test

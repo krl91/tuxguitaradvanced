@@ -21,8 +21,6 @@ import javax.imageio.ImageIO;
  */
 public final class SceneImageWriter {
 
-	private static final Color BACKGROUND_TOP = new Color(0x080B10);
-	private static final Color BACKGROUND_BOTTOM = new Color(0x161B24);
 
 	private SceneImageWriter() {
 	}
@@ -34,7 +32,9 @@ public final class SceneImageWriter {
 		Graphics2D g = image.createGraphics();
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-		g.setPaint(new java.awt.GradientPaint(0, 0, BACKGROUND_TOP, 0, height, BACKGROUND_BOTTOM));
+		int base = scene.theme().background();
+		Color top = new Color(Math.max(0, ((base >> 16) & 0xFF) - 8), Math.max(0, ((base >> 8) & 0xFF) - 8), Math.max(0, (base & 0xFF) - 8));
+		g.setPaint(new java.awt.GradientPaint(0, 0, top, 0, height, new Color(base)));
 		g.fillRect(0, 0, width, height);
 		for (SceneItem item : scene.items()) {
 			g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) Math.max(0.0, Math.min(1.0, item.alpha()))));

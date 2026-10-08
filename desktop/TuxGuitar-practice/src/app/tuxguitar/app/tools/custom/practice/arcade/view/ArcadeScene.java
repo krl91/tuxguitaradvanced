@@ -26,6 +26,14 @@ public final class ArcadeScene {
 	static final int DIAGRAM_LINE = 0xB8BEC8;
 	static final int HEADER_COLOUR = 0x2F3647;
 	static final int HEADER_TEXT_COLOUR = 0xFFFFFF;
+	/** The outline of the target on the neck: the colour that stands out most from the neck (white on the dark neck, near black on the light one). */
+	static final int OUTLINE_COLOUR = 0xFEFEFE;
+	/** The width of the outline of a target, in logical pixels: between two and four (FR-065). */
+	public static final double OUTLINE_PX = 3.0;
+	/** The filled core of a target: the least and the most it measures, in logical pixels at the density of the display, and its share of the space between strings. */
+	public static final double TARGET_MIN_PX = 24.0;
+	public static final double TARGET_MAX_PX = 42.0;
+	public static final double TARGET_SPACING_SHARE = 0.60;
 
 	private final List<ArcadeRenderEvent> events;
 	private final NeckModel neck;
@@ -114,14 +122,38 @@ public final class ArcadeScene {
 	static final double GAP = 4.0;
 
 	private boolean densityBudget = true;
+	private Theme theme = Theme.DARK;
+	private double uiScale = 1.0;
 
 	/**
 	 * Switches the density budget off, for the measurement of the unreduced cost and for the proof that the budget changes nothing of the judgement
 	 * (SC-019). A view for the learner always has it on: the unreduced picture is unreadable (the owner refused it).
 	 */
 	public ArcadeScene withDensityBudget(boolean enabled) {
-		ArcadeScene copy = new ArcadeScene(this.events, this.neck, this.colours, this.camera, this.labels, this.monochrome);
+		ArcadeScene copy = copy();
 		copy.densityBudget = enabled;
+		return copy;
+	}
+
+	/** The same scene in another theme. */
+	public ArcadeScene withTheme(Theme theme) {
+		ArcadeScene copy = copy();
+		copy.theme = theme;
+		return copy;
+	}
+
+	/** The same scene for a display of another density: 1 is a normal one, 2 a Retina one. The target on the neck grows with it (FR-065). */
+	public ArcadeScene withUiScale(double scale) {
+		ArcadeScene copy = copy();
+		copy.uiScale = scale;
+		return copy;
+	}
+
+	private ArcadeScene copy() {
+		ArcadeScene copy = new ArcadeScene(this.events, this.neck, this.colours, this.camera, this.labels, this.monochrome);
+		copy.densityBudget = this.densityBudget;
+		copy.theme = this.theme;
+		copy.uiScale = this.uiScale;
 		return copy;
 	}
 
@@ -140,7 +172,7 @@ public final class ArcadeScene {
 	 * reorders an event of the timeline, the judging or the MIDI playback: a compact event is the same event, shown smaller.
 	 */
 	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier) {
-		Out out = new Out(this.monochrome);
+		Out out = new Out(this.monochrome, this.theme);
 		Frame f = new Frame(out, new IsometricProjection(viewport), this.camera.at(nowNanos), viewport, tier, nowNanos, this.camera.settings(), run);
 		drawNeck(out, f.projection, f.cam, viewport);
 
@@ -157,9 +189,10 @@ public final class ArcadeScene {
 				drawCompact(f, index, plan);
 			}
 		}
+		drawTargets(f, active);
 		drawBadges(f, plan);
 		drawHud(out, viewport, run, speedPercent);
-		return new Scene(out.items, nowNanos, viewport);
+		return new Scene(out.items, nowNanos, viewport, this.theme);
 	}
 
 	private static boolean isPlayable(ArcadeRenderEvent event) {
@@ -215,6 +248,33 @@ public final class ArcadeScene {
 			}
 		}
 		return low;
+	}
+
+	/**
+	 * The target on the physical neck (FR-060, FR-065): for the active event and for no other, one filled, fully opaque disk on each written string and fret,
+	 * in the colour of its string, with a high-contrast outline of {@value #OUTLINE_PX} logical pixels. A single note has one disk, a chord all of its
+	 * positions and only those, as one group. The core is the same size, at the same place and as opaque in every quality tier, in the fallback, at every
+	 * window size and in every theme; a halo may surround it as decoration, it never replaces or weakens it.
+	 */
+	private void drawTargets(Frame f, int active) {
+		if (active < 0) {
+			return;
+		}
+		ArcadeRenderEvent event = this.events.get(active);
+		int count = this.neck.layout().count();
+		double spacing = count > 1 ? Math.abs(f.projection.stringY(1, count) - f.projection.stringY(0, count)) : 40.0;
+		double diameter = Math.max(TARGET_MIN_PX * this.uiScale, Math.min(TARGET_MAX_PX * this.uiScale, TARGET_SPACING_SHARE * spacing));
+		double radius = diameter / 2.0;
+		for (ArcadeRenderEvent.Position position : event.positions()) {
+			ScreenPoint at = f.projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, f.cam);
+			int colour = this.colours.of(position.tgString());
+			if (f.tier.glow()) {
+				f.out.disc(Role.TARGET_HALO, at.x(), at.y(), radius * 1.7, radius * 1.7, colour, 0.28, event.index(), position.tgString());
+			}
+			f.out.disc(Role.TARGET_DISK, at.x(), at.y(), radius, radius, colour, 1.0, event.index(), position.tgString());
+			f.out.ring(Role.TARGET_OUTLINE, at.x(), at.y(), radius + OUTLINE_PX / 2.0, radius + OUTLINE_PX / 2.0, OUTLINE_COLOUR, 1.0, OUTLINE_PX, event.index(),
+					position.tgString());
+		}
 	}
 
 	/** The depth cues of the approach field: the lanes of the frets converging towards the horizon and a few lines across, at fixed shares of the way. */
@@ -720,13 +780,6 @@ public final class ArcadeScene {
 		if (!judged) {
 			out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
 		}
-		double ring = f.h * 0.026;
-		if (active) {
-			out.ring(Role.TARGET_RING, target.x(), target.y(), ring, ring, colour, alpha, 3.0, event.index(), position.tgString());
-			if (state.ordinal() >= RenderState.READABLE.ordinal()) {
-				out.ring(Role.GHOST, target.x(), target.y(), ring * 1.5, ring * 1.5, colour, alpha * 0.5, 1.5, event.index(), position.tgString());
-			}
-		}
 		if (f.tier.trails() && !judged) {
 			ScreenPoint behind = f.projection.approach(g.x, Math.max(0.0, f.progressOf(event) - 0.12), f.cam);
 			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.35, g.radius, event.index(), position.tgString());
@@ -760,15 +813,6 @@ public final class ArcadeScene {
 					0x000000, alpha * 0.35, event.index(), 0);
 		}
 		drawCartouche(out, cartouche, event, state, boxX, boxY, g.boxW, g.boxH, alpha);
-		if (active) {
-			int count = this.neck.layout().count();
-			for (ArcadeRenderEvent.Position position : event.positions()) {
-				ScreenPoint target = f.projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, f.cam);
-				double ring = f.h * 0.026;
-				out.ring(Role.GHOST, target.x(), target.y(), ring, ring, this.colours.of(position.tgString()), alpha * 0.5, 1.5, event.index(),
-						position.tgString());
-			}
-		}
 	}
 
 	private static final double HEADER_FONT_MIN = 9.0;
@@ -893,11 +937,15 @@ public final class ArcadeScene {
 		final List<SceneItem> items = new ArrayList<SceneItem>();
 		private final boolean monochrome;
 
-		Out(boolean monochrome) {
+		private final Theme theme;
+
+		Out(boolean monochrome, Theme theme) {
 			this.monochrome = monochrome;
+			this.theme = theme;
 		}
 
-		private int colour(int rgb) {
+		private int colour(int dark) {
+			int rgb = this.theme.map(dark);
 			if (!this.monochrome) {
 				return rgb;
 			}

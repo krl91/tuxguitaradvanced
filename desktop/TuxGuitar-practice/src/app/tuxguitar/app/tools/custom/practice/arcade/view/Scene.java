@@ -10,11 +10,17 @@ public final class Scene {
 	private final List<SceneItem> items;
 	private final long nowNanos;
 	private final Viewport viewport;
+	private final Theme theme;
 
-	Scene(List<SceneItem> items, long nowNanos, Viewport viewport) {
+	Scene(List<SceneItem> items, long nowNanos, Viewport viewport, Theme theme) {
 		this.items = Collections.unmodifiableList(items);
 		this.nowNanos = nowNanos;
 		this.viewport = viewport;
+		this.theme = theme;
+	}
+
+	public Theme theme() {
+		return this.theme;
 	}
 
 	public List<SceneItem> items() {

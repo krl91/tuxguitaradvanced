@@ -19,13 +19,14 @@ public class ArcadeSceneScaleTest {
 	public void doublingTheWindowDoublesEveryEssentialPositionAndTextSizeAndKeepsTheLabelsApart() {
 		for (ReferenceScenes.Reference reference : ReferenceScenes.all()) {
 			Scene one = reference.fixture.scene(false).build(reference.nowNanos, new Viewport(1280, 720), reference.run, 100);
-			Scene two = reference.fixture.scene(false).build(reference.nowNanos, new Viewport(2560, 1440), reference.run, 100);
-			for (Role role : new Role[] { Role.HIT_LINE, Role.STRING, Role.NUT, Role.FRET_WIRE, Role.STRING_LABEL, Role.FRET_NUMBER }) {
+			Scene two = reference.fixture.scene(false).withUiScale(2.0).build(reference.nowNanos, new Viewport(2560, 1440), reference.run, 100);
+			for (Role role : new Role[] { Role.HIT_LINE, Role.STRING, Role.NUT, Role.FRET_WIRE, Role.STRING_LABEL, Role.FRET_NUMBER, Role.TARGET_DISK, Role.TARGET_OUTLINE }) {
 				assertEquals(one.withRole(role).size(), two.withRole(role).size(), reference.name + " " + role);
 				for (int i = 0; i < one.withRole(role).size(); i++) {
 					SceneItem a = one.withRole(role).get(i);
 					SceneItem b = two.withRole(role).get(i);
-					for (int v = 0; v < a.valueCount(); v++) {
+					// the outline is a number of logical pixels, which the toolkit turns into physical ones: only its centre is a position
+					for (int v = 0; v < (role == Role.TARGET_OUTLINE ? 2 : a.valueCount()); v++) {
 						assertEquals(2.0 * a.value(v), b.value(v), 1e-6, reference.name + " " + role + " value " + v);
 					}
 				}
