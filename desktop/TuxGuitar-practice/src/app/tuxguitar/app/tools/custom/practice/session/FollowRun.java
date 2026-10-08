@@ -31,6 +31,7 @@ public final class FollowRun {
 		COMMAND
 	}
 
+	private final FollowHandler handler;
 	private final SessionLoop<FollowSession.Snapshot> loop;
 	private final FollowSession session;
 	private final FollowPlayback playback;
@@ -51,6 +52,7 @@ public final class FollowRun {
 		this.endListener = endListener;
 		this.uiExecutor = uiExecutor;
 		FollowHandler handler = new FollowHandler(session, player, restart, exception -> failed(), this::commanded);
+		this.handler = handler;
 		this.loop = new SessionLoop<FollowSession.Snapshot>(context, handler, snapshot -> {
 			try {
 				uiSink.accept(snapshot);
@@ -88,6 +90,38 @@ public final class FollowRun {
 			finish();
 		}
 		return result;
+	}
+
+	/**
+	 * The learner pauses (Arcade, spec 003 US5.2): the player stops where it is and the session stops judging, together. The events that go by
+	 * meanwhile are not judged. Nothing happens unless the run is going.
+	 */
+	public void pause() {
+		if (!this.finished.get() && this.playback.state() == FollowPlayback.State.PLAYING) {
+			this.playback.pause();
+			this.loop.post(() -> this.handler.pause(PracticeSession.PauseReason.USER));
+		}
+	}
+
+	/**
+	 * The learner resumes: the player counts in and plays again from where it stopped, and the session goes on when no other cause of pause remains
+	 * (an unusable input keeps it paused). The session does not judge during the count-in: the clock of the player is stalled until it moves.
+	 *
+	 * @return false when the run was not paused or the player could not start again (the run is then ended and everything given back)
+	 */
+	public boolean resume() {
+		if (this.finished.get() || this.playback.state() != FollowPlayback.State.PAUSED) {
+			return false;
+		}
+		if (!this.playback.resume()) {
+			ended(Ended.FAILED, this.uiExecutor);
+			return false;
+		}
+		this.loop.post(() -> {
+			this.handler.resolve(PracticeSession.PauseReason.USER);
+			return this.handler.onCommand(PracticeCommand.RESUME);
+		});
+		return true;
 	}
 
 	/** A frame of the analysis (any thread). */

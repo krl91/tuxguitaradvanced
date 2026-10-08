@@ -53,7 +53,9 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		INPUT_UNUSABLE,
 		TUNER_OPEN,
 		INPUT_CHANGED,
-		PLAYBACK
+		PLAYBACK,
+		/** The learner paused (Arcade, spec 003 US5.2); the wait mode never uses it. */
+		USER
 	}
 
 	/**

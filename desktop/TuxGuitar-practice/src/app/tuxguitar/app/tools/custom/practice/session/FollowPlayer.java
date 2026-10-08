@@ -48,6 +48,15 @@ public interface FollowPlayer {
 
 	void play() throws MidiPlayerException;
 
+	/**
+	 * Stops the sound where it is and keeps the position to play again from (the pause of a run, Arcade spec 003 US5.2). The stop notification this
+	 * causes comes later and from another thread.
+	 */
+	void pause();
+
+	/** Plays again from where {@link #pause()} stopped, with the count-down the player is set to give; the start notification comes later. */
+	void resume() throws MidiPlayerException;
+
 	void stop();
 
 	/** The clock of the player. Poll it with {@link #pollClock()}. */

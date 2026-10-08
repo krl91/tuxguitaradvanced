@@ -373,4 +373,61 @@ public class FollowRunTest {
 		assertTrue(this.fake.player.isRunning());
 		run.stop();
 	}
+
+	// ------------------------------------------------------------------ pause and resume of the whole run (spec 003 T021)
+
+	@Test
+	public void thePlayerAndTheSessionPauseAndResumeTogether() throws InterruptedException {
+		FollowRun run = newRun(this.fake);
+		run.start();
+		this.fake.player.advance(3_000 * MS);
+		await(snapshot -> snapshot.state() == State.COUNT_IN);
+
+		run.pause();
+		FollowSession.Snapshot paused = await(snapshot -> snapshot.state() == State.PAUSED);
+
+		assertTrue(paused.pauseReasons().contains(PracticeSession.PauseReason.USER));
+		assertFalse(this.fake.player.isRunning(), "the backing stops with the judging");
+		assertTrue(this.fake.player.isPlayerOnlyMuted(FakePlayerRun.TRACK), "the practised track stays silent");
+		assertEquals(0, this.ends.size(), "a pause is not an end");
+
+		assertTrue(run.resume());
+		await(snapshot -> snapshot.state() == State.COUNT_IN || snapshot.state() == State.FOLLOWING);
+
+		assertTrue(this.fake.player.isRunning(), "the backing plays again");
+		assertEquals(0, this.ends.size());
+		run.stop();
+		assertGivenBack(new FakeMidiPlayerView(this.fake));
+		assertEquals(List.of(Ended.STOPPED), this.ends);
+	}
+
+	@Test
+	public void aPauseOrAResumeThatMeansNothingChangesNothing() throws InterruptedException {
+		FollowRun run = newRun(this.fake);
+		assertFalse(run.resume(), "not started");
+		run.pause();
+		run.start();
+		assertFalse(run.resume(), "not paused");
+		run.stop();
+		List<String> calls = this.fake.player.calls();
+		run.pause();
+		assertFalse(run.resume(), "ended");
+		assertEquals(calls, this.fake.player.calls(), "an ended run does not touch the player again");
+	}
+
+	@Test
+	public void aPlayerThatCannotStartAgainEndsTheRunWithAFailureAndGivesBack() throws InterruptedException {
+		FollowRun run = newRun(this.fake);
+		run.start();
+		this.fake.player.advance(3_000 * MS);
+		run.pause();
+		await(snapshot -> snapshot.state() == State.PAUSED);
+		this.fake.player.failOnResume(true);
+
+		assertFalse(run.resume());
+
+		assertEquals(List.of(Ended.FAILED), this.ends);
+		assertGivenBack(new FakeMidiPlayerView(this.fake));
+		assertTrue(run.isFinished());
+	}
 }

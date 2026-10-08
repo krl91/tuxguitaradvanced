@@ -268,4 +268,140 @@ public class FollowPlaybackTest {
 		assertEquals(0, this.ends.size(), "a late notification after the stop is nothing");
 		assertGivenBack(player, 100, false, true);
 	}
+
+	// ------------------------------------------------------------------ pause and resume (spec 003 T020, T021, Arcade US5.2)
+
+	private FollowPlayback playing(FakeMidiPlayer player, int percent) throws InterruptedException {
+		FollowPlayback run = run(player, percent);
+		assertEquals(Result.STARTED, run.start());
+		player.advance(2_000 * MS);
+		player.advance(1_000 * MS);
+		assertTrue(player.fakeClock().isReady());
+		return run;
+	}
+
+	@Test
+	public void aPauseKeepsEverythingAsTheRunSetItAndResumeContinuesFromTheSamePlace() throws InterruptedException {
+		FakeMidiPlayer player = player();
+		FollowPlayback run = playing(player, 70);
+		double before = player.fakeClock().positionNow();
+
+		run.pause();
+
+		assertEquals(State.PAUSED, run.state());
+		assertFalse(player.isRunning());
+		assertTrue(player.isPlayerOnlyMuted(TRACK), "the practised track stays silent while paused");
+		assertEquals(70, player.tempoPercent());
+		assertEquals(1, player.listenerCount(), "the run is still listening");
+		assertEquals(0, this.ends.size(), "the stop caused by the pause is not an end");
+		assertTrue(player.fakeClock().isStalled(player.fakeClock().nowNanos()));
+		player.advance(10_000 * MS);
+		assertEquals(Math.floor(before), player.fakeClock().positionNow(), 1.0, "the position does not move while paused");
+
+		assertTrue(run.resume());
+
+		assertEquals(State.PLAYING, run.state());
+		assertTrue(player.isRunning());
+		assertEquals(0, this.ends.size(), "its own start after the pause is not a play of the learner");
+		assertEquals(Math.floor(before), (double) player.tickPosition(), 1.0, "it plays again from where it stopped");
+		player.advance(2_000 * MS);
+		assertFalse(player.fakeClock().isReady() && player.isCounting(), "the count-in of the resume runs first");
+		player.advance(1_000 * MS);
+		assertEquals(Math.floor(before) + 1920.0, player.fakeClock().positionNow(), 40.0, "then the clock goes on at the same speed");
+	}
+
+	@Test
+	public void pausingTwiceOrResumingWithoutAPauseChangesNothing() throws InterruptedException {
+		FakeMidiPlayer player = player();
+		FollowPlayback run = playing(player, 70);
+
+		assertFalse(run.resume(), "nothing to resume");
+		run.pause();
+		List<String> afterFirst = player.calls();
+		run.pause();
+		assertEquals(afterFirst, player.calls(), "a second pause does nothing");
+		assertTrue(run.resume());
+		List<String> afterResume = player.calls();
+		assertFalse(run.resume(), "a second resume does nothing");
+		assertEquals(afterResume, player.calls());
+	}
+
+	@Test
+	public void stoppingWhilePausedGivesBackEverythingExactlyOnce() throws InterruptedException {
+		FakeMidiPlayer player = player();
+		FollowPlayback run = playing(player, 70);
+		run.pause();
+
+		run.stop();
+		run.stop();
+
+		assertGivenBack(player, 100, false, true);
+		assertEquals(1, player.calls().stream().filter("mute-2=false"::equals).count());
+		assertEquals(0, this.ends.size());
+		assertFalse(run.resume(), "an ended run does not resume");
+	}
+
+	@Test
+	public void aPlayOfTheLearnerWhilePausedEndsTheRunAndTheirPlaybackGoesOn() throws InterruptedException {
+		FakeMidiPlayer player = player();
+		FollowPlayback run = playing(player, 70);
+		run.pause();
+
+		player.learnerPlays();
+
+		assertEquals(List.of(EndReason.MANUAL_PLAY), this.ends);
+		assertFalse(player.isPlayerOnlyMuted(TRACK));
+		assertEquals(100, player.tempoPercent());
+		assertTrue(player.isRunning(), "the learner's playback is not stopped");
+		assertEquals(0, player.listenerCount());
+	}
+
+	@Test
+	public void aPauseDuringTheCountInAndALateStopNotificationAreBothHandled() throws InterruptedException {
+		FakeMidiPlayer player = player().autoStopNotification(false).autoStartNotification(false);
+		FollowPlayback run = run(player, 70);
+		run.start();
+		player.deliverStartNotification();
+		player.advance(800 * MS);
+		assertTrue(player.isCounting());
+
+		run.pause();
+		assertFalse(player.isCounting(), "the count-in stops with the pause");
+		assertTrue(run.resume());
+		player.deliverStopNotification();           // the stop caused by the pause arrives after the new play was asked
+		player.deliverStartNotification();          // and then the start of the new play
+
+		assertEquals(State.PLAYING, run.state());
+		assertEquals(0, this.ends.size(), "a late stop of the pause is not the end of the run");
+		player.advance(2_500 * MS);
+		assertTrue(player.fakeClock().isReady(), "the count-in ran again, then the clock started");
+		run.stop();
+		assertGivenBack(player, 100, false, true);
+	}
+
+	@Test
+	public void aPlayerThatCannotStartAgainAfterAPauseGivesBackEverything() throws InterruptedException {
+		FakeMidiPlayer player = player().failOnResume(true);
+		FollowPlayback run = playing(player, 70);
+		run.pause();
+
+		assertFalse(run.resume());
+
+		assertEquals(State.ENDED, run.state());
+		assertGivenBack(player, 100, false, true);
+		assertEquals(0, this.ends.size(), "the caller got the failure from resume()");
+	}
+
+	@Test
+	public void theEndOfTheSongWhilePausedIsNotMistakenForAnEndOfTheRunButStopStillGivesBack() throws InterruptedException {
+		FakeMidiPlayer player = player();
+		FollowPlayback run = playing(player, 70);
+		run.pause();
+
+		player.deliverStopNotification();
+
+		assertEquals(State.PAUSED, run.state());
+		run.stop();
+		assertGivenBack(player, 100, false, true);
+	}
 }

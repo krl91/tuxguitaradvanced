@@ -17,6 +17,8 @@ public final class FollowPlayback implements FollowPlayer.Listener {
 		IDLE,
 		STARTING,
 		PLAYING,
+		/** Stopped where it was by {@link #pause()}: the mute, the percentage and the listener are still the run's. */
+		PAUSED,
 		ENDED
 	}
 
@@ -52,6 +54,8 @@ public final class FollowPlayback implements FollowPlayer.Listener {
 	private State state = State.IDLE;
 	private boolean ownStartPending;
 	private boolean ownStopAsked;
+	/** After {@link #resume()}: the stop notification of the pause may still arrive, before the start notification of the new play. */
+	private boolean staleStopPossible;
 	private int previousPercent;
 	private boolean previousCountDown;
 	private boolean previousLoop;
@@ -136,12 +140,13 @@ public final class FollowPlayback implements FollowPlayer.Listener {
 	public void playbackStarted() {
 		EndReason reason = null;
 		synchronized (this) {
-			if (this.state != State.STARTING && this.state != State.PLAYING) {
+			if (this.state != State.STARTING && this.state != State.PLAYING && this.state != State.PAUSED) {
 				return;
 			}
-			if (this.ownStartPending) {
-				// the start of the run's own play
+			if (this.ownStartPending && this.state != State.PAUSED) {
+				// the start of the run's own play (the first one, or the one after a pause)
 				this.ownStartPending = false;
+				this.staleStopPossible = false;
 				return;
 			}
 			reason = EndReason.MANUAL_PLAY;
@@ -152,14 +157,56 @@ public final class FollowPlayback implements FollowPlayer.Listener {
 	@Override
 	public void playbackStopped() {
 		synchronized (this) {
-			if (this.state != State.STARTING && this.state != State.PLAYING) {
+			if (this.state != State.STARTING && this.state != State.PLAYING && this.state != State.PAUSED) {
 				return;
 			}
 			if (this.ownStopAsked) {
 				return;
 			}
+			if (this.state == State.PAUSED || this.staleStopPossible) {
+				// the stop caused by the run's own pause: not an end of the run
+				return;
+			}
 		}
 		endBy(EndReason.PLAYER_STOPPED);
+	}
+
+	/**
+	 * Stops the sound where it is and keeps the position to resume from; everything the run changed stays as it is (the practised track silent, the
+	 * percentage, the listener). Nothing happens unless the run is playing.
+	 */
+	public void pause() {
+		synchronized (this) {
+			if (this.state != State.PLAYING && this.state != State.STARTING) {
+				return;
+			}
+			this.state = State.PAUSED;
+			this.ownStartPending = false;
+		}
+		this.player.pause();
+	}
+
+	/**
+	 * Plays again from where {@link #pause()} stopped, with a count-in. Nothing happens unless the run is paused.
+	 *
+	 * @return false when there was nothing to resume or the player could not start again (everything is then given back)
+	 */
+	public boolean resume() {
+		synchronized (this) {
+			if (this.state != State.PAUSED) {
+				return false;
+			}
+			this.state = State.PLAYING;
+			this.ownStartPending = true;
+			this.staleStopPossible = true;
+		}
+		try {
+			this.player.resume();
+		} catch (MidiPlayerException | RuntimeException exception) {
+			giveBack(true);
+			return false;
+		}
+		return true;
 	}
 
 	private void endBy(EndReason reason) {

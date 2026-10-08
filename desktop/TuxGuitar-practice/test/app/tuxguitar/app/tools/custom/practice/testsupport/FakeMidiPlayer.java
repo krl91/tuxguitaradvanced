@@ -39,6 +39,8 @@ public final class FakeMidiPlayer implements FollowPlayer {
 	private int listenerAdds;
 	private int listenerRemoves;
 	private boolean clockPolled;
+	private boolean failOnResume;
+	private boolean autoStopNotification = true;
 
 	public FakeMidiPlayer(FakeTempoClock clock) {
 		this.clock = clock;
@@ -66,6 +68,18 @@ public final class FakeMidiPlayer implements FollowPlayer {
 	/** The player refuses to be positioned, with a runtime exception (a player that is being closed). */
 	public FakeMidiPlayer failOnTickPosition(boolean fail) {
 		this.failOnTickPosition = fail;
+		return this;
+	}
+
+	/** The player cannot start again after a pause. */
+	public FakeMidiPlayer failOnResume(boolean fail) {
+		this.failOnResume = fail;
+		return this;
+	}
+
+	/** False: the stop notification of a pause comes only when the test calls {@link #deliverStopNotification()}, as the real one comes later. */
+	public FakeMidiPlayer autoStopNotification(boolean auto) {
+		this.autoStopNotification = auto;
 		return this;
 	}
 
@@ -104,6 +118,13 @@ public final class FakeMidiPlayer implements FollowPlayer {
 	public void deliverStartNotification() {
 		for (Listener listener : this.listeners) {
 			listener.playbackStarted();
+		}
+	}
+
+	/** The stop notification of the player, late: after a pause it may arrive when the run has already asked to play again. */
+	public void deliverStopNotification() {
+		for (Listener listener : this.listeners) {
+			listener.playbackStopped();
 		}
 	}
 
@@ -266,6 +287,41 @@ public final class FakeMidiPlayer implements FollowPlayer {
 			for (Listener listener : this.listeners) {
 				listener.playbackStopped();
 			}
+		}
+	}
+
+	@Override
+	public void pause() {
+		this.calls.add("pause");
+		if (this.clock.isStarted()) {
+			this.tickPosition = (long) Math.floor(this.clock.positionNow());
+			this.clock.pause();
+		}
+		boolean wasRunning = this.running;
+		this.running = false;
+		this.counting = false;
+		if (wasRunning && this.autoStopNotification) {
+			deliverStopNotification();
+		}
+	}
+
+	@Override
+	public void resume() throws MidiPlayerException {
+		this.calls.add("resume");
+		if (this.failOnResume) {
+			throw new MidiPlayerException("the player cannot start again", new RuntimeException("test"));
+		}
+		boolean notify = !this.running;
+		this.running = true;
+		if (this.countDown) {
+			this.counting = true;
+			this.countDownRemaining = this.countDownNanos;
+		} else {
+			this.clock.start(this.tickPosition);
+			this.calls.add("clock-started");
+		}
+		if (notify && this.autoStartNotification) {
+			deliverStartNotification();
 		}
 	}
 

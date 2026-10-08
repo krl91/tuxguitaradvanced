@@ -109,6 +109,22 @@ public final class MidiFollowPlayer implements FollowPlayer, TGEventListener {
 		this.player.play();
 	}
 
+	private long pausedTick = -1L;
+
+	@Override
+	public void pause() {
+		this.pausedTick = this.player.getTickPosition();
+		this.player.pause();
+	}
+
+	@Override
+	public void resume() throws MidiPlayerException {
+		if (this.pausedTick >= 0) {
+			this.player.setTickPosition(this.pausedTick);
+		}
+		this.player.play();
+	}
+
 	@Override
 	public void stop() {
 		this.player.stop();

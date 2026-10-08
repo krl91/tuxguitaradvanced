@@ -95,7 +95,7 @@ final class FakePlayerRun {
 					}
 					return T0 + frame.getTimestampNanos();
 				},
-				() -> new TimingContext(tolerance, this.compensation, new ClockUncertainty(this.spreadMillis), this.captureReady, this.clock.isReady()),
+				() -> new TimingContext(tolerance, this.compensation, new ClockUncertainty(this.spreadMillis), this.captureReady, this.clock.isReady() && !this.clock.isStalled(this.clock.nowNanos())),
 				new NoteInterpreter(0.8), new TolerancePolicy(5.0, 25.0), new ChordMatcher(ChordMatcher.Parameters.defaults()), STABILITY, articulationLatency);
 		this.session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		this.session.setTrackAccepted(true);
