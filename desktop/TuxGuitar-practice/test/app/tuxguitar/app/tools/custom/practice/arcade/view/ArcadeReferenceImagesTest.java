@@ -17,9 +17,9 @@ public class ArcadeReferenceImagesTest {
 		for (ReferenceScenes.Reference reference : ReferenceScenes.all()) {
 			String base = "arcade-" + reference.name;
 			SceneImageWriter.write(reference.scene(false, QualityTier.FULL), new File(directory, base + "-full.png"));
-			SceneImageWriter.write(reference.scene(false, QualityTier.PERFORMANCE), new File(directory, base + "-performance.png"));
+			SceneImageWriter.write(reference.scene(false, QualityTier.PERFORMANCE), new File(directory, base + "-performance.png"), QualityTier.PERFORMANCE);
 			SceneImageWriter.write(reference.scene(true, QualityTier.FULL), new File(directory, base + "-monochrome-full.png"));
-			SceneImageWriter.write(reference.scene(true, QualityTier.PERFORMANCE), new File(directory, base + "-monochrome-performance.png"));
+			SceneImageWriter.write(reference.scene(true, QualityTier.PERFORMANCE), new File(directory, base + "-monochrome-performance.png"), QualityTier.PERFORMANCE);
 			SceneImageWriter.write(reference.fixture.scene(false).withTheme(Theme.LIGHT).build(reference.nowNanos, ReferenceScenes.SCREEN, reference.run, 100, QualityTier.FULL),
 					new File(directory, base + "-light-full.png"));
 		}

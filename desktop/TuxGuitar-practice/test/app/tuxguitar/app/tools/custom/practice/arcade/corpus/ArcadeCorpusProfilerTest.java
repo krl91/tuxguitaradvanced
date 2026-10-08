@@ -195,7 +195,7 @@ public class ArcadeCorpusProfilerTest {
 				Scene scene = p.scene(false).build(now, CorpusScenes.SCREEN, CorpusScenes.runOf(p, anchor, Moment.ARMED), 100, tier);
 				assertTrue(!scene.withRole(Role.TARGET_DISK).isEmpty(), c.id + ": the capture must hold an active target");
 				String name = c.id + "-" + tier.name().toLowerCase(Locale.ROOT) + ".png";
-				SceneImageWriter.write(scene, images.resolve(name).toFile());
+				SceneImageWriter.write(scene, images.resolve(name).toFile(), tier);
 				html.append("<img src=\"").append(name).append("\" alt=\"").append(name).append("\">");
 				imagesWritten++;
 			}
