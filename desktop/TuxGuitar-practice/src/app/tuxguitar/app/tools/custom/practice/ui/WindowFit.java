@@ -35,6 +35,40 @@ final class WindowFit {
 	}
 
 	/**
+	 * Like {@link #refit(UIWindow, UIRectangle)} for a window whose main content is in a vertical scroll area that does not ask for its height (so that the
+	 * window can be shorter than the content): the window grows to the content, but never past {@value #SCREEN_SHARE} of the reference area, and what does not
+	 * fit scrolls. Its minimum height is small, so that the learner can shrink it.
+	 *
+	 * @param content the packed size of what is in the scroll area
+	 */
+	static void refit(UIWindow window, UIRectangle area, UISize content) {
+		if( window == null || window.isDisposed() ) {
+			return;
+		}
+		window.computePackedSize(null, null);
+		UISize packed = window.getPackedSize();
+		float cap = (area != null && area.getHeight() > 0 ? area.getHeight() * SCREEN_SHARE : Float.MAX_VALUE);
+		float wanted = Math.min(packed.getHeight() + content.getHeight(), cap);
+		float width = Math.max(packed.getWidth(), content.getWidth() + SCROLL_BAR_WIDTH);
+		window.setMinimumSize(Math.round(width), Math.round(Math.min(wanted, MINIMUM_HEIGHT)));
+		UIRectangle current = window.getBounds();
+		UIRectangle fitted = fit(current, new UISize(width, wanted), area);
+		if( fitted.getHeight() > cap ) {
+			fitted = new UIRectangle(fitted.getX(), fitted.getY(), fitted.getWidth(), cap);
+		}
+		if( !same(current, fitted) ) {
+			window.setBounds(fitted);
+		} else {
+			window.layout();
+		}
+	}
+
+	/** The share of the reference area that a window with a scroll area may take in height. */
+	static final float SCREEN_SHARE = 0.92f;
+	private static final float SCROLL_BAR_WIDTH = 24f;
+	private static final float MINIMUM_HEIGHT = 360f;
+
+	/**
 	 * The bounds that show the whole content: at least the packed size (never smaller than
 	 * the current size), positioned inside {@code area} where it fits (top-left aligned with
 	 * the area when it is larger). The size is never capped: hiding controls is worse than

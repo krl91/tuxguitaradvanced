@@ -62,12 +62,15 @@ import app.tuxguitar.ui.event.UIDisposeEvent;
 import app.tuxguitar.ui.event.UIDisposeListener;
 import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
+import app.tuxguitar.ui.layout.UIScrollBarPanelLayout;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.widget.UIButton;
+import app.tuxguitar.ui.widget.UIContainer;
 import app.tuxguitar.ui.widget.UIControl;
 import app.tuxguitar.ui.widget.UIDropDownSelect;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
+import app.tuxguitar.ui.widget.UIScrollBarPanel;
 import app.tuxguitar.ui.widget.UISelectItem;
 import app.tuxguitar.ui.widget.UIWindow;
 import app.tuxguitar.util.TGContext;
@@ -97,6 +100,7 @@ public class PracticeWindow {
 
 	private UIWindow window;
 	private UIPanel preparation;
+	private UIScrollBarPanel preparationScroll;
 	private PracticePalette palette;
 	private InputSelectorPanel inputSelector;
 	private LevelPanel levelPanel;
@@ -199,8 +203,17 @@ public class PracticeWindow {
 		this.window.setImage(TuxGuitar.getInstance().getIconManager().getAppIcon());
 		this.window.setText(TuxGuitar.getProperty(PracticePlugin.OPEN_ACTION_ID));
 
-		this.preparation = createPreparation(uiFactory);
-		windowLayout.set(this.preparation, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 480f, null, null);
+		// the preparation is taller than a small screen when the mode adds its controls: it scrolls, and the window never asks for more than the screen holds
+		this.preparationScroll = uiFactory.createScrollBarPanel(this.window, true, false, false);
+		this.preparationScroll.setLayout(new UIScrollBarPanelLayout(false, true, true, false, false, true));
+		this.preparationScroll.getVScroll().setIncrement(40);
+		this.preparationScroll.getVScroll().addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				PracticeWindow.this.preparationScroll.layout();
+			}
+		});
+		this.preparation = createPreparation(uiFactory, this.preparationScroll);
+		windowLayout.set(this.preparationScroll, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 480f, 200f, null);
 
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel buttons = uiFactory.createPanel(this.window, false);
@@ -298,8 +311,8 @@ public class PracticeWindow {
 
 	// ---------------------------------------------------------------- preparation (FR-002)
 
-	private UIPanel createPreparation(UIFactory uiFactory) {
-		UIPanel panel = uiFactory.createPanel(this.window, false);
+	private UIPanel createPreparation(UIFactory uiFactory, UIContainer parent) {
+		UIPanel panel = uiFactory.createPanel(parent, false);
 		UITableLayout layout = new UITableLayout();
 		panel.setLayout(layout);
 
@@ -1060,7 +1073,8 @@ public class PracticeWindow {
 	/** Applies the packed/minimum size after a content or state change (all controls stay visible). */
 	private void refit() {
 		if( isOpen() ) {
-			WindowFit.refit(this.window, TGWindow.getInstance(this.context).getWindow().getBounds());
+			this.preparation.computePackedSize(null, null);
+			WindowFit.refit(this.window, TGWindow.getInstance(this.context).getWindow().getBounds(), this.preparation.getPackedSize());
 		}
 	}
 
