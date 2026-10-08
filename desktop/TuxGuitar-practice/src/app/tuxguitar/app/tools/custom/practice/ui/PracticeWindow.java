@@ -99,6 +99,7 @@ public class PracticeWindow {
 
 	private UIWindow window;
 	private UITabFolder preparation;
+	private final java.util.List<UIPanel> tabPanels = new java.util.ArrayList<UIPanel>();
 	private PracticePalette palette;
 	private InputSelectorPanel inputSelector;
 	private LevelPanel levelPanel;
@@ -265,7 +266,9 @@ public class PracticeWindow {
 		}
 		if( !this.windowShown ) {
 			this.windowShown = true;
+			refit();
 			TGDialogUtil.openDialog(this.window, TGDialogUtil.OPEN_STYLE_CENTER | TGDialogUtil.OPEN_STYLE_PACK);
+			refit();
 		} else {
 			setVisible(this.window, true);
 			this.window.moveToTop();
@@ -359,11 +362,12 @@ public class PracticeWindow {
 	}
 
 	/** One tab of the preparation: its text and a panel with its own layout. */
-	private static UIPanel tab(UIFactory uiFactory, UITabFolder folder, String key, UITableLayout layout) {
+	private UIPanel tab(UIFactory uiFactory, UITabFolder folder, String key, UITableLayout layout) {
 		UITabItem item = folder.createTab();
 		item.setText(TuxGuitar.getProperty(key));
 		UIPanel panel = uiFactory.createPanel(item, false);
 		panel.setLayout(layout);
+		tabPanels.add(panel);
 		return panel;
 	}
 
@@ -1078,6 +1082,15 @@ public class PracticeWindow {
 	/** Applies the packed/minimum size after a content or state change (all controls stay visible). */
 	private void refit() {
 		if( isOpen() ) {
+			// the folder asks for the height of its tallest tab, so that no tab needs the window to be resized by hand
+			float tallest = 0f;
+			for( UIPanel tabPanel : this.tabPanels ) {
+				if( !tabPanel.isDisposed() ) {
+					tabPanel.computePackedSize(null, null);
+					tallest = Math.max(tallest, tabPanel.getPackedSize().getHeight());
+				}
+			}
+			((UITableLayout) this.window.getLayout()).set(this.preparation, UITableLayout.PACKED_HEIGHT, tallest + 48f);
 			WindowFit.refit(this.window, TGWindow.getInstance(this.context).getWindow().getBounds());
 		}
 	}
