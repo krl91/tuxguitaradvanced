@@ -6,25 +6,23 @@ package app.tuxguitar.app.tools.custom.practice.arcade.view;
  * cues and the verdicts are the same at every tier, at the same instants.
  */
 public enum QualityTier {
-	/** Glow, trails and soft shadows, the best antialiasing, the field at full resolution. */
-	FULL(true, true, true, true, 1.0),
+	/** Glow, trails and soft shadows, the best antialiasing. */
+	FULL(true, true, true, true),
 	/** A simpler glow only; cheaper antialiasing. */
-	BALANCED(true, false, false, true, 1.0),
-	/** No decoration; the field may be drawn at a lower resolution and scaled up, the text and the controls never. */
-	PERFORMANCE(false, false, false, false, 0.6);
+	BALANCED(true, false, false, true),
+	/** No decoration and no antialiasing of the field. */
+	PERFORMANCE(false, false, false, false);
 
 	private final boolean glow;
 	private final boolean trails;
 	private final boolean shadows;
 	private final boolean antialias;
-	private final double fieldResolution;
 
-	QualityTier(boolean glow, boolean trails, boolean shadows, boolean antialias, double fieldResolution) {
+	QualityTier(boolean glow, boolean trails, boolean shadows, boolean antialias) {
 		this.glow = glow;
 		this.trails = trails;
 		this.shadows = shadows;
 		this.antialias = antialias;
-		this.fieldResolution = fieldResolution;
 	}
 
 	public boolean glow() {
@@ -42,11 +40,6 @@ public enum QualityTier {
 	/** True when the painter should antialias the field. */
 	public boolean antialias() {
 		return this.antialias;
-	}
-
-	/** The share of the field's resolution to paint at (1 = native). Text, hit line and controls are always native. */
-	public double fieldResolution() {
-		return this.fieldResolution;
 	}
 
 	/** The next tier down in cost, or this one at the bottom. */

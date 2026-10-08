@@ -64,8 +64,6 @@ public class ArcadeSceneQualityTest {
 	@Test
 	public void theTiersAskForLessAndLessFromThePainter() {
 		assertTrue(QualityTier.FULL.antialias() && QualityTier.BALANCED.antialias() && !QualityTier.PERFORMANCE.antialias());
-		assertEquals(1.0, QualityTier.FULL.fieldResolution(), 0.0);
-		assertTrue(QualityTier.PERFORMANCE.fieldResolution() < QualityTier.BALANCED.fieldResolution());
 		assertEquals(QualityTier.PERFORMANCE, QualityTier.PERFORMANCE.cheaper());
 		assertEquals(QualityTier.FULL, QualityTier.FULL.richer());
 	}

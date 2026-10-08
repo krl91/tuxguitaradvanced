@@ -142,20 +142,20 @@ public class ArcadeSceneDensityTest {
 		SceneFixture fixture = crowded(32);
 		Scene scene = fixture.scene(false).build(fixture.onset(0) - 150 * MS, SCREEN, null, 100, QualityTier.FULL);
 		Set<Integer> detailed = SceneBoxes.detailed(scene);
-		int previews = 0;
+		Set<Integer> previewed = new TreeSet<Integer>();
 		for (SceneItem item : scene.items()) {
 			if (item.eventIndex() < 0 || detailed.contains(item.eventIndex())) {
 				continue;
 			}
-			assertTrue(item.role() == Role.PREVIEW || item.role() == Role.PREVIEW_BAR, "a compact event shows only a marker or a bar: " + item);
-			previews++;
+			assertTrue(item.role() == Role.PREVIEW || item.role() == Role.PREVIEW_BAR || item.role() == Role.CHORD_CHIP, "a compact event shows only a marker or a bar, and perhaps the name of a chord: " + item);
+			previewed.add(item.eventIndex());
 			if (item.role() == Role.PREVIEW) {
 				assertEquals(SceneItem.Shape.DISC, item.shape());
 				assertTrue(item.tgString() > 0, "a note preview is in the colour of its string");
 			}
 		}
-		assertTrue(previews >= 8, "the look-ahead is still shown, as previews: " + previews);
-		assertTrue(previews <= ArcadeScene.MAX_COMPACT);
+		assertTrue(previewed.size() >= 8, "the look-ahead is still shown, as previews: " + previewed);
+		assertTrue(previewed.size() <= ArcadeScene.MAX_COMPACT);
 	}
 
 	@Test

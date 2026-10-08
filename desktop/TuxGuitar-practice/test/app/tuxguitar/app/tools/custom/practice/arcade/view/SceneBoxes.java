@@ -103,6 +103,7 @@ public final class SceneBoxes {
 					boxes.add(ofQuad(item));
 					break;
 				case EVENT_TEXT:
+				case CHORD_CHIP:
 				case HUD_STREAK:
 				case HUD_SPEED:
 				case FRET_NUMBER:

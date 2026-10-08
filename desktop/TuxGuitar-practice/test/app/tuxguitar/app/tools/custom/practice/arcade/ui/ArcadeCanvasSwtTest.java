@@ -23,6 +23,7 @@ import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeReferenceSceneT
 import app.tuxguitar.app.tools.custom.practice.arcade.view.QualityController;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.QualityTier;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ReferenceScenes;
+import app.tuxguitar.app.tools.custom.practice.arcade.view.SceneBoxes;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.SceneCapture;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.SceneFixture;
 import app.tuxguitar.app.tools.custom.practice.model.SongFixture;
@@ -54,11 +55,16 @@ public class ArcadeCanvasSwtTest {
 		final Thread uiThread = Thread.currentThread();
 
 		Harness(Object display, UIFactory factory, SceneFixture fixture, int width, int height) throws Exception {
-			this(display, factory, fixture, width, height, null);
+			this(display, factory, fixture, width, height, null, false);
 		}
 
 		Harness(Object display, UIFactory factory, SceneFixture fixture, int width, int height, app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun.View run)
 				throws Exception {
+			this(display, factory, fixture, width, height, run, false);
+		}
+
+		Harness(Object display, UIFactory factory, SceneFixture fixture, int width, int height, app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun.View run,
+				boolean forceFallback) throws Exception {
 			this.display = display;
 			this.factory = factory;
 			this.window = factory.createWindow();
@@ -76,7 +82,7 @@ public class ArcadeCanvasSwtTest {
 				} catch (ReflectiveOperationException exception) {
 					throw new AssertionError(exception);
 				}
-			}, this.clock::nowNanos, "Sans");
+			}, this.clock::nowNanos, "Sans", forceFallback);
 			((UITableLayout) this.window.getLayout()).set(this.canvas.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, (float) width,
 					(float) height, 0f);
 			this.window.pack();
@@ -193,6 +199,104 @@ public class ArcadeCanvasSwtTest {
 				} finally {
 					harness.close();
 				}
+			}
+		});
+	}
+
+	@Test
+	public void aForcedFallbackCanvasPaintsEveryReferenceWithTheSameScene() throws Exception {
+		withDisplay((display, factory) -> {
+			for (ReferenceScenes.Reference reference : ReferenceScenes.all()) {
+				Harness harness = new Harness(display, factory, reference.fixture, 1280, 720, reference.run, true);
+				try {
+					assertTrue(harness.canvas.rendererName().contains("toolkit painter"), "named before the first paint: " + harness.canvas.rendererName());
+					harness.clock.start(FIRST_TICK);
+					harness.clock.seek(FIRST_TICK + reference.tick);
+					assertTrue(harness.paintOneFrame(), reference.name + " painted by the fallback");
+					assertTrue(harness.canvas.rendererName().contains("fallback"), harness.canvas.rendererName());
+					assertEquals(ArcadeReferenceSceneTest.expected(reference.name),
+							SceneCapture.of(harness.source.frame(harness.clock.nowNanos(), ReferenceScenes.SCREEN)), reference.name + ": the fallback changed the scene");
+				} finally {
+					harness.close();
+				}
+			}
+		});
+	}
+
+	@Test
+	public void aLiveResizeKeepsPaintingAndKeepsTheLabelsApartAtEverySize() throws Exception {
+		withDisplay((display, factory) -> {
+			ReferenceScenes.Reference reference = ReferenceScenes.denseRealistic();
+			Harness harness = new Harness(display, factory, reference.fixture, 1280, 720, reference.run);
+			try {
+				harness.clock.start(FIRST_TICK);
+				harness.clock.seek(FIRST_TICK + reference.tick);
+				int[][] sizes = { { 640, 360 }, { 800, 450 }, { 1280, 720 }, { 1600, 900 }, { 2560, 1440 }, { 1280, 720 }, { 480, 300 }, { 1920, 1080 }, { 1000, 600 } };
+				int painted = 0;
+				for (int[] size : sizes) {
+					harness.window.setBounds(new UIRectangle(20, 20, size[0], size[1]));
+					harness.flush();
+					for (int frame = 0; frame < 5; frame++) {
+						if (harness.paintOneFrame()) {
+							painted++;
+						}
+					}
+					UIRectangle bounds = harness.canvas.getControl().getBounds();
+					app.tuxguitar.app.tools.custom.practice.arcade.view.Viewport viewport = new app.tuxguitar.app.tools.custom.practice.arcade.view.Viewport(bounds.getWidth(), bounds.getHeight());
+					app.tuxguitar.app.tools.custom.practice.arcade.view.Scene scene = harness.source.frame(harness.clock.nowNanos(), viewport);
+					assertEquals(null, SceneBoxes.firstOverlap(SceneBoxes.labels(scene)), "labels at " + size[0] + "x" + size[1]);
+					for (SceneBoxes.Box box : SceneBoxes.labels(scene)) {
+						assertTrue(box.x1 >= 0 && box.y1 >= 0 && box.x2 <= viewport.width() && box.y2 <= viewport.height(), "clipped at " + size[0] + "x" + size[1] + ": " + box);
+					}
+					assertEquals(viewport.height() * 0.60, scene.withRole(app.tuxguitar.app.tools.custom.practice.arcade.view.SceneItem.Role.HIT_LINE).get(0).value(1), 0.01,
+							"the hit line keeps its place at " + size[0] + "x" + size[1]);
+				}
+				assertEquals(sizes.length * 5, painted, "every frame asked for during the resize was painted");
+			} finally {
+				harness.close();
+			}
+		});
+	}
+
+	@Test
+	public void reportTheFallbackFrameRateAndTierOnADensePassage() throws Exception {
+		withDisplay((display, factory) -> {
+			SceneFixture fixture = dense();
+			Harness harness = new Harness(display, factory, fixture, 1280, 720, null, true);
+			try {
+				harness.clock.start(FIRST_TICK);
+				int frames = 600;
+				double[] costs = new double[frames];
+				int painted = 0;
+				long begin = System.nanoTime();
+				for (int f = 0; f < frames; f++) {
+					double position = (double) f / frames * (fixture.events.size() - 16) + 8;
+					int event = (int) position;
+					long ticks = fixture.timeline.targetTicks(event) + Math.round((position - event)
+							* (fixture.timeline.targetTicks(event + 1) - fixture.timeline.targetTicks(event)));
+					harness.clock.seek(FIRST_TICK + ticks);
+					if (harness.paintOneFrame()) {
+						costs[painted++] = harness.canvas.lastFrameCostNanos() / 1e6;
+					}
+				}
+				double seconds = (System.nanoTime() - begin) / 1e9;
+				assertTrue(painted > frames / 2, "most requested frames were really painted: " + painted);
+				double[] sorted = Arrays.copyOf(costs, painted);
+				Arrays.sort(sorted);
+				StringBuilder report = new StringBuilder();
+				report.append("Arcade canvas, forced fallback path (spec 003 T048), ").append(System.getProperty("os.name")).append(' ').append(System.getProperty("os.arch"))
+						.append(", Java ").append(System.getProperty("java.version")).append('\n');
+				report.append(String.format(Locale.ROOT, "dense passage under the density budget, window 1280x720, renderer \"%s\": %d frames painted of %d asked in %.1f s, one after the other through the event loop (the rate is that of this test loop, not a display rate)%n",
+						harness.canvas.rendererName(), painted, frames, seconds));
+				report.append(String.format(Locale.ROOT, "cost of one paint: p50 %.3f ms, p95 %.3f ms, p99 %.3f ms, max %.3f ms%n", sorted[sorted.length / 2],
+						sorted[(int) (sorted.length * 0.95)], sorted[(int) (sorted.length * 0.99)], sorted[sorted.length - 1]));
+				report.append("quality tier chosen by the controller at the end: ").append(harness.source.tier()).append('\n');
+				Path out = Paths.get("../../specs/003-arcade-mode/benchmark/fallback-2026-10-08.txt");
+				Files.createDirectories(out.getParent());
+				Files.write(out, report.toString().getBytes(StandardCharsets.UTF_8));
+				System.out.println(report);
+			} finally {
+				harness.close();
 			}
 		});
 	}

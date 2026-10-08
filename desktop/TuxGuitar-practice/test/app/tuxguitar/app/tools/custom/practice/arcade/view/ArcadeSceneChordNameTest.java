@@ -45,6 +45,16 @@ public class ArcadeSceneChordNameTest {
 		return new SceneFixture(song, SceneFixture.sixStrings(), 100);
 	}
 
+	/** One named chord alone: A5, a stroke, the fifth fret. */
+	private static SceneFixture lone() {
+		SongFixture song = new SongFixture(2);
+		song.chord(1, 0, new int[] { 6, 5, 4 }, new int[] { 5, 7, 7 });
+		TGChord named = song.factory().newChord(6);
+		named.setName("A5");
+		song.track().getMeasure(1).getBeat(0).setChord(named);
+		return new SceneFixture(song, SceneFixture.sixStrings(), 100);
+	}
+
 	private static List<Scene> variants(SceneFixture fixture, long now, app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun.View run) {
 		java.util.ArrayList<Scene> scenes = new java.util.ArrayList<Scene>();
 		for (boolean mono : new boolean[] { false, true }) {
@@ -63,7 +73,7 @@ public class ArcadeSceneChordNameTest {
 			assertEquals(1, names.size());
 			assertEquals("A5", names.get(0).text(), "the name as written");
 		}
-		for (Scene scene : variants(fixture, fixture.onset(3) - 800 * MS, ArcadeSceneTest.completedBefore(3, 5))) {
+		for (Scene scene : variants(fixture, fixture.onset(3) - 300 * MS, ArcadeSceneTest.completedBefore(3, 5))) {
 			assertEquals("F#m7b5/C#", scene.forEvent(3, Role.CARTOUCHE_NAME).get(0).text(), "a long name is shown whole");
 		}
 	}
@@ -71,11 +81,11 @@ public class ArcadeSceneChordNameTest {
 	@Test
 	public void aChordWithoutAUsableNameShowsTheGenericWordAndNeverAnInventedName() {
 		SceneFixture fixture = fixture();
-		for (Scene scene : variants(fixture, fixture.onset(1) - 900 * MS, ArcadeSceneTest.completedBefore(1, 5))) {
+		for (Scene scene : variants(fixture, fixture.onset(1) - 300 * MS, ArcadeSceneTest.completedBefore(1, 5))) {
 			assertEquals("Chord", scene.forEvent(1, Role.CARTOUCHE_NAME).get(0).text(), "a blank name is no name");
 		}
 		// the pitches 5 3 0 1 of that chord would make a name, and none is made
-		for (Scene scene : variants(fixture, fixture.onset(1) - 900 * MS, ArcadeSceneTest.completedBefore(1, 5))) {
+		for (Scene scene : variants(fixture, fixture.onset(1) - 300 * MS, ArcadeSceneTest.completedBefore(1, 5))) {
 			for (SceneItem item : scene.items()) {
 				if (item.text() != null && item.eventIndex() == 1) {
 					assertFalse(item.text().matches("[A-G][#b]?(m|maj|dim|aug|sus)?[0-9]*"), "no name derived from pitches: " + item.text());
@@ -100,7 +110,7 @@ public class ArcadeSceneChordNameTest {
 
 	@Test
 	public void theHeaderIsThereFromTheFirstReadableStateThroughImpactAndFeedback() {
-		SceneFixture fixture = fixture();
+		SceneFixture fixture = lone();
 		long onset = fixture.onset(0);
 		CameraTrack.Settings settings = CameraTrack.Settings.standard();
 		int seen = 0;
@@ -119,9 +129,8 @@ public class ArcadeSceneChordNameTest {
 
 	@Test
 	public void theHeaderIsAHeaderApartFromTheFretLabelTheFretNumbersAndTheVerdict() {
-		SceneFixture fixture = fixture();
-		Scene scene = fixture.scene(false).build(fixture.onset(0) + 150 * MS,
-				SCREEN, ArcadeSceneTest.viewOf(ArcadeVerdict.ON_TIME, ArcadeVerdict.WAITING, ArcadeVerdict.WAITING, ArcadeVerdict.WAITING, ArcadeVerdict.WAITING), 100);
+		SceneFixture fixture = lone();
+		Scene scene = fixture.scene(false).build(fixture.onset(0) + 150 * MS, SCREEN, ArcadeSceneTest.viewOf(ArcadeVerdict.ON_TIME), 100);
 		SceneItem name = scene.forEvent(0, Role.CARTOUCHE_NAME).get(0);
 		SceneItem header = scene.forEvent(0, Role.CARTOUCHE_HEADER).get(0);
 		SceneItem fretLabel = scene.forEvent(0, Role.CARTOUCHE_FRET_LABEL).get(0);
@@ -148,10 +157,12 @@ public class ArcadeSceneChordNameTest {
 				continue;
 			}
 			Box cartouche = SceneBoxes.ofQuad(frames.get(0));
-			// the next playable event is event 1, a chord: its bar, or a marker if it is a note
+			// the next playable event is event 1, a chord: its bar is on the same axis, behind the diagram, and still visible on both sides of it
 			for (SceneItem item : scene.forEvent(1)) {
 				if (item.role() == Role.TIMING_BAR || item.role() == Role.PREVIEW_BAR) {
-					assertFalse(cartouche.overlaps(SceneBoxes.ofQuad(item)), "the header covers the bar of the next chord at " + offset + " ms");
+					Box bar = SceneBoxes.ofQuad(item);
+					double hidden = Math.max(0.0, Math.min(bar.x2, cartouche.x2) - Math.max(bar.x1, cartouche.x1));
+					assertTrue(hidden <= 0.5 * (bar.x2 - bar.x1), "the diagram hides more than half of the bar of the next chord at " + offset + " ms");
 				}
 			}
 		}

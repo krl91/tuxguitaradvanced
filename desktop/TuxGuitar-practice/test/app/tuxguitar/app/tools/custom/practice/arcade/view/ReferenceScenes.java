@@ -157,8 +157,36 @@ public final class ReferenceScenes {
 		return new Reference("dense-passage", fixture, tick, verdicts(fixture.events.size(), judged));
 	}
 
+	/**
+	 * A realistic passage of chords, as a song would have it: a progression Am, F, C, G7, Dm, E, Am, with a note between some of them, played at 140 quarters
+	 * a minute. The chords are on the one preview axis in the middle of the lane, the next one has its diagram, the others are compact bars with their names
+	 * where there is room, the one before has just been judged.
+	 */
+	public static Reference multiChord() {
+		SongFixture song = new SongFixture(6);
+		song.tempoChange(0, 140);
+		String[] names = { "Am", "F", "C", "G7", "Dm", "E", null, "Am" };
+		int[][] strings = { { 5, 4, 3, 2 }, { 6, 5, 4, 3, 2, 1 }, { 5, 4, 3, 2 }, { 6, 5, 4, 3, 2, 1 }, { 4, 3, 2 }, { 6, 5, 4, 3, 2, 1 }, { 5, 4, 3, 2 }, { 5, 4, 3, 2 } };
+		int[][] frets = { { 0, 2, 2, 1 }, { 1, 3, 3, 2, 1, 1 }, { 3, 2, 0, 1 }, { 3, 2, 0, 0, 0, 1 }, { 0, 2, 3 }, { 0, 2, 2, 1, 0, 0 }, { 0, 2, 2, 1 }, { 0, 2, 2, 1 } };
+		for (int i = 0; i < 8; i++) {
+			song.chord(1 + i / 2, (i % 2) * 2, strings[i], frets[i]);
+			if (i % 2 == 1) {
+				song.quarter(1 + i / 2, 3, 2, 5 + i);
+			}
+			if (names[i] != null) {
+				TGChord chord = song.factory().newChord(6);
+				chord.setName(names[i]);
+				song.track().getMeasure(1 + i / 2).getBeat((i % 2) * 2).setChord(chord);
+			}
+		}
+		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+		long tick = fixture.timeline.targetTicks(2) - 500;
+		ArcadeVerdict[] judged = { ArcadeVerdict.ON_TIME, ArcadeVerdict.EARLY };
+		return new Reference("chords-progression", fixture, tick, verdicts(fixture.events.size(), judged));
+	}
+
 	/** Every reference scene, in the order of the review. */
 	public static Reference[] all() {
-		return new Reference[] { sixStrings(), fourStrings(), namedChord(), unnamedChord(), singleNote(), denseRealistic() };
+		return new Reference[] { sixStrings(), fourStrings(), namedChord(), unnamedChord(), singleNote(), denseRealistic(), multiChord() };
 	}
 }

@@ -103,6 +103,13 @@ public final class ArcadeScene {
 	public static final int MAX_DETAILED = 4;
 	/** The most compact previews drawn besides the detailed events: the nearest ones; further ones are not drawn. */
 	public static final int MAX_COMPACT = 28;
+	/**
+	 * The one axis of all the chord bars (FR-063): the middle of the approach lane, as a share of the width of the view. A chord is placed by its onset and
+	 * its depth alone; its frets are used for the neck ghost and the camera, never to put its bar to the left or to the right.
+	 */
+	public static final double CHORD_AXIS = 0.5;
+	/** The half width of a chord bar at the hit line, as a share of the width of the view; it shrinks with the distance as everything does. */
+	public static final double CHORD_HALF_WIDTH = 0.26;
 	/** The gap kept between two labels, in pixels. */
 	static final double GAP = 4.0;
 
@@ -147,7 +154,7 @@ public final class ArcadeScene {
 				drawDetailed(f, index, index == active, plan);
 			} else if (compact < MAX_COMPACT) {
 				compact++;
-				drawCompact(f, index);
+				drawCompact(f, index, plan);
 			}
 		}
 		drawBadges(f, plan);
@@ -315,8 +322,13 @@ public final class ArcadeScene {
 	/** The result of the choice: which events are fully detailed, where the diagrams of the chords go, where the verdict badges go. */
 	private static final class Plan {
 		final java.util.Set<Integer> detailed = new java.util.HashSet<Integer>();
-		final java.util.Map<Integer, Double> boxX = new java.util.HashMap<Integer, Double>();
 		final java.util.Map<Integer, double[]> badge = new java.util.HashMap<Integer, double[]>();
+		/** The chords whose diagram is expanded: one, except in the unreduced picture. */
+		final java.util.Set<Integer> expanded = new java.util.HashSet<Integer>();
+		/** How far a diagram was raised above its default place to leave the next event in view. */
+		final java.util.Map<Integer, Double> raise = new java.util.HashMap<Integer, Double>();
+		/** The names of compact chords that fit without touching anything. */
+		final java.util.Map<Integer, double[]> chip = new java.util.HashMap<Integer, double[]>();
 	}
 
 	/** Where a note is on the screen, and how big. */
@@ -363,36 +375,25 @@ public final class ArcadeScene {
 	private ChordGeo chordGeo(Frame f, ArcadeRenderEvent event) {
 		ChordGeo g = new ChordGeo();
 		double progress = f.progressOf(event);
-		double left;
-		double right;
-		if (event.positions().isEmpty()) {
-			left = f.cam.left();
-			right = f.cam.right();
-		} else {
-			double min = Double.MAX_VALUE;
-			double max = -Double.MAX_VALUE;
-			for (ArcadeRenderEvent.Position position : event.positions()) {
-				double x = this.neck.fretCentreX(position.fret());
-				min = Math.min(min, x);
-				max = Math.max(max, x);
-			}
-			left = min - 8.0;
-			right = max + 8.0;
-		}
-		g.pl = f.projection.approach(left, progress, f.cam);
-		g.pr = f.projection.approach(right, progress, f.cam);
-		g.thickness = Math.max(3.0, f.h * 0.014 * g.pl.scale());
-		g.centreX = (g.pl.x() + g.pr.x()) / 2.0;
-		g.barTop = g.pl.y() - g.thickness;
+		// every chord bar is on the same axis, whatever the frets of the chord (FR-063): the point of the lane at this depth gives the height and the scale
+		ScreenPoint lane = f.projection.approach(f.cam.centre(), progress, f.cam);
+		double axis = f.viewport.width() * CHORD_AXIS;
+		double half = f.viewport.width() * CHORD_HALF_WIDTH * lane.scale();
+		g.pl = new ScreenPoint(axis - half, lane.y(), lane.scale());
+		g.pr = new ScreenPoint(axis + half, lane.y(), lane.scale());
+		g.thickness = Math.max(3.0, f.h * 0.014 * lane.scale());
+		g.centreX = axis;
+		g.barTop = lane.y() - g.thickness;
 		if (event.kind() == ArcadeRenderEvent.Kind.CHORD) {
 			ChordCartouche cartouche = this.cartouches[event.index()];
-			double scale = g.pl.scale();
+			double scale = lane.scale();
 			double unit = f.h / 720.0;
 			g.boxW = Math.max(ChordCartouche.MIN_WIDTH_PX, (20 + 18 * (cartouche.strings() - 1)) * unit * scale);
 			g.boxH = Math.max(ChordCartouche.MIN_HEIGHT_PX, (24 + 14 * cartouche.rows()) * unit * 1.6 * scale);
 			// the header carries the whole name as written: the diagram is made wide enough for it, never the name cut or shrunk below a readable size
 			g.boxW = Math.max(g.boxW, headerWidth(cartouche, g.boxH));
 			double stem = Math.max(6.0, f.h * 0.03 * scale);
+			// centred on its bar, and kept whole inside the window
 			g.boxX = Math.max(2.0, Math.min(f.viewport.width() - g.boxW - 2.0, g.centreX - g.boxW / 2.0));
 			g.boxY = Math.max(cartouche.notCheckedSeparately() ? 16.0 : 2.0, g.barTop - stem - g.boxH);
 		}
@@ -420,25 +421,6 @@ public final class ArcadeScene {
 
 	private static boolean inside(double[] box, Viewport viewport) {
 		return box[0] >= 0 && box[1] >= 0 && box[2] <= viewport.width() && box[3] <= viewport.height();
-	}
-
-	/** The places a diagram of the given width may take on its row, nearest to its own first: beside each label that is in its way, left or right. */
-	private static List<Double> candidateXs(double x, double w, List<double[]> obstacles, double screenWidth) {
-		List<Double> xs = new ArrayList<Double>();
-		xs.add(x);
-		for (double[] o : obstacles) {
-			xs.add(o[2] + GAP);
-			xs.add(o[0] - GAP - w);
-		}
-		List<Double> valid = new ArrayList<Double>();
-		for (double candidate : xs) {
-			if (candidate >= 2.0 && candidate + w <= screenWidth - 2.0) {
-				valid.add(candidate);
-			}
-		}
-		final double wanted = x;
-		valid.sort((p, q) -> Double.compare(Math.abs(p - wanted), Math.abs(q - wanted)));
-		return valid;
 	}
 
 	private double[] badgeSize(Frame f, ArcadeRun.EventState result) {
@@ -502,6 +484,12 @@ public final class ArcadeScene {
 		List<double[]> taken = new ArrayList<double[]>(hudBoxes(f, f.run, speedPercent));
 		List<double[]> badges = new ArrayList<double[]>();
 		int limit = this.densityBudget ? MAX_DETAILED : Integer.MAX_VALUE;
+		int expandedChord = expandedChord(f, visible, active);
+		if (expandedChord >= 0 && expandedChord != active) {
+			// the chord that is to be read has its place right after the active event
+			order.remove(Integer.valueOf(expandedChord));
+			order.add(active >= 0 ? 1 : 0, expandedChord);
+		}
 		for (int index : order) {
 			if (plan.detailed.size() >= limit) {
 				break;
@@ -513,43 +501,55 @@ public final class ArcadeScene {
 			if (!eligible) {
 				continue;
 			}
+			boolean verdictOnly = false;
+			if (event.kind() == ArcadeRenderEvent.Kind.CHORD && this.densityBudget && index != expandedChord) {
+				// one diagram at a time (FR-063): the other chords are compact bars; one just judged keeps its verdict badge, which is a label of its own
+				boolean judged = f.run != null && index < f.run.states().size() && f.run.states().get(index).verdict() != ArcadeVerdict.WAITING
+						&& state.ordinal() >= RenderState.ARMED.ordinal();
+				if (!judged) {
+					continue;
+				}
+				verdictOnly = true;
+			}
 			double[] next = nextPlayableFootprint(f, visible, index);
 			List<double[]> mine = new ArrayList<double[]>();
-			double chosenX = Double.NaN;
 			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
 				// once the note is judged its number is no longer needed: only the verdict stays, so that notes just played, which all lie on the hit line, do not
 				// compete for the same place
 				if (!isJudged(f, index, state)) {
 					mine.add(noteGeo(f, event).box());
 				}
-			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD) {
+			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD && !verdictOnly) {
 				ChordGeo g = chordGeo(f, event);
 				boolean note = this.cartouches[index].notCheckedSeparately() && state.ordinal() >= RenderState.READABLE.ordinal();
 				List<double[]> obstacles = new ArrayList<double[]>(taken);
 				if (next != null) {
 					obstacles.add(next);
 				}
-				chosenX = Double.NaN;
-				for (double x : candidateXs(g.boxX, g.boxW, obstacles, f.viewport.width())) {
-					double[] box = g.cartoucheBox(x, note);
+				// the diagram stays centred on its bar and inside the window; to leave the next playable event in view it can only be raised, by a longer stem
+				double raise = 0.0;
+				boolean placed = false;
+				for (double lift = 0.0; g.boxY - lift >= 2.0 + (note ? 14.0 : 0.0) && !placed; lift += 12.0) {
+					double[] box = g.cartoucheBox(g.boxX, note);
+					box[1] -= lift;
+					box[3] -= lift;
 					if (disjointFromAll(box, obstacles)) {
-						chosenX = x;
-						break;
+						raise = lift;
+						placed = true;
 					}
 				}
-				if (Double.isNaN(chosenX)) {
-					if (!isActive && this.densityBudget) {
-						continue;
-					}
-					chosenX = g.boxX;
-				}
-				mine.add(g.cartoucheBox(chosenX, note));
-			} else {
+				double[] box = g.cartoucheBox(g.boxX, note);
+				box[1] -= raise;
+				box[3] -= raise;
+				mine.add(box);
+				plan.raise.put(index, raise);
+				plan.expanded.add(index);
+			} else if (event.kind() != ArcadeRenderEvent.Kind.CHORD) {
 				ChordGeo g = chordGeo(f, event);
 				String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
 				mine.add(textBox(word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026));
 			}
-			if (this.densityBudget && !isActive) {
+			if (this.densityBudget && !isActive && event.kind() != ArcadeRenderEvent.Kind.CHORD) {
 				boolean free = true;
 				for (double[] box : mine) {
 					free &= disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || event.kind() == ArcadeRenderEvent.Kind.CHORD || disjoint(box, next));
@@ -570,23 +570,69 @@ public final class ArcadeScene {
 			}
 			plan.detailed.add(index);
 			taken.addAll(mine);
-			if (!Double.isNaN(chosenX)) {
-				plan.boxX.put(index, chosenX);
-			}
 			if (badge != null) {
 				plan.badge.put(index, badge);
 				badges.add(badge);
 			}
 		}
+		// the names of the chords that stay compact, nearest first, where nothing is touched
+		List<Integer> chords = new ArrayList<Integer>(visible);
+		chords.sort((p, q) -> Long.compare(Math.abs(this.events.get(p).onsetNanos() - now), Math.abs(this.events.get(q).onsetNanos() - now)));
+		for (int index : chords) {
+			ArcadeRenderEvent event = this.events.get(index);
+			if (event.kind() != ArcadeRenderEvent.Kind.CHORD || plan.detailed.contains(index) || event.chordName() == null) {
+				continue;
+			}
+			ChordGeo g = chordGeo(f, event);
+			double size = Math.max(9.0, f.h * 0.022);
+			double[] box = textBox(event.chordName(), g.centreX, g.barTop - size, size);
+			if (inside(box, f.viewport) && disjointFromAll(box, taken)) {
+				plan.chip.put(index, box);
+				taken.add(box);
+			}
+		}
 		return plan;
+	}
+
+	/**
+	 * The chord whose diagram is expanded (FR-063): the active event when it is a chord; otherwise the nearest upcoming chord that has reached the readable
+	 * state and is not being judged. One at most, so that a frame never holds two diagrams; when it completes or leaves the screen the next chord in onset
+	 * order takes its place in the same update. Nothing here moves a bar: the onsets and the depths are those of the timeline.
+	 *
+	 * @return its index, or -1
+	 */
+	int expandedChord(Frame f, List<Integer> visible, int active) {
+		if (active >= 0 && this.events.get(active).kind() == ArcadeRenderEvent.Kind.CHORD) {
+			return active;
+		}
+		for (int index : visible) {
+			ArcadeRenderEvent event = this.events.get(index);
+			if (event.kind() != ArcadeRenderEvent.Kind.CHORD) {
+				continue;
+			}
+			RenderState state = f.stateOf(event);
+			boolean readable = state == RenderState.READABLE || state == RenderState.ARMED || state == RenderState.IMPACT;
+			if (readable && !isJudged(f, index, state)) {
+				return index;
+			}
+		}
+		// no chord is coming that can be read: the last one keeps its diagram through the end of its feedback
+		for (int k = visible.size() - 1; k >= 0; k--) {
+			ArcadeRenderEvent event = this.events.get(visible.get(k));
+			RenderState state = f.stateOf(event);
+			if (event.kind() == ArcadeRenderEvent.Kind.CHORD && (state == RenderState.IMPACT || state == RenderState.FEEDBACK)) {
+				return visible.get(k);
+			}
+		}
+		return -1;
 	}
 
 	/** True for an event that has its verdict and is past its impact: its number is no longer needed. */
 	private static boolean isJudged(Frame f, int index, RenderState state) {
-		return state == RenderState.FEEDBACK && f.run != null && index < f.run.states().size() && f.run.states().get(index).verdict() != ArcadeVerdict.WAITING;
+		return state.ordinal() >= RenderState.IMPACT.ordinal() && f.run != null && index < f.run.states().size() && f.run.states().get(index).verdict() != ArcadeVerdict.WAITING;
 	}
 
-	/** The room taken by the next playable event after this one: its marker, or its bar. */
+	/** The room taken by the next playable event after this one when it is a note: its marker; null when it is a chord, see below. */
 	private double[] nextPlayableFootprint(Frame f, List<Integer> visible, int index) {
 		boolean after = false;
 		for (int other : visible) {
@@ -596,7 +642,9 @@ public final class ArcadeScene {
 			}
 			if (after && isPlayable(this.events.get(other))) {
 				ArcadeRenderEvent event = this.events.get(other);
-				return event.kind() == ArcadeRenderEvent.Kind.NOTE ? noteGeo(f, event).box() : chordGeo(f, event).barBox();
+				// a next note must stay in view; the bar of a next chord is on the same axis as this diagram by rule (FR-063): it passes behind it and stays
+				// visible on both sides, because a bar is much wider than a diagram
+				return event.kind() == ArcadeRenderEvent.Kind.NOTE ? noteGeo(f, event).box() : null;
 			}
 		}
 		return null;
@@ -622,7 +670,7 @@ public final class ArcadeScene {
 	 * An event that is not in the detailed set (FR-062): a small marker in the colour of its string, or a thin neutral bar, on its own lane and at its own
 	 * distance. No fret number, no diagram, no glow, no trail, no trajectory, nothing on the neck.
 	 */
-	private void drawCompact(Frame f, int index) {
+	private void drawCompact(Frame f, int index, Plan plan) {
 		ArcadeRenderEvent event = this.events.get(index);
 		RenderState state = f.stateOf(event);
 		double alpha = alphaOf(state, f.now, event.onsetNanos(), f.settings) * 0.8;
@@ -636,6 +684,11 @@ public final class ArcadeScene {
 			double t = Math.max(2.0, g.thickness * 0.5);
 			f.out.quad(Role.PREVIEW_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - t, g.pl.x(), g.pl.y() - t }, BAR_COLOUR, alpha,
 					event.index(), 0);
+			double[] chip = plan.chip.get(index);
+			if (chip != null) {
+				f.out.text(Role.CHORD_CHIP, event.chordName(), (chip[0] + chip[2]) / 2.0, (chip[1] + chip[3]) / 2.0, Math.max(9.0, f.h * 0.022), TEXT_COLOUR, alpha,
+						event.index(), 0);
+			}
 		}
 	}
 
@@ -645,8 +698,10 @@ public final class ArcadeScene {
 		double alpha = alphaOf(state, f.now, event.onsetNanos(), f.settings);
 		if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
 			drawNote(f, event, state, alpha, active);
+		} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD && !plan.expanded.contains(index)) {
+			drawCompact(f, index, plan);
 		} else {
-			drawBarEvent(f, event, state, alpha, active, plan.boxX.get(index));
+			drawBarEvent(f, event, state, alpha, active, plan.raise.get(index));
 		}
 	}
 
@@ -686,7 +741,7 @@ public final class ArcadeScene {
 		}
 	}
 
-	private void drawBarEvent(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active, Double chosenX) {
+	private void drawBarEvent(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active, Double raise) {
 		Out out = f.out;
 		ChordGeo g = chordGeo(f, event);
 		out.quad(Role.TIMING_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - g.thickness, g.pl.x(), g.pl.y() - g.thickness },
@@ -697,13 +752,14 @@ public final class ArcadeScene {
 			return;
 		}
 		ChordCartouche cartouche = this.cartouches[event.index()];
-		double boxX = chosenX != null ? chosenX : g.boxX;
-		out.line(Role.STEM, g.centreX, g.barTop, boxX + g.boxW / 2.0, g.boxY + g.boxH, BAR_COLOUR, alpha, 2.0, event.index(), 0);
+		double boxX = g.boxX;
+		double boxY = g.boxY - (raise != null ? raise : 0.0);
+		out.line(Role.STEM, g.centreX, g.barTop, g.centreX, boxY + g.boxH, BAR_COLOUR, alpha, 2.0, event.index(), 0);
 		if (f.tier.shadows()) {
-			out.quad(Role.SHADOW, new double[] { boxX + 4, g.boxY + 5, boxX + g.boxW + 4, g.boxY + 5, boxX + g.boxW + 4, g.boxY + g.boxH + 5, boxX + 4, g.boxY + g.boxH + 5 },
+			out.quad(Role.SHADOW, new double[] { boxX + 4, boxY + 5, boxX + g.boxW + 4, boxY + 5, boxX + g.boxW + 4, boxY + g.boxH + 5, boxX + 4, boxY + g.boxH + 5 },
 					0x000000, alpha * 0.35, event.index(), 0);
 		}
-		drawCartouche(out, cartouche, event, state, boxX, g.boxY, g.boxW, g.boxH, alpha);
+		drawCartouche(out, cartouche, event, state, boxX, boxY, g.boxW, g.boxH, alpha);
 		if (active) {
 			int count = this.neck.layout().count();
 			for (ArcadeRenderEvent.Position position : event.positions()) {

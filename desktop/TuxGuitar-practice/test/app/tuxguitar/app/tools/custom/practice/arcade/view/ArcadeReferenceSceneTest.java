@@ -66,6 +66,21 @@ public class ArcadeReferenceSceneTest {
 	}
 
 	@Test
+	public void theChordProgressionSceneIsTheReference() throws IOException {
+		check(ReferenceScenes.multiChord());
+	}
+
+	@Test
+	public void theChordProgressionReferenceHasOneDiagramAndOneAxis() {
+		for (QualityTier tier : QualityTier.values()) {
+			Scene scene = ReferenceScenes.multiChord().scene(false, tier);
+			assertEquals(1, scene.withRole(Role.CARTOUCHE_FRAME).size());
+			assertTrue(scene.withRole(Role.PREVIEW_BAR).size() >= 2, "the following chords are compact bars");
+			assertEquals(null, SceneBoxes.firstOverlap(SceneBoxes.labels(scene)));
+		}
+	}
+
+	@Test
 	public void theDensePassageReferenceIsReadable() {
 		Scene scene = ReferenceScenes.denseRealistic().scene(false, QualityTier.FULL);
 		assertTrue(SceneBoxes.detailed(scene).size() <= ArcadeScene.MAX_DETAILED);

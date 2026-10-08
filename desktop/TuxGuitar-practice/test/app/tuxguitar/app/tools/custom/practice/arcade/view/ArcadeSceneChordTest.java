@@ -132,7 +132,8 @@ public class ArcadeSceneChordTest {
 		Scene picture = fixture.scene(false).build(fixture.onset(0) - 500 * MS, SCREEN, null, 100);
 		assertEquals("A5", picture.forEvent(0, Role.CARTOUCHE_NAME).get(0).text());
 		assertEquals("↓", picture.forEvent(0, Role.CARTOUCHE_STROKE).get(0).text());
-		Scene other = fixture.scene(false).build(fixture.onset(1) - 500 * MS, SCREEN, null, 100);
+		// the first chord is judged; the second, which was only a compact bar, is promoted
+		Scene other = fixture.scene(false).build(fixture.onset(1) - 300 * MS, SCREEN, ArcadeSceneTest.completedBefore(1, 2), 100);
 		assertEquals("Chord", other.forEvent(1, Role.CARTOUCHE_NAME).get(0).text());
 		assertTrue(other.forEvent(1, Role.CARTOUCHE_STROKE).isEmpty(), "no stroke written, no arrow");
 	}
