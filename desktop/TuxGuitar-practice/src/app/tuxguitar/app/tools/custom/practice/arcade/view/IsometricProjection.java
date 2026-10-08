@@ -70,4 +70,18 @@ public final class IsometricProjection {
 		double x = centre + (neckX(xMm, camera) - centre) * scale;
 		return new ScreenPoint(x, y, scale);
 	}
+
+	/** The y of the top edge of the neck: the line of the arrival of the events, which is the hit line. */
+	public double neckTopY() {
+		return hitLineY();
+	}
+
+	/**
+	 * Where a lane that ends at the given x on the top edge of the neck begins at the horizon: the end drawn towards the middle of the screen by the scale of
+	 * the horizon, as everything is. The same construction as {@link #approach}, so that a lane and the way of an event along a column are one line.
+	 */
+	public ScreenPoint horizonOrigin(double endX) {
+		double centre = this.viewport.width() / 2.0;
+		return new ScreenPoint(centre + (endX - centre) * FAR_SCALE, horizonY(), FAR_SCALE);
+	}
 }

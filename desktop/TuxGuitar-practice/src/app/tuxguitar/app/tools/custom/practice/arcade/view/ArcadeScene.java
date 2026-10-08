@@ -174,7 +174,10 @@ public final class ArcadeScene {
 	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier) {
 		Out out = new Out(this.monochrome, this.theme);
 		Frame f = new Frame(out, new IsometricProjection(viewport), this.camera.at(nowNanos), viewport, tier, nowNanos, this.camera.settings(), run);
-		drawNeck(out, f.projection, f.cam, viewport);
+		// the grid of the neck as it is painted, and the lanes built from it, once for this camera snapshot: the neck, the lanes and every marker below use these
+		f.grid = PaintedFretGrid.of(this.neck, f.projection, f.cam);
+		f.lanes = FretArrivalLaneMap.fromPaintedFrets(f.grid, f.projection);
+		drawNeck(out, f, viewport);
 
 		List<Integer> visible = visibleEvents(nowNanos, f.settings);
 		int active = activeEvent(visible, run);
@@ -268,11 +271,6 @@ public final class ArcadeScene {
 		for (ArcadeRenderEvent.Position position : event.positions()) {
 			ScreenPoint at = f.projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, f.cam);
 			int colour = this.colours.of(position.tgString());
-			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
-				// the landing point on the hit line and the disk on the neck are at the same x: a plain vertical link joins them
-				ScreenPoint landing = f.projection.approach(this.neck.fretCentreX(position.fret()), 1.0, f.cam);
-				f.out.line(Role.TARGET_LINK, landing.x(), landing.y(), at.x(), at.y(), colour, 0.75, 2.0, event.index(), position.tgString());
-			}
 			if (f.tier.glow()) {
 				f.out.disc(Role.TARGET_HALO, at.x(), at.y(), radius * 1.7, radius * 1.7, colour, 0.28, event.index(), position.tgString());
 			}
@@ -282,42 +280,45 @@ public final class ArcadeScene {
 		}
 	}
 
-	/** The depth cues of the approach field: the lanes of the frets converging towards the horizon and a few lines across, at fixed shares of the way. */
-	private void drawField(Out out, IsometricProjection projection, Camera cam) {
-		for (int n = 0; n <= this.neck.fretCount(); n++) {
-			double x = this.neck.fretX(n);
-			if (!cam.shows(x, 0.0)) {
+	/**
+	 * The approach field: the predefined lane of every fret cell that is on the screen, from the horizon to the middle of the top edge of the cell, and a few
+	 * lines across at fixed shares of the way. A note follows one of these lanes and no other line goes from the horizon to the neck.
+	 */
+	private void drawField(Out out, Frame f) {
+		for (int fret = 0; fret < f.lanes.size(); fret++) {
+			FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(fret);
+			if (!f.grid.isPainted(Math.max(0, fret - 1)) || !f.grid.isPainted(fret)) {
 				continue;
 			}
-			ScreenPoint near = projection.approach(x, 1.0, cam);
-			ScreenPoint far = projection.approach(x, 0.0, cam);
-			out.line(Role.FIELD_GUIDE, far.x(), far.y(), near.x(), near.y(), WIRE_COLOUR, 0.16, 1.0, -1, 0);
+			out.line(Role.FIELD_GUIDE, lane.origin().x(), lane.origin().y(), lane.end().x(), lane.end().y(), WIRE_COLOUR, 0.16, 1.0, -1, 0);
 		}
 		for (int k = 0; k <= 3; k++) {
 			double progress = k / 4.0;
-			ScreenPoint left = projection.approach(cam.left(), progress, cam);
-			ScreenPoint right = projection.approach(cam.right(), progress, cam);
+			ScreenPoint left = f.projection.approach(f.cam.left(), progress, f.cam);
+			ScreenPoint right = f.projection.approach(f.cam.right(), progress, f.cam);
 			out.line(Role.FIELD_GUIDE, left.x(), left.y(), right.x(), right.y(), WIRE_COLOUR, 0.12, 1.0, -1, 0);
 		}
 	}
 
-	private void drawNeck(Out out, IsometricProjection projection, Camera cam, Viewport viewport) {
+	private void drawNeck(Out out, Frame f, Viewport viewport) {
+		IsometricProjection projection = f.projection;
+		Camera cam = f.cam;
 		int count = this.neck.layout().count();
-		drawField(out, projection, cam);
+		drawField(out, f);
 		double w = viewport.width();
 		double h = viewport.height();
-		double top = h * (IsometricProjection.HIT_LINE + 0.02);
+		// the top edge of the neck is where the lanes end
+		double top = f.grid.neckTopY();
 		double bottom = h * IsometricProjection.NECK_NEAR_EDGE;
 		out.quad(Role.NECK_BODY, new double[] { 0, top, w, top, w, bottom, 0, bottom }, NECK_COLOUR, 1.0, -1, 0);
 		double wireTop = projection.stringY(count - 1, count) - h * 0.012;
 		double wireBottom = projection.stringY(0, count) + h * 0.012;
 		double lastNumberRight = -1000.0;
 		for (int n = 0; n <= this.neck.fretCount(); n++) {
-			double x = this.neck.fretX(n);
-			if (!cam.shows(x, 0.0)) {
+			if (!f.grid.isPainted(n)) {
 				continue;
 			}
-			double px = projection.neckX(x, cam);
+			double px = f.grid.wireX(n);
 			out.line(n == 0 ? Role.NUT : Role.FRET_WIRE, px, wireTop, px, wireBottom, WIRE_COLOUR, 1.0, n == 0 ? 4.0 : 1.5, -1, 0);
 			if (n >= 1) {
 				// a number is drawn only whole: the wire of a fret may be on the screen while its middle, where the number goes, is not
@@ -369,6 +370,8 @@ public final class ArcadeScene {
 		final CameraTrack.Settings settings;
 		final ArcadeRun.View run;
 		final double h;
+		PaintedFretGrid grid;
+		FretArrivalLaneMap lanes;
 
 		Frame(Out out, IsometricProjection projection, Camera cam, Viewport viewport, QualityTier tier, long now, CameraTrack.Settings settings, ArcadeRun.View run) {
 			this.out = out;
@@ -439,7 +442,8 @@ public final class ArcadeScene {
 		NoteGeo g = new NoteGeo();
 		ArcadeRenderEvent.Position position = event.positions().get(0);
 		g.x = this.neck.fretCentreX(position.fret());
-		g.at = f.projection.approach(g.x, f.progressOf(event), f.cam);
+		// the lane of the fret of the note, whatever its string: the same line for every note written on that fret
+		g.at = f.lanes.laneForFret(position.fret()).at(f.progressOf(event));
 		g.radius = Math.max(6.0, f.h * 0.030 * g.at.scale());
 		return g;
 	}
@@ -784,26 +788,25 @@ public final class ArcadeScene {
 		int row = this.neck.layout().rowOf(position.tgString());
 		int colour = this.colours.of(position.tgString());
 		NoteGeo g = noteGeo(f, event);
-		ScreenPoint far = f.projection.approach(g.x, 0.0, f.cam);
-		boolean judged = isJudged(f, event.index(), state);
-		// the trajectory of a note is the one segment that its marker follows, from the horizon to the hit line, at the same projection as the marker (FR-066);
-		// the link from the hit line down to the target on the neck is a second, separate segment, drawn with the target of the active event
-		ScreenPoint end = f.projection.approach(g.x, 1.0, f.cam);
-		if (!judged) {
-			out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
+		FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(position.fret());
+		ScreenPoint far = lane.origin();
+		// a note that has its verdict is gone from the lane: the badge says the rest, and the next note of the same fret, which comes on the same lane, finds it free
+		if (isJudged(f, event.index(), state)) {
+			return;
 		}
-		if (f.tier.trails() && !judged) {
-			ScreenPoint behind = f.projection.approach(g.x, Math.max(0.0, f.progressOf(event) - 0.12), f.cam);
+		// the trajectory of a note is its lane, the one of its fret (FR-066): from the horizon to the middle of the top edge of its cell, where it stops; nothing
+		// continues across the neck to the string, the target disk of the neck tells the string
+		ScreenPoint end = lane.end();
+		out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
+		if (f.tier.trails()) {
+			ScreenPoint behind = lane.at(Math.max(0.0, f.progressOf(event) - 0.12));
 			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.35, g.radius, event.index(), position.tgString());
 		}
-		if (f.tier.glow() && !judged) {
+		if (f.tier.glow()) {
 			out.disc(Role.GLOW, g.at.x(), g.at.y(), g.radius * 1.9, g.radius * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
 		}
 		out.disc(Role.MARKER, g.at.x(), g.at.y(), g.radius, g.radius, colour, alpha, event.index(), position.tgString());
-		if (!judged) {
-			out.text(Role.MARKER_FRET, Integer.toString(position.fret()), g.at.x(), g.at.y(), Math.max(8.0, g.radius * 1.1), 0xFFFFFF, alpha, event.index(),
-					position.tgString());
-		}
+		out.text(Role.MARKER_FRET, Integer.toString(position.fret()), g.at.x(), g.at.y(), Math.max(8.0, g.radius * 1.1), 0xFFFFFF, alpha, event.index(), position.tgString());
 	}
 
 	private void drawBarEvent(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active, Double raise) {

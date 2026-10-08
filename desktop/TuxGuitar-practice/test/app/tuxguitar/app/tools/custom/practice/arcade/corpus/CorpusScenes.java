@@ -305,8 +305,9 @@ public final class CorpusScenes {
 	}
 
 	/**
-	 * The markers of the notes against the segments of their approach as sent to the painter by the selected renderer (and by the fallback, in the cheapest tier):
-	 * every marker is on the segment drawn for it, inside the cell of its fret, and the segment ends on the hit line at the x of the disk of the neck.
+	 * The markers of the notes against the lanes of their frets as sent to the painter by the selected renderer (and by the fallback, in the cheapest tier): the lane
+	 * of a fret ends at the middle of the top edge of its cell, between the two wires that were painted; every marker is on the lane of its fret, at its end at the
+	 * onset; nothing of the approach goes below the top edge of the neck.
 	 */
 	static List<String> checkAlignment(Prepared p, Scene scene, long now, QualityTier tier, String where) {
 		List<String> failures = new ArrayList<String>();
@@ -314,48 +315,84 @@ public final class CorpusScenes {
 		IsometricProjection projection = new IsometricProjection(SCREEN);
 		app.tuxguitar.app.tools.custom.practice.arcade.view.Camera camera = p.camera.at(now);
 		long look = p.camera.settings().lookAheadNanos;
+		List<Double> wires = new ArrayList<Double>();
+		double top = Double.NaN;
+		for (SceneItem item : scene.items()) {
+			if (item.role() == Role.NUT || item.role() == Role.FRET_WIRE) {
+				boolean sent = false;
+				for (PaintRecorder.Segment segment : recorder.segments) {
+					sent |= Math.abs(segment.x1 - item.value(0)) < 0.01 && Math.abs(segment.y1 - item.value(1)) < 0.01 && Math.abs(segment.x2 - item.value(2)) < 0.01;
+				}
+				if (!sent) {
+					failures.add(where + ": a wire of the neck was not sent to the painter");
+				}
+				wires.add(item.value(0));
+			} else if (item.role() == Role.NECK_BODY) {
+				top = Math.min(Math.min(item.value(1), item.value(3)), Math.min(item.value(5), item.value(7)));
+			}
+		}
+		java.util.Collections.sort(wires);
+		for (SceneItem item : scene.items()) {
+			if (item.shape() == SceneItem.Shape.LINE && (item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL || item.role() == Role.FIELD_GUIDE)
+					&& Math.max(item.value(1), item.value(3)) > top + 0.5) {
+				failures.add(where + ": a line of the approach (" + item.role() + ") goes into the neck");
+			}
+		}
+		int count = p.neck.layout().count();
 		for (SceneItem marker : scene.items()) {
 			if ((marker.role() != Role.MARKER && marker.role() != Role.PREVIEW) || marker.eventIndex() < 0) {
 				continue;
 			}
 			ArcadeRenderEvent event = p.events.get(marker.eventIndex());
-			int fret = event.positions().get(0).fret();
-			double progress = RenderState.progress(event.onsetNanos(), now, look);
-			double x = p.neck.fretCentreX(fret);
-			ScreenPoint at = projection.approach(x, progress, camera);
-			if (Math.abs(at.x() - marker.value(0)) > 0.5 || Math.abs(at.y() - marker.value(1)) > 0.5) {
-				failures.add(where + ": the marker of event " + marker.eventIndex() + " is not at the projected centre of its cell");
+			ArcadeRenderEvent.Position position = null;
+			for (ArcadeRenderEvent.Position candidate : event.positions()) {
+				if (candidate.tgString() == marker.tgString()) {
+					position = candidate;
+				}
 			}
-			double left = projection.approach(p.neck.cellLeftX(fret), progress, camera).x();
-			double right = projection.approach(p.neck.cellRightX(fret), progress, camera).x();
-			if (marker.value(0) < Math.min(left, right) - 1e-6 || marker.value(0) > Math.max(left, right) + 1e-6) {
-				failures.add(where + ": the marker of event " + marker.eventIndex() + " is outside its fret cell");
+			if (position == null) {
+				failures.add(where + ": the marker of event " + marker.eventIndex() + " has no written position on its string");
+				continue;
 			}
-			for (SceneItem trajectory : scene.forEvent(marker.eventIndex(), Role.TRAJECTORY)) {
-				boolean sent = false;
-				for (PaintRecorder.Segment segment : recorder.segments) {
-					if (Math.abs(segment.x1 - trajectory.value(0)) < 0.01 && Math.abs(segment.y1 - trajectory.value(1)) < 0.01 && Math.abs(segment.x2 - trajectory.value(2)) < 0.01
-							&& Math.abs(segment.y2 - trajectory.value(3)) < 0.01) {
-						sent = true;
-						if (distanceToSegment(marker.value(0), marker.value(1), segment.x1, segment.y1, segment.x2, segment.y2) > 0.5) {
-							failures.add(where + ": the marker of event " + marker.eventIndex() + " leaves its trajectory");
-						}
-						if (Math.abs(segment.y2 - projection.hitLineY()) > 0.01) {
-							failures.add(where + ": the trajectory of event " + marker.eventIndex() + " does not end on the hit line");
-						}
+			int fret = position.fret();
+			double centre = projection.neckX(p.neck.fretCentreX(fret), camera);
+			double arrival = centre;
+			if (fret > 0) {
+				double left = Double.NaN;
+				double right = Double.NaN;
+				for (double wire : wires) {
+					if (wire <= centre && (Double.isNaN(left) || wire > left)) {
+						left = wire;
+					}
+					if (wire > centre && (Double.isNaN(right) || wire < right)) {
+						right = wire;
 					}
 				}
-				if (!sent) {
-					failures.add(where + ": the trajectory of event " + marker.eventIndex() + " was not sent to the painter");
+				if (Double.isNaN(left) || Double.isNaN(right)) {
+					continue;
+				}
+				arrival = (left + right) / 2.0;
+			}
+			SceneItem lane = null;
+			for (SceneItem guide : scene.withRole(Role.FIELD_GUIDE)) {
+				if (Math.abs(guide.value(3) - top) < 0.01 && Math.abs(guide.value(2) - arrival) <= 0.5) {
+					lane = guide;
 				}
 			}
-			for (SceneItem disk : scene.forEvent(marker.eventIndex(), Role.TARGET_DISK)) {
-				SceneItem landing = scene.forEvent(marker.eventIndex(), Role.TRAJECTORY).isEmpty() ? null : scene.forEvent(marker.eventIndex(), Role.TRAJECTORY).get(0);
-				if (landing != null && Math.abs(landing.value(2) - disk.value(0)) > 0.5) {
-					failures.add(where + ": the landing point and the target of event " + marker.eventIndex() + " are not at the same x");
-				}
-				if (scene.forEvent(marker.eventIndex(), Role.TARGET_LINK).isEmpty()) {
-					failures.add(where + ": no link from the hit line to the target of event " + marker.eventIndex());
+			if (lane == null) {
+				failures.add(where + ": no lane ends at the middle of the painted cell of fret " + fret + " (event " + marker.eventIndex() + ")");
+				continue;
+			}
+			if (distanceToSegment(marker.value(0), marker.value(1), lane.value(0), lane.value(1), lane.value(2), lane.value(3)) > 0.5) {
+				failures.add(where + ": the marker of event " + marker.eventIndex() + " is off the lane of its fret");
+			}
+			double progress = RenderState.progress(event.onsetNanos(), now, look);
+			if (progress >= 1.0 && (Math.abs(marker.value(0) - lane.value(2)) > 0.5 || Math.abs(marker.value(1) - lane.value(3)) > 0.5)) {
+				failures.add(where + ": at the onset the marker of event " + marker.eventIndex() + " is not at the end of its lane");
+			}
+			for (SceneItem trajectory : scene.forEvent(marker.eventIndex(), Role.TRAJECTORY)) {
+				if (trajectory.tgString() == marker.tgString() && (Math.abs(trajectory.value(2) - lane.value(2)) > 0.5 || Math.abs(trajectory.value(0) - lane.value(0)) > 0.5)) {
+					failures.add(where + ": the trajectory of event " + marker.eventIndex() + " is not the lane of its fret");
 				}
 			}
 		}

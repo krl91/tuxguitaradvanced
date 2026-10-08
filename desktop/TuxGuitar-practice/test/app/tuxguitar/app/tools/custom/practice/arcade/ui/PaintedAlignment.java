@@ -150,7 +150,7 @@ final class PaintedAlignment {
 		double first = Math.min(strings.get(0).value(1), strings.get(1).value(1));
 		double second = Math.max(strings.get(0).value(1), strings.get(1).value(1));
 		int wireRow = (int) Math.round((first + second) / 2.0);
-		List<Double> wires = verticalLines(picture, wireRow, 0x707080, 0, picture.width - 1);
+		List<Double> wires = verticalLines(picture, wireRow, 0x505060, 0, picture.width - 1);
 		double left = Double.NaN;
 		double right = Double.NaN;
 		for (double wire : wires) {

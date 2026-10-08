@@ -79,9 +79,11 @@ public final class CameraTrack {
 			double low = Double.MAX_VALUE;
 			double high = -Double.MAX_VALUE;
 			for (ArcadeRenderEvent.Position position : event.positions()) {
-				double x = neck.fretCentreX(position.fret());
-				low = Math.min(low, x);
-				high = Math.max(high, x);
+				// the whole cell of the fret, from its wire on the nut side to its own: the lane of the fret ends at the middle of the upper edge between the two
+				// wires that are painted (FR-066), so both are in the shown part
+				// (the lane before the nut has no wire of its own on its far side: its middle is what is shown, with the nut that is its other side)
+				low = Math.min(low, position.fret() == 0 ? neck.fretCentreX(0) : neck.cellLeftX(position.fret()));
+				high = Math.max(high, neck.cellRightX(position.fret()));
 			}
 			// a hair more than the margin, so that rounding in the averages below can never leave a target on the edge
 			lo[used] = low - settings.marginMm - 1e-6;

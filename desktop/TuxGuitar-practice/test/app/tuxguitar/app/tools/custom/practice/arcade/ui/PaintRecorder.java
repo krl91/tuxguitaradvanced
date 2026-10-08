@@ -62,7 +62,29 @@ public final class PaintRecorder implements InvocationHandler {
 		}
 	}
 
+	/** A filled four-cornered shape that was drawn (the body of the neck, a timing bar). */
+	public static final class Polygon {
+		public final double[] xy;
+		public final int alpha;
+		public final int fill;
+
+		Polygon(double[] xy, int alpha, int fill) {
+			this.xy = xy;
+			this.alpha = alpha;
+			this.fill = fill;
+		}
+
+		public double minY() {
+			double min = Double.MAX_VALUE;
+			for (int i = 1; i < this.xy.length; i += 2) {
+				min = Math.min(min, this.xy[i]);
+			}
+			return min;
+		}
+	}
+
 	public final List<Segment> segments = new ArrayList<Segment>();
+	public final List<Polygon> polygons = new ArrayList<Polygon>();
 	public final List<Circle> circles = new ArrayList<Circle>();
 	public final List<String> texts = new ArrayList<String>();
 	private int alpha = 255;
@@ -107,6 +129,9 @@ public final class PaintRecorder implements InvocationHandler {
 			case "closePath":
 				if (this.style == UIPainter.PATH_DRAW && this.pointCount == 2) {
 					this.segments.add(new Segment(this.points[0], this.points[1], this.points[2], this.points[3], this.lineWidth, this.alpha, this.stroke));
+				}
+				if (this.style == UIPainter.PATH_FILL && this.pointCount == 4) {
+					this.polygons.add(new Polygon(java.util.Arrays.copyOf(this.points, 8), this.alpha, this.fill));
 				}
 				this.pointCount = 0;
 				return null;

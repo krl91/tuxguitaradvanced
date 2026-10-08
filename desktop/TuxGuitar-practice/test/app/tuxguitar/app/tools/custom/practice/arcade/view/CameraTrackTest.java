@@ -162,7 +162,9 @@ public class CameraTrackTest {
 
 		assertTrue(track.isUnfittable(), "fret 0 and fret 24 together need more than the widest part this camera may show");
 		assertEquals(0.7, track.zoomAt(events.get(0).onsetNanos()), 1e-6, "but the zoom stays within its bound");
-		assertFalse(CameraTrack.build(events, NECK, SETTINGS).isUnfittable(), "the standard camera shows them together");
+		// the standard camera shows the open string with the 23rd fret together; the 24th, whose whole cell must be shown (the lane of a fret ends between its two
+		// wires, FR-066), is beyond the widest part it may show
+		assertFalse(CameraTrack.build(events(new int[][] { { 0, 23 }, { 3 } }), NECK, SETTINGS).isUnfittable(), "the standard camera shows them together");
 	}
 
 	@Test
