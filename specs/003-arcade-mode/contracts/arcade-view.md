@@ -9,6 +9,7 @@ final class StringLayout { static StringLayout of(TGTrack track); int count(); i
 final class NeckModel { static NeckModel of(StringLayout l, double scaleLength, int frets); double fretX(int n); double fretCentreX(int n); Marker[] markers(); }
 final class StringColours { static StringColours of(int count); Colour of(int tgString); }
 final class IsometricProjection { Point project(double modelX, double modelY, double depth, Viewport v); }
+final class FretArrivalLaneMap { static FretArrivalLaneMap fromPaintedFrets(PaintedFretGrid grid); Lane laneForFret(int fret); }
 final class CameraTrack { static CameraTrack build(List<ArcadeRenderEvent> events, NeckModel neck, CameraSettings s); Camera at(long nanos); }
 final class ChordCartouche { static ChordCartouche of(PracticeEvent chord, StringLayout l, TGChord metadata?); }
 final class ArcadeScene { static List<Shape> build(ArcadeRun.View run, CameraTrack camera, NeckModel neck, long nowNanos, Viewport v); }
@@ -26,6 +27,7 @@ final class ArcadeScene { static List<Shape> build(ArcadeRun.View run, CameraTra
 8. **Monochrome.** Rendering with colours removed still identifies string (label, row), fret (position), chord timing (bar) and verdict (symbol and word).
 9. **No numeric score** is ever part of a scene during play (FR-021).
 10. **Resize / density.** A resize keeps the minimum cartouche size; a dense passage drops detail in a documented order (far events first) and never hides the current event.
+11. **Predefined fret lanes.** For every visible fretted cell, one lane ends at the midpoint of its painted upper edge; fret 0 has one pre-nut lane. Lane selection depends only on fret, so notes on different strings at the same fret reuse identical geometry and differ only through string colour and the separate target disk. The marker remains on its lane, reaches the endpoint at onset, and no approach line or connector enters the physical neck (FR-066/SC-024).
 
 ## Canvas layer
 

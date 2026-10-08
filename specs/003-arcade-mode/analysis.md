@@ -81,7 +81,7 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | FR-063 one centred ordered chord-preview lane | T038, T040, T043, T044 | one expanded diagram; later chords compact; no fret-based lateral scattering |
 | FR-064 optional external real-score corpus | T060-T065 | content-aware recursive read, deterministic diversity selection, no score bytes committed |
 | FR-065 opaque active target disks | T037, T038, T040, T043, T062, T063 | filled alpha-1 core, bounded size, string colour, contrasting outline, identical across tiers |
-| FR-066 canonical marker/trajectory/fret registration | T037, T043, T062, T063 | approach ends at hit line; any lower-neck connector is a separate segment |
+| FR-066 predefined fret-arrival lanes | T037, T043, T062, T063, T066 | one lane per visible fret, shared across strings; endpoint is the painted cell-top midpoint; no approach primitive or connector crosses the neck |
 | SC-001 start in under 30 s | manual, T068-adjacent walk-through | not measured by a task; reported only if timed |
 | SC-002 95 % at 8 notes a second | inherited from 002 SC-009 | **not met by the base mode** (R15 of 002) |
 | SC-003 monitoring loopback | T072, T073 | |
@@ -103,6 +103,6 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | SC-021 corpus size and diversity | T060, T061, T065 | >=2,000 profiled files and >=60 selected track cases across required categories |
 | SC-022 real-score structural/render acceptance | T062-T065, T044 | all selected cases plus twelve local screenshot pairs; degraded files separate |
 | SC-023 active-target visibility | T037, T038, T040, T043, T062, T063 | structural alpha/size/centre assertions plus light/dark/monochrome screenshots |
-| SC-024 approach registration | T037, T043, T062, T063 | primitive-level marker-on-line and fret-cell bounds across progress/camera/tiers |
+| SC-024 predefined-lane registration | T037, T043, T062, T063, T066 | primitive-level marker-on-lane and exact painted cell-top endpoint across strings/progress/camera/tiers; no neck-crossing primitive |
 
 **Result**: every requirement has a task or an explicit reason it has none; no task is orphaned; the dependencies are acyclic (T002 -> T004 -> T022 -> D; E and F independent). Three items are *not decided* and wait for the owner: O1, O2, O3 (and the outcome of O4, O5 comes from measurements). The two inherited limits (SC-002 vs the measured judging; Arcade release gated by 002 T102) are stated in `plan.md` and `tasks.md` T001.

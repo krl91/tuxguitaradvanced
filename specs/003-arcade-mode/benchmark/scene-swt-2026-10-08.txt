@@ -1,5 +1,5 @@
 Arcade canvas, real SWT paints (spec 003 T043), Mac OS X aarch64, Java 21.0.12.1
 dense passage, window 1280x720, 600 frames painted of 600 asked, painted through the event loop one at a time
-cost of one paint (scene build + replay on the SWT painter): p50 2.020 ms, p95 2.406 ms, p99 2.646 ms, max 3.554 ms
+cost of one paint (scene build + replay on the SWT painter): p50 1.988 ms, p95 2.176 ms, p99 2.379 ms, max 3.022 ms
 final quality tier chosen by the controller: FULL
 Whether the toolkit paints with a hardware accelerated path is not known to this test and is not claimed: SWT on macOS draws with Core Graphics, and nothing here reads the GPU. Not measured here: MIDI playback and live capture running (T047).

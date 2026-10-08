@@ -22,3 +22,7 @@ mvn -e clean verify -P native-modules                                           
 5. Pause and resume: the backing and the judging stop and restart together.
 6. The result at the end: score, counts, best streak; nothing during play; nothing kept after closing.
 7. Monitoring (only if the spike allowed it): the physical loopback of `contracts/monitoring-latency-protocol.md`.
+
+### Visual lane gate before corpus approval
+
+Before reviewing the 32 real-score screenshots, inspect the minimal lane fixtures required by T066. For every visible fret, its approach lane must meet the midpoint of the fret cell's upper edge. Notes on different strings but the same fret must travel on the same lane while keeping different string colours. At onset the moving marker must be centred on that endpoint; no approach line or connector may continue into or across the physical neck. Reject T044 if any note floats beside a lane, lands on a fret wire, uses a string-specific trajectory or draws a diagonal through the neck.

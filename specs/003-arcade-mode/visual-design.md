@@ -21,7 +21,7 @@ These are composition references, not pixel templates. Generated fret widths, ma
 1. The real instrument neck occupies the foreground; its strings run horizontally.
 2. Musical events come from the depth field toward the player, perpendicular to the strings.
 3. The fixed hit line is the written onset. Animation never moves the musical instant.
-4. A single note is a string-coloured marker and trajectory resolving to one expected string/fret intersection.
+4. A single note is a string-coloured marker travelling on the one predefined lane of its written fret. That lane ends at the midpoint of the fret cell's upper edge; the separate opaque neck target identifies the exact string/fret intersection.
 5. A chord is **not** a collection of independent flying notes. It is one neutral timing bar with one attached chord cartouche.
 6. The timing bar answers **when**. The cartouche answers **what**. The verdict badge answers **what was heard**.
 7. Expected string/fret positions come from the tablature and are instructions only. Audio feedback verifies pitch and timing, never physical string, fret or fingering.
@@ -99,21 +99,23 @@ For `PracticeEvent.Kind.EXPECTED_NOTE`:
 2. ensure that fret is inside the camera's anticipated visible range;
 3. spawn the marker at the event's look-ahead boundary;
 4. use the destination string's stable colour for marker, trajectory and target ring;
-5. project depth from event time so the marker reaches the hit line exactly at the event onset;
+5. select the predefined lane indexed by the written fret and project depth from event time so the marker reaches that lane's cell-top endpoint exactly at the event onset;
 6. apply the tempo judgement as a separate shape/text badge without changing the marker's string colour.
 
 The physical-neck target is emitted only when this event is the active/next actionable event. It is not a faint ring: it is a large filled disk, fully opaque, centred exactly on the destination string/fret intersection, in that string's stable colour, with a contrasting 2–4 logical-pixel outline. Its filled-core diameter is `clamp(24 logical px, 60% of the rendered inter-string spacing, 42 logical px)` and scales with UI density. An optional halo or pulse may surround it, but the opaque core always remains. Other visible note markers continue travelling in the approach field without a disk, ring, ghost or fret highlight on the neck.
 
-### Canonical fret alignment
+### Predefined fret-arrival lanes
 
-The approach field is the perspective continuation of the same fret geometry as the neck. A note written at fret `n` travels along the centre of the projected cell between wires `n-1` and `n`; its centre must visibly sit on its trajectory, not beside it. Use one canonical projection for the two cell boundaries, cell centre, marker and hit-line landing point.
+The approach field uses a small fixed vocabulary: one lane per visible fret cell, not one computed trajectory per note. For the fret cell `n` bounded by the two wires actually painted at `paintedWireX(n-1)` and `paintedWireX(n)`, define:
 
-The active note needs two distinct visual segments:
+```text
+arrivalX(n) = (paintedWireX(n-1) + paintedWireX(n)) / 2
+arrivalY    = paintedNeckTopY
+```
 
-1. the **approach segment**, from the horizon to the hit line, on which the incoming marker actually moves;
-2. when useful, a separate **landing connector**, from that hit-line point to the opaque target disk on the destination string.
+The lane for fret `n` joins its documented horizon origin to this cell-top endpoint. Every single note on fret `n` selects exactly that lane, whatever its destination string. String identity changes the marker colour, target disk and labels, never the lane geometry. Fret 0 has one explicit pre-nut lane.
 
-Do not draw one straight trajectory from the horizon directly to the lower neck disk while moving the marker on a horizon-to-hit-line path: those two lines have different slopes, which makes the note appear unrelated to its case. The approach segment and marker remain identical for active and future notes. Camera movement recomputes the entire construction from the same camera snapshot, so grid, marker, trajectory, landing point and target cannot disagree for one frame.
+The marker centre stays on the selected lane throughout the approach and equals the endpoint at onset. The visible approach line is clipped at `paintedNeckTopY`: it never continues, bends or adds a connector across the physical neck. The opaque target disk remains separately centred on the tablature's string/fret position inside the neck. Camera pan, zoom and resize rebuild all visible lane endpoints from the same painted fret-boundary snapshot before any marker is placed; no event retains a stale or private trajectory.
 
 ## Chord event: timing bar plus cartouche
 
@@ -301,7 +303,7 @@ The scene model is backend-neutral. The first implementation uses the existing t
 20. **Chord preview lane**: fixtures with 2, 4 and 8 upcoming chords contain exactly one expanded diagram, every full cartouche is inside the viewport, every chord timing bar shares the same centre axis, and promotion follows onset order without a two-diagram transition frame.
 21. **External real-score corpus**: at least 60 deterministically selected GP3/GP4 track cases exercise sparse, mixed, chord-heavy, repeated/dense-chord, fast, large-jump, bass/alternate-string and multi-track/repeat material. Apply tests 3, 8, 10 and 13-20 at representative frames in `FULL` and `PERFORMANCE`; generate at least twelve local, uncommitted screenshot pairs for owner review.
 22. **Opaque active neck target**: structural tests inspect every active neck-target primitive in all quality tiers and require a filled core with alpha 1.0, the exact FR-065 diameter/centre and a contrasting outline. Single-note scenes contain one disk; chord scenes contain all and only the written chord positions; later events contain none. Light, dark, monochrome, resize, high-density and fallback screenshots keep the target immediately visible.
-23. **Fret/trajectory registration**: for frets 0 through the maximum, sample the complete approach and assert that marker centre, approach segment and projected fret-cell centre agree within 0.5 logical pixel. At impact, the approach endpoint and target fret centre share x; any connector below the hit line is a separate primitive. Repeat while the camera pans, after resize, in every tier and on real-score screenshots.
+23. **Predefined fret-lane registration**: for fret 0 and every visible cell, sample the complete approach and assert that the marker remains on the lane within 0.5 logical pixel and reaches the exact midpoint of the cell's painted upper edge at onset. Notes on several strings at the same fret must reuse byte-for-byte identical lane geometry while keeping their string colours. Assert that no approach primitive enters the neck, no connector is emitted, and camera/resize/tier changes rebuild lanes from the current painted wires. Repeat on real-score screenshots.
 
 ## Do not infer
 

@@ -22,6 +22,7 @@ All objects are in memory for one run (FR-026). "Source" names the existing clas
 | `ArcadeRenderEvent` | `eventIndex`, `kind` (NOTE/CHORD/AUTO/UNSUPPORTED), `onsetNanos` (from `FollowTimeline.targetNanos`), `positions[]` (string, fret), `chordName?`, `stroke`, `fretSpan` | Built from `PracticeEvent` + `FollowTimeline` only (no second score parser). `MULTI_NOTE` and `AUTO_PASS` are shown as what they are. |
 | `CameraTrack` | keyframes `(timeNanos, centreFret, zoom)`; `at(t)` | R4; built once per run; continuous; pure. |
 | `IsometricProjection` | `project(modelX, modelY, depth) -> (screenX, screenY, scale)` for a viewport | One affine isometric transform plus depth scaling; the hit line is a fixed depth. |
+| `FretArrivalLaneMap` | camera/viewport snapshot; painted top-edge fret-wire x positions; one `(horizonStart, cellTopEndpoint)` lane per visible fret plus the pre-nut lane | Built once from the same geometry sent to the painter. For fretted cell `n`, endpoint is `((wireX[n-1] + wireX[n]) / 2, neckTopY)`. Events select by fret only; string changes colour and the separate neck target, never lane geometry. |
 | `ChordCartouche` | `strings` (count, vertical, low to high), `firstFret` window, `dots[]` (string, fret, colour, open/dead flags), `name?`, `stroke`, minimum screen size | visual-design.md; name only from non-blank `TGChord.getName()`; dead strings only when explicit. |
 | `ArcadeScene` | list of drawable shapes (polygons, circles, text) for `(t, viewport, run state)` | Pure function; deterministic; the unit of the structural capture test. |
 
