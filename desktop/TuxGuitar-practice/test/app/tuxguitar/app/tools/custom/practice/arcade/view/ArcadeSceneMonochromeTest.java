@@ -55,7 +55,7 @@ public class ArcadeSceneMonochromeTest {
 	@Test
 	public void theStringIsToldByItsLabelAndItsRowTheFretByItsPositionAndItsNumber() {
 		SceneFixture fixture = song();
-		Scene picture = fixture.scene(true).build(fixture.onset(1) - 400 * MS, SCREEN, null, 100);
+		Scene picture = fixture.scene(true).build(fixture.onset(1) - 400 * MS, SCREEN, ArcadeSceneTest.completedBefore(1, 4), 100);
 		Set<String> labels = new HashSet<String>();
 		Set<Double> rows = new HashSet<Double>();
 		for (SceneItem label : picture.withRole(Role.STRING_LABEL)) {

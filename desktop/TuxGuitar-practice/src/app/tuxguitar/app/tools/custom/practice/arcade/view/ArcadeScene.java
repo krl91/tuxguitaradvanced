@@ -24,6 +24,8 @@ public final class ArcadeScene {
 	static final int TEXT_COLOUR = 0xEEF0F3;
 	static final int FRAME_COLOUR = 0x12151B;
 	static final int DIAGRAM_LINE = 0xB8BEC8;
+	static final int HEADER_COLOUR = 0x2F3647;
+	static final int HEADER_TEXT_COLOUR = 0xFFFFFF;
 
 	private final List<ArcadeRenderEvent> events;
 	private final NeckModel neck;
@@ -94,6 +96,29 @@ public final class ArcadeScene {
 	}
 
 	/**
+	 * How many event identities may be fully detailed at once (FR-062): the number at the size of a normal desktop window. The active event always is; the
+	 * others are admitted by nearness in time, one after the other, only while their labels (fret numbers, chord names and diagrams, verdicts) stay
+	 * disjoint from every label already admitted and from the next playable event. The rest are compact previews.
+	 */
+	public static final int MAX_DETAILED = 4;
+	/** The most compact previews drawn besides the detailed events: the nearest ones; further ones are not drawn. */
+	public static final int MAX_COMPACT = 28;
+	/** The gap kept between two labels, in pixels. */
+	static final double GAP = 4.0;
+
+	private boolean densityBudget = true;
+
+	/**
+	 * Switches the density budget off, for the measurement of the unreduced cost and for the proof that the budget changes nothing of the judgement
+	 * (SC-019). A view for the learner always has it on: the unreduced picture is unreadable (the owner refused it).
+	 */
+	public ArcadeScene withDensityBudget(boolean enabled) {
+		ArcadeScene copy = new ArcadeScene(this.events, this.neck, this.colours, this.camera, this.labels, this.monochrome);
+		copy.densityBudget = enabled;
+		return copy;
+	}
+
+	/**
 	 * @param nowNanos the clock reading of the player
 	 * @param run the state of the run, or null before the first snapshot
 	 * @param speedPercent the speed of the run, for the HUD
@@ -103,48 +128,55 @@ public final class ArcadeScene {
 	}
 
 	/**
-	 * The same picture at a quality tier: only the decoration (glow, trails, shadows) differs, every other item is identical at every tier. When many
-	 * events are on screen the far ones lose their detail in a documented order, see {@link #FAR_TRAJECTORY_LIMIT}.
+	 * The same picture at a quality tier: only the decoration (glow, trails, shadows) differs, every other item is identical at every tier. The events
+	 * that are fully detailed are chosen from the clock and the identities alone (see {@link #MAX_DETAILED}); nothing here removes, merges, moves or
+	 * reorders an event of the timeline, the judging or the MIDI playback: a compact event is the same event, shown smaller.
 	 */
 	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier) {
 		Out out = new Out(this.monochrome);
-		IsometricProjection projection = new IsometricProjection(viewport);
-		Camera cam = this.camera.at(nowNanos);
-		CameraTrack.Settings settings = this.camera.settings();
-		drawNeck(out, projection, cam, viewport);
+		Frame f = new Frame(out, new IsometricProjection(viewport), this.camera.at(nowNanos), viewport, tier, nowNanos, this.camera.settings(), run);
+		drawNeck(out, f.projection, f.cam, viewport);
 
-		List<Integer> visible = visibleEvents(nowNanos, settings);
-		int[] farRank = farRanks(visible, nowNanos, settings);
+		List<Integer> visible = visibleEvents(nowNanos, f.settings);
+		int active = activeEvent(visible, run);
+		Plan plan = plan(f, visible, active, speedPercent);
+		int compact = 0;
 		for (int k = visible.size() - 1; k >= 0; k--) {
-			if (farRank[k] < FAR_EVENT_LIMIT) {
-				drawEvent(out, projection, cam, viewport, visible.get(k), nowNanos, settings, tier, farRank[k]);
+			int index = visible.get(k);
+			if (plan.detailed.contains(index)) {
+				drawDetailed(f, index, index == active, plan);
+			} else if (compact < MAX_COMPACT) {
+				compact++;
+				drawCompact(f, index);
 			}
 		}
-		drawBadges(out, projection, cam, viewport, visible, run, nowNanos, settings);
+		drawBadges(f, plan);
 		drawHud(out, viewport, run, speedPercent);
 		return new Scene(out.items, nowNanos, viewport);
 	}
 
-	/**
-	 * The order in which a crowded screen loses detail. Events that are armed, on the hit line or just judged are never touched. The others ("far":
-	 * distant or readable) are ranked from the nearest to the farthest in time; from the rank {@value #FAR_TRAJECTORY_LIMIT} on they lose their
-	 * trajectory and their ghost on the neck, from {@value #FAR_CARTOUCHE_LIMIT} on a chord keeps its timing bar but not its diagram, and from
-	 * {@value #FAR_EVENT_LIMIT} on they are not drawn. A sparse passage never reaches these limits.
-	 */
-	public static final int FAR_TRAJECTORY_LIMIT = 12;
-	public static final int FAR_CARTOUCHE_LIMIT = 16;
-	public static final int FAR_EVENT_LIMIT = 32;
+	private static boolean isPlayable(ArcadeRenderEvent event) {
+		return event.kind() == ArcadeRenderEvent.Kind.NOTE || event.kind() == ArcadeRenderEvent.Kind.CHORD;
+	}
 
-	/** The rank of each visible event among the far ones (0 for the nearest), or 0 for an event that is never reduced. */
-	private int[] farRanks(List<Integer> visible, long nowNanos, CameraTrack.Settings settings) {
-		int[] ranks = new int[visible.size()];
-		int rank = 0;
-		for (int k = 0; k < visible.size(); k++) {
-			RenderState state = RenderState.of(this.events.get(visible.get(k)).onsetNanos(), nowNanos, settings.lookAheadNanos, settings.holdAfterNanos);
-			boolean far = state == RenderState.DISTANT || state == RenderState.READABLE;
-			ranks[k] = far ? rank++ : 0;
+	/**
+	 * The one event whose target is on the physical neck (FR-060): the earliest actionable event (a note or a chord) that is not completed. An event is
+	 * completed when the run has a verdict for it; one that is still waiting, even past its time, stays the active one until it is judged or leaves the
+	 * screen. The camera looks at later events, but only this one gets a ring or a ghost; when it completes the next takes its place in the same scene.
+	 *
+	 * @return its index, or -1 when no visible event is actionable
+	 */
+	int activeEvent(List<Integer> visible, ArcadeRun.View run) {
+		for (int index : visible) {
+			if (!isPlayable(this.events.get(index))) {
+				continue;
+			}
+			boolean completed = run != null && index < run.states().size() && run.states().get(index).verdict() != ArcadeVerdict.WAITING;
+			if (!completed) {
+				return index;
+			}
 		}
-		return ranks;
+		return -1;
 	}
 
 	/** The indices of the events that are on screen, in play order. */
@@ -245,6 +277,333 @@ public final class ArcadeScene {
 		out.line(Role.HIT_LINE, 0, projection.hitLineY(), w, projection.hitLineY(), HIT_COLOUR, 1.0, 2.0, -1, 0);
 	}
 
+	// ------------------------------------------------------------------------------------------------------- the density budget (FR-062)
+
+	/** What one build needs everywhere: the output, the projection and the instant. */
+	private static final class Frame {
+		final Out out;
+		final IsometricProjection projection;
+		final Camera cam;
+		final Viewport viewport;
+		final QualityTier tier;
+		final long now;
+		final CameraTrack.Settings settings;
+		final ArcadeRun.View run;
+		final double h;
+
+		Frame(Out out, IsometricProjection projection, Camera cam, Viewport viewport, QualityTier tier, long now, CameraTrack.Settings settings, ArcadeRun.View run) {
+			this.out = out;
+			this.projection = projection;
+			this.cam = cam;
+			this.viewport = viewport;
+			this.tier = tier;
+			this.now = now;
+			this.settings = settings;
+			this.run = run;
+			this.h = viewport.height();
+		}
+
+		RenderState stateOf(ArcadeRenderEvent event) {
+			return RenderState.of(event.onsetNanos(), this.now, this.settings.lookAheadNanos, this.settings.holdAfterNanos);
+		}
+
+		double progressOf(ArcadeRenderEvent event) {
+			return RenderState.progress(event.onsetNanos(), this.now, this.settings.lookAheadNanos);
+		}
+	}
+
+	/** The result of the choice: which events are fully detailed, where the diagrams of the chords go, where the verdict badges go. */
+	private static final class Plan {
+		final java.util.Set<Integer> detailed = new java.util.HashSet<Integer>();
+		final java.util.Map<Integer, Double> boxX = new java.util.HashMap<Integer, Double>();
+		final java.util.Map<Integer, double[]> badge = new java.util.HashMap<Integer, double[]>();
+	}
+
+	/** Where a note is on the screen, and how big. */
+	private static final class NoteGeo {
+		ScreenPoint at;
+		double radius;
+		double x;
+
+		double[] box() {
+			return new double[] { this.at.x() - this.radius, this.at.y() - this.radius, this.at.x() + this.radius, this.at.y() + this.radius };
+		}
+	}
+
+	/** Where a chord bar is and where its diagram goes before any move. */
+	private static final class ChordGeo {
+		ScreenPoint pl;
+		ScreenPoint pr;
+		double thickness;
+		double centreX;
+		double barTop;
+		double boxW;
+		double boxH;
+		double boxX;
+		double boxY;
+
+		double[] barBox() {
+			return new double[] { Math.min(this.pl.x(), this.pr.x()), this.barTop, Math.max(this.pl.x(), this.pr.x()), this.pl.y() };
+		}
+
+		double[] cartoucheBox(double x, boolean note) {
+			return new double[] { x, this.boxY - (note ? 14.0 : 0.0), x + this.boxW, this.boxY + this.boxH };
+		}
+	}
+
+	private NoteGeo noteGeo(Frame f, ArcadeRenderEvent event) {
+		NoteGeo g = new NoteGeo();
+		ArcadeRenderEvent.Position position = event.positions().get(0);
+		g.x = this.neck.fretCentreX(position.fret());
+		g.at = f.projection.approach(g.x, f.progressOf(event), f.cam);
+		g.radius = Math.max(6.0, f.h * 0.030 * g.at.scale());
+		return g;
+	}
+
+	private ChordGeo chordGeo(Frame f, ArcadeRenderEvent event) {
+		ChordGeo g = new ChordGeo();
+		double progress = f.progressOf(event);
+		double left;
+		double right;
+		if (event.positions().isEmpty()) {
+			left = f.cam.left();
+			right = f.cam.right();
+		} else {
+			double min = Double.MAX_VALUE;
+			double max = -Double.MAX_VALUE;
+			for (ArcadeRenderEvent.Position position : event.positions()) {
+				double x = this.neck.fretCentreX(position.fret());
+				min = Math.min(min, x);
+				max = Math.max(max, x);
+			}
+			left = min - 8.0;
+			right = max + 8.0;
+		}
+		g.pl = f.projection.approach(left, progress, f.cam);
+		g.pr = f.projection.approach(right, progress, f.cam);
+		g.thickness = Math.max(3.0, f.h * 0.014 * g.pl.scale());
+		g.centreX = (g.pl.x() + g.pr.x()) / 2.0;
+		g.barTop = g.pl.y() - g.thickness;
+		if (event.kind() == ArcadeRenderEvent.Kind.CHORD) {
+			ChordCartouche cartouche = this.cartouches[event.index()];
+			double scale = g.pl.scale();
+			double unit = f.h / 720.0;
+			g.boxW = Math.max(ChordCartouche.MIN_WIDTH_PX, (20 + 18 * (cartouche.strings() - 1)) * unit * scale);
+			g.boxH = Math.max(ChordCartouche.MIN_HEIGHT_PX, (24 + 14 * cartouche.rows()) * unit * 1.6 * scale);
+			// the header carries the whole name as written: the diagram is made wide enough for it, never the name cut or shrunk below a readable size
+			g.boxW = Math.max(g.boxW, headerWidth(cartouche, g.boxH));
+			double stem = Math.max(6.0, f.h * 0.03 * scale);
+			g.boxX = Math.max(2.0, Math.min(f.viewport.width() - g.boxW - 2.0, g.centreX - g.boxW / 2.0));
+			g.boxY = Math.max(cartouche.notCheckedSeparately() ? 16.0 : 2.0, g.barTop - stem - g.boxH);
+		}
+		return g;
+	}
+
+	/** The room of a text, estimated from its length and size: the widest letters of a bold sans-serif font. */
+	private static double[] textBox(String text, double cx, double cy, double size) {
+		double width = text.length() * size * 0.66;
+		return new double[] { cx - width / 2.0, cy - size * 0.6, cx + width / 2.0, cy + size * 0.6 };
+	}
+
+	private static boolean disjoint(double[] a, double[] b) {
+		return a[2] + GAP <= b[0] || b[2] + GAP <= a[0] || a[3] + GAP <= b[1] || b[3] + GAP <= a[1];
+	}
+
+	private static boolean disjointFromAll(double[] box, List<double[]> others) {
+		for (double[] other : others) {
+			if (!disjoint(box, other)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean inside(double[] box, Viewport viewport) {
+		return box[0] >= 0 && box[1] >= 0 && box[2] <= viewport.width() && box[3] <= viewport.height();
+	}
+
+	/** The places a diagram of the given width may take on its row, nearest to its own first: beside each label that is in its way, left or right. */
+	private static List<Double> candidateXs(double x, double w, List<double[]> obstacles, double screenWidth) {
+		List<Double> xs = new ArrayList<Double>();
+		xs.add(x);
+		for (double[] o : obstacles) {
+			xs.add(o[2] + GAP);
+			xs.add(o[0] - GAP - w);
+		}
+		List<Double> valid = new ArrayList<Double>();
+		for (double candidate : xs) {
+			if (candidate >= 2.0 && candidate + w <= screenWidth - 2.0) {
+				valid.add(candidate);
+			}
+		}
+		final double wanted = x;
+		valid.sort((p, q) -> Double.compare(Math.abs(p - wanted), Math.abs(q - wanted)));
+		return valid;
+	}
+
+	private double[] badgeSize(Frame f, ArcadeRun.EventState result) {
+		double badgeH = f.h * 0.036;
+		return new double[] { f.viewport.width() * (missingNames(result).isEmpty() ? 0.15 : 0.22), badgeH };
+	}
+
+	/** The rows of the verdict badges, under the neck and its fret numbers. */
+	private double[] badgeSlot(Frame f, double wantedX, double w, double hgt, List<double[]> placed) {
+		double screen = f.viewport.width();
+		double[] rows = { f.h * 0.925, f.h * 0.925 + hgt + 3.0 };
+		List<Double> xs = new ArrayList<Double>();
+		double base = Math.max(2.0, Math.min(screen - w - 2.0, wantedX - w / 2.0));
+		xs.add(base);
+		for (int k = 1; k <= 8; k++) {
+			xs.add(base + k * (w + GAP));
+			xs.add(base - k * (w + GAP));
+		}
+		for (double y : rows) {
+			for (double x : xs) {
+				double[] box = { x, y, x + w, y + hgt };
+				if (x >= 2.0 && x + w <= screen - 2.0 && y + hgt <= f.viewport.height() - 1.0 && disjointFromAll(box, placed)) {
+					return box;
+				}
+			}
+		}
+		return null;
+	}
+
+	/** The boxes of the HUD, which no label may cover. */
+	private List<double[]> hudBoxes(Frame f, ArcadeRun.View run, int speedPercent) {
+		List<double[]> boxes = new ArrayList<double[]>();
+		double size = f.h * 0.034;
+		double w = f.viewport.width();
+		if (run != null) {
+			String text = this.labels.streak(run.streak());
+			boxes.add(new double[] { w * 0.03, f.h * 0.05 - size * 0.6, w * 0.03 + text.length() * size * 0.66, f.h * 0.05 + size * 0.6 });
+		}
+		String speed = this.labels.speed(speedPercent);
+		boxes.add(new double[] { w * 0.97 - speed.length() * size * 0.66, f.h * 0.05 - size * 0.6, w * 0.97, f.h * 0.05 + size * 0.6 });
+		return boxes;
+	}
+
+	/**
+	 * Chooses the events that are fully detailed (FR-062): the active one first, always; then the others by their nearness in time to the clock, up to
+	 * {@link #MAX_DETAILED} in all, each only if it has reached the readable state or is being judged, and only if every label it brings (the fret number of
+	 * a note, the header and diagram of a chord, the verdict badge) is disjoint from the labels already admitted, from the HUD and from the next playable
+	 * event. A chord may move sideways to find room. It is a function of the clock and the identities alone.
+	 */
+	private Plan plan(Frame f, List<Integer> visible, int active, int speedPercent) {
+		Plan plan = new Plan();
+		List<Integer> order = new ArrayList<Integer>(visible);
+		final long now = f.now;
+		order.sort((p, q) -> {
+			if (p == active || q == active) {
+				return p == active ? -1 : 1;
+			}
+			int byTime = Long.compare(Math.abs(this.events.get(p).onsetNanos() - now), Math.abs(this.events.get(q).onsetNanos() - now));
+			return byTime != 0 ? byTime : Integer.compare(p, q);
+		});
+		List<double[]> taken = new ArrayList<double[]>(hudBoxes(f, f.run, speedPercent));
+		List<double[]> badges = new ArrayList<double[]>();
+		int limit = this.densityBudget ? MAX_DETAILED : Integer.MAX_VALUE;
+		for (int index : order) {
+			if (plan.detailed.size() >= limit) {
+				break;
+			}
+			ArcadeRenderEvent event = this.events.get(index);
+			boolean isActive = index == active;
+			RenderState state = f.stateOf(event);
+			boolean eligible = isActive || state.ordinal() >= RenderState.READABLE.ordinal();
+			if (!eligible) {
+				continue;
+			}
+			double[] next = nextPlayableFootprint(f, visible, index);
+			List<double[]> mine = new ArrayList<double[]>();
+			double chosenX = Double.NaN;
+			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
+				// once the note is judged its number is no longer needed: only the verdict stays, so that notes just played, which all lie on the hit line, do not
+				// compete for the same place
+				if (!isJudged(f, index, state)) {
+					mine.add(noteGeo(f, event).box());
+				}
+			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD) {
+				ChordGeo g = chordGeo(f, event);
+				boolean note = this.cartouches[index].notCheckedSeparately() && state.ordinal() >= RenderState.READABLE.ordinal();
+				List<double[]> obstacles = new ArrayList<double[]>(taken);
+				if (next != null) {
+					obstacles.add(next);
+				}
+				chosenX = Double.NaN;
+				for (double x : candidateXs(g.boxX, g.boxW, obstacles, f.viewport.width())) {
+					double[] box = g.cartoucheBox(x, note);
+					if (disjointFromAll(box, obstacles)) {
+						chosenX = x;
+						break;
+					}
+				}
+				if (Double.isNaN(chosenX)) {
+					if (!isActive && this.densityBudget) {
+						continue;
+					}
+					chosenX = g.boxX;
+				}
+				mine.add(g.cartoucheBox(chosenX, note));
+			} else {
+				ChordGeo g = chordGeo(f, event);
+				String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
+				mine.add(textBox(word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026));
+			}
+			if (this.densityBudget && !isActive) {
+				boolean free = true;
+				for (double[] box : mine) {
+					free &= disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || event.kind() == ArcadeRenderEvent.Kind.CHORD || disjoint(box, next));
+				}
+				if (!free) {
+					continue;
+				}
+			}
+			double[] badge = null;
+			if (f.run != null && index < f.run.states().size() && f.run.states().get(index).verdict() != ArcadeVerdict.WAITING
+					&& state.ordinal() >= RenderState.ARMED.ordinal()) {
+				ArcadeRun.EventState result = f.run.states().get(index);
+				double[] size = badgeSize(f, result);
+				badge = badgeSlot(f, f.projection.neckX(columnOf(event), f.cam), size[0], size[1], badges);
+				if (badge == null && this.densityBudget && !isActive) {
+					continue;
+				}
+			}
+			plan.detailed.add(index);
+			taken.addAll(mine);
+			if (!Double.isNaN(chosenX)) {
+				plan.boxX.put(index, chosenX);
+			}
+			if (badge != null) {
+				plan.badge.put(index, badge);
+				badges.add(badge);
+			}
+		}
+		return plan;
+	}
+
+	/** True for an event that has its verdict and is past its impact: its number is no longer needed. */
+	private static boolean isJudged(Frame f, int index, RenderState state) {
+		return state == RenderState.FEEDBACK && f.run != null && index < f.run.states().size() && f.run.states().get(index).verdict() != ArcadeVerdict.WAITING;
+	}
+
+	/** The room taken by the next playable event after this one: its marker, or its bar. */
+	private double[] nextPlayableFootprint(Frame f, List<Integer> visible, int index) {
+		boolean after = false;
+		for (int other : visible) {
+			if (other == index) {
+				after = true;
+				continue;
+			}
+			if (after && isPlayable(this.events.get(other))) {
+				ArcadeRenderEvent event = this.events.get(other);
+				return event.kind() == ArcadeRenderEvent.Kind.NOTE ? noteGeo(f, event).box() : chordGeo(f, event).barBox();
+			}
+		}
+		return null;
+	}
+
+	// ------------------------------------------------------------------------------------------------------- drawing
+
 	private double alphaOf(RenderState state, long nowNanos, long onset, CameraTrack.Settings settings) {
 		switch (state) {
 			case DISTANT:
@@ -259,109 +618,115 @@ public final class ArcadeScene {
 		}
 	}
 
-	private void drawEvent(Out out, IsometricProjection projection, Camera cam, Viewport viewport, int index, long nowNanos, CameraTrack.Settings settings,
-			QualityTier tier, int farRank) {
+	/**
+	 * An event that is not in the detailed set (FR-062): a small marker in the colour of its string, or a thin neutral bar, on its own lane and at its own
+	 * distance. No fret number, no diagram, no glow, no trail, no trajectory, nothing on the neck.
+	 */
+	private void drawCompact(Frame f, int index) {
 		ArcadeRenderEvent event = this.events.get(index);
-		RenderState state = RenderState.of(event.onsetNanos(), nowNanos, settings.lookAheadNanos, settings.holdAfterNanos);
-		double progress = RenderState.progress(event.onsetNanos(), nowNanos, settings.lookAheadNanos);
-		double alpha = alphaOf(state, nowNanos, event.onsetNanos(), settings);
+		RenderState state = f.stateOf(event);
+		double alpha = alphaOf(state, f.now, event.onsetNanos(), f.settings) * 0.8;
 		if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
-			drawNote(out, projection, cam, viewport, event, state, progress, alpha, tier, farRank < FAR_TRAJECTORY_LIMIT);
+			NoteGeo g = noteGeo(f, event);
+			ArcadeRenderEvent.Position position = event.positions().get(0);
+			double r = Math.max(3.0, f.h * 0.012 * g.at.scale());
+			f.out.disc(Role.PREVIEW, g.at.x(), g.at.y(), r, r, this.colours.of(position.tgString()), alpha, event.index(), position.tgString());
 		} else {
-			drawBarEvent(out, projection, cam, viewport, event, state, progress, alpha, tier, farRank);
+			ChordGeo g = chordGeo(f, event);
+			double t = Math.max(2.0, g.thickness * 0.5);
+			f.out.quad(Role.PREVIEW_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - t, g.pl.x(), g.pl.y() - t }, BAR_COLOUR, alpha,
+					event.index(), 0);
 		}
 	}
 
-	private void drawNote(Out out, IsometricProjection projection, Camera cam, Viewport viewport, ArcadeRenderEvent event, RenderState state, double progress,
-			double alpha, QualityTier tier, boolean detailed) {
+	private void drawDetailed(Frame f, int index, boolean active, Plan plan) {
+		ArcadeRenderEvent event = this.events.get(index);
+		RenderState state = f.stateOf(event);
+		double alpha = alphaOf(state, f.now, event.onsetNanos(), f.settings);
+		if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
+			drawNote(f, event, state, alpha, active);
+		} else {
+			drawBarEvent(f, event, state, alpha, active, plan.boxX.get(index));
+		}
+	}
+
+	private void drawNote(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active) {
+		Out out = f.out;
 		ArcadeRenderEvent.Position position = event.positions().get(0);
 		int count = this.neck.layout().count();
 		int row = this.neck.layout().rowOf(position.tgString());
 		int colour = this.colours.of(position.tgString());
-		double x = this.neck.fretCentreX(position.fret());
-		double h = viewport.height();
-		ScreenPoint far = projection.approach(x, 0.0, cam);
-		ScreenPoint now = projection.approach(x, progress, cam);
-		ScreenPoint target = projection.neck(x, row, count, cam);
-		if (detailed) {
-			out.line(Role.TRAJECTORY, far.x(), far.y(), target.x(), target.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
+		NoteGeo g = noteGeo(f, event);
+		ScreenPoint far = f.projection.approach(g.x, 0.0, f.cam);
+		ScreenPoint target = f.projection.neck(g.x, row, count, f.cam);
+		boolean judged = isJudged(f, event.index(), state);
+		// the trajectory of a note stays in the approach field, down to the hit line; only the active note goes on to the neck and rings its target (FR-060)
+		ScreenPoint end = active ? target : f.projection.approach(g.x, 1.0, f.cam);
+		if (!judged) {
+			out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
 		}
-		double ring = h * 0.026;
-		out.ring(Role.TARGET_RING, target.x(), target.y(), ring, ring, colour, alpha, 3.0, event.index(), position.tgString());
-		if (detailed && state.ordinal() >= RenderState.READABLE.ordinal() && state != RenderState.EXPIRED) {
-			out.ring(Role.GHOST, target.x(), target.y(), ring * 1.5, ring * 1.5, colour, alpha * 0.5, 1.5, event.index(), position.tgString());
+		double ring = f.h * 0.026;
+		if (active) {
+			out.ring(Role.TARGET_RING, target.x(), target.y(), ring, ring, colour, alpha, 3.0, event.index(), position.tgString());
+			if (state.ordinal() >= RenderState.READABLE.ordinal()) {
+				out.ring(Role.GHOST, target.x(), target.y(), ring * 1.5, ring * 1.5, colour, alpha * 0.5, 1.5, event.index(), position.tgString());
+			}
 		}
-		double radius = Math.max(6.0, h * 0.030 * now.scale());
-		if (tier.trails()) {
-			ScreenPoint behind = projection.approach(x, Math.max(0.0, progress - 0.12), cam);
-			out.line(Role.TRAIL, behind.x(), behind.y(), now.x(), now.y(), colour, alpha * 0.35, radius, event.index(), position.tgString());
+		if (f.tier.trails() && !judged) {
+			ScreenPoint behind = f.projection.approach(g.x, Math.max(0.0, f.progressOf(event) - 0.12), f.cam);
+			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.35, g.radius, event.index(), position.tgString());
 		}
-		if (tier.glow()) {
-			out.disc(Role.GLOW, now.x(), now.y(), radius * 1.9, radius * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
+		if (f.tier.glow() && !judged) {
+			out.disc(Role.GLOW, g.at.x(), g.at.y(), g.radius * 1.9, g.radius * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
 		}
-		out.disc(Role.MARKER, now.x(), now.y(), radius, radius, colour, alpha, event.index(), position.tgString());
-		out.text(Role.MARKER_FRET, Integer.toString(position.fret()), now.x(), now.y(), Math.max(8.0, radius * 1.1), 0xFFFFFF, alpha, event.index(),
-				position.tgString());
+		out.disc(Role.MARKER, g.at.x(), g.at.y(), g.radius, g.radius, colour, alpha, event.index(), position.tgString());
+		if (!judged) {
+			out.text(Role.MARKER_FRET, Integer.toString(position.fret()), g.at.x(), g.at.y(), Math.max(8.0, g.radius * 1.1), 0xFFFFFF, alpha, event.index(),
+					position.tgString());
+		}
 	}
 
-	private void drawBarEvent(Out out, IsometricProjection projection, Camera cam, Viewport viewport, ArcadeRenderEvent event, RenderState state,
-			double progress, double alpha, QualityTier tier, int farRank) {
-		double h = viewport.height();
-		double left;
-		double right;
-		if (event.positions().isEmpty()) {
-			left = cam.left();
-			right = cam.right();
-		} else {
-			double min = Double.MAX_VALUE;
-			double max = -Double.MAX_VALUE;
-			for (ArcadeRenderEvent.Position position : event.positions()) {
-				double x = this.neck.fretCentreX(position.fret());
-				min = Math.min(min, x);
-				max = Math.max(max, x);
-			}
-			left = min - 8.0;
-			right = max + 8.0;
-		}
-		ScreenPoint pl = projection.approach(left, progress, cam);
-		ScreenPoint pr = projection.approach(right, progress, cam);
-		double thickness = Math.max(3.0, h * 0.014 * pl.scale());
-		out.quad(Role.TIMING_BAR, new double[] { pl.x(), pl.y(), pr.x(), pr.y(), pr.x(), pr.y() - thickness, pl.x(), pl.y() - thickness }, BAR_COLOUR, alpha,
-				event.index(), 0);
-		double centreX = (pl.x() + pr.x()) / 2.0;
-		double barTop = pl.y() - thickness;
+	private void drawBarEvent(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active, Double chosenX) {
+		Out out = f.out;
+		ChordGeo g = chordGeo(f, event);
+		out.quad(Role.TIMING_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - g.thickness, g.pl.x(), g.pl.y() - g.thickness },
+				BAR_COLOUR, alpha, event.index(), 0);
 		if (event.kind() != ArcadeRenderEvent.Kind.CHORD) {
 			String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
-			out.text(Role.EVENT_TEXT, word, centreX, barTop - h * 0.025, h * 0.026, TEXT_COLOUR, alpha, event.index(), 0);
-			return;
-		}
-		if (farRank >= FAR_CARTOUCHE_LIMIT) {
+			out.text(Role.EVENT_TEXT, word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026, TEXT_COLOUR, alpha, event.index(), 0);
 			return;
 		}
 		ChordCartouche cartouche = this.cartouches[event.index()];
-		double scale = pl.scale();
-		double unit = h / 720.0;
-		double boxW = Math.max(ChordCartouche.MIN_WIDTH_PX, (20 + 18 * (cartouche.strings() - 1)) * unit * scale);
-		double boxH = Math.max(ChordCartouche.MIN_HEIGHT_PX, (24 + 14 * cartouche.rows()) * unit * 1.6 * scale);
-		double stem = Math.max(6.0, h * 0.03 * scale);
-		double boxX = Math.max(2.0, Math.min(viewport.width() - boxW - 2.0, centreX - boxW / 2.0));
-		double boxBottom = barTop - stem;
-		double boxY = Math.max(cartouche.notCheckedSeparately() ? 16.0 : 2.0, boxBottom - boxH);
-		out.line(Role.STEM, centreX, barTop, centreX, boxY + boxH, BAR_COLOUR, alpha, 2.0, event.index(), 0);
-		if (tier.shadows()) {
-			out.quad(Role.SHADOW, new double[] { boxX + 4, boxY + 5, boxX + boxW + 4, boxY + 5, boxX + boxW + 4, boxY + boxH + 5, boxX + 4, boxY + boxH + 5 }, 0x000000,
-					alpha * 0.35, event.index(), 0);
+		double boxX = chosenX != null ? chosenX : g.boxX;
+		out.line(Role.STEM, g.centreX, g.barTop, boxX + g.boxW / 2.0, g.boxY + g.boxH, BAR_COLOUR, alpha, 2.0, event.index(), 0);
+		if (f.tier.shadows()) {
+			out.quad(Role.SHADOW, new double[] { boxX + 4, g.boxY + 5, boxX + g.boxW + 4, g.boxY + 5, boxX + g.boxW + 4, g.boxY + g.boxH + 5, boxX + 4, g.boxY + g.boxH + 5 },
+					0x000000, alpha * 0.35, event.index(), 0);
 		}
-		drawCartouche(out, cartouche, event, state, boxX, boxY, boxW, boxH, alpha);
-		if (farRank < FAR_TRAJECTORY_LIMIT && state.ordinal() >= RenderState.READABLE.ordinal()) {
+		drawCartouche(out, cartouche, event, state, boxX, g.boxY, g.boxW, g.boxH, alpha);
+		if (active) {
 			int count = this.neck.layout().count();
 			for (ArcadeRenderEvent.Position position : event.positions()) {
-				ScreenPoint target = projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, cam);
-				double ring = h * 0.026;
+				ScreenPoint target = f.projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, f.cam);
+				double ring = f.h * 0.026;
 				out.ring(Role.GHOST, target.x(), target.y(), ring, ring, this.colours.of(position.tgString()), alpha * 0.5, 1.5, event.index(),
 						position.tgString());
 			}
 		}
+	}
+
+	private static final double HEADER_FONT_MIN = 9.0;
+
+	/** The size of the font of the header for a diagram of this height. */
+	private static double headerSize(double boxHeight) {
+		return Math.max(HEADER_FONT_MIN, boxHeight * 0.22 * 0.62);
+	}
+
+	/** The width the header needs: the name (or the generic word), the arrow of the stroke, and a margin. */
+	private double headerWidth(ChordCartouche cartouche, double boxHeight) {
+		String name = cartouche.name() != null ? cartouche.name() : this.labels.chordFallback();
+		double size = headerSize(boxHeight);
+		return name.length() * size * 0.66 + (cartouche.stroke() != ArcadeRenderEvent.Stroke.NONE ? size * 1.4 : 0.0) + 14.0;
 	}
 
 	private void drawCartouche(Out out, ChordCartouche cartouche, ArcadeRenderEvent event, RenderState state, double x, double y, double w, double h,
@@ -370,18 +735,23 @@ public final class ArcadeScene {
 		out.quad(Role.CARTOUCHE_FRAME, new double[] { x, y, x + w, y, x + w, y + h, x, y + h }, FRAME_COLOUR, alpha, event.index(), 0);
 		double nameBand = h * 0.22;
 		double markBand = h * 0.12;
+		out.quad(Role.CARTOUCHE_HEADER, new double[] { x, y, x + w, y, x + w, y + nameBand, x, y + nameBand }, HEADER_COLOUR, Math.max(alpha, 0.9), event.index(), 0);
 		double gridTop = y + nameBand + markBand;
 		double gridBottom = y + h - h * 0.04;
-		double gridLeft = x + w * 0.26;
+		double gridLeft = x + w * 0.34;
 		double gridRight = x + w - w * 0.10;
 		double columnGap = strings == 1 ? 0.0 : (gridRight - gridLeft) / (strings - 1);
 		double rowHeight = (gridBottom - gridTop) / cartouche.rows();
 		String name = cartouche.name() != null ? cartouche.name() : this.labels.chordFallback();
-		double nameSize = Math.max(8.0, nameBand * 0.62);
-		out.text(Role.CARTOUCHE_NAME, name, x + w * 0.45, y + nameBand / 2.0, nameSize, TEXT_COLOUR, alpha, event.index(), 0);
-		if (cartouche.stroke() != ArcadeRenderEvent.Stroke.NONE) {
-			out.text(Role.CARTOUCHE_STROKE, cartouche.stroke() == ArcadeRenderEvent.Stroke.DOWN ? "↓" : "↑", x + w * 0.88, y + nameBand / 2.0, nameSize,
-					TEXT_COLOUR, alpha, event.index(), 0);
+		double nameSize = headerSize(h);
+		boolean arrow = cartouche.stroke() != ArcadeRenderEvent.Stroke.NONE;
+		double arrowWidth = arrow ? nameSize * 1.4 : 0.0;
+		// the header stays at its full strength from the first state to the end of the feedback: the name is what the learner reads to know the chord
+		double headerAlpha = Math.max(alpha, 0.9);
+		out.text(Role.CARTOUCHE_NAME, name, x + (w - arrowWidth) / 2.0, y + nameBand / 2.0, nameSize, HEADER_TEXT_COLOUR, headerAlpha, event.index(), 0);
+		if (arrow) {
+			out.text(Role.CARTOUCHE_STROKE, cartouche.stroke() == ArcadeRenderEvent.Stroke.DOWN ? "\u2193" : "\u2191", x + w - arrowWidth / 2.0 - 3.0, y + nameBand / 2.0,
+					nameSize, HEADER_TEXT_COLOUR, headerAlpha, event.index(), 0);
 		}
 		for (int column = 0; column < strings; column++) {
 			double cx = gridLeft + column * columnGap;
@@ -410,47 +780,27 @@ public final class ArcadeScene {
 		}
 	}
 
-	private void drawBadges(Out out, IsometricProjection projection, Camera cam, Viewport viewport, List<Integer> visible, ArcadeRun.View run, long nowNanos,
-			CameraTrack.Settings settings) {
-		if (run == null) {
+	private void drawBadges(Frame f, Plan plan) {
+		if (f.run == null) {
 			return;
 		}
-		double h = viewport.height();
-		double badgeH = h * 0.036;
-		List<double[]> placed = new ArrayList<double[]>();
-		for (int index : visible) {
-			if (index >= run.states().size()) {
-				continue;
-			}
+		List<Integer> indices = new ArrayList<Integer>(plan.badge.keySet());
+		java.util.Collections.sort(indices);
+		for (int index : indices) {
 			ArcadeRenderEvent event = this.events.get(index);
-			RenderState state = RenderState.of(event.onsetNanos(), nowNanos, settings.lookAheadNanos, settings.holdAfterNanos);
-			ArcadeRun.EventState result = run.states().get(index);
-			if (result.verdict() == ArcadeVerdict.WAITING || state.ordinal() < RenderState.ARMED.ordinal()) {
-				continue;
-			}
+			RenderState state = f.stateOf(event);
+			ArcadeRun.EventState result = f.run.states().get(index);
+			double[] box = plan.badge.get(index);
+			double badgeW = box[2] - box[0];
+			double badgeH = box[3] - box[1];
+			double alpha = alphaOf(state, f.now, event.onsetNanos(), f.settings);
 			String names = missingNames(result);
-			double badgeW = viewport.width() * (names.isEmpty() ? 0.15 : 0.22);
-			double column = projection.neckX(columnOf(event), cam);
-			double bx = Math.max(2.0, Math.min(viewport.width() - badgeW - 2.0, column - badgeW / 2.0));
-			double by = h * 0.92;
-			boolean moved = true;
-			for (int attempt = 0; attempt < 2 && moved; attempt++) {
-				moved = false;
-				for (double[] other : placed) {
-					if (bx < other[0] + other[2] && other[0] < bx + badgeW && by < other[1] + other[3] && other[1] < by + badgeH) {
-						by = Math.min(h - badgeH - 2.0, other[1] + other[3] + 2.0);
-						moved = true;
-					}
-				}
-			}
-			placed.add(new double[] { bx, by, badgeW, badgeH });
-			double alpha = alphaOf(state, nowNanos, event.onsetNanos(), settings);
 			int colour = verdictColour(result.verdict());
-			out.quad(Role.BADGE, new double[] { bx, by, bx + badgeW, by, bx + badgeW, by + badgeH, bx, by + badgeH }, colour, alpha, index, 0);
-			out.text(Role.BADGE_SYMBOL, verdictSymbol(result.verdict()), bx + badgeH * 0.6, by + badgeH / 2.0, badgeH * 0.7, 0x101216, alpha, index, 0);
+			f.out.quad(Role.BADGE, new double[] { box[0], box[1], box[2], box[1], box[2], box[3], box[0], box[3] }, colour, alpha, index, 0);
+			f.out.text(Role.BADGE_SYMBOL, verdictSymbol(result.verdict()), box[0] + badgeH * 0.6, box[1] + badgeH / 2.0, badgeH * 0.7, 0x101216, alpha, index, 0);
 			String word = this.labels.verdict(result.verdict());
-			out.text(Role.BADGE_TEXT, names.isEmpty() ? word : word + " · " + this.labels.missing(names), bx + badgeW / 2.0 + badgeH * 0.3, by + badgeH / 2.0,
-					badgeH * 0.55, 0x101216, alpha, index, 0);
+			f.out.text(Role.BADGE_TEXT, names.isEmpty() ? word : word + " \u00B7 " + this.labels.missing(names), box[0] + badgeW / 2.0 + badgeH * 0.3,
+					box[1] + badgeH / 2.0, badgeH * 0.55, 0x101216, alpha, index, 0);
 		}
 	}
 

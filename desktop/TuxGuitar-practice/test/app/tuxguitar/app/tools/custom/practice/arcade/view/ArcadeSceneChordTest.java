@@ -89,16 +89,18 @@ public class ArcadeSceneChordTest {
 	}
 
 	@Test
-	public void theGhostAppearsOnTheNeckOnlyWhenTheChordIsReadable() {
+	public void theGhostIsOnTheNeckOnlyWhileTheChordIsTheActiveEventAndWithAllAndOnlyItsPositions() {
 		SceneFixture fixture = a5();
 		ArcadeScene scene = fixture.scene(false);
-		Scene far = scene.build(fixture.onset(0) - 2900 * MS, SCREEN, null, 100);
-		Scene near = scene.build(fixture.onset(0) - 1000 * MS, SCREEN, null, 100);
-		assertTrue(far.forEvent(0, Role.GHOST).isEmpty(), "too far to be read");
-		List<SceneItem> ghosts = near.forEvent(0, Role.GHOST);
-		assertEquals(3, ghosts.size());
-		assertEquals(fixture.colours.of(6), colourOfString(ghosts, 6));
-		assertEquals(fixture.colours.of(4), colourOfString(ghosts, 4));
+		for (long offset : new long[] { -2900, -1000, -100, 100 }) {
+			List<SceneItem> ghosts = scene.build(fixture.onset(0) + offset * MS, SCREEN, null, 100).forEvent(0, Role.GHOST);
+			assertEquals(3, ghosts.size(), "the three positions of the active chord, at " + offset + " ms");
+			assertEquals(fixture.colours.of(6), colourOfString(ghosts, 6));
+			assertEquals(fixture.colours.of(4), colourOfString(ghosts, 4));
+		}
+		Scene afterIt = scene.build(fixture.onset(0) - 100 * MS, SCREEN, ArcadeSceneTest.viewOf(ArcadeVerdict.ON_TIME, ArcadeVerdict.WAITING), 100);
+		assertTrue(afterIt.forEvent(0, Role.GHOST).isEmpty(), "completed: no longer on the neck");
+		assertEquals(1, afterIt.forEvent(1, Role.TARGET_RING).size(), "the following note takes its place");
 	}
 
 	@Test

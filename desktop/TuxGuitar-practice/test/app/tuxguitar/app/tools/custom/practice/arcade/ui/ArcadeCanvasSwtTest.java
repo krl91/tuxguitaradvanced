@@ -141,7 +141,7 @@ public class ArcadeCanvasSwtTest {
 			Harness harness = new Harness(display, factory, reference.fixture, 1280, 720, reference.run);
 			try {
 				harness.clock.start(FIRST_TICK);
-				harness.clock.seek(FIRST_TICK + reference.fixture.timeline.targetTicks(3) + 144);
+				harness.clock.seek(FIRST_TICK + reference.tick);
 				assertTrue(harness.paintOneFrame(), "the canvas painted the frame it was asked for");
 				assertTrue(harness.canvas.lastFrameCostNanos() > 0, "a real paint took place");
 				assertSame(harness.uiThread, harness.paintThread.get(), "painted on the UI thread");
@@ -172,6 +172,29 @@ public class ArcadeCanvasSwtTest {
 	@Test
 	public void aFourStringSceneIsPaintedOnTheRealPainter() throws Exception {
 		paintsWithoutException(ReferenceScenes.fourStrings());
+	}
+
+	@Test
+	public void everyReferenceSceneIsPaintedInEveryTierWithoutExceptionAndKeepsItsLabelsApart() throws Exception {
+		withDisplay((display, factory) -> {
+			for (ReferenceScenes.Reference reference : ReferenceScenes.all()) {
+				Harness harness = new Harness(display, factory, reference.fixture, 1280, 720, reference.run);
+				try {
+					harness.clock.start(FIRST_TICK);
+					harness.clock.seek(FIRST_TICK + reference.tick);
+					assertTrue(harness.paintOneFrame(), reference.name + " painted");
+					assertEquals(ArcadeReferenceSceneTest.expected(reference.name),
+							SceneCapture.of(harness.source.frame(harness.clock.nowNanos(), ReferenceScenes.SCREEN)), reference.name + ": the scene fed to the canvas is not the reference");
+					for (app.tuxguitar.app.tools.custom.practice.arcade.view.QualityTier tier : app.tuxguitar.app.tools.custom.practice.arcade.view.QualityTier.values()) {
+						app.tuxguitar.app.tools.custom.practice.arcade.view.Scene scene = reference.scene(false, tier);
+						assertEquals(null, app.tuxguitar.app.tools.custom.practice.arcade.view.SceneBoxes.firstOverlap(app.tuxguitar.app.tools.custom.practice.arcade.view.SceneBoxes.labels(scene)),
+								reference.name + " at " + tier);
+					}
+				} finally {
+					harness.close();
+				}
+			}
+		});
 	}
 
 	@Test

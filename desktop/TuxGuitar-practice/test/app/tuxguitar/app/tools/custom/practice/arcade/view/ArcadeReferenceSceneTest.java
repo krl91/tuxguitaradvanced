@@ -46,6 +46,34 @@ public class ArcadeReferenceSceneTest {
 	}
 
 	@Test
+	public void theNamedChordSceneIsTheReference() throws IOException {
+		check(ReferenceScenes.namedChord());
+	}
+
+	@Test
+	public void theUnnamedChordSceneIsTheReference() throws IOException {
+		check(ReferenceScenes.unnamedChord());
+	}
+
+	@Test
+	public void theSingleNoteSceneIsTheReference() throws IOException {
+		check(ReferenceScenes.singleNote());
+	}
+
+	@Test
+	public void theDensePassageSceneIsTheReference() throws IOException {
+		check(ReferenceScenes.denseRealistic());
+	}
+
+	@Test
+	public void theDensePassageReferenceIsReadable() {
+		Scene scene = ReferenceScenes.denseRealistic().scene(false, QualityTier.FULL);
+		assertTrue(SceneBoxes.detailed(scene).size() <= ArcadeScene.MAX_DETAILED);
+		assertEquals(null, SceneBoxes.firstOverlap(SceneBoxes.labels(scene)));
+		assertTrue(!scene.withRole(Role.PREVIEW).isEmpty(), "the look-ahead is shown as previews");
+	}
+
+	@Test
 	public void theReferencesShowWhatTheyAreMeantToShow() {
 		Scene six = ReferenceScenes.sixStrings().scene(false, QualityTier.FULL);
 		assertEquals(6, six.withRole(Role.STRING).size());

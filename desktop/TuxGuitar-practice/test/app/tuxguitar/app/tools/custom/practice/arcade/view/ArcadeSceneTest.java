@@ -46,6 +46,15 @@ public class ArcadeSceneTest {
 		return new ArcadeRun.View(states, 4321, 7, 7, 0, verdicts.length);
 	}
 
+	/** A run in which every event before the given one is completed and the others wait: the given one is the active event of the neck. */
+	static ArcadeRun.View completedBefore(int index, int total) {
+		ArcadeVerdict[] verdicts = new ArcadeVerdict[total];
+		for (int i = 0; i < total; i++) {
+			verdicts[i] = i < index ? ArcadeVerdict.ON_TIME : ArcadeVerdict.WAITING;
+		}
+		return viewOf(verdicts);
+	}
+
 	@Test
 	public void markerTrajectoryTargetRingAndStringLabelShareTheDestinationStringColourFromSpawnToImpact() {
 		SceneFixture fixture = oneNotePerString(100);
@@ -54,7 +63,7 @@ public class ArcadeSceneTest {
 			int tgString = 6 - index;
 			int expected = fixture.colours.of(tgString);
 			for (long offset = -2900; offset <= 0; offset += 100) {
-				Scene picture = scene.build(fixture.onset(index) + offset * MS, SCREEN, null, 100);
+				Scene picture = scene.build(fixture.onset(index) + offset * MS, SCREEN, completedBefore(index, 6), 100);
 				for (Role role : new Role[] { Role.MARKER, Role.TRAJECTORY, Role.TARGET_RING }) {
 					List<SceneItem> items = picture.forEvent(index, role);
 					assertEquals(1, items.size(), "event " + index + " " + role + " at " + offset + " ms");
@@ -88,13 +97,13 @@ public class ArcadeSceneTest {
 			ArcadeScene scene = fixture.scene(false);
 			IsometricProjection projection = new IsometricProjection(SCREEN);
 			for (int index = 0; index < 6; index++) {
-				SceneItem at = scene.build(fixture.onset(index), SCREEN, null, percent).forEvent(index, Role.MARKER).get(0);
+				SceneItem at = scene.build(fixture.onset(index), SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.MARKER).get(0);
 				assertEquals(projection.hitLineY(), at.value(1), 0.0, "event " + index + " at " + percent + " %");
-				SceneItem ring = scene.build(fixture.onset(index), SCREEN, null, percent).forEvent(index, Role.TARGET_RING).get(0);
+				SceneItem ring = scene.build(fixture.onset(index), SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.TARGET_RING).get(0);
 				assertEquals(ring.value(0), at.value(0), 1e-9, "the marker arrives on the column of its target");
 				double previous = Double.NEGATIVE_INFINITY;
 				for (long offset = -2900; offset <= 0; offset += 100) {
-					SceneItem marker = scene.build(fixture.onset(index) + offset * MS, SCREEN, null, percent).forEvent(index, Role.MARKER).get(0);
+					SceneItem marker = scene.build(fixture.onset(index) + offset * MS, SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.MARKER).get(0);
 					assertTrue(marker.value(1) >= previous, "the marker only moves towards the hit line");
 					assertTrue(marker.value(1) <= projection.hitLineY());
 					previous = marker.value(1);

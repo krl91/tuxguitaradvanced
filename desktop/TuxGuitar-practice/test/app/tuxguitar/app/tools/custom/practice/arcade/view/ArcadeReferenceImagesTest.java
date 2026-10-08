@@ -14,9 +14,12 @@ public class ArcadeReferenceImagesTest {
 		String directory = System.getProperty("tuxguitar.arcade.images");
 		Assumptions.assumeTrue(directory != null && !directory.isEmpty(), "no directory asked for");
 		System.setProperty("java.awt.headless", "true");
-		for (ReferenceScenes.Reference reference : new ReferenceScenes.Reference[] { ReferenceScenes.sixStrings(), ReferenceScenes.fourStrings() }) {
-			SceneImageWriter.write(reference.scene(false, QualityTier.FULL), new File(directory, "arcade-" + reference.name + ".png"));
-			SceneImageWriter.write(reference.scene(true, QualityTier.FULL), new File(directory, "arcade-" + reference.name + "-monochrome.png"));
+		for (ReferenceScenes.Reference reference : ReferenceScenes.all()) {
+			String base = "arcade-" + reference.name;
+			SceneImageWriter.write(reference.scene(false, QualityTier.FULL), new File(directory, base + "-full.png"));
+			SceneImageWriter.write(reference.scene(false, QualityTier.PERFORMANCE), new File(directory, base + "-performance.png"));
+			SceneImageWriter.write(reference.scene(true, QualityTier.FULL), new File(directory, base + "-monochrome-full.png"));
+			SceneImageWriter.write(reference.scene(true, QualityTier.PERFORMANCE), new File(directory, base + "-monochrome-performance.png"));
 		}
 	}
 }
