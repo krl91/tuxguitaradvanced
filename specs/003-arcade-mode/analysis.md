@@ -34,7 +34,7 @@
 * **O1 - "uncertain" verdicts.** The following mode has no UNCERTAIN verdict. Proposal in R6: show an event that could not be judged (NOT_JUDGED: a pause, the clocks not ready, a window not seen whole) as "not judged", not as an error, and show no "uncertain" badge of a note; a chord-level "uncertain" appears only if the following mode one day produces it. To be confirmed by the owner before increment D.
 * **O2 - scoring rules.** FR-022 asks the plan to document them; the specification gives none. R5 proposes a fixed table. To be confirmed by the owner before increment A is declared complete (the table is data, the code does not depend on its numbers).
 * **O3 - the name "Arcade".** Pending the owner.
-* **O4 - bass.** Whether a four-string bass is promised in the first Arcade version depends on the recognition spike (T003). The neck, the colours and the sequence support N strings regardless.
+* **O4 - bass. Answered by measurement (T003, 2026-10-08).** B0 to F#1 are never recognised, G1 and above always: the open E of a standard bass and its first two frets cannot be judged by the existing chain, so a four-string bass is not promised below G1. The neck, the colours and the sequence support N strings regardless.
 * **O5 - monitoring.** Whether any supported configuration reaches 22 ms is unknown and is the result of increment E; Arcade is complete and usable without it.
 
 ## 4. Verdict of the analysis

@@ -82,7 +82,7 @@ Streak multiplier applied to the points of an event: x1 for a streak below 10, x
 
 ## R11 - Bass recognition (open, spike)
 
-Window 2048 samples at 48 kHz in `TarsosFastYinEstimator` holds 1.7 periods of an E1. The tuner and the wait mode were validated on a guitar. **Task T003** measures the recognition of synthetic and, when available, recorded bass notes down to E1/B0 through the existing chain and reports the rate before a bass is promised. Possible remedy (not decided): a longer window for low pitches. Out of scope until measured.
+Window 2048 samples at 48 kHz in `TarsosFastYinEstimator` holds 1.7 periods of an E1. The tuner and the wait mode were validated on a guitar. **Task T003** measured it (2026-10-08, `BassRecognitionBenchmarkTest`, report `benchmark/bass-recognition-2026-10-08.txt`): on synthetic plucked notes, **B0, C1, E1, F1 and F#1 are not recognised at all (0 % of the frames have a reliable pitch)** and **G1 (49 Hz) and everything above it is recognised on 100 % of the frames, from about 50 to 60 ms after the pluck**. The boundary lies between F#1 (46.2 Hz) and G1 (49.0 Hz). So the open E string of a standard four-string bass and its first two frets cannot be judged by the existing chain, while the rest of a bass neck can. **Answer to O4: a four-string bass is not promised in the first Arcade version** for the notes below G1; the neck, colours and sequence support it (T002), the recognition does not. Possible remedy, not decided and not part of this feature: a longer analysis window for low pitches (a change of the shared analysis, to be specified and measured on its own). Synthetic notes only: a real bass may differ.
 
 ## R12 - Live monitoring: what the existing stack gives (spike E)
 
