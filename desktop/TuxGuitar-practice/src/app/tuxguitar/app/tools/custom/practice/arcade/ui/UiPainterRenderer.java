@@ -114,14 +114,14 @@ public final class UiPainterRenderer extends PainterRenderer {
 				case DISC:
 					p.setBackground(colour(item.colour()));
 					p.initPath(UIPainter.PATH_FILL);
-					p.addCircle((float) (item.value(0) - item.value(2)), (float) (item.value(1) - item.value(2)), (float) (2.0 * item.value(2)));
+					p.addCircle((float) item.value(0), (float) item.value(1), (float) (2.0 * item.value(2)));
 					p.closePath();
 					break;
 				case RING:
 					p.setForeground(colour(item.colour()));
 					p.setLineWidth((float) item.lineWidth());
 					p.initPath(UIPainter.PATH_DRAW);
-					p.addCircle((float) (item.value(0) - item.value(2)), (float) (item.value(1) - item.value(2)), (float) (2.0 * item.value(2)));
+					p.addCircle((float) item.value(0), (float) item.value(1), (float) (2.0 * item.value(2)));
 					p.closePath();
 					break;
 				case TEXT:

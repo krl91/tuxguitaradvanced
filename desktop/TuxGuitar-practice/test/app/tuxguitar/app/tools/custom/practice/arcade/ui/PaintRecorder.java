@@ -111,10 +111,11 @@ public final class PaintRecorder implements InvocationHandler {
 				this.pointCount = 0;
 				return null;
 			case "addCircle": {
+				// UIPainter.addCircle(x, y, width): the centre and the diameter, as SWTPainter, JFXPainter and QTPainter all take it
 				double x = (Float) args[0];
 				double y = (Float) args[1];
 				double w = (Float) args[2];
-				this.circles.add(new Circle(this.style, x + w / 2.0, y + w / 2.0, w, this.alpha, this.fill, this.stroke, this.lineWidth));
+				this.circles.add(new Circle(this.style, x, y, w, this.alpha, this.fill, this.stroke, this.lineWidth));
 				return null;
 			}
 			case "drawString":

@@ -33,7 +33,7 @@ import app.tuxguitar.ui.resource.UIPainter;
  */
 public class TargetPrimitivesTest {
 
-	/** One circle sent to the painter, with the state of the painter when it was drawn. */
+	/** One circle sent to the painter, with the state of the painter when it was drawn: {@code UIPainter.addCircle(x, y, width)} takes the CENTRE and the diameter (SWT, JavaFX and Qt alike). */
 	private static final class Circle {
 		final int style;
 		final double x;
@@ -134,7 +134,7 @@ public class TargetPrimitivesTest {
 
 	private static Circle find(StatefulPainter painter, int style, double cx, double cy, double diameter) {
 		for (Circle circle : painter.circles) {
-			if (circle.style == style && Math.abs(circle.x - (cx - diameter / 2.0)) < 0.01 && Math.abs(circle.y - (cy - diameter / 2.0)) < 0.01
+			if (circle.style == style && Math.abs(circle.x - cx) < 0.01 && Math.abs(circle.y - cy) < 0.01
 					&& Math.abs(circle.width - diameter) < 0.01) {
 				return circle;
 			}
