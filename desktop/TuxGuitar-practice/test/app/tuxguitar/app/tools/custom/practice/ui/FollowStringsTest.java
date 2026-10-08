@@ -46,7 +46,7 @@ public class FollowStringsTest {
 	private static Set<String> followKeys(Properties properties) {
 		Set<String> keys = new TreeSet<String>();
 		for (String key : properties.stringPropertyNames()) {
-			if (key.startsWith("practice.follow.") || key.startsWith("practice.mode") || key.equals("practice.start.follow")) {
+			if (key.startsWith("practice.follow.") || key.startsWith("practice.mode") || key.equals("practice.start.follow") || key.startsWith("arcade.") || key.equals("practice.start.arcade")) {
 				keys.add(key);
 			}
 		}

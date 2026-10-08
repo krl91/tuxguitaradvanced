@@ -121,7 +121,7 @@ public class ArcadeDensityDigestTest {
 		ArcadeScene scene = new ArcadeScene(events, neck, StringColours.forStrings(6), CameraTrack.build(events, neck, CameraTrack.Settings.standard()),
 				SceneFixture.ENGLISH, false);
 		long now = run.timeline.targetNanos(10);
-		assertTrue(SceneBoxes.detailed(scene.withDensityBudget(false).build(now, SCREEN, null, 100)).size() > ArcadeScene.MAX_DETAILED);
-		assertTrue(SceneBoxes.detailed(scene.build(now, SCREEN, null, 100)).size() <= ArcadeScene.MAX_DETAILED);
+		assertTrue(SceneBoxes.detailed(scene.withDensityBudget(false).build(now, SCREEN, null, 100)).size() > ArcadeScene.MAX_ADMITTED);
+		assertTrue(SceneBoxes.detailed(scene.build(now, SCREEN, null, 100)).size() <= ArcadeScene.MAX_ADMITTED);
 	}
 }

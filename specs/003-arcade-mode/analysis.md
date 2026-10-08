@@ -75,10 +75,10 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | FR-057 measured vendor-neutral acceleration and fallback | T042, T045, T046, T048 | the valid decision may be to retain `UIPainter` |
 | FR-058 concept composition over pixel resolution | T040, T044 | human review includes minimalist tier |
 | FR-059 high-density lower-resolution field with crisp essentials | T040, T042, T048 | |
-| FR-060 one active target event on the physical neck | T037, T038, T043 | future events remain in the approach field; camera look-ahead does not expose their neck targets |
+| FR-060 one active target event on the physical neck | T037, T038, T043 | the active event alone owns neck targets; camera look-ahead does not expose the others and does not admit events to the visual set |
 | FR-061 useful approaching chord identity | T038, T043, T056 | exact written name wins; otherwise deterministic resolver from written pitches/bass; pitch-list fallback, never audio |
-| FR-062 bounded collision-free disclosure in dense passages | T040, T043, T044 | active plus at most three following identities detailed; later events compact |
-| FR-063 one centred ordered chord-preview lane | T038, T040, T043, T044 | one expanded diagram; later chords compact; no fret-based lateral scattering |
+| FR-062 admitted visual set | T040, T043, T044, T062 | the first four events not completed, in onset order, narrowed by label collisions, the active event always in; every other event absent (no preview, dot, bar or label); completed events keep only their verdict badge; every admitted note on its FR-066 lane |
+| FR-063 chords in the admitted set | T038, T040, T043, T044 | one expanded diagram; the other chords of the set are bars without diagram on one centred axis; chords outside the set absent; no fret-based lateral scattering |
 | FR-064 optional external real-score corpus | T060-T065 | content-aware recursive read, deterministic diversity selection, no score bytes committed |
 | FR-065 opaque active target disks | T037, T038, T040, T043, T062, T063 | filled alpha-1 core, bounded size, string colour, contrasting outline, identical across tiers |
 | FR-066 predefined fret-arrival lanes | T037, T043, T062, T063, T066 | one lane per visible fret, shared across strings; endpoint is the painted cell-top midpoint; no approach primitive or connector crosses the neck |
