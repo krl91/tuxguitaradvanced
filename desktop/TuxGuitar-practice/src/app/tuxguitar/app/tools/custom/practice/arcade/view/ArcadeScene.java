@@ -268,6 +268,11 @@ public final class ArcadeScene {
 		for (ArcadeRenderEvent.Position position : event.positions()) {
 			ScreenPoint at = f.projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, f.cam);
 			int colour = this.colours.of(position.tgString());
+			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
+				// the landing point on the hit line and the disk on the neck are at the same x: a plain vertical link joins them
+				ScreenPoint landing = f.projection.approach(this.neck.fretCentreX(position.fret()), 1.0, f.cam);
+				f.out.line(Role.TARGET_LINK, landing.x(), landing.y(), at.x(), at.y(), colour, 0.75, 2.0, event.index(), position.tgString());
+			}
 			if (f.tier.glow()) {
 				f.out.disc(Role.TARGET_HALO, at.x(), at.y(), radius * 1.7, radius * 1.7, colour, 0.28, event.index(), position.tgString());
 			}
@@ -458,7 +463,7 @@ public final class ArcadeScene {
 			g.boxW = Math.max(ChordCartouche.MIN_WIDTH_PX, (20 + 18 * (cartouche.strings() - 1)) * unit * scale);
 			g.boxH = Math.max(ChordCartouche.MIN_HEIGHT_PX, (24 + 14 * cartouche.rows()) * unit * 1.6 * scale);
 			// the header carries the whole name as written: the diagram is made wide enough for it, never the name cut or shrunk below a readable size
-			g.boxW = Math.max(g.boxW, headerWidth(cartouche, g.boxH));
+			g.boxW = Math.max(g.boxW, headerWidth(cartouche, event, g.boxH));
 			double stem = Math.max(6.0, f.h * 0.03 * scale);
 			// centred on its bar, and kept whole inside the window
 			g.boxX = Math.max(2.0, Math.min(f.viewport.width() - g.boxW - 2.0, g.centreX - g.boxW / 2.0));
@@ -647,12 +652,12 @@ public final class ArcadeScene {
 		chords.sort((p, q) -> Long.compare(Math.abs(this.events.get(p).onsetNanos() - now), Math.abs(this.events.get(q).onsetNanos() - now)));
 		for (int index : chords) {
 			ArcadeRenderEvent event = this.events.get(index);
-			if (event.kind() != ArcadeRenderEvent.Kind.CHORD || plan.detailed.contains(index) || event.chordName() == null) {
+			if (event.kind() != ArcadeRenderEvent.Kind.CHORD || plan.detailed.contains(index) || event.display().source() == ChordNameResolver.Source.PITCH_SET) {
 				continue;
 			}
 			ChordGeo g = chordGeo(f, event);
 			double size = Math.max(9.0, f.h * 0.022);
-			double[] box = textBox(event.chordName(), g.centreX, g.barTop - size, size);
+			double[] box = textBox(event.display().text(), g.centreX, g.barTop - size, size);
 			if (inside(box, f.viewport) && disjointFromAll(box, taken)) {
 				plan.chip.put(index, box);
 				taken.add(box);
@@ -753,7 +758,7 @@ public final class ArcadeScene {
 					event.index(), 0);
 			double[] chip = plan.chip.get(index);
 			if (chip != null) {
-				f.out.text(Role.CHORD_CHIP, event.chordName(), (chip[0] + chip[2]) / 2.0, (chip[1] + chip[3]) / 2.0, Math.max(9.0, f.h * 0.022), TEXT_COLOUR, alpha,
+				f.out.text(Role.CHORD_CHIP, event.display().text(), (chip[0] + chip[2]) / 2.0, (chip[1] + chip[3]) / 2.0, Math.max(9.0, f.h * 0.022), TEXT_COLOUR, alpha,
 						event.index(), 0);
 			}
 		}
@@ -780,10 +785,10 @@ public final class ArcadeScene {
 		int colour = this.colours.of(position.tgString());
 		NoteGeo g = noteGeo(f, event);
 		ScreenPoint far = f.projection.approach(g.x, 0.0, f.cam);
-		ScreenPoint target = f.projection.neck(g.x, row, count, f.cam);
 		boolean judged = isJudged(f, event.index(), state);
-		// the trajectory of a note stays in the approach field, down to the hit line; only the active note goes on to the neck and rings its target (FR-060)
-		ScreenPoint end = active ? target : f.projection.approach(g.x, 1.0, f.cam);
+		// the trajectory of a note is the one segment that its marker follows, from the horizon to the hit line, at the same projection as the marker (FR-066);
+		// the link from the hit line down to the target on the neck is a second, separate segment, drawn with the target of the active event
+		ScreenPoint end = f.projection.approach(g.x, 1.0, f.cam);
 		if (!judged) {
 			out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
 		}
@@ -829,9 +834,15 @@ public final class ArcadeScene {
 		return Math.max(HEADER_FONT_MIN, boxHeight * 0.22 * 0.62);
 	}
 
+	/** The text of the header of a chord: its written or derived name, or the notes introduced by the word of the interface; never a bare generic word. */
+	private String headerText(ArcadeRenderEvent event) {
+		ChordNameResolver.Display display = event.display();
+		return display.source() == ChordNameResolver.Source.PITCH_SET ? this.labels.pitchSet(display.text()) : display.text();
+	}
+
 	/** The width the header needs: the name (or the generic word), the arrow of the stroke, and a margin. */
-	private double headerWidth(ChordCartouche cartouche, double boxHeight) {
-		String name = cartouche.name() != null ? cartouche.name() : this.labels.chordFallback();
+	private double headerWidth(ChordCartouche cartouche, ArcadeRenderEvent event, double boxHeight) {
+		String name = headerText(event);
 		double size = headerSize(boxHeight);
 		return name.length() * size * 0.66 + (cartouche.stroke() != ArcadeRenderEvent.Stroke.NONE ? size * 1.4 : 0.0) + 14.0;
 	}
@@ -849,7 +860,7 @@ public final class ArcadeScene {
 		double gridRight = x + w - w * 0.10;
 		double columnGap = strings == 1 ? 0.0 : (gridRight - gridLeft) / (strings - 1);
 		double rowHeight = (gridBottom - gridTop) / cartouche.rows();
-		String name = cartouche.name() != null ? cartouche.name() : this.labels.chordFallback();
+		String name = headerText(event);
 		double nameSize = headerSize(h);
 		boolean arrow = cartouche.stroke() != ArcadeRenderEvent.Stroke.NONE;
 		double arrowWidth = arrow ? nameSize * 1.4 : 0.0;

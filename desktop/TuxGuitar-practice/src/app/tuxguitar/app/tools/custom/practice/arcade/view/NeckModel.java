@@ -95,6 +95,16 @@ public final class NeckModel {
 		return n <= 0 ? -OPEN_STRING_OFFSET_MM : (fretX(n - 1) + fretX(n)) / 2.0;
 	}
 
+	/** The left edge of the cell of fret {@code n}, from the nut: the wire {@code n-1}; for the open string, the pre-nut lane, which is as wide as it is far from the nut. */
+	public double cellLeftX(int n) {
+		return n <= 0 ? -2.0 * OPEN_STRING_OFFSET_MM : fretX(n - 1);
+	}
+
+	/** The right edge of the cell of fret {@code n}: the wire {@code n}; for the open string, the nut. */
+	public double cellRightX(int n) {
+		return n <= 0 ? 0.0 : fretX(n);
+	}
+
 	/** The position inlays of the neck, within its frets. */
 	public List<Marker> markers() {
 		List<Marker> markers = new ArrayList<Marker>();
