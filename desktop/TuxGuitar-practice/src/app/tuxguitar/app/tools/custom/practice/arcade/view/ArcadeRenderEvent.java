@@ -64,9 +64,11 @@ public final class ArcadeRenderEvent {
 	private final Stroke stroke;
 	private final boolean duplicatePitches;
 	private final int[] requiredPitches;
+	private final int metadataFirstFret;
+	private final int metadataStrings;
 
 	private ArcadeRenderEvent(int index, Kind kind, long onsetNanos, List<Position> positions, List<Integer> deadStrings, String chordName, Stroke stroke,
-			boolean duplicatePitches, int[] requiredPitches) {
+			boolean duplicatePitches, int[] requiredPitches, int metadataFirstFret, int metadataStrings) {
 		this.index = index;
 		this.kind = kind;
 		this.onsetNanos = onsetNanos;
@@ -76,6 +78,8 @@ public final class ArcadeRenderEvent {
 		this.stroke = stroke;
 		this.duplicatePitches = duplicatePitches;
 		this.requiredPitches = requiredPitches;
+		this.metadataFirstFret = metadataFirstFret;
+		this.metadataStrings = metadataStrings;
 	}
 
 	/**
@@ -117,8 +121,9 @@ public final class ArcadeRenderEvent {
 				}
 				break;
 		}
+		TGChord metadata = (event.getBeat() != null && event.getBeat().isChordBeat() ? event.getBeat().getChord() : null);
 		return new ArcadeRenderEvent(index, kind, onset, positions, dead, chordNameOf(event.getBeat()), strokeOf(event.getBeat()), event.hasDuplicatePitches(),
-				event.getRequiredPitches());
+				event.getRequiredPitches(), metadata != null ? metadata.getFirstFret() : 0, metadata != null ? metadata.countStrings() : 0);
 	}
 
 	/** The name written with the chord, when it is not blank: never made up from the pitches. */
@@ -184,6 +189,16 @@ public final class ArcadeRenderEvent {
 	/** The distinct sounding pitches to be heard (a chord), possibly empty. */
 	public int[] requiredPitches() {
 		return this.requiredPitches.clone();
+	}
+
+	/** The first fret of the chord diagram written with the chord, or 0 when none is written: a hint, used only when it fits the written positions. */
+	public int metadataFirstFret() {
+		return this.metadataFirstFret;
+	}
+
+	/** The number of strings of the written chord diagram, or 0 when none is written. */
+	public int metadataStrings() {
+		return this.metadataStrings;
 	}
 
 	public int minFret() {
