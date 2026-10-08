@@ -38,20 +38,44 @@ public final class TrackTuning {
 	 *        presets, string 1 first; null when unavailable (then no notice is ever shown)
 	 */
 	public TrackTuning(int[] openStringMidi, int offset, int[] presetMinimumMidi) {
-		if( openStringMidi.length != STRING_COUNT ) {
+		this(openStringMidi, offset, presetMinimumMidi, true);
+	}
+
+	private TrackTuning(int[] openStringMidi, int offset, int[] presetMinimumMidi, boolean sixStringsOnly) {
+		if( sixStringsOnly && openStringMidi.length != STRING_COUNT ) {
 			throw new IllegalArgumentException("six strings expected");
+		}
+		if( openStringMidi.length == 0 ) {
+			throw new IllegalArgumentException("a string is expected");
 		}
 		this.openStringMidi = openStringMidi.clone();
 		this.offset = offset;
-		this.physicalTargetMidi = new int[STRING_COUNT];
+		this.physicalTargetMidi = new int[openStringMidi.length];
 		boolean belowPresets = false;
-		for( int i = 0 ; i < STRING_COUNT ; i ++ ) {
+		for( int i = 0 ; i < openStringMidi.length ; i ++ ) {
 			this.physicalTargetMidi[i] = (offset >= 0 ? openStringMidi[i] : openStringMidi[i] + offset);
-			if( presetMinimumMidi != null && this.physicalTargetMidi[i] < presetMinimumMidi[i] ) {
+			if( presetMinimumMidi != null && i < presetMinimumMidi.length && this.physicalTargetMidi[i] < presetMinimumMidi[i] ) {
 				belowPresets = true;
 			}
 		}
 		this.unusualSetup = (offset < 0 && belowPresets);
+	}
+
+	/**
+	 * The tuning of a track of any number of strings (a four-string bass, a seven-string guitar), as its definition says (Arcade mode, spec 003 FR-027).
+	 * The wait and following modes keep {@link #of(TGTrack, int[])}, which is for six strings; there is no preset notice for other counts.
+	 */
+	public static TrackTuning ofAnyStrings(TGTrack track) {
+		int[] open = new int[track.stringCount()];
+		for( int i = 0 ; i < open.length ; i ++ ) {
+			open[i] = track.getString(i + 1).getValue();
+		}
+		return new TrackTuning(open, track.getOffset(), null, false);
+	}
+
+	/** The number of strings of this tuning. */
+	public int getStringCount() {
+		return this.openStringMidi.length;
 	}
 
 	/** Reads the six open strings (string 1 first) and the offset of a six-string track. */
