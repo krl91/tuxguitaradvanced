@@ -21,7 +21,9 @@ public final class FollowSettings {
 		/** The score waits for the right note (the mode that was there first). */
 		WAIT,
 		/** The score plays at its tempo and the notes are judged on time. */
-		FOLLOW
+		FOLLOW,
+		/** Arcade (spec 003): the tempo-following run on the track the learner chose, with the other tracks as the backing and the isometric view. */
+		ARCADE
 	}
 
 	public static final int MIN_PERCENT = 20;
@@ -97,5 +99,14 @@ public final class FollowSettings {
 
 	public synchronized boolean isFollow() {
 		return this.mode == Mode.FOLLOW;
+	}
+
+	public synchronized boolean isArcade() {
+		return this.mode == Mode.ARCADE;
+	}
+
+	/** True for the modes that play the score at its tempo and judge on time: they share the percentage, the tolerance and the calibration. */
+	public synchronized boolean isTimed() {
+		return this.mode == Mode.FOLLOW || this.mode == Mode.ARCADE;
 	}
 }
