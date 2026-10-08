@@ -275,6 +275,15 @@ public final class FollowSession {
 		}
 	}
 
+	/** An attack the articulation detector reported: its real transient time. */
+	private static final class RecentOnset {
+		final long transient_;
+
+		RecentOnset(long transient_) {
+			this.transient_ = transient_;
+		}
+	}
+
 	/** The hops of a matched note, until its techniques can be judged. */
 	private static final class Collector {
 		final int eventIndex;
@@ -308,6 +317,16 @@ public final class FollowSession {
 	/** A note that ended before the stability time is accepted when its pitch was held this long. */
 	private static final long SHORT_NOTE_NANOS = 40_000_000L;
 	private static final long SAME_SOUND_NANOS = 100_000_000L;
+	/**
+	 * How far before the time the attack evidence gives a reported attack may lie to be the same attack. The evidence begins to grow late when the
+	 * identical note before it still rings; the transient is the earlier time.
+	 */
+	/** How long a plucked string is taken to ring under the notes that follow it. */
+	private static final long RINGING_NANOS = 1_500_000_000L;
+	private static final long REFINE_BEFORE_NANOS = 150_000_000L;
+	private static final long REFINE_AFTER_NANOS = 30_000_000L;
+	/** The evidence of an attack is confirmed some frames after it begins: an event that closed unmatched waits this much longer. */
+	private static final long EVIDENCE_AFTER_CLOSE_NANOS = 100_000_000L;
 	private static final long TAIL_NANOS = 100_000_000L;
 	private static final long HISTORY_NANOS = 1_200_000_000L;
 	private static final long TECHNIQUE_WINDOW_NANOS = 1_500_000_000L;
@@ -331,11 +350,14 @@ public final class FollowSession {
 	private final long[] gapBefore;
 	private final long[] gapAfter;
 	private final boolean[] legatoArrival;
+	/** True for an event whose pitch already rings from an earlier event: the evidence of its attack grows late, so its time comes from the reported attack. */
+	private final boolean[] ringingUnder;
 	/** For a matched event: the time of the sound it was matched on (an attack flagged at the same time, by another path, is that same sound). */
 	private final long[] soundAt;
 
 	private TechniqueJudge judge;
 	private Supplier<PolyphonicAcceptance> polyphonicFactory;
+	private boolean waitsForReportedAttack;
 	private PolyphonicAcceptance[] acceptances;
 	private InputAssessment assessment = InputAssessment.UNCHECKED;
 	private boolean trackAccepted;
@@ -349,6 +371,8 @@ public final class FollowSession {
 	private final OpenEvent[] open;
 	private final List<Extra> extras = new ArrayList<Extra>();
 	private final List<PendingOnset> pending = new ArrayList<PendingOnset>();
+	/** The attacks reported by the detector lately, with the transient time of each. */
+	private final List<RecentOnset> recentOnsets = new ArrayList<RecentOnset>();
 	private final List<Collector> collectors = new ArrayList<Collector>();
 	private final Deque<Seen> history = new ArrayDeque<Seen>();
 	private int scanFrom;
@@ -382,6 +406,7 @@ public final class FollowSession {
 		this.gapBefore = new long[n];
 		this.gapAfter = new long[n];
 		this.legatoArrival = new boolean[n];
+		this.ringingUnder = new boolean[n];
 		this.soundAt = new long[n];
 		Arrays.fill(this.soundAt, Long.MIN_VALUE);
 		this.results = new EventResult[n];
@@ -413,7 +438,35 @@ public final class FollowSession {
 				}
 			}
 		}
+		for (int i = 0; i < n; i++) {
+			this.ringingUnder[i] = sharesAPitchWithARecentEvent(i);
+		}
 		this.lastContext = this.contextSupplier.get();
+	}
+
+	/** True when an event within the last {@link #RINGING_NANOS} expects one of the pitches of this one: that pitch is still ringing when this event is played. */
+	private boolean sharesAPitchWithARecentEvent(int index) {
+		int[] pitches = expectedPitches(this.events.get(index));
+		if (pitches.length == 0) {
+			return false;
+		}
+		for (int j = index - 1; j >= 0 && this.timeline.targetNanos(index) - this.timeline.targetNanos(j) <= RINGING_NANOS; j--) {
+			for (int other : expectedPitches(this.events.get(j))) {
+				for (int pitch : pitches) {
+					if (other == pitch) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	private static int[] expectedPitches(PracticeEvent event) {
+		if (event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD) {
+			return event.getRequiredPitches();
+		}
+		return event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ? new int[] { event.getExpectedMidi() } : new int[0];
 	}
 
 	public void setTechniqueJudge(TechniqueJudge judge) {
@@ -426,6 +479,16 @@ public final class FollowSession {
 	 */
 	public void setPolyphonicAcceptance(Supplier<PolyphonicAcceptance> factory) {
 		this.polyphonicFactory = factory;
+	}
+
+	/**
+	 * For an event whose pitch already rings, the time of an attack is the transient the detector reported, when it did. When it did not report it
+	 * (yet), the event can take the time the attack evidence gives at once (the default), or wait until the detector had the time to report it. Waiting
+	 * removes the matches made on the late time of the evidence of an identical repeated note (research R15: 56 to 0 false matches at 4 notes a second)
+	 * but loses right matches of notes whose window closes meanwhile; the choice between the two is a product one and is not made here.
+	 */
+	public void setWaitsForReportedAttack(boolean waits) {
+		this.waitsForReportedAttack = waits;
 	}
 
 	public void setAssessment(InputAssessment assessment) {
@@ -660,6 +723,8 @@ public final class FollowSession {
 				}
 			}
 		}
+		this.recentOnsets.add(new RecentOnset(transient_));
+		this.recentOnsets.removeIf(o -> o.transient_ < transient_ - 3_000_000_000L);
 		PendingOnset onset = new PendingOnset(transient_, adjusted, candidates.stream().mapToInt(Integer::intValue).toArray());
 		onset.inWindow.addAll(inWindow);
 		this.pending.add(onset);
@@ -797,12 +862,13 @@ public final class FollowSession {
 
 	/**
 	 * An attack is reported {@code articulationLatency} after its transient, while the window of an event closes at its own end: a note played at the
-	 * very end of a window is reported after the window closed. The MISSED of an event stays open to such an attack (and only to it: the pitch alone
-	 * decides nothing), which turns it into MATCHED or WRONG_PITCH.
+	 * very end of a window is reported after the window closed. The MISSED of an event (or its NOT_JUDGED, when its window began before the judging did,
+	 * as the first window of a run does) stays open to such an attack (and only to it: the pitch alone decides nothing), which turns it into MATCHED
+	 * or WRONG_PITCH. The window of the onset decides whether the attack is the event's.
 	 */
 	private boolean isOpenForOnset(int index) {
 		Status status = this.results[index].status();
-		return status == Status.PENDING || (status == Status.MISSED && !this.open[index].wrongSeen);
+		return status == Status.PENDING || ((status == Status.MISSED || status == Status.NOT_JUDGED) && !this.open[index].wrongSeen);
 	}
 
 	private boolean hasPendingChord(PendingOnset onset) {
@@ -902,13 +968,19 @@ public final class FollowSession {
 		boolean clipping = frame.getLevelState() == AnalysisFrame.LevelState.CLIPPING;
 		for (int i = scanStart(); i < this.results.length; i++) {
 			PracticeEvent event = this.events.get(i);
-			if (this.results[i].status() != Status.PENDING
-					|| (event.getKind() != PracticeEvent.Kind.EXPECTED_NOTE && event.getKind() != PracticeEvent.Kind.EXPECTED_CHORD)) {
+			boolean pending = this.results[i].status() == Status.PENDING;
+			if (!(this.ringingUnder[i] ? isOpenForOnset(i) : pending) || (event.getKind() != PracticeEvent.Kind.EXPECTED_NOTE && event.getKind() != PracticeEvent.Kind.EXPECTED_CHORD)) {
 				continue;
 			}
 			Window w = window(i, context);
 			if (w.outerFrom() - EVIDENCE_LEAD_NANOS > context.compensation().adjust(wall)) {
 				break;
+			}
+			// an event that closed unmatched stays open to its evidence for as long as the detector can still report its attack, like the pitch path
+			if (!pending
+					&& context.compensation().adjust(wall) > w.outerTo() + this.articulationLatencyNanos + REFINE_AFTER_NANOS + EVIDENCE_AFTER_CLOSE_NANOS) {
+				this.acceptances[i] = null;
+				continue;
 			}
 			// a written movement (a bend, a release) cannot be told from its path by the spectrum: it is heard from its pitch
 			if (event.getBendPath() != null || this.legatoArrival[i]) {
@@ -922,7 +994,27 @@ public final class FollowSession {
 			int[] pitches = (event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ? new int[] { event.getExpectedMidi() } : event.getRequiredPitches());
 			int[] frets = (event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ? new int[] { event.getFret() } : null);
 			if (acceptance.offer(clipping ? null : frame.getAttackEvidence(), frame.getTimestampNanos(), pitches, frets, this.tolerance)) {
-				long onsetWall = wall - (frame.getTimestampNanos() - acceptance.getOnsetNanos());
+				long evidenceWall = wall - (frame.getTimestampNanos() - acceptance.getOnsetNanos());
+				long onsetWall = evidenceWall;
+				if (this.ringingUnder[i]) {
+					// The evidence of an attack begins to grow late over the same pitch that still rings. The time of an attack is its transient, the
+					// one the detector reports: the event takes the attack that lies in its own window (windows never overlap, so an attack belongs to
+					// one event), the evidence of another event's attack is not moved to this one, and until the detector had the time to report the
+					// attack the event waits (the evidence goes on saying the same). A pitch that does not ring has its evidence on time: no wait.
+					RecentOnset reported = reportedAttackNear(evidenceWall, w, context);
+					if (reported == null && foreignAttackNear(evidenceWall, w, context)) {
+						acceptance.rearm(frame.getTimestampNanos());
+						continue;
+					}
+					if (reported != null) {
+						onsetWall = reported.transient_;
+					} else if (!pending) {
+						// a closed event is reopened only by an attack the detector reported: the late time of the evidence is no time for it
+						continue;
+					} else if (this.waitsForReportedAttack && wall < evidenceWall + this.articulationLatencyNanos + REFINE_AFTER_NANOS) {
+						continue;
+					}
+				}
 				TimingOutcome outcome = context.judgeOnset(w, onsetWall);
 				if (outcome.verdict() != null) {
 					finishMatch(i, outcome, onsetWall);
@@ -933,6 +1025,37 @@ public final class FollowSession {
 				}
 			}
 		}
+	}
+
+	/** The attack the detector reported nearest to the time the evidence gives, inside the window of the event, ; null when none. */
+	private RecentOnset reportedAttackNear(long evidenceWall, Window window, TimingContext context) {
+		RecentOnset best = null;
+		for (RecentOnset candidate : this.recentOnsets) {
+			if (!near(candidate, evidenceWall)) {
+				continue;
+			}
+			if (window.classify(context.compensation().adjust(candidate.transient_)) == null) {
+				continue;
+			}
+			if (best == null || Math.abs(candidate.transient_ - evidenceWall) < Math.abs(best.transient_ - evidenceWall)) {
+				best = candidate;
+			}
+		}
+		return best;
+	}
+
+	/** True when the detector reported an attack near the evidence that this event cannot take: it lies in the window of another event. */
+	private boolean foreignAttackNear(long evidenceWall, Window window, TimingContext context) {
+		for (RecentOnset candidate : this.recentOnsets) {
+			if (near(candidate, evidenceWall) && window.classify(context.compensation().adjust(candidate.transient_)) == null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean near(RecentOnset candidate, long evidenceWall) {
+		return candidate.transient_ >= evidenceWall - REFINE_BEFORE_NANOS && candidate.transient_ <= evidenceWall + REFINE_AFTER_NANOS;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------- legato arrivals

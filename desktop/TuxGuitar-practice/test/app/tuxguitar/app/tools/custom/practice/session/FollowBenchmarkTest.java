@@ -61,7 +61,7 @@ public class FollowBenchmarkTest {
 	private static final double MATCH_TOLERANCE_MILLIS = 60.0;
 	private static final int[] SCALE = { 0, 2, 4, 5, 7, 5, 4, 2, 0, 3, 5, 7, 8, 7, 5, 3 };
 
-	private enum Scenario {
+	enum Scenario {
 		CLEAN("scale, played in time (offsets within 25 ms)"),
 		REPEATED("one pitch repeated, played in time"),
 		MISTAKE("scale with one deliberate mistake"),
@@ -79,7 +79,8 @@ public class FollowBenchmarkTest {
 	}
 
 	/** What one run gave. */
-	private static final class Outcome {
+	static final class Outcome {
+		final StringBuilder details = new StringBuilder();
 		int events;
 		int matched;
 		int rightMatches;
@@ -139,7 +140,12 @@ public class FollowBenchmarkTest {
 		}
 	}
 
-	private static Outcome run(Scenario scenario, double notesPerSecond, long seed) {
+	static Outcome run(Scenario scenario, double notesPerSecond, long seed) {
+		return run(scenario, notesPerSecond, seed, false);
+	}
+
+	/** @param waits the event waits for the detector to report an attack before taking the late time of the evidence (see FollowSession) */
+	static Outcome run(Scenario scenario, double notesPerSecond, long seed, boolean waits) {
 		Random random = new Random(seed);
 		SongFixture fixture = song(scenario);
 		int percent = (int) Math.round(notesPerSecond / 2.0 * 100.0);
@@ -180,6 +186,7 @@ public class FollowBenchmarkTest {
 		List<AnalysisFrame> frames = OfflineAnalysis.analyze(signal, RATE, RecognitionSettings.defaults(), scenario == Scenario.CHORDS,
 				AttackCandidates.of(run.sequence));
 		run.session.setPolyphonicAcceptance(() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
+		run.session.setWaitsForReportedAttack(waits);
 		run.start();
 		run.feed(frames);
 
@@ -187,6 +194,8 @@ public class FollowBenchmarkTest {
 		outcome.events = n;
 		for (int i = 0; i < n; i++) {
 			EventResult result = run.last.results().get(i);
+			outcome.details.append(i).append(' ').append(result.status()).append('/').append(result.timing()).append(" off=").append(Math.round(result.offsetNanos() / 1e6))
+					.append(" jitter=").append(Math.round(jitter[i])).append(" attempts=").append(result.attempts()).append('\n');
 			boolean wrongPlayed = (i == mistakeAt && mistake == Mistake.WRONG_NOTE);
 			switch (result.status()) {
 				case MATCHED: {
@@ -246,12 +255,12 @@ public class FollowBenchmarkTest {
 		return whole == 0 ? "-" : String.format(java.util.Locale.ROOT, "%.0f%%", 100.0 * part / whole);
 	}
 
-	private static String cell(Scenario scenario, double notesPerSecond) {
+	private static String cell(Scenario scenario, double notesPerSecond, boolean waits) {
 		int events = 0, matched = 0, right = 0, falseMatches = 0, wrong = 0, missed = 0, notJudged = 0, extras = 0, onTime = 0, early = 0, late = 0;
 		int afterPlayed = 0, afterRight = 0, resyncRuns = 0, separatedRuns = 0;
 		double bias = 0.0;
 		for (int r = 0; r < RUNS; r++) {
-			Outcome o = run(scenario, notesPerSecond, 1000 + r);
+			Outcome o = run(scenario, notesPerSecond, 1000 + r, waits);
 			events += o.events;
 			matched += o.matched;
 			right += o.rightMatches;
@@ -292,12 +301,16 @@ public class FollowBenchmarkTest {
 		report.append("synchronised after a deliberate mistake. SC-004: repeated identical notes at 8 a second separated in >= 95 % of cases.\n");
 		report.append("A match is right when the event is MATCHED and its offset is within ").append((int) MATCH_TOLERANCE_MILLIS)
 				.append(" ms of the time the note was played (the 25 ms of jitter and the detection bias are inside the offset).\n\n");
-		for (Scenario scenario : Scenario.values()) {
-			report.append("## ").append(scenario.text).append("\n");
-			for (double rate : scenario == Scenario.CHORDS ? new double[] { 1, 2 } : NOTES_PER_SECOND) {
-				report.append(cell(scenario, rate)).append("\n");
+		for (boolean waits : new boolean[] { false, true }) {
+			report.append(waits ? "# Variant B: an event whose pitch rings waits for the detector to report the attack before taking the late time of the evidence\n"
+					: "# Variant A (the default): the event takes the time of the attack the detector reported, or at once the time of the evidence when none was reported\n");
+			for (Scenario scenario : Scenario.values()) {
+				report.append("## ").append(scenario.text).append("\n");
+				for (double rate : scenario == Scenario.CHORDS ? new double[] { 1, 2 } : NOTES_PER_SECOND) {
+					report.append(cell(scenario, rate, waits)).append("\n");
+				}
+				report.append("\n");
 			}
-			report.append("\n");
 		}
 		Outcome first = run(Scenario.MISTAKE, 4, 1003);
 		Outcome second = run(Scenario.MISTAKE, 4, 1003);
