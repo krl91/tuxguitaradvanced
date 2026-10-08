@@ -8,8 +8,8 @@ public interface SceneLabels {
 	/** The word of a verdict ("On time", "Not judged" ...). */
 	String verdict(ArcadeVerdict verdict);
 
-	/** The generic name of a chord that has none written. */
-	String chordFallback();
+	/** The notes of a chord that no conventional name describes: "Notes: A–C–F♯" for the list {@code A–C–F♯}. */
+	String pitchSet(String notes);
 
 	/** An event the mode shows as automatic (it is passed without being judged). */
 	String automatic();

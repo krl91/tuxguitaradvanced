@@ -40,8 +40,8 @@ public final class SceneFixture {
 		}
 
 		@Override
-		public String chordFallback() {
-			return "Chord";
+		public String pitchSet(String notes) {
+			return "Notes: " + notes;
 		}
 
 		@Override

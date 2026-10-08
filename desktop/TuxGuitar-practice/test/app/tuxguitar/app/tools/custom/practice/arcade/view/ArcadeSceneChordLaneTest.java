@@ -243,13 +243,15 @@ public class ArcadeSceneChordLaneTest {
 	}
 
 	@Test
-	public void aCompactChordShowsItsNameOnlyWhenItIsFreeAndNeverABlankOne() {
+	public void aCompactChordShowsItsNameOnlyWhenItIsFreeAndNeverAListOfNotes() {
 		SceneFixture fixture = chords(8, 0, true);
 		for (long t = fixture.onset(0) - 2900 * MS; t <= fixture.onset(7); t += 60 * MS) {
 			Scene scene = fixture.scene(false).build(t, SCREEN, null, 100);
 			assertNull(SceneBoxes.firstOverlap(SceneBoxes.labels(scene)), "at " + (t - fixture.onset(0)) / MS + " ms");
 			for (SceneItem chip : scene.withRole(Role.CHORD_CHIP)) {
-				assertTrue(chip.text().startsWith("Ch") && !chip.text().trim().isEmpty(), "a written name: " + chip.text());
+				ChordNameResolver.Display display = fixture.events.get(chip.eventIndex()).display();
+				assertEquals(display.text(), chip.text(), "the identity of the chord: its written name, or the name derived from its notes");
+				assertTrue(display.source() != ChordNameResolver.Source.PITCH_SET && !chip.text().trim().isEmpty(), "a short name, never a list of notes");
 				assertTrue(scene.forEvent(chip.eventIndex(), Role.CARTOUCHE_FRAME).isEmpty(), "and no diagram with it");
 			}
 		}

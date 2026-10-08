@@ -51,7 +51,7 @@ public class ArcadeSceneChordTest {
 		assertEquals(fixture.colours.of(5), colourOfString(dots, 5));
 		assertEquals(fixture.colours.of(4), colourOfString(dots, 4));
 		assertEquals("5fr", picture.forEvent(0, Role.CARTOUCHE_FRET_LABEL).get(0).text());
-		assertEquals("Chord", picture.forEvent(0, Role.CARTOUCHE_NAME).get(0).text(), "no name written, none invented");
+		assertEquals("A5", picture.forEvent(0, Role.CARTOUCHE_NAME).get(0).text(), "no name written: the name derived from the written notes, a power chord");
 		assertEquals(6, picture.forEvent(0, Role.CARTOUCHE_STRING).size(), "the vertical lines of the track");
 	}
 
@@ -134,7 +134,7 @@ public class ArcadeSceneChordTest {
 		assertEquals("↓", picture.forEvent(0, Role.CARTOUCHE_STROKE).get(0).text());
 		// the first chord is judged; the second, which was only a compact bar, is promoted
 		Scene other = fixture.scene(false).build(fixture.onset(1) - 300 * MS, SCREEN, ArcadeSceneTest.completedBefore(1, 2), 100);
-		assertEquals("Chord", other.forEvent(1, Role.CARTOUCHE_NAME).get(0).text());
+		assertEquals("A5", other.forEvent(1, Role.CARTOUCHE_NAME).get(0).text(), "derived from the written notes");
 		assertTrue(other.forEvent(1, Role.CARTOUCHE_STROKE).isEmpty(), "no stroke written, no arrow");
 	}
 

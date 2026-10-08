@@ -79,16 +79,14 @@ public class ArcadeSceneChordNameTest {
 	}
 
 	@Test
-	public void aChordWithoutAUsableNameShowsTheGenericWordAndNeverAnInventedName() {
+	public void aChordWithoutAUsableNameShowsTheNameDerivedFromItsWrittenNotesNeverTheBareGenericWord() {
 		SceneFixture fixture = fixture();
+		// the blank name of the second chord is no name: its written notes, C on the A string, E, G and C, give a C chord
 		for (Scene scene : variants(fixture, fixture.onset(1) - 300 * MS, ArcadeSceneTest.completedBefore(1, 5))) {
-			assertEquals("Chord", scene.forEvent(1, Role.CARTOUCHE_NAME).get(0).text(), "a blank name is no name");
-		}
-		// the pitches 5 3 0 1 of that chord would make a name, and none is made
-		for (Scene scene : variants(fixture, fixture.onset(1) - 300 * MS, ArcadeSceneTest.completedBefore(1, 5))) {
+			assertEquals("C", scene.forEvent(1, Role.CARTOUCHE_NAME).get(0).text(), "a blank name is no name");
 			for (SceneItem item : scene.items()) {
-				if (item.text() != null && item.eventIndex() == 1) {
-					assertFalse(item.text().matches("[A-G][#b]?(m|maj|dim|aug|sus)?[0-9]*"), "no name derived from pitches: " + item.text());
+				if (item.text() != null) {
+					assertFalse(item.text().equals("Chord") || item.text().equals("Accord"), "the bare generic word is gone: " + item);
 				}
 			}
 		}
@@ -104,7 +102,7 @@ public class ArcadeSceneChordNameTest {
 			assertEquals("5", scene.forEvent(2, Role.MARKER_FRET).get(0).text(), "a note shows its fret, and only that");
 		}
 		for (SceneItem item : fixture.scene(false).build(fixture.onset(2) - 600 * MS, SCREEN, null, 100).items()) {
-			assertFalse("Chord".equals(item.text()) && item.eventIndex() == 2);
+			assertFalse(item.eventIndex() == 2 && item.role() == Role.CARTOUCHE_NAME);
 		}
 	}
 

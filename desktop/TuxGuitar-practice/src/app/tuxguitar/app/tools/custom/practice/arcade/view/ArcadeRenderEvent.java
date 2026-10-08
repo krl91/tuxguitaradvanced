@@ -66,9 +66,11 @@ public final class ArcadeRenderEvent {
 	private final int[] requiredPitches;
 	private final int metadataFirstFret;
 	private final int metadataStrings;
+	private final ChordNameResolver.Display display;
 
 	private ArcadeRenderEvent(int index, Kind kind, long onsetNanos, List<Position> positions, List<Integer> deadStrings, String chordName, Stroke stroke,
-			boolean duplicatePitches, int[] requiredPitches, int metadataFirstFret, int metadataStrings) {
+			boolean duplicatePitches, int[] requiredPitches, int metadataFirstFret, int metadataStrings,
+			ChordNameResolver.Display display) {
 		this.index = index;
 		this.kind = kind;
 		this.onsetNanos = onsetNanos;
@@ -80,6 +82,7 @@ public final class ArcadeRenderEvent {
 		this.requiredPitches = requiredPitches;
 		this.metadataFirstFret = metadataFirstFret;
 		this.metadataStrings = metadataStrings;
+		this.display = display;
 	}
 
 	/**
@@ -122,8 +125,18 @@ public final class ArcadeRenderEvent {
 				break;
 		}
 		TGChord metadata = (event.getBeat() != null && event.getBeat().isChordBeat() ? event.getBeat().getChord() : null);
+		ChordNameResolver.Display display = null;
+		if (kind == Kind.CHORD) {
+			// the identity of the chord is resolved here, from what the score writes, before any renderer sees it
+			int[] pitches = new int[event.getChordNotes().size()];
+			for (int i = 0; i < pitches.length; i++) {
+				pitches[i] = event.getChordNotes().get(i).getMidi();
+			}
+			int key = (event.getBeat() != null && event.getBeat().getMeasure() != null) ? event.getBeat().getMeasure().getKeySignature() : 0;
+			display = ChordNameResolver.resolve(chordNameOf(event.getBeat()), pitches, key);
+		}
 		return new ArcadeRenderEvent(index, kind, onset, positions, dead, chordNameOf(event.getBeat()), strokeOf(event.getBeat()), event.hasDuplicatePitches(),
-				event.getRequiredPitches(), metadata != null ? metadata.getFirstFret() : 0, metadata != null ? metadata.countStrings() : 0);
+				event.getRequiredPitches(), metadata != null ? metadata.getFirstFret() : 0, metadata != null ? metadata.countStrings() : 0, display);
 	}
 
 	/** The name written with the chord, when it is not blank: never made up from the pitches. */
@@ -170,6 +183,14 @@ public final class ArcadeRenderEvent {
 	/** Strings written as muted in the chord (an explicit mark); a string that is just not written is not in this list. */
 	public List<Integer> deadStrings() {
 		return this.deadStrings;
+	}
+
+	/**
+	 * What the diagram of a chord shows as its identity and where that comes from (the written name, a name derived from the written notes, or the notes
+	 * themselves); null for anything that is not a chord.
+	 */
+	public ChordNameResolver.Display display() {
+		return this.display;
 	}
 
 	/** The name written on the chord, or null. */
