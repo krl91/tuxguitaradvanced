@@ -4,27 +4,51 @@ and clock; normal tolerance; no latency compensation. SC-009 (provisional): >= 9
 synchronised after a deliberate mistake. SC-004: repeated identical notes at 8 a second separated in >= 95 % of cases.
 A match is right when the event is MATCHED and its offset is within 60 ms of the time the note was played (the 25 ms of jitter and the detection bias are inside the offset).
 
+# Variant A (the default): the event takes the time of the attack the detector reported, or at once the time of the evidence when none was reported
 ## scale, played in time (offsets within 25 ms)
-| CLEAN | 2/s | 12 | matched to the right event 100% (192/192) | false matches 0 | wrong pitch 0 | missed 0 | not judged 0 | extra 0 | on time 192, early 0, late 0 | mean offset error +24 ms |
-| CLEAN | 4/s | 12 | matched to the right event 86% (165/192) | false matches 0 | wrong pitch 0 | missed 27 | not judged 0 | extra 0 | on time 165, early 0, late 0 | mean offset error +25 ms |
-| CLEAN | 6/s | 12 | matched to the right event 44% (84/192) | false matches 0 | wrong pitch 0 | missed 107 | not judged 1 | extra 0 | on time 82, early 2, late 0 | mean offset error +23 ms |
-| CLEAN | 8/s | 12 | matched to the right event 22% (43/192) | false matches 1 | wrong pitch 0 | missed 144 | not judged 4 | extra 2 | on time 44, early 0, late 0 | mean offset error +32 ms |
+| CLEAN | 2/s | 12 | matched to the right event 100% (192/192) | false matches 0 | wrong pitch 0 | missed 0 | not judged 0 | extra 0 | on time 192, early 0, late 0 | mean offset error +22 ms |
+| CLEAN | 4/s | 12 | matched to the right event 86% (165/192) | false matches 0 | wrong pitch 0 | missed 27 | not judged 0 | extra 0 | on time 165, early 0, late 0 | mean offset error +20 ms |
+| CLEAN | 6/s | 12 | matched to the right event 44% (85/192) | false matches 0 | wrong pitch 0 | missed 107 | not judged 0 | extra 0 | on time 83, early 2, late 0 | mean offset error +23 ms |
+| CLEAN | 8/s | 12 | matched to the right event 24% (47/192) | false matches 1 | wrong pitch 0 | missed 144 | not judged 0 | extra 0 | on time 48, early 0, late 0 | mean offset error +30 ms |
 
 ## one pitch repeated, played in time
-| REPEATED | 2/s | 12 | matched to the right event 99% (191/192) | false matches 1 | wrong pitch 0 | missed 0 | not judged 0 | extra 0 | on time 190, early 2, late 0 | mean offset error +17 ms | runs with every repeat separated and no extra 92% (11/12) |
-| REPEATED | 4/s | 12 | matched to the right event 41% (78/192) | false matches 56 | wrong pitch 0 | missed 58 | not judged 0 | extra 3 | on time 75, early 0, late 59 | mean offset error +51 ms | runs with every repeat separated and no extra 0% (0/12) |
-| REPEATED | 6/s | 12 | matched to the right event 30% (58/192) | false matches 7 | wrong pitch 0 | missed 126 | not judged 1 | extra 1 | on time 59, early 2, late 4 | mean offset error +19 ms | runs with every repeat separated and no extra 0% (0/12) |
-| REPEATED | 8/s | 12 | matched to the right event 15% (28/192) | false matches 6 | wrong pitch 0 | missed 154 | not judged 4 | extra 4 | on time 27, early 5, late 2 | mean offset error +3 ms | runs with every repeat separated and no extra 0% (0/12) |
+| REPEATED | 2/s | 12 | matched to the right event 99% (191/192) | false matches 1 | wrong pitch 0 | missed 0 | not judged 0 | extra 0 | on time 190, early 2, late 0 | mean offset error +5 ms | runs with every repeat separated and no extra 92% (11/12) |
+| REPEATED | 4/s | 12 | matched to the right event 51% (98/192) | false matches 36 | wrong pitch 0 | missed 58 | not judged 0 | extra 0 | on time 100, early 0, late 34 | mean offset error +35 ms | runs with every repeat separated and no extra 0% (0/12) |
+| REPEATED | 6/s | 12 | matched to the right event 31% (59/192) | false matches 7 | wrong pitch 0 | missed 126 | not judged 0 | extra 0 | on time 60, early 2, late 4 | mean offset error +18 ms | runs with every repeat separated and no extra 0% (0/12) |
+| REPEATED | 8/s | 12 | matched to the right event 17% (32/192) | false matches 6 | wrong pitch 0 | missed 154 | not judged 0 | extra 0 | on time 31, early 5, late 2 | mean offset error +3 ms | runs with every repeat separated and no extra 0% (0/12) |
 
 ## scale with one deliberate mistake
-| MISTAKE | 2/s | 12 | matched to the right event 97% (186/192) | false matches 0 | wrong pitch 3 | missed 3 | not judged 0 | extra 2 | on time 186, early 0, late 0 | mean offset error +24 ms | resynchronised runs 100% (12/12), events after the mistake right 100% (97/97) |
-| MISTAKE | 4/s | 12 | matched to the right event 86% (166/192) | false matches 2 | wrong pitch 0 | missed 24 | not judged 0 | extra 0 | on time 166, early 1, late 1 | mean offset error +24 ms | resynchronised runs 17% (2/12), events after the mistake right 86% (83/97) |
-| MISTAKE | 6/s | 12 | matched to the right event 36% (69/192) | false matches 0 | wrong pitch 0 | missed 120 | not judged 3 | extra 3 | on time 69, early 0, late 0 | mean offset error +25 ms | resynchronised runs 0% (0/12), events after the mistake right 42% (41/97) |
-| MISTAKE | 8/s | 12 | matched to the right event 17% (33/192) | false matches 0 | wrong pitch 0 | missed 152 | not judged 7 | extra 3 | on time 32, early 0, late 1 | mean offset error +35 ms | resynchronised runs 0% (0/12), events after the mistake right 23% (22/97) |
+| MISTAKE | 2/s | 12 | matched to the right event 97% (186/192) | false matches 0 | wrong pitch 3 | missed 3 | not judged 0 | extra 2 | on time 186, early 0, late 0 | mean offset error +21 ms | resynchronised runs 100% (12/12), events after the mistake right 100% (97/97) |
+| MISTAKE | 4/s | 12 | matched to the right event 86% (166/192) | false matches 2 | wrong pitch 0 | missed 24 | not judged 0 | extra 0 | on time 166, early 1, late 1 | mean offset error +19 ms | resynchronised runs 17% (2/12), events after the mistake right 86% (83/97) |
+| MISTAKE | 6/s | 12 | matched to the right event 38% (72/192) | false matches 0 | wrong pitch 0 | missed 120 | not judged 0 | extra 0 | on time 72, early 0, late 0 | mean offset error +24 ms | resynchronised runs 0% (0/12), events after the mistake right 42% (41/97) |
+| MISTAKE | 8/s | 12 | matched to the right event 21% (40/192) | false matches 0 | wrong pitch 0 | missed 152 | not judged 0 | extra 0 | on time 39, early 0, late 1 | mean offset error +29 ms | resynchronised runs 0% (0/12), events after the mistake right 23% (22/97) |
 
 ## chords played in time
-| CHORDS | 1/s | 12 | matched to the right event 98% (94/96) | false matches 1 | wrong pitch 1 | missed 0 | not judged 0 | extra 0 | on time 94, early 1, late 0 | mean offset error +8 ms |
-| CHORDS | 2/s | 12 | matched to the right event 92% (88/96) | false matches 1 | wrong pitch 7 | missed 0 | not judged 0 | extra 0 | on time 89, early 0, late 0 | mean offset error +13 ms |
+| CHORDS | 1/s | 12 | matched to the right event 98% (94/96) | false matches 1 | wrong pitch 1 | missed 0 | not judged 0 | extra 0 | on time 94, early 1, late 0 | mean offset error +4 ms |
+| CHORDS | 2/s | 12 | matched to the right event 93% (89/96) | false matches 0 | wrong pitch 7 | missed 0 | not judged 0 | extra 0 | on time 89, early 0, late 0 | mean offset error +6 ms |
+
+# Variant B: an event whose pitch rings waits for the detector to report the attack before taking the late time of the evidence
+## scale, played in time (offsets within 25 ms)
+| CLEAN | 2/s | 12 | matched to the right event 100% (192/192) | false matches 0 | wrong pitch 0 | missed 0 | not judged 0 | extra 0 | on time 192, early 0, late 0 | mean offset error +22 ms |
+| CLEAN | 4/s | 12 | matched to the right event 81% (155/192) | false matches 0 | wrong pitch 0 | missed 37 | not judged 0 | extra 0 | on time 155, early 0, late 0 | mean offset error +19 ms |
+| CLEAN | 6/s | 12 | matched to the right event 24% (46/192) | false matches 0 | wrong pitch 0 | missed 146 | not judged 0 | extra 0 | on time 46, early 0, late 0 | mean offset error +25 ms |
+| CLEAN | 8/s | 12 | matched to the right event 15% (28/192) | false matches 1 | wrong pitch 0 | missed 163 | not judged 0 | extra 0 | on time 29, early 0, late 0 | mean offset error +24 ms |
+
+## one pitch repeated, played in time
+| REPEATED | 2/s | 12 | matched to the right event 99% (191/192) | false matches 1 | wrong pitch 0 | missed 0 | not judged 0 | extra 0 | on time 190, early 2, late 0 | mean offset error +5 ms | runs with every repeat separated and no extra 92% (11/12) |
+| REPEATED | 4/s | 12 | matched to the right event 51% (98/192) | false matches 0 | wrong pitch 0 | missed 94 | not judged 0 | extra 0 | on time 98, early 0, late 0 | mean offset error +14 ms | runs with every repeat separated and no extra 0% (0/12) |
+| REPEATED | 6/s | 12 | matched to the right event 11% (21/192) | false matches 1 | wrong pitch 0 | missed 170 | not judged 0 | extra 0 | on time 20, early 2, late 0 | mean offset error -6 ms | runs with every repeat separated and no extra 0% (0/12) |
+| REPEATED | 8/s | 12 | matched to the right event 11% (22/192) | false matches 4 | wrong pitch 0 | missed 166 | not judged 0 | extra 0 | on time 21, early 5, late 0 | mean offset error -19 ms | runs with every repeat separated and no extra 0% (0/12) |
+
+## scale with one deliberate mistake
+| MISTAKE | 2/s | 12 | matched to the right event 97% (186/192) | false matches 0 | wrong pitch 3 | missed 3 | not judged 0 | extra 2 | on time 186, early 0, late 0 | mean offset error +21 ms | resynchronised runs 100% (12/12), events after the mistake right 100% (97/97) |
+| MISTAKE | 4/s | 12 | matched to the right event 85% (164/192) | false matches 2 | wrong pitch 0 | missed 26 | not judged 0 | extra 0 | on time 164, early 1, late 1 | mean offset error +18 ms | resynchronised runs 17% (2/12), events after the mistake right 84% (81/97) |
+| MISTAKE | 6/s | 12 | matched to the right event 22% (42/192) | false matches 0 | wrong pitch 0 | missed 150 | not judged 0 | extra 0 | on time 42, early 0, late 0 | mean offset error +26 ms | resynchronised runs 0% (0/12), events after the mistake right 18% (17/97) |
+| MISTAKE | 8/s | 12 | matched to the right event 9% (17/192) | false matches 0 | wrong pitch 0 | missed 175 | not judged 0 | extra 0 | on time 17, early 0, late 0 | mean offset error +19 ms | resynchronised runs 0% (0/12), events after the mistake right 5% (5/97) |
+
+## chords played in time
+| CHORDS | 1/s | 12 | matched to the right event 98% (94/96) | false matches 1 | wrong pitch 1 | missed 0 | not judged 0 | extra 0 | on time 94, early 1, late 0 | mean offset error +4 ms |
+| CHORDS | 2/s | 12 | matched to the right event 93% (89/96) | false matches 0 | wrong pitch 7 | missed 0 | not judged 0 | extra 0 | on time 89, early 0, late 0 | mean offset error +6 ms |
 
 Determinism: two runs of the same seed gave the same matches (12 matched, 0 extra).
 Techniques: not part of this benchmark (see technique-benchmark-2026-10-06.txt for the detectors, and the session tests for the rule that a technique never changes the timing).
