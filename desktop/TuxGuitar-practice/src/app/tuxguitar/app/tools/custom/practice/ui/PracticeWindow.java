@@ -68,6 +68,8 @@ import app.tuxguitar.ui.widget.UIControl;
 import app.tuxguitar.ui.widget.UIDropDownSelect;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
+import app.tuxguitar.ui.widget.UITabFolder;
+import app.tuxguitar.ui.widget.UITabItem;
 import app.tuxguitar.ui.widget.UISelectItem;
 import app.tuxguitar.ui.widget.UIWindow;
 import app.tuxguitar.util.TGContext;
@@ -96,7 +98,7 @@ public class PracticeWindow {
 	private AudioEngine engine;
 
 	private UIWindow window;
-	private UIPanel preparation;
+	private UITabFolder preparation;
 	private PracticePalette palette;
 	private InputSelectorPanel inputSelector;
 	private LevelPanel levelPanel;
@@ -199,16 +201,19 @@ public class PracticeWindow {
 		this.window.setImage(TuxGuitar.getInstance().getIconManager().getAppIcon());
 		this.window.setText(TuxGuitar.getProperty(PracticePlugin.OPEN_ACTION_ID));
 
+		// the preparation is in tabs, so that the window is not taller than a screen: the track, the input, the mode, the repeated passages
 		this.preparation = createPreparation(uiFactory);
-		windowLayout.set(this.preparation, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 480f, null, null);
+		windowLayout.set(this.preparation, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 520f, null, null);
 
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel buttons = uiFactory.createPanel(this.window, false);
 		buttons.setLayout(buttonsLayout);
 		windowLayout.set(buttons, 3, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_FILL, true, false);
-		UIButton closeButton = button(uiFactory, buttons, buttonsLayout, 1, "close", () -> close());
+		// Start and Close are always in view, whatever the tab
+		this.startButton = button(uiFactory, buttons, buttonsLayout, 1, "practice.start", () -> startSession());
+		UIButton closeButton = button(uiFactory, buttons, buttonsLayout, 2, "close", () -> close());
 		buttonsLayout.set(closeButton, UITableLayout.MARGIN_RIGHT, 0f);
-		listenKeys(buttons, closeButton);
+		listenKeys(buttons, closeButton, this.startButton);
 
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
@@ -298,11 +303,12 @@ public class PracticeWindow {
 
 	// ---------------------------------------------------------------- preparation (FR-002)
 
-	private UIPanel createPreparation(UIFactory uiFactory) {
-		UIPanel panel = uiFactory.createPanel(this.window, false);
-		UITableLayout layout = new UITableLayout();
-		panel.setLayout(layout);
+	private UITabFolder createPreparation(UIFactory uiFactory) {
+		UITabFolder folder = uiFactory.createTabFolder(this.window, false);
 
+		// ---- tab 1: the track
+		UITableLayout layout = new UITableLayout();
+		UIPanel panel = tab(uiFactory, folder, "practice.tab.track", layout);
 		UILabel trackLabel = uiFactory.createLabel(panel);
 		trackLabel.setText(TuxGuitar.getProperty("practice.track"));
 		layout.set(trackLabel, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
@@ -318,34 +324,46 @@ public class PracticeWindow {
 		this.trackNotice = label(uiFactory, panel, layout, 2);
 		this.tuningLabel = label(uiFactory, panel, layout, 3);
 		this.unusualLabel = label(uiFactory, panel, layout, 4);
-		this.startLabel = label(uiFactory, panel, layout, 7);
-		this.mismatchLabel = label(uiFactory, panel, layout, 9);
+		this.startLabel = label(uiFactory, panel, layout, 5);
+		this.mismatchLabel = label(uiFactory, panel, layout, 6);
 
-		this.inputSelector = new InputSelectorPanel(this.context, this.engine, uiFactory, panel);
-		layout.set(this.inputSelector.getControl(), 5, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		// ---- tab 2: the input and its level
+		UITableLayout inputLayout = new UITableLayout();
+		UIPanel inputPanel = tab(uiFactory, folder, "practice.tab.input", inputLayout);
+		this.inputSelector = new InputSelectorPanel(this.context, this.engine, uiFactory, inputPanel);
+		inputLayout.set(this.inputSelector.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.inputSelector.setContentListener(this::refit);
-		this.levelPanel = new LevelPanel(this.context, this.engine, uiFactory, panel);
+		this.levelPanel = new LevelPanel(this.context, this.engine, uiFactory, inputPanel);
 		this.levelPanel.setContentListener(this::refit);
-		layout.set(this.levelPanel.getControl(), 6, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
-		this.headphoneLabel = label(uiFactory, panel, layout, 8);
+		inputLayout.set(this.levelPanel.getControl(), 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		this.headphoneLabel = label(uiFactory, inputPanel, inputLayout, 3);
 
-		UITableLayout startLayout = new UITableLayout(0f);
-		UIPanel startPanel = uiFactory.createPanel(panel, false);
-		startPanel.setLayout(startLayout);
-		createPassageSettings(uiFactory, panel, layout);
-
-		// the mode, and for the tempo-following mode the tempo, the tolerance and the rhythm calibration (spec 002 T097, T098)
-		this.followPanel = new FollowPanel(uiFactory, panel, FollowSettings.getInstance(this.context), this.followAdapter);
-		layout.set(this.followPanel.getControl(), 13, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		// ---- tab 3: the mode, and for the tempo-following modes the tempo, the tolerance and the rhythm calibration (spec 002 T097, T098)
+		UITableLayout modeLayout = new UITableLayout();
+		UIPanel modePanel = tab(uiFactory, folder, "practice.tab.mode", modeLayout);
+		this.followPanel = new FollowPanel(uiFactory, modePanel, FollowSettings.getInstance(this.context), this.followAdapter);
+		modeLayout.set(this.followPanel.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.followPanel.setContentListener(this::refit);
 		this.followPanel.setModeListener(this::modeChanged);
-
-		layout.set(startPanel, 14, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
-		this.startButton = button(uiFactory, startPanel, startLayout, 1, "practice.start", () -> startSession());
 		// what recognition measured: said as measured, with no more precision (spec 004 T009, SC-003, FR-008)
-		this.delayLabel = label(uiFactory, panel, layout, 15);
+		this.delayLabel = label(uiFactory, modePanel, modeLayout, 2);
 		this.delayLabel.setText(delayInfo());
-		listenKeys(panel, this.tracks, this.passageMeasures, this.passageThreshold, startPanel, this.startButton);
+
+		// ---- tab 4: the repeated passages of the wait mode
+		UITableLayout passageLayout = new UITableLayout();
+		UIPanel passagePanel = tab(uiFactory, folder, "practice.tab.passages", passageLayout);
+		createPassageSettings(uiFactory, passagePanel, passageLayout);
+
+		listenKeys(panel, this.tracks, this.passageMeasures, this.passageThreshold);
+		return folder;
+	}
+
+	/** One tab of the preparation: its text and a panel with its own layout. */
+	private static UIPanel tab(UIFactory uiFactory, UITabFolder folder, String key, UITableLayout layout) {
+		UITabItem item = folder.createTab();
+		item.setText(TuxGuitar.getProperty(key));
+		UIPanel panel = uiFactory.createPanel(item, false);
+		panel.setLayout(layout);
 		return panel;
 	}
 
@@ -357,9 +375,9 @@ public class PracticeWindow {
 		final PassageSettings settings = PassageSettings.getInstance(this.context);
 		UILabel measuresLabel = uiFactory.createLabel(panel);
 		measuresLabel.setText(TuxGuitar.getProperty("practice.passages"));
-		layout.set(measuresLabel, 10, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		layout.set(measuresLabel, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		this.passageMeasures = uiFactory.createDropDownSelect(panel);
-		layout.set(this.passageMeasures, 10, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.passageMeasures, 1, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		for( int measures : PassageSettings.MEASURE_OPTIONS ) {
 			this.passageMeasures.addItem(new UISelectItem<Integer>(passageMeasuresText(measures), measures));
 		}
@@ -367,16 +385,16 @@ public class PracticeWindow {
 
 		UILabel thresholdLabel = uiFactory.createLabel(panel);
 		thresholdLabel.setText(TuxGuitar.getProperty("practice.passages.threshold"));
-		layout.set(thresholdLabel, 11, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		layout.set(thresholdLabel, 2, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		this.passageThreshold = uiFactory.createDropDownSelect(panel);
-		layout.set(this.passageThreshold, 11, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.passageThreshold, 2, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		for( int percent : PassageSettings.THRESHOLD_PERCENT_OPTIONS ) {
 			this.passageThreshold.addItem(new UISelectItem<Integer>(
 					TuxGuitar.getProperty("practice.passages.threshold.value", new String[] { Integer.toString(percent) }), percent));
 		}
 		this.passageThreshold.setSelectedValue(settings.getThresholdPercent());
 		this.passageThreshold.setEnabled(!settings.isOff());
-		UILabel hint = label(uiFactory, panel, layout, 12);
+		UILabel hint = label(uiFactory, panel, layout, 3);
 		hint.setText(TuxGuitar.getProperty("practice.passages.hint"));
 
 		this.passageMeasures.addSelectionListener(new UISelectionListener() {

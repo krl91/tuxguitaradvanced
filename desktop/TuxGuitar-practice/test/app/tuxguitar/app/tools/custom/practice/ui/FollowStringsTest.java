@@ -30,7 +30,7 @@ public class FollowStringsTest {
 
 	private static final String[] FILES = { "messages.properties", "messages_fr.properties", "messages_es.properties" };
 	private static final Set<String> LIKE_IN_EVERY_LANGUAGE = new TreeSet<String>(java.util.Arrays.asList("arcade.name", "practice.mode.arcade", "arcade.window.title",
-			"arcade.result.percent.value", "arcade.label.speed", "arcade.button.pause", "arcade.result.score"));
+			"arcade.result.percent.value", "arcade.label.speed", "arcade.button.pause", "arcade.result.score", "practice.tab.mode"));
 	private static final Pattern PLACEHOLDER = Pattern.compile("\\{(\\d+)\\}");
 
 	private static Properties load(String file) throws IOException {
