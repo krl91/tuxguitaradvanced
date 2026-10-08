@@ -4,9 +4,9 @@
 
 **Created**: 2026-10-01
 
-**Status**: Draft (clarified 2026-10-07: approved 3D isometric neck view, anticipatory smooth camera; scores shown only at the end of a run)
+**Status**: Draft (clarified 2026-10-08: selected player track, MIDI backing, clear live monitoring with a measured 22 ms maximum; effects deferred)
 
-**Input**: User description: "Mode « Arcade » (variante du mode Practice, inspiré de Rocksmith), distinct de la spec 002 mais qui s'appuie sur son mode de jeu au tempo de la partition (US2b). (1) Le joueur doit jouer chaque note au bon moment (pas d'attente) pendant que la partition défile au tempo, avec retour immédiat et score de type jeu (justesse, timing, enchaînements). (2) Il entend les autres instruments de la partition pendant qu'il joue, la piste jouée étant coupée du lecteur. (3) Retour audio de la guitare en temps réel avec un effet simple : son clair (avec ou sans écho) ou saturé (avec ou sans écho), soit quatre préréglages. (4) Nom du mode : « Arcade » ou équivalent. Contraintes : macOS Apple Silicon d'abord, traitement du signal déterministe, latence annoncée et mesurée, aucun enregistrement de l'audio, honnêteté sur ce qui est vérifié, textes en français et anglais. Risques : latence du retour audio, larsen, choix de la sortie."
+**Input**: User description: "Mode « Arcade » (variante du mode Practice, inspiré de Rocksmith), distinct de la spec 002 mais qui s'appuie sur son mode de jeu au tempo de la partition (US2b). Le joueur choisit la piste de guitare ou de basse qu'il joue; cette piste est retirée de l'accompagnement et toutes les autres pistes sont jouées en MIDI. Il joue chaque note au bon moment pendant que le morceau avance sans attendre, avec retour immédiat et score de type jeu. Sa guitare est renvoyée en son clair vers la sortie choisie avec une latence réelle qui ne dépasse pas 22 ms. Réverbération et distorsion sont différées à une version suivante et devront respecter la même limite. Aucun audio n'est enregistré."
 
 ## Relation to other specifications
 
@@ -27,6 +27,15 @@
 - Q5: Chords → all notes at the same expected instant form one visibly grouped object while retaining each expected string/fret position. Recorded as FR-028.
 - Q6: Camera → the neck pans smoothly left or right using musical look-ahead. Every target fret, including every member of a chord, must already be visible before its note first appears. Recorded as FR-029.
 - Q7: String colours → every string has a stable colour, and each approaching note, trajectory and target ring repeats the colour of the string it targets. Colour remains a redundant cue, never the only way to identify a string or verdict. Recorded as FR-025 and FR-028.
+- Q8: Chord presentation → an approaching chord is a neutral timing bar with an attached, camera-facing cartouche containing a traditional vertical-string chord diagram. The bar says *when*; the cartouche says *what*. Recorded as FR-028.
+
+### Session 2026-10-08
+
+- Q9: Player/backing split → before starting, the learner explicitly chooses the one track they will play. That track is excluded from MIDI playback for the run; every other playable track remains in the MIDI backing. The song and its saved mute/solo state are not modified. Recorded as FR-002 and FR-010 to FR-014.
+- Q10: First live sound and later effects → the first Arcade version provides only a dry, clear return of the selected guitar/bass input. A later version may add reverb, distortion and instrument-dependent recommended presets, but reverb and distortion remain independent optional effects: each can be enabled, disabled and adjusted separately, both can be combined, and a full bypass always restores the dry clear sound. Recorded as FR-030 to FR-037.
+- Q11: Latency → 22 ms is a hard maximum for the end-to-end monitoring path from captured input to audible output on a supported configuration, not a warning threshold. If the application cannot establish that the selected path meets it, live monitoring stays off and explains why. Recorded as FR-040 to FR-047 and SC-003.
+- Q12: Measurement → planning must define a repeatable measurement that combines timestamp/buffer accounting with a physical loopback validation. A cable loopback is preferred; an acoustic test using the computer microphone/speakers or an independent microphone may be used as an indicative real-world check, with distance and room error documented. Recorded as FR-045 to FR-047.
+- Q13: Effects technology → before implementing the later effects version, the team must inventory actively usable free/open-source real-time audio libraries, verify licence and platform compatibility, and benchmark viable candidates inside the actual monitoring path. The selected solution is the one with the best verified live behaviour within the remaining 22 ms budget, not simply the largest feature list. If no library qualifies, no library is adopted and a smaller purpose-built effect or a deferred feature must be considered explicitly. Recorded as FR-038, FR-039 and SC-013.
 
 ## Approved visual direction
 
@@ -41,6 +50,17 @@ The image fixes the intended composition and visual hierarchy, not literal geome
 - **Target**: an approaching event resolves to an exact expected string/fret intersection from the tablature. That position is an instruction; audio feedback still claims to verify only pitch and timing.
 - **Feedback**: verdict symbols remain close to the impact point and use both colour and shape/text.
 
+### Approved chord presentation
+
+![Approved Arcade chord timing bar and cartouche](assets/arcade-chord-timing-cartouche-concept.png)
+
+- **At a distance**: a neutral timing bar and its attached chord cartouche approach as one unit. The learner can distinguish a chord from a single note immediately.
+- **Near the neck**: the cartouche grows to a readable size but remains facing the camera. It uses the traditional chord-diagram orientation: strings vertical, frets horizontal, open/muted indications above, position number at the side and one dot per written position. A ghost of the expected positions appears on the real neck.
+- **At impact**: the leading edge of the timing bar reaches the fixed hit line at the written onset. The cartouche remains visible briefly, and one chord-level verdict appears. The renderer never claims that audio verified the displayed physical fingering.
+- **Separation of meaning**: the neutral bar encodes only time; the cartouche encodes chord name and expected tablature positions; per-string colours remain supplementary location cues; the verdict badge encodes recognition.
+
+The source-to-visual mapping, animation states, fallback rules and required tests are normative in [visual-design.md](visual-design.md). It exists so an implementation agent can reproduce the approved visuals from TuxGuitar's real score and practice models without guessing APIs or musical semantics.
+
 The concept image contains generative approximations. Implementations MUST NOT trace its fret widths, dot count or dot positions. Model-space fret position for fret `n` MUST follow twelve-tone equal temperament for the instrument scale length `L`: `x(n) = L * (1 - 2^(-n/12))`; therefore fret 12 lies at half the scale length. The renderer then projects those model positions into the isometric camera. Position inlays are conventional rather than universal: the default visual model may use single markers at 3, 5, 7, 9, 15, 17, 19 and 21 and double markers at 12 and 24, but an explicit instrument model or theme may override them. The neck width, radius, string spacing and string gauges must remain visually plausible.
 
 Implementation should compare its proportions with a real instrument rather than the generated pixels. Useful manufacturer references include a [22-fret, 25.5-inch-scale Fender neck with documented fingerboard and inlays](https://de.fender.com/en/products/richie-kotzen-telecaster) and Fender's explanation that the [12th fret is half the scale length](https://www.fender.com/articles/maintenance/intonation-101).
@@ -49,7 +69,7 @@ Implementation should compare its proportions with a real instrument rather than
 
 ### User Story 1 - Play along with the band (Priority: P1)
 
-A learner opens a song, chooses the Arcade mode for their guitar track, and plays along: the score advances at the tempo, the other tracks (drums, bass, rhythm guitar...) are heard, the learner's own track is silent in the playback, and each note they play is judged as it passes. There is no waiting for the learner.
+A learner opens a song, explicitly chooses the guitar or bass track they will perform, and plays along: the score advances at the tempo, every other playable track (drums, bass, rhythm guitar...) is rendered by the MIDI player, the learner's chosen track is excluded from playback, and each note they play is judged as it passes. There is no waiting for the learner.
 
 **Why this priority**: it is the point of the mode: the feeling of playing in a band, which wait-for-the-note practice cannot give.
 
@@ -57,7 +77,7 @@ A learner opens a song, chooses the Arcade mode for their guitar track, and play
 
 **Acceptance Scenarios**:
 
-1. **Given** a song with several tracks, **When** the learner starts Arcade on a guitar track, **Then** a count-in is heard, then the other tracks play at the song's tempo while the chosen track is silent.
+1. **Given** a song with several tracks, **When** the learner selects a guitar or bass track and starts Arcade, **Then** a count-in is heard, then all other playable tracks form the MIDI backing at the song's tempo while the selected track is excluded from MIDI playback.
 2. **Given** Arcade running, **When** the learner misses or plays a wrong note, **Then** the song continues and the following notes are judged normally.
 3. **Given** a song with tempo changes and repeats, **When** Arcade runs, **Then** the judging follows the same order and tempo as the playback.
 4. **Given** Arcade, **When** the learner sets a speed below 100%, **Then** backing and judging both slow down together.
@@ -85,22 +105,22 @@ As notes pass, the learner sees at once whether each was right (on time, early, 
 
 ---
 
-### User Story 3 - Hear my own guitar, with a simple sound (Priority: P1)
+### User Story 3 - Hear my own guitar with a clear, low-latency return (Priority: P1)
 
-The learner hears their guitar in real time through their headphones or speakers, shaped by one of four simple sounds: clear, clear with echo, distorted, or distorted with echo. They can switch it off, change its volume, and change the sound while playing.
+The learner hears their guitar or bass in real time through their chosen headphones, speakers or audio interface. The first version returns the input dry and clear, without reverb, echo, distortion, amp simulation or other tone processing. They can switch monitoring off and adjust its volume and balance against the MIDI backing.
 
-**Why this priority**: playing along without hearing oneself is uncomfortable; a recognisable guitar tone is what makes the mode feel like the real instrument.
+**Why this priority**: playing along without hearing oneself is uncomfortable, while a delayed return makes accurate timing harder. A transparent, bounded-latency path is the safe foundation for later effects.
 
-**Independent Test**: with a guitar connected, enable the live return, cycle through the four sounds and confirm that each is audibly different, that the learner's volume is adjustable, and that switching it off silences it.
+**Independent Test**: with a guitar connected, enable monitoring, verify that the returned signal is dry and clear, measure its end-to-end delay, adjust its volume and balance, and confirm that switching it off silences only the monitored instrument.
 
 **Acceptance Scenarios**:
 
-1. **Given** a connected guitar, **When** the learner enables the live return, **Then** they hear their guitar through the chosen output with the chosen sound.
-2. **Given** the four sounds, **When** the learner selects each, **Then** clear is undistorted, distorted is audibly saturated, and the echo variants repeat the sound decaying.
-3. **Given** the live return on, **When** the learner switches to another sound, **Then** the change is immediate and does not interrupt the playing or the judging.
-4. **Given** the live return, **When** the learner changes its volume or the balance with the backing, **Then** the change is heard at once and is not remembered beyond the session unless the owner later decides otherwise.
-5. **Given** the live return is off, **When** the learner plays, **Then** the application behaves as without this feature.
-6. **Given** any sound and any setting, **When** notes are judged, **Then** the judging uses the guitar's unprocessed signal, so effects never change what is recognised.
+1. **Given** a connected guitar or bass and a validated output path, **When** the learner enables monitoring, **Then** they hear the selected input through that output as a dry, clear signal.
+2. **Given** the initial Arcade version, **When** the learner opens monitoring controls, **Then** it does not offer reverb, echo, distortion or instrument-dependent effects as if they were already supported.
+3. **Given** monitoring is enabled, **When** the learner changes its volume or balance with the MIDI backing, **Then** the change is heard promptly without interrupting playback or judging.
+4. **Given** monitoring is off, **When** the learner plays, **Then** recognition and Arcade judging still operate normally and no input audio is sent to the output.
+5. **Given** any monitoring setting, **When** notes are judged, **Then** analysis uses the original captured samples, independently of monitoring gain or future effects.
+6. **Given** the selected input/output path cannot be demonstrated at or below 22 ms, **When** the learner tries to enable monitoring, **Then** it remains off and the application explains how to choose a lower-latency path.
 
 ---
 
@@ -116,7 +136,7 @@ The learner chooses where the sound goes (headphones, speakers, an interface), s
 
 1. **Given** several output devices, **When** the learner picks one, **Then** the live return and the backing use it (or the learner is told why they cannot).
 2. **Given** the live return, **When** it is on, **Then** the measured total delay on this setup is shown, not an assumed figure.
-3. **Given** the delay is above the level at which playing feels comfortable, **When** it is shown, **Then** the learner is told and offered to use a direct input or headphones, and the live return stays available.
+3. **Given** the measured or conservatively bounded delay exceeds 22 ms, **When** monitoring is requested, **Then** the learner is told and offered lower-latency input/output choices, and software monitoring remains disabled.
 4. **Given** a built-in microphone with the computer speakers as output, **When** the live return is enabled, **Then** a feedback warning recommends headphones, and the return starts at a low volume.
 5. **Given** the chosen output disappears (unplugged), **When** it happens during Arcade, **Then** Arcade degrades with a clear message and does not crash or hang.
 
@@ -124,7 +144,7 @@ The learner chooses where the sound goes (headphones, speakers, an interface), s
 
 ### User Story 5 - Start Arcade easily and retry a section (Priority: P3)
 
-The learner starts Arcade from the practice entry points (transport-bar button and Tools menu), picks the track, speed and sound, can pause, and can replay a difficult section.
+The learner starts Arcade from the practice entry points (transport-bar button and Tools menu), picks the track, speed, monitoring state and audio balance, can pause, and can replay a difficult section.
 
 **Why this priority**: convenience on top of a working mode.
 
@@ -150,7 +170,7 @@ A 3D isometric view shows the physical neck of the selected track across the for
 
 1. **Given** Arcade running, **When** notes approach from the distance, **Then** they move perpendicular to the strings toward the hit line at the tempo and reach it exactly at the moment to play.
 2. **Given** a note to play, **When** it is displayed, **Then** it resolves to its expected string/fret intersection on the visible neck (as the tablature's instruction, never claimed as verified).
-3. **Given** a chord, **When** it approaches, **Then** one translucent brace, plate or outline groups all of its markers as one event, while every marker remains aligned with its own expected string/fret intersection; partial and complete verdicts remain distinguishable.
+3. **Given** a chord, **When** it approaches, **Then** a neutral timing bar carries an attached traditional chord-diagram cartouche as one event; the bar reaches the hit line at the written onset, the diagram shows the score's expected positions, and complete, incomplete, uncertain and strum-again verdicts remain distinguishable at chord level.
 4. **Given** a judged note, **When** the verdict is known, **Then** it changes appearance at once (on time, early, late, wrong, missed) using colours and also a shape or text marker, so colour is never the only signal.
 5. **Given** the application's light or dark look, **When** Arcade is shown, **Then** the colours stay soft but visible in both, with enough contrast to be read comfortably.
 6. **Given** a window resize or a dense passage, **When** the view is drawn, **Then** it stays legible and does not slow the judging or the playback.
@@ -186,16 +206,17 @@ A 3D isometric view shows the physical neck of the selected track across the for
 **The mode**
 
 - **FR-001**: The application MUST offer an Arcade mode next to the existing practice modes, reachable from the same entry points, named "Arcade" in English and French (name to be confirmed by the owner).
-- **FR-002**: Arcade MUST start only when the input is suitable and a track is chosen, like the tempo-following mode it builds on.
+- **FR-002**: Arcade MUST start only when the input is suitable and the learner has explicitly chosen the one guitar or bass track they will perform, like the tempo-following mode it builds on.
 - **FR-003**: Arcade MUST give a count-in, then advance at the song's tempo scaled by the chosen speed, without ever waiting for the learner.
 - **FR-004**: The playback MUST follow the same order, repeats and tempo changes as the judging.
 
 **Backing**
 
-- **FR-010**: The learner's chosen track MUST be silent in the playback, and every other track MUST be heard, as in the song.
-- **FR-011**: The mute applied for Arcade MUST NOT change the song or its saved mute/solo settings, and MUST be undone when Arcade ends.
+- **FR-010**: The learner's chosen track MUST be excluded from MIDI playback for the run, and every other playable track MUST be rendered by the normal MIDI player in the song's order, tempo, repeats and mix.
+- **FR-011**: The temporary playback exclusion applied for Arcade MUST NOT change the song or its saved mute/solo settings, and MUST be undone when Arcade ends.
 - **FR-012**: The learner MUST be able to adjust the balance between the backing and their live guitar.
 - **FR-013**: The backing MUST NOT be judged as the learner's playing (the learner is advised to use headphones, and the application MUST say so when the input could pick up the speakers).
+- **FR-014**: If the song contains only the chosen track, Arcade MUST continue with count-in/metronome and live monitoring as configured; it MUST NOT re-enable the chosen track merely to avoid silent backing.
 
 **Score and feedback**
 
@@ -207,25 +228,32 @@ A 3D isometric view shows the physical neck of the selected track across the for
 - **FR-025**: Arcade MUST show the approved 3D isometric incoming-note view (superseding the initial 2D decision on 2026-10-07): a recognisable instrument neck across the foreground; events arriving from the distance perpendicular to its strings; a fixed hit line; and expected string/fret targets taken from the tablature. Each string MUST have one stable, distinct colour repeated exactly by every note, trajectory and target ring assigned to it from first appearance through impact. String labels, position and geometry MUST remain sufficient without colour. Chords MUST be grouped, and streak and speed MUST remain visible without hiding events. Colours MUST be soft but clearly visible in light and dark looks, and colour MUST never be the only string or verdict signal.
 - **FR-026**: Scores MUST be shown only in the result at the end of each run (decided 2026-10-01); nothing about scores is kept after the application closes, and no history or personal best is stored.
 - **FR-027**: The neck model MUST derive its string count from the chosen track and its fret positions from the instrument scale length using twelve-tone equal-tempered spacing. Default marker placement MUST follow a documented real-instrument convention, including a double marker at the octave where that convention applies; generated concept-art geometry MUST NOT be used as reference data.
-- **FR-028**: Notes expected at the same musical instant MUST be rendered as one chord event with a shared neutral brace, plate or outline plus individual string/fret markers. Each member MUST retain the stable colour of its own destination string while the neutral grouping communicates simultaneity at a glance. The group MUST remain readable in perspective and allow complete, partial, wrong and uncertain feedback without implying that audio verified physical fingering.
+- **FR-028**: Notes expected at the same musical instant MUST be rendered as one chord event: a neutral timing bar perpendicular to the approach direction, with a traditional chord-diagram cartouche attached to and moving with it. The bar MUST encode only the written onset; the cartouche MUST remain camera-facing and encode the score's chord name when present plus expected string/fret positions, with strings vertical and frets horizontal. It MUST remain legible from approach through impact, show written stroke direction when present, and allow waiting, correct, incomplete, uncertain and strum-again feedback at chord level. Per-string colours MAY repeat inside the diagram and ghost target, but audio MUST NOT be presented as verification of physical fingering.
 - **FR-029**: The visible fret range MUST be driven by a deterministic musical look-ahead window. The neck MUST pan left or right with continuous, smooth animation and MAY use bounded zoom to include a wide span. Every target fret for every visible note or chord MUST already be visible with a margin before that event first appears; camera motion MUST never change musical timing or block playback/judging.
 
-**Live guitar return**
+**Live guitar/bass return**
 
-- **FR-030**: The application MUST offer a live return of the guitar with four sounds: clear, clear with echo, distorted, and distorted with echo, selectable at any time.
-- **FR-031**: The live return MUST be switchable off, have its own volume, and leave the application unchanged when off.
-- **FR-032**: Each sound MUST be deterministic signal processing with documented parameters; the four presets have fixed values chosen and verified by listening on the validated setup, and their parameters are not learner-editable in this version.
-- **FR-033**: The judging and every analysis MUST use the unprocessed guitar signal; the effects apply only to what is heard.
+- **FR-030**: The initial version MUST offer an optional dry, clear live return of the selected guitar or bass input to the selected output, with no reverb, echo, distortion, amp simulation or other tone effect.
+- **FR-031**: The live return MUST be switchable off, have its own volume and backing balance, and leave recognition and Arcade judging unchanged when off.
+- **FR-032**: Reverb, distortion and instrument-dependent tone presets MUST be deferred to a later specification/version. Any future effect MUST be deterministic, act only on the monitoring branch and preserve the same end-to-end 22 ms maximum.
+- **FR-033**: Judging and every analysis MUST always use the original unprocessed captured samples; monitoring gain and future effects MUST apply only to what is heard.
 - **FR-034**: The live return MUST NOT record, store or transmit audio.
 - **FR-035**: The live return MUST NOT degrade playback or user-interface responsiveness.
+- **FR-036**: Monitoring and MIDI backing MUST share a stable output timeline. Starting, pausing, resuming, seeking or stopping Arcade MUST not leave a stale monitoring route, duplicate the input or desynchronise the backing.
+- **FR-037**: When effects are introduced in the later version, reverb and distortion MUST each have an independent on/off control and independently adjustable parameters with documented safe ranges, recommended defaults and a one-action reset. The learner MUST be able to use either effect alone, combine both, bypass either one, or bypass the complete effect chain to recover the dry clear sound. Changing, bypassing or resetting an effect MUST be click-free, MUST NOT interrupt MIDI backing or judging, and MUST NOT cause the monitoring path to exceed 22 ms.
+- **FR-038**: Before choosing an effects implementation, research MUST identify viable free/open-source libraries and compare at least licence compatibility, maintenance status, macOS/Windows/Linux support, Java/native integration cost, real-time safety, deterministic output, supported sample rates/channels, buffer constraints, added latency, CPU load, steady-state allocations and the availability/quality of adjustable reverb and distortion. Claims MUST cite the inspected source, official documentation and measured library version.
+- **FR-039**: Every viable candidate MUST be benchmarked through the same representative monitoring harness at the same sample rates and buffer sizes in five states: dry bypass, distortion only, reverb only, both effects and live parameter changes. The report MUST include processing-time median/95th percentile/maximum, deadline misses, dropouts, CPU, allocations/garbage-collection activity and complete physical-loopback latency. Selection MUST reserve enough input/output latency headroom so the complete path remains at or below 22 ms under the worst supported effects state. A candidate that cannot meet the deadline, has an incompatible licence or performs blocking/unbounded work on the audio thread MUST be rejected regardless of sound quality.
 
 **Latency, output, safety**
 
-- **FR-040**: The application MUST measure and display the total delay between playing a note and hearing it, for the learner's input and output, and MUST NOT state a delay it did not measure.
-- **FR-041**: When the measured delay is above a documented comfort limit, the learner MUST be warned and told what improves it.
+- **FR-040**: For the selected input/output configuration, the application MUST measure or conservatively bound the end-to-end software-monitoring delay from captured input to audible output and display the result and method; it MUST NOT present nominal buffer size or an unverified estimate as a measured physical latency.
+- **FR-041**: Live software monitoring MUST NOT be enabled unless the validated end-to-end delay is at most 22 ms. A result above 22 ms, an unstable result whose upper bound exceeds 22 ms, or an inability to establish the bound MUST keep monitoring off and explain how to improve the path.
 - **FR-042**: The learner MUST be able to choose the output device for the live return and the backing.
 - **FR-043**: The application MUST warn of feedback when a microphone input is combined with a speaker output, and start the live return at a low volume in that case.
 - **FR-044**: A lost, refused or busy audio device MUST degrade gracefully with a clear message, never crash or hang.
+- **FR-045**: Planning MUST define a reproducible latency protocol with at least (a) deterministic accounting from capture timestamps, processing time and queued output buffers and (b) an external end-to-end loopback measurement based on correlated impulses or transients.
+- **FR-046**: A wired electrical loopback from output to an independent input SHOULD be the reference measurement when suitable hardware is available. An acoustic test using the built-in microphone/speakers or an independent microphone MAY validate a real setup, but its report MUST state microphone/speaker distance, subtract or bound acoustic propagation time, repeat enough trials to report median, 95th percentile and maximum, and identify room-reflection uncertainty.
+- **FR-047**: The 22 ms gate MUST use the worst credible value for the validated configuration, including buffer scheduling and observed jitter; passing on an average while repeated trials exceed 22 ms is forbidden. Automated timing tests MAY validate software budgets, but only a physical loopback can validate the complete input-to-audible-output claim.
 
 **Quality**
 
@@ -235,14 +263,14 @@ A 3D isometric view shows the physical neck of the selected track across the for
 
 ### Key Entities
 
-- **Arcade Run**: one play-through of a track at a speed with a chosen sound; holds its judgements, score and streak.
+- **Arcade Run**: one play-through of the explicitly selected player track at a speed and monitoring state; holds its judgements, score and streak while every other playable track forms the MIDI backing.
 - **Judgement**: the verdict for one expected event: on time, early, late, wrong or missed (plus "uncertain"), with its timing offset.
 - **Score**: points, current streak, best streak, derived from the judgements by fixed rules; held in memory for the run only.
 - **Isometric Neck View**: the 3D view containing the physical neck model, depth-based approach field, hit line, incoming events, chord grouping, verdict markers and anticipatory camera state.
 - **String Colour Map**: the deterministic mapping from every displayed string to a distinct visual colour, reused by that string's label, incoming markers, trajectories and target rings, but never used alone to communicate destination or judgement.
 - **Run Result**: the end-of-run summary: score, counts per judgement, best streak.
-- **Live Sound**: one of four presets (clear, clear + echo, distorted, distorted + echo) with its fixed parameters.
-- **Monitoring Path**: the route from the guitar input to the chosen output, with its measured delay, separate from the analysis path.
+- **Live Sound**: in the initial version, the dry and clear captured instrument signal with independently adjustable monitoring gain; effects are deferred.
+- **Monitoring Path**: the route from the selected guitar/bass input to the chosen output, separate from the analysis path and enabled only when its worst credible end-to-end delay is no more than 22 ms.
 - **Output Route**: the chosen output device and the balance between backing and live guitar.
 
 ## Success Criteria *(mandatory)*
@@ -251,16 +279,17 @@ A 3D isometric view shows the physical neck of the selected track across the for
 
 - **SC-001**: A learner can start Arcade on a track of a multi-track song in under 30 seconds once the song is open and the guitar is connected.
 - **SC-002**: With the judging following the tempo, at least 95% of notes played within the normal tolerance of the expected moment are judged on time, at up to 8 notes per second (provisional, shared with spec 002, SC-009).
-- **SC-003**: The measured delay of the live return on the owner's validated setup (direct input through an audio interface, headphones) is reported with its method, and a comfort limit is fixed from that measurement; with a built-in microphone the measured delay is reported separately.
+- **SC-003**: On every configuration claimed as supported for live monitoring, a documented physical loopback run reports median, 95th percentile and maximum end-to-end latency, and none exceeds 22 ms. The owner's audio-interface/headphone setup is the preferred reference; a built-in microphone/speaker test is reported separately as an acoustic validation with its uncertainty.
 - **SC-004**: For the same recorded play, two runs give identical judgements and the same score.
-- **SC-005**: Every chosen sound is distinguishable by ear from the others in a blind check by at least three guitarists, and the clear sound is not distorted (measured distortion below a documented bound).
-- **SC-006**: Switching the live sound or the balance during play causes no audible dropout and no missed or wrongly judged note in the test runs.
+- **SC-005**: The initial monitored signal is audibly clear and introduces no deliberate reverb, echo or distortion; objective comparison with the captured input stays within documented level, frequency-response and distortion bounds established during planning.
+- **SC-006**: Enabling/disabling monitoring or changing its volume/backing balance causes no audible dropout in the MIDI backing and no missed or wrongly judged note in the test runs.
 - **SC-007**: No regression of the other modes: the existing tests of the editor, player and practice modes pass unchanged.
 - **SC-008**: After a run, at least three guitarists report that the feedback told them what to improve (timing versus pitch) in a qualitative check.
 - **SC-009**: On the isometric view, at least three guitarists can read the next note and its expected string/fret at the tempo of a mid-speed song (provisionally 90 BPM) without stopping, identify a chord as one simultaneous event, and tell every verdict without relying on colour.
 - **SC-010**: Automated viewport tests over single notes, chords, repeated positions and large fret jumps prove that 100% of events have every target fret visible with the specified margin from their first visible approach frame through judgement; camera position is continuous and deterministic for the same timeline.
 - **SC-011**: Geometry tests prove in model space that fret 12 is at half the configured scale length and every rendered fret originates from `x(n) = L * (1 - 2^(-n/12))`; approved screenshot tests cover a six-string guitar and four-string bass against documented real-instrument references.
 - **SC-012**: Automated rendering-state tests for every string on six-string guitar and four-string bass prove that 100% of note markers, trajectories and target rings use their destination string's colour from spawn through impact; monochrome screenshot tests remain readable, and verdict symbols remain distinguishable independently of string colour.
+- **SC-013**: The later effects plan contains a reproducible, versioned comparison of all viable free/open-source candidates and a documented selection decision. The selected implementation completes every dry/distortion/reverb/combined/parameter-change benchmark without audio deadline misses or steady-state audio-thread allocation, and physical loopback remains at or below 22 ms in every supported effects state.
 
 ## Assumptions
 
@@ -268,9 +297,9 @@ A 3D isometric view shows the physical neck of the selected track across the for
 - The first version judges single notes and chords with the recognition of spec 002, at the speeds that recognition supports; techniques are judged as in spec 002 (shown honestly, never blocking).
 - "Arcade" is the working name (English and French); the owner confirms or changes it.
 - Only macOS on Apple Silicon is validated; other platforms must still build and are not claimed to support the live return.
-- The four sounds are presets, not an amp simulator: no cabinet or impulse-response modelling, no user-editable effect chain, in this version.
+- The first version is deliberately dry and clear. Reverb, distortion, cabinet/impulse-response modelling and instrument-dependent recommended presets belong to a later version and must still meet the 22 ms end-to-end limit. Reverb and distortion are optional independent modules, not a mandatory fixed tone: each is adjustable and bypassable, they may be combined, and complete bypass always returns to the dry clear signal.
 - Headphones are the recommended setup; the application warns rather than forbids other setups.
-- The live return's quality depends on the audio path available on the platform; if the measured delay is not comfortable on a given setup, the feature stays available with an honest warning (the audio path itself is a planning decision, not fixed here).
+- The live return's availability depends on the selected audio path. Recognition and Arcade remain usable when monitoring is unavailable, but software monitoring stays disabled unless the 22 ms maximum is demonstrated for that configuration.
 - Scores follow fixed rules documented in the plan; scores are not kept between sessions; adaptive difficulty, online leaderboards and social features are out of scope.
 - The isometric neck view is part of this feature (not a reuse of the score view). It is drawn with the application's own UI toolkit unless planning demonstrates that this cannot meet the geometry, smoothness and portability requirements; no game engine is assumed by this specification.
 - Audio is never recorded; only derived numbers (judgements, score) live in memory during a run.

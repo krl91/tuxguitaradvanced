@@ -25,7 +25,7 @@ CLAUDE.md
 CLAUDE.local.md
 AGENTS.md
 GEMINI.md
-specs/
+# specs/ is versioned: the Spec Kit specifications are part of the repository (never ignore them as a whole)
 
 # Secrets / credentials
 .env
