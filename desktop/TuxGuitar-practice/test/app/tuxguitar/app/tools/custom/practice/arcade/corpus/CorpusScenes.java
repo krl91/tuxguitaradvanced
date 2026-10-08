@@ -255,7 +255,16 @@ public final class CorpusScenes {
 			}
 		}
 		// FR-062, FR-063: at most four detailed, one diagram, no overlap, nothing cut, the bars on the axis and ordered by depth
-		if (SceneBoxes.detailed(scene).size() > ArcadeScene.MAX_DETAILED) {
+		java.util.Set<Integer> noteIdentities = new java.util.HashSet<Integer>();
+		for (SceneItem item : scene.items()) {
+			if (item.eventIndex() >= 0 && (item.role() == Role.MARKER || item.role() == Role.TRAJECTORY || item.role() == Role.MARKER_FRET)) {
+				noteIdentities.add(item.eventIndex());
+			}
+		}
+		if (noteIdentities.size() > ArcadeScene.MAX_ADMITTED) {
+			failures.add(where + ": " + noteIdentities.size() + " notes on their lanes at once (FR-062)");
+		}
+		if (SceneBoxes.detailed(scene).size() > ArcadeScene.MAX_ADMITTED) {
 			failures.add(where + ": " + SceneBoxes.detailed(scene).size() + " detailed events");
 		}
 		if (scene.withRole(Role.CARTOUCHE_FRAME).size() > 1) {
@@ -273,7 +282,7 @@ public final class CorpusScenes {
 		double previousY = Double.MAX_VALUE;
 		for (int i = 0; i < p.events.size(); i++) {
 			List<SceneItem> bars = scene.forEvent(i, Role.TIMING_BAR);
-			bars = bars.isEmpty() ? scene.forEvent(i, Role.PREVIEW_BAR) : bars;
+			bars = bars.isEmpty() ? scene.forEvent(i, Role.CHORD_BAR) : bars;
 			if (bars.isEmpty()) {
 				continue;
 			}
@@ -340,7 +349,7 @@ public final class CorpusScenes {
 		}
 		int count = p.neck.layout().count();
 		for (SceneItem marker : scene.items()) {
-			if ((marker.role() != Role.MARKER && marker.role() != Role.PREVIEW) || marker.eventIndex() < 0) {
+			if (marker.role() != Role.MARKER || marker.eventIndex() < 0) {
 				continue;
 			}
 			ArcadeRenderEvent event = p.events.get(marker.eventIndex());

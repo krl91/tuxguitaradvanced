@@ -104,13 +104,10 @@ public final class ArcadeScene {
 	}
 
 	/**
-	 * How many event identities may be fully detailed at once (FR-062): the number at the size of a normal desktop window. The active event always is; the
-	 * others are admitted by nearness in time, one after the other, only while their labels (fret numbers, chord names and diagrams, verdicts) stay
-	 * disjoint from every label already admitted and from the next playable event. The rest are compact previews.
+	 * The size of the admitted visual set (FR-062): the active event and at most three following events in onset order, notes and chords alike. Every event
+	 * outside the set is absent from the picture.
 	 */
-	public static final int MAX_DETAILED = 4;
-	/** The most compact previews drawn besides the detailed events: the nearest ones; further ones are not drawn. */
-	public static final int MAX_COMPACT = 28;
+	public static final int MAX_ADMITTED = 4;
 	/**
 	 * The one axis of all the chord bars (FR-063): the middle of the approach lane, as a share of the width of the view. A chord is placed by its onset and
 	 * its depth alone; its frets are used for the neck ghost and the camera, never to put its bar to the left or to the right.
@@ -168,8 +165,8 @@ public final class ArcadeScene {
 
 	/**
 	 * The same picture at a quality tier: only the decoration (glow, trails, shadows) differs, every other item is identical at every tier. The events
-	 * that are fully detailed are chosen from the clock and the identities alone (see {@link #MAX_DETAILED}); nothing here removes, merges, moves or
-	 * reorders an event of the timeline, the judging or the MIDI playback: a compact event is the same event, shown smaller.
+	 * that are fully detailed are chosen from the clock and the identities alone (see {@link #MAX_ADMITTED}); nothing here removes, merges, moves or
+	 * reorders an event of the timeline, the judging or the MIDI playback: a hidden note is the same event, not painted.
 	 */
 	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier) {
 		Out out = new Out(this.monochrome, this.theme);
@@ -182,19 +179,18 @@ public final class ArcadeScene {
 		List<Integer> visible = visibleEvents(nowNanos, f.settings);
 		int active = activeEvent(visible, run);
 		Plan plan = plan(f, visible, active, speedPercent);
-		int compact = 0;
+		// the events of the admitted set are drawn, the farthest first; every other event is absent: no marker, no lane, no bar, no label (FR-062)
 		for (int k = visible.size() - 1; k >= 0; k--) {
 			int index = visible.get(k);
 			if (plan.detailed.contains(index)) {
 				drawDetailed(f, index, index == active, plan);
-			} else if (compact < MAX_COMPACT) {
-				compact++;
-				drawCompact(f, index, plan);
+			} else if (plan.bars.contains(index)) {
+				drawChordBar(f, index, plan);
 			}
 		}
 		drawTargets(f, active);
 		drawBadges(f, plan);
-		drawHud(out, viewport, run, speedPercent);
+		drawHud(out, viewport, run, speedPercent, active >= 0 ? nextText(this.events.get(active)) : null);
 		return new Scene(out.items, nowNanos, viewport, this.theme);
 	}
 
@@ -400,9 +396,11 @@ public final class ArcadeScene {
 		final java.util.Map<Integer, double[]> badge = new java.util.HashMap<Integer, double[]>();
 		/** The chords whose diagram is expanded: one, except in the unreduced picture. */
 		final java.util.Set<Integer> expanded = new java.util.HashSet<Integer>();
+		/** The chords of the admitted visual set that have no diagram: they are timing bars. */
+		final java.util.Set<Integer> bars = new java.util.HashSet<Integer>();
 		/** How far a diagram was raised above its default place to leave the next event in view. */
 		final java.util.Map<Integer, Double> raise = new java.util.HashMap<Integer, Double>();
-		/** The names of compact chords that fit without touching anything. */
+		/** The names of the chords that are bars and that fit without touching anything. */
 		final java.util.Map<Integer, double[]> chip = new java.util.HashMap<Integer, double[]>();
 	}
 
@@ -527,7 +525,7 @@ public final class ArcadeScene {
 	}
 
 	/** The boxes of the HUD, which no label may cover. */
-	private List<double[]> hudBoxes(Frame f, ArcadeRun.View run, int speedPercent) {
+	private List<double[]> hudBoxes(Frame f, ArcadeRun.View run, int speedPercent, String next) {
 		List<double[]> boxes = new ArrayList<double[]>();
 		double size = f.h * 0.034;
 		double w = f.viewport.width();
@@ -537,65 +535,61 @@ public final class ArcadeScene {
 		}
 		String speed = this.labels.speed(speedPercent);
 		boxes.add(new double[] { w * 0.97 - speed.length() * size * 0.66, f.h * 0.05 - size * 0.6, w * 0.97, f.h * 0.05 + size * 0.6 });
+		if (next != null) {
+			double small = f.h * 0.026;
+			boxes.add(new double[] { w * 0.97 - next.length() * small * 0.66, f.h * 0.098 - small * 0.6, w * 0.97, f.h * 0.098 + small * 0.6 });
+		}
 		return boxes;
 	}
 
 	/**
-	 * Chooses the events that are fully detailed (FR-062): the active one first, always; then the others by their nearness in time to the clock, up to
-	 * {@link #MAX_DETAILED} in all, each only if it has reached the readable state or is being judged, and only if every label it brings (the fret number of
-	 * a note, the header and diagram of a chord, the verdict badge) is disjoint from the labels already admitted, from the HUD and from the next playable
-	 * event. A chord may move sideways to find room. It is a function of the clock and the identities alone.
+	 * Chooses the admitted visual set (FR-062): the active event and, after it, the following events in onset order, notes and chords alike, up to
+	 * {@link #MAX_ADMITTED} in all; every other event is absent from the picture. The set is a prefix of the events in order of time: it stops at the first
+	 * event whose labels (the fret number of a note, the header and diagram of a chord, the word of an automatic event) would touch a label already admitted, the
+	 * HUD or the next playable event, never below the active event. Of the chords of the set the nearest that can be read has the diagram; the others are
+	 * timing bars (FR-063). The events that are completed are not in the set: only the verdict badge of each stays during its feedback. It is a function of the
+	 * clock, the run and the identities alone.
 	 */
 	private Plan plan(Frame f, List<Integer> visible, int active, int speedPercent) {
 		Plan plan = new Plan();
-		List<Integer> order = new ArrayList<Integer>(visible);
-		final long now = f.now;
-		order.sort((p, q) -> {
-			if (p == active || q == active) {
-				return p == active ? -1 : 1;
-			}
-			int byTime = Long.compare(Math.abs(this.events.get(p).onsetNanos() - now), Math.abs(this.events.get(q).onsetNanos() - now));
-			return byTime != 0 ? byTime : Integer.compare(p, q);
-		});
-		List<double[]> taken = new ArrayList<double[]>(hudBoxes(f, f.run, speedPercent));
+		List<double[]> taken = new ArrayList<double[]>(hudBoxes(f, f.run, speedPercent, active >= 0 ? nextText(this.events.get(active)) : null));
 		List<double[]> badges = new ArrayList<double[]>();
-		int limit = this.densityBudget ? MAX_DETAILED : Integer.MAX_VALUE;
-		int expandedChord = expandedChord(f, visible, active);
-		if (expandedChord >= 0 && expandedChord != active) {
-			// the chord that is to be read has its place right after the active event
-			order.remove(Integer.valueOf(expandedChord));
-			order.add(active >= 0 ? 1 : 0, expandedChord);
-		}
-		for (int index : order) {
-			if (plan.detailed.size() >= limit) {
-				break;
+		// the verdict of an event that is completed stays as a badge for the length of its feedback; its marker, lane and target are gone
+		for (int index : visible) {
+			ArcadeRenderEvent event = this.events.get(index);
+			RenderState state = f.stateOf(event);
+			if (isCompleted(f, index) && state.ordinal() >= RenderState.ARMED.ordinal()) {
+				double[] size = badgeSize(f, f.run.states().get(index));
+				double[] slot = badgeSlot(f, f.projection.neckX(columnOf(event), f.cam), size[0], size[1], badges);
+				if (slot != null) {
+					plan.badge.put(index, slot);
+					badges.add(slot);
+				}
 			}
+		}
+		if (active < 0) {
+			return plan;
+		}
+		int limit = this.densityBudget ? MAX_ADMITTED : Integer.MAX_VALUE;
+		// the first events that are not completed, in onset order: the active event and the ones that follow it (an event of the score that is passed
+		// automatically and comes before the active one is the first of them)
+		List<Integer> candidates = new ArrayList<Integer>();
+		for (int index : visible) {
+			if (!isCompleted(f, index) && candidates.size() < limit && (index >= active || !isPlayable(this.events.get(index)))) {
+				candidates.add(index);
+			}
+		}
+		int expandedChord = expandedChord(f, candidates, active);
+		for (int index : candidates) {
 			ArcadeRenderEvent event = this.events.get(index);
 			boolean isActive = index == active;
 			RenderState state = f.stateOf(event);
-			boolean eligible = isActive || state.ordinal() >= RenderState.READABLE.ordinal();
-			if (!eligible) {
-				continue;
-			}
-			boolean verdictOnly = false;
-			if (event.kind() == ArcadeRenderEvent.Kind.CHORD && this.densityBudget && index != expandedChord) {
-				// one diagram at a time (FR-063): the other chords are compact bars; one just judged keeps its verdict badge, which is a label of its own
-				boolean judged = f.run != null && index < f.run.states().size() && f.run.states().get(index).verdict() != ArcadeVerdict.WAITING
-						&& state.ordinal() >= RenderState.ARMED.ordinal();
-				if (!judged) {
-					continue;
-				}
-				verdictOnly = true;
-			}
 			double[] next = nextPlayableFootprint(f, visible, index);
 			List<double[]> mine = new ArrayList<double[]>();
+			boolean bar = false;
 			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
-				// once the note is judged its number is no longer needed: only the verdict stays, so that notes just played, which all lie on the hit line, do not
-				// compete for the same place
-				if (!isJudged(f, index, state)) {
-					mine.add(noteGeo(f, event).box());
-				}
-			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD && !verdictOnly) {
+				mine.add(noteGeo(f, event).box());
+			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD && index == expandedChord) {
 				ChordGeo g = chordGeo(f, event);
 				boolean note = this.cartouches[index].notCheckedSeparately() && state.ordinal() >= RenderState.READABLE.ordinal();
 				List<double[]> obstacles = new ArrayList<double[]>(taken);
@@ -620,43 +614,40 @@ public final class ArcadeScene {
 				mine.add(box);
 				plan.raise.put(index, raise);
 				plan.expanded.add(index);
-			} else if (event.kind() != ArcadeRenderEvent.Kind.CHORD) {
+			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD) {
+				bar = true;
+			} else {
 				ChordGeo g = chordGeo(f, event);
 				String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
 				mine.add(textBox(word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026));
 			}
-			if (this.densityBudget && !isActive && event.kind() != ArcadeRenderEvent.Kind.CHORD) {
+			if (this.densityBudget && !isActive && !bar && index != candidates.get(0)) {
 				boolean free = true;
 				for (double[] box : mine) {
-					free &= disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || event.kind() == ArcadeRenderEvent.Kind.CHORD || disjoint(box, next));
+					free &= disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || disjoint(box, next));
 				}
 				if (!free) {
-					continue;
+					if (index < active) {
+						// an automatic event before the active one that does not fit is left out; the active event is always admitted
+						continue;
+					}
+					// the set is a prefix of the events in order of time: nothing after an event that does not fit is admitted
+					break;
 				}
 			}
-			double[] badge = null;
-			if (f.run != null && index < f.run.states().size() && f.run.states().get(index).verdict() != ArcadeVerdict.WAITING
-					&& state.ordinal() >= RenderState.ARMED.ordinal()) {
-				ArcadeRun.EventState result = f.run.states().get(index);
-				double[] size = badgeSize(f, result);
-				badge = badgeSlot(f, f.projection.neckX(columnOf(event), f.cam), size[0], size[1], badges);
-				if (badge == null && this.densityBudget && !isActive) {
-					continue;
-				}
+			if (bar) {
+				plan.bars.add(index);
+			} else {
+				plan.detailed.add(index);
 			}
-			plan.detailed.add(index);
 			taken.addAll(mine);
-			if (badge != null) {
-				plan.badge.put(index, badge);
-				badges.add(badge);
-			}
 		}
-		// the names of the chords that stay compact, nearest first, where nothing is touched
-		List<Integer> chords = new ArrayList<Integer>(visible);
-		chords.sort((p, q) -> Long.compare(Math.abs(this.events.get(p).onsetNanos() - now), Math.abs(this.events.get(q).onsetNanos() - now)));
+		// the names of the chords that are bars, nearest first, where nothing is touched
+		List<Integer> chords = new ArrayList<Integer>(plan.bars);
+		java.util.Collections.sort(chords);
 		for (int index : chords) {
 			ArcadeRenderEvent event = this.events.get(index);
-			if (event.kind() != ArcadeRenderEvent.Kind.CHORD || plan.detailed.contains(index) || event.display().source() == ChordNameResolver.Source.PITCH_SET) {
+			if (event.display().source() == ChordNameResolver.Source.PITCH_SET) {
 				continue;
 			}
 			ChordGeo g = chordGeo(f, event);
@@ -671,36 +662,33 @@ public final class ArcadeScene {
 	}
 
 	/**
-	 * The chord whose diagram is expanded (FR-063): the active event when it is a chord; otherwise the nearest upcoming chord that has reached the readable
-	 * state and is not being judged. One at most, so that a frame never holds two diagrams; when it completes or leaves the screen the next chord in onset
-	 * order takes its place in the same update. Nothing here moves a bar: the onsets and the depths are those of the timeline.
+	 * The chord of the admitted set whose diagram is expanded (FR-063): the active event when it is a chord; otherwise the nearest admitted chord that has
+	 * reached the readable state. One at most, so that a frame never holds two diagrams; when it completes the next chord of the set takes its place in the same
+	 * update. Nothing here moves a bar: the onsets and the depths are those of the timeline.
 	 *
+	 * @param set the events that may be admitted, the active one first, in onset order
 	 * @return its index, or -1
 	 */
-	int expandedChord(Frame f, List<Integer> visible, int active) {
+	int expandedChord(Frame f, List<Integer> set, int active) {
 		if (active >= 0 && this.events.get(active).kind() == ArcadeRenderEvent.Kind.CHORD) {
 			return active;
 		}
-		for (int index : visible) {
+		for (int index : set) {
 			ArcadeRenderEvent event = this.events.get(index);
 			if (event.kind() != ArcadeRenderEvent.Kind.CHORD) {
 				continue;
 			}
 			RenderState state = f.stateOf(event);
-			boolean readable = state == RenderState.READABLE || state == RenderState.ARMED || state == RenderState.IMPACT;
-			if (readable && !isJudged(f, index, state)) {
+			if (state == RenderState.READABLE || state == RenderState.ARMED || state == RenderState.IMPACT) {
 				return index;
 			}
 		}
-		// no chord is coming that can be read: the last one keeps its diagram through the end of its feedback
-		for (int k = visible.size() - 1; k >= 0; k--) {
-			ArcadeRenderEvent event = this.events.get(visible.get(k));
-			RenderState state = f.stateOf(event);
-			if (event.kind() == ArcadeRenderEvent.Kind.CHORD && (state == RenderState.IMPACT || state == RenderState.FEEDBACK)) {
-				return visible.get(k);
-			}
-		}
 		return -1;
+	}
+
+	/** True for an event that has its verdict: it is completed, whatever the state of its time. */
+	private static boolean isCompleted(Frame f, int index) {
+		return f.run != null && index < f.run.states().size() && f.run.states().get(index).verdict() != ArcadeVerdict.WAITING;
 	}
 
 	/** True for an event that has its verdict and is past its impact: its number is no longer needed. */
@@ -746,19 +734,14 @@ public final class ArcadeScene {
 	 * An event that is not in the detailed set (FR-062): a small marker in the colour of its string, or a thin neutral bar, on its own lane and at its own
 	 * distance. No fret number, no diagram, no glow, no trail, no trajectory, nothing on the neck.
 	 */
-	private void drawCompact(Frame f, int index, Plan plan) {
+	private void drawChordBar(Frame f, int index, Plan plan) {
 		ArcadeRenderEvent event = this.events.get(index);
 		RenderState state = f.stateOf(event);
 		double alpha = alphaOf(state, f.now, event.onsetNanos(), f.settings) * 0.8;
-		if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
-			NoteGeo g = noteGeo(f, event);
-			ArcadeRenderEvent.Position position = event.positions().get(0);
-			double r = Math.max(3.0, f.h * 0.012 * g.at.scale());
-			f.out.disc(Role.PREVIEW, g.at.x(), g.at.y(), r, r, this.colours.of(position.tgString()), alpha, event.index(), position.tgString());
-		} else {
+		{
 			ChordGeo g = chordGeo(f, event);
 			double t = Math.max(2.0, g.thickness * 0.5);
-			f.out.quad(Role.PREVIEW_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - t, g.pl.x(), g.pl.y() - t }, BAR_COLOUR, alpha,
+			f.out.quad(Role.CHORD_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - t, g.pl.x(), g.pl.y() - t }, BAR_COLOUR, alpha,
 					event.index(), 0);
 			double[] chip = plan.chip.get(index);
 			if (chip != null) {
@@ -775,7 +758,7 @@ public final class ArcadeScene {
 		if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
 			drawNote(f, event, state, alpha, active);
 		} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD && !plan.expanded.contains(index)) {
-			drawCompact(f, index, plan);
+			drawChordBar(f, index, plan);
 		} else {
 			drawBarEvent(f, event, state, alpha, active, plan.raise.get(index));
 		}
@@ -945,12 +928,25 @@ public final class ArcadeScene {
 		return sum / event.positions().size();
 	}
 
-	private void drawHud(Out out, Viewport viewport, ArcadeRun.View run, int speedPercent) {
+	private void drawHud(Out out, Viewport viewport, ArcadeRun.View run, int speedPercent, String next) {
 		double h = viewport.height();
 		if (run != null) {
 			out.text(Role.HUD_STREAK, this.labels.streak(run.streak()), viewport.width() * 0.03, h * 0.05, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, SceneItem.Align.LEFT);
 		}
 		out.text(Role.HUD_SPEED, this.labels.speed(speedPercent), viewport.width() * 0.97, h * 0.05, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, SceneItem.Align.RIGHT);
+		if (next != null) {
+			// the next expected event, under the speed: what to play next, said in words (the score of the run is never shown while playing)
+			out.text(Role.HUD_NEXT, next, viewport.width() * 0.97, h * 0.098, h * 0.026, TEXT_COLOUR, 0.85, -1, 0, SceneItem.Align.RIGHT);
+		}
+	}
+
+	/** What the HUD says of the next event to play: a note by its pitch, string and fret, a chord by its name. */
+	private String nextText(ArcadeRenderEvent event) {
+		if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
+			ArcadeRenderEvent.Position position = event.positions().get(0);
+			return this.labels.nextNote(position.tgString(), position.fret());
+		}
+		return this.labels.nextChord(headerText(event));
 	}
 
 	/** Collects the items, removing the colour when the scene is monochrome. */

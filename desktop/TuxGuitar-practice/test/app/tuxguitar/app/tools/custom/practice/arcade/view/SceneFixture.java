@@ -65,6 +65,16 @@ public final class SceneFixture {
 		}
 
 		@Override
+		public String nextNote(int string, int fret) {
+			return "Next: string " + string + ", fret " + fret;
+		}
+
+		@Override
+		public String nextChord(String name) {
+			return "Next: chord " + name;
+		}
+
+		@Override
 		public String streak(int streak) {
 			return "Streak " + streak;
 		}

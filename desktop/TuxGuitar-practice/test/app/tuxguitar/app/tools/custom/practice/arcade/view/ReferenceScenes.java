@@ -159,7 +159,7 @@ public final class ReferenceScenes {
 
 	/**
 	 * A realistic passage of chords, as a song would have it: a progression Am, F, C, G7, Dm, E, Am, with a note between some of them, played at 140 quarters
-	 * a minute. The chords are on the one preview axis in the middle of the lane, the next one has its diagram, the others are compact bars with their names
+	 * a minute. The chords are on the one axis in the middle of the lane, the next one has its diagram, the others are bars without diagram with their names
 	 * where there is room, the one before has just been judged.
 	 */
 	public static Reference multiChord() {
@@ -170,13 +170,10 @@ public final class ReferenceScenes {
 		int[][] frets = { { 0, 2, 2, 1 }, { 1, 3, 3, 2, 1, 1 }, { 3, 2, 0, 1 }, { 3, 2, 0, 0, 0, 1 }, { 0, 2, 3 }, { 0, 2, 2, 1, 0, 0 }, { 0, 2, 2, 1 }, { 0, 2, 2, 1 } };
 		for (int i = 0; i < 8; i++) {
 			song.chord(1 + i / 2, (i % 2) * 2, strings[i], frets[i]);
-			if (i % 2 == 1) {
-				song.quarter(1 + i / 2, 3, 2, 5 + i);
-			}
 			if (names[i] != null) {
 				TGChord chord = song.factory().newChord(6);
 				chord.setName(names[i]);
-				song.track().getMeasure(1 + i / 2).getBeat((i % 2) * 2).setChord(chord);
+				song.track().getMeasure(1 + i / 2).getBeat(i % 2).setChord(chord);
 			}
 		}
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);

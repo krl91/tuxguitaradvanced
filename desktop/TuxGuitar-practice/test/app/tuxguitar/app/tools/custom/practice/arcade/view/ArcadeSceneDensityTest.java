@@ -21,7 +21,7 @@ import app.tuxguitar.song.models.TGChord;
 
 /**
  * The visual-density budget (spec 003 FR-060, FR-062, SC-017, SC-019): at 1280x720 at most four events are fully detailed, the active one always, the
- * labels of the detailed events never overlap or leave the screen, the others are compact previews, exactly one event owns the targets of the neck, and
+ * labels of the admitted events never overlap or leave the screen, every other event is absent, exactly one event owns the targets of the neck, and
  * nothing depends on the quality tier or on colour.
  */
 public class ArcadeSceneDensityTest {
@@ -82,7 +82,7 @@ public class ArcadeSceneDensityTest {
 				long now = fixture.onset(0) + offset * MS;
 				for (Scene scene : allVariants(fixture, now, null)) {
 					Set<Integer> detailed = SceneBoxes.detailed(scene);
-					assertTrue(detailed.size() <= ArcadeScene.MAX_DETAILED, future + " future events at " + offset + " ms: detailed " + detailed);
+					assertTrue(detailed.size() <= ArcadeScene.MAX_ADMITTED, future + " future events at " + offset + " ms: detailed " + detailed);
 					assertFalse(detailed.isEmpty(), "something is detailed");
 				}
 			}
@@ -138,24 +138,25 @@ public class ArcadeSceneDensityTest {
 	}
 
 	@Test
-	public void theEventsBeyondTheDetailedSetAreCompactPreviewsWithoutTextDiagramGlowTrajectoryOrNeckTarget() {
-		SceneFixture fixture = crowded(32);
-		Scene scene = fixture.scene(false).build(fixture.onset(0) - 150 * MS, SCREEN, null, 100, QualityTier.FULL);
-		Set<Integer> detailed = SceneBoxes.detailed(scene);
-		Set<Integer> previewed = new TreeSet<Integer>();
-		for (SceneItem item : scene.items()) {
-			if (item.eventIndex() < 0 || detailed.contains(item.eventIndex())) {
-				continue;
-			}
-			assertTrue(item.role() == Role.PREVIEW || item.role() == Role.PREVIEW_BAR || item.role() == Role.CHORD_CHIP, "a compact event shows only a marker or a bar, and perhaps the name of a chord: " + item);
-			previewed.add(item.eventIndex());
-			if (item.role() == Role.PREVIEW) {
-				assertEquals(SceneItem.Shape.DISC, item.shape());
-				assertTrue(item.tgString() > 0, "a note preview is in the colour of its string");
+	public void everyEventOutsideTheAdmittedSetIsAbsentFromThePicture() {
+		for (int future : FUTURE) {
+			SceneFixture fixture = crowded(future);
+			for (long offset = -150; offset <= 300; offset += 150) {
+				Scene scene = fixture.scene(false).build(fixture.onset(0) + offset * MS, SCREEN, null, 100, QualityTier.FULL);
+				Set<Integer> painted = new TreeSet<Integer>();
+				for (SceneItem item : scene.items()) {
+					if (item.eventIndex() >= 0) {
+						painted.add(item.eventIndex());
+					}
+				}
+				assertTrue(painted.size() <= ArcadeScene.MAX_ADMITTED, future + " future events: " + painted.size() + " events painted " + painted);
+				for (int index = 0; index < fixture.events.size(); index++) {
+					if (!painted.contains(index)) {
+						assertTrue(scene.forEvent(index).isEmpty(), "event " + index + " is outside the admitted set and left a primitive");
+					}
+				}
 			}
 		}
-		assertTrue(previewed.size() >= 8, "the look-ahead is still shown, as previews: " + previewed);
-		assertTrue(previewed.size() <= ArcadeScene.MAX_COMPACT);
 	}
 
 	@Test
@@ -220,24 +221,46 @@ public class ArcadeSceneDensityTest {
 		}
 	}
 
+	/** The identities that are in the picture of the events: every event that has a primitive other than a verdict badge. */
+	private static Set<Integer> admitted(Scene scene) {
+		Set<Integer> found = new TreeSet<Integer>();
+		for (SceneItem item : scene.items()) {
+			if (item.eventIndex() >= 0 && item.role() != Role.BADGE && item.role() != Role.BADGE_TEXT && item.role() != Role.BADGE_SYMBOL) {
+				found.add(item.eventIndex());
+			}
+		}
+		return found;
+	}
+
 	@Test
-	public void aCompactEventIsPromotedWhenAnEarlierOneLeavesTheSet() {
+	public void aHiddenEventIsPromotedWhenAnEarlierOneIsCompletedAndThenHasItsCompleteLane() {
 		SceneFixture fixture = crowded(16);
 		ArcadeScene scene = fixture.scene(false);
 		long now = fixture.onset(0) - 150 * MS;
-		Set<Integer> before = SceneBoxes.detailed(scene.build(now, SCREEN, null, 100));
-		assertTrue(before.contains(0));
-		// event 0 is judged and then leaves: the others move up and a further event may be admitted in its place
-		Set<Integer> later = SceneBoxes.detailed(scene.build(fixture.onset(0) + 900 * MS, SCREEN, ArcadeSceneTest.completedBefore(3, fixture.events.size()), 100));
-		assertFalse(later.contains(0), "event 0 has left the screen");
-		assertTrue(later.size() <= ArcadeScene.MAX_DETAILED);
-		for (int index : later) {
-			assertTrue(index >= 3 || !scene.build(fixture.onset(0) + 900 * MS, SCREEN, null, 100).forEvent(index).isEmpty());
+		Scene first = scene.build(now, SCREEN, null, 100);
+		Set<Integer> before = admitted(first);
+		assertTrue(before.contains(0) && before.size() <= ArcadeScene.MAX_ADMITTED);
+		// events 0 to 2 are completed: the set is the active event 3 and the three that follow it, in order, and the completed ones are gone but for their verdict
+		long later = fixture.onset(0) + 900 * MS;
+		Scene second = scene.build(later, SCREEN, ArcadeSceneTest.completedBefore(3, fixture.events.size()), 100);
+		Set<Integer> after = admitted(second);
+		assertEquals(3, (int) after.iterator().next(), "the active event comes first");
+		for (int k = 0; k < after.size(); k++) {
+			assertTrue(after.contains(3 + k), "the set is a prefix of the events in order of time: " + after);
+		}
+		assertTrue(after.size() <= ArcadeScene.MAX_ADMITTED);
+		for (int index : after) {
+			if (!before.contains(index) && fixture.events.get(index).kind() == app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent.Kind.NOTE) {
+				// promoted: it was not painted at all before, and now it has its complete lane from the horizon to the top edge of its cell
+				assertTrue(first.forEvent(index).isEmpty(), "note " + index + " was absent before it was promoted");
+				assertEquals(1, second.forEvent(index, Role.TRAJECTORY).size(), "event " + index + " has its lane");
+				assertEquals(1, second.forEvent(index, Role.MARKER).size());
+			}
 		}
 	}
 
 	@Test
-	public void theBudgetChangesNothingOfTheEventsOnlyTheirDetail() {
+	public void theBudgetChangesNothingOfTheEventsOnlyWhatIsPainted() {
 		SceneFixture fixture = crowded(16);
 		long now = fixture.onset(0) - 150 * MS;
 		Scene reduced = fixture.scene(false).build(now, SCREEN, null, 100);
@@ -254,8 +277,11 @@ public class ArcadeSceneDensityTest {
 				shownUnreduced.add(item.eventIndex());
 			}
 		}
-		assertEquals(shownUnreduced, shown, "the same events are on the screen, none dropped, merged or moved on the timeline");
-		assertTrue(SceneBoxes.detailed(unreduced).size() > ArcadeScene.MAX_DETAILED, "and the unreduced picture is the cluttered one");
+		// what is painted is a part of the events, and only the nearest ones; the events themselves are the same objects of the same timeline
+		assertTrue(shownUnreduced.containsAll(shown), "nothing is painted with the budget that the unreduced picture does not paint");
+		assertTrue(shown.size() < shownUnreduced.size(), "some events are not painted");
+		assertTrue(SceneBoxes.detailed(unreduced).size() > ArcadeScene.MAX_ADMITTED, "and the unreduced picture is the cluttered one");
+		assertEquals(fixture.events.size(), crowded(16).events.size(), "no event was dropped from the timeline");
 	}
 
 	@Test
@@ -266,7 +292,7 @@ public class ArcadeSceneDensityTest {
 				Scene scene = fixture.scene(false).build(fixture.onset(0) + offset * MS, narrow, null, 100);
 				Set<Integer> detailed = SceneBoxes.detailed(scene);
 				assertTrue(detailed.contains(0), "the active event stays at " + narrow.width() + "x" + narrow.height());
-				assertTrue(detailed.size() <= ArcadeScene.MAX_DETAILED);
+				assertTrue(detailed.size() <= ArcadeScene.MAX_ADMITTED);
 				List<Box> boxes = SceneBoxes.labels(scene);
 				assertNull(SceneBoxes.firstOverlap(boxes), narrow.width() + "x" + narrow.height() + " at " + offset);
 			}
@@ -274,20 +300,22 @@ public class ArcadeSceneDensityTest {
 	}
 
 	@Test
-	public void anEventThatIsNotYetReadableIsACompactPreviewUnlessItIsTheActiveOne() {
+	public void theAdmittedSetIsTheFirstFourEventsAndTheFifthIsAbsent() {
 		SongFixture song = new SongFixture(3);
 		for (int i = 0; i < 8; i++) {
 			song.quarter(i / 4, i % 4, 1 + i % 6, i % 2 == 0 ? 2 : 17);
 		}
-		song.tempoChange(0, 660);
+		song.tempoChange(0, 150);
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
-		// the first event is far away (distant): it is the active one and detailed; the next ones are distant too and only previews
-		long now = fixture.onset(0) - 2_900 * MS;
+		// six events are inside the look-ahead; the first four are the set, the others are absent whatever their distance
+		long now = fixture.onset(0) - 600 * MS;
 		Scene scene = fixture.scene(false).build(now, SCREEN, null, 100);
-		assertTrue(scene.forEvent(1, Role.PREVIEW).size() == 1 && scene.forEvent(1, Role.MARKER_FRET).isEmpty(), "event 1 is far (distant) and only a preview");
-		assertEquals(Set.of(0), SceneBoxes.detailed(scene));
-		// later, the following events become readable and join the set one by one
-		Set<Integer> later = SceneBoxes.detailed(fixture.scene(false).build(fixture.onset(0) - 1_000 * MS, SCREEN, null, 100));
-		assertTrue(later.contains(0));
+		assertEquals(Set.of(0, 1, 2, 3), admitted(scene), "the active event and the three that follow it, each on its lane");
+		for (int index = 0; index < 4; index++) {
+			assertEquals(1, scene.forEvent(index, Role.TRAJECTORY).size(), "event " + index + " has its lane");
+		}
+		for (int index = 4; index < 8; index++) {
+			assertTrue(scene.forEvent(index).isEmpty(), "event " + index + " is outside the set: no marker, no halo, no lane, no preview, nothing");
+		}
 	}
 }

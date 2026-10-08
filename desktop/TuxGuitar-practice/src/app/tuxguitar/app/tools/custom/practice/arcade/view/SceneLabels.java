@@ -26,4 +26,10 @@ public interface SceneLabels {
 	String streak(int streak);
 
 	String speed(int percent);
+
+	/** "Next: string 1, fret 3": the next note to play, for the HUD. */
+	String nextNote(int string, int fret);
+
+	/** "Next: chord Am": the next chord to play, for the HUD. */
+	String nextChord(String name);
 }

@@ -75,7 +75,7 @@ public class ArcadeReferenceSceneTest {
 		for (QualityTier tier : QualityTier.values()) {
 			Scene scene = ReferenceScenes.multiChord().scene(false, tier);
 			assertEquals(1, scene.withRole(Role.CARTOUCHE_FRAME).size());
-			assertTrue(scene.withRole(Role.PREVIEW_BAR).size() >= 2, "the following chords are compact bars");
+			assertTrue(scene.withRole(Role.CHORD_BAR).size() >= 2, "the other admitted chords are bars without diagram, at most three");
 			assertEquals(null, SceneBoxes.firstOverlap(SceneBoxes.labels(scene)));
 		}
 	}
@@ -83,9 +83,9 @@ public class ArcadeReferenceSceneTest {
 	@Test
 	public void theDensePassageReferenceIsReadable() {
 		Scene scene = ReferenceScenes.denseRealistic().scene(false, QualityTier.FULL);
-		assertTrue(SceneBoxes.detailed(scene).size() <= ArcadeScene.MAX_DETAILED);
+		assertTrue(SceneBoxes.detailed(scene).size() <= ArcadeScene.MAX_ADMITTED);
 		assertEquals(null, SceneBoxes.firstOverlap(SceneBoxes.labels(scene)));
-		assertTrue(!scene.withRole(Role.PREVIEW).isEmpty(), "the look-ahead is shown as previews");
+		assertTrue(scene.withRole(Role.MARKER).size() <= ArcadeScene.MAX_ADMITTED, "at most four notes are on their lanes");
 	}
 
 	@Test

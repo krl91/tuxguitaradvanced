@@ -146,7 +146,7 @@ public class NoteLaneTest {
 			if (item.shape() == SceneItem.Shape.LINE && (item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL || item.role() == Role.FIELD_GUIDE)) {
 				assertTrue(Math.max(item.value(1), item.value(3)) <= neck.top + TOLERANCE, where + ": a line of the approach goes into the neck: " + item.role());
 			}
-			if (item.role() == Role.MARKER || item.role() == Role.PREVIEW) {
+			if (item.role() == Role.MARKER) {
 				assertTrue(item.value(1) <= neck.top + TOLERANCE, where + ": a marker is below the top edge of the neck");
 			}
 			if (item.eventIndex() == 0 && item.shape() == SceneItem.Shape.LINE) {
@@ -291,7 +291,7 @@ public class NoteLaneTest {
 				}
 				moved |= Math.abs(camera.left() - firstLeft) > 1.0;
 				for (SceneItem item : scene.items()) {
-					if ((item.role() != Role.MARKER && item.role() != Role.PREVIEW) || item.eventIndex() < 0) {
+					if (item.role() != Role.MARKER || item.eventIndex() < 0) {
 						continue;
 					}
 					int fret = fixture.events.get(item.eventIndex()).positions().get(0).fret();

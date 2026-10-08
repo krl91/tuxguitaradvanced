@@ -70,12 +70,11 @@ public final class SceneBoxes {
 		return new Box(left, item.value(1) - item.value(2) * 0.6, left + width, item.value(1) + item.value(2) * 0.6, item.eventIndex(), item.role().name());
 	}
 
-	/** The identities of the events that are fully detailed: those that show a fret number, a diagram or a label of their own. */
+	/** The identities of the admitted events that are fully detailed: those that show a fret number, a diagram or a word of their own. The verdict badge of a completed event is not part of the set. */
 	public static java.util.Set<Integer> detailed(Scene scene) {
 		java.util.Set<Integer> detailed = new java.util.TreeSet<Integer>();
 		for (SceneItem item : scene.items()) {
-			if (item.eventIndex() >= 0 && (item.role() == Role.MARKER_FRET || item.role() == Role.CARTOUCHE_FRAME || item.role() == Role.EVENT_TEXT
-					|| item.role() == Role.BADGE)) {
+			if (item.eventIndex() >= 0 && (item.role() == Role.MARKER_FRET || item.role() == Role.CARTOUCHE_FRAME || item.role() == Role.EVENT_TEXT)) {
 				detailed.add(item.eventIndex());
 			}
 		}
@@ -106,6 +105,7 @@ public final class SceneBoxes {
 				case CHORD_CHIP:
 				case HUD_STREAK:
 				case HUD_SPEED:
+				case HUD_NEXT:
 				case FRET_NUMBER:
 				case STRING_LABEL:
 					boxes.add(ofText(item));

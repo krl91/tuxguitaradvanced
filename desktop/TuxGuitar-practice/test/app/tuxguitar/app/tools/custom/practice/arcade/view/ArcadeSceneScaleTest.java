@@ -33,7 +33,7 @@ public class ArcadeSceneScaleTest {
 			}
 			assertNull(SceneBoxes.firstOverlap(SceneBoxes.labels(two)), reference.name + " at the doubled size");
 			assertNull(SceneBoxes.firstOverlap(SceneBoxes.labels(one)), reference.name + " at the normal size");
-			assertTrue(SceneBoxes.detailed(two).size() <= ArcadeScene.MAX_DETAILED);
+			assertTrue(SceneBoxes.detailed(two).size() <= ArcadeScene.MAX_ADMITTED);
 			assertEquals(SceneBoxes.detailed(one), SceneBoxes.detailed(two), reference.name + ": the same events are detailed at both scales");
 		}
 	}

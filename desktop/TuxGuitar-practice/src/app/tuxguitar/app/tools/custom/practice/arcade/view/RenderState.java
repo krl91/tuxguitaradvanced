@@ -7,7 +7,7 @@ package app.tuxguitar.app.tools.custom.practice.arcade.view;
 public enum RenderState {
 	/** Outside the look-ahead: nothing is drawn. */
 	HIDDEN,
-	/** Far: a bar and a compact cartouche, or a small marker. */
+	/** Far: a bar and a small cartouche, or a small marker (only for an event of the admitted visual set). */
 	DISTANT,
 	/** Near: the cartouche is held above its minimum size and the ghost appears on the neck. */
 	READABLE,

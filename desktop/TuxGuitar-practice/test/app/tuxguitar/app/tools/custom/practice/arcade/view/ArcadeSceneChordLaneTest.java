@@ -20,7 +20,7 @@ import app.tuxguitar.song.models.TGChord;
 
 /**
  * The chord preview lane (spec 003 FR-063, SC-020): all the chords on one axis in the middle of the approach lane, ordered by their onset and their depth
- * alone; one expanded diagram at a time, the nearest upcoming chord, whole inside the window; the others compact; promotion in onset order without a frame
+ * alone; one expanded diagram at a time, the nearest upcoming chord, whole inside the window; the others bars without diagram, at most three, the rest absent; promotion in onset order without a frame
  * of two diagrams; nothing of this moves an impact, whatever the frets of the chords.
  */
 public class ArcadeSceneChordLaneTest {
@@ -106,7 +106,7 @@ public class ArcadeSceneChordLaneTest {
 					for (Scene scene : variants(fixture, t, null)) {
 						int bars = 0;
 						for (SceneItem item : scene.items()) {
-							if (item.role() == Role.TIMING_BAR || item.role() == Role.PREVIEW_BAR) {
+							if (item.role() == Role.TIMING_BAR || item.role() == Role.CHORD_BAR) {
 								assertEquals(SCREEN.width() * ArcadeScene.CHORD_AXIS, centreAndEdge(item)[0], 1e-6, "bar of chord " + item.eventIndex() + " at " + (t - fixture.onset(0)) / MS);
 								bars++;
 							}
@@ -128,9 +128,9 @@ public class ArcadeSceneChordLaneTest {
 				Scene b = high.scene(false).build(t, SCREEN, null, 100);
 				for (int i = 0; i < count; i++) {
 					List<SceneItem> barsA = a.forEvent(i, Role.TIMING_BAR);
-					barsA = barsA.isEmpty() ? a.forEvent(i, Role.PREVIEW_BAR) : barsA;
+					barsA = barsA.isEmpty() ? a.forEvent(i, Role.CHORD_BAR) : barsA;
 					List<SceneItem> barsB = b.forEvent(i, Role.TIMING_BAR);
-					barsB = barsB.isEmpty() ? b.forEvent(i, Role.PREVIEW_BAR) : barsB;
+					barsB = barsB.isEmpty() ? b.forEvent(i, Role.CHORD_BAR) : barsB;
 					if (barsA.isEmpty()) {
 						assertTrue(barsB.isEmpty());
 						continue;
@@ -159,7 +159,7 @@ public class ArcadeSceneChordLaneTest {
 				double previousY = Double.MAX_VALUE;
 				for (int i = 0; i < count; i++) {
 					List<SceneItem> bars = scene.forEvent(i, Role.TIMING_BAR);
-					bars = bars.isEmpty() ? scene.forEvent(i, Role.PREVIEW_BAR) : bars;
+					bars = bars.isEmpty() ? scene.forEvent(i, Role.CHORD_BAR) : bars;
 					if (bars.isEmpty()) {
 						continue;
 					}
@@ -209,16 +209,16 @@ public class ArcadeSceneChordLaneTest {
 				for (boolean budget : new boolean[] { true, false }) {
 					for (Scene scene : variants(fixture, fixture.onset(i), null)) {
 						List<SceneItem> bars = scene.forEvent(i, Role.TIMING_BAR);
-						bars = bars.isEmpty() ? scene.forEvent(i, Role.PREVIEW_BAR) : bars;
+						bars = bars.isEmpty() ? scene.forEvent(i, Role.CHORD_BAR) : bars;
 						assertFalse(bars.isEmpty());
 						assertEquals(projection.hitLineY(), centreAndEdge(bars.get(0))[1], 0.0, "chord " + i + " at its onset");
 					}
 					Scene before = fixture.scene(false).withDensityBudget(budget).build(fixture.onset(i) - 300 * MS, SCREEN, null, 100);
 					Scene after = fixture.scene(false).withDensityBudget(!budget).build(fixture.onset(i) - 300 * MS, SCREEN, null, 100);
 					List<SceneItem> a = before.forEvent(i, Role.TIMING_BAR);
-					a = a.isEmpty() ? before.forEvent(i, Role.PREVIEW_BAR) : a;
+					a = a.isEmpty() ? before.forEvent(i, Role.CHORD_BAR) : a;
 					List<SceneItem> b = after.forEvent(i, Role.TIMING_BAR);
-					b = b.isEmpty() ? after.forEvent(i, Role.PREVIEW_BAR) : b;
+					b = b.isEmpty() ? after.forEvent(i, Role.CHORD_BAR) : b;
 					assertEquals(centreAndEdge(a.get(0))[1], centreAndEdge(b.get(0))[1], 0.0, "the budget moves nothing in depth");
 				}
 			}
@@ -237,7 +237,7 @@ public class ArcadeSceneChordLaneTest {
 		assertEquals(4, scene.forEvent(0, Role.TARGET_DISK).size());
 		for (int i = 1; i < 8; i++) {
 			for (SceneItem item : scene.forEvent(i)) {
-				assertTrue(item.role() == Role.PREVIEW_BAR || item.role() == Role.CHORD_CHIP, "chord " + i + " is a compact bar, perhaps with its name: " + item);
+				assertTrue(item.role() == Role.CHORD_BAR || item.role() == Role.CHORD_CHIP, "chord " + i + " is a bar without diagram, perhaps with its name: " + item);
 			}
 		}
 	}

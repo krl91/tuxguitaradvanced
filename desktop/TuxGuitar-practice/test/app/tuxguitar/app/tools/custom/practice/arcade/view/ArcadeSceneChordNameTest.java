@@ -128,18 +128,21 @@ public class ArcadeSceneChordNameTest {
 	@Test
 	public void theHeaderIsAHeaderApartFromTheFretLabelTheFretNumbersAndTheVerdict() {
 		SceneFixture fixture = lone();
-		Scene scene = fixture.scene(false).build(fixture.onset(0) + 150 * MS, SCREEN, ArcadeSceneTest.viewOf(ArcadeVerdict.ON_TIME), 100);
+		// the chord is not judged yet: its cartouche is there; once it is judged only its verdict stays, so the two are read in two pictures
+		Scene scene = fixture.scene(false).build(fixture.onset(0) + 150 * MS, SCREEN, null, 100);
 		SceneItem name = scene.forEvent(0, Role.CARTOUCHE_NAME).get(0);
 		SceneItem header = scene.forEvent(0, Role.CARTOUCHE_HEADER).get(0);
 		SceneItem fretLabel = scene.forEvent(0, Role.CARTOUCHE_FRET_LABEL).get(0);
-		SceneItem verdict = scene.forEvent(0, Role.BADGE_TEXT).get(0);
+		Scene judged = fixture.scene(false).build(fixture.onset(0) + 150 * MS, SCREEN, ArcadeSceneTest.viewOf(ArcadeVerdict.ON_TIME), 100);
+		assertTrue(judged.forEvent(0, Role.CARTOUCHE_NAME).isEmpty(), "a chord that is completed keeps no cartouche, only its verdict");
+		SceneItem verdict = judged.forEvent(0, Role.BADGE_TEXT).get(0);
 		assertNotEquals(name.text(), fretLabel.text());
 		assertNotEquals(name.text(), verdict.text());
 		assertEquals("5fr", fretLabel.text());
 		Box headerBox = SceneBoxes.ofQuad(header);
 		assertTrue(headerBox.contains(SceneBoxes.ofText(name)), "the name is in the header band");
 		assertFalse(headerBox.overlaps(SceneBoxes.ofText(fretLabel)), "the fret label is not in the header band");
-		assertFalse(headerBox.overlaps(SceneBoxes.ofQuad(scene.forEvent(0, Role.BADGE).get(0))), "nor is the verdict");
+		assertFalse(headerBox.overlaps(SceneBoxes.ofQuad(judged.forEvent(0, Role.BADGE).get(0))), "nor is the verdict");
 		assertNotEquals(ArcadeScene.TEXT_COLOUR, name.colour(), "its own style");
 		assertTrue(name.value(2) >= 9.0, "a readable size: " + name.value(2));
 	}
@@ -157,7 +160,7 @@ public class ArcadeSceneChordNameTest {
 			Box cartouche = SceneBoxes.ofQuad(frames.get(0));
 			// the next playable event is event 1, a chord: its bar is on the same axis, behind the diagram, and still visible on both sides of it
 			for (SceneItem item : scene.forEvent(1)) {
-				if (item.role() == Role.TIMING_BAR || item.role() == Role.PREVIEW_BAR) {
+				if (item.role() == Role.TIMING_BAR || item.role() == Role.CHORD_BAR) {
 					Box bar = SceneBoxes.ofQuad(item);
 					double hidden = Math.max(0.0, Math.min(bar.x2, cartouche.x2) - Math.max(bar.x1, cartouche.x1));
 					assertTrue(hidden <= 0.5 * (bar.x2 - bar.x1), "the diagram hides more than half of the bar of the next chord at " + offset + " ms");
@@ -170,7 +173,6 @@ public class ArcadeSceneChordNameTest {
 			Scene scene = fixture.scene(false).build(now, SCREEN, ArcadeSceneTest.completedBefore(1, 5), 100);
 			List<SceneItem> frames = scene.forEvent(1, Role.CARTOUCHE_FRAME);
 			List<SceneItem> markers = scene.forEvent(2, Role.MARKER);
-			markers = markers.isEmpty() ? scene.forEvent(2, Role.PREVIEW) : markers;
 			if (!frames.isEmpty() && !markers.isEmpty()) {
 				assertFalse(SceneBoxes.ofQuad(frames.get(0)).overlaps(SceneBoxes.ofDisc(markers.get(0))), "the diagram covers the next note at " + offset + " ms");
 			}
