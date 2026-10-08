@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-01
 
-**Last reviewed**: 2026-10-08 after approval of selected-track MIDI backing, dry monitoring and the 22 ms latency gate
+**Last reviewed**: 2026-10-08 after approval of selected-track MIDI backing, dry monitoring, the 22 ms latency gate and the performance-over-decoration policy
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -28,6 +28,11 @@
 - [x] Software timing budgets and physical loopback validation are both required.
 - [x] Future effects require a source-cited free/open-source library survey and equal-condition live benchmarks before selection.
 - [x] Licence, portability, real-time safety, CPU, allocation, dropout and remaining latency headroom are selection gates.
+- [x] Audio continuity and unchanged judging take priority over animation, which takes priority over decorative quality.
+- [x] Adaptive quality has a deterministic drop order and explicitly protects every gameplay-critical visual.
+- [x] Apple Silicon frame pacing is measured under concurrent MIDI and recognition, not from an isolated paint loop.
+- [x] Hardware acceleration is vendor-neutral at the scene boundary, benchmark-gated and optional; a functional fallback is mandatory.
+- [x] Frame queues, audio-thread rendering work and render-held audio locks are forbidden and testable.
 
 ## Feature Readiness
 
@@ -42,3 +47,4 @@
 - Recognition targets remain provisional; the monitoring limit is fixed by the owner at a hard 22 ms maximum (SC-003).
 - Planning must define the latency fixture and protocol before claiming monitoring support. Electrical loopback is preferred; an acoustic built-in-microphone/speaker test is useful only with propagation and room uncertainty documented.
 - The later effects plan must preserve the candidate matrix and raw benchmark results. It may select no third-party library when none meets the licence, integration and 22 ms constraints.
+- The approved concept art is a composition/readability reference, not a resolution target. The simplest renderer that passes SC-014 to SC-016 wins; retaining the existing toolkit renderer is a valid and preferred result when it passes.

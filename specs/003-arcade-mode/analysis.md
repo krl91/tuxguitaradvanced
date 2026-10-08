@@ -18,7 +18,7 @@
 | Judging with the tolerance presets, calibration and "reduced rhythmic precision" of 002 | Implemented (`TimingTolerance`, `RouteCalibrations`, `FollowPanel`). | Reused as they are. |
 | A live return of the guitar (FR-030 to FR-047) | **Nothing exists.** The capture is a `TargetDataLine` read in 1024-frame blocks (about 21 ms at 48 kHz) by `CaptureService`; the synthesizer writes to a `SourceDataLine` through `TGAudioLine` (`desktop/TuxGuitar-synth`); the audio engine has an input selector (`CurrentInputSelection`) and **no output selector**. | The 22 ms limit is in doubt on the plain Java Sound path (one capture block alone is about 21 ms). Increment E is a spike and may conclude that monitoring cannot be offered on this stack. |
 | A shared output timeline for backing and monitoring (FR-036) | The backing is the MIDI player's synthesizer line; a monitoring line would be a second Java Sound line with its own clock. | Risk recorded in `research.md` R12: two lines drift; the spike measures it. |
-| Drawing the isometric view with the application's own toolkit | `UICanvas` + `UIPaintListener` + `UIPainter` (`common/TuxGuitar-lib/.../ui/resource/UIPainter.java`): 2D paths, circles, rectangles, text, images, alpha, antialias, line styles; **no transform stack and no 3D**. Used by the tuner widgets (`TunerNeedle`, `TunerScale`). Implemented for SWT, JavaFX and Qt toolkits. | The isometric projection is computed in plain Java and drawn as 2D polygons (R3). It is feasible; its performance at 60 images a second is a measured acceptance criterion, not an assumption. |
+| Drawing the isometric view with the application's own toolkit | `UICanvas` + `UIPaintListener` + `UIPainter` (`common/TuxGuitar-lib/.../ui/resource/UIPainter.java`): 2D paths, circles, rectangles, text, images, alpha, antialias, line styles; **no transform stack and no 3D**. Used by the tuner widgets (`TunerNeedle`, `TunerScale`). Implemented for SWT, JavaFX and Qt toolkits. | The isometric projection and immutable scene stay plain Java and backend-neutral (R3). The existing toolkit renderer is benchmarked first on Apple Silicon; hardware acceleration is adopted only if the complete workload needs it. Adaptive quality, latest-frame replacement, a forced fallback and concurrent audio/render acceptance are T040-T048, not assumptions. |
 
 ## 2. Consistency with the other specifications
 
@@ -68,6 +68,13 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | FR-050 texts | T056 (English, French, Spanish) | |
 | FR-051 tests including GUI | every task is test-first; T043, T058 | |
 | FR-052 other modes unchanged | checkpoints T016, T027, T049, T059 | |
+| FR-053 priority: audio/judging, pacing, readability, decoration | T040, T047 | acceptance includes concurrent audio and digest parity |
+| FR-054 adaptive quality and protected gameplay information | T040, T044, T048 | deterministic tiers and drop order |
+| FR-055 latest-frame replacement, no backlog | T041, T047 | stalled-paint test plus long stress run |
+| FR-056 render/audio isolation | T041, T047 | no audio lock/path allocation; dropout and overrun counters |
+| FR-057 measured vendor-neutral acceleration and fallback | T042, T045, T046, T048 | the valid decision may be to retain `UIPainter` |
+| FR-058 concept composition over pixel resolution | T040, T044 | human review includes minimalist tier |
+| FR-059 high-density lower-resolution field with crisp essentials | T040, T042, T048 | |
 | SC-001 start in under 30 s | manual, T068-adjacent walk-through | not measured by a task; reported only if timed |
 | SC-002 95 % at 8 notes a second | inherited from 002 SC-009 | **not met by the base mode** (R15 of 002) |
 | SC-003 monitoring loopback | T072, T073 | |
@@ -79,6 +86,8 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | SC-011 geometry | T031 | |
 | SC-012 colour chain, monochrome | T037, T039 | |
 | SC-013 effects decision | T092 | |
+| SC-014 Apple Silicon frame pacing | T042, T045, T047 | ten-minute complete-workload acceptance |
+| SC-015 zero audio regression and identical judgement digest | T047 | renderer-disabled comparison |
+| SC-016 functional fallback | T046, T048 | achieved fallback rate is reported, not invented |
 
 **Result**: every requirement has a task or an explicit reason it has none; no task is orphaned; the dependencies are acyclic (T002 -> T004 -> T022 -> D; E and F independent). Three items are *not decided* and wait for the owner: O1, O2, O3 (and the outcome of O4, O5 comes from measurements). The two inherited limits (SC-002 vs the measured judging; Arcade release gated by 002 T102) are stated in `plan.md` and `tasks.md` T001.
-

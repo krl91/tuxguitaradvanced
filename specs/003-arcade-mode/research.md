@@ -30,7 +30,7 @@
 
 **Rejected.** Making the approved concept art a pixel target; requiring a large game engine before the baseline is measured; drawing the gameplay from one prerendered image (cannot honour real fret geometry, time, camera motion and per-string colours); any backend that blocks or allocates on an audio path.
 
-**Measured, not assumed.** T042 establishes scene-build and replay costs. T045 records the backend decision. T046 runs dense and chord-heavy visual loads concurrently with MIDI and recognition, and with monitoring when it exists. T047 performs the ten-minute Apple Silicon frame-pacing and audio-integrity acceptance run for SC-014/SC-015. The forced fallback is covered by SC-016. The fixed target is 60 frames/s on the validated Apple Silicon machine, but visual detail is expendable and musical continuity is not.
+**Measured, not assumed.** T042 establishes scene-build and replay costs. T045 records the backend decision. T046 implements only the selected replay path and its forced fallback. T047 runs dense and chord-heavy visual loads concurrently with MIDI and recognition, and with monitoring when it exists, for the ten-minute Apple Silicon frame-pacing and audio-integrity acceptance of SC-014/SC-015. T048 covers the forced fallback and high-density presentation for SC-016. The fixed target is 60 frames/s on the validated Apple Silicon machine, but visual detail is expendable and musical continuity is not.
 
 ## R4 - Camera
 
