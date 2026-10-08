@@ -29,6 +29,8 @@ import app.tuxguitar.app.tools.custom.practice.session.TimingContext;
 public class FollowStringsTest {
 
 	private static final String[] FILES = { "messages.properties", "messages_fr.properties", "messages_es.properties" };
+	private static final Set<String> LIKE_IN_EVERY_LANGUAGE = new TreeSet<String>(java.util.Arrays.asList("arcade.name", "practice.mode.arcade", "arcade.window.title",
+			"arcade.result.percent.value", "arcade.label.speed", "arcade.button.pause", "arcade.result.score"));
 	private static final Pattern PLACEHOLDER = Pattern.compile("\\{(\\d+)\\}");
 
 	private static Properties load(String file) throws IOException {
@@ -108,6 +110,10 @@ public class FollowStringsTest {
 			Properties other = load(file);
 			int same = 0;
 			for (String key : followKeys(english)) {
+				// the name of the mode, a bare placeholder and the words that are the same in the three languages are not untranslated texts
+				if (LIKE_IN_EVERY_LANGUAGE.contains(key)) {
+					continue;
+				}
 				same += (english.getProperty(key).equals(other.getProperty(key)) ? 1 : 0);
 			}
 			// a few texts (a bare number, "Normal") may be alike; a whole untranslated file may not
