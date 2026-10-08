@@ -33,7 +33,7 @@ public final class SongFixture {
 	static final long MEASURE_TICKS = 4 * QUARTER;
 
 	final TGFactory factory = new TGFactory();
-	final TGSongManager manager = new TGSongManager();
+	public final TGSongManager manager = new TGSongManager();
 	public final TGSong song;
 
 	public SongFixture(int measures) {
@@ -56,11 +56,11 @@ public final class SongFixture {
 	}
 
 	/** Adds a track with its own channel (program 25, a guitar sound, unless changed). */
-	TGTrack addTrack() {
+	public TGTrack addTrack() {
 		return this.manager.addTrack(this.song);
 	}
 
-	TGChannel channelOf(TGTrack track) {
+	public TGChannel channelOf(TGTrack track) {
 		Iterator<TGChannel> channels = this.song.getChannels();
 		while( channels.hasNext() ) {
 			TGChannel channel = channels.next();
@@ -137,7 +137,7 @@ public final class SongFixture {
 		return note(track(), measureIndex, quarterOffset, voice, string, fret, durationValue);
 	}
 
-	TGNote note(TGTrack track, int measureIndex, int quarterOffset, int voice, int string, int fret, int durationValue) {
+	public TGNote note(TGTrack track, int measureIndex, int quarterOffset, int voice, int string, int fret, int durationValue) {
 		TGMeasure measure = track.getMeasure(measureIndex);
 		long start = measure.getStart() + quarterOffset * QUARTER;
 		TGBeat beat = null;
