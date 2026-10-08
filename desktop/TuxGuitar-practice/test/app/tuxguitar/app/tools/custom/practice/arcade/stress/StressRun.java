@@ -432,6 +432,18 @@ public final class StressRun {
 			window.pack();
 			window.setBounds(new UIRectangle(20, 20, this.config.width, this.config.height));
 			window.open();
+			window.moveToTop();
+			if (!ArcadeStressTest.setting("tuxguitar.arcade.stress.background", "").isEmpty()) {
+				// the window is left as the system puts it: possibly behind other windows (a test of the cause of the gaps, see the report)
+			} else {
+				try {
+					// the window of the learner is the one in front: the system does not slow the painting of a window that is hidden or that is not the active one
+					Object shell = window.getClass().getMethod("getControl").invoke(window);
+					Class.forName("org.eclipse.swt.widgets.Shell").getMethod("forceActive").invoke(shell);
+				} catch (ReflectiveOperationException exception) {
+					throw new AssertionError(exception);
+				}
+			}
 			canvas.setObserver(metrics);
 		}
 
