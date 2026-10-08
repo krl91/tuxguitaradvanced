@@ -99,6 +99,14 @@ public final class ArcadeScene {
 	 * @param speedPercent the speed of the run, for the HUD
 	 */
 	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent) {
+		return build(nowNanos, viewport, run, speedPercent, QualityTier.FULL);
+	}
+
+	/**
+	 * The same picture at a quality tier: only the decoration (glow, trails, shadows) differs, every other item is identical at every tier. When many
+	 * events are on screen the far ones lose their detail in a documented order, see {@link #FAR_TRAJECTORY_LIMIT}.
+	 */
+	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier) {
 		Out out = new Out(this.monochrome);
 		IsometricProjection projection = new IsometricProjection(viewport);
 		Camera cam = this.camera.at(nowNanos);
@@ -106,12 +114,37 @@ public final class ArcadeScene {
 		drawNeck(out, projection, cam, viewport);
 
 		List<Integer> visible = visibleEvents(nowNanos, settings);
+		int[] farRank = farRanks(visible, nowNanos, settings);
 		for (int k = visible.size() - 1; k >= 0; k--) {
-			drawEvent(out, projection, cam, viewport, visible.get(k), nowNanos, settings);
+			if (farRank[k] < FAR_EVENT_LIMIT) {
+				drawEvent(out, projection, cam, viewport, visible.get(k), nowNanos, settings, tier, farRank[k]);
+			}
 		}
 		drawBadges(out, projection, cam, viewport, visible, run, nowNanos, settings);
 		drawHud(out, viewport, run, speedPercent);
 		return new Scene(out.items, nowNanos, viewport);
+	}
+
+	/**
+	 * The order in which a crowded screen loses detail. Events that are armed, on the hit line or just judged are never touched. The others ("far":
+	 * distant or readable) are ranked from the nearest to the farthest in time; from the rank {@value #FAR_TRAJECTORY_LIMIT} on they lose their
+	 * trajectory and their ghost on the neck, from {@value #FAR_CARTOUCHE_LIMIT} on a chord keeps its timing bar but not its diagram, and from
+	 * {@value #FAR_EVENT_LIMIT} on they are not drawn. A sparse passage never reaches these limits.
+	 */
+	public static final int FAR_TRAJECTORY_LIMIT = 12;
+	public static final int FAR_CARTOUCHE_LIMIT = 16;
+	public static final int FAR_EVENT_LIMIT = 32;
+
+	/** The rank of each visible event among the far ones (0 for the nearest), or 0 for an event that is never reduced. */
+	private int[] farRanks(List<Integer> visible, long nowNanos, CameraTrack.Settings settings) {
+		int[] ranks = new int[visible.size()];
+		int rank = 0;
+		for (int k = 0; k < visible.size(); k++) {
+			RenderState state = RenderState.of(this.events.get(visible.get(k)).onsetNanos(), nowNanos, settings.lookAheadNanos, settings.holdAfterNanos);
+			boolean far = state == RenderState.DISTANT || state == RenderState.READABLE;
+			ranks[k] = far ? rank++ : 0;
+		}
+		return ranks;
 	}
 
 	/** The indices of the events that are on screen, in play order. */
@@ -206,20 +239,21 @@ public final class ArcadeScene {
 		}
 	}
 
-	private void drawEvent(Out out, IsometricProjection projection, Camera cam, Viewport viewport, int index, long nowNanos, CameraTrack.Settings settings) {
+	private void drawEvent(Out out, IsometricProjection projection, Camera cam, Viewport viewport, int index, long nowNanos, CameraTrack.Settings settings,
+			QualityTier tier, int farRank) {
 		ArcadeRenderEvent event = this.events.get(index);
 		RenderState state = RenderState.of(event.onsetNanos(), nowNanos, settings.lookAheadNanos, settings.holdAfterNanos);
 		double progress = RenderState.progress(event.onsetNanos(), nowNanos, settings.lookAheadNanos);
 		double alpha = alphaOf(state, nowNanos, event.onsetNanos(), settings);
 		if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
-			drawNote(out, projection, cam, viewport, event, state, progress, alpha);
+			drawNote(out, projection, cam, viewport, event, state, progress, alpha, tier, farRank < FAR_TRAJECTORY_LIMIT);
 		} else {
-			drawBarEvent(out, projection, cam, viewport, event, state, progress, alpha);
+			drawBarEvent(out, projection, cam, viewport, event, state, progress, alpha, tier, farRank);
 		}
 	}
 
 	private void drawNote(Out out, IsometricProjection projection, Camera cam, Viewport viewport, ArcadeRenderEvent event, RenderState state, double progress,
-			double alpha) {
+			double alpha, QualityTier tier, boolean detailed) {
 		ArcadeRenderEvent.Position position = event.positions().get(0);
 		int count = this.neck.layout().count();
 		int row = this.neck.layout().rowOf(position.tgString());
@@ -229,20 +263,29 @@ public final class ArcadeScene {
 		ScreenPoint far = projection.approach(x, 0.0, cam);
 		ScreenPoint now = projection.approach(x, progress, cam);
 		ScreenPoint target = projection.neck(x, row, count, cam);
-		out.line(Role.TRAJECTORY, far.x(), far.y(), target.x(), target.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
+		if (detailed) {
+			out.line(Role.TRAJECTORY, far.x(), far.y(), target.x(), target.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
+		}
 		double ring = h * 0.026;
 		out.ring(Role.TARGET_RING, target.x(), target.y(), ring, ring, colour, alpha, 3.0, event.index(), position.tgString());
-		if (state.ordinal() >= RenderState.READABLE.ordinal() && state != RenderState.EXPIRED) {
+		if (detailed && state.ordinal() >= RenderState.READABLE.ordinal() && state != RenderState.EXPIRED) {
 			out.ring(Role.GHOST, target.x(), target.y(), ring * 1.5, ring * 1.5, colour, alpha * 0.5, 1.5, event.index(), position.tgString());
 		}
 		double radius = Math.max(6.0, h * 0.030 * now.scale());
+		if (tier.trails()) {
+			ScreenPoint behind = projection.approach(x, Math.max(0.0, progress - 0.12), cam);
+			out.line(Role.TRAIL, behind.x(), behind.y(), now.x(), now.y(), colour, alpha * 0.35, radius, event.index(), position.tgString());
+		}
+		if (tier.glow()) {
+			out.disc(Role.GLOW, now.x(), now.y(), radius * 1.9, radius * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
+		}
 		out.disc(Role.MARKER, now.x(), now.y(), radius, radius, colour, alpha, event.index(), position.tgString());
 		out.text(Role.MARKER_FRET, Integer.toString(position.fret()), now.x(), now.y(), Math.max(8.0, radius * 1.1), 0xFFFFFF, alpha, event.index(),
 				position.tgString());
 	}
 
 	private void drawBarEvent(Out out, IsometricProjection projection, Camera cam, Viewport viewport, ArcadeRenderEvent event, RenderState state,
-			double progress, double alpha) {
+			double progress, double alpha, QualityTier tier, int farRank) {
 		double h = viewport.height();
 		double left;
 		double right;
@@ -272,6 +315,9 @@ public final class ArcadeScene {
 			out.text(Role.EVENT_TEXT, word, centreX, barTop - h * 0.025, h * 0.026, TEXT_COLOUR, alpha, event.index(), 0);
 			return;
 		}
+		if (farRank >= FAR_CARTOUCHE_LIMIT) {
+			return;
+		}
 		ChordCartouche cartouche = this.cartouches[event.index()];
 		double scale = pl.scale();
 		double unit = h / 720.0;
@@ -282,8 +328,12 @@ public final class ArcadeScene {
 		double boxBottom = barTop - stem;
 		double boxY = Math.max(cartouche.notCheckedSeparately() ? 16.0 : 2.0, boxBottom - boxH);
 		out.line(Role.STEM, centreX, barTop, centreX, boxY + boxH, BAR_COLOUR, alpha, 2.0, event.index(), 0);
+		if (tier.shadows()) {
+			out.quad(Role.SHADOW, new double[] { boxX + 4, boxY + 5, boxX + boxW + 4, boxY + 5, boxX + boxW + 4, boxY + boxH + 5, boxX + 4, boxY + boxH + 5 }, 0x000000,
+					alpha * 0.35, event.index(), 0);
+		}
 		drawCartouche(out, cartouche, event, state, boxX, boxY, boxW, boxH, alpha);
-		if (state.ordinal() >= RenderState.READABLE.ordinal()) {
+		if (farRank < FAR_TRAJECTORY_LIMIT && state.ordinal() >= RenderState.READABLE.ordinal()) {
 			int count = this.neck.layout().count();
 			for (ArcadeRenderEvent.Position position : event.positions()) {
 				ScreenPoint target = projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, cam);

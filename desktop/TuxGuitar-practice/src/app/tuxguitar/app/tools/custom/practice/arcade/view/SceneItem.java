@@ -26,7 +26,13 @@ public final class SceneItem {
 		CARTOUCHE_FRAME, CARTOUCHE_STRING, CARTOUCHE_FRET, CARTOUCHE_DOT, CARTOUCHE_MARK, CARTOUCHE_FRET_LABEL, CARTOUCHE_NAME, CARTOUCHE_STROKE,
 		CARTOUCHE_NOTE,
 		BADGE, BADGE_SYMBOL, BADGE_TEXT,
-		HUD_STREAK, HUD_SPEED
+		HUD_STREAK, HUD_SPEED,
+		/** Decoration, dropped first when the frames cost too much: never information. */
+		GLOW, TRAIL, SHADOW;
+
+		public boolean isDecoration() {
+			return this == GLOW || this == TRAIL || this == SHADOW;
+		}
 	}
 
 	private final Shape shape;
