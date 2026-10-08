@@ -104,6 +104,17 @@ For `PracticeEvent.Kind.EXPECTED_NOTE`:
 
 The physical-neck target is emitted only when this event is the active/next actionable event. It is not a faint ring: it is a large filled disk, fully opaque, centred exactly on the destination string/fret intersection, in that string's stable colour, with a contrasting 2–4 logical-pixel outline. Its filled-core diameter is `clamp(24 logical px, 60% of the rendered inter-string spacing, 42 logical px)` and scales with UI density. An optional halo or pulse may surround it, but the opaque core always remains. Other visible note markers continue travelling in the approach field without a disk, ring, ghost or fret highlight on the neck.
 
+### Canonical fret alignment
+
+The approach field is the perspective continuation of the same fret geometry as the neck. A note written at fret `n` travels along the centre of the projected cell between wires `n-1` and `n`; its centre must visibly sit on its trajectory, not beside it. Use one canonical projection for the two cell boundaries, cell centre, marker and hit-line landing point.
+
+The active note needs two distinct visual segments:
+
+1. the **approach segment**, from the horizon to the hit line, on which the incoming marker actually moves;
+2. when useful, a separate **landing connector**, from that hit-line point to the opaque target disk on the destination string.
+
+Do not draw one straight trajectory from the horizon directly to the lower neck disk while moving the marker on a horizon-to-hit-line path: those two lines have different slopes, which makes the note appear unrelated to its case. The approach segment and marker remain identical for active and future notes. Camera movement recomputes the entire construction from the same camera snapshot, so grid, marker, trajectory, landing point and target cannot disagree for one frame.
+
 ## Chord event: timing bar plus cartouche
 
 Use this representation only for `PracticeEvent.Kind.EXPECTED_CHORD`. `MULTI_NOTE` and `AUTO_PASS` need their own honest unsupported/automatic presentation; do not disguise them as recognised chords.
@@ -120,7 +131,7 @@ Use this representation only for `PracticeEvent.Kind.EXPECTED_CHORD`. `MULTI_NOT
 ### Traditional cartouche
 
 - Keep it camera-facing (billboarded), even though the bar and world are isometric.
-- Put the chord name in a stable header on the cartouche. When `TGChord.getName()` is non-blank, show that exact written name; otherwise show the localised generic label `Chord` / `Accord`. Keep this header readable from the first readable approach state through impact and feedback, in every quality tier. It must not be confused with a fret number or verdict and must not cover the following event.
+- Put the chord's useful musical identity in a stable header on the cartouche. When `TGChord.getName()` is non-blank, show that exact written name. Otherwise show the deterministic conventional name resolved before rendering from the written expected pitches and bass/inversion. Only an unsupported pitch set uses a localized explicit note list (`Notes: A–C–F♯`); never show the bare generic word `Chord` / `Accord` for a pitched event. Keep the header readable from the first readable approach state through impact and feedback, in every quality tier. It must not be confused with a fret number or verdict and must not cover the following event.
 - Draw exactly the track's number of **vertical** string lines, ordered low-to-high from left to right.
 - Draw horizontal fret lines and a side label such as `5fr` when the window starts above fret 1.
 - Place one dot per `PracticeEvent.ChordNote` at its written string/fret, using that string's colour.
@@ -143,7 +154,7 @@ Chord diagrams are disclosed serially, never scattered around the highway:
 `TGBeat.isChordBeat()` and `TGBeat.getChord()` provide an optional `TGChord` with `getName()`, `getFirstFret()`, `countStrings()` and per-string fret values. Treat it as notation metadata, not as the event source:
 
 1. the actual event positions always come from `PracticeEvent.getChordNotes()`;
-2. use `TGChord.getName()` only when non-blank; do not invent a chord name from a pitch set in the renderer;
+2. use `TGChord.getName()` exactly when non-blank; otherwise consume the deterministic name already derived by the pure chord-name resolver from written pitches—never perform recognition inside the renderer or from captured audio;
 3. use its first-fret/window hint only when compatible with the event positions and string count;
 4. if it is absent or inconsistent, generate the grid from the event positions and label the cartouche `Accord` rather than guessing a name;
 5. show `X` only for an explicitly dead/muted score note or compatible chord-diagram metadata; an omitted string is otherwise blank, not automatically muted;
@@ -273,7 +284,7 @@ The scene model is backend-neutral. The first implementation uses the existing t
 3. **Single-note projection**: every event reaches the hit line exactly at its timeline onset across tempo changes and selected speeds.
 4. **A5 fixture**: low-E 5, A 7 and D 7 produce one bar/cartouche, a `5fr` grid window and three correctly coloured dots.
 5. **Open chord fixture**: fret 0 becomes `O`; explicit dead strings become `X`; omitted strings remain blank without metadata.
-6. **Metadata fallback**: missing, blank or inconsistent `TGChord` metadata never changes event positions and never invents a chord name.
+6. **Name resolution**: missing, blank or inconsistent `TGChord` metadata never changes event positions; common written pitch sets receive the deterministic conventional name, and unsupported sets receive an explicit localized note list rather than a fabricated name or bare “Chord”.
 7. **Stroke**: up, down and none produce the correct arrow/sweep behaviour using `TGStroke`; none produces no arrow.
 8. **Chord feedback**: all five `ChordFeedback.Kind` values map to chord-level badges; no test produces a per-string “heard” claim.
 9. **Duplicate pitches**: `hasDuplicatePitches()` / `getUnverifiable()` remain explicitly unverifiable.
@@ -285,16 +296,17 @@ The scene model is backend-neutral. The first implementation uses the existing t
 15. **Backend parity**: the selected accelerated path (if any) and the forced software/toolkit fallback produce the same structural scene for fixed fixtures.
 16. **Concurrent stress**: dense notes, chord cartouches and camera movement run with MIDI and recognition, plus monitoring when available; report frame percentiles and prove no audio drop, capture overrun or judgement-digest change.
 17. **Single active neck target**: with five or more incoming events, the approach field keeps the preview while the neck contains rings/ghosts for exactly one event identity; a chord contributes all and only its simultaneous positions; advancing never produces a mixed old/new target frame.
-18. **Chord-name visibility**: named chord fixtures show the exact score name in the cartouche header throughout readable approach, impact and feedback; blank metadata uses the translated generic label; single notes have no chord header. Repeat in all quality tiers and ensure the header never obscures the next event.
+18. **Chord-name visibility**: named chord fixtures show the exact score name; unnamed A5, open major/minor, seventh, suspended and inversion fixtures show their deterministic derived names; unsupported sets show the pitch-list fallback; single notes have no chord header. Repeat in all quality tiers and ensure the header never obscures the next event.
 19. **Dense-passage disclosure**: fixtures with 8, 16 and 32 incoming event identities at 1280x720 admit at most four fully detailed identities, keep the active event detailed, use compact previews for the rest, and have pairwise-disjoint/unclipped fret, chord-name and verdict bounds. The judgement digest is unchanged.
 20. **Chord preview lane**: fixtures with 2, 4 and 8 upcoming chords contain exactly one expanded diagram, every full cartouche is inside the viewport, every chord timing bar shares the same centre axis, and promotion follows onset order without a two-diagram transition frame.
 21. **External real-score corpus**: at least 60 deterministically selected GP3/GP4 track cases exercise sparse, mixed, chord-heavy, repeated/dense-chord, fast, large-jump, bass/alternate-string and multi-track/repeat material. Apply tests 3, 8, 10 and 13-20 at representative frames in `FULL` and `PERFORMANCE`; generate at least twelve local, uncommitted screenshot pairs for owner review.
 22. **Opaque active neck target**: structural tests inspect every active neck-target primitive in all quality tiers and require a filled core with alpha 1.0, the exact FR-065 diameter/centre and a contrasting outline. Single-note scenes contain one disk; chord scenes contain all and only the written chord positions; later events contain none. Light, dark, monochrome, resize, high-density and fallback screenshots keep the target immediately visible.
+23. **Fret/trajectory registration**: for frets 0 through the maximum, sample the complete approach and assert that marker centre, approach segment and projected fret-cell centre agree within 0.5 logical pixel. At impact, the approach endpoint and target fret centre share x; any connector below the hit line is a separate primitive. Repeat while the camera pans, after resize, in every tier and on real-score screenshots.
 
 ## Do not infer
 
 - Do not infer the physical string played from audio.
-- Do not infer a chord name when `TGChord.getName()` is absent.
+- Do not infer a chord name from captured/detected audio. When score metadata is absent, derive only from the written expected pitches through the tested resolver, outside the renderer.
 - Do not infer muted strings merely because no note is written on them.
 - Do not infer a stroke direction when `TGStroke.STROKE_NONE` is written.
 - Do not use generated-image fret spacing, marker placement or diagram mistakes as data.
