@@ -38,11 +38,11 @@ public final class FretArrivalLaneMap {
 			return this.end;
 		}
 
-		/** The point of the lane at a progress: the origin for 0, the end for 1, the straight way between, the scale growing with it. */
+		/** The point of the lane at a progress of the look-ahead: the origin for 0, the end for 1, on the straight way between, placed in perspective (see {@link IsometricProjection#depthShare}). */
 		public ScreenPoint at(double progress) {
-			double p = Math.max(0.0, Math.min(1.0, progress));
-			double scale = this.origin.scale() + (this.end.scale() - this.origin.scale()) * p;
-			return new ScreenPoint(this.origin.x() + (this.end.x() - this.origin.x()) * p, this.origin.y() + (this.end.y() - this.origin.y()) * p, scale);
+			double q = IsometricProjection.depthShare(progress);
+			double scale = this.origin.scale() + (this.end.scale() - this.origin.scale()) * q;
+			return new ScreenPoint(this.origin.x() + (this.end.x() - this.origin.x()) * q, this.origin.y() + (this.end.y() - this.origin.y()) * q, scale);
 		}
 	}
 

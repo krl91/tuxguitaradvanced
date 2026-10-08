@@ -45,9 +45,9 @@ public final class CameraTrack {
 			this.stepNanos = stepNanos;
 		}
 
-		/** The settings of the view: events appear 3 s ahead, are in view 1 s earlier, stay 0.8 s, a part of 260 mm, zoom down to 0.5, 600 ms of easing. */
+		/** The settings of the view: events appear 9 s ahead (the owner asked for three times the first 3 s, 2026-10-09), are in view 1 s earlier, stay 0.8 s, a part of 260 mm, zoom down to 0.5, 600 ms of easing. */
 		public static Settings standard() {
-			return new Settings(3_000_000_000L, 1_000_000_000L, 800_000_000L, 260.0, 0.5, 12.0, 600_000_000L, 20_000_000L);
+			return new Settings(9_000_000_000L, 1_000_000_000L, 800_000_000L, 260.0, 0.5, 12.0, 600_000_000L, 20_000_000L);
 		}
 	}
 

@@ -78,4 +78,20 @@ public class IsometricProjectionTest {
 		assertThrows(IllegalArgumentException.class, () -> new Viewport(0, 100));
 		assertThrows(IllegalArgumentException.class, () -> new Camera(5.0, 5.0));
 	}
+
+	@Test
+	public void thePerspectiveGivesTheLastSecondsMuchOfTheLaneAndKeepsTheFarOnesClose() {
+		assertEquals(0.0, IsometricProjection.depthShare(0.0), 1e-12);
+		assertEquals(1.0, IsometricProjection.depthShare(1.0), 1e-12);
+		double previous = -1.0;
+		for (int step = 0; step <= 100; step++) {
+			double share = IsometricProjection.depthShare(step / 100.0);
+			assertTrue(share > previous, "strictly increasing");
+			previous = share;
+		}
+		// the last third of the time before the onset is more than half of the way, the first third less than a sixth
+		assertTrue(1.0 - IsometricProjection.depthShare(2.0 / 3.0) > 0.55, "the last third covers more than half of the lane");
+		assertTrue(IsometricProjection.depthShare(1.0 / 3.0) < 0.15, "the first third covers little");
+		assertEquals(IsometricProjection.depthShare(0.5), (this.projection.approach(250.0, 0.5, CAMERA).y() - this.projection.horizonY()) / (this.projection.hitLineY() - this.projection.horizonY()), 1e-9);
+	}
 }

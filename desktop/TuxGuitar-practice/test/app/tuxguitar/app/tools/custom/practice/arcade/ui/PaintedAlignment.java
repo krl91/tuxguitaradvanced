@@ -181,7 +181,8 @@ final class PaintedAlignment {
 		for (int side : new int[] { -1, 1 }) {
 			// a column clear of every painted wire (a wire is not a string: it would cross the rows that are measured)
 			int probe = (int) Math.round(paintedX + side * (radius + 48));
-			for (int d = 30; d <= 120; d += 3) {
+			int start = (int) (picture.height * 0.075) + 12;
+			for (int d = start; d <= start + 150; d += 3) {
 				int candidate = (int) Math.round(paintedX + side * (radius + d));
 				boolean clear = candidate > picture.width * 0.07 && candidate < picture.width - 1;
 				for (double wire : wires) {

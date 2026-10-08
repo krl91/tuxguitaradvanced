@@ -1,4 +1,4 @@
 Arcade canvas, forced fallback path (spec 003 T048), Mac OS X aarch64, Java 21.0.12.1
 dense passage under the density budget, window 1280x720, renderer "fallback (toolkit painter, minimal)": 600 frames painted of 600 asked in 5.0 s, one after the other through the event loop (the rate is that of this test loop, not a display rate)
-cost of one paint: p50 1.613 ms, p95 1.951 ms, p99 2.144 ms, max 3.173 ms
+cost of one paint: p50 1.621 ms, p95 1.948 ms, p99 2.174 ms, max 2.852 ms
 quality tier chosen by the controller at the end: FULL

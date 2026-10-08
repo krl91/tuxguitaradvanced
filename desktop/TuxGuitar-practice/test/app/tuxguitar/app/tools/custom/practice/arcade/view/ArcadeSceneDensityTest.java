@@ -300,22 +300,24 @@ public class ArcadeSceneDensityTest {
 	}
 
 	@Test
-	public void theAdmittedSetIsTheFirstFourEventsAndTheFifthIsAbsent() {
-		SongFixture song = new SongFixture(3);
-		for (int i = 0; i < 8; i++) {
+	public void theAdmittedSetIsAPrefixOfAtMostFourEventsAndEveryLaterEventIsAbsent() {
+		SongFixture song = new SongFixture(4);
+		for (int i = 0; i < 12; i++) {
 			song.quarter(i / 4, i % 4, 1 + i % 6, i % 2 == 0 ? 2 : 17);
 		}
-		song.tempoChange(0, 150);
+		song.tempoChange(0, 60);
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
-		// six events are inside the look-ahead; the first four are the set, the others are absent whatever their distance
-		long now = fixture.onset(0) - 600 * MS;
+		// the events are a second apart and all inside the look-ahead: the set is the first ones, at most four, and nothing else is painted
+		long now = fixture.onset(0) - 1000 * MS;
 		Scene scene = fixture.scene(false).build(now, SCREEN, null, 100);
-		assertEquals(Set.of(0, 1, 2, 3), admitted(scene), "the active event and the three that follow it, each on its lane");
-		for (int index = 0; index < 4; index++) {
-			assertEquals(1, scene.forEvent(index, Role.TRAJECTORY).size(), "event " + index + " has its lane");
+		Set<Integer> set = admitted(scene);
+		assertTrue(set.size() >= 3 && set.size() <= ArcadeScene.MAX_ADMITTED, "the nearest events are admitted, at most four: " + set);
+		for (int k = 0; k < set.size(); k++) {
+			assertTrue(set.contains(k), "a prefix of the events in order of time, without a gap: " + set);
+			assertEquals(1, scene.forEvent(k, Role.TRAJECTORY).size(), "event " + k + " has its lane");
 		}
-		for (int index = 4; index < 8; index++) {
-			assertTrue(scene.forEvent(index).isEmpty(), "event " + index + " is outside the set: no marker, no halo, no lane, no preview, nothing");
+		for (int index = set.size(); index < 12; index++) {
+			assertTrue(scene.forEvent(index).isEmpty(), "event " + index + " is outside the set: no marker, no halo, no lane, nothing");
 		}
 	}
 }

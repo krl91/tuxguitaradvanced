@@ -62,14 +62,30 @@ public final class IsometricProjection {
 	 * two, the distance to the hit line is proportional to the time left, and the scale falls linearly with it.
 	 */
 	public ScreenPoint approach(double xMm, double progress, Camera camera) {
-		double p = Math.max(0.0, Math.min(1.0, progress));
-		double away = 1.0 - p;
+		double q = depthShare(progress);
+		double away = 1.0 - q;
 		double scale = 1.0 - (1.0 - FAR_SCALE) * away;
 		double y = hitLineY() - (hitLineY() - horizonY()) * away;
 		double centre = this.viewport.width() / 2.0;
 		double x = centre + (neckX(xMm, camera) - centre) * scale;
 		return new ScreenPoint(x, y, scale);
 	}
+
+	/**
+	 * How far along its lane an event is when it has gone the given share of its look-ahead: a perspective, not a straight line in time. The depth of the event
+	 * is {@code 1 + DEPTH * (time left / look-ahead)} and its distance from the horizon is proportional to the inverse of the depth, so that the last seconds
+	 * before the onset take much of the lane and the far ones are close together: an event can be seen coming from far without the near ones being packed.
+	 * It is 0 for 0, exactly 1 for 1, and strictly increasing; the same for the lane of a note, the bar of a chord and the lines across the field.
+	 */
+	public static double depthShare(double progress) {
+		double p = Math.max(0.0, Math.min(1.0, progress));
+		double left = 1.0 - p;
+		double far = 1.0 / (1.0 + DEPTH);
+		return (1.0 / (1.0 + DEPTH * left) - far) / (1.0 - far);
+	}
+
+	/** The depth of an event at its horizon, in times its depth at the hit line: the strength of the perspective of {@link #depthShare}. */
+	static final double DEPTH = 2.0;
 
 	/** The y of the top edge of the neck: the line of the arrival of the events, which is the hit line. */
 	public double neckTopY() {

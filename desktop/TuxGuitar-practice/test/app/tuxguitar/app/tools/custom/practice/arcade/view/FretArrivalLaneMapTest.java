@@ -43,7 +43,8 @@ public class FretArrivalLaneMapTest {
 		assertEquals(lane.origin().y(), lane.at(0.0).y(), 1e-9);
 		assertEquals(lane.end().x(), lane.at(1.0).x(), 1e-9);
 		assertEquals(lane.end().y(), lane.at(1.0).y(), 1e-9);
-		assertEquals((lane.origin().x() + lane.end().x()) / 2.0, lane.at(0.5).x(), 1e-9, "straight");
+		double q = IsometricProjection.depthShare(0.5);
+		assertEquals(lane.origin().x() + (lane.end().x() - lane.origin().x()) * q, lane.at(0.5).x(), 1e-9, "on the straight way, in perspective");
 		assertEquals(lane.end().x(), lane.at(7.0).x(), 1e-9, "it stops at its end");
 	}
 

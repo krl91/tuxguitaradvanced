@@ -207,7 +207,7 @@ public class ArcadeSceneChordTest {
 	public void aVerdictDoesNotAppearBeforeTheEventIsClose() {
 		SceneFixture fixture = a5();
 		ArcadeRun.View run = ArcadeSceneTest.viewOf(ArcadeVerdict.ON_TIME, ArcadeVerdict.WAITING);
-		assertTrue(fixture.scene(false).build(fixture.onset(0) - 2500 * MS, SCREEN, run, 100).forEvent(0, Role.BADGE).isEmpty());
+		assertTrue(fixture.scene(false).build(fixture.onset(0) - 8000 * MS, SCREEN, run, 100).forEvent(0, Role.BADGE).isEmpty());
 		assertFalse(fixture.scene(false).build(fixture.onset(0) - 100 * MS, SCREEN, run, 100).forEvent(0, Role.BADGE).isEmpty(), "an early match shows at once");
 	}
 

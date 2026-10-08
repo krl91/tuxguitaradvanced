@@ -288,8 +288,7 @@ public final class ArcadeScene {
 			}
 			out.line(Role.FIELD_GUIDE, lane.origin().x(), lane.origin().y(), lane.end().x(), lane.end().y(), WIRE_COLOUR, 0.16, 1.0, -1, 0);
 		}
-		for (int k = 0; k <= 3; k++) {
-			double progress = k / 4.0;
+		for (double progress : new double[] { 0.0, 0.35, 0.65, 0.85 }) {
 			ScreenPoint left = f.projection.approach(f.cam.left(), progress, f.cam);
 			ScreenPoint right = f.projection.approach(f.cam.right(), progress, f.cam);
 			out.line(Role.FIELD_GUIDE, left.x(), left.y(), right.x(), right.y(), WIRE_COLOUR, 0.12, 1.0, -1, 0);
@@ -442,7 +441,8 @@ public final class ArcadeScene {
 		g.x = this.neck.fretCentreX(position.fret());
 		// the lane of the fret of the note, whatever its string: the same line for every note written on that fret
 		g.at = f.lanes.laneForFret(position.fret()).at(f.progressOf(event));
-		g.radius = Math.max(6.0, f.h * 0.030 * g.at.scale());
+		// bigger than before, and still big in the distance, so that a note is seen coming from far (the owner, 2026-10-09)
+		g.radius = Math.max(8.0, f.h * 0.036 * (0.6 + 0.4 * g.at.scale()));
 		return g;
 	}
 

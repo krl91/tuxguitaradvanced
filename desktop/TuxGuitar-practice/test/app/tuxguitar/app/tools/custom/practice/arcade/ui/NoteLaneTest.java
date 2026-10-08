@@ -160,7 +160,7 @@ public class NoteLaneTest {
 		assertNotNull(marker, where + ": the marker was sent to the painter");
 		assertTrue(distanceToSegment(marker.cx, marker.cy, lane.x1, lane.y1, lane.x2, lane.y2) <= TOLERANCE,
 				where + ": the marker leaves its lane by " + distanceToSegment(marker.cx, marker.cy, lane.x1, lane.y1, lane.x2, lane.y2));
-		double p = Math.max(0.0, Math.min(1.0, progress));
+		double p = IsometricProjection.depthShare(progress);
 		assertEquals(lane.x1 + (lane.x2 - lane.x1) * p, marker.cx, TOLERANCE, where + ": the marker is at its share of the lane");
 		assertEquals(lane.y1 + (lane.y2 - lane.y1) * p, marker.cy, TOLERANCE, where);
 		if (progress >= 1.0) {
