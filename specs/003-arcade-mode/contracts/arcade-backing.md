@@ -1,0 +1,12 @@
+# Contract: Arcade backing (increment B)
+
+Built on `FollowPlayer`, `FollowPlayback`, `FollowRun`, `FollowStarter` (`.../practice/session`). Additions: `FollowPlayer.pause()/resume()`, `FollowPlayback.pause()/resume()`, `ArcadeTrackCandidates`.
+
+1. **Explicit track.** Arcade starts only with a track chosen by the learner from `ArcadeTrackCandidates` (pitched, not percussion, with events). No default is applied silently: a pre-selection (the cursor's track) is shown and must be confirmed by the start.
+2. **Exclusion in the player only.** `FollowPlayback` mutes the chosen track with `setPlayerOnlyMute` before `play()`; every other track plays through the normal player with the song's mix, order, tempo, repeats and alternative endings. The song's `isMute()/isSolo()` flags, the tracks and the undo stack are byte-for-byte unchanged during and after the run (test: digest of the song before/after, as in `FollowSummaryTest`).
+3. **A song with a single track** keeps that track silent and plays the count-in; it is not re-enabled (FR-014), a test pins it.
+4. **Count-in, speed, tempo, repeats.** The player's count-down is forced on and the tempo percentage is the chosen speed; the timeline (`FollowTimeline.build(song, sequence, percent)`) follows the same repeats and tempo changes as the player (inherited; tested at 70 and 100 %, with a tempo change, a repeat and an alternative ending in `FollowFunctionalTest`, to be repeated for the Arcade run).
+5. **Pause and resume together.** `pause()`: the player stops at its tick (mutes, percentage, count-down and listeners stay as set; the stop notification caused by the run's own pause is not an end), the session is paused with a reason, the events of the pause are NOT_JUDGED. `resume()`: tick position restored, count-in, play, session resumed. A pause while counting in, a pause when already paused, a resume without pause and a stop while paused are defined and tested.
+6. **Exactly-once restoration** after stop, error, a learner's own Play (ends the run, the playback goes on), the end of the song, a new song, closing the window, an exception: the guarantees and tests of `FollowPlaybackTest`/`FollowRunTest` are repeated for the paused states.
+7. **The backing is never judged**: no input is mixed from the output; the preparation advises headphones when the selected input can hear the speakers (a microphone with built-in speakers), and says so (FR-013).
+8. **Input or output lost during a run** degrades with a message and ends the run cleanly; never a hang (FR-044).
