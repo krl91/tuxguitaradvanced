@@ -61,7 +61,7 @@ public class FollowBenchmarkTest {
 	private static final double MATCH_TOLERANCE_MILLIS = 60.0;
 	private static final int[] SCALE = { 0, 2, 4, 5, 7, 5, 4, 2, 0, 3, 5, 7, 8, 7, 5, 3 };
 
-	enum Scenario {
+	public enum Scenario {
 		CLEAN("scale, played in time (offsets within 25 ms)"),
 		REPEATED("one pitch repeated, played in time"),
 		MISTAKE("scale with one deliberate mistake"),
@@ -79,10 +79,10 @@ public class FollowBenchmarkTest {
 	}
 
 	/** What one run gave. */
-	static final class Outcome {
+	public static final class Outcome {
 		final StringBuilder details = new StringBuilder();
 		int events;
-		int matched;
+		public int matched;
 		int rightMatches;
 		int falseMatches;
 		int wrongPitch;
@@ -140,7 +140,7 @@ public class FollowBenchmarkTest {
 		}
 	}
 
-	static Outcome run(Scenario scenario, double notesPerSecond, long seed) {
+	public static Outcome run(Scenario scenario, double notesPerSecond, long seed) {
 		return run(scenario, notesPerSecond, seed, false);
 	}
 
