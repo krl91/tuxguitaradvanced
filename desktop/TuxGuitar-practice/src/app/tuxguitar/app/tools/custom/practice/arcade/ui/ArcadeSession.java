@@ -26,7 +26,7 @@ import app.tuxguitar.app.tools.custom.practice.session.TempoClock;
  * of the prepared plan and the neck of the chosen track, and the latest snapshot of the session. The snapshots arrive on the UI thread (the sink of the run);
  * the view of the run is taken from the latest one at each paint, on the UI thread. Nothing here is kept after the run: it is dropped with the window (FR-026).
  */
-public final class ArcadeSession {
+public final class ArcadeSession implements ArcadeController.Outcome {
 
 	private final FollowStarter.Plan plan;
 	private final ArcadeRun arcadeRun;
@@ -80,12 +80,14 @@ public final class ArcadeSession {
 	}
 
 	/** The result of the run so far, or null before the first snapshot. */
+	@Override
 	public ArcadeResult result() {
 		FollowSession.Snapshot snapshot = this.latest.get();
 		return snapshot == null ? null : this.arcadeRun.result(snapshot);
 	}
 
 	/** True when the session judged the whole passage. */
+	@Override
 	public boolean isComplete() {
 		FollowSession.Snapshot snapshot = this.latest.get();
 		return snapshot != null && snapshot.state() == FollowSession.State.COMPLETE;

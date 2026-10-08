@@ -416,4 +416,22 @@ public class FollowPanelTest {
 		assertEquals(1, this.backend.clicks.silenced);
 		assertEquals(1, this.backend.ended);
 	}
+
+	@Test
+	public void arcadeIsOfferedAsAThirdModeWithTheControlsOfTheTimedModesAndItsOwnExplanation() {
+		open();
+		chooseMode(FollowSettings.Mode.ARCADE);
+
+		assertEquals(FollowSettings.Mode.ARCADE, this.settings.getMode());
+		assertTrue(visible(this.panel.percentSpinner()), "the speed is shared with the following mode");
+		assertTrue(visible(this.panel.toleranceSelect()));
+		assertTrue(visible(this.panel.calibrateButton()));
+		assertTrue(this.panel.modeHintLabel().getText().contains("practice.mode.arcade.hint"));
+		assertTrue(this.panel.modeHintLabel().getText().contains("arcade.monitoring.unavailable"), "the learner is told that hearing the guitar through the application is not offered");
+
+		chooseMode(FollowSettings.Mode.FOLLOW);
+		assertFalse(this.panel.modeHintLabel().getText().contains("arcade."), "the following mode says nothing of Arcade");
+		chooseMode(FollowSettings.Mode.WAIT);
+		assertFalse(visible(this.panel.percentSpinner()));
+	}
 }

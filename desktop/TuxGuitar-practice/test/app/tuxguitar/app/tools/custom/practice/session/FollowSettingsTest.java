@@ -112,4 +112,25 @@ public class FollowSettingsTest {
 		assertEquals(0, full.startingAt(99).getEvents().size());
 		assertEquals(5, full.getEvents().size(), "the sequence it comes from is not changed");
 	}
+
+	@Test
+	public void arcadeIsAThirdModeThatSharesThePercentageAndTheToleranceWithFollowingAndChangesNothingOfThem() {
+		FollowSettings settings = new FollowSettings(new RecognitionSettingsStore(new Memory()));
+		settings.setPercent(80);
+		settings.setTolerance(Preset.STRICT);
+
+		settings.setMode(Mode.ARCADE);
+		assertTrue(settings.isArcade());
+		assertFalse(settings.isFollow(), "following and Arcade are two modes");
+		assertTrue(settings.isTimed(), "both are played at the tempo of the score and judged on time");
+		assertEquals(80, settings.getPercent());
+		assertEquals(Preset.STRICT, settings.getTolerance());
+
+		settings.setMode(Mode.FOLLOW);
+		assertFalse(settings.isArcade());
+		assertTrue(settings.isTimed());
+		settings.setMode(Mode.WAIT);
+		assertFalse(settings.isTimed());
+		assertEquals(80, settings.getPercent(), "the choices stay for the next time, in memory only");
+	}
 }

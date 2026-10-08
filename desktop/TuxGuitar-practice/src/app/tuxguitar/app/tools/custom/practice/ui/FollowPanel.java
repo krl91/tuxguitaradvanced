@@ -102,6 +102,8 @@ public final class FollowPanel {
 		this.mode = uiFactory.createDropDownSelect(this.panel);
 		this.mode.addItem(new UISelectItem<FollowSettings.Mode>(TuxGuitar.getProperty("practice.mode.wait"), FollowSettings.Mode.WAIT));
 		this.mode.addItem(new UISelectItem<FollowSettings.Mode>(TuxGuitar.getProperty("practice.mode.follow"), FollowSettings.Mode.FOLLOW));
+		this.mode.addItem(new UISelectItem<FollowSettings.Mode>(TuxGuitar.getProperty("practice.mode.arcade", new String[] { TuxGuitar.getProperty("arcade.name") }),
+				FollowSettings.Mode.ARCADE));
 		layout.set(this.mode, 1, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.modeHint = wrap(uiFactory, layout, 2);
 
@@ -245,11 +247,13 @@ public final class FollowPanel {
 		}
 		this.updating = true;
 		try {
-			boolean follow = this.settings.isFollow();
+			// Arcade is the tempo-following run too: it shares the percentage, the tolerance and the calibration
+			boolean follow = this.settings.isTimed();
 			this.mode.setSelectedValue(this.settings.getMode());
 			this.percent.setValue(this.settings.getPercent());
 			this.tolerance.setSelectedValue(this.settings.getTolerance());
-			this.modeHint.setText(TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
+			this.modeHint.setText(this.settings.isArcade() ? TuxGuitar.getProperty("practice.mode.arcade.hint") + "\n" + TuxGuitar.getProperty("arcade.monitoring.unavailable")
+					: TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
 			boolean idle = (this.running == null);
 			this.percentLabel.setVisible(follow);
 			this.percent.setVisible(follow);
@@ -502,6 +506,10 @@ public final class FollowPanel {
 
 	UILabel precisionLabel() {
 		return this.precision;
+	}
+
+	UILabel modeHintLabel() {
+		return this.modeHint;
 	}
 
 	UILabel announceLabel() {

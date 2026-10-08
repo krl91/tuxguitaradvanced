@@ -53,6 +53,20 @@ public final class ArcadeStarter {
 			throw new IllegalArgumentException("this track cannot be performed: " + candidates.getExclusions().get(track));
 		}
 		PracticeSequence sequence = PracticeSequenceBuilder.build(song, track, TrackTuning.ofAnyStrings(track), caretMeasure, caretPosition);
+		return prepareFrom(context, song, track, sequence, settings, parameters, judge, polyphonic, environment, uiSink, uiExecutor, endListener, eventsFactory, restart);
+	}
+
+	/**
+	 * The same run from a sequence the caller made (the replay of a section starts from a chosen measure: {@code PracticeSequence.startingAt}); the checks are
+	 * those of {@link #prepare}.
+	 */
+	public static FollowStarter.Plan prepareFrom(TGContext context, TGSong song, TGTrack track, PracticeSequence sequence, FollowSettings settings,
+			PracticeParameters parameters, TechniqueJudge judge, Supplier<PolyphonicAcceptance> polyphonic, FollowStarter.Environment environment,
+			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
+			Runnable restart) {
+		if (track == null) {
+			throw new IllegalArgumentException("the learner must choose the track to perform");
+		}
 		return FollowStarter.prepare(context, song, sequence, track.getNumber(), settings, parameters, judge, polyphonic, environment, uiSink, uiExecutor,
 				endListener, eventsFactory, restart);
 	}

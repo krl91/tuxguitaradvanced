@@ -5,6 +5,16 @@ import java.util.Map;
 
 import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeResult;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeStarter;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeController;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeResultWindow;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeRunPort;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSceneLabels;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSession;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeTexts;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeWindow;
+import app.tuxguitar.app.tools.custom.practice.model.ArcadeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequenceBuilder;
@@ -128,6 +138,14 @@ public class PracticeWindow {
 	private FollowSession.Snapshot followLast;
 	private int followShownEvent = -1;
 	private int followShownExtras;
+	// ---- Arcade (spec 003 Increment D): the same run as the tempo-following mode (followPlan), seen on the isometric view
+	private ArcadeController arcadeController;
+	private ArcadeSession arcadeSession;
+	private ArcadeWindow arcadeWindow;
+	private ArcadeResultWindow arcadeResult;
+	private PracticeTrackCandidate arcadeCandidate;
+	private PracticeSequence arcadeFull;
+	private static final ArcadeTexts ARCADE_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
 		this.context = context;
@@ -320,7 +338,7 @@ public class PracticeWindow {
 		this.followPanel = new FollowPanel(uiFactory, panel, FollowSettings.getInstance(this.context), this.followAdapter);
 		layout.set(this.followPanel.getControl(), 13, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.followPanel.setContentListener(this::refit);
-		this.followPanel.setModeListener(this::updateStartButton);
+		this.followPanel.setModeListener(this::modeChanged);
 
 		layout.set(startPanel, 14, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.startButton = button(uiFactory, startPanel, startLayout, 1, "practice.start", () -> startSession());
@@ -401,9 +419,28 @@ public class PracticeWindow {
 	private void showPreparation() {
 		this.song = TuxGuitar.getInstance().getDocumentManager().getSong();
 		TGTrack caretTrack = TuxGuitar.getInstance().getTablatureEditor().getTablature().getCaret().getTrack();
-		PracticeTrackCandidates candidates = PracticeTrackCandidates.evaluate(this.song, caretTrack);
+		boolean arcade = FollowSettings.getInstance(this.context).isArcade();
+		java.util.List<PracticeTrackCandidate> candidateList;
+		PracticeTrackCandidate preselected;
+		Map<TGTrack, String> exclusions = new java.util.LinkedHashMap<TGTrack, String>();
+		if( arcade ) {
+			// Arcade: any pitched track, whatever its number of strings; the cursor's track is shown, and nothing starts on it alone
+			ArcadeTrackCandidates arcadeCandidates = ArcadeTrackCandidates.evaluate(this.song, caretTrack);
+			candidateList = arcadeCandidates.getCandidates();
+			preselected = arcadeCandidates.getPreselected();
+			for( Map.Entry<TGTrack, ArcadeTrackCandidates.Exclusion> entry : arcadeCandidates.getExclusions().entrySet() ) {
+				exclusions.put(entry.getKey(), entry.getValue().name());
+			}
+		} else {
+			PracticeTrackCandidates candidates = PracticeTrackCandidates.evaluate(this.song, caretTrack);
+			candidateList = candidates.getCandidates();
+			preselected = candidates.getPreselected();
+			for( Map.Entry<TGTrack, PracticeTrackCandidates.Exclusion> entry : candidates.getExclusions().entrySet() ) {
+				exclusions.put(entry.getKey(), entry.getValue().name());
+			}
+		}
 		this.tracks.removeItems();
-		for( PracticeTrackCandidate candidate : candidates.getCandidates() ) {
+		for( PracticeTrackCandidate candidate : candidateList ) {
 			String text = candidate.getTrackNumber() + ". " + candidate.getTrackName();
 			if( candidate.hasGuitarHint() ) {
 				text += " (" + TuxGuitar.getProperty("practice.track.guitar-hint") + ")";
@@ -411,16 +448,16 @@ public class PracticeWindow {
 			this.tracks.addItem(new UISelectItem<PracticeTrackCandidate>(text, candidate));
 		}
 		boolean cursorTrackCanBePractised = false;
-		for( PracticeTrackCandidate candidate : candidates.getCandidates() ) {
+		for( PracticeTrackCandidate candidate : candidateList ) {
 			cursorTrackCanBePractised |= (caretTrack != null && candidate.getTrack() == caretTrack);
 		}
 		this.autoStart = QuickStart.requested(this.quickStartRequested, cursorTrackCanBePractised);
-		if( candidates.getPreselected() != null ) {
-			this.tracks.setSelectedValue(candidates.getPreselected());
-		} else if( !candidates.getCandidates().isEmpty() ) {
-			this.tracks.setSelectedValue(candidates.getCandidates().get(0));
+		if( preselected != null ) {
+			this.tracks.setSelectedValue(preselected);
+		} else if( !candidateList.isEmpty() ) {
+			this.tracks.setSelectedValue(candidateList.get(0));
 		}
-		this.trackNotice.setText(candidates.getCandidates().isEmpty() ? noCandidateText(candidates.getExclusions()) : "");
+		this.trackNotice.setText(candidateList.isEmpty() ? noCandidateText(exclusions) : "");
 		updateTuning();
 		inputChanged(this.engine.getSelection().snapshot());
 		refreshPassageSettings();
@@ -457,7 +494,12 @@ public class PracticeWindow {
 				break;
 		}
 		this.tuningLabel.setText(text);
-		this.unusualLabel.setText(tuning.isUnusualSetup() ? TuxGuitar.getProperty("practice.tuning.unusual") : "");
+		String unusual = tuning.isUnusualSetup() ? TuxGuitar.getProperty("practice.tuning.unusual") : "";
+		if( FollowSettings.getInstance(this.context).isArcade() && lowestBelowG1(tuning.getOpenStringMidi()) ) {
+			// the notes below G1 (49 Hz) are never recognised by the chain (research R11): said, not hidden
+			unusual = (unusual.isEmpty() ? "" : unusual + "\n") + TuxGuitar.getProperty("arcade.bass.limit");
+		}
+		this.unusualLabel.setText(unusual);
 		updateMismatch();
 		updateStartButton();
 		refit();
@@ -494,7 +536,9 @@ public class PracticeWindow {
 	private void updateStartButton() {
 		boolean canStart = QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus());
 		this.startButton.setEnabled(canStart);
-		this.startButton.setText(TuxGuitar.getProperty(FollowSettings.getInstance(this.context).isFollow() ? "practice.start.follow" : "practice.start"));
+		FollowSettings modes = FollowSettings.getInstance(this.context);
+		this.startButton.setText(modes.isArcade() ? TuxGuitar.getProperty("practice.start.arcade", new String[] { TuxGuitar.getProperty("arcade.name") })
+				: TuxGuitar.getProperty(modes.isFollow() ? "practice.start.follow" : "practice.start"));
 		// a one-click start is waiting for the guitar: say so instead of leaving a greyed button unexplained
 		boolean waiting = (this.autoStart && !canStart && this.tracks.getSelectedValue() != null);
 		this.startLabel.setText(waiting ? this.startBase + "\n" + TuxGuitar.getProperty("practice.quickstart.waiting") : this.startBase);
@@ -515,6 +559,10 @@ public class PracticeWindow {
 	private void startSession() {
 		PracticeTrackCandidate candidate = this.tracks.getSelectedValue();
 		if( candidate == null ) {
+			return;
+		}
+		if( FollowSettings.getInstance(this.context).isArcade() ) {
+			startArcade(candidate, this.preparedSequence);
 			return;
 		}
 		if( FollowSettings.getInstance(this.context).isFollow() ) {
@@ -604,6 +652,186 @@ public class PracticeWindow {
 		// the current event framed red (none once complete), the just-accepted one flashed green
 		this.highlight.show(state == PracticeSession.State.COMPLETE ? null : snapshot.getCurrentEvent(), snapshot.getLastAccepted(),
 				snapshot.getAcceptedCount());
+	}
+
+	// ---------------------------------------------------------------- Arcade (spec 003, Increment D)
+
+	/** The learner chose another mode: the tracks that can be played are not the same, so the list is made again. */
+	private void modeChanged() {
+		if( !isOpen() ) {
+			return;
+		}
+		showPreparation();
+		refit();
+	}
+
+	/**
+	 * Starts an Arcade run of the chosen track from the given sequence: the same run as the tempo-following mode (the chosen track is the only one silent in
+	 * the player, the others are the backing), seen on the isometric view in its own window. The preparation window is hidden while it runs.
+	 */
+	private void startArcade(PracticeTrackCandidate candidate, PracticeSequence full) {
+		RecognitionSettings recognition = RecognitionSettingsStore.getInstance(this.context).get();
+		PracticeParameters parameters = PracticeParameters.of(recognition);
+		this.arcadeCandidate = candidate;
+		this.arcadeFull = full;
+		final TrackTuning arcadeTuning = TrackTuning.ofAnyStrings(candidate.getTrack());
+		FollowStarter.Plan plan;
+		try {
+			plan = ArcadeStarter.prepareFrom(this.context, this.song, candidate.getTrack(), full, FollowSettings.getInstance(this.context), parameters,
+					new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
+					() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()), this.followAdapter, this::renderArcade,
+					runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), this::arcadeRunEnded,
+					(loop, handler) -> new FollowEvents(this.context, loop, handler, this.engine.getSelection(), this.shared),
+					() -> TGSynchronizer.getInstance(this.context).executeLater(this::restartArcade));
+		} catch( IllegalArgumentException exception ) {
+			this.followPanel.message(TuxGuitar.getProperty("arcade.start.failed"));
+			refit();
+			return;
+		}
+		this.followPlan = plan;
+		this.followLast = null;
+		this.arcadeSession = ArcadeSession.of(plan, arcadeTuning, new ArcadeSceneLabels(ARCADE_TEXTS), false);
+		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
+		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
+		final FollowRun run = plan.run();
+		this.followFrameListener = run::postFrame;
+		this.engine.subscribe(this.followFrameListener);
+		this.plugin.setCommandSink(run::postCommand);
+		final ArcadeSession session = this.arcadeSession;
+		this.arcadeController = new ArcadeController(ArcadeRunPort.of(run), session, new ArcadeController.Listener() {
+			public void stateChanged(ArcadeController.State state) {
+				if( PracticeWindow.this.arcadeWindow != null ) {
+					PracticeWindow.this.arcadeWindow.setPaused(state == ArcadeController.State.PAUSED);
+				}
+			}
+
+			public void ended(FollowRun.Ended reason, ArcadeResult result) {
+				PracticeWindow.this.arcadeEnded(reason, result);
+			}
+
+			public void startFailed(FollowPlayback.Result result) {
+				PracticeWindow.this.arcadeStartFailed(result);
+			}
+		});
+		final ArcadeController controller = this.arcadeController;
+		this.arcadeWindow = new ArcadeWindow(TGApplication.getInstance(this.context).getFactory(), TGWindow.getInstance(this.context).getWindow(),
+				session.frameSource(this.followAdapter.player().clock(), ArcadeWindow.newQuality(), () -> plan.percent()),
+				task -> TGSynchronizer.getInstance(this.context).executeLater(task), ARCADE_TEXTS, new ArcadeWindow.Actions() {
+					public void pause() {
+						controller.pause();
+					}
+
+					public void resume() {
+						controller.resume();
+					}
+
+					public void stop() {
+						controller.stop();
+					}
+				});
+		controller.start();
+		if( controller.state() == ArcadeController.State.RUNNING ) {
+			this.arcadeWindow.open();
+			setVisible(this.window, false);
+		}
+	}
+
+	/** A snapshot of the run (UI thread). */
+	private void renderArcade(FollowSession.Snapshot snapshot) {
+		ArcadeSession session = this.arcadeSession;
+		if( session != null ) {
+			session.accept(snapshot);
+		}
+	}
+
+	/** The run ended, for any cause (UI thread): the controller says it once. */
+	private void arcadeRunEnded(FollowRun.Ended reason) {
+		ArcadeController controller = this.arcadeController;
+		if( controller != null ) {
+			controller.ended(reason);
+		}
+	}
+
+	private void arcadeStartFailed(FollowPlayback.Result result) {
+		teardownSession();
+		showPreparation();
+		showWindow();
+		this.followPanel.message(TuxGuitar.getProperty(result == FollowPlayback.Result.ALREADY_PLAYING ? "arcade.start.player-busy" : "arcade.start.failed"));
+		refit();
+	}
+
+	/**
+	 * The end of an Arcade run (UI thread). The window of the run is closed and everything is given back; the result is shown once when the whole passage was
+	 * judged and the song came to its end, otherwise the preparation window comes back, with the reason for a play of the learner, a stopped player or an error.
+	 */
+	private void arcadeEnded(FollowRun.Ended reason, ArcadeResult result) {
+		final PracticeSequence full = this.arcadeFull;
+		final PracticeTrackCandidate candidate = this.arcadeCandidate;
+		teardownSession();
+		if( !isOpen() ) {
+			return;
+		}
+		if( result != null ) {
+			showPreparation();
+			int first = 1;
+			int last = 1;
+			if( full != null && !full.isEmpty() ) {
+				first = full.getEvents().get(full.getStartIndex()).getMeasureIndex() + 1;
+				last = full.getEvents().get(full.getEvents().size() - 1).getMeasureIndex() + 1;
+			}
+			this.arcadeResult = new ArcadeResultWindow(TGApplication.getInstance(this.context).getFactory(), TGWindow.getInstance(this.context).getWindow(),
+					ARCADE_TEXTS, result, first, last, measure -> replayArcade(candidate, full, measure));
+			this.arcadeResult.open();
+			return;
+		}
+		showPreparation();
+		showWindow();
+		if( reason == FollowRun.Ended.MANUAL_PLAY || reason == FollowRun.Ended.FAILED || reason == FollowRun.Ended.PLAYER_STOPPED ) {
+			this.followPanel.message(TuxGuitar.getProperty(reason == FollowRun.Ended.MANUAL_PLAY ? "arcade.end.manual-play"
+					: reason == FollowRun.Ended.FAILED ? "arcade.end.failed" : "arcade.end.player-stopped"));
+		}
+		refit();
+	}
+
+	/** The replay of a section: the same settings, from the first event of the chosen measure (US5.3). */
+	private void replayArcade(PracticeTrackCandidate candidate, PracticeSequence full, int measureNumber) {
+		if( !isOpen() || candidate == null || full == null ) {
+			return;
+		}
+		int index = full.getStartIndex();
+		for( int i = 0; i < full.getEvents().size(); i++ ) {
+			if( full.getEvents().get(i).getMeasureIndex() >= measureNumber - 1 ) {
+				index = i;
+				break;
+			}
+		}
+		startArcade(candidate, full.startingAt(index));
+	}
+
+	/** Restart of the learner: this run ends and a new one begins from the same place, once. */
+	private void restartArcade() {
+		PracticeTrackCandidate candidate = this.arcadeCandidate;
+		PracticeSequence full = this.arcadeFull;
+		if( !isOpen() || this.followPlan == null || candidate == null || full == null ) {
+			return;
+		}
+		teardownSession();
+		startArcade(candidate, full);
+	}
+
+	/** Gives the window and the controller of the run back; the run itself is stopped by {@link #teardownFollow}. */
+	private void teardownArcade() {
+		ArcadeWindow window = this.arcadeWindow;
+		this.arcadeWindow = null;
+		this.arcadeController = null;
+		this.arcadeSession = null;
+		if( window != null ) {
+			window.close();
+		}
+		if( this.arcadeResult != null ) {
+			this.arcadeResult.close();
+			this.arcadeResult = null;
+		}
 	}
 
 	// ---------------------------------------------------------------- the tempo-following mode (spec 002 T096-T099)
@@ -726,6 +954,7 @@ public class PracticeWindow {
 
 	/** Ends the run if there is one, gives everything back, and forgets it: calling it again does nothing. */
 	private void teardownFollow() {
+		teardownArcade();
 		FollowStarter.Plan plan = this.followPlan;
 		if( plan == null ) {
 			return;
@@ -783,15 +1012,28 @@ public class PracticeWindow {
 		return TuxGuitar.getProperty("practice.start-position.cursor", new String[] { measure });
 	}
 
+	/** True when a string of the track is tuned below G1 (MIDI 31): its open note and the first frets cannot be judged. */
+	private static boolean lowestBelowG1(int[] openStringMidi) {
+		for( int midi : openStringMidi ) {
+			if( midi < 31 ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private TrackTuning tuning(TGTrack track) {
+		if( FollowSettings.getInstance(this.context).isArcade() ) {
+			return TrackTuning.ofAnyStrings(track);
+		}
 		return TrackTuning.of(track, TrackTuning.builtInSixStringMinimum(TuningManager.getInstance(this.context).getTgTuningsGroup()));
 	}
 
-	private static String noCandidateText(Map<TGTrack, PracticeTrackCandidates.Exclusion> exclusions) {
+	private static String noCandidateText(Map<TGTrack, String> exclusions) {
 		StringBuilder text = new StringBuilder(TuxGuitar.getProperty("practice.track.none"));
-		for( Map.Entry<TGTrack, PracticeTrackCandidates.Exclusion> entry : exclusions.entrySet() ) {
+		for( Map.Entry<TGTrack, String> entry : exclusions.entrySet() ) {
 			text.append("\n").append(entry.getKey().getNumber()).append(". ").append(entry.getKey().getName()).append(": ")
-					.append(TuxGuitar.getProperty("practice.exclusion." + entry.getValue().name()));
+					.append(TuxGuitar.getProperty("practice.exclusion." + entry.getValue()));
 		}
 		return text.toString();
 	}

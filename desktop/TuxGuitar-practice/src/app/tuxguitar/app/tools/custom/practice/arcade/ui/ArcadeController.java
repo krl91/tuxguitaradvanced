@@ -35,12 +35,19 @@ public final class ArcadeController {
 		void startFailed(FollowPlayback.Result result);
 	}
 
+	/** What the controller needs to know of the run to decide about the result: whether the passage was judged to its end, and the result. */
+	public interface Outcome {
+		boolean isComplete();
+
+		ArcadeResult result();
+	}
+
 	private final ArcadeRunPort run;
-	private final ArcadeSession session;
+	private final Outcome session;
 	private final Listener listener;
 	private State state = State.READY;
 
-	public ArcadeController(ArcadeRunPort run, ArcadeSession session, Listener listener) {
+	public ArcadeController(ArcadeRunPort run, Outcome session, Listener listener) {
 		this.run = run;
 		this.session = session;
 		this.listener = listener;
@@ -48,10 +55,6 @@ public final class ArcadeController {
 
 	public State state() {
 		return this.state;
-	}
-
-	public ArcadeSession session() {
-		return this.session;
 	}
 
 	/** Starts the run: the count-in, then the backing and the judging together. Only from READY. */
