@@ -178,8 +178,28 @@ public final class ArcadeScene {
 		return low;
 	}
 
+	/** The depth cues of the approach field: the lanes of the frets converging towards the horizon and a few lines across, at fixed shares of the way. */
+	private void drawField(Out out, IsometricProjection projection, Camera cam) {
+		for (int n = 0; n <= this.neck.fretCount(); n++) {
+			double x = this.neck.fretX(n);
+			if (!cam.shows(x, 0.0)) {
+				continue;
+			}
+			ScreenPoint near = projection.approach(x, 1.0, cam);
+			ScreenPoint far = projection.approach(x, 0.0, cam);
+			out.line(Role.FIELD_GUIDE, far.x(), far.y(), near.x(), near.y(), WIRE_COLOUR, 0.16, 1.0, -1, 0);
+		}
+		for (int k = 0; k <= 3; k++) {
+			double progress = k / 4.0;
+			ScreenPoint left = projection.approach(cam.left(), progress, cam);
+			ScreenPoint right = projection.approach(cam.right(), progress, cam);
+			out.line(Role.FIELD_GUIDE, left.x(), left.y(), right.x(), right.y(), WIRE_COLOUR, 0.12, 1.0, -1, 0);
+		}
+	}
+
 	private void drawNeck(Out out, IsometricProjection projection, Camera cam, Viewport viewport) {
 		int count = this.neck.layout().count();
+		drawField(out, projection, cam);
 		double w = viewport.width();
 		double h = viewport.height();
 		double top = h * (IsometricProjection.HIT_LINE + 0.02);

@@ -76,6 +76,7 @@ public final class SceneFixture {
 	};
 
 	public final SongFixture song;
+	public final FollowTimeline timeline;
 	public final List<ArcadeRenderEvent> events;
 	public final NeckModel neck;
 	public final StringColours colours;
@@ -84,6 +85,7 @@ public final class SceneFixture {
 	public SceneFixture(SongFixture song, TrackTuning tuning, int percent) {
 		this.song = song;
 		FollowTimeline timeline = FollowTimeline.build(song.song, song.sequence(), percent);
+		this.timeline = timeline;
 		List<PracticeEvent> practice = song.sequence().getEvents();
 		this.events = new ArrayList<ArcadeRenderEvent>();
 		for (int i = 0; i < practice.size(); i++) {
