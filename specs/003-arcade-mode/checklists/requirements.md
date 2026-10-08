@@ -33,6 +33,12 @@
 - [x] Apple Silicon frame pacing is measured under concurrent MIDI and recognition, not from an isolated paint loop.
 - [x] Hardware acceleration is vendor-neutral at the scene boundary, benchmark-gated and optional; a functional fallback is mandatory.
 - [x] Frame queues, audio-thread rendering work and render-held audio locks are forbidden and testable.
+- [x] Multiple future events may be previewed in the approach field, but the physical neck exposes targets for exactly one next event (or the complete next chord), with an atomic transition.
+- [x] Every approaching chord carries its written name when available, with a translated generic fallback and no inferred harmonic name.
+- [x] Dense passages use a collision-free detail budget: the active event remains readable, at most four identities are detailed, and farther events become compact previews without changing musical data.
+- [x] Multiple upcoming chords share one centred temporal lane; only the nearest has a full in-bounds diagram and later chords remain compact until promoted in order.
+- [x] Visual acceptance includes a deterministic, diverse external GP3/GP4 corpus; normal builds skip without it and copyrighted score bytes/private paths are never committed.
+- [x] The actionable neck target is a large opaque filled string-coloured disk with a contrasting outline; quality reduction may remove decoration but never weaken this core cue.
 
 ## Feature Readiness
 

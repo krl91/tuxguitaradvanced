@@ -117,3 +117,15 @@ No effect is implemented in the first increment (FR-032). Task T090 is the **res
 ## R16 - Texts and accessibility
 
 English, French and Spanish keys under `arcade.*`, with the parity test pattern of `FollowStringsTest`. Verdicts always carry a symbol and a word; the string label, the position and the geometry identify a string with all colours removed (a test renders the scene in monochrome and checks the identifiers). The numeric score is never shown while playing (FR-021, FR-026).
+
+## R17 - Real GP3/GP4 corpus for visual validation
+
+**Evidence.** The owner-provided recursive folder currently contains 48,506 candidate files: 23,046 `.gp3` and 25,460 `.gp4`. `TestGPCorpusSmoke` already proves the safe pattern: an external environment variable, recursive `Files.walk`, content-aware reading, an optional limit, a clear skip when absent and no copyrighted bytes committed. Its earlier Metallica-only run covered file reading/MIDI generation, not Arcade visual diversity.
+
+**Decision.** Add a practice-module corpus profiler driven by `TG_ARCADE_GP_CORPUS`; do not duplicate or modify `TestGPCorpusSmoke`. Enumerate all candidates, then choose at least 1,000 of each available format by a stable hash of the relative path so alphabetical artist/folder ordering cannot bias the sample. Read by content through the application's normal detection path. For every eligible guitar/bass track, build the real `PracticeSequence`/`FollowTimeline`; classify chords from `PracticeEvent.Kind.EXPECTED_CHORD`, not merely `TGBeat.countNotes()`, so ringing/tied-note semantics match the shipped mode.
+
+Profile: event count, note/chord ratio, longest consecutive chord run, peak events/s over fixed windows, named/unnamed chord counts, maximum chord size, fret range and jump percentiles, string count, track count, repeats and tempo changes. Select at least 60 track cases deterministically from the extremes and middle of the distributions, with both formats and at least five cases each for sparse notes, mixed notes/chords, chord-heavy, repeated/dense chords, fast single notes, large fret jumps, bass/unusual string count when present, and multi-track/repeat/tempo-change material. Limit one source folder to three selected cases unless a category cannot otherwise be filled.
+
+**Privacy/copyright.** The exact local path manifest and generated screenshots live only under the owner's ignored `tests/` area or a temporary directory. The committed report contains aggregate distributions, anonymous stable case IDs and failure categories, never score bytes. Normal tests and CI skip clearly without `TG_ARCADE_GP_CORPUS`.
+
+**Use.** Run structural Arcade assertions for all selected cases at representative clock positions and both `FULL`/`PERFORMANCE`. Generate local screenshots for at least twelve maximally varied cases for T044. Synthetic fixtures remain necessary for exact boundary and mutation tests; the real corpus prevents synthetic geometry from becoming the only product evidence.

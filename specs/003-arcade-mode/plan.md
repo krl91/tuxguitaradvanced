@@ -18,7 +18,7 @@ The work is cut into six increments (A to F) that are independently reviewable; 
 
 **Storage**: none. Nothing about a run is persisted (FR-026, R10).
 
-**Testing**: JUnit 5 in the practice module (`test/`) and in the audio-engine module; fakes `FakeTempoClock` and `FakeMidiPlayer` (`test/.../practice/testsupport`) and `FakePlayerRun` for whole runs; `SwtContractToolkit` for headless widgets; the profile `swt-gui-tests` for native SWT; the `benchmark` tag for measurements.
+**Testing**: JUnit 5 in the practice module (`test/`) and in the audio-engine module; fakes `FakeTempoClock` and `FakeMidiPlayer` (`test/.../practice/testsupport`) and `FakePlayerRun` for whole runs; `SwtContractToolkit` for headless widgets; the profile `swt-gui-tests` for native SWT; the `benchmark` tag for measurements; and an optional external real-score suite under `TG_ARCADE_GP_CORPUS`, skipped without it and never copying score bytes into Git (R17).
 
 **Target Platform**: macOS on Apple Silicon is the only validated platform (constitution IX). Windows and Linux must keep building (the practice module is already in their packages); nothing is claimed for them. The live return is validated, if at all, on this machine.
 
@@ -96,6 +96,7 @@ desktop/TuxGuitar-practice/test/...                  # tests mirror the packages
 * **A - Core without interface.** `ArcadeRun` turns the results of a `FollowSession` into verdicts, score, streak and result; `ArcadeScoring` holds the table (R5). No waiting after an error (inherited: the following session never waits). Deterministic tests on `FakePlayerRun` and on recorded result sequences (SC-004).
 * **B - Backing.** Explicit choice of the performed track (`ArcadeTrackCandidates`), player-only mute of that track only, count-in, tempo, speed, repeats, tempo changes, player pause/resume (T020/T021), exact restoration after stop or error: all on `FakeMidiPlayer`, plus the real `MidiPlayer` without sound as in `MidiFollowPlayerTest`.
 * **C - Isometric view.** `NeckModel` (N strings, `x(n) = L (1 - 2^(-n/12))`), `StringColours`, `IsometricProjection`, `CameraTrack`, `ChordCartouche`, `ArcadeScene` (pure), then a narrow renderer contract and `ArcadeCanvas`. Begin with the existing toolkit path; benchmark it on Apple Silicon under concurrent MIDI, recognition and (when available) monitoring. Adopt an accelerated backend only if the decision record proves a material gain without adding audio risk or disproportionate packaging complexity. Geometry, visibility (SC-010), colour (SC-012), adaptive quality, fallback, monochrome, structural-capture and concurrent audio/render stress tests are required.
+* **H - Real-score visual corpus.** Reuse content-aware GP3/GP4 reading, profile a deterministic sample of at least 2,000 external files and select at least 60 diverse playable tracks. Replay their real practice timelines through the Arcade scene in both quality tiers; keep exact paths/screenshots local and commit only aggregate anonymous evidence. H is part of C's visual acceptance and feeds T044; it does not replace pure fixtures.
 * **D - Interface and result.** Arcade in the mode selector, the Arcade window with the HUD (speed, streak, next event; no number), pause/resume/stop, the result window (score, counts, best streak), the three languages, headless and native GUI tests.
 * **E - Monitoring spike.** Measure, do not build: capture block sizes, a low-buffer output line, accounting, wired and acoustic loopback; gate at 22 ms on the worst credible value; decide whether a monitoring path is built. See `contracts/monitoring-latency-protocol.md`.
 * **F - Effects research task.** Only the protocol and the inventory (`contracts/effects-research-protocol.md`); nothing implemented.
@@ -103,7 +104,7 @@ desktop/TuxGuitar-practice/test/...                  # tests mirror the packages
 ## Order across the pending features (proposal, nothing is started in parallel)
 
 1. Finish and validate Phase 9 of 002 by the owner (blocking for any Arcade release).
-2. Arcade A to D (no effects, no monitoring dependency).
+2. Arcade A to C, real-score corpus H, then D (no effects, no monitoring dependency).
 3. 007 (refresh and select audio inputs): useful before E and for the Arcade preparation window.
 4. 006 (drag and drop): independent, small.
 5. 008 (new logo): after the variants of the icons are created and validated.

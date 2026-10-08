@@ -75,6 +75,12 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | FR-057 measured vendor-neutral acceleration and fallback | T042, T045, T046, T048 | the valid decision may be to retain `UIPainter` |
 | FR-058 concept composition over pixel resolution | T040, T044 | human review includes minimalist tier |
 | FR-059 high-density lower-resolution field with crisp essentials | T040, T042, T048 | |
+| FR-060 one active target event on the physical neck | T037, T038, T043 | future events remain in the approach field; camera look-ahead does not expose their neck targets |
+| FR-061 approaching chord name | T038, T043, T056 | exact score metadata when present; translated generic fallback, never inferred |
+| FR-062 bounded collision-free disclosure in dense passages | T040, T043, T044 | active plus at most three following identities detailed; later events compact |
+| FR-063 one centred ordered chord-preview lane | T038, T040, T043, T044 | one expanded diagram; later chords compact; no fret-based lateral scattering |
+| FR-064 optional external real-score corpus | T060-T065 | content-aware recursive read, deterministic diversity selection, no score bytes committed |
+| FR-065 opaque active target disks | T037, T038, T040, T043, T062, T063 | filled alpha-1 core, bounded size, string colour, contrasting outline, identical across tiers |
 | SC-001 start in under 30 s | manual, T068-adjacent walk-through | not measured by a task; reported only if timed |
 | SC-002 95 % at 8 notes a second | inherited from 002 SC-009 | **not met by the base mode** (R15 of 002) |
 | SC-003 monitoring loopback | T072, T073 | |
@@ -89,5 +95,12 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | SC-014 Apple Silicon frame pacing | T042, T045, T047 | ten-minute complete-workload acceptance |
 | SC-015 zero audio regression and identical judgement digest | T047 | renderer-disabled comparison |
 | SC-016 functional fallback | T046, T048 | achieved fallback rate is reported, not invented |
+| SC-017 no mixed future targets on the neck | T037, T038, T043 | crowded note and chord fixtures, atomic event transition |
+| SC-018 chord-name readability in every tier | T038, T043, T056 | named, unnamed and single-note fixtures |
+| SC-019 dense-scene readability and unchanged judging | T040, T043, T047 | 8/16/32-event fixtures, collision bounds and digest parity |
+| SC-020 multiple-chord readability | T038, T040, T043 | 2/4/8 chords, one expanded diagram, centred bars, ordered promotion and no clipping |
+| SC-021 corpus size and diversity | T060, T061, T065 | >=2,000 profiled files and >=60 selected track cases across required categories |
+| SC-022 real-score structural/render acceptance | T062-T065, T044 | all selected cases plus twelve local screenshot pairs; degraded files separate |
+| SC-023 active-target visibility | T037, T038, T040, T043, T062, T063 | structural alpha/size/centre assertions plus light/dark/monochrome screenshots |
 
 **Result**: every requirement has a task or an explicit reason it has none; no task is orphaned; the dependencies are acyclic (T002 -> T004 -> T022 -> D; E and F independent). Three items are *not decided* and wait for the owner: O1, O2, O3 (and the outcome of O4, O5 comes from measurements). The two inherited limits (SC-002 vs the measured judging; Arcade release gated by 002 T102) are stated in `plan.md` and `tasks.md` T001.
