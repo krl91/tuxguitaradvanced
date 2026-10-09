@@ -362,6 +362,13 @@ public class PracticeWindow {
 		UIPanel passagePanel = tab(uiFactory, folder, "practice.tab.passages", passageLayout);
 		createPassageSettings(uiFactory, passagePanel, passageLayout);
 
+		// a tab that was hidden is measured only once it is shown (its controls count as invisible before): the window is refitted when the learner changes tab
+		folder.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				refit();
+			}
+		});
+
 		listenKeys(panel, this.tracks, this.passageMeasures, this.passageThreshold);
 		return folder;
 	}

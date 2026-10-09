@@ -17,6 +17,9 @@ import app.tuxguitar.app.tools.custom.practice.session.TimingTolerance;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.resource.UIRectangle;
+import app.tuxguitar.ui.widget.UIPanel;
+import app.tuxguitar.ui.widget.UITabFolder;
+import app.tuxguitar.ui.widget.UITabItem;
 import app.tuxguitar.ui.widget.UIWindow;
 
 /**
@@ -117,6 +120,64 @@ public class FollowPanelSwtTest {
 			panel.dispose();
 			assertEquals(2, backend.clicks.silenced);
 			assertEquals(2, backend.ended);
+		} finally {
+			displayClass.getMethod("dispose").invoke(display);
+		}
+	}
+
+	/** The Mode tab as the preparation window builds it (a tab folder), in Arcade: nothing of the tab is cut at the right or at the bottom of the window. */
+	@Test
+	public void theModeTabInArcadeIsWhollyInsideTheWindowOpenedAtItsPackedSize() throws Exception {
+		Class<?> displayClass = Class.forName("org.eclipse.swt.widgets.Display");
+		Object display = displayClass.getConstructor().newInstance();
+		try {
+			UIFactory factory = (UIFactory) Class.forName("app.tuxguitar.ui.swt.SWTFactory").getConstructor(displayClass).newInstance(display);
+			UIWindow window = factory.createWindow();
+			UITableLayout windowLayout = new UITableLayout();
+			window.setLayout(windowLayout);
+			UITabFolder folder = factory.createTabFolder(window, false);
+			windowLayout.set(folder, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 520f, null, null);
+			// a first tab, the one shown at the opening, so that the Mode tab is hidden when the window is first measured
+			UITabItem first = folder.createTab();
+			first.setText("Track");
+			UIPanel firstPanel = factory.createPanel(first, false);
+			firstPanel.setLayout(new UITableLayout());
+			UITableLayout modeLayout = new UITableLayout();
+			UITabItem item = folder.createTab();
+			item.setText("Mode");
+			UIPanel modePanel = factory.createPanel(item, false);
+			modePanel.setLayout(modeLayout);
+			FollowSettings settings = FollowPanelTest.settings();
+			// Arcade was already the mode when the window opened (the settings last until the application ends): no pick of the mode refits the window
+			settings.setMode(FollowSettings.Mode.ARCADE);
+			FollowPanel panel = new FollowPanel(factory, modePanel, settings, new FollowPanelTest.FakeBackend());
+			modeLayout.set(panel.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+			UIRectangle area = new UIRectangle(0, 0, 1440, 900);
+			Runnable refit = () -> {
+				modePanel.computePackedSize(null, null);
+				windowLayout.set(folder, UITableLayout.PACKED_HEIGHT, modePanel.getPackedSize().getHeight() + 48f);
+				windowLayout.set(folder, UITableLayout.PACKED_WIDTH, modePanel.getPackedSize().getWidth() + 24f);
+				WindowFit.refit(window, area);
+			};
+			panel.setContentListener(refit);
+			panel.setModeListener(refit);
+			refit.run();
+			window.pack();
+			window.open();
+			flush(display);
+			refit.run();
+			flush(display);
+			// the learner opens the Mode tab (a native selection, which the window answers by refitting), then picks Arcade
+			folder.addSelectionListener(new app.tuxguitar.ui.event.UISelectionListener() {
+				public void onSelect(app.tuxguitar.ui.event.UISelectionEvent event) {
+					refit.run();
+				}
+			});
+			folder.setSelectedIndex(1);
+			notifySelection(display, nativeOf(folder));
+			assertInside(display, window, panel);
+			window.dispose();
+			panel.dispose();
 		} finally {
 			displayClass.getMethod("dispose").invoke(display);
 		}
