@@ -300,7 +300,7 @@ public class ArcadeSceneDensityTest {
 	}
 
 	@Test
-	public void theAdmittedSetIsAPrefixOfAtMostFourEventsAndEveryLaterEventIsAbsent() {
+	public void theAdmittedSetIsAPrefixOfTheEventsDueAndEveryLaterEventIsAbsent() {
 		SongFixture song = new SongFixture(4);
 		for (int i = 0; i < 12; i++) {
 			song.quarter(i / 4, i % 4, 1 + i % 6, i % 2 == 0 ? 2 : 17);
@@ -311,7 +311,7 @@ public class ArcadeSceneDensityTest {
 		long now = fixture.onset(0) - 1000 * MS;
 		Scene scene = fixture.scene(false).build(now, SCREEN, null, 100);
 		Set<Integer> set = admitted(scene);
-		assertTrue(set.size() >= 3 && set.size() <= ArcadeScene.MAX_ADMITTED, "the nearest events are admitted, at most four: " + set);
+		assertTrue(set.size() >= 3 && set.size() <= ArcadeScene.MAX_ADMITTED, "the nearest events are admitted, those due within five seconds, never more than the cap: " + set);
 		for (int k = 0; k < set.size(); k++) {
 			assertTrue(set.contains(k), "a prefix of the events in order of time, without a gap: " + set);
 			assertEquals(1, scene.forEvent(k, Role.TRAJECTORY).size(), "event " + k + " has its lane");

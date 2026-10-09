@@ -13,7 +13,7 @@ Produced by `ArcadeCorpusProfilerTest` from a folder of Guitar Pro 3 and 4 files
 - negative cases:
   - the file (4): DEGRADED, 7 playable tracks
   - the known defective file (6): DEGRADED, 3 playable tracks
-- duration: profile of the sample 13.0 s (from the cache of an earlier pass: 2200 of 2200 files), second pass from nothing 73.2 s, structural check of the cases 2.0 s, in all 92.0 s
+- duration: profile of the sample 12.8 s (from the cache of an earlier pass: 2200 of 2200 files), second pass from nothing 70.6 s, structural check of the cases 1.7 s, in all 88.8 s
 
 ## Playable tracks of the files read cleanly: 2288
 
@@ -49,7 +49,27 @@ Total 64 cases (at least 60 and five in each category: met); no folder or artist
 
 ## Structural check (T062)
 
-- 64 tracks, 2400 scenes (two anchors, five moments, FULL and PERFORMANCE, colour and monochrome), failures: 0
+- 64 tracks, 2400 scenes (two anchors, five moments, FULL and PERFORMANCE, colour and monochrome), failures: 52
+  - C0074d88c-T3 IMPACT FULL at event 4: 7 notes on their lanes at once (FR-062)
+  - C0074d88c-T3 IMPACT FULL at event 4: 7 detailed events
+  - C0074d88c-T3 IMPACT FULL mono at event 4: 7 notes on their lanes at once (FR-062)
+  - C0074d88c-T3 IMPACT FULL mono at event 4: 7 detailed events
+  - C0074d88c-T3 IMPACT PERFORMANCE at event 4: 7 notes on their lanes at once (FR-062)
+  - C0074d88c-T3 IMPACT PERFORMANCE at event 4: 7 detailed events
+  - C0074d88c-T3 IMPACT PERFORMANCE mono at event 4: 7 notes on their lanes at once (FR-062)
+  - C0074d88c-T3 IMPACT PERFORMANCE mono at event 4: 7 detailed events
+  - C0074d88c-T3 FEEDBACK FULL at event 4: 6 notes on their lanes at once (FR-062)
+  - C0074d88c-T3 FEEDBACK FULL at event 4: 6 detailed events
+  - C0074d88c-T3 FEEDBACK FULL mono at event 4: 6 notes on their lanes at once (FR-062)
+  - C0074d88c-T3 FEEDBACK FULL mono at event 4: 6 detailed events
+  - C0074d88c-T3 FEEDBACK PERFORMANCE at event 4: 6 notes on their lanes at once (FR-062)
+  - C0074d88c-T3 FEEDBACK PERFORMANCE at event 4: 6 detailed events
+  - C0074d88c-T3 FEEDBACK PERFORMANCE mono at event 4: 6 notes on their lanes at once (FR-062)
+  - C0074d88c-T3 FEEDBACK PERFORMANCE mono at event 4: 6 detailed events
+  - C01d67f17-T2 IMPACT FULL at event 38: 5 detailed events
+  - C01d67f17-T2 IMPACT FULL mono at event 38: 5 detailed events
+  - C01d67f17-T2 IMPACT PERFORMANCE at event 38: 5 detailed events
+  - C01d67f17-T2 IMPACT PERFORMANCE mono at event 38: 5 detailed events
 - identity shown for every chord event of the 64 tracks (FR-061): {WRITTEN=56, DERIVED=9999, PITCH_SET=2176} (written name, name derived from the written notes, list of notes); no chord shows a bare generic word (asserted)
 
 ## Images (T063)

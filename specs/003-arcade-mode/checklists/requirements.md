@@ -35,7 +35,7 @@
 - [x] Frame queues, audio-thread rendering work and render-held audio locks are forbidden and testable.
 - [x] The physical neck exposes targets for exactly one event, the active event (or its complete chord), with an atomic transition; camera look-ahead never exposes or admits another event.
 - [x] Every approaching chord carries its exact written name when available; otherwise a tested deterministic name is derived from written pitches/bass, with an honest pitch-list fallback and no use of detected audio.
-- [x] One admitted visual set (the active event and at most three following events, notes and chords alike, narrowed by label collisions) is the only thing drawn; every other event is absent, no compact or preview form exists, completed events keep only their verdict badge, and musical data remains unchanged.
+- [x] One admitted visual set (the active event and the following ones, at least four and those due within five seconds, never more than eight, notes and chords alike, narrowed by label collisions) is the only thing drawn; every other event is absent, no compact or preview form exists, completed events keep only their verdict badge, and musical data remains unchanged.
 - [x] Chords of the admitted set share one centred temporal lane; only one has a full in-bounds diagram, the others of the set are bars without diagram, chords outside the set are absent, and promotion follows onset order.
 - [x] Visual acceptance includes a deterministic, diverse external GP3/GP4 corpus; normal builds skip without it and copyrighted score bytes/private paths are never committed.
 - [x] The actionable neck target is a large opaque filled string-coloured disk with a contrasting outline; quality reduction may remove decoration but never weaken this core cue.

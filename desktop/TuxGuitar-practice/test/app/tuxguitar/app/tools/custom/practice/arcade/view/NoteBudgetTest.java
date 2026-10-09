@@ -83,7 +83,13 @@ public class NoteBudgetTest {
 							}
 						}
 						String where = count + " notes " + viewport.width() + " " + tier + " " + before + " ms before";
-						assertTrue(painted.size() <= ArcadeScene.MAX_ADMITTED, where + ": " + painted.size() + " notes painted " + painted);
+						int due = 0;
+						for (int index = 0; index < fixture.events.size(); index++) {
+							long until = fixture.onset(index) - (fixture.onset(0) - before * MS);
+							due += (until > -80 * MS && until <= ArcadeScene.ADMITTED_WINDOW_NANOS) ? 1 : 0;
+						}
+						assertTrue(painted.size() <= Math.min(ArcadeScene.MAX_ADMITTED, Math.max(ArcadeScene.MIN_ADMITTED, due)),
+								where + ": " + painted.size() + " events painted " + painted + " with " + due + " due within the window");
 						// the painted ones are the nearest in time: no gap in the order of the notes
 						int expected = painted.isEmpty() ? 0 : painted.iterator().next();
 						for (int index : painted) {
@@ -183,5 +189,40 @@ public class NoteBudgetTest {
 				assertEquals(Set.of(1), owners, "the next event takes the target at once");
 			}
 		}
+	}
+
+	@Test
+	public void everyNoteDueWithinFiveSecondsIsSeenComingFromTheHorizonOnItsWholeLane() {
+		// one note a second: four are the base set, and a fifth is due within five seconds as the first ones come near
+		SongFixture song = new SongFixture(4);
+		song.tempoChange(0, 60);
+		for (int i = 0; i < 12; i++) {
+			song.quarter(i / 4, i % 4, 1 + (i * 5) % 6, 2 + i);
+		}
+		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+		long first = fixture.onset(0);
+		Viewport screen = new Viewport(1280, 720);
+		Scene before = fixture.scene(false).build(first - 1_700 * MS, screen, null, 100);
+		assertEquals(Set.of(0, 1, 2, 3), admittedIdentities(before), "the base set of four: the fifth is 5.7 s away");
+		assertTrue(before.forEvent(4).isEmpty());
+		Scene after = fixture.scene(false).build(first - 700 * MS, screen, null, 100);
+		assertEquals(Set.of(0, 1, 2, 3, 4), admittedIdentities(after), "the fifth is due within five seconds: it is there, whole");
+		assertEquals(1, after.forEvent(4, Role.TRAJECTORY).size());
+		assertEquals(1, after.forEvent(4, Role.MARKER).size());
+		// it comes in at the far end of its lane, small, in the distance (the horizon): its marker is near the horizon, not half way
+		IsometricProjection projection = new IsometricProjection(screen);
+		double travelled = (after.forEvent(4, Role.MARKER).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+		assertTrue(travelled < 0.3, "the fifth note has still most of its lane to travel: " + travelled);
+		assertTrue(fixture.events.size() > 5 && after.forEvent(5).isEmpty(), "and the sixth, due in 5.7 s, is absent");
+	}
+
+	private static Set<Integer> admittedIdentities(Scene scene) {
+		Set<Integer> found = new TreeSet<Integer>();
+		for (SceneItem item : scene.items()) {
+			if (item.eventIndex() >= 0) {
+				found.add(item.eventIndex());
+			}
+		}
+		return found;
 	}
 }

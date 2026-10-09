@@ -104,10 +104,15 @@ public final class ArcadeScene {
 	}
 
 	/**
-	 * The size of the admitted visual set (FR-062): the active event and at most three following events in onset order, notes and chords alike. Every event
-	 * outside the set is absent from the picture.
+	 * The admitted visual set (FR-062): the active event and the events that follow it in onset order, notes and chords alike, at least {@value #MIN_ADMITTED}
+	 * of them and, when more events than that are due within {@link #ADMITTED_WINDOW_NANOS}, all of those, but never more than {@value #MAX_ADMITTED}. Every other
+	 * event is absent from the picture.
 	 */
-	public static final int MAX_ADMITTED = 4;
+	public static final int MIN_ADMITTED = 4;
+	/** The most events the set can hold. */
+	public static final int MAX_ADMITTED = 8;
+	/** Every event due within this long is in the set (up to {@link #MAX_ADMITTED}), so that a note is seen coming from the horizon for a few seconds. */
+	public static final long ADMITTED_WINDOW_NANOS = 5_000_000_000L;
 	/**
 	 * The one axis of all the chord bars (FR-063): the middle of the approach lane, as a share of the width of the view. A chord is placed by its onset and
 	 * its depth alone; its frets are used for the neck ghost and the camera, never to put its bar to the left or to the right.
@@ -543,8 +548,8 @@ public final class ArcadeScene {
 	}
 
 	/**
-	 * Chooses the admitted visual set (FR-062): the active event and, after it, the following events in onset order, notes and chords alike, up to
-	 * {@link #MAX_ADMITTED} in all; every other event is absent from the picture. The set is a prefix of the events in order of time: it stops at the first
+	 * Chooses the admitted visual set (FR-062): the active event and, after it, the following events in onset order, notes and chords alike, as many as the
+	 * limit allows ({@link #MIN_ADMITTED} or the events due within {@link #ADMITTED_WINDOW_NANOS}, at most {@link #MAX_ADMITTED}); every other event is absent from the picture. The set is a prefix of the events in order of time: it stops at the first
 	 * event whose labels (the fret number of a note, the header and diagram of a chord, the word of an automatic event) would touch a label already admitted, the
 	 * HUD or the next playable event, never below the active event. Of the chords of the set the nearest that can be read has the diagram; the others are
 	 * timing bars (FR-063). The events that are completed are not in the set: only the verdict badge of each stays during its feedback. It is a function of the
@@ -570,7 +575,13 @@ public final class ArcadeScene {
 		if (active < 0) {
 			return plan;
 		}
-		int limit = this.densityBudget ? MAX_ADMITTED : Integer.MAX_VALUE;
+		int due = 0;
+		for (int index : visible) {
+			if (!isCompleted(f, index) && this.events.get(index).onsetNanos() - f.now <= ADMITTED_WINDOW_NANOS) {
+				due++;
+			}
+		}
+		int limit = this.densityBudget ? Math.min(MAX_ADMITTED, Math.max(MIN_ADMITTED, due)) : Integer.MAX_VALUE;
 		// the first events that are not completed, in onset order: the active event and the ones that follow it (an event of the score that is passed
 		// automatically and comes before the active one is the first of them)
 		List<Integer> candidates = new ArrayList<Integer>();
