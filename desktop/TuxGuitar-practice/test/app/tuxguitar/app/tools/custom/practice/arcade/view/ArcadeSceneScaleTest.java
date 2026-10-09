@@ -33,8 +33,15 @@ public class ArcadeSceneScaleTest {
 			}
 			assertNull(SceneBoxes.firstOverlap(SceneBoxes.labels(two)), reference.name + " at the doubled size");
 			assertNull(SceneBoxes.firstOverlap(SceneBoxes.labels(one)), reference.name + " at the normal size");
-			assertTrue(SceneBoxes.detailed(two).size() <= ArcadeScene.MAX_ADMITTED);
-			assertEquals(SceneBoxes.detailed(one), SceneBoxes.detailed(two), reference.name + ": the same events are detailed at both scales");
+			java.util.Set<Integer> markersOne = new java.util.TreeSet<Integer>();
+			java.util.Set<Integer> markersTwo = new java.util.TreeSet<Integer>();
+			for (SceneItem item : one.withRole(Role.MARKER)) {
+				markersOne.add(item.eventIndex());
+			}
+			for (SceneItem item : two.withRole(Role.MARKER)) {
+				markersTwo.add(item.eventIndex());
+			}
+			assertEquals(markersOne, markersTwo, reference.name + ": the same notes are drawn at both scales (only which numbers fit may differ)");
 		}
 	}
 }

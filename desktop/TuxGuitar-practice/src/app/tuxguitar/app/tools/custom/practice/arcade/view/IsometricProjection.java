@@ -10,7 +10,7 @@ public final class IsometricProjection {
 
 	/** The share of the height at which the hit line lies, and the horizon, and the near edge of the neck. */
 	static final double HIT_LINE = 0.60;
-	static final double HORIZON = 0.14;
+	static final double HORIZON = 0.04;
 	static final double NECK_NEAR_EDGE = 0.90;
 	/** The scale of what is drawn at the horizon. */
 	static final double FAR_SCALE = 0.35;
@@ -85,7 +85,7 @@ public final class IsometricProjection {
 	}
 
 	/** The depth of an event at its horizon, in times its depth at the hit line: the strength of the perspective of {@link #depthShare}. */
-	static final double DEPTH = 2.0;
+	static final double DEPTH = 1.0;
 
 	/** The y of the top edge of the neck: the line of the arrival of the events, which is the hit line. */
 	public double neckTopY() {

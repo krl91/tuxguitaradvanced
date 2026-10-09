@@ -75,14 +75,14 @@ public class ArcadeSceneDensityTest {
 	}
 
 	@Test
-	public void atMostFourEventsAreDetailedWhateverTheNumberOfFutureEventsTheTierAndTheColour() {
+	public void theLabelsNeverOverlapWhateverTheNumberOfFutureEventsTheTierAndTheColourAndTheActiveEventKeepsItsLabel() {
 		for (int future : FUTURE) {
 			SceneFixture fixture = crowded(future);
 			for (long offset = -150; offset <= 300; offset += 75) {
 				long now = fixture.onset(0) + offset * MS;
 				for (Scene scene : allVariants(fixture, now, null)) {
 					Set<Integer> detailed = SceneBoxes.detailed(scene);
-					assertTrue(detailed.size() <= ArcadeScene.MAX_ADMITTED, future + " future events at " + offset + " ms: detailed " + detailed);
+					assertNull(SceneBoxes.firstOverlap(SceneBoxes.labels(scene)), future + " future events at " + offset + " ms");
 					assertFalse(detailed.isEmpty(), "something is detailed");
 				}
 			}
@@ -138,21 +138,25 @@ public class ArcadeSceneDensityTest {
 	}
 
 	@Test
-	public void everyEventOutsideTheAdmittedSetIsAbsentFromThePicture() {
+	public void everyEventDueWithinTheLookAheadIsPaintedAndNoOtherEventLeavesAPrimitive() {
+		long look = CameraTrack.Settings.standard().lookAheadNanos;
 		for (int future : FUTURE) {
 			SceneFixture fixture = crowded(future);
 			for (long offset = -150; offset <= 300; offset += 150) {
-				Scene scene = fixture.scene(false).build(fixture.onset(0) + offset * MS, SCREEN, null, 100, QualityTier.FULL);
+				long now = fixture.onset(0) + offset * MS;
+				Scene scene = fixture.scene(false).build(now, SCREEN, null, 100, QualityTier.FULL);
 				Set<Integer> painted = new TreeSet<Integer>();
 				for (SceneItem item : scene.items()) {
 					if (item.eventIndex() >= 0) {
 						painted.add(item.eventIndex());
 					}
 				}
-				assertTrue(painted.size() <= ArcadeScene.MAX_ADMITTED, future + " future events: " + painted.size() + " events painted " + painted);
 				for (int index = 0; index < fixture.events.size(); index++) {
-					if (!painted.contains(index)) {
-						assertTrue(scene.forEvent(index).isEmpty(), "event " + index + " is outside the admitted set and left a primitive");
+					long until = fixture.onset(index) - now;
+					boolean due = until <= look && until > -CameraTrack.Settings.standard().holdAfterNanos;
+					assertEquals(due, painted.contains(index), future + " future events: event " + index + " is " + (until / MS) + " ms from its onset");
+					if (!due) {
+						assertTrue(scene.forEvent(index).isEmpty(), "event " + index + " is outside the look-ahead and left a primitive");
 					}
 				}
 			}
@@ -233,54 +237,35 @@ public class ArcadeSceneDensityTest {
 	}
 
 	@Test
-	public void aHiddenEventIsPromotedWhenAnEarlierOneIsCompletedAndThenHasItsCompleteLane() {
+	public void anEventThatIsCompletedLeavesThePictureButForItsVerdictAndTheOthersStay() {
 		SceneFixture fixture = crowded(16);
 		ArcadeScene scene = fixture.scene(false);
-		long now = fixture.onset(0) - 150 * MS;
-		Scene first = scene.build(now, SCREEN, null, 100);
-		Set<Integer> before = admitted(first);
-		assertTrue(before.contains(0) && before.size() <= ArcadeScene.MAX_ADMITTED);
-		// events 0 to 2 are completed: the set is the active event 3 and the three that follow it, in order, and the completed ones are gone but for their verdict
-		long later = fixture.onset(0) + 900 * MS;
-		Scene second = scene.build(later, SCREEN, ArcadeSceneTest.completedBefore(3, fixture.events.size()), 100);
-		Set<Integer> after = admitted(second);
-		assertEquals(3, (int) after.iterator().next(), "the active event comes first");
-		for (int k = 0; k < after.size(); k++) {
-			assertTrue(after.contains(3 + k), "the set is a prefix of the events in order of time: " + after);
+		long now = fixture.onset(0) + 900 * MS;
+		Scene all = scene.build(now, SCREEN, null, 100);
+		Scene completed = scene.build(now, SCREEN, ArcadeSceneTest.completedBefore(3, fixture.events.size()), 100);
+		Set<Integer> before = admitted(all);
+		Set<Integer> after = admitted(completed);
+		for (int index = 0; index < 3; index++) {
+			assertFalse(after.contains(index), "event " + index + " is completed: only its verdict may stay");
 		}
-		assertTrue(after.size() <= ArcadeScene.MAX_ADMITTED);
+		assertTrue(before.containsAll(after), "no event is added by the completion of others");
 		for (int index : after) {
-			if (!before.contains(index) && fixture.events.get(index).kind() == app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent.Kind.NOTE) {
-				// promoted: it was not painted at all before, and now it has its complete lane from the horizon to the top edge of its cell
-				assertTrue(first.forEvent(index).isEmpty(), "note " + index + " was absent before it was promoted");
-				assertEquals(1, second.forEvent(index, Role.TRAJECTORY).size(), "event " + index + " has its lane");
-				assertEquals(1, second.forEvent(index, Role.MARKER).size());
+			if (fixture.events.get(index).kind() == app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent.Kind.NOTE) {
+				assertEquals(1, completed.forEvent(index, Role.TRAJECTORY).size(), "event " + index + " keeps its whole lane");
 			}
 		}
+		assertTrue(after.contains(3), "the active event is the first of the others");
 	}
 
 	@Test
-	public void theBudgetChangesNothingOfTheEventsOnlyWhatIsPainted() {
+	public void theLabelBudgetChangesNothingOfTheEventsOnlyTheNumbersOfTheMarkers() {
 		SceneFixture fixture = crowded(16);
 		long now = fixture.onset(0) - 150 * MS;
 		Scene reduced = fixture.scene(false).build(now, SCREEN, null, 100);
 		Scene unreduced = fixture.scene(false).withDensityBudget(false).build(now, SCREEN, null, 100);
-		Set<Integer> shown = new TreeSet<Integer>();
-		Set<Integer> shownUnreduced = new TreeSet<Integer>();
-		for (SceneItem item : reduced.items()) {
-			if (item.eventIndex() >= 0) {
-				shown.add(item.eventIndex());
-			}
-		}
-		for (SceneItem item : unreduced.items()) {
-			if (item.eventIndex() >= 0) {
-				shownUnreduced.add(item.eventIndex());
-			}
-		}
-		// what is painted is a part of the events, and only the nearest ones; the events themselves are the same objects of the same timeline
-		assertTrue(shownUnreduced.containsAll(shown), "nothing is painted with the budget that the unreduced picture does not paint");
-		assertTrue(shown.size() < shownUnreduced.size(), "some events are not painted");
-		assertTrue(SceneBoxes.detailed(unreduced).size() > ArcadeScene.MAX_ADMITTED, "and the unreduced picture is the cluttered one");
+		assertEquals(admitted(unreduced), admitted(reduced), "the same events are painted with and without the budget: none is dropped, merged or moved");
+		assertEquals(unreduced.withRole(Role.MARKER).size(), reduced.withRole(Role.MARKER).size(), "every marker is drawn");
+		assertTrue(SceneBoxes.detailed(unreduced).size() > SceneBoxes.detailed(reduced).size(), "and the unreduced picture is the cluttered one: its numbers touch");
 		assertEquals(fixture.events.size(), crowded(16).events.size(), "no event was dropped from the timeline");
 	}
 
@@ -292,7 +277,6 @@ public class ArcadeSceneDensityTest {
 				Scene scene = fixture.scene(false).build(fixture.onset(0) + offset * MS, narrow, null, 100);
 				Set<Integer> detailed = SceneBoxes.detailed(scene);
 				assertTrue(detailed.contains(0), "the active event stays at " + narrow.width() + "x" + narrow.height());
-				assertTrue(detailed.size() <= ArcadeScene.MAX_ADMITTED);
 				List<Box> boxes = SceneBoxes.labels(scene);
 				assertNull(SceneBoxes.firstOverlap(boxes), narrow.width() + "x" + narrow.height() + " at " + offset);
 			}
@@ -300,24 +284,25 @@ public class ArcadeSceneDensityTest {
 	}
 
 	@Test
-	public void theAdmittedSetIsAPrefixOfTheEventsDueAndEveryLaterEventIsAbsent() {
+	public void everyNoteOfTheNextFiveSecondsIsOnItsWholeLaneAndTheLaterOnesAreAbsent() {
 		SongFixture song = new SongFixture(4);
 		for (int i = 0; i < 12; i++) {
 			song.quarter(i / 4, i % 4, 1 + i % 6, i % 2 == 0 ? 2 : 17);
 		}
 		song.tempoChange(0, 60);
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
-		// the events are a second apart and all inside the look-ahead: the set is the first ones, at most four, and nothing else is painted
+		// the events are a second apart: those due within five seconds are all there, each on its lane, and nothing else is painted
 		long now = fixture.onset(0) - 1000 * MS;
 		Scene scene = fixture.scene(false).build(now, SCREEN, null, 100);
 		Set<Integer> set = admitted(scene);
-		assertTrue(set.size() >= 3 && set.size() <= ArcadeScene.MAX_ADMITTED, "the nearest events are admitted, those due within five seconds, never more than the cap: " + set);
-		for (int k = 0; k < set.size(); k++) {
-			assertTrue(set.contains(k), "a prefix of the events in order of time, without a gap: " + set);
-			assertEquals(1, scene.forEvent(k, Role.TRAJECTORY).size(), "event " + k + " has its lane");
-		}
-		for (int index = set.size(); index < 12; index++) {
-			assertTrue(scene.forEvent(index).isEmpty(), "event " + index + " is outside the set: no marker, no halo, no lane, nothing");
+		long look = CameraTrack.Settings.standard().lookAheadNanos;
+		for (int index = 0; index < 12; index++) {
+			boolean due = fixture.onset(index) - now <= look;
+			assertEquals(due, set.contains(index), "event " + index + " is " + (fixture.onset(index) - now) / MS + " ms away");
+			assertEquals(due ? 1 : 0, scene.forEvent(index, Role.TRAJECTORY).size(), "event " + index + " has its lane when it is due");
+			if (!due) {
+				assertTrue(scene.forEvent(index).isEmpty(), "event " + index + " is outside the look-ahead: no marker, no halo, no lane, nothing");
+			}
 		}
 	}
 }

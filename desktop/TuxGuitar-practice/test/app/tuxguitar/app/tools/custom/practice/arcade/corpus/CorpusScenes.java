@@ -261,18 +261,13 @@ public final class CorpusScenes {
 				noteIdentities.add(item.eventIndex());
 			}
 		}
-		// the size of the set: four, or the events due within five seconds when that makes more, never more than eight
-		int due = 0;
-		for (ArcadeRenderEvent event : p.events) {
-			long until = event.onsetNanos() - now;
-			due += (until > 0 && until <= ArcadeScene.ADMITTED_WINDOW_NANOS) ? 1 : 0;
-		}
-		int allowed = Math.min(ArcadeScene.MAX_ADMITTED, Math.max(ArcadeScene.MIN_ADMITTED, due + 1));
-		if (noteIdentities.size() > allowed) {
-			failures.add(where + ": " + noteIdentities.size() + " notes on their lanes at once, " + allowed + " allowed (FR-062)");
-		}
-		if (SceneBoxes.detailed(scene).size() > allowed) {
-			failures.add(where + ": " + SceneBoxes.detailed(scene).size() + " detailed events, " + allowed + " allowed");
+		// every event of the look-ahead is in the picture and nothing else: the notes that are due and not completed have their marker and their lane
+		for (int index = 0; index < p.events.size(); index++) {
+			long until = p.events.get(index).onsetNanos() - now;
+			boolean outside = until > p.camera.settings().lookAheadNanos;
+			if (outside && !scene.forEvent(index).isEmpty() && scene.forEvent(index).stream().anyMatch(item -> item.role() != Role.BADGE && item.role() != Role.BADGE_TEXT && item.role() != Role.BADGE_SYMBOL)) {
+				failures.add(where + ": event " + index + " is outside the look-ahead and has a primitive");
+			}
 		}
 		if (scene.withRole(Role.CARTOUCHE_FRAME).size() > 1) {
 			failures.add(where + ": " + scene.withRole(Role.CARTOUCHE_FRAME).size() + " chord diagrams");

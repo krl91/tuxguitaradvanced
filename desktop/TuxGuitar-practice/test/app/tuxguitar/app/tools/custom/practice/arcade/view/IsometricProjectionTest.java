@@ -89,9 +89,9 @@ public class IsometricProjectionTest {
 			assertTrue(share > previous, "strictly increasing");
 			previous = share;
 		}
-		// the last third of the time before the onset is more than half of the way, the first third less than a sixth
-		assertTrue(1.0 - IsometricProjection.depthShare(2.0 / 3.0) > 0.55, "the last third covers more than half of the lane");
-		assertTrue(IsometricProjection.depthShare(1.0 / 3.0) < 0.15, "the first third covers little");
+		// the last third of the time before the onset is nearly half of the way, the first third less than a quarter
+		assertTrue(1.0 - IsometricProjection.depthShare(2.0 / 3.0) > 0.45, "the last third covers nearly half of the lane");
+		assertTrue(IsometricProjection.depthShare(1.0 / 3.0) < 0.25, "the first third covers little");
 		assertEquals(IsometricProjection.depthShare(0.5), (this.projection.approach(250.0, 0.5, CAMERA).y() - this.projection.horizonY()) / (this.projection.hitLineY() - this.projection.horizonY()), 1e-9);
 	}
 }

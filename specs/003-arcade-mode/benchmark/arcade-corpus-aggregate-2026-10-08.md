@@ -13,7 +13,7 @@ Produced by `ArcadeCorpusProfilerTest` from a folder of Guitar Pro 3 and 4 files
 - negative cases:
   - the file (4): DEGRADED, 7 playable tracks
   - the known defective file (6): DEGRADED, 3 playable tracks
-- duration: profile of the sample 12.9 s (from the cache of an earlier pass: 2200 of 2200 files), second pass from nothing 70.2 s, structural check of the cases 2.2 s, in all 88.4 s
+- duration: profile of the sample 13.0 s (from the cache of an earlier pass: 2200 of 2200 files), second pass from nothing 71.9 s, structural check of the cases 2.0 s, in all 89.8 s
 
 ## Playable tracks of the files read cleanly: 2288
 

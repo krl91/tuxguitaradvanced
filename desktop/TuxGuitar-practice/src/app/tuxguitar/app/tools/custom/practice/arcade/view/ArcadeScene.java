@@ -104,16 +104,6 @@ public final class ArcadeScene {
 	}
 
 	/**
-	 * The admitted visual set (FR-062): the active event and the events that follow it in onset order, notes and chords alike, at least {@value #MIN_ADMITTED}
-	 * of them and, when more events than that are due within {@link #ADMITTED_WINDOW_NANOS}, all of those, but never more than {@value #MAX_ADMITTED}. Every other
-	 * event is absent from the picture.
-	 */
-	public static final int MIN_ADMITTED = 4;
-	/** The most events the set can hold. */
-	public static final int MAX_ADMITTED = 8;
-	/** Every event due within this long is in the set (up to {@link #MAX_ADMITTED}), so that a note is seen coming from the horizon for a few seconds. */
-	public static final long ADMITTED_WINDOW_NANOS = 5_000_000_000L;
-	/**
 	 * The one axis of all the chord bars (FR-063): the middle of the approach lane, as a share of the width of the view. A chord is placed by its onset and
 	 * its depth alone; its frets are used for the neck ghost and the camera, never to put its bar to the left or to the right.
 	 */
@@ -170,7 +160,7 @@ public final class ArcadeScene {
 
 	/**
 	 * The same picture at a quality tier: only the decoration (glow, trails, shadows) differs, every other item is identical at every tier. The events
-	 * that are fully detailed are chosen from the clock and the identities alone (see {@link #MAX_ADMITTED}); nothing here removes, merges, moves or
+	 * that are fully detailed are chosen from the clock and the identities alone (FR-062); nothing here removes, merges, moves or
 	 * reorders an event of the timeline, the judging or the MIDI playback: a hidden note is the same event, not painted.
 	 */
 	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier) {
@@ -184,6 +174,7 @@ public final class ArcadeScene {
 		List<Integer> visible = visibleEvents(nowNanos, f.settings);
 		int active = activeEvent(visible, run);
 		Plan plan = plan(f, visible, active, speedPercent);
+		f.noLabel = plan.noLabel;
 		// the events of the admitted set are drawn, the farthest first; every other event is absent: no marker, no lane, no bar, no label (FR-062)
 		for (int k = visible.size() - 1; k >= 0; k--) {
 			int index = visible.get(k);
@@ -371,6 +362,7 @@ public final class ArcadeScene {
 		final ArcadeRun.View run;
 		final double h;
 		PaintedFretGrid grid;
+		java.util.Set<Integer> noLabel;
 		FretArrivalLaneMap lanes;
 
 		Frame(Out out, IsometricProjection projection, Camera cam, Viewport viewport, QualityTier tier, long now, CameraTrack.Settings settings, ArcadeRun.View run) {
@@ -400,6 +392,8 @@ public final class ArcadeScene {
 		final java.util.Map<Integer, double[]> badge = new java.util.HashMap<Integer, double[]>();
 		/** The chords whose diagram is expanded: one, except in the unreduced picture. */
 		final java.util.Set<Integer> expanded = new java.util.HashSet<Integer>();
+		/** The notes whose fret number would touch another label: the marker is drawn, the number is left out. */
+		final java.util.Set<Integer> noLabel = new java.util.HashSet<Integer>();
 		/** The chords of the admitted visual set that have no diagram: they are timing bars. */
 		final java.util.Set<Integer> bars = new java.util.HashSet<Integer>();
 		/** How far a diagram was raised above its default place to leave the next event in view. */
@@ -548,12 +542,11 @@ public final class ArcadeScene {
 	}
 
 	/**
-	 * Chooses the admitted visual set (FR-062): the active event and, after it, the following events in onset order, notes and chords alike, as many as the
-	 * limit allows ({@link #MIN_ADMITTED} or the events due within {@link #ADMITTED_WINDOW_NANOS}, at most {@link #MAX_ADMITTED}); every other event is absent from the picture. The set is a prefix of the events in order of time: it stops at the first
-	 * event whose labels (the fret number of a note, the header and diagram of a chord, the word of an automatic event) would touch a label already admitted, the
-	 * HUD or the next playable event, never below the active event. Of the chords of the set the nearest that can be read has the diagram; the others are
-	 * timing bars (FR-063). The events that are completed are not in the set: only the verdict badge of each stays during its feedback. It is a function of the
-	 * clock, the run and the identities alone.
+	 * Chooses what the picture holds (FR-062): every event that is not completed and due within the look-ahead, in onset order, notes, chords and automatically
+	 * passed events alike, whatever their number; nothing else is drawn. The markers of the notes are always drawn; the fret number of a note is left out only
+	 * where it would touch a label already placed (the nearest notes are placed first, the active event always), and so are the words of automatic events. Of
+	 * the chords of the set the nearest that can be read has the diagram; the others are timing bars (FR-063). The events that are completed are not in the
+	 * set: only the verdict badge of each stays during its feedback. It is a function of the clock, the run and the identities alone.
 	 */
 	private Plan plan(Frame f, List<Integer> visible, int active, int speedPercent) {
 		Plan plan = new Plan();
@@ -575,18 +568,11 @@ public final class ArcadeScene {
 		if (active < 0) {
 			return plan;
 		}
-		int due = 0;
-		for (int index : visible) {
-			if (!isCompleted(f, index) && this.events.get(index).onsetNanos() - f.now <= ADMITTED_WINDOW_NANOS) {
-				due++;
-			}
-		}
-		int limit = this.densityBudget ? Math.min(MAX_ADMITTED, Math.max(MIN_ADMITTED, due)) : Integer.MAX_VALUE;
-		// the first events that are not completed, in onset order: the active event and the ones that follow it (an event of the score that is passed
-		// automatically and comes before the active one is the first of them)
+		// every event that is not completed and due within the look-ahead (an event of the score that is passed automatically and comes before the active
+		// one is one of them), in onset order: the visible set, whatever the number of events
 		List<Integer> candidates = new ArrayList<Integer>();
 		for (int index : visible) {
-			if (!isCompleted(f, index) && candidates.size() < limit && (index >= active || !isPlayable(this.events.get(index)))) {
+			if (!isCompleted(f, index) && (index >= active || !isPlayable(this.events.get(index)))) {
 				candidates.add(index);
 			}
 		}
@@ -599,7 +585,14 @@ public final class ArcadeScene {
 			List<double[]> mine = new ArrayList<double[]>();
 			boolean bar = false;
 			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
-				mine.add(noteGeo(f, event).box());
+				// the marker is always drawn; its fret number only where it touches no label already placed (the nearest notes are placed first)
+				double[] box = noteGeo(f, event).box();
+				boolean free = disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || disjoint(box, next));
+				if (this.densityBudget && !isActive && !free) {
+					plan.noLabel.add(index);
+				} else {
+					mine.add(box);
+				}
 			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD && index == expandedChord) {
 				ChordGeo g = chordGeo(f, event);
 				boolean note = this.cartouches[index].notCheckedSeparately() && state.ordinal() >= RenderState.READABLE.ordinal();
@@ -632,18 +625,14 @@ public final class ArcadeScene {
 				String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
 				mine.add(textBox(word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026));
 			}
-			if (this.densityBudget && !isActive && !bar && index != candidates.get(0)) {
+			if (this.densityBudget && !isActive && !bar && event.kind() != ArcadeRenderEvent.Kind.NOTE) {
 				boolean free = true;
 				for (double[] box : mine) {
 					free &= disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || disjoint(box, next));
 				}
 				if (!free) {
-					if (index < active) {
-						// an automatic event before the active one that does not fit is left out; the active event is always admitted
-						continue;
-					}
-					// the set is a prefix of the events in order of time: nothing after an event that does not fit is admitted
-					break;
+					// the word of an automatic event that would touch another label is left out with the event: it is passed by itself
+					continue;
 				}
 			}
 			if (bar) {
@@ -800,7 +789,9 @@ public final class ArcadeScene {
 			out.disc(Role.GLOW, g.at.x(), g.at.y(), g.radius * 1.9, g.radius * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
 		}
 		out.disc(Role.MARKER, g.at.x(), g.at.y(), g.radius, g.radius, colour, alpha, event.index(), position.tgString());
-		out.text(Role.MARKER_FRET, Integer.toString(position.fret()), g.at.x(), g.at.y(), Math.max(8.0, g.radius * 1.1), 0xFFFFFF, alpha, event.index(), position.tgString());
+		if (f.noLabel == null || !f.noLabel.contains(event.index())) {
+			out.text(Role.MARKER_FRET, Integer.toString(position.fret()), g.at.x(), g.at.y(), Math.max(8.0, g.radius * 1.1), 0xFFFFFF, alpha, event.index(), position.tgString());
+		}
 	}
 
 	private void drawBarEvent(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active, Double raise) {

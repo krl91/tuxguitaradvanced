@@ -83,9 +83,8 @@ public class ArcadeReferenceSceneTest {
 	@Test
 	public void theDensePassageReferenceIsReadable() {
 		Scene scene = ReferenceScenes.denseRealistic().scene(false, QualityTier.FULL);
-		assertTrue(SceneBoxes.detailed(scene).size() <= ArcadeScene.MAX_ADMITTED);
 		assertEquals(null, SceneBoxes.firstOverlap(SceneBoxes.labels(scene)));
-		assertTrue(scene.withRole(Role.MARKER).size() <= ArcadeScene.MAX_ADMITTED, "at most four notes are on their lanes");
+		assertTrue(!scene.withRole(Role.MARKER).isEmpty(), "the notes of the next seconds are on their lanes");
 	}
 
 	@Test

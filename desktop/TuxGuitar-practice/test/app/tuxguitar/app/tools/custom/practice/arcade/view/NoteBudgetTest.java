@@ -2,6 +2,7 @@ package app.tuxguitar.app.tools.custom.practice.arcade.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
@@ -69,40 +70,35 @@ public class NoteBudgetTest {
 	}
 
 	@Test
-	public void atMostFourEventsArePaintedAndAnExcludedNoteLeavesNoPrimitiveAtAll() {
+	public void everyEventDueWithinTheLookAheadIsPaintedWholeAndNoOtherEventLeavesAPrimitive() {
+		long look = CameraTrack.Settings.standard().lookAheadNanos;
+		long hold = CameraTrack.Settings.standard().holdAfterNanos;
 		for (SceneFixture fixture : new SceneFixture[] { crowd(8), crowd(16), crowd(32), mixedCrowd(8), mixedCrowd(16), mixedCrowd(32) }) {
 			int count = fixture.events.size();
 			for (Viewport viewport : SIZES) {
 				for (QualityTier tier : QualityTier.values()) {
-					for (long before = 3_000; before >= -300; before -= 60) {
-						Scene scene = fixture.scene(false).build(fixture.onset(0) - before * MS, viewport, null, 100, tier);
+					for (long before = 5_500; before >= -300; before -= 100) {
+						long now = fixture.onset(0) - before * MS;
+						Scene scene = fixture.scene(false).build(now, viewport, null, 100, tier);
 						Set<Integer> painted = new TreeSet<Integer>();
 						for (SceneItem item : scene.items()) {
 							if (item.eventIndex() >= 0) {
 								painted.add(item.eventIndex());
 							}
 						}
-						String where = count + " notes " + viewport.width() + " " + tier + " " + before + " ms before";
-						int due = 0;
+						String where = count + " events " + viewport.width() + " " + tier + " " + before + " ms before";
 						for (int index = 0; index < fixture.events.size(); index++) {
-							long until = fixture.onset(index) - (fixture.onset(0) - before * MS);
-							due += (until > -80 * MS && until <= ArcadeScene.ADMITTED_WINDOW_NANOS) ? 1 : 0;
-						}
-						assertTrue(painted.size() <= Math.min(ArcadeScene.MAX_ADMITTED, Math.max(ArcadeScene.MIN_ADMITTED, due)),
-								where + ": " + painted.size() + " events painted " + painted + " with " + due + " due within the window");
-						// the painted ones are the nearest in time: no gap in the order of the notes
-						int expected = painted.isEmpty() ? 0 : painted.iterator().next();
-						for (int index : painted) {
-							assertTrue(index >= expected, where);
-						}
-						for (int index = 0; index < fixture.events.size(); index++) {
-							if (!painted.contains(index)) {
-								// an event outside the admitted set has no primitive of any kind: not a marker, a halo, a lane, a bar, a dot, a label (no run: no verdict either)
-								if (!scene.forEvent(index).isEmpty()) {
-									assertTrue(false, where + ": event " + index + " left " + scene.forEvent(index).size() + " primitives, the first a " + scene.forEvent(index).get(0).role());
-								}
+							long until = fixture.onset(index) - now;
+							boolean due = until <= look && until > -hold;
+							assertEquals(due, painted.contains(index), where + ": event " + index + " is " + until / MS + " ms from its onset");
+							if (!due && !scene.forEvent(index).isEmpty()) {
+								assertTrue(false, where + ": event " + index + " left " + scene.forEvent(index).size() + " primitives, the first a " + scene.forEvent(index).get(0).role());
+							}
+							if (due && fixture.events.get(index).kind() == app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent.Kind.NOTE) {
+								assertEquals(1, scene.forEvent(index, Role.MARKER).size(), where + ": the marker of event " + index + " is drawn, whatever its number of neighbours");
 							}
 						}
+						assertNull(SceneBoxes.firstOverlap(SceneBoxes.labels(scene)), where + ": no two labels touch");
 					}
 				}
 			}
@@ -192,28 +188,35 @@ public class NoteBudgetTest {
 	}
 
 	@Test
-	public void everyNoteDueWithinFiveSecondsIsSeenComingFromTheHorizonOnItsWholeLane() {
-		// one note a second: four are the base set, and a fifth is due within five seconds as the first ones come near
-		SongFixture song = new SongFixture(4);
-		song.tempoChange(0, 60);
-		for (int i = 0; i < 12; i++) {
-			song.quarter(i / 4, i % 4, 1 + (i * 5) % 6, 2 + i);
+	public void everyNoteIsSeenComingFromTheHorizonForFiveSecondsWhateverTheNumberOfNotes() {
+		long look = CameraTrack.Settings.standard().lookAheadNanos;
+		assertEquals(5_000_000_000L, look, "five seconds to see, find and play a note");
+		for (SceneFixture fixture : new SceneFixture[] { note1(), crowd(100 / 4 * 4) }) {
+			IsometricProjection projection = new IsometricProjection(new Viewport(1280, 720));
+			// a note that has just come inside the look-ahead is at the horizon, small; it then goes down its lane for the five seconds
+			long now = fixture.onset(0) - look + 20 * MS;
+			Scene entering = fixture.scene(false).build(now, new Viewport(1280, 720), null, 100);
+			SceneItem marker = entering.forEvent(0, Role.MARKER).get(0);
+			double travelled = (marker.value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+			assertTrue(travelled < 0.02, "the note comes in at the horizon: " + travelled);
+			double previous = travelled;
+			for (long left = look - 20 * MS; left >= 0; left -= 100 * MS) {
+				Scene scene = fixture.scene(false).build(fixture.onset(0) - left, new Viewport(1280, 720), null, 100);
+				double now2 = (scene.forEvent(0, Role.MARKER).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+				assertTrue(now2 >= previous, "it only goes down");
+				previous = now2;
+			}
+			Scene onset = fixture.scene(false).build(fixture.onset(0), new Viewport(1280, 720), null, 100);
+			double arrived = (onset.forEvent(0, Role.MARKER).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+			assertTrue(arrived >= previous);
+			assertEquals(1.0, arrived, 1e-9, "and reaches the neck at its onset");
 		}
-		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
-		long first = fixture.onset(0);
-		Viewport screen = new Viewport(1280, 720);
-		Scene before = fixture.scene(false).build(first - 1_700 * MS, screen, null, 100);
-		assertEquals(Set.of(0, 1, 2, 3), admittedIdentities(before), "the base set of four: the fifth is 5.7 s away");
-		assertTrue(before.forEvent(4).isEmpty());
-		Scene after = fixture.scene(false).build(first - 700 * MS, screen, null, 100);
-		assertEquals(Set.of(0, 1, 2, 3, 4), admittedIdentities(after), "the fifth is due within five seconds: it is there, whole");
-		assertEquals(1, after.forEvent(4, Role.TRAJECTORY).size());
-		assertEquals(1, after.forEvent(4, Role.MARKER).size());
-		// it comes in at the far end of its lane, small, in the distance (the horizon): its marker is near the horizon, not half way
-		IsometricProjection projection = new IsometricProjection(screen);
-		double travelled = (after.forEvent(4, Role.MARKER).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
-		assertTrue(travelled < 0.3, "the fifth note has still most of its lane to travel: " + travelled);
-		assertTrue(fixture.events.size() > 5 && after.forEvent(5).isEmpty(), "and the sixth, due in 5.7 s, is absent");
+	}
+
+	private static SceneFixture note1() {
+		SongFixture song = new SongFixture(2);
+		song.quarter(1, 0, 3, 7);
+		return new SceneFixture(song, SceneFixture.sixStrings(), 100);
 	}
 
 	private static Set<Integer> admittedIdentities(Scene scene) {
