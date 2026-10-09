@@ -272,6 +272,11 @@ public class PracticeWindow {
 		} else {
 			setVisible(this.window, true);
 			this.window.moveToTop();
+			// back from a hidden state (the Arcade run): what the tabs show is recomposed and painted again
+			this.followPanel.refresh();
+			refit();
+			this.preparation.redraw();
+			this.window.redraw();
 		}
 	}
 
@@ -1084,14 +1089,18 @@ public class PracticeWindow {
 	private void refit() {
 		if( isOpen() ) {
 			// the folder asks for the height of its tallest tab, so that no tab needs the window to be resized by hand
+			// and the width of its widest one: the window is never too narrow for a tab that is not the one shown
 			float tallest = 0f;
+			float widest = 0f;
 			for( UIPanel tabPanel : this.tabPanels ) {
 				if( !tabPanel.isDisposed() ) {
 					tabPanel.computePackedSize(null, null);
 					tallest = Math.max(tallest, tabPanel.getPackedSize().getHeight());
+					widest = Math.max(widest, tabPanel.getPackedSize().getWidth());
 				}
 			}
 			((UITableLayout) this.window.getLayout()).set(this.preparation, UITableLayout.PACKED_HEIGHT, tallest + 48f);
+			((UITableLayout) this.window.getLayout()).set(this.preparation, UITableLayout.PACKED_WIDTH, widest + 24f);
 			WindowFit.refit(this.window, TGWindow.getInstance(this.context).getWindow().getBounds());
 		}
 	}
