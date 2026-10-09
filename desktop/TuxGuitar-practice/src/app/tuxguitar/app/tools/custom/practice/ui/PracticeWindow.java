@@ -712,7 +712,8 @@ public class PracticeWindow {
 		}
 		this.followPlan = plan;
 		this.followLast = null;
-		this.arcadeSession = ArcadeSession.of(plan, arcadeTuning, new ArcadeSceneLabels(ARCADE_TEXTS), false);
+		this.arcadeSession = ArcadeSession.of(plan, arcadeTuning, new ArcadeSceneLabels(ARCADE_TEXTS), false,
+				FollowSettings.getInstance(this.context).getMarkerPercent() / 100.0);
 		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
 		final FollowRun run = plan.run();

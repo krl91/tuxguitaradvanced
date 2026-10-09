@@ -116,6 +116,7 @@ public final class ArcadeScene {
 	private boolean densityBudget = true;
 	private Theme theme = Theme.DARK;
 	private double uiScale = 1.0;
+	private double markerSize = 1.0;
 
 	/**
 	 * Switches the density budget off, for the measurement of the unreduced cost and for the proof that the budget changes nothing of the judgement
@@ -134,6 +135,13 @@ public final class ArcadeScene {
 		return copy;
 	}
 
+	/** The same scene with the discs of the incoming notes at another size: 1 is the normal one, 0.5 half of it. The disks on the neck do not change. */
+	public ArcadeScene withMarkerSize(double factor) {
+		ArcadeScene copy = copy();
+		copy.markerSize = Math.max(0.3, Math.min(2.0, factor));
+		return copy;
+	}
+
 	/** The same scene for a display of another density: 1 is a normal one, 2 a Retina one. The target on the neck grows with it (FR-065). */
 	public ArcadeScene withUiScale(double scale) {
 		ArcadeScene copy = copy();
@@ -146,6 +154,7 @@ public final class ArcadeScene {
 		copy.densityBudget = this.densityBudget;
 		copy.theme = this.theme;
 		copy.uiScale = this.uiScale;
+		copy.markerSize = this.markerSize;
 		return copy;
 	}
 
@@ -440,8 +449,8 @@ public final class ArcadeScene {
 		g.x = this.neck.fretCentreX(position.fret());
 		// the lane of the fret of the note, whatever its string: the same line for every note written on that fret
 		g.at = f.lanes.laneForFret(position.fret()).at(f.progressOf(event));
-		// bigger than before, and still big in the distance, so that a note is seen coming from far (the owner, 2026-10-09)
-		g.radius = Math.max(8.0, f.h * 0.036 * (0.6 + 0.4 * g.at.scale()));
+		// smaller in the distance than on the neck (the owner, 2026-10-09: the disks off the neck were too big), and adjustable by the learner
+		g.radius = Math.max(6.0, f.h * 0.036 * this.markerSize * (0.35 + 0.65 * g.at.scale()));
 		return g;
 	}
 

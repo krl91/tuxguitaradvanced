@@ -44,6 +44,11 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 	 * @param tuning the strings of the chosen track: the neck has as many strings as the track
 	 */
 	public static ArcadeSession of(FollowStarter.Plan plan, TrackTuning tuning, SceneLabels labels, boolean monochrome) {
+		return of(plan, tuning, labels, monochrome, 1.0);
+	}
+
+	/** @param markerSize the size of the discs of the incoming notes, 1 being the normal one */
+	public static ArcadeSession of(FollowStarter.Plan plan, TrackTuning tuning, SceneLabels labels, boolean monochrome, double markerSize) {
 		List<ArcadeRenderEvent> events = new ArrayList<ArcadeRenderEvent>();
 		List<PracticeEvent> practice = plan.sequence().getEvents();
 		for (int i = 0; i < practice.size(); i++) {
@@ -51,7 +56,7 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 		}
 		NeckModel neck = NeckModel.of(tuning, 24);
 		ArcadeScene scene = new ArcadeScene(events, neck, StringColours.forStrings(tuning.getStringCount()), CameraTrack.build(events, neck, CameraTrack.Settings.standard()),
-				labels, monochrome);
+				labels, monochrome).withMarkerSize(markerSize);
 		return new ArcadeSession(plan, new ArcadeRun(plan.sequence(), ArcadeScoring.standard()), scene);
 	}
 

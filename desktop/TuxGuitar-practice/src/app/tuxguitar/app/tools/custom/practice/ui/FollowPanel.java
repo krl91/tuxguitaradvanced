@@ -63,6 +63,8 @@ public final class FollowPanel {
 	private final UILabel modeHint;
 	private final UILabel percentLabel;
 	private final UISpinner percent;
+	private final UILabel markerLabel;
+	private final UISpinner marker;
 	private final UILabel percentHint;
 	private final UILabel toleranceLabel;
 	private final UIDropDownSelect<TimingTolerance.Preset> tolerance;
@@ -118,6 +120,15 @@ public final class FollowPanel {
 		this.percentHint = wrap(uiFactory, layout, 4);
 		this.percentHint.setText(TuxGuitar.getProperty("practice.follow.percent.hint",
 				new String[] { Integer.toString(FollowSettings.MIN_PERCENT), Integer.toString(FollowSettings.MAX_PERCENT) }));
+
+		this.markerLabel = uiFactory.createLabel(this.panel);
+		this.markerLabel.setText(TuxGuitar.getProperty("arcade.marker.size"));
+		layout.set(this.markerLabel, 15, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.marker = uiFactory.createSpinner(this.panel);
+		this.marker.setMinimum(FollowSettings.MIN_MARKER_PERCENT);
+		this.marker.setMaximum(FollowSettings.MAX_MARKER_PERCENT);
+		this.marker.setIncrement(5);
+		layout.set(this.marker, 15, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 
 		this.toleranceLabel = uiFactory.createLabel(this.panel);
 		this.toleranceLabel.setText(TuxGuitar.getProperty("practice.follow.tolerance"));
@@ -196,6 +207,14 @@ public final class FollowPanel {
 				this.updating = false;
 			}
 		}));
+		this.marker.addSelectionListener(selected(() -> {
+			int value = this.settings.setMarkerPercent(this.marker.getValue());
+			if (value != this.marker.getValue()) {
+				this.updating = true;
+				this.marker.setValue(value);
+				this.updating = false;
+			}
+		}));
 		this.tolerance.addSelectionListener(selected(() -> {
 			TimingTolerance.Preset chosen = this.tolerance.getSelectedValue();
 			if (chosen != null) {
@@ -251,6 +270,9 @@ public final class FollowPanel {
 			boolean follow = this.settings.isTimed();
 			this.mode.setSelectedValue(this.settings.getMode());
 			this.percent.setValue(this.settings.getPercent());
+			this.marker.setValue(this.settings.getMarkerPercent());
+			this.markerLabel.setVisible(this.settings.isArcade());
+			this.marker.setVisible(this.settings.isArcade());
 			this.tolerance.setSelectedValue(this.settings.getTolerance());
 			this.modeHint.setText(this.settings.isArcade() ? TuxGuitar.getProperty("practice.mode.arcade.hint") + "\n" + TuxGuitar.getProperty("arcade.monitoring.unavailable")
 					: TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
@@ -278,6 +300,7 @@ public final class FollowPanel {
 			this.precision.setVisible(follow);
 			this.mode.setEnabled(idle);
 			this.percent.setEnabled(idle);
+			this.marker.setEnabled(idle);
 			this.tolerance.setEnabled(idle);
 			this.manual.setEnabled(idle);
 			AudioRoute route = this.backend.route();

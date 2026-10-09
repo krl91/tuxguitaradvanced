@@ -30,7 +30,13 @@ public final class FollowSettings {
 	public static final int MAX_PERCENT = 150;
 	public static final int DEFAULT_PERCENT = 100;
 
+	/** The size of the discs of the incoming notes in Arcade, in percent of the normal size. */
+	public static final int MIN_MARKER_PERCENT = 40;
+	public static final int MAX_MARKER_PERCENT = 150;
+	public static final int DEFAULT_MARKER_PERCENT = 100;
+
 	private final RecognitionSettingsStore store;
+	private int markerPercent = DEFAULT_MARKER_PERCENT;
 	private Mode mode = Mode.WAIT;
 	private int percent = DEFAULT_PERCENT;
 	private TimingTolerance.Preset tolerance;
@@ -87,6 +93,16 @@ public final class FollowSettings {
 	public synchronized int setPercent(int percent) {
 		this.percent = Math.max(MIN_PERCENT, Math.min(MAX_PERCENT, percent));
 		return this.percent;
+	}
+
+	public synchronized int getMarkerPercent() {
+		return this.markerPercent;
+	}
+
+	/** The size of the Arcade discs in percent, kept within the bounds. */
+	public synchronized int setMarkerPercent(int percent) {
+		this.markerPercent = Math.max(MIN_MARKER_PERCENT, Math.min(MAX_MARKER_PERCENT, percent));
+		return this.markerPercent;
 	}
 
 	public synchronized TimingTolerance.Preset getTolerance() {
