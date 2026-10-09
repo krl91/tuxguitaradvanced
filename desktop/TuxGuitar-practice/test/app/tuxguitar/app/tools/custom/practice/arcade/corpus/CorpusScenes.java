@@ -261,11 +261,18 @@ public final class CorpusScenes {
 				noteIdentities.add(item.eventIndex());
 			}
 		}
-		if (noteIdentities.size() > ArcadeScene.MAX_ADMITTED) {
-			failures.add(where + ": " + noteIdentities.size() + " notes on their lanes at once (FR-062)");
+		// the size of the set: four, or the events due within five seconds when that makes more, never more than eight
+		int due = 0;
+		for (ArcadeRenderEvent event : p.events) {
+			long until = event.onsetNanos() - now;
+			due += (until > 0 && until <= ArcadeScene.ADMITTED_WINDOW_NANOS) ? 1 : 0;
 		}
-		if (SceneBoxes.detailed(scene).size() > ArcadeScene.MAX_ADMITTED) {
-			failures.add(where + ": " + SceneBoxes.detailed(scene).size() + " detailed events");
+		int allowed = Math.min(ArcadeScene.MAX_ADMITTED, Math.max(ArcadeScene.MIN_ADMITTED, due + 1));
+		if (noteIdentities.size() > allowed) {
+			failures.add(where + ": " + noteIdentities.size() + " notes on their lanes at once, " + allowed + " allowed (FR-062)");
+		}
+		if (SceneBoxes.detailed(scene).size() > allowed) {
+			failures.add(where + ": " + SceneBoxes.detailed(scene).size() + " detailed events, " + allowed + " allowed");
 		}
 		if (scene.withRole(Role.CARTOUCHE_FRAME).size() > 1) {
 			failures.add(where + ": " + scene.withRole(Role.CARTOUCHE_FRAME).size() + " chord diagrams");
