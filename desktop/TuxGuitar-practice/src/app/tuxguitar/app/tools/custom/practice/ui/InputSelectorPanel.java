@@ -11,6 +11,7 @@ import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
+import app.tuxguitar.ui.widget.UIButton;
 import app.tuxguitar.ui.widget.UIContainer;
 import app.tuxguitar.ui.widget.UIDropDownSelect;
 import app.tuxguitar.ui.widget.UILabel;
@@ -60,8 +61,18 @@ public final class InputSelectorPanel {
 			}
 		});
 
+		// an interface plugged in while the application runs: the learner asks for the list again (the list is not watched)
+		UIButton refresh = uiFactory.createButton(this.panel);
+		refresh.setText(TuxGuitar.getProperty("practice.input.refresh"));
+		refresh.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				reload();
+			}
+		});
+		layout.set(refresh, 1, 3, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, false, false);
+
 		this.hint = uiFactory.createWrapLabel(this.panel);
-		layout.set(this.hint, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		layout.set(this.hint, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
 		layout.set(this.hint, UITableLayout.PACKED_WIDTH, WRAP_WIDTH);
 
 		this.selectionListener = snapshot -> TGSynchronizer.getInstance(this.context).executeLater(() -> {
