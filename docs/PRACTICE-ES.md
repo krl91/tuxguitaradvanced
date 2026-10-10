@@ -22,6 +22,44 @@ La práctica interactiva escucha tu guitarra y comprueba, nota por nota y acorde
 
 La primera vez (o después de cambiar la entrada) la ventana comprueba tu **nivel de entrada**: toca una cuerda y mira el medidor. Si dice *demasiado bajo* o *saturación*, acércate o ajusta la ganancia (más abajo).
 
+## Practicar con la banda: Seguir el tempo y Arcade (alfa)
+
+En la pestaña **Modo** de la ventana de práctica eliges cómo se trabaja la partitura:
+
+| Modo | Qué pasa |
+|---|---|
+| **Esperar la nota correcta** | La partitura te espera (el modo descrito arriba). |
+| **Seguir el tempo** | La partitura suena a su tempo, tras una cuenta atrás. La pista que practicas queda muda y las demás suenan de acompañamiento. Cada nota o acorde se juzga en el tiempo: a tiempo, pronto, tarde, errónea, fallada. |
+| **Arcade** | La misma partida, presentada como un juego: las notas vienen hacia ti sobre un mástil y se juzgan al pasar. El resultado se muestra al final. |
+
+Los dos modos cronometrados comparten el **tempo** (20 % a 150 % del tempo escrito), la **tolerancia de tiempo** (estricta, normal, flexible) y la **calibración del ritmo** de tu cadena de audio (calibra con clics, o escribe el retraso a mano: sin ella las notas pueden juzgarse algo pronto o tarde, y la ventana indica *Precisión rítmica reducida*).
+
+### Arcade
+
+Elige **Arcade** en la pestaña Modo, la pista que tocas en la pestaña Pista (cualquier pista con altura, bajo incluido) y pulsa *Iniciar Arcade*. La ventana de práctica se oculta mientras corre la ventana del juego.
+
+<img src="images/features/arcade-six-strings.png" width="640" alt="La ventana Arcade: las notas vienen del horizonte hacia el mástil, un diagrama de acorde y las insignias de veredicto">
+
+* **Cada nota se ve venir durante cinco segundos**, desde el horizonte, sea cual sea el número de notas. Una nota escrita en el traste *n* sigue siempre el mismo carril hasta el centro de su traste en el mástil; solo su color (el de su cuerda) depende de la cuerda. El disco que llega al mástil es el que tocas ahora.
+* **Los acordes** son una barra sobre un eje central; el próximo acorde muestra su diagrama y su nombre, los demás son barras sin diagrama.
+* **Los veredictos** (a tiempo, pronto, tarde, erróneo, incompleto, fallado) aparecen como insignia una vez juzgada la nota. La parte superior muestra tu racha, el tempo y lo que viene.
+* **Pausa, reanudar y parar** están en la ventana. Reproducir la partitura desde la ventana principal detiene la partida.
+* **Tamaño de los discos que llegan:** un ajuste (40 % a 150 %) en la pestaña Modo, para los discos que aún no están en el mástil.
+* Al final, el **resultado** da la puntuación, la parte del máximo, la mejor racha y el recuento de cada juicio; puedes **repetir desde el principio o desde un compás**.
+* **Entradas:** el botón *Actualizar* de la pestaña Entrada vuelve a listar las entradas de audio, para una interfaz conectada con la aplicación en marcha.
+
+<img src="images/features/arcade-chord.png" width="480" alt="Un acorde como barra con su diagrama con nombre, y las notas que llegan">
+
+*Estas imágenes son renderizados de la vista Arcade hechos por el motor de la propia aplicación sobre partituras de prueba, no capturas de ventana.*
+
+### Alfa: lo que aún no está verificado
+
+* Es una **alfa**: el tiempo de la vista Arcade y del seguimiento de tempo está validado con pruebas automáticas, y el aspecto de la vista por el propietario en un Mac; **no** se ha validado con otros jugadores, guitarras, micrófonos o máquinas.
+* En una prueba de carga de 10 minutos, la cadena de audio **aún pierde un plazo de análisis por minuto** (un hueco de planificación del sistema); no se ha visto que cambie un juicio, pero el objetivo de menos no se cumple todavía.
+* **Bajo:** las notas por debajo de sol 1 (49 Hz) se muestran pero no se juzgan.
+* **Oír tu propia guitarra a través de la aplicación** no se ofrece: toca por tu amplificador, o por unos auriculares conectados a tu interfaz de audio.
+* Las notas más juntas de unos 0,3 s pueden no seguirse; las técnicas (hammer-on, slide, bend...) se indican aparte y no cambian la puntuación.
+
 ## Mientras practicas
 
 <img src="images/features/practice-window.png" width="380" alt="La ventana de práctica mientras se espera un acorde">

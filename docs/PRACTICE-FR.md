@@ -40,6 +40,44 @@ La pratique peut aussi se faire **par passages** : quelques mesures à la fois, 
 
 Ce qui est vérifié, c'est la **hauteur**. La corde et la case utilisées ne peuvent pas être connues par le son. Pour chaque technique écrite (hammer-on, pull-off, slide, bend, vibrato), une ligne sous le résultat de hauteur dit ce qui a été entendu : *entendu*, *non entendu*, *incertain* ou *pas encore vérifiable*. Aucune technique n'est encore vérifiée (détection mesurée : vibrato 59 %, bend 82 %, slide 48 % des notes annotées, objectif 85 %) : pour l'instant la ligne indique donc *pas encore vérifiable*. Elle ne bloque jamais l'exercice : une note de hammer-on ou de pull-off est acceptée d'après sa hauteur.
 
+## S'entraîner avec le groupe : Suivre le tempo et Arcade (alpha)
+
+Dans l'onglet **Mode** de la fenêtre de pratique, vous choisissez comment la partition est travaillée :
+
+| Mode | Ce qui se passe |
+|---|---|
+| **Attendre la bonne note** | La partition vous attend (le mode décrit plus haut). |
+| **Suivre le tempo** | La partition joue à son tempo, après un décompte. La piste travaillée est muette, les autres pistes jouent l'accompagnement. Chaque note ou accord est jugé dans le temps : à l'heure, en avance, en retard, faux, manqué. |
+| **Arcade** | La même partie, présentée comme un jeu : les notes viennent vers vous sur un manche et sont jugées à leur passage. Le résultat s'affiche à la fin. |
+
+Les deux modes chronométrés partagent le **tempo** (20 % à 150 % du tempo écrit), la **tolérance de timing** (stricte, normale, souple) et le **calibrage du rythme** de votre chaîne audio (calibrage par clics, ou délai saisi à la main : sans lui, les notes peuvent être jugées un peu en avance ou en retard, et la fenêtre indique *Précision rythmique réduite*).
+
+### Arcade
+
+Choisissez **Arcade** dans l'onglet Mode, la piste que vous jouez dans l'onglet Piste (toute piste avec hauteur, basse comprise), puis *Démarrer Arcade*. La fenêtre de pratique se masque pendant que la fenêtre du jeu tourne.
+
+<img src="images/features/arcade-six-strings.png" width="640" alt="La fenêtre Arcade : les notes viennent de l'horizon vers le manche, un diagramme d'accord et les badges de verdict">
+
+* **Chaque note se voit venir pendant cinq secondes**, depuis l'horizon, quel que soit le nombre de notes. Une note écrite à la case *n* suit toujours la même voie jusqu'au milieu de sa case sur le manche ; seule sa couleur (celle de sa corde) dépend de la corde. Le disque qui atteint le manche est celui que vous jouez maintenant.
+* **Les accords** sont une barre sur un axe central ; le prochain accord montre son diagramme et son nom, les autres sont des barres sans diagramme.
+* **Les verdicts** (à l'heure, en avance, en retard, faux, incomplet, manqué) apparaissent en badge une fois la note jugée. Le haut de la fenêtre montre votre série, le tempo et la suite.
+* **Pause, reprise et arrêt** sont dans la fenêtre. Jouer la partition depuis la fenêtre principale arrête la partie.
+* **Taille des disques qui arrivent :** un réglage (40 % à 150 %) dans l'onglet Mode, pour les disques qui ne sont pas encore sur le manche.
+* À la fin, le **résultat** donne le score, la part du maximum, la meilleure série et le décompte de chaque jugement ; vous pouvez **rejouer depuis le début ou depuis une mesure**.
+* **Entrées :** le bouton *Actualiser* de l'onglet Entrée relit la liste des entrées audio, pour une interface branchée pendant que l'application tourne.
+
+<img src="images/features/arcade-chord.png" width="480" alt="Un accord en barre avec son diagramme nommé, et les notes qui arrivent">
+
+*Ces images sont des rendus de la vue Arcade faits par le moteur de rendu de l'application sur des partitions de test, pas des captures de fenêtre.*
+
+### Alpha : ce qui n'est pas encore vérifié
+
+* C'est une **alpha** : le timing de la vue Arcade et du suivi de tempo est validé par des tests automatiques, et l'aspect de la vue par le propriétaire sur un Mac ; il n'a **pas** été validé avec d'autres joueurs, guitares, micros ou machines.
+* Sur un test de charge de 10 minutes, la chaîne audio **manque encore environ une échéance d'analyse par minute** (un trou d'ordonnancement du système) ; il n'a pas été montré qu'elle change un jugement, mais l'objectif de moins n'est pas atteint.
+* **Basse :** les notes sous le sol 1 (49 Hz) sont affichées mais pas jugées.
+* **Entendre sa propre guitare à travers l'application** n'est pas proposé : jouez par votre ampli, ou par un casque branché sur votre interface audio.
+* Les notes plus rapprochées que 0,3 s environ peuvent ne pas être suivies ; les techniques (hammer-on, slide, bend...) sont signalées à part et ne changent pas le score.
+
 ## Gain d'entrée, réduction du bruit et gain suggéré
 
 Sous la jauge de niveau de la fenêtre de pratique, et dans l'accordeur, un curseur **Gain d'entrée** renforce ou baisse le signal dans l'application (de -6 à +18 dB) ; **Remise à zéro** revient à 0 dB. Le gain n'est jamais mémorisé : il revient à 0 dB quand l'entrée change et à chaque démarrage. Si l'amplification n'amplifie surtout que le bruit de fond, ou fait saturer le signal, un avertissement le dit et conseille d'augmenter plutôt le gain de l'interface audio.

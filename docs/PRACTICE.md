@@ -40,6 +40,44 @@ Practice can also work **by passages**: a few measures at a time, repeated until
 
 What is verified is **pitch**. The string and fret you used cannot be known from audio. For each written technique (hammer-on, pull-off, slide, bend, vibrato) a line under the pitch result says what was heard: *heard*, *not heard*, *uncertain* or *cannot be checked yet*. No technique is verified yet (measured detection: vibrato 59 %, bend 82 %, slide 48 % of annotated notes, target 85 %), so for now the line says *cannot be checked yet*. It never blocks the exercise: a hammer-on or pull-off note is accepted from its pitch.
 
+## Practising with the band: Follow the tempo and Arcade (alpha)
+
+In the **Mode** tab of the practice window you choose how the score is practised:
+
+| Mode | What happens |
+|---|---|
+| **Wait for the right note** | The score waits for you (the mode described above). |
+| **Follow the tempo** | The score plays at its tempo, after a count-in. The track you practise is silent, the other tracks sound as a backing. Each note or chord is judged on time: on time, early, late, wrong, missed. |
+| **Arcade** | The same run, shown as a game: the notes come towards you on a neck and are judged as they pass. The result of the run is shown at the end. |
+
+Both timed modes share the **tempo** (20 % to 150 % of the written tempo), the **timing tolerance** (strict, normal, lenient) and the **rhythm calibration** of your audio route (calibrate with clicks, or type the delay by hand: without it the notes may be judged a little early or late, and the window says *Reduced rhythmic precision*).
+
+### Arcade
+
+Choose **Arcade** in the Mode tab, choose the track you play in the Track tab (any pitched track, bass included), then press *Start Arcade*. The practice window hides while the game window runs.
+
+<img src="images/features/arcade-six-strings.png" width="640" alt="The Arcade window: notes coming from the horizon towards the neck, a chord diagram and the verdict badges">
+
+* **Every note is seen coming for five seconds**, from the horizon, whatever the number of notes. A note written at fret *n* always follows the same lane to the middle of its fret on the neck; only its colour (that of its string) depends on the string. The disk that reaches the neck is the one you play now.
+* **Chords** are a bar on a central axis; the next chord shows its diagram and name, the others are bars without diagram.
+* **Verdicts** (on time, early, late, wrong, incomplete, missed) appear as a badge once the note is judged. The top of the window shows your streak, the tempo and what comes next.
+* **Pause, resume and stop** are in the window. Playing the score from the main window stops the run.
+* **Size of the incoming discs:** a setting (40 % to 150 %) in the Mode tab, for the discs that are not on the neck yet.
+* At the end the **result** gives the score, the share of the maximum, the best streak and the count of each judgement; you can **play again from the start or from a measure**.
+* **Inputs:** the *Refresh* button of the Input tab lists the audio inputs again, for an interface plugged in while the application runs.
+
+<img src="images/features/arcade-chord.png" width="480" alt="A chord shown as a bar with its named diagram, and the incoming notes">
+
+*These images are renderings of the Arcade view made by the application's own renderer on test scores, not window captures.*
+
+### Alpha: what is not verified yet
+
+* This is an **alpha**: the timing of the Arcade view and of the tempo-following run is validated by automatic tests, and the look of the view by the owner on a Mac; it has **not** been validated by other players, guitars, microphones or machines.
+* In a 10-minute stress run, the audio chain still **misses about one analysis deadline per minute** (an operating-system scheduling gap); it was not shown to change a judgement, but the goal of fewer is not met yet.
+* **Bass:** notes below G1 (49 Hz) are shown but not judged.
+* **Hearing your own guitar through the application** is not offered: play through your amplifier, or through headphones plugged in your audio interface.
+* Notes closer than about 0.3 s may not be followed; the techniques (hammer-on, slide, bend...) are reported apart and do not change the score.
+
 ## Input gain, noise reduction and suggested gain
 
 Under the level meter of the practice window, and in the tuner, an **Input gain** slider boosts or lowers the signal inside the application (-6 to +18 dB), and **Reset** returns to 0 dB. The gain is never remembered: it returns to 0 dB when the input changes and at each start. If the boost mostly amplifies background noise, or makes the signal clip, a warning says so and tells you to raise the gain on the audio interface instead.
