@@ -49,13 +49,32 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 
 	/** @param markerSize the size of the discs of the incoming notes, 1 being the normal one */
 	public static ArcadeSession of(FollowStarter.Plan plan, TrackTuning tuning, SceneLabels labels, boolean monochrome, double markerSize) {
+		return of(plan, tuning, labels, monochrome, markerSize, CameraTrack.Settings.standard().lookAheadNanos);
+	}
+
+	/** The shortest floating measure: a measure shorter than this (a very fast tempo) is shown for this long anyway. */
+	public static final long MIN_LOOK_AHEAD_NANOS = 1_000_000_000L;
+
+	/**
+	 * The length of a measure of the run (FR-076): the time between the start of a measure and the start of the next one, at the tempo of the run, from the
+	 * timeline and the length of the measure in ticks. Never shorter than {@link #MIN_LOOK_AHEAD_NANOS}.
+	 */
+	public static long measureNanos(app.tuxguitar.app.tools.custom.practice.session.FollowTimeline timeline, long fromTicks, long measureTicks) {
+		return Math.max(MIN_LOOK_AHEAD_NANOS, timeline.nanosAtTick(fromTicks + measureTicks) - timeline.nanosAtTick(fromTicks));
+	}
+
+	/**
+	 * @param lookAheadNanos how long before its onset an event is in the picture: the length of one measure, a floating measure that holds the same sum of
+	 *        beats whatever the notes (FR-076)
+	 */
+	public static ArcadeSession of(FollowStarter.Plan plan, TrackTuning tuning, SceneLabels labels, boolean monochrome, double markerSize, long lookAheadNanos) {
 		List<ArcadeRenderEvent> events = new ArrayList<ArcadeRenderEvent>();
 		List<PracticeEvent> practice = plan.sequence().getEvents();
 		for (int i = 0; i < practice.size(); i++) {
 			events.add(ArcadeRenderEvent.of(i, practice.get(i), plan.timeline()));
 		}
 		NeckModel neck = NeckModel.of(tuning, 24);
-		ArcadeScene scene = new ArcadeScene(events, neck, StringColours.forStrings(tuning.getStringCount()), CameraTrack.build(events, neck, CameraTrack.Settings.standard()),
+		ArcadeScene scene = new ArcadeScene(events, neck, StringColours.forStrings(tuning.getStringCount()), CameraTrack.build(events, neck, CameraTrack.Settings.standard().withLookAhead(lookAheadNanos)),
 				labels, monochrome).withMarkerSize(markerSize);
 		return new ArcadeSession(plan, new ArcadeRun(plan.sequence(), ArcadeScoring.standard()), scene);
 	}

@@ -21,7 +21,7 @@ public final class ArcadeScene {
 	static final int PANEL_EDGE_COLOUR = 0x9FE8F0;
 	static final int PANEL_FRET_COLOUR = 0x10151C;
 	/** The body of the neck is a faint tint: the scene behind stays visible (FR-075). */
-	static final double NECK_ALPHA = 0.30;
+	static final double NECK_ALPHA = 0.10;
 	/** The number of the fret of the active event on the ruler of the neck. */
 	static final int RULER_ACTIVE_COLOUR = 0xFFB347;
 	static final int BAND_COLOUR = 0x2D5FA6;
@@ -313,6 +313,9 @@ public final class ArcadeScene {
 			ScreenPoint nearLeft = f.projection.approach(f.cam.left(), 1.0, f.cam);
 			ScreenPoint nearRight = f.projection.approach(f.cam.right(), 1.0, f.cam);
 			out.quad(Role.APPROACH_BAND, new double[] { farLeft.x(), farLeft.y(), farRight.x(), farRight.y(), nearRight.x(), nearRight.y(), nearLeft.x(), nearLeft.y() }, BAND_COLOUR, 0.16, -1, 0);
+			// the band goes on under the neck, which is see-through: the strings float over it
+			double neckBottom = f.h * IsometricProjection.NECK_NEAR_EDGE;
+			out.quad(Role.APPROACH_BAND, new double[] { nearLeft.x(), nearLeft.y(), nearRight.x(), nearRight.y(), nearRight.x(), neckBottom, nearLeft.x(), neckBottom }, BAND_COLOUR, 0.16, -1, 0);
 			for (int fret : f.activeFrets) {
 				if (f.cam.shows(this.neck.fretX(fret - 1), 0.0) || f.cam.shows(this.neck.fretX(fret), 0.0)) {
 					ScreenPoint a0 = f.projection.approach(this.neck.fretX(fret - 1), 0.0, f.cam);
@@ -924,8 +927,17 @@ public final class ArcadeScene {
 
 	private PanelGeo panelGeo(Frame f, ArcadeRenderEvent event) {
 		double progress = Math.min(1.0, f.progressOf(event));
-		ScreenPoint left = f.projection.approach(f.cam.left(), progress, f.cam);
-		ScreenPoint right = f.projection.approach(f.cam.right(), progress, f.cam);
+		// the panel spans the cells of the neck from the first fret of the chord to its last, inclusive, so that it lands exactly on the cells that are played (FR-074)
+		int first = Integer.MAX_VALUE;
+		int last = 0;
+		for (ArcadeRenderEvent.Position position : event.positions()) {
+			if (position.fret() > 0) {
+				first = Math.min(first, position.fret());
+				last = Math.max(last, position.fret());
+			}
+		}
+		ScreenPoint left = last == 0 ? f.projection.approach(f.cam.left(), progress, f.cam) : f.projection.approach(this.neck.fretX(first - 1), progress, f.cam);
+		ScreenPoint right = last == 0 ? f.projection.approach(f.cam.right(), progress, f.cam) : f.projection.approach(this.neck.fretX(last), progress, f.cam);
 		PanelGeo g = new PanelGeo();
 		g.left = left.x();
 		g.right = right.x();
@@ -966,7 +978,7 @@ public final class ArcadeScene {
 			}
 			double x = f.projection.approach(this.neck.fretCentreX(position.fret()), g.progress, f.cam).x();
 			double cell = Math.abs(f.projection.approach(this.neck.fretX(position.fret()), g.progress, f.cam).x() - f.projection.approach(this.neck.fretX(position.fret() - 1), g.progress, f.cam).x());
-			double rx = Math.max(ry * 1.6, Math.min(cell * 0.38, ry * 3.2));
+			double rx = Math.max(1.5, cell * 0.44);
 			if (f.tier.glow()) {
 				out.rounded(Role.GLOW, x, y, rx * 1.3, ry * 1.5, colour, alpha * 0.25, index, position.tgString());
 			}

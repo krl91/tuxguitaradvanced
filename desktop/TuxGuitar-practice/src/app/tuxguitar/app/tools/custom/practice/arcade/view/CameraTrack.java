@@ -45,6 +45,11 @@ public final class CameraTrack {
 			this.stepNanos = stepNanos;
 		}
 
+		/** The same settings with another look-ahead (FR-076: the floating measure, whose length is that of a measure of the song). */
+		public Settings withLookAhead(long lookAheadNanos) {
+			return new Settings(lookAheadNanos, this.spawnLeadNanos, this.holdAfterNanos, this.baseSpanMm, this.minZoom, this.marginMm, this.smoothingNanos, this.stepNanos);
+		}
+
 		/** The settings of the view: events appear 5 s ahead (the owner, 2026-10-09: every note is seen coming from the horizon for five seconds, whatever the number of notes), are in view 1 s earlier, stay 0.8 s, a part of 260 mm, zoom down to 0.5, 600 ms of easing. */
 		public static Settings standard() {
 			return new Settings(5_000_000_000L, 1_000_000_000L, 800_000_000L, 260.0, 0.5, 12.0, 600_000_000L, 20_000_000L);

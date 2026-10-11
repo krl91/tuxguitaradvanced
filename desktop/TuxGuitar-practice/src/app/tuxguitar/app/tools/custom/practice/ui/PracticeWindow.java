@@ -723,8 +723,11 @@ public class PracticeWindow {
 		}
 		this.followPlan = plan;
 		this.followLast = null;
+		// the floating measure (FR-076): the picture holds what comes in the length of one measure of the track
+		long measureNanos = ArcadeSession.measureNanos(plan.timeline(), plan.timeline().targetTicks(0),
+				this.song.getMeasureHeader(plan.sequence().getEvents().get(0).getMeasureIndex()).getLength());
 		this.arcadeSession = ArcadeSession.of(plan, arcadeTuning, new ArcadeSceneLabels(ARCADE_TEXTS), false,
-				FollowSettings.getInstance(this.context).getMarkerPercent() / 100.0);
+				FollowSettings.getInstance(this.context).getMarkerPercent() / 100.0, measureNanos);
 		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
 		final FollowRun run = plan.run();

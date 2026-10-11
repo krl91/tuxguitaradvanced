@@ -102,6 +102,9 @@
 - [ ] T115 Update the manuals and the README screenshots only after the owner validates the new graphics.
 - [ ] T117 [HUMAN] The owner judges the chord panel on the built application.
 
+- [x] T118 (done 2026-10-11) The panel spans the first to the last fret of the chord (Q25) and the neck tint at 10 % with the band under it (Q27), with tests (`ChordPanelTest`, `RoundedRectTest`).
+- [x] T119 (done 2026-10-11) The floating measure (Q26, FR-076): `CameraTrack.Settings.withLookAhead`, `ArcadeSession.measureNanos` (minimum one second) used at the start of a run, tests in `FloatingMeasureTest`; the tests of the former five seconds keep the standard settings. [HUMAN] the owner judges the readability of one measure and says whether a shorter or longer window is wanted.
+
 ## Increment D - Interface and result (`SRC/arcade/ui`, `share/lang`)
 
 **Goal**: start, play, pause, stop and read the result, in three languages. **Independent test**: headless and native GUI tests, then the manual guide.

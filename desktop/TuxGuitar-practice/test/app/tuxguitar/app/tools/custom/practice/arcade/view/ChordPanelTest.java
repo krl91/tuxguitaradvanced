@@ -46,7 +46,7 @@ public class ChordPanelTest {
 	}
 
 	@Test
-	public void aChordIsATranslucentPanelAsWideAsTheLanesGrowingWithItsProgressAndLandingOnTheNeck() {
+	public void aChordIsATranslucentPanelFromItsFirstFretToItsLastGrowingWithItsProgressAndLandingOnTheNeck() {
 		SceneFixture fixture = chords();
 		long look = CameraTrack.Settings.standard().lookAheadNanos;
 		IsometricProjection projection = new IsometricProjection(SCREEN);
@@ -62,10 +62,11 @@ public class ChordPanelTest {
 			assertTrue(panel.alpha() > 0.0 && panel.alpha() <= 0.3, "translucent: the scene behind stays visible");
 			Camera cam = fixture.camera.at(now);
 			double[] box = bounds(panel);
-			ScreenPoint left = projection.approach(cam.left(), progress, cam);
-			ScreenPoint right = projection.approach(cam.right(), progress, cam);
-			assertEquals(left.x(), box[0], 0.5, "as wide as the lanes at its depth (left)");
-			assertEquals(right.x(), box[2], 0.5, "as wide as the lanes at its depth (right)");
+			// the chord of the fixture is on frets 1 to 3: the panel spans the cells of the first to the last fret, inclusive (the owner, 2026-10-11)
+			ScreenPoint left = projection.approach(fixture.neck.fretX(0), progress, cam);
+			ScreenPoint right = projection.approach(fixture.neck.fretX(3), progress, cam);
+			assertEquals(left.x(), box[0], 0.5, "from the first cell played (left)");
+			assertEquals(right.x(), box[2], 0.5, "to the last cell played (right)");
 			assertEquals(left.y(), box[3], 0.5, "its lower edge is on the line of the lanes");
 			assertTrue(box[3] - box[1] >= previousHeight - 1e-9, "it grows as it comes");
 			previousHeight = box[3] - box[1];

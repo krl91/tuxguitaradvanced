@@ -103,7 +103,7 @@ public class RoundedRectTest {
 	public void theNeckBodyIsTranslucentWhileTheStringsAndTheTargetsStayOpaque() {
 		SceneFixture fixture = notes();
 		Scene scene = fixture.scene(false).build(fixture.onset(0) - 400 * MS, SCREEN, null, 100, QualityTier.FULL);
-		assertTrue(scene.withRole(Role.NECK_BODY).get(0).alpha() <= 0.4 && scene.withRole(Role.NECK_BODY).get(0).alpha() > 0.0, "the body of the neck is a faint tint");
+		assertTrue(scene.withRole(Role.NECK_BODY).get(0).alpha() <= 0.15 && scene.withRole(Role.NECK_BODY).get(0).alpha() > 0.0, "the body of the neck is a faint tint");
 		for (SceneItem wire : scene.withRole(Role.FRET_WIRE)) {
 			assertEquals(1.0, wire.alpha(), 0.0, "the wires are opaque");
 		}
@@ -124,5 +124,19 @@ public class RoundedRectTest {
 		int firstBand = full.items().indexOf(full.withRole(Role.APPROACH_BAND).get(0));
 		assertTrue(firstBand < full.items().indexOf(full.forEvent(0, Role.MARKER).get(0)), "drawn behind the markers");
 		assertTrue(firstBand < full.items().indexOf(full.withRole(Role.FIELD_GUIDE).get(0)), "and behind the lanes");
+	}
+
+	@Test
+	public void theBandGoesOnUnderTheSeeThroughNeckSoThatTheStringsFloatOverIt() {
+		SceneFixture fixture = notes();
+		Scene scene = fixture.scene(false).build(fixture.onset(0) - 1000 * MS, SCREEN, null, 100, QualityTier.FULL);
+		double neckBottom = scene.withRole(Role.NECK_BODY).get(0).value(5);
+		boolean under = false;
+		for (SceneItem band : scene.withRole(Role.APPROACH_BAND)) {
+			double bottom = Math.max(Math.max(band.value(1), band.value(3)), Math.max(band.value(5), band.value(7)));
+			under |= Math.abs(bottom - neckBottom) < 0.5;
+		}
+		assertTrue(under, "a band reaches the bottom of the neck: the neck is see-through");
+		assertTrue(scene.withRole(Role.NECK_BODY).get(0).alpha() <= 0.15, "and the neck's own tint is faint");
 	}
 }

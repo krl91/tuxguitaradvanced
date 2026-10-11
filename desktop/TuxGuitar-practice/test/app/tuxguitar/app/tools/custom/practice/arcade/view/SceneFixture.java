@@ -98,6 +98,10 @@ public final class SceneFixture {
 	public final CameraTrack camera;
 
 	public SceneFixture(SongFixture song, TrackTuning tuning, int percent) {
+		this(song, tuning, percent, CameraTrack.Settings.standard());
+	}
+
+	public SceneFixture(SongFixture song, TrackTuning tuning, int percent, CameraTrack.Settings settings) {
 		this.song = song;
 		FollowTimeline timeline = FollowTimeline.build(song.song, song.sequence(), percent);
 		this.timeline = timeline;
@@ -108,7 +112,7 @@ public final class SceneFixture {
 		}
 		this.neck = NeckModel.of(tuning, 24);
 		this.colours = StringColours.forStrings(tuning.getStringCount());
-		this.camera = CameraTrack.build(this.events, this.neck, CameraTrack.Settings.standard());
+		this.camera = CameraTrack.build(this.events, this.neck, settings);
 	}
 
 	public static TrackTuning sixStrings() {
