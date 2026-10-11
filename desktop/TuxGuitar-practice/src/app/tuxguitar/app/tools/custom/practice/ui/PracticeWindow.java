@@ -154,7 +154,8 @@ public class PracticeWindow {
 	private PracticeSequence arcadeFull;
 	/** How many times the start of a restart may be tried again while the player is still stopping the run that was just given back. */
 	private int arcadeRestartTries;
-	private static final int ARCADE_RESTART_TRIES = 200;
+	private static final int ARCADE_RESTART_TRIES = 100;
+	private static final long ARCADE_RESTART_RETRY_MILLIS = 50L;
 	private static final ArcadeTexts ARCADE_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
@@ -318,7 +319,8 @@ public class PracticeWindow {
 				return;
 			}
 			TGSynchronizer.getInstance(this.context).executeLater(() -> {
-				if( isOpen() && !this.windowShown && this.session == null ) {
+				if( isOpen() && !this.windowShown && this.session == null && this.followPlan == null ) {
+					// not while a run (Arcade) is going on: the preparation window would come over the game
 					showWindow();
 				}
 			});
@@ -575,7 +577,7 @@ public class PracticeWindow {
 		}
 		this.palette.setInput(this.assessment);
 		this.levelPanel.setAssessment(this.assessment);
-		if( !this.windowShown && this.session == null && this.assessment.getStatus() == InputAssessment.Status.UNUSABLE ) {
+		if( QuickStart.showForUnusableInput(this.windowShown, this.session != null || this.followPlan != null || this.arcadeRestartTries > 0, this.immediateStart, this.assessment.getStatus()) ) {
 			showWindow();
 		}
 		this.followPanel.refresh();
@@ -900,12 +902,26 @@ public class PracticeWindow {
 		restartArcade();
 	}
 
+	/**
+	 * Asks for the start again a little later, off the UI thread so that the UI thread and the player can finish stopping the run that was given back: a retry
+	 * posted at once would only be burnt in a few milliseconds, before the player has stopped.
+	 */
 	private boolean retryArcadeRestart() {
 		if( this.arcadeRestartTries <= 0 ) {
 			return false;
 		}
 		this.arcadeRestartTries--;
-		TGSynchronizer.getInstance(this.context).executeLater(this::restartArcade);
+		Thread retry = new Thread(() -> {
+			try {
+				Thread.sleep(ARCADE_RESTART_RETRY_MILLIS);
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
+				return;
+			}
+			TGSynchronizer.getInstance(this.context).executeLater(this::restartArcade);
+		}, "arcade-restart");
+		retry.setDaemon(true);
+		retry.start();
 		return true;
 	}
 
