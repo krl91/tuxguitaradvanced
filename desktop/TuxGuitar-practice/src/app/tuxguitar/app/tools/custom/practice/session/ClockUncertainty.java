@@ -21,8 +21,13 @@ public final class ClockUncertainty {
 		this.captureLagSpreadMillis = captureLagSpreadMillis;
 	}
 
+	/** A measured spread, or none yet (NaN, as when the input has just been opened): then nothing is known, so the route is not called unstable. */
+	public static ClockUncertainty ofMeasurement(double captureLagSpreadMillis) {
+		return new ClockUncertainty(Double.isNaN(captureLagSpreadMillis) ? 0.0 : captureLagSpreadMillis);
+	}
+
 	public static ClockUncertainty of(CaptureClock clock) {
-		return new ClockUncertainty(clock.lagSpreadMillis());
+		return ofMeasurement(clock.lagSpreadMillis());
 	}
 
 	public double captureLagSpreadMillis() {

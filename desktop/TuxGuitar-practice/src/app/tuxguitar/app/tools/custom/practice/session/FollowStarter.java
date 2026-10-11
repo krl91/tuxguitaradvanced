@@ -111,7 +111,7 @@ public final class FollowStarter {
 		final TimingTolerance tolerance = new TimingTolerance(preset);
 		final TempoClock clock = player.clock();
 		FollowSession session = new FollowSession(sequence, timeline, FIRST_TICK, clock, environment::wallNanosOf,
-				() -> new TimingContext(tolerance, environment.calibrations().forRoute(environment.route()), new ClockUncertainty(environment.lagSpreadMillis()),
+				() -> new TimingContext(tolerance, environment.calibrations().forRoute(environment.route()), ClockUncertainty.ofMeasurement(environment.lagSpreadMillis()),
 						environment.captureReady(), clock.isReady() && !clock.isStalled(clock.nowNanos())),
 				parameters.noteInterpreter(), parameters.tolerance(), new ChordMatcher(parameters.chordParameters()), parameters.stabilityNanos(),
 				parameters.articulationLatencyNanos());
