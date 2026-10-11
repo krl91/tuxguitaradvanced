@@ -4,10 +4,11 @@
 
 TuxGuitarAdvanced est une version avancée de [TuxGuitar](https://www.tuxguitar.app/), l'éditeur et lecteur de tablatures multipistes. Il garde tout ce que fait TuxGuitar (**édition et création** de partitions, lecture, import et export de nombreux formats) et ajoute le **Practice** (la pratique interactive : l'application écoute votre guitare et vérifie ce que vous jouez), l'**accordeur stable** et des outils d'analyse de partition.
 
-Ce manuel a deux parties :
+Ce manuel a trois parties :
 
 * **[Partie A : édition et création](#partie-a--édition-et-création)** : écrire, modifier, écouter et exporter une partition ;
-* **[Partie B : le Practice](#partie-b--le-practice-pratique-interactive)** : travailler une partition avec votre vraie guitare, dans trois modes (Attendre la bonne note, Suivre le tempo, Arcade), plus l'accordeur et les réglages de reconnaissance.
+* **[Partie B : le Practice](#partie-b--le-practice-pratique-interactive)** : travailler une partition avec votre vraie guitare, dans trois modes (Attendre la bonne note, Suivre le tempo, Arcade), plus l'accordeur et les réglages de reconnaissance ;
+* **[Partie C : un exemple complet](#partie-c--un-exemple-complet-pas-à-pas)** : d'un document vide à un morceau de trois pistes (guitare, basse, batterie), puis travaillé dans les trois modes.
 
 *Les captures d'écran viennent de la version macOS, interface en français, thème sombre. Sous Linux et Windows, les fenêtres sont les mêmes ; les raccourcis qui utilisent ⌘ sous macOS utilisent Ctrl.*
 
@@ -40,6 +41,7 @@ Ce manuel a deux parties :
   * [B9. Analyse de la partition (mesures invalides)](#b9-analyse-de-la-partition-mesures-invalides)
   * [B10. Qualité mesurée, limites et trace de diagnostic](#b10-qualité-mesurée-limites-et-trace-de-diagnostic)
   * [B11. Questions fréquentes et dépannage](#b11-questions-fréquentes-et-dépannage)
+* **[Partie C : un exemple complet, pas à pas](#partie-c--un-exemple-complet-pas-à-pas)**
 
 ---
 
@@ -640,3 +642,149 @@ Sur un **jeu de données indépendant** (GuitarSet, accompagnement rythmique à 
 **Je veux plus ou moins d'exigence.** Ajustez, dans *Configuration > Reconnaissance audio*, l'écart de hauteur accepté, la certitude minimale, la durée de confirmation et, pour les accords, l'exigence sur les accords ; *Rétablir* revient aux valeurs mesurées.
 
 **Où trouver plus de détails ?** [PRACTICE-FR.md](PRACTICE-FR.md) (guide du Practice, mesures de qualité), [README-FR.md](README-FR.md) et les notes de release.
+
+---
+
+# Partie C : un exemple complet, pas à pas
+
+Ce chapitre vous mène d'un document vide à un **morceau de trois pistes** (guitare, basse, batterie), le joue, puis fait travailler la guitare dans les **trois modes** : Attendre la bonne note, Suivre le tempo et Arcade. Chaque étape a sa capture. Comptez une vingtaine de minutes. Le morceau fait quatre mesures, en 4/4 à 120 BPM, pour que tout reste simple.
+
+*Les captures de ce chapitre montrent l'interface en anglais (les autres captures du manuel sont en français) ; les noms des menus et des boutons sont donnés ci-dessous dans les deux langues.*
+
+**À propos de la guitare des captures.** Pour montrer les modes de pratique sans jouer d'une vraie guitare, l'ordinateur de test joue par ses haut-parleurs un son synthétique de corde pincée, que son micro intégré entend (l'entrée « Default Audio Device »). Les notes sont les bonnes : vous verrez de vrais verdicts (« Correct », « À l'heure ») ; certains sont en retard, faux ou manqués parce que le son vient d'un haut-parleur et que le rythme n'est pas celui d'un joueur. **Avec votre guitare, le résultat est le vôtre.** Sans guitare sous la main, vous pouvez faire pareil : jouez un son quelconque près du micro.
+
+## C1. Créer le morceau
+
+**Étape 1. Partir d'un document vide.** Au lancement, un document vide est prêt, avec une piste de guitare et une mesure (*Fichier > Nouveau*, *File > New*, en crée un autre).
+
+<img src="images/manual-en/tut-01-blank.png" width="760" alt="Un document vide">
+
+**Étape 2. Nommer le morceau.** *Composition > Propriétés* (*Properties*, F5) : tapez un nom et un auteur, puis **OK**.
+
+<img src="images/manual-en/tut-02-properties.png" width="380" alt="Les propriétés du morceau remplies">
+
+**Étape 3. Nommer la piste de guitare.** Double-cliquez la piste dans la liste du bas (ou *Piste > Propriétés*). Remplacez le nom par *Guitare* ; l'instrument (Steel String Acoustic Guitar 1) et l'accordage (E A D G B E) conviennent à une guitare standard. Fermez la fenêtre.
+
+<img src="images/manual-en/tut-03-guitar-track.png" width="380" alt="Les propriétés de la piste de guitare">
+
+**Étape 4. Écrire les notes de la guitare.** Cliquez la première mesure de la tablature, puis choisissez la durée **noire** dans la barre latérale. Sur la troisième corde (sol), tapez les cases **5 5 7 5** : chaque chiffre écrit une note et le curseur passe au temps suivant (→ pour avancer). Mesure 2 : **3 3 5 3**. Mesure 3 : **5 5 7 5** à nouveau. Mesure 4 : choisissez la **ronde** et écrivez un accord de do à trois notes : **5 sur la corde 3, 5 sur la corde 4 et 3 sur la corde 5** (changez de corde avec ↑ ↓ et tapez chaque chiffre sur le même temps). Si le morceau a besoin de place, *Mesure > Ajouter une mesure* ajoute des mesures (ici, quatre).
+
+<img src="images/manual-en/tut-04-guitar-notes.png" width="760" alt="Les quatre mesures de la piste de guitare">
+
+## C2. Ajouter la basse
+
+**Étape 5. Ajouter une piste.** *Piste > Ajouter une piste* (bouton + vert). Une nouvelle piste apparaît, avec le même son de guitare.
+
+<img src="images/manual-en/tut-05-added-track.png" width="760" alt="Une deuxième piste ajoutée">
+
+**Étape 6. En faire une basse.** Double-cliquez la nouvelle piste et nommez-la *Basse*. Cliquez la clé à côté de **Instrument** (ou *Affichage > Afficher les instruments*) et choisissez **Fingered Electric Bass** comme programme de son canal.
+
+<img src="images/manual-en/tut-06-bass-instrument.png" width="560" alt="L'instrument de la piste de basse">
+
+**Étape 7. Lui donner quatre cordes.** Dans les propriétés de la piste, cliquez la clé à côté de **Accordage** : choisissez *Bass*, *4-String* et *E Tuning - E A D G* (cordes mi1 la1 ré2 sol2). **OK**, puis **Fermer**.
+
+<img src="images/manual-en/tut-07-bass-tuning.png" width="400" alt="La fenêtre d'accordage de la basse">
+
+**Étape 8. Écrire la ligne de basse.** Choisissez la durée **blanche**. Mesure 1 : **3 3** sur la troisième corde. Mesure 2 : **1 1**. Mesure 3 : **3 3**. Mesure 4 : **3 3**.
+
+<img src="images/manual-en/tut-08-bass-notes.png" width="760" alt="La ligne de basse">
+
+## C3. Ajouter la batterie
+
+**Étape 9. Ajouter une troisième piste, en faire une batterie.** *Piste > Ajouter une piste*, double-clic, nommez-la *Batterie* et choisissez l'instrument **DrumKit**. Les champs d'accordage et de cases se vident : une piste de batterie n'a pas de cordes.
+
+<img src="images/manual-en/tut-09-drums-track.png" width="400" alt="Les propriétés de la piste de batterie">
+
+**Étape 10. Dessiner le rythme dans la matrice.** *Affichage > Afficher la matrice* ouvre l'éditeur de matrice : chaque ligne est un son de batterie. Faites défiler jusqu'à **Acoustic Bass Drum** (la grosse caisse) et **Acoustic Snare** (la caisse claire) et cliquez les cases : grosse caisse sur les temps 1 et 3, caisse claire sur les temps 2 et 4.
+
+<img src="images/manual-en/tut-10-drums-matrix.png" width="560" alt="La matrice avec un motif grosse caisse et caisse claire">
+
+**Étape 11. Copier la mesure.** Curseur dans la mesure 1, *Mesure > Copier la mesure*, puis allez à la mesure 2 et *Mesure > Coller la mesure* ; recommencez pour les mesures 3 et 4.
+
+<img src="images/manual-en/tut-11-drums-done.png" width="760" alt="Les quatre mesures de batterie">
+
+**Étape 12. Voir les trois pistes ensemble.** *Affichage > Multipiste* montre toutes les pistes à la fois (la disposition passe en linéaire) ; *Affichage > Réduire* fait tout tenir.
+
+<img src="images/manual-en/tut-12-three-tracks.png" width="760" alt="Les trois pistes du morceau">
+
+Enregistrez le morceau avec *Fichier > Enregistrer* (⌘S) sous le nom de votre choix.
+
+## C4. Jouer le morceau
+
+**Étape 13. Lecture normale.** Appuyez sur **Espace** (ou le bouton Lecture). Les trois pistes sonnent ; le temps joué est rouge et la mesure surlignée.
+
+<img src="images/manual-en/tut-13-playing.png" width="760" alt="Le morceau en lecture : le temps joué est rouge">
+
+Utilisez *Lecteur > Mode de lecture* pour ralentir (par exemple 60 %) ou boucler quelques mesures : c'est la façon normale d'écouter une partition ; les modes de pratique ci-dessous vous demandent de jouer, **vous**.
+
+## C5. S'entraîner : trois modes
+
+Assurez-vous d'abord que l'entrée audio fonctionne : ouvrez **Outils > Pratique interactive**. Dans l'onglet *Entrée*, choisissez votre entrée et vérifiez le niveau (jouez une corde).
+
+<img src="images/manual-en/practice-input.png" width="420" alt="L'onglet Entrée avec l'indicateur de niveau">
+
+### Mode 1 : Attendre la bonne note
+
+**Étape 14. Démarrer.** Onglet *Piste* : choisissez la piste *Guitare* ; onglet *Mode* : **Attendre la bonne note** ; appuyez sur **Travailler cette piste**.
+
+<img src="images/manual-en/practice-track.png" width="400" alt="L'onglet Piste, guitare choisie"> <img src="images/manual-en/practice-mode-wait.png" width="400" alt="L'onglet Mode, Attendre la bonne note">
+
+**Étape 15. Jouer ce qui est encadré.** La note à jouer est **encadrée** sur la partition, et la palette dit « Jouez C4 » (do4). La partition vous attend.
+
+<img src="images/manual-en/tut-16-wait-main.png" width="760" alt="La note encadrée sur la partition et la palette">
+
+**Étape 16. Lire la réponse.** Quand la bonne note est entendue, la palette dit « Correct » avec la note ; une mauvaise note dit ce qui a été entendu et ce qu'il faut jouer.
+
+<img src="images/manual-en/tut-14-wait-palette.png" width="380" alt="La palette qui attend C4"> <img src="images/manual-en/tut-15-wait-correct.png" width="380" alt="La palette après la bonne note">
+
+**Étape 17. La fin.** Après la dernière note ou le dernier accord, la palette dit « Bravo, vous êtes arrivé à la fin » avec le décompte des passages réussis du premier coup. **Recommencer** relance, **Stop** ferme la pratique. L'onglet *Passages* règle ce qui se passe quand un passage a trop d'erreurs (il est répété).
+
+<img src="images/manual-en/tut-17-wait-done.png" width="380" alt="La fin de la pratique en mode Attendre">
+
+### Mode 2 : Suivre le tempo
+
+**Étape 18. Choisir le mode.** De retour dans la fenêtre de pratique, onglet *Mode* : **Suivre le tempo**. Le tempo (100 % = comme écrit), la tolérance de timing et le calibrage du rythme apparaissent. Pour un premier essai, laissez 100 %, ou baissez-le si le morceau est difficile pour vous. Appuyez ensuite sur **Suivre le tempo de cette piste**.
+
+<img src="images/manual-en/practice-mode-follow.png" width="480" alt="L'onglet Mode avec Suivre le tempo">
+
+**Étape 19. Jouer avec la partition.** La partition défile à son tempo, après un décompte, avec la basse et la batterie ; la guitare est muette pour que vous la jouiez. Chaque note est jugée dans le temps.
+
+<img src="images/manual-en/tut-19-follow-main.png" width="760" alt="La partition à son tempo avec la palette">
+
+**Étape 20. Lire les verdicts.** La palette montre le verdict de la dernière note (« Right note, late (163 ms) » : juste note, en retard de 163 ms), les compteurs (à l'heure, en avance, en retard, fausses, manquées, en trop) et la note suivante.
+
+<img src="images/manual-en/tut-20-follow-palette.png" width="380" alt="La palette pendant la partie">
+
+**Étape 21. Le bilan.** À la fin, un bilan liste les nombres. Si vos notes sont souvent en avance ou en retard du même écart, utilisez **Calibrer…** (ou saisissez le retard à la main) dans l'onglet *Mode* : voir [B5](#b5-mode--suivre-le-tempo-).
+
+<img src="images/manual-en/tut-21-follow-summary.png" width="380" alt="Le bilan de la partie">
+
+### Mode 3 : Arcade (alpha)
+
+**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la tolérance et le calibrage sont les mêmes ; une nouvelle ligne règle la **taille des disques qui arrivent**. Appuyez sur **Démarrer Arcade**.
+
+<img src="images/manual-en/practice-mode-arcade.png" width="480" alt="L'onglet Mode avec Arcade">
+
+**Étape 23. Jouer les notes quand elles atteignent le manche.** Une nouvelle fenêtre montre un manche en bas. Chaque note vient de l'horizon pendant cinq secondes, sur la voie de sa case ; quand elle atteint le manche, jouez-la. Le disque porte le numéro de case, sa couleur est celle de sa corde. En haut : votre série, le tempo et la note suivante. Les badges sous le manche donnent les derniers verdicts (« On time » à l'heure, « Wrong » faux).
+
+<img src="images/manual-en/tut-23-arcade-run.png" width="760" alt="Arcade : des notes viennent vers le manche, avec les verdicts dessous">
+
+**Étape 24. Les accords.** Un accord est une barre sur l'axe central, avec son diagramme et son nom au-dessus.
+
+<img src="images/manual-en/tut-24-arcade-chord.png" width="760" alt="Arcade : un accord avec son diagramme">
+
+**Étape 25. Le résultat.** À la fin, la fenêtre de résultat donne le score, la part du maximum, la meilleure série et le décompte de chaque verdict. **From the start** (depuis le début) ou **From measure** + **Play** (depuis une mesure) rejoue.
+
+<img src="images/manual-en/tut-25-arcade-result.png" width="300" alt="Le résultat Arcade">
+
+**Étape 26. Retour à la fenêtre de préparation.** Fermez le résultat : la fenêtre de pratique est de retour, avec vos réglages. Rouvrez-la à tout moment par *Outils > Pratique interactive*.
+
+<img src="images/manual-en/tut-26-back.png" width="400" alt="La fenêtre de pratique de nouveau après la partie">
+
+### Dernier contrôle : l'accordeur
+
+Avant une vraie séance, accordez la guitare : *Outils > Accordeur*. Sur la capture, la corde de sol sonne et l'aiguille est au centre.
+
+<img src="images/manual-en/tut-27-tuner.png" width="380" alt="L'accordeur guidé qui lit un sol">
+
+Vous avez écrit, joué et travaillé un morceau de trois pistes. Pour aller plus loin : [B7](#b7-les-réglages-de-reconnaissance-audio) pour les réglages de reconnaissance, [A5](#a5-les-effets-de-jeu) pour les effets et [A6](#a6-les-accords) pour les accords.
