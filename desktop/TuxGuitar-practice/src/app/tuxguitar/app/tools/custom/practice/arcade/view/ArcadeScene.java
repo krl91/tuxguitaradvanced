@@ -112,6 +112,9 @@ public final class ArcadeScene {
 	public static final double CHORD_HALF_WIDTH = 0.26;
 	/** The alpha of a string that no event of the active moment targets (FR-068); the string of the active event is at 1. */
 	static final double STRING_DIM_ALPHA = 0.35;
+	/** The size of a marker at the setting of 100 %: three quarters of the former size (owner, 2026-10-11, FR-073); at 0 % it is one pixel across. */
+	static final double MARKER_SHARE = 0.75;
+	static final double MARKER_MIN_RADIUS = 0.5;
 	/** The gap kept between two labels, in pixels. */
 	static final double GAP = 4.0;
 
@@ -140,7 +143,7 @@ public final class ArcadeScene {
 	/** The same scene with the discs of the incoming notes at another size: 1 is the normal one, 0.5 half of it. The disks on the neck do not change. */
 	public ArcadeScene withMarkerSize(double factor) {
 		ArcadeScene copy = copy();
-		copy.markerSize = Math.max(0.3, Math.min(2.0, factor));
+		copy.markerSize = Math.max(0.0, Math.min(2.0, factor));
 		return copy;
 	}
 
@@ -476,7 +479,7 @@ public final class ArcadeScene {
 		// the lane of the fret of the note, whatever its string: the same line for every note written on that fret
 		g.at = f.lanes.laneForFret(position.fret()).at(f.progressOf(event));
 		// smaller in the distance than on the neck (the owner, 2026-10-09: the disks off the neck were too big), and adjustable by the learner
-		g.radius = Math.max(6.0, f.h * 0.036 * this.markerSize * (0.35 + 0.65 * g.at.scale()));
+		g.radius = Math.max(MARKER_MIN_RADIUS, f.h * 0.036 * MARKER_SHARE * this.markerSize * (0.35 + 0.65 * g.at.scale()));
 		return g;
 	}
 

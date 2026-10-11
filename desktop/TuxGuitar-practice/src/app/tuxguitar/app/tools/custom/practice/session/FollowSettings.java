@@ -31,7 +31,7 @@ public final class FollowSettings {
 	public static final int DEFAULT_PERCENT = 100;
 
 	/** The size of the discs of the incoming notes in Arcade, in percent of the normal size. */
-	public static final int MIN_MARKER_PERCENT = 40;
+	public static final int MIN_MARKER_PERCENT = 0;
 	public static final int MAX_MARKER_PERCENT = 150;
 	public static final int DEFAULT_MARKER_PERCENT = 100;
 
