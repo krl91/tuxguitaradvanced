@@ -236,4 +236,41 @@ public class RoundedRectTest {
 		assertEquals(0.04 * SCREEN.height(), flat.value(1), 0.05 * SCREEN.height(), "the horizon asked for is used");
 		assertTrue(flat.value(1) < normal.value(1) - 0.05 * SCREEN.height(), "a higher horizon is far from the default one");
 	}
+
+	/**
+	 * Bug (owner, 2026-10-11): the rectangles bent when they reached the neck (down the lane, then straight down). A note goes in one straight line from the
+	 * horizon to its cell at the foot of the neck, the marker as well (Q34).
+	 */
+	@Test
+	public void aNoteGoesInOneStraightLineFromTheHorizonToItsCellOnTheNeck() {
+		// the neck shows the frets of both notes, so that the lane of the first one is far from the middle of the picture
+		for (int[] frets : new int[][] { { 2, 20 }, { 20, 2 }, { 1, 12 }, { 12, 1 } }) {
+			int fret = frets[0];
+			SongFixture song = new SongFixture(2);
+			song.quarter(1, 0, 3, frets[0]);
+			song.quarter(1, 1, 3, frets[1]);
+			SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+			long look = CameraTrack.Settings.standard().lookAheadNanos;
+			double[][] foot = new double[9][];
+			double[][] marker = new double[9][];
+			for (int i = 0; i < 9; i++) {
+				double progress = 0.05 + 0.95 * i / 8.0;
+				long now = fixture.onset(0) - (long) ((1.0 - progress) * look);
+				Scene scene = fixture.scene(false).build(now, SCREEN, null, 100, QualityTier.FULL);
+				SceneItem f = scene.forEvent(0, Role.MARKER_FOOTPRINT).get(0);
+				SceneItem m = scene.forEvent(0, Role.MARKER).get(0);
+				foot[i] = new double[] { f.value(0), f.value(1) };
+				marker[i] = new double[] { m.value(0), m.value(1) };
+			}
+			for (double[][] path : new double[][][] { foot, marker }) {
+				double[] a = path[0];
+				double[] z = path[8];
+				double length = Math.hypot(z[0] - a[0], z[1] - a[1]);
+				for (int i = 1; i < 8; i++) {
+					double cross = ((z[0] - a[0]) * (path[i][1] - a[1]) - (z[1] - a[1]) * (path[i][0] - a[0])) / length;
+					assertEquals(0.0, cross, 0.75, "fret " + fret + ": the point " + i + " is off the straight line by " + cross + " px");
+				}
+			}
+		}
+	}
 }

@@ -348,23 +348,16 @@ public final class ArcadeScene {
 				}
 			}
 		}
-		// the neck is see-through: the lanes go on under it, down to its bottom, as faint lines (FR-066 amended, FR-075)
-		double neckBottomY = f.h * IsometricProjection.NECK_NEAR_EDGE;
+		// the lanes are straight from the horizon to the foot of the neck, in the cell of their fret; the neck is see-through (FR-075), so the part of a lane
+		// that goes across it is drawn too, as a faint line (FR-066, Q34). No lane for fret 0: an open string is a bar across the lanes (FR-069)
 		for (int fret = 1; fret < f.lanes.size(); fret++) {
 			FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(fret);
 			if (!f.grid.isPainted(Math.max(0, fret - 1)) || !f.grid.isPainted(fret) || lane.end().y() <= lane.origin().y()) {
 				continue;
 			}
-			double x2 = lane.end().x();
-			out.line(Role.NECK_LANE, lane.end().x(), lane.end().y(), x2, neckBottomY, WIRE_COLOUR, 0.10, 1.0, -1, 0);
-		}
-		// no lane for fret 0: an open string is a bar across the lanes (FR-069)
-		for (int fret = 1; fret < f.lanes.size(); fret++) {
-			FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(fret);
-			if (!f.grid.isPainted(Math.max(0, fret - 1)) || !f.grid.isPainted(fret)) {
-				continue;
-			}
-			out.line(Role.FIELD_GUIDE, lane.origin().x(), lane.origin().y(), lane.end().x(), lane.end().y(), WIRE_COLOUR, 0.10, 1.0, -1, 0);
+			ScreenPoint top = lane.crossing(f.grid.neckTopY());
+			out.line(Role.FIELD_GUIDE, lane.origin().x(), lane.origin().y(), top.x(), top.y(), WIRE_COLOUR, 0.10, 1.0, -1, 0);
+			out.line(Role.NECK_LANE, top.x(), top.y(), lane.end().x(), lane.end().y(), WIRE_COLOUR, 0.10, 1.0, -1, 0);
 		}
 		for (double progress : new double[] { 0.0, 0.35, 0.65, 0.85 }) {
 			ScreenPoint left = f.projection.approach(f.cam.left(), progress, f.cam);
@@ -609,18 +602,9 @@ public final class ArcadeScene {
 		return g;
 	}
 
-	/** The footprint of a note of the given fret at the given progress: down its lane to the top edge of the neck, then straight down its cell to the bottom edge. */
+	/** The footprint of a note of the given fret at the given progress: on its lane, one straight line from the horizon to the foot of the neck (Q34). */
 	private static ScreenPoint footAt(Frame f, int fret, double progress) {
-		double bottom = f.h * IsometricProjection.NECK_NEAR_EDGE;
-		double top = f.projection.hitLineY();
-		double hor = f.projection.horizonY();
-		FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(fret);
-		double yf = hor + (bottom - hor) * IsometricProjection.depthShare(Math.max(0.0, Math.min(1.0, progress)));
-		if (yf <= top) {
-			double v = (yf - hor) / (top - hor);
-			return new ScreenPoint(lane.origin().x() + (lane.end().x() - lane.origin().x()) * v, yf, f.projection.farScale() + (1.0 - f.projection.farScale()) * v);
-		}
-		return new ScreenPoint(lane.end().x(), yf, 1.0);
+		return f.lanes.laneForFret(fret).at(Math.max(0.0, Math.min(1.0, progress)));
 	}
 
 	private ChordGeo chordGeo(Frame f, ArcadeRenderEvent event) {

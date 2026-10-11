@@ -34,16 +34,19 @@ public final class ArcadeWindow {
 
 	private final ArcadeTexts texts;
 	private final Actions actions;
+	private final ArcadeCanvas.UiThread ui;
 	private final UIWindow window;
 	private final ArcadeCanvas canvas;
 	private final UIButton pause;
 	private final UILabel state;
+	private final UIPanel buttonsPanel;
 	private boolean paused;
 	private boolean closing;
 
 	public ArcadeWindow(UIFactory factory, UIWindow parent, ArcadeFrameSource source, ArcadeCanvas.UiThread ui, ArcadeTexts texts, Actions actions) {
 		this.texts = texts;
 		this.actions = actions;
+		this.ui = ui;
 		this.window = factory.createWindow(parent, false, true);
 		this.window.setText(texts.get("arcade.window.title", texts.get("arcade.name")));
 		UITableLayout layout = new UITableLayout();
@@ -55,6 +58,7 @@ public final class ArcadeWindow {
 		UIPanel buttons = factory.createPanel(this.window, false);
 		buttons.setLayout(buttonsLayout);
 		layout.set(buttons, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.buttonsPanel = buttons;
 		this.state = factory.createLabel(buttons);
 		buttonsLayout.set(this.state, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
 		UIButton restart = factory.createButton(buttons);
@@ -102,11 +106,27 @@ public final class ArcadeWindow {
 		this.window.open();
 		// the game fills the screen (owner, 2026-10-11)
 		this.window.setFullScreen(true);
+		// the size of the window changes once it is shown: the rows are laid out again on the next turn of the UI loop, so that the picture takes all the room
+		// and the buttons are at the very bottom
+		this.ui.post(() -> {
+			if (!this.window.isDisposed()) {
+				this.window.layout();
+			}
+		});
 		this.canvas.start();
 	}
 
 	public boolean isOpen() {
 		return !this.window.isDisposed();
+	}
+
+	/** The bounds of the row of the buttons and of the canvas, for the tests of the layout. */
+	UIRectangle buttonsBounds() {
+		return this.buttonsPanel.getBounds();
+	}
+
+	UIRectangle canvasBounds() {
+		return this.canvas.getControl().getBounds();
 	}
 
 	public UIWindow getWindow() {

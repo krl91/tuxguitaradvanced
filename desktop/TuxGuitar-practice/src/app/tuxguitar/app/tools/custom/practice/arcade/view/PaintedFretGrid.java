@@ -11,12 +11,14 @@ public final class PaintedFretGrid {
 	private final boolean[] painted;
 	private final double preNutX;
 	private final double neckTopY;
+	private final double neckBottomY;
 
-	private PaintedFretGrid(double[] wireX, boolean[] painted, double preNutX, double neckTopY) {
+	private PaintedFretGrid(double[] wireX, boolean[] painted, double preNutX, double neckTopY, double neckBottomY) {
 		this.wireX = wireX;
 		this.painted = painted;
 		this.preNutX = preNutX;
 		this.neckTopY = neckTopY;
+		this.neckBottomY = neckBottomY;
 	}
 
 	/** The grid of the neck for the camera snapshot: a wire is painted when it is in the shown part. */
@@ -29,7 +31,8 @@ public final class PaintedFretGrid {
 			// a wire is painted when it is in the shown part of the neck: the camera keeps both wires of the cell of every target in it
 			painted[n] = camera.shows(neck.fretX(n), 0.0);
 		}
-		return new PaintedFretGrid(wireX, painted, projection.neckX(neck.cellLeftX(0), camera), projection.neckTopY());
+		return new PaintedFretGrid(wireX, painted, projection.neckX(neck.cellLeftX(0), camera), projection.neckTopY(),
+				projection.viewport().height() * IsometricProjection.NECK_NEAR_EDGE);
 	}
 
 	/** The number of wires, the nut included: frets 0 to the last. */
@@ -50,6 +53,11 @@ public final class PaintedFretGrid {
 	/** The screen x of the left edge of the lane before the nut, where the open strings are. */
 	public double preNutX() {
 		return this.preNutX;
+	}
+
+	/** The screen y of the bottom edge of the neck, the foot, where the notes are played (Q31). */
+	public double neckBottomY() {
+		return this.neckBottomY;
 	}
 
 	/** The screen y of the top edge of the neck. */

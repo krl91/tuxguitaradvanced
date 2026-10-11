@@ -124,15 +124,13 @@ public class NoteBudgetTest {
 							int fret = fixture.events.get(index).positions().get(0).fret();
 							double progress = Math.max(0.0, Math.min(1.0, 1.0 - (double) (fixture.onset(index) - now) / look));
 							FretArrivalLaneMap.Lane lane = lanes.laneForFret(fret);
-							double footY = projection.horizonY() + (viewport.height() * IsometricProjection.NECK_NEAR_EDGE - projection.horizonY()) * IsometricProjection.depthShare(progress);
-							double footX = footY <= lane.end().y() ? lane.origin().x() + (lane.end().x() - lane.origin().x()) * (footY - lane.origin().y()) / (lane.end().y() - lane.origin().y()) : lane.end().x();
-							ScreenPoint at = new ScreenPoint(footX, footY, 1.0);
+							ScreenPoint at = lane.at(progress);
 							String where = count + " notes " + viewport.width() + " " + tier + " event " + index + " fret " + fret + " p=" + progress;
 							assertEquals(at.x(), marker.value(0), 1e-6, where + ": the centre is on its lane");
 							assertEquals(at.y(), marker.value(1), 1e-6, where);
-							// the lane ends at the middle of the upper edge of the cell between the wires
+							// the lane ends at the middle of the bottom edge of the cell between the wires, the foot of the neck
 							assertEquals((grid.cellLeftX(fret) + grid.cellRightX(fret)) / 2.0, lane.end().x(), 1e-9, where);
-							assertEquals(grid.neckTopY(), lane.end().y(), 1e-9, where);
+							assertEquals(grid.neckBottomY(), lane.end().y(), 1e-9, where);
 							if (progress >= 1.0) {
 								assertEquals(lane.end().x(), marker.value(0), 1e-6, where + ": at the onset, the middle of its cell");
 								assertEquals(viewport.height() * IsometricProjection.NECK_NEAR_EDGE, marker.value(1), 1e-6, where + ": at the foot of the neck");

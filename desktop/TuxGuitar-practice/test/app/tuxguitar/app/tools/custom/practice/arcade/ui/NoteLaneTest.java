@@ -142,7 +142,7 @@ public class NoteLaneTest {
 		assertNotNull(lane, where + ": the lane was sent to the painter");
 
 		// 1. the end of the lane: the middle of the upper edge of the cell, between the two wires that were painted, on the top edge of the neck
-		assertEquals(neck.top, lane.y2, TOLERANCE, where + ": the lane ends on the top edge of the neck");
+		assertEquals(viewport.height() * IsometricProjection.NECK_NEAR_EDGE, lane.y2, TOLERANCE, where + ": the lane ends at the foot of the neck, the bottom edge, in one straight line from the horizon (Q34)");
 		if (fret == 0) {
 			assertTrue(lane.x2 < neck.wires.get(0), where + ": the lane of the open strings is before the nut");
 			IsometricProjection projection = new IsometricProjection(viewport);
@@ -155,7 +155,7 @@ public class NoteLaneTest {
 
 		// 2. nothing of the approach goes below the top edge of the neck: no line of the lanes, of the trails, no connector, no marker centre
 		for (SceneItem item : scene.items()) {
-			if (item.shape() == SceneItem.Shape.LINE && (item.role() == Role.TRAJECTORY || item.role() == Role.FIELD_GUIDE)) {
+			if (item.shape() == SceneItem.Shape.LINE && (item.role() == Role.FIELD_GUIDE)) {
 				assertTrue(Math.max(item.value(1), item.value(3)) <= neck.top + TOLERANCE, where + ": a line of the approach goes into the neck: " + item.role());
 			}
 			if (item.role() == Role.MARKER_FOOTPRINT) {
@@ -319,17 +319,12 @@ public class NoteLaneTest {
 					// the lane of this fret in this frame: the line of the field that ends at the middle of the cell between the wires painted now
 					double wanted = fret == 0 ? projection.neckX(fixture.neck.fretCentreX(0), camera) : neck.midpointAround(projection.neckX(fixture.neck.fretCentreX(fret), camera));
 					PaintRecorder.Segment lane = null;
-					for (SceneItem guide : scene.withRole(Role.FIELD_GUIDE)) {
-						if (guide.value(3) == neck.top && Math.abs(guide.value(2) - wanted) <= TOLERANCE) {
-							lane = painted(recorder, guide);
-						}
+					for (SceneItem trajectory : scene.forEvent(item.eventIndex(), Role.TRAJECTORY)) {
+						lane = painted(recorder, trajectory);
 					}
-					assertNotNull(lane, "event " + item.eventIndex() + " fret " + fret + ": no painted lane ends at the middle of its painted cell (" + wanted + ")");
-					if (item.value(1) <= neck.top) {
-						assertTrue(distanceToSegment(item.value(0), item.value(1), lane.x1, lane.y1, lane.x2, lane.y2) <= TOLERANCE, "event " + item.eventIndex() + " " + item.role() + ": off its lane");
-					} else {
-						assertEquals(lane.x2, item.value(0), TOLERANCE, "event " + item.eventIndex() + " " + item.role() + ": in the neck, on the middle of its cell");
-					}
+					assertNotNull(lane, "event " + item.eventIndex() + " fret " + fret + ": the lane of the note was painted");
+					assertEquals(wanted, lane.x2, TOLERANCE, "event " + item.eventIndex() + " fret " + fret + ": the lane ends at the middle of its painted cell");
+					assertTrue(distanceToSegment(item.value(0), item.value(1), lane.x1, lane.y1, lane.x2, lane.y2) <= TOLERANCE, "event " + item.eventIndex() + " " + item.role() + ": off its lane");
 					checked++;
 				}
 			}

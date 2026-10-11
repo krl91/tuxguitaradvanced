@@ -241,13 +241,15 @@ final class PaintedAlignment {
 		SceneItem trajectory = scene.forEvent(0, Role.TRAJECTORY).get(0);
 		// the painted trajectory (or the marker that has reached the line) is the only thing within a few pixels of the disk's x that differs from the field on the row
 		// of the hit line: the field is sampled well to the side, on the same row
+		// the lane is one straight line from the horizon to the foot of the neck: it crosses the hit line beside the middle of the cell, not at it (Q34)
+		double crossing = trajectory.value(0) + (trajectory.value(2) - trajectory.value(0)) * (row - trajectory.value(1)) / (trajectory.value(3) - trajectory.value(1));
 		int field = picture.at((int) Math.round(paintedX) + 90, row) >= 0 ? picture.at((int) Math.round(paintedX) + 90, row) : picture.at((int) Math.round(paintedX) - 90, row);
 		boolean found = false;
-		for (int x = (int) Math.round(paintedX) - 3; x <= (int) Math.round(paintedX) + 3 && !found; x++) {
+		for (int x = (int) Math.round(crossing) - 3; x <= (int) Math.round(crossing) + 3 && !found; x++) {
 			int pixel = picture.at(x, row);
 			int deviation = Math.abs(((pixel >> 16) & 0xFF) - ((field >> 16) & 0xFF)) + Math.abs(((pixel >> 8) & 0xFF) - ((field >> 8) & 0xFF)) + Math.abs((pixel & 0xFF) - (field & 0xFF));
 			found = pixel >= 0 && deviation > 25;
 		}
-		assertTrue(found, where + ": nothing of the trajectory (or of the marker at the line) was painted around x " + paintedX + " on the row of the hit line");
+		assertTrue(found, where + ": nothing of the trajectory (or of the marker at the line) was painted around x " + crossing + " on the row of the hit line");
 	}
 }

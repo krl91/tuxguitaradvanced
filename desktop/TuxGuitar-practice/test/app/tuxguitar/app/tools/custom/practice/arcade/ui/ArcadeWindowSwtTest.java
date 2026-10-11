@@ -132,6 +132,33 @@ public class ArcadeWindowSwtTest {
 		});
 	}
 
+	/**
+	 * Bug (owner, 2026-10-11): the three buttons of the game were too high, with a band of nothing under them, so that the neck could not go down: the picture
+	 * must take all the room there is and the buttons must be at the very bottom of the window, however big it is.
+	 */
+	@Test
+	public void theCanvasTakesTheRoomAndTheButtonsAreAtTheVeryBottomOfTheWindow() throws Exception {
+		withDisplay((display, factory) -> {
+			FakeTempoClock[] clock = new FakeTempoClock[1];
+			ArcadeWindow window = open(display, factory, new Counting(), new AtomicInteger(), clock);
+			try {
+				for (int[] size : new int[][] { { 1200, 800 }, { 1500, 900 }, { 900, 700 } }) {
+					window.getWindow().setBounds(new UIRectangle(0, 0, size[0], size[1]));
+					flush(display);
+					UIRectangle canvas = window.canvasBounds();
+					UIRectangle buttons = window.buttonsBounds();
+					double windowHeight = window.getWindow().getBounds().getHeight();
+					assertEquals(canvas.getY() + canvas.getHeight(), buttons.getY(), 8.0, size[0] + "x" + size[1] + ": the buttons come right under the picture");
+					assertTrue(buttons.getY() + buttons.getHeight() >= windowHeight - 60.0,
+							size[0] + "x" + size[1] + ": the buttons are at the very bottom, they end at " + (buttons.getY() + buttons.getHeight()) + " of " + windowHeight);
+					assertTrue(canvas.getHeight() >= windowHeight - 130.0, size[0] + "x" + size[1] + ": the picture takes the room: " + canvas.getHeight() + " of " + windowHeight);
+				}
+			} finally {
+				window.close();
+			}
+		});
+	}
+
 	@Test
 	public void closingByTheLearnerStopsTheRunOnceAndClosingByTheApplicationDoesNot() throws Exception {
 		withDisplay((display, factory) -> {
