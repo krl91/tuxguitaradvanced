@@ -35,3 +35,4 @@ final class ArcadeScene { static List<Shape> build(ArcadeRun.View run, CameraTra
 ## Canvas layer
 
 `ArcadeCanvas` owns a `UICanvas`, a repaint timer on the UI thread, and replays the scene on the `UIPainter` of the paint event. It reads the clock through the same `TempoClock` as the session (the player's), never accumulates time, and never blocks: a slow frame is skipped, not queued. Native tests: paint a six-string and a four-string scene without exception; the structural capture (list of shapes and texts) equals the approved reference.
+12. **Open string.** A single note at fret 0 yields one `OPEN_BAR` item (horizontal, string colour, lane-wide, cap at the left end, label *open*) and no marker, no fret-number label and no target disk; the string is lit from the onset (FR-068); inside a chord the open string is `O` of the cartouche only.

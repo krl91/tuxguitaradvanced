@@ -82,6 +82,10 @@
 - [ ] T102 Implement `StringColours` (palette FR-067), the row mapping (lowest string at the top) and the string painting with the `lit` flag per frame from the active event (`ArcadeScene`, `UiPainterRenderer`); camera, lanes, judgement and timing untouched. Regenerate the reference scenes (`ArcadeReferenceSceneTest`) and the local images; do not commit the reference PNG.
 - [ ] T103 Run the unit tests, the native SWT pixel tests (the colours of the strings on the real canvas), the corpus (`TG_ARCADE_GP_CORPUS`) and the full macOS build; refresh the local contact sheet; T037, T038, T040, T043, T044, T062 and T066 stay open until the owner validates.
 
+- [ ] T104 Tests first for the open-string bar (SC-026): `OpenBarTest` in `TEST/arcade/view` and a painted-primitive test in `TEST/arcade/ui` (every string of four- and six-string tracks, 101 progress values, lane-wide ends within 0.5 px, centre line on the neck top at the onset, no disk / marker / connector, the word *open* without overlap, an open string in a chord stays `O` with no bar, tiers, monochrome, resize); they must fail on the current code.
+- [ ] T105 Implement `OPEN_BAR` in `ArcadeScene` and `UiPainterRenderer`, remove the pre-nut lane for single notes in `FretArrivalLaneMap`, light the string at the onset (FR-068), add `arcade.label.open` in `share/lang/messages{,_fr,_es}.properties`; regenerate the reference scenes and local images (reference PNG not committed).
+- [ ] T106 [HUMAN] The owner judges the open-string bar, the dim and lit strings and the palette on the built application; T037, T038, T040, T043, T044, T062 and T066 stay open until then.
+
 ## Increment D - Interface and result (`SRC/arcade/ui`, `share/lang`)
 
 **Goal**: start, play, pause, stop and read the result, in three languages. **Independent test**: headless and native GUI tests, then the manual guide.

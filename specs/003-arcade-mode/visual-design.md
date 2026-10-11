@@ -313,3 +313,7 @@ The scene model is backend-neutral. The first implementation uses the existing t
 - Do not infer a stroke direction when `TGStroke.STROKE_NONE` is written.
 - Do not use generated-image fret spacing, marker placement or diagram mistakes as data.
 - Do not let UI animation create a second tempo, repeat traversal or tolerance policy.
+
+## Open-string bar (FR-069, owner reference of 2026-10-11)
+
+A single note at fret 0 is a **thin horizontal bar** in the colour of its string, as wide as the lanes, with a bright cap at its left end (the reference image shows a red line over the blue lanes with a white-blue cap). It comes from the horizon like every note, thickens with perspective and ends on the top edge of the neck; it carries the word *open* in the language of the interface; it has no disk and no fret number; at the onset its string is lit (FR-068). In a chord the open strings stay `O` in the cartouche and are lit with it. The explanatory text of the reference ("this horizontal line is an open note, pluck the string that matches the one shown") is a tutorial caption, not part of the Arcade picture; a first-run hint may reuse it later, it is not specified here.

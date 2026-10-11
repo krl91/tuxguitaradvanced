@@ -32,3 +32,9 @@ Before reviewing the 32 real-score screenshots, inspect the minimal lane fixture
 1. Start an Arcade run on a six-string track. The strings, from the top to the bottom of the neck, are red, yellow, light blue, orange, green, violet; violet is the highest string.
 2. While no event is active the strings are dim. When a note is the active event, its string is bright with a glow and the other strings stay dim; for a chord, every written string is bright together. The light goes out at the judgement.
 3. In the monochrome look and at `PERFORMANCE`, the targeted string is still visibly brighter or thicker.
+
+## Manual check of the open string (FR-069, owner, 2026-10-11)
+
+1. Use a score with open-string notes (fret 0) and start Arcade.
+2. An open note arrives as a thin horizontal bar in the colour of its string, as wide as the lanes, with the word *open*; there is no disk and no fret number.
+3. When it lands, its string is lit; inside a chord the open string shows as `O` in the diagram and is lit with the chord.

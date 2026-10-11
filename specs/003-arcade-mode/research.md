@@ -161,3 +161,13 @@ Profile: event count, note/chord ratio, longest consecutive chord run, peak even
 **Alternatives.** Keeping the old cobalt-to-magenta palette (rejected by the owner); lighting the string only at the impact (rejected: the string must tell the learner where to look while the note approaches, from its activation to its judgement).
 
 **Consequences.** `StringColours`, `StringLayout`/the neck rows, the neck painting and every reference scene and image change; the lit state is a per-frame function of the active event; the monochrome look signals a lit string by thickness or brightness. No change to the judgement.
+
+## R22 - The open string as a bar (2026-10-11)
+
+**Decision.** A single open-string note is a horizontal bar across the lanes in the colour of its string, not a marker on a pre-nut lane (FR-069). It replaces the fret-0 lane of R19 for single notes.
+
+**Evidence.** The owner's second reference image: a red line spanning the blue lanes, with a bright cap at the left, over a red string; the caption states that the line is an open note and that the matching string is to be plucked. A marker at fret 0 is hard to place (there is no cell) and confuses with fretted notes; a bar is read at once as "the whole string".
+
+**Alternatives.** Keeping a disk before the nut (the previous rule: ambiguous position and an extra lane); a bar the width of the whole screen (rejected: it would hide the camera context).
+
+**Consequences.** `FretArrivalLaneMap` drops the pre-nut lane for single notes; the scene gains an `OPEN_BAR` item; the chord cartouche is unchanged; labels `arcade.label.open` in the three languages. No change to judgement.

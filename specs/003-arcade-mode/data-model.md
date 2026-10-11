@@ -30,3 +30,5 @@ All objects are in memory for one run (FR-026). "Source" names the existing clas
 ## Monitoring side (package `audio.engine.monitor`, increment E, only if the spike allows)
 
 `MonitoringPath` (input -> output, gain, balance), `LatencyBudget` (named terms of the accounting), `LatencyMeasurement` (trials, median, p95, maximum, method), `MonitoringGate` (22 ms rule on the worst credible value). Defined by the spike; not designed further here.
+
+**Open-string bar (FR-069).** A render item of role `OPEN_BAR`: string, progress, left and right ends (the lane width), thickness, the *open* label; no target disk. Derived from an `EXPECTED_NOTE` whose only position has `fret == 0`; a chord keeps `O` in its cartouche.
