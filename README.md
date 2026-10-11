@@ -2,13 +2,66 @@
 
 *English · [Français](docs/README-FR.md) · [Español](docs/README-ES.md)*
 
-TuxGuitarAdvanced turns a free score and tablature editor into a complete environment for learning guitar interactively. You can open and edit your own pieces, then use a real guitar to move forward note by note, work at tempo and get precise feedback on the notes, the chords, the rhythm and the written techniques.
+### 🎸 Your guitar is the controller. Your score is the game.
 
-Its main strengths are the freedom to work with your own scores and tablatures, local operation with no subscription and no imposed catalogue, feedback built directly into the score, and detailed verification of techniques such as bends, slides, hammer-ons and pull-offs. Users keep control of their files, their audio devices, their settings and their progress.
+**Press play on a tab. Play the notes as they fly towards your fretboard. Get judged on pitch *and* timing, in real time, with your own guitar.**
+
+<p align="center"><img src="docs/images/manual-en/arcade-run.png" width="760" alt="Arcade mode: notes fly from the horizon towards the neck, coloured like the strings, and are judged as they land"></p>
+
+TuxGuitarAdvanced is a free, open source tablature editor that **listens to your guitar** (a microphone or an audio interface is all you need). Open any score (Guitar Pro, MIDI, TuxGuitar...), pick a track, and play along with the rest of the band. No subscription, no catalogue, no account: **your songs, your guitar, your machine**.
+
+> ⚠️ **Alpha.** It works, we play it, and it is honestly rough in places. That is exactly why we need players like you. [See what is not done yet](#where-it-stands-today) and [how to help](#join-the-band-help-us-level-it-up).
+
+## Choose your game mode
+
+| | Mode | The idea |
+|---|---|---|
+| 🎯 | **Wait for the right note** | The score **waits for you**. The next note is framed on the tab; play it and a green tick lights up. No pressure, perfect for learning a new piece. |
+| 🥁 | **Follow the tempo** | The band starts (count-in, bass, drums, everything but your track) and you play **in time**. Every note is *on time, early, late, wrong or missed*. Raise the tempo step by step from 20 % to 150 %. |
+| 🕹️ | **Arcade** (alpha) | Same band, but as a **game**: notes fly from the horizon, five seconds ahead, on the lane of their fret, coloured like their string. Chase streaks, read the verdict badges, beat your score. |
+
+<p align="center"><img src="docs/images/manual-en/arcade-chord.png" width="700" alt="Arcade mode: a chord arrives with its diagram and its name"></p>
+
+*Chords come as a bar with the diagram and the name of the next chord, so you can get your hand ready.*
+
+### What you get when the song ends
+
+<p align="center"><img src="docs/images/manual-en/arcade-result.png" width="300" alt="The Arcade result window: score, share of the maximum, best streak and every verdict"> &nbsp; <img src="docs/images/manual-en/practice-wait-main.png" width="460" alt="Wait mode: the next note is framed on the score and a palette tells what was heard"></p>
+
+A score, your share of the maximum, your **best streak** and the count of every verdict, then **play again** from the start or from the measure that beat you.
+
+## It is also a real editor (and a real tuner)
+
+Under the game there is the full **TuxGuitar** editor: write guitar, bass and drums tracks, tabs and staff, chords and effects, play it back, import and export Guitar Pro, MIDI, MusicXML, PDF... You can build your own practice song in ten minutes: the **[worked example](docs/MANUAL.md#part-c-a-complete-example-step-by-step)** takes you from an empty page to a three-track song (guitar, bass, drums) and then plays all three modes.
+
+<p align="center"><img src="docs/images/manual-en/main-window.png" width="760" alt="The TuxGuitarAdvanced editor with a guitar part in staff and tablature"></p>
+
+And before you play, a **steady tuner** (the needle stays still when you are in tune):
+
+<p align="center"><img src="docs/images/manual-en/tuner.png" width="300" alt="The guided tuner reading a G string, needle vertical"></p>
+
+## Get started in two minutes
+
+1. **Download** the latest build from [Releases](https://github.com/krl91/tuxguitaradvanced/releases) (macOS Apple Silicon today; see below).
+2. Open a score, then **Tools > Interactive Practice** (or the ♪ button next to Play).
+3. Pick your track, your input (check the level by plucking a string) and a mode. **Start.** That is it.
+
+Never written a tab? The **[user manual](docs/MANUAL.md)** ([français](docs/MANUAL-FR.md)) has everything, with screenshots, including the step-by-step example.
+
+## Join the band: help us level it up
+
+This is a young project and every kind of help changes it. You do **not** need to be a programmer:
+
+* 🎸 **Play it and tell us.** Your guitar, your microphone, your interface, your machine: the recognition was tuned on 1,200+ real recordings, but **more guitars is the best test there is**. Open an [issue](https://github.com/krl91/tuxguitaradvanced/issues) with what happened (the practice can write a numbers-only trace, no audio, to help us understand).
+* 🎚️ **Beat the bosses.** Open problems we would love help with: more reliable timing under load, bass notes below G1, validating hammer-on / slide / vibrato detection on real playing, a Linux and a Windows build we can test.
+* 🌍 **Translate it.** The interface is in English, French and Spanish; more languages are one text file away ([how](docs/CONTRIBUTING.md#translate-app-content)).
+* 🎨 **Make it prettier.** Arcade is drawn with simple shapes: colours, themes, effects and sounds are wide open.
+* 🧪 **Write a test or fix a bug.** The code is Java, built with Maven, with 700+ automatic tests ([INSTALL.md](INSTALL.md)); the architecture is documented in [docs/architecture](docs/architecture/README.md). Every bug gets a reproducing test first.
+* 📣 **Share it.** Know a guitarist who would like to play their tabs like a game? Send them here.
 
 ### Where it stands today
 
-Available now (version 0.5.0-alpha.1): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, five seconds ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
+Available now (version 0.5.0-alpha.2): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, five seconds ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
 
 **User manual** (editing and creating a score, and the whole Practice, with screenshots): [English](docs/MANUAL.md) · [Français](docs/MANUAL-FR.md).
 
@@ -53,7 +106,7 @@ The default build runs **479 automatic tests**; the benchmark on recordings is a
 
 ## Download and installation
 
-Packages for macOS (Apple Silicon), Linux and Windows are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; the three packages include the Interactive Practice modules.
+Packages are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). **Today the alphas ship a macOS (Apple Silicon) package only**; Linux and Windows packages are built by the release workflow when GitHub Actions is available, and can always be built from source. The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; the three packages include the Interactive Practice modules.
 
 To build from source, refer to [INSTALL.md](INSTALL.md). The practice modules need a few more things:
 

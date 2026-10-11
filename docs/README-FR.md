@@ -2,13 +2,66 @@
 
 *[English](../README.md) · Français · [Español](README-ES.md)*
 
-TuxGuitarAdvanced transforme un éditeur libre de partitions et de tablatures en un environnement complet d'apprentissage interactif de la guitare. Il permet d'ouvrir et de modifier ses propres morceaux, puis d'utiliser une vraie guitare pour avancer note par note, travailler au tempo et recevoir un retour précis sur les notes, les accords, le rythme et les techniques écrites.
+### 🎸 Votre guitare est la manette. Votre partition est le jeu.
 
-Ses principaux atouts sont la liberté de travailler avec ses propres partitions et tablatures, le fonctionnement local sans abonnement ni catalogue imposé, l'intégration directe du retour dans la partition et la vérification détaillée des techniques comme les bends, slides, hammer-ons et pull-offs. L'utilisateur conserve ainsi le contrôle de ses fichiers, de ses périphériques audio, de ses réglages et de sa progression.
+**Lancez une tablature. Jouez les notes qui filent vers votre manche. Soyez jugé sur la hauteur *et* le rythme, en temps réel, avec votre vraie guitare.**
+
+<p align="center"><img src="images/manual/arcade-run.png" width="760" alt="Mode Arcade : des notes viennent de l'horizon vers le manche, de la couleur des cordes, et sont jugées à l'arrivée"></p>
+
+TuxGuitarAdvanced est un éditeur de tablatures libre et open source qui **écoute votre guitare** (un micro ou une interface audio suffit). Ouvrez n'importe quelle partition (Guitar Pro, MIDI, TuxGuitar...), choisissez une piste et jouez avec le reste du groupe. Sans abonnement, sans catalogue, sans compte : **vos morceaux, votre guitare, votre machine**.
+
+> ⚠️ **Alpha.** Ça marche, on y joue, et c'est honnêtement encore brut par endroits. C'est précisément pour ça qu'on a besoin de joueurs comme vous. [Ce qui reste à faire](#où-en-est-le-projet) et [comment aider](#rejoignez-le-groupe--aidez-nous-à-monter-de-niveau).
+
+## Choisissez votre mode de jeu
+
+| | Mode | L'idée |
+|---|---|---|
+| 🎯 | **Attendre la bonne note** | La partition **vous attend**. La prochaine note est encadrée ; jouez-la et une coche verte s'allume. Aucune pression, idéal pour apprendre un nouveau morceau. |
+| 🥁 | **Suivre le tempo** | Le groupe démarre (décompte, basse, batterie, tout sauf votre piste) et vous jouez **en rythme**. Chaque note est *à l'heure, en avance, en retard, fausse ou manquée*. Montez le tempo par étapes de 20 % à 150 %. |
+| 🕹️ | **Arcade** (alpha) | Le même groupe, mais en **jeu** : les notes filent de l'horizon, cinq secondes à l'avance, sur la voie de leur case, de la couleur de leur corde. Visez les séries, lisez les badges de verdict, battez votre score. |
+
+<p align="center"><img src="images/manual/arcade-chord.png" width="700" alt="Mode Arcade : un accord arrive avec son diagramme et son nom"></p>
+
+*Les accords arrivent en barre avec le diagramme et le nom du prochain accord, pour préparer votre main.*
+
+### Ce que vous gagnez à la fin du morceau
+
+<p align="center"><img src="images/manual/arcade-result.png" width="300" alt="La fenêtre de résultat Arcade"> &nbsp; <img src="images/manual/practice-wait-main.png" width="460" alt="Mode Attendre : la prochaine note est encadrée sur la partition"></p>
+
+Un score, votre part du maximum, votre **meilleure série** et le décompte de chaque verdict, puis **rejouez** depuis le début ou depuis la mesure qui vous a battu.
+
+## C'est aussi un vrai éditeur (et un vrai accordeur)
+
+Sous le jeu, il y a l'éditeur **TuxGuitar** complet : écrivez des pistes de guitare, basse et batterie, tablature et portée, accords et effets, écoutez-les, importez et exportez Guitar Pro, MIDI, MusicXML, PDF... Vous pouvez construire votre morceau d'entraînement en dix minutes : l'**[exemple complet](MANUAL-FR.md#partie-c--un-exemple-complet-pas-à-pas)** vous mène d'une page vide à un morceau de trois pistes (guitare, basse, batterie), puis aux trois modes.
+
+<p align="center"><img src="images/manual/main-window.png" width="760" alt="L'éditeur TuxGuitarAdvanced avec une partie de guitare en portée et tablature"></p>
+
+Et avant de jouer, un **accordeur stable** (l'aiguille ne bouge plus quand vous êtes juste) :
+
+<p align="center"><img src="images/manual/tuner.png" width="300" alt="L'accordeur guidé qui lit une corde"></p>
+
+## Démarrer en deux minutes
+
+1. **Téléchargez** la dernière version dans les [Releases](https://github.com/krl91/tuxguitaradvanced/releases) (macOS Apple Silicon aujourd'hui).
+2. Ouvrez une partition, puis **Outils > Pratique interactive** (ou le bouton ♪ à côté de Lecture).
+3. Choisissez votre piste, votre entrée (vérifiez le niveau en pinçant une corde) et un mode. **C'est parti.**
+
+Jamais écrit de tablature ? Le **[manuel](MANUAL-FR.md)** ([English](MANUAL.md)) dit tout, avec des captures, dont l'exemple pas à pas.
+
+## Rejoignez le groupe : aidez-nous à monter de niveau
+
+Le projet est jeune et chaque aide compte. Pas besoin d'être développeur :
+
+* 🎸 **Jouez et dites-nous.** Votre guitare, votre micro, votre interface, votre machine : la reconnaissance a été réglée sur plus de 1 200 vrais enregistrements, mais **plus de guitares, c'est le meilleur test**. Ouvrez une [issue](https://github.com/krl91/tuxguitaradvanced/issues) avec ce qui s'est passé (la pratique peut écrire une trace de nombres, sans audio, pour nous aider).
+* 🎚️ **Battez les boss.** Problèmes ouverts pour lesquels l'aide est bienvenue : timing plus fiable sous charge, notes de basse sous sol1, validation des détecteurs de hammer-on / slide / vibrato sur du vrai jeu, un paquet Linux et un Windows que nous pouvons tester.
+* 🌍 **Traduisez.** Interface en anglais, français et espagnol ; d'autres langues sont à un fichier texte près.
+* 🎨 **Embellissez.** Arcade est dessiné avec des formes simples : couleurs, thèmes, effets et sons sont grands ouverts.
+* 🧪 **Écrivez un test ou corrigez un bug.** Le code est en Java, construit avec Maven, avec plus de 700 tests automatiques ([INSTALL.md](../INSTALL.md)) ; l'architecture est documentée dans [architecture](architecture/README.md). Chaque bug reçoit d'abord un test qui le reproduit.
+* 📣 **Partagez.** Un guitariste qui aimerait jouer ses tablatures comme à un jeu ? Envoyez-le ici.
 
 ## Où en est le projet
 
-Disponible aujourd'hui (version 0.5.0-alpha.1) : la pratique note par note et accord par accord avec votre vraie guitare (la hauteur est vérifiée), les bends, relâchés et pré-bends suivis le long de leur chemin écrit, l'arrivée d'un hammer-on, d'un pull-off ou d'un slide acceptée sans nouveau coup de médiator, un accordeur stable, le gain d'entrée et la réduction de bruit. **Nouveau, en alpha :** le **mode de suivi du tempo** (la partition joue à son tempo avec les autres pistes en accompagnement, et chaque note est jugée dans le temps : en avance, en retard, manquée) et **Arcade**, la même partie sous forme de jeu où les notes viennent vers vous sur un manche, cinq secondes à l'avance. **Pas encore disponible :** un verdict *entendu / pas entendu* pour chaque technique (les détecteurs ne sont pas encore validés sur assez d'enregistrements réels, donc la ligne de technique dit toujours « pas encore vérifiable »). Le guide d'utilisation liste ce qui est mesuré et ce qui ne l'est pas : [English](PRACTICE.md) · [Français](PRACTICE-FR.md) · [Español](PRACTICE-ES.md).
+Disponible aujourd'hui (version 0.5.0-alpha.2) : la pratique note par note et accord par accord avec votre vraie guitare (la hauteur est vérifiée), les bends, relâchés et pré-bends suivis le long de leur chemin écrit, l'arrivée d'un hammer-on, d'un pull-off ou d'un slide acceptée sans nouveau coup de médiator, un accordeur stable, le gain d'entrée et la réduction de bruit. **Nouveau, en alpha :** le **mode de suivi du tempo** (la partition joue à son tempo avec les autres pistes en accompagnement, et chaque note est jugée dans le temps : en avance, en retard, manquée) et **Arcade**, la même partie sous forme de jeu où les notes viennent vers vous sur un manche, cinq secondes à l'avance. **Pas encore disponible :** un verdict *entendu / pas entendu* pour chaque technique (les détecteurs ne sont pas encore validés sur assez d'enregistrements réels, donc la ligne de technique dit toujours « pas encore vérifiable »). Le guide d'utilisation liste ce qui est mesuré et ce qui ne l'est pas : [English](PRACTICE.md) · [Français](PRACTICE-FR.md) · [Español](PRACTICE-ES.md).
 
 **Manuel d'utilisation** (édition et création de partitions, et tout le Practice, avec des captures d'écran) : [English](MANUAL.md) · [Français](MANUAL-FR.md).
 
