@@ -148,8 +148,9 @@ public class PracticeWindow {
 	private ArcadeResultWindow arcadeResult;
 	private PracticeTrackCandidate arcadeCandidate;
 	private PracticeSequence arcadeFull;
-	/** The whole piece as the preparation gave it: the button Restart of the game starts again from its first event, whatever replayed section it is in. */
-	private PracticeSequence arcadeWhole;
+	/** How many times the start of a restart may be tried again while the player is still stopping the run that was just given back. */
+	private int arcadeRestartTries;
+	private static final int ARCADE_RESTART_TRIES = 200;
 	private static final ArcadeTexts ARCADE_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
@@ -616,7 +617,6 @@ public class PracticeWindow {
 			return;
 		}
 		if( FollowSettings.getInstance(this.context).isArcade() ) {
-			this.arcadeWhole = this.preparedSequence;
 			startArcade(candidate, this.preparedSequence);
 			return;
 		}
@@ -794,6 +794,7 @@ public class PracticeWindow {
 				});
 		controller.start();
 		if( controller.state() == ArcadeController.State.RUNNING ) {
+			this.arcadeRestartTries = 0;
 			this.arcadeWindow.open();
 			setVisible(this.window, false);
 		}
@@ -817,6 +818,10 @@ public class PracticeWindow {
 
 	private void arcadeStartFailed(FollowPlayback.Result result) {
 		teardownSession();
+		if( result == FollowPlayback.Result.ALREADY_PLAYING && retryArcadeRestart() ) {
+			return;
+		}
+		this.arcadeRestartTries = 0;
 		showPreparation();
 		showWindow();
 		this.followPanel.message(TuxGuitar.getProperty(result == FollowPlayback.Result.ALREADY_PLAYING ? "arcade.start.player-busy" : "arcade.start.failed"));
@@ -875,22 +880,30 @@ public class PracticeWindow {
 	private void restartArcade() {
 		PracticeTrackCandidate candidate = this.arcadeCandidate;
 		PracticeSequence full = this.arcadeFull;
-		if( !isOpen() || this.followPlan == null || candidate == null || full == null ) {
+		if( !isOpen() || (this.followPlan == null && this.arcadeRestartTries <= 0) || candidate == null || full == null ) {
 			return;
 		}
 		teardownSession();
 		startArcade(candidate, full);
 	}
 
-	/** The button Restart of the game window: the same track and settings, from the beginning of the piece. */
+	/**
+	 * The button Restart of the game window (owner, 2026-10-11): the same track and settings, from the beginning of the piece or of the passage that was
+	 * started, without leaving the game: the preparation window stays hidden and the game window opens again by itself. The player may still be stopping
+	 * the run that was just given back, so the start is tried again (on the next turn of the UI loop, no waiting) while it says it is busy.
+	 */
 	private void restartArcadeFromStart() {
-		PracticeTrackCandidate candidate = this.arcadeCandidate;
-		PracticeSequence whole = this.arcadeWhole != null ? this.arcadeWhole : this.arcadeFull;
-		if( !isOpen() || candidate == null || whole == null ) {
-			return;
+		this.arcadeRestartTries = ARCADE_RESTART_TRIES;
+		restartArcade();
+	}
+
+	private boolean retryArcadeRestart() {
+		if( this.arcadeRestartTries <= 0 ) {
+			return false;
 		}
-		teardownSession();
-		startArcade(candidate, whole);
+		this.arcadeRestartTries--;
+		TGSynchronizer.getInstance(this.context).executeLater(this::restartArcade);
+		return true;
 	}
 
 	/** Gives the window and the controller of the run back; the run itself is stopped by {@link #teardownFollow}. */
