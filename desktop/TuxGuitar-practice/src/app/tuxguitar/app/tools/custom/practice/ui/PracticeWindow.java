@@ -274,13 +274,8 @@ public class PracticeWindow {
 			TGDialogUtil.openDialog(this.window, TGDialogUtil.OPEN_STYLE_CENTER | TGDialogUtil.OPEN_STYLE_PACK);
 			refit();
 		} else {
-			setVisible(this.window, true);
-			this.window.moveToTop();
-			// back from a hidden state (the Arcade run): what the tabs show is recomposed and painted again
-			this.followPanel.refresh();
-			refit();
-			this.preparation.redraw();
-			this.window.redraw();
+			// back from a hidden state (the Arcade run): shown, recomposed and painted again
+			WindowRevival.revive(this.window, this.preparation, this.followPanel::refresh, this::refit);
 		}
 	}
 

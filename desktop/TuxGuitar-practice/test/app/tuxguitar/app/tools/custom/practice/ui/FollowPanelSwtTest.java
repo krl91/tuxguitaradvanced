@@ -183,6 +183,50 @@ public class FollowPanelSwtTest {
 		}
 	}
 
+	/**
+	 * Bug (owner, 2026-10-10 and 2026-10-11): the preparation window is hidden while an Arcade run goes on; opened again afterwards it stayed hidden, and when it
+	 * came back its tab was not recomposed. Reproduced here with the real widgets: hidden, the settings change (the learner's mode), then the window is revived.
+	 */
+	@Test
+	public void aHiddenWindowComesBackVisibleAndRecomposedFromTheSettingsAndInsideTheWindow() throws Exception {
+		Class<?> displayClass = Class.forName("org.eclipse.swt.widgets.Display");
+		Object display = displayClass.getConstructor().newInstance();
+		try {
+			UIFactory factory = (UIFactory) Class.forName("app.tuxguitar.ui.swt.SWTFactory").getConstructor(displayClass).newInstance(display);
+			UIWindow window = factory.createWindow();
+			UITableLayout windowLayout = new UITableLayout();
+			window.setLayout(windowLayout);
+			FollowSettings settings = FollowPanelTest.settings();
+			FollowPanel panel = new FollowPanel(factory, window, settings, new FollowPanelTest.FakeBackend());
+			windowLayout.set(panel.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true);
+			UIRectangle area = new UIRectangle(0, 0, 1440, 900);
+			Runnable refit = () -> WindowFit.refit(window, area);
+			window.pack();
+			window.open();
+			flush(display);
+			refit.run();
+			Object percent = nativeOf(panel.percentSpinner());
+			assertFalse(nativeBoolean(percent, "isVisible"), "the wait mode shows no tempo");
+
+			// an Arcade run starts: the window is hidden; the mode is Arcade when it ends, without the window having been told
+			window.setVisible(false);
+			flush(display);
+			settings.setMode(FollowSettings.Mode.ARCADE);
+
+			WindowRevival.revive(window, panel.getControl(), panel::refresh, refit);
+			flush(display);
+
+			assertTrue(window.isVisible(), "the window is visible again");
+			assertTrue(nativeBoolean(percent, "isVisible"), "the controls of Arcade are shown: the tab was recomposed from the settings");
+			assertEquals(FollowSettings.Mode.ARCADE, panel.modeSelect().getSelectedValue());
+			assertInside(display, window, panel);
+			window.dispose();
+			panel.dispose();
+		} finally {
+			displayClass.getMethod("dispose").invoke(display);
+		}
+	}
+
 	@Test
 	public void closingAndOpeningAgainLeavesNoListenerDoubledAndNoStaleValue() throws Exception {
 		Class<?> displayClass = Class.forName("org.eclipse.swt.widgets.Display");
