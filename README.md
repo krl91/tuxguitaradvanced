@@ -10,6 +10,8 @@ Its main strengths are the freedom to work with your own scores and tablatures, 
 
 Available now (version 0.5.0-alpha.1): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, five seconds ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
 
+**User manual** (editing and creating a score, and the whole Practice, with screenshots): [English](docs/MANUAL.md) · [Français](docs/MANUAL-FR.md).
+
 **TuxGuitarAdvanced** is an advanced version of [TuxGuitar](https://www.tuxguitar.app/), the open source multitrack tablature editor and player written in Java. It keeps everything TuxGuitar does (editing, playback, Guitar Pro / MIDI / MusicXML import and export...) and adds a **practice mode that listens to your guitar**, a **steadier tuner**, and tools to check your scores.
 
 > Practise any track of any score with your real guitar: TuxGuitarAdvanced listens through your microphone or audio interface, tells you note by note and chord by chord whether you played what is written, and waits for you.
