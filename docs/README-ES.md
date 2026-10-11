@@ -10,6 +10,8 @@
 
 TuxGuitarAdvanced es un editor de tablaturas libre y de código abierto que **escucha tu guitarra** (basta un micrófono o una interfaz de audio). Abre cualquier partitura (Guitar Pro, MIDI, TuxGuitar...), elige una pista y toca con el resto de la banda. Sin suscripción, sin catálogo, sin cuenta: **tus canciones, tu guitarra, tu máquina**.
 
+> 🙏 **Construido sobre TuxGuitar, que ya es excelente.** TuxGuitarAdvanced es un **fork de [TuxGuitar](https://www.tuxguitar.app/)**, el gran editor y reproductor de tablaturas multipista libre. Todo lo que hace TuxGuitar sigue ahí, intacto: edición, reproducción, importación y exportación Guitar Pro / MIDI / MusicXML / PDF, muchos idiomas. **Solo añadimos cosas nuevas encima**: los modos de práctica (Esperar, Seguir el tempo, Arcade) y un afinador más estable. El mérito del editor es de los autores y colaboradores de TuxGuitar ([helge17](https://github.com/helge17/tuxguitar) y muchos más); si solo quieres un editor magnífico, [usa TuxGuitar](https://www.tuxguitar.app/), se lo merece. (Algunas capturas están en inglés o francés: la interfaz existe en español, francés e inglés.)
+
 > ⚠️ **Alfa.** Funciona, jugamos con ella, y todavía está algo áspera en algunos puntos. Por eso necesitamos jugadores como tú. [Lo que falta](#dónde-está-el-proyecto) y [cómo ayudar](#únete-a-la-banda-ayúdanos-a-subir-de-nivel).
 
 ## Elige tu modo de juego
@@ -20,13 +22,13 @@ TuxGuitarAdvanced es un editor de tablaturas libre y de código abierto que **es
 | 🥁 | **Seguir el tempo** | La banda arranca (cuenta atrás, bajo, batería, todo menos tu pista) y tocas **a tiempo**. Cada nota es *a tiempo, pronto, tarde, errónea o fallada*. Sube el tempo poco a poco del 20 % al 150 %. |
 | 🕹️ | **Arcade** (alfa) | La misma banda, pero como **juego**: las notas vuelan desde el horizonte, cinco segundos antes, por el carril de su traste, del color de su cuerda. Persigue rachas, lee las insignias de veredicto, supera tu puntuación. |
 
-<p align="center"><img src="images/manual-en/arcade-chord.png" width="700" alt="Modo Arcade: llega un acorde con su diagrama y su nombre"></p>
+<p align="center"><img src="images/manual/arcade-chord.png" width="700" alt="Modo Arcade (interfaz en francés): llega un acorde con su diagrama y su nombre"></p>
 
 ## También es un editor de verdad (y un afinador de verdad)
 
 Bajo el juego está el editor **TuxGuitar** completo: escribe pistas de guitarra, bajo y batería, tablatura y pentagrama, acordes y efectos, escúchalos, importa y exporta Guitar Pro, MIDI, MusicXML, PDF... El **[ejemplo completo](MANUAL.md#part-c-a-complete-example-step-by-step)** (en inglés y francés) te lleva de una página vacía a una canción de tres pistas y a los tres modos.
 
-<p align="center"><img src="images/manual-en/main-window.png" width="760" alt="El editor TuxGuitarAdvanced con una parte de guitarra en pentagrama y tablatura"></p>
+<p align="center"><img src="images/manual/main-window.png" width="760" alt="El editor TuxGuitarAdvanced (interfaz en francés) con una parte de guitarra en pentagrama y tablatura"></p>
 
 ## Empezar en dos minutos
 

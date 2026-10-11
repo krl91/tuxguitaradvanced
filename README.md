@@ -10,6 +10,8 @@
 
 TuxGuitarAdvanced is a free, open source tablature editor that **listens to your guitar** (a microphone or an audio interface is all you need). Open any score (Guitar Pro, MIDI, TuxGuitar...), pick a track, and play along with the rest of the band. No subscription, no catalogue, no account: **your songs, your guitar, your machine**.
 
+> 🙏 **Built on TuxGuitar, which is already excellent.** TuxGuitarAdvanced is a **fork of [TuxGuitar](https://www.tuxguitar.app/)**, the great free multitrack tablature editor and player. Everything TuxGuitar does is still here, untouched: editing, playback, Guitar Pro / MIDI / MusicXML / PDF import and export, many languages. **We only add new things on top**: the practice modes (Wait, Follow the tempo, Arcade) and a steadier tuner. All the credit for the editor goes to TuxGuitar's authors and contributors ([helge17](https://github.com/helge17/tuxguitar) and many others); if you only want a superb editor, [go and use TuxGuitar](https://www.tuxguitar.app/) too, it deserves it.
+
 > ⚠️ **Alpha.** It works, we play it, and it is honestly rough in places. That is exactly why we need players like you. [See what is not done yet](#where-it-stands-today) and [how to help](#join-the-band-help-us-level-it-up).
 
 ## Choose your game mode
@@ -20,13 +22,13 @@ TuxGuitarAdvanced is a free, open source tablature editor that **listens to your
 | 🥁 | **Follow the tempo** | The band starts (count-in, bass, drums, everything but your track) and you play **in time**. Every note is *on time, early, late, wrong or missed*. Raise the tempo step by step from 20 % to 150 %. |
 | 🕹️ | **Arcade** (alpha) | Same band, but as a **game**: notes fly from the horizon, five seconds ahead, on the lane of their fret, coloured like their string. Chase streaks, read the verdict badges, beat your score. |
 
-<p align="center"><img src="docs/images/manual-en/arcade-chord.png" width="700" alt="Arcade mode: a chord arrives with its diagram and its name"></p>
+<p align="center"><img src="docs/images/manual/arcade-chord.png" width="700" alt="Arcade mode: a chord arrives with its diagram and its name (French interface)"></p>
 
-*Chords come as a bar with the diagram and the name of the next chord, so you can get your hand ready.*
+*Chords come as a bar with the diagram and the name of the next chord, so you can get your hand ready. (This screenshot is in French: the interface is available in English, French and Spanish, and more languages can be added.)*
 
 ### What you get when the song ends
 
-<p align="center"><img src="docs/images/manual-en/arcade-result.png" width="300" alt="The Arcade result window: score, share of the maximum, best streak and every verdict"> &nbsp; <img src="docs/images/manual-en/practice-wait-main.png" width="460" alt="Wait mode: the next note is framed on the score and a palette tells what was heard"></p>
+<p align="center"><img src="docs/images/manual/arcade-result.png" width="300" alt="The Arcade result window (French interface): score, share of the maximum, best streak and every verdict"> &nbsp; <img src="docs/images/manual-en/practice-wait-main.png" width="460" alt="Wait mode: the next note is framed on the score and a palette tells what was heard"></p>
 
 A score, your share of the maximum, your **best streak** and the count of every verdict, then **play again** from the start or from the measure that beat you.
 
@@ -34,7 +36,7 @@ A score, your share of the maximum, your **best streak** and the count of every 
 
 Under the game there is the full **TuxGuitar** editor: write guitar, bass and drums tracks, tabs and staff, chords and effects, play it back, import and export Guitar Pro, MIDI, MusicXML, PDF... You can build your own practice song in ten minutes: the **[worked example](docs/MANUAL.md#part-c-a-complete-example-step-by-step)** takes you from an empty page to a three-track song (guitar, bass, drums) and then plays all three modes.
 
-<p align="center"><img src="docs/images/manual-en/main-window.png" width="760" alt="The TuxGuitarAdvanced editor with a guitar part in staff and tablature"></p>
+<p align="center"><img src="docs/images/manual/main-window.png" width="760" alt="The TuxGuitarAdvanced editor with a guitar part in staff and tablature (French interface)"></p>
 
 And before you play, a **steady tuner** (the needle stays still when you are in tune):
 

@@ -6,9 +6,11 @@
 
 **Lancez une tablature. Jouez les notes qui filent vers votre manche. Soyez jugé sur la hauteur *et* le rythme, en temps réel, avec votre vraie guitare.**
 
-<p align="center"><img src="images/manual/arcade-run.png" width="760" alt="Mode Arcade : des notes viennent de l'horizon vers le manche, de la couleur des cordes, et sont jugées à l'arrivée"></p>
+<p align="center"><img src="images/manual-en/arcade-run.png" width="760" alt="Mode Arcade (interface en anglais) : des notes viennent de l'horizon vers le manche, de la couleur des cordes, et sont jugées à l'arrivée"></p>
 
 TuxGuitarAdvanced est un éditeur de tablatures libre et open source qui **écoute votre guitare** (un micro ou une interface audio suffit). Ouvrez n'importe quelle partition (Guitar Pro, MIDI, TuxGuitar...), choisissez une piste et jouez avec le reste du groupe. Sans abonnement, sans catalogue, sans compte : **vos morceaux, votre guitare, votre machine**.
+
+> 🙏 **Construit sur TuxGuitar, qui est déjà excellent.** TuxGuitarAdvanced est un **fork de [TuxGuitar](https://www.tuxguitar.app/)**, le très bon éditeur et lecteur de tablatures multipistes libre. Tout ce que fait TuxGuitar est toujours là, intact : édition, lecture, import et export Guitar Pro / MIDI / MusicXML / PDF, de nombreuses langues. **Nous n'ajoutons que du neuf par-dessus** : les modes de pratique (Attendre, Suivre le tempo, Arcade) et un accordeur plus stable. Tout le mérite de l'éditeur revient aux auteurs et contributeurs de TuxGuitar ([helge17](https://github.com/helge17/tuxguitar) et beaucoup d'autres) ; si vous ne voulez qu'un superbe éditeur, [utilisez TuxGuitar](https://www.tuxguitar.app/), il le mérite.
 
 > ⚠️ **Alpha.** Ça marche, on y joue, et c'est honnêtement encore brut par endroits. C'est précisément pour ça qu'on a besoin de joueurs comme vous. [Ce qui reste à faire](#où-en-est-le-projet) et [comment aider](#rejoignez-le-groupe--aidez-nous-à-monter-de-niveau).
 
@@ -22,11 +24,11 @@ TuxGuitarAdvanced est un éditeur de tablatures libre et open source qui **écou
 
 <p align="center"><img src="images/manual/arcade-chord.png" width="700" alt="Mode Arcade : un accord arrive avec son diagramme et son nom"></p>
 
-*Les accords arrivent en barre avec le diagramme et le nom du prochain accord, pour préparer votre main.*
+*Les accords arrivent en barre avec le diagramme et le nom du prochain accord, pour préparer votre main. (Certaines captures sont en anglais : l'interface existe en français, anglais et espagnol, et d'autres langues peuvent s'ajouter.)*
 
 ### Ce que vous gagnez à la fin du morceau
 
-<p align="center"><img src="images/manual/arcade-result.png" width="300" alt="La fenêtre de résultat Arcade"> &nbsp; <img src="images/manual/practice-wait-main.png" width="460" alt="Mode Attendre : la prochaine note est encadrée sur la partition"></p>
+<p align="center"><img src="images/manual-en/arcade-result.png" width="300" alt="La fenêtre de résultat Arcade (interface en anglais)"> &nbsp; <img src="images/manual/practice-wait-main.png" width="460" alt="Mode Attendre : la prochaine note est encadrée sur la partition"></p>
 
 Un score, votre part du maximum, votre **meilleure série** et le décompte de chaque verdict, puis **rejouez** depuis le début ou depuis la mesure qui vous a battu.
 
