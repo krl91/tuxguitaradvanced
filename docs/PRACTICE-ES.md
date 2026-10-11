@@ -38,7 +38,11 @@ Los dos modos cronometrados comparten el **tempo** (20 % a 150 % del tempo escri
 
 Elige **Arcade** en la pestaña Modo, la pista que tocas en la pestaña Pista (cualquier pista con altura, bajo incluido) y pulsa *Iniciar Arcade*. La ventana de práctica se oculta mientras corre la ventana del juego.
 
-<img src="images/features/arcade-six-strings.png" width="640" alt="La ventana Arcade: las notas vienen del horizonte hacia el mástil, un diagrama de acorde y las insignias de veredicto">
+<img src="images/features/practice-modes.png" width="480" alt="Elección del modo">
+
+<img src="images/features/practice-mode-arcade.png" width="420" alt="Pestaña Modo con Arcade elegido">
+
+<img src="images/features/arcade-notes.png" width="640" alt="Una partida Arcade: notas que vienen del horizonte, una llega al mástil">
 
 * **Cada nota se ve venir durante cinco segundos**, desde el horizonte, sea cual sea el número de notas. Una nota escrita en el traste *n* sigue siempre el mismo carril hasta el centro de su traste en el mástil; solo su color (el de su cuerda) depende de la cuerda. El disco que llega al mástil es el que tocas ahora.
 * **Los acordes** son una barra sobre un eje central; el próximo acorde muestra su diagrama y su nombre, los demás son barras sin diagrama.
@@ -48,9 +52,13 @@ Elige **Arcade** en la pestaña Modo, la pista que tocas en la pestaña Pista (c
 * Al final, el **resultado** da la puntuación, la parte del máximo, la mejor racha y el recuento de cada juicio; puedes **repetir desde el principio o desde un compás**.
 * **Entradas:** el botón *Actualizar* de la pestaña Entrada vuelve a listar las entradas de audio, para una interfaz conectada con la aplicación en marcha.
 
-<img src="images/features/arcade-chord.png" width="480" alt="Un acorde como barra con su diagrama con nombre, y las notas que llegan">
+<img src="images/features/arcade-chord.png" width="640" alt="Un acorde: su diagrama con nombre, las notas que llegan y los objetivos en el mástil">
 
-*Estas imágenes son renderizados de la vista Arcade hechos por el motor de la propia aplicación sobre partituras de prueba, no capturas de ventana.*
+<img src="images/features/arcade-result.png" width="300" alt="Ventana de resultado al final de la partida">
+
+<img src="images/features/practice-input-refresh.png" width="420" alt="La pestaña Entrada con el botón Actualizar">
+
+*Capturas de la aplicación, mostradas con su interfaz en francés.*
 
 ### Alfa: lo que aún no está verificado
 

@@ -56,7 +56,11 @@ Both timed modes share the **tempo** (20 % to 150 % of the written tempo), the *
 
 Choose **Arcade** in the Mode tab, choose the track you play in the Track tab (any pitched track, bass included), then press *Start Arcade*. The practice window hides while the game window runs.
 
-<img src="images/features/arcade-six-strings.png" width="640" alt="The Arcade window: notes coming from the horizon towards the neck, a chord diagram and the verdict badges">
+<img src="images/features/practice-modes.png" width="480" alt="Choice of the mode">
+
+<img src="images/features/practice-mode-arcade.png" width="420" alt="Mode tab with Arcade chosen">
+
+<img src="images/features/arcade-notes.png" width="640" alt="Arcade run: notes coming from the horizon, one reaching the neck">
 
 * **Every note is seen coming for five seconds**, from the horizon, whatever the number of notes. A note written at fret *n* always follows the same lane to the middle of its fret on the neck; only its colour (that of its string) depends on the string. The disk that reaches the neck is the one you play now.
 * **Chords** are a bar on a central axis; the next chord shows its diagram and name, the others are bars without diagram.
@@ -66,9 +70,13 @@ Choose **Arcade** in the Mode tab, choose the track you play in the Track tab (a
 * At the end the **result** gives the score, the share of the maximum, the best streak and the count of each judgement; you can **play again from the start or from a measure**.
 * **Inputs:** the *Refresh* button of the Input tab lists the audio inputs again, for an interface plugged in while the application runs.
 
-<img src="images/features/arcade-chord.png" width="480" alt="A chord shown as a bar with its named diagram, and the incoming notes">
+<img src="images/features/arcade-chord.png" width="640" alt="A chord: its named diagram, the incoming notes and the targets on the neck">
 
-*These images are renderings of the Arcade view made by the application's own renderer on test scores, not window captures.*
+<img src="images/features/arcade-result.png" width="300" alt="Result window at the end of a run">
+
+<img src="images/features/practice-input-refresh.png" width="420" alt="The Input tab with the Refresh button">
+
+*Screenshots of the application, shown with its French interface.*
 
 ### Alpha: what is not verified yet
 

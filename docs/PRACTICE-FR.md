@@ -56,7 +56,11 @@ Les deux modes chronométrés partagent le **tempo** (20 % à 150 % du tempo éc
 
 Choisissez **Arcade** dans l'onglet Mode, la piste que vous jouez dans l'onglet Piste (toute piste avec hauteur, basse comprise), puis *Démarrer Arcade*. La fenêtre de pratique se masque pendant que la fenêtre du jeu tourne.
 
-<img src="images/features/arcade-six-strings.png" width="640" alt="La fenêtre Arcade : les notes viennent de l'horizon vers le manche, un diagramme d'accord et les badges de verdict">
+<img src="images/features/practice-modes.png" width="480" alt="Choix du mode">
+
+<img src="images/features/practice-mode-arcade.png" width="420" alt="Onglet Mode avec Arcade choisi">
+
+<img src="images/features/arcade-notes.png" width="640" alt="Une partie Arcade : des notes viennent de l'horizon, l'une atteint le manche">
 
 * **Chaque note se voit venir pendant cinq secondes**, depuis l'horizon, quel que soit le nombre de notes. Une note écrite à la case *n* suit toujours la même voie jusqu'au milieu de sa case sur le manche ; seule sa couleur (celle de sa corde) dépend de la corde. Le disque qui atteint le manche est celui que vous jouez maintenant.
 * **Les accords** sont une barre sur un axe central ; le prochain accord montre son diagramme et son nom, les autres sont des barres sans diagramme.
@@ -66,9 +70,13 @@ Choisissez **Arcade** dans l'onglet Mode, la piste que vous jouez dans l'onglet 
 * À la fin, le **résultat** donne le score, la part du maximum, la meilleure série et le décompte de chaque jugement ; vous pouvez **rejouer depuis le début ou depuis une mesure**.
 * **Entrées :** le bouton *Actualiser* de l'onglet Entrée relit la liste des entrées audio, pour une interface branchée pendant que l'application tourne.
 
-<img src="images/features/arcade-chord.png" width="480" alt="Un accord en barre avec son diagramme nommé, et les notes qui arrivent">
+<img src="images/features/arcade-chord.png" width="640" alt="Un accord : son diagramme nommé, les notes qui arrivent et les cibles sur le manche">
 
-*Ces images sont des rendus de la vue Arcade faits par le moteur de rendu de l'application sur des partitions de test, pas des captures de fenêtre.*
+<img src="images/features/arcade-result.png" width="300" alt="La fenêtre de résultat en fin de partie">
+
+<img src="images/features/practice-input-refresh.png" width="420" alt="L'onglet Entrée avec le bouton Actualiser">
+
+*Captures de l'application.*
 
 ### Alpha : ce qui n'est pas encore vérifié
 
