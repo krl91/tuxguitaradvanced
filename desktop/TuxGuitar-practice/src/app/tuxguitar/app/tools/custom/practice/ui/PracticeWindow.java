@@ -186,8 +186,12 @@ public class PracticeWindow {
 		if( this.isOpen() ) {
 			if( this.palette.isOpen() ) {
 				this.palette.open();
+			} else if( this.arcadeWindow != null && this.arcadeWindow.isOpen() ) {
+				// an Arcade run is going on: the game comes to the front, the preparation stays hidden
+				this.arcadeWindow.getWindow().moveToTop();
 			} else {
-				this.window.moveToTop();
+				// hidden after an Arcade run whose result was shown: it comes back (showWindow shows it again and brings it to the front)
+				showWindow();
 			}
 			return;
 		}
