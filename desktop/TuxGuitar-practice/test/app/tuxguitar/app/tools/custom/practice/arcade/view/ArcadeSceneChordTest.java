@@ -33,26 +33,21 @@ public class ArcadeSceneChordTest {
 	}
 
 	@Test
-	public void aChordIsOneNeutralBarAndOneDiagramAndNeverIndependentNotes() {
+	public void aChordIsOnePanelWithItsNoteRectanglesAndNeverIndependentNotes() {
 		SceneFixture fixture = a5();
 		Scene picture = fixture.scene(false).build(fixture.onset(0) - 1000 * MS, SCREEN, null, 100);
 
-		assertEquals(1, picture.forEvent(0, Role.TIMING_BAR).size());
-		assertEquals(1, picture.forEvent(0, Role.CARTOUCHE_FRAME).size());
-		assertEquals(1, picture.forEvent(0, Role.STEM).size());
+		assertEquals(1, picture.forEvent(0, Role.CHORD_PANEL).size());
+		assertTrue(picture.forEvent(0, Role.TIMING_BAR).isEmpty(), "no neutral bar since the panel (FR-074)");
 		assertTrue(picture.forEvent(0, Role.MARKER).isEmpty(), "no flying note for a chord");
 		assertTrue(picture.forEvent(0, Role.TRAJECTORY).isEmpty());
-		assertEquals(ArcadeScene.BAR_COLOUR, picture.forEvent(0, Role.TIMING_BAR).get(0).colour(), "the bar is neutral");
-		assertEquals(0, picture.forEvent(0, Role.TIMING_BAR).get(0).tgString());
 
-		List<SceneItem> dots = picture.forEvent(0, Role.CARTOUCHE_DOT);
-		assertEquals(3, dots.size());
-		assertEquals(fixture.colours.of(6), colourOfString(dots, 6));
-		assertEquals(fixture.colours.of(5), colourOfString(dots, 5));
-		assertEquals(fixture.colours.of(4), colourOfString(dots, 4));
-		assertEquals("5fr", picture.forEvent(0, Role.CARTOUCHE_FRET_LABEL).get(0).text());
-		assertEquals("A5", picture.forEvent(0, Role.CARTOUCHE_NAME).get(0).text(), "no name written: the name derived from the written notes, a power chord");
-		assertEquals(6, picture.forEvent(0, Role.CARTOUCHE_STRING).size(), "the vertical lines of the track");
+		List<SceneItem> notes = picture.forEvent(0, Role.PANEL_NOTE);
+		assertEquals(3, notes.size());
+		assertEquals(fixture.colours.of(6), colourOfString(notes, 6));
+		assertEquals(fixture.colours.of(5), colourOfString(notes, 5));
+		assertEquals(fixture.colours.of(4), colourOfString(notes, 4));
+		assertEquals("A5", picture.forEvent(0, Role.PANEL_NAME).get(0).text(), "no name written: the name derived from the written notes, a power chord");
 	}
 
 	private static int colourOfString(List<SceneItem> dots, int tgString) {
@@ -65,25 +60,17 @@ public class ArcadeSceneChordTest {
 	}
 
 	@Test
-	public void theBarReachesTheHitLineAtTheOnsetAndTheDiagramIsAttachedToItByTheStem() {
+	public void thePanelReachesTheHitLineAtTheOnsetAndIsAboveItBefore() {
 		SceneFixture fixture = a5();
 		ArcadeScene scene = fixture.scene(false);
 		IsometricProjection projection = new IsometricProjection(SCREEN);
 		for (long offset : new long[] { -2500, -1500, -600, -100, 0 }) {
-			Scene picture = scene.build(fixture.onset(0) + offset * MS, SCREEN, null, 100);
-			SceneItem bar = picture.forEvent(0, Role.TIMING_BAR).get(0);
-			SceneItem stem = picture.forEvent(0, Role.STEM).get(0);
-			SceneItem frame = picture.forEvent(0, Role.CARTOUCHE_FRAME).get(0);
-			double barCentre = (bar.value(0) + bar.value(2)) / 2.0;
-			assertEquals(barCentre, stem.value(0), 1e-9, "the stem is at the centre of the bar at " + offset + " ms");
-			assertEquals(bar.value(5), stem.value(1), 1e-9, "the stem starts on the bar");
-			assertEquals(frame.value(5), stem.value(3), 1e-9, "and ends on the diagram");
-			double frameCentre = (frame.value(0) + frame.value(2)) / 2.0;
-			assertEquals(barCentre, frameCentre, 1e-9, "the diagram sits on the bar");
+			SceneItem panel = scene.build(fixture.onset(0) + offset * MS, SCREEN, null, 100).forEvent(0, Role.CHORD_PANEL).get(0);
+			double bottom = Math.max(Math.max(panel.value(1), panel.value(3)), Math.max(panel.value(5), panel.value(7)));
 			if (offset == 0) {
-				assertEquals(projection.hitLineY(), bar.value(1), 0.0, "the leading edge is on the hit line at the onset");
+				assertEquals(projection.hitLineY(), bottom, 0.5, "the lower edge is on the hit line at the onset");
 			} else {
-				assertTrue(bar.value(1) < projection.hitLineY());
+				assertTrue(bottom < projection.hitLineY(), "above the hit line before the onset at " + offset + " ms");
 			}
 		}
 	}
@@ -104,16 +91,18 @@ public class ArcadeSceneChordTest {
 	}
 
 	@Test
-	public void theDiagramNeverShrinksBelowItsMinimumSizeNorLeavesTheScreen() {
+	public void thePanelNeverShrinksBelowAReadableSizeAndItsNameStaysInsideTheScreen() {
 		SceneFixture fixture = a5();
 		ArcadeScene scene = fixture.scene(false);
 		for (Viewport viewport : new Viewport[] { SCREEN, new Viewport(480, 320), new Viewport(2560, 1440) }) {
 			for (long offset = -2900; offset <= 0; offset += 100) {
-				SceneItem frame = scene.build(fixture.onset(0) + offset * MS, viewport, null, 100).forEvent(0, Role.CARTOUCHE_FRAME).get(0);
-				assertTrue(frame.value(2) - frame.value(0) >= ChordCartouche.MIN_WIDTH_PX - 1e-9, "width at " + offset + " ms in " + viewport.width());
-				assertTrue(frame.value(5) - frame.value(1) >= ChordCartouche.MIN_HEIGHT_PX - 1e-9, "height at " + offset + " ms in " + viewport.width());
-				assertTrue(frame.value(0) >= 0 && frame.value(2) <= viewport.width(), "inside the width");
-				assertTrue(frame.value(1) >= 0, "inside the top");
+				Scene picture = scene.build(fixture.onset(0) + offset * MS, viewport, null, 100);
+				SceneItem panel = picture.forEvent(0, Role.CHORD_PANEL).get(0);
+				assertTrue(panel.value(5) - panel.value(1) >= 24.0 - 1e-9, "height at " + offset + " ms in " + viewport.width());
+				SceneItem name = picture.forEvent(0, Role.PANEL_NAME).get(0);
+				assertTrue(name.value(2) >= 10.0 - 1e-9, "a readable name at " + offset + " ms");
+				SceneBoxes.Box box = SceneBoxes.ofText(name);
+				assertTrue(box.x1 >= 0 && box.x2 <= viewport.width(), "the name is inside the width at " + offset + " ms in " + viewport.width());
 			}
 		}
 	}
@@ -130,12 +119,12 @@ public class ArcadeSceneChordTest {
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
 
 		Scene picture = fixture.scene(false).build(fixture.onset(0) - 500 * MS, SCREEN, null, 100);
-		assertEquals("A5", picture.forEvent(0, Role.CARTOUCHE_NAME).get(0).text());
-		assertEquals("↓", picture.forEvent(0, Role.CARTOUCHE_STROKE).get(0).text());
-		// the first chord is judged; the second, which was only a bar without diagram, is promoted
+		assertEquals("A5", picture.forEvent(0, Role.PANEL_NAME).get(0).text());
+		assertEquals("↓", picture.forEvent(0, Role.PANEL_STROKE).get(0).text());
+		// the first chord is judged; the second has its panel and name
 		Scene other = fixture.scene(false).build(fixture.onset(1) - 300 * MS, SCREEN, ArcadeSceneTest.completedBefore(1, 2), 100);
-		assertEquals("A5", other.forEvent(1, Role.CARTOUCHE_NAME).get(0).text(), "derived from the written notes");
-		assertTrue(other.forEvent(1, Role.CARTOUCHE_STROKE).isEmpty(), "no stroke written, no arrow");
+		assertEquals("A5", other.forEvent(1, Role.PANEL_NAME).get(0).text(), "derived from the written notes");
+		assertTrue(other.forEvent(1, Role.PANEL_STROKE).isEmpty(), "no stroke written, no arrow");
 	}
 
 	@Test
@@ -146,8 +135,8 @@ public class ArcadeSceneChordTest {
 		song.quarter(0, 0, 3, 2);
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
 		Scene picture = fixture.scene(false).build(fixture.onset(0) - 500 * MS, SCREEN, null, 100);
-		assertEquals("Not checked separately", picture.forEvent(0, Role.CARTOUCHE_NOTE).get(0).text());
-		assertTrue(a5Scene(500).forEvent(0, Role.CARTOUCHE_NOTE).isEmpty());
+		assertEquals("Not checked separately", picture.forEvent(0, Role.PANEL_REMARK).get(0).text());
+		assertTrue(a5Scene(500).forEvent(0, Role.PANEL_REMARK).isEmpty());
 	}
 
 	private static Scene a5Scene(long msBefore) {
@@ -236,7 +225,7 @@ public class ArcadeSceneChordTest {
 		assertEquals(ArcadeRenderEvent.Kind.AUTOMATIC, fixture.events.get(0).kind());
 		Scene picture = fixture.scene(false).build(fixture.onset(0) - 500 * MS, SCREEN, null, 100);
 		assertEquals("Automatic", picture.forEvent(0, Role.EVENT_TEXT).get(0).text());
-		assertTrue(picture.forEvent(0, Role.CARTOUCHE_FRAME).isEmpty());
+		assertTrue(picture.forEvent(0, Role.CHORD_PANEL).isEmpty());
 		assertTrue(picture.forEvent(0, Role.MARKER).isEmpty());
 		assertEquals(1, picture.forEvent(0, Role.TIMING_BAR).size());
 	}

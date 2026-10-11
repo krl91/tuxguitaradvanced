@@ -86,17 +86,14 @@ public class OpenBarTest {
 	}
 
 	@Test
-	public void anOpenStringInsideAChordStaysAnOInTheDiagramWithNoBar() {
+	public void anOpenStringInsideAChordIsALineAcrossItsPanelWithNoBar() {
 		SongFixture song = new SongFixture(3);
 		song.chord(1, 0, new int[] { 4, 3, 2 }, new int[] { 2, 0, 1 });
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
 		Scene scene = fixture.scene(false).build(fixture.onset(0) - 300 * MS, SCREEN, null, 100, QualityTier.FULL);
 		assertTrue(scene.withRole(Role.OPEN_BAR).isEmpty(), "no flying bar for an open string of a chord");
-		boolean open = false;
-		for (SceneItem mark : scene.withRole(Role.CARTOUCHE_MARK)) {
-			open |= "O".equals(mark.text());
-		}
-		assertTrue(open, "the O of the diagram");
+		assertEquals(1, scene.withRole(Role.PANEL_OPEN_LINE).size(), "the open string of the chord is a line across its panel");
+		assertEquals(3, scene.withRole(Role.PANEL_OPEN_LINE).get(0).tgString());
 		assertTrue(scene.withRole(Role.TARGET_RECT).stream().noneMatch(d -> d.tgString() == 3), "no disk on an open string of the chord");
 		assertEquals(3, scene.withRole(Role.TARGET_RECT).size() + 1, "the two fretted positions have their disks (the open one has none)");
 	}

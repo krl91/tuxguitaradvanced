@@ -69,12 +69,12 @@ public class ArcadeSceneChordNameTest {
 	public void aNamedChordShowsExactlyItsWrittenNameInEveryTierAndInMonochrome() {
 		SceneFixture fixture = fixture();
 		for (Scene scene : variants(fixture, fixture.onset(0) - 1000 * MS, null)) {
-			List<SceneItem> names = scene.forEvent(0, Role.CARTOUCHE_NAME);
+			List<SceneItem> names = scene.forEvent(0, Role.PANEL_NAME);
 			assertEquals(1, names.size());
 			assertEquals("A5", names.get(0).text(), "the name as written");
 		}
 		for (Scene scene : variants(fixture, fixture.onset(3) - 300 * MS, ArcadeSceneTest.completedBefore(3, 5))) {
-			assertEquals("F#m7b5/C#", scene.forEvent(3, Role.CARTOUCHE_NAME).get(0).text(), "a long name is shown whole");
+			assertEquals("F#m7b5/C#", scene.forEvent(3, Role.PANEL_NAME).get(0).text(), "a long name is shown whole");
 		}
 	}
 
@@ -83,7 +83,7 @@ public class ArcadeSceneChordNameTest {
 		SceneFixture fixture = fixture();
 		// the blank name of the second chord is no name: its written notes, C on the A string, E, G and C, give a C chord
 		for (Scene scene : variants(fixture, fixture.onset(1) - 300 * MS, ArcadeSceneTest.completedBefore(1, 5))) {
-			assertEquals("C", scene.forEvent(1, Role.CARTOUCHE_NAME).get(0).text(), "a blank name is no name");
+			assertEquals("C", scene.forEvent(1, Role.PANEL_NAME).get(0).text(), "a blank name is no name");
 			for (SceneItem item : scene.items()) {
 				if (item.text() != null) {
 					assertFalse(item.text().equals("Chord") || item.text().equals("Accord"), "the bare generic word is gone: " + item);
@@ -96,13 +96,12 @@ public class ArcadeSceneChordNameTest {
 	public void aSingleNoteNeverHasAChordHeader() {
 		SceneFixture fixture = fixture();
 		for (Scene scene : variants(fixture, fixture.onset(2) - 600 * MS, ArcadeSceneTest.completedBefore(2, 5))) {
-			assertTrue(scene.forEvent(2, Role.CARTOUCHE_NAME).isEmpty());
-			assertTrue(scene.forEvent(2, Role.CARTOUCHE_HEADER).isEmpty());
-			assertTrue(scene.forEvent(2, Role.CARTOUCHE_FRAME).isEmpty());
+			assertTrue(scene.forEvent(2, Role.PANEL_NAME).isEmpty());
+			assertTrue(scene.forEvent(2, Role.CHORD_PANEL).isEmpty());
 			assertEquals("5", scene.forEvent(2, Role.MARKER_FRET).get(0).text(), "a note shows its fret, and only that");
 		}
 		for (SceneItem item : fixture.scene(false).build(fixture.onset(2) - 600 * MS, SCREEN, null, 100).items()) {
-			assertFalse(item.eventIndex() == 2 && item.role() == Role.CARTOUCHE_NAME);
+			assertFalse(item.eventIndex() == 2 && item.role() == Role.PANEL_NAME);
 		}
 	}
 
@@ -116,8 +115,8 @@ public class ArcadeSceneChordNameTest {
 			RenderState state = RenderState.of(onset, t, settings.lookAheadNanos, settings.holdAfterNanos);
 			Scene scene = fixture.scene(false).build(t, SCREEN, null, 100);
 			if (state.ordinal() >= RenderState.READABLE.ordinal() && state != RenderState.EXPIRED) {
-				assertEquals("A5", scene.forEvent(0, Role.CARTOUCHE_NAME).get(0).text(), "the name in state " + state + " at " + (t - onset) / MS + " ms");
-				SceneItem name = scene.forEvent(0, Role.CARTOUCHE_NAME).get(0);
+				assertEquals("A5", scene.forEvent(0, Role.PANEL_NAME).get(0).text(), "the name in state " + state + " at " + (t - onset) / MS + " ms");
+				SceneItem name = scene.forEvent(0, Role.PANEL_NAME).get(0);
 				assertTrue(name.alpha() >= 0.9, "and readable, not faded: " + name.alpha());
 				seen++;
 			}
@@ -126,61 +125,39 @@ public class ArcadeSceneChordNameTest {
 	}
 
 	@Test
-	public void theHeaderIsAHeaderApartFromTheFretLabelTheFretNumbersAndTheVerdict() {
+	public void theNameIsApartFromTheFretNumbersAndTheVerdictAndStandsAboveThePanel() {
 		SceneFixture fixture = lone();
-		// the chord is not judged yet: its cartouche is there; once it is judged only its verdict stays, so the two are read in two pictures
+		// the chord is not judged yet: its panel is there; once it is judged only its verdict stays, so the two are read in two pictures
 		Scene scene = fixture.scene(false).build(fixture.onset(0) + 150 * MS, SCREEN, null, 100);
-		SceneItem name = scene.forEvent(0, Role.CARTOUCHE_NAME).get(0);
-		SceneItem header = scene.forEvent(0, Role.CARTOUCHE_HEADER).get(0);
-		SceneItem fretLabel = scene.forEvent(0, Role.CARTOUCHE_FRET_LABEL).get(0);
+		SceneItem name = scene.forEvent(0, Role.PANEL_NAME).get(0);
 		Scene judged = fixture.scene(false).build(fixture.onset(0) + 150 * MS, SCREEN, ArcadeSceneTest.viewOf(ArcadeVerdict.ON_TIME), 100);
-		assertTrue(judged.forEvent(0, Role.CARTOUCHE_NAME).isEmpty(), "a chord that is completed keeps no cartouche, only its verdict");
+		assertTrue(judged.forEvent(0, Role.PANEL_NAME).isEmpty(), "a chord that is completed keeps no panel, only its verdict");
 		SceneItem verdict = judged.forEvent(0, Role.BADGE_TEXT).get(0);
-		assertNotEquals(name.text(), fretLabel.text());
 		assertNotEquals(name.text(), verdict.text());
-		assertEquals("5fr", fretLabel.text());
-		Box headerBox = SceneBoxes.ofQuad(header);
-		assertTrue(headerBox.contains(SceneBoxes.ofText(name)), "the name is in the header band");
-		assertFalse(headerBox.overlaps(SceneBoxes.ofText(fretLabel)), "the fret label is not in the header band");
-		assertFalse(headerBox.overlaps(SceneBoxes.ofQuad(judged.forEvent(0, Role.BADGE).get(0))), "nor is the verdict");
-		assertNotEquals(ArcadeScene.TEXT_COLOUR, name.colour(), "its own style");
-		assertTrue(name.value(2) >= 9.0, "a readable size: " + name.value(2));
+		for (SceneItem number : scene.forEvent(0, Role.PANEL_FRET)) {
+			assertNotEquals(name.text(), number.text());
+		}
+		Box nameBox = SceneBoxes.ofText(name);
+		Box panel = SceneBoxes.ofQuad(scene.forEvent(0, Role.CHORD_PANEL).get(0));
+		assertFalse(nameBox.overlaps(panel), "the name is above the panel, not over its rectangles");
+		assertFalse(nameBox.overlaps(SceneBoxes.ofQuad(judged.forEvent(0, Role.BADGE).get(0))), "nor over the verdict");
+		assertTrue(name.value(2) >= 10.0, "a readable size: " + name.value(2));
 	}
 
 	@Test
-	public void theHeaderNeverCoversTheNextPlayableEvent() {
+	public void thePanelOfAChordIsTranslucentSoThatTheNextNoteStaysVisible() {
 		SceneFixture fixture = fixture();
-		for (long offset = -1500; offset <= 0; offset += 50) {
-			long now = fixture.onset(0) + offset * MS;
-			Scene scene = fixture.scene(false).build(now, SCREEN, null, 100);
-			List<SceneItem> frames = scene.forEvent(0, Role.CARTOUCHE_FRAME);
-			if (frames.isEmpty()) {
-				continue;
-			}
-			Box cartouche = SceneBoxes.ofQuad(frames.get(0));
-			// the next playable event is event 1, a chord: its bar is on the same axis, behind the diagram, and still visible on both sides of it
-			for (SceneItem item : scene.forEvent(1)) {
-				if (item.role() == Role.TIMING_BAR || item.role() == Role.CHORD_BAR) {
-					Box bar = SceneBoxes.ofQuad(item);
-					double hidden = Math.max(0.0, Math.min(bar.x2, cartouche.x2) - Math.max(bar.x1, cartouche.x1));
-					assertTrue(hidden <= 0.5 * (bar.x2 - bar.x1), "the diagram hides more than half of the bar of the next chord at " + offset + " ms");
-				}
-			}
-		}
-		// a note after a chord
 		for (long offset = -1500; offset <= 0; offset += 50) {
 			long now = fixture.onset(1) + offset * MS;
 			Scene scene = fixture.scene(false).build(now, SCREEN, ArcadeSceneTest.completedBefore(1, 5), 100);
-			List<SceneItem> frames = scene.forEvent(1, Role.CARTOUCHE_FRAME);
-			List<SceneItem> markers = scene.forEvent(2, Role.MARKER);
-			if (!frames.isEmpty() && !markers.isEmpty()) {
-				assertFalse(SceneBoxes.ofQuad(frames.get(0)).overlaps(SceneBoxes.ofDisc(markers.get(0))), "the diagram covers the next note at " + offset + " ms");
+			for (SceneItem panel : scene.forEvent(1, Role.CHORD_PANEL)) {
+				assertTrue(panel.alpha() <= 0.3, "a see-through body at " + offset + " ms: it never hides the next note");
 			}
 		}
 	}
 
 	@Test
-	public void aVeryLongNameIsShownWholeInsideItsHeaderAtEverySizeOfTheDiagram() {
+	public void aVeryLongNameIsShownWholeAndInsideTheScreenAtEveryDepth() {
 		SongFixture song = new SongFixture(1);
 		song.chord(0, 0, new int[] { 4, 3 }, new int[] { 3, 5 });
 		song.quarter(0, 2, 2, 4);
@@ -190,14 +167,13 @@ public class ArcadeSceneChordNameTest {
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
 		for (long offset = -2900; offset <= 700; offset += 100) {
 			for (Scene scene : variants(fixture, fixture.onset(0) + offset * MS, null)) {
-				List<SceneItem> names = scene.forEvent(0, Role.CARTOUCHE_NAME);
+				List<SceneItem> names = scene.forEvent(0, Role.PANEL_NAME);
 				if (names.isEmpty()) {
 					continue;
 				}
 				assertEquals("Abmaj7#11/Gb", names.get(0).text());
-				Box header = SceneBoxes.ofQuad(scene.forEvent(0, Role.CARTOUCHE_HEADER).get(0));
-				assertTrue(header.contains(SceneBoxes.ofText(names.get(0))), "inside its header at " + offset + " ms: " + header + " vs " + SceneBoxes.ofText(names.get(0)));
-				assertTrue(header.x1 >= 0 && header.x2 <= SCREEN.width(), "not clipped by the screen");
+				Box box = SceneBoxes.ofText(names.get(0));
+				assertTrue(box.x1 >= 0 && box.x2 <= SCREEN.width(), "not clipped by the screen at " + offset + " ms: " + box);
 			}
 		}
 	}

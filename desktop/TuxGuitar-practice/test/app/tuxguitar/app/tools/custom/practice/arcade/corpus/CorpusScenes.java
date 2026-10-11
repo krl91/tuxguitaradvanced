@@ -248,7 +248,7 @@ public final class CorpusScenes {
 			}
 		}
 		// FR-061: the name of the expanded chord, the generic word otherwise, nothing on a note
-		for (SceneItem name : scene.withRole(Role.CARTOUCHE_NAME)) {
+		for (SceneItem name : scene.withRole(Role.PANEL_NAME)) {
 			ArcadeRenderEvent event = p.events.get(name.eventIndex());
 			String expected = event.kind() != ArcadeRenderEvent.Kind.CHORD ? null : event.display().source() == app.tuxguitar.app.tools.custom.practice.arcade.view.ChordNameResolver.Source.PITCH_SET
 					? SceneFixture.ENGLISH.pitchSet(event.display().text()) : event.display().text();
@@ -259,12 +259,12 @@ public final class CorpusScenes {
 				failures.add(where + ": chord name \"" + name.text() + "\" for an event of kind " + event.kind());
 			}
 		}
-		for (SceneItem frame : scene.withRole(Role.CARTOUCHE_FRAME)) {
+		for (SceneItem frame : scene.withRole(Role.CHORD_PANEL)) {
 			if (p.events.get(frame.eventIndex()).kind() != ArcadeRenderEvent.Kind.CHORD) {
 				failures.add(where + ": a chord diagram on a note");
 			}
 		}
-		// FR-062, FR-063: at most four detailed, one diagram, no overlap, nothing cut, the bars on the axis and ordered by depth
+		// FR-062, FR-074: every chord of the set has its panel, no overlap of labels, nothing cut, the panels ordered by depth
 		java.util.Set<Integer> noteIdentities = new java.util.HashSet<Integer>();
 		for (SceneItem item : scene.items()) {
 			if (item.eventIndex() >= 0 && (item.role() == Role.MARKER || item.role() == Role.TRAJECTORY || item.role() == Role.MARKER_FRET)) {
@@ -279,8 +279,12 @@ public final class CorpusScenes {
 				failures.add(where + ": event " + index + " is outside the look-ahead and has a primitive");
 			}
 		}
-		if (scene.withRole(Role.CARTOUCHE_FRAME).size() > 1) {
-			failures.add(where + ": " + scene.withRole(Role.CARTOUCHE_FRAME).size() + " chord diagrams");
+		// FR-074: one panel per chord of the set, at most
+		java.util.Set<Integer> panelOwners = new java.util.HashSet<Integer>();
+		for (SceneItem panel : scene.withRole(Role.CHORD_PANEL)) {
+			if (!panelOwners.add(panel.eventIndex())) {
+				failures.add(where + ": two panels for event " + panel.eventIndex());
+			}
 		}
 		String overlap = SceneBoxes.firstOverlap(SceneBoxes.labels(scene));
 		if (overlap != null) {
@@ -291,23 +295,18 @@ public final class CorpusScenes {
 				failures.add(where + ": cut label " + box);
 			}
 		}
-		double previousY = Double.MAX_VALUE;
+		// the chord panels are in depth order: a later chord is farther, so its lower edge is higher on the screen
+		double previousBottom = Double.MAX_VALUE;
 		for (int i = 0; i < p.events.size(); i++) {
-			List<SceneItem> bars = scene.forEvent(i, Role.TIMING_BAR);
-			bars = bars.isEmpty() ? scene.forEvent(i, Role.CHORD_BAR) : bars;
-			if (bars.isEmpty()) {
+			List<SceneItem> panels = scene.forEvent(i, Role.CHORD_PANEL);
+			if (panels.isEmpty() || p.events.get(i).onsetNanos() <= now) {
 				continue;
 			}
-			SceneBoxes.Box box = SceneBoxes.ofQuad(bars.get(0));
-			if (Math.abs((box.x1 + box.x2) / 2.0 - SCREEN.width() * ArcadeScene.CHORD_AXIS) > 1e-6) {
-				failures.add(where + ": the bar of event " + i + " is off the axis");
+			SceneBoxes.Box box = SceneBoxes.ofQuad(panels.get(0));
+			if (box.y2 > previousBottom + 1e-6) {
+				failures.add(where + ": the panels are not in depth order at event " + i);
 			}
-			if (p.events.get(i).onsetNanos() > now) {
-				if (box.y2 >= previousY) {
-					failures.add(where + ": the bars are not in depth order at event " + i);
-				}
-				previousY = box.y2;
-			}
+			previousBottom = box.y2;
 		}
 		if (digestOf(p.events) != p.timelineDigest) {
 			failures.add(where + ": the timeline changed");

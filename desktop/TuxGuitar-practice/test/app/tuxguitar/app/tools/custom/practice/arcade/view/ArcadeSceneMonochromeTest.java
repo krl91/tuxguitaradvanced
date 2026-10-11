@@ -83,17 +83,18 @@ public class ArcadeSceneMonochromeTest {
 	}
 
 	@Test
-	public void aChordTimingIsTheBarAndItsDiagramIsReadableWithoutColour() {
+	public void aChordPanelIsReadableWithoutColour() {
 		SceneFixture fixture = song();
 		Scene picture = fixture.scene(true).build(fixture.onset(2) - 600 * MS, SCREEN, null, 100);
-		assertEquals(1, picture.forEvent(2, Role.TIMING_BAR).size());
-		assertEquals("5fr", picture.forEvent(2, Role.CARTOUCHE_FRET_LABEL).get(0).text());
-		assertEquals(3, picture.forEvent(2, Role.CARTOUCHE_DOT).size());
-		Set<Double> columns = new HashSet<Double>();
-		for (SceneItem dot : picture.forEvent(2, Role.CARTOUCHE_DOT)) {
-			columns.add(dot.value(0));
+		assertEquals(1, picture.forEvent(2, Role.CHORD_PANEL).size());
+		assertTrue(picture.forEvent(2, Role.PANEL_NAME).size() == 1, "the name is text, not colour");
+		assertEquals(3, picture.forEvent(2, Role.PANEL_NOTE).size());
+		Set<Double> rows = new HashSet<Double>();
+		for (SceneItem rect : picture.forEvent(2, Role.PANEL_NOTE)) {
+			assertTrue(rect.isGrey(), "grey in monochrome");
+			rows.add(rect.value(1));
 		}
-		assertEquals(3, columns.size(), "each dot is on its own string line, the strings being told apart by their place");
+		assertEquals(3, rows.size(), "each rectangle is on its own string row, the strings being told apart by their place");
 	}
 
 	@Test

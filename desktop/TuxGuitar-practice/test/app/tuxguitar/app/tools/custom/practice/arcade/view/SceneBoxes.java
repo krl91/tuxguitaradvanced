@@ -74,7 +74,7 @@ public final class SceneBoxes {
 	public static java.util.Set<Integer> detailed(Scene scene) {
 		java.util.Set<Integer> detailed = new java.util.TreeSet<Integer>();
 		for (SceneItem item : scene.items()) {
-			if (item.eventIndex() >= 0 && (item.role() == Role.MARKER_FRET || item.role() == Role.CARTOUCHE_FRAME || item.role() == Role.EVENT_TEXT)) {
+			if (item.eventIndex() >= 0 && (item.role() == Role.MARKER_FRET || item.role() == Role.CHORD_PANEL || item.role() == Role.EVENT_TEXT)) {
 				detailed.add(item.eventIndex());
 			}
 		}
@@ -97,12 +97,14 @@ public final class SceneBoxes {
 				case FRET_RULER_ACTIVE:
 					boxes.add(ofText(item));
 					break;
-				case CARTOUCHE_FRAME:
 				case BADGE:
 					boxes.add(ofQuad(item));
 					break;
+				case PANEL_NAME:
+				case PANEL_STROKE:
+					boxes.add(ofText(item));
+					break;
 				case EVENT_TEXT:
-				case CHORD_CHIP:
 				case HUD_STREAK:
 				case HUD_SPEED:
 				case HUD_NEXT:

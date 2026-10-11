@@ -17,6 +17,9 @@ import app.tuxguitar.app.tools.custom.practice.arcade.view.SceneItem.Shape;
 public final class ArcadeScene {
 
 	static final int NECK_COLOUR = 0x1B2028;
+	static final int PANEL_BODY_COLOUR = 0xBFE9FF;
+	static final int PANEL_EDGE_COLOUR = 0x9FE8F0;
+	static final int PANEL_FRET_COLOUR = 0x10151C;
 	/** The body of the neck is a faint tint: the scene behind stays visible (FR-075). */
 	static final double NECK_ALPHA = 0.30;
 	/** The number of the fret of the active event on the ruler of the neck. */
@@ -200,8 +203,6 @@ public final class ArcadeScene {
 			int index = visible.get(k);
 			if (plan.detailed.contains(index)) {
 				drawDetailed(f, index, index == active, plan);
-			} else if (plan.bars.contains(index)) {
-				drawChordBar(f, index, plan);
 			}
 		}
 		drawTargets(f, active);
@@ -474,16 +475,10 @@ public final class ArcadeScene {
 	private static final class Plan {
 		final java.util.Set<Integer> detailed = new java.util.HashSet<Integer>();
 		final java.util.Map<Integer, double[]> badge = new java.util.HashMap<Integer, double[]>();
-		/** The chords whose diagram is expanded: one, except in the unreduced picture. */
-		final java.util.Set<Integer> expanded = new java.util.HashSet<Integer>();
 		/** The notes whose fret number would touch another label: the marker is drawn, the number is left out. */
 		final java.util.Set<Integer> noLabel = new java.util.HashSet<Integer>();
-		/** The chords of the admitted visual set that have no diagram: they are timing bars. */
-		final java.util.Set<Integer> bars = new java.util.HashSet<Integer>();
-		/** How far a diagram was raised above its default place to leave the next event in view. */
-		final java.util.Map<Integer, Double> raise = new java.util.HashMap<Integer, Double>();
-		/** The names of the chords that are bars and that fit without touching anything. */
-		final java.util.Map<Integer, double[]> chip = new java.util.HashMap<Integer, double[]>();
+		/** The chords whose name would touch another label: the panel is drawn, the name is left out (the active chord always has it). */
+		final java.util.Set<Integer> noName = new java.util.HashSet<Integer>();
 	}
 
 	/** Where a note is on the screen, and how big. */
@@ -577,19 +572,6 @@ public final class ArcadeScene {
 		g.thickness = Math.max(3.0, f.h * 0.014 * lane.scale());
 		g.centreX = axis;
 		g.barTop = lane.y() - g.thickness;
-		if (event.kind() == ArcadeRenderEvent.Kind.CHORD) {
-			ChordCartouche cartouche = this.cartouches[event.index()];
-			double scale = lane.scale();
-			double unit = f.h / 720.0;
-			g.boxW = Math.max(ChordCartouche.MIN_WIDTH_PX, (20 + 18 * (cartouche.strings() - 1)) * unit * scale);
-			g.boxH = Math.max(ChordCartouche.MIN_HEIGHT_PX, (24 + 14 * cartouche.rows()) * unit * 1.6 * scale);
-			// the header carries the whole name as written: the diagram is made wide enough for it, never the name cut or shrunk below a readable size
-			g.boxW = Math.max(g.boxW, headerWidth(cartouche, event, g.boxH));
-			double stem = Math.max(6.0, f.h * 0.03 * scale);
-			// centred on its bar, and kept whole inside the window
-			g.boxX = Math.max(2.0, Math.min(f.viewport.width() - g.boxW - 2.0, g.centreX - g.boxW / 2.0));
-			g.boxY = Math.max(cartouche.notCheckedSeparately() ? 16.0 : 2.0, g.barTop - stem - g.boxH);
-		}
 		return g;
 	}
 
@@ -696,14 +678,12 @@ public final class ArcadeScene {
 				candidates.add(index);
 			}
 		}
-		int expandedChord = expandedChord(f, candidates, active);
 		for (int index : candidates) {
 			ArcadeRenderEvent event = this.events.get(index);
 			boolean isActive = index == active;
 			RenderState state = f.stateOf(event);
 			double[] next = nextPlayableFootprint(f, visible, index);
 			List<double[]> mine = new ArrayList<double[]>();
-			boolean bar = false;
 			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
 				// the marker is always drawn; its fret number only where it touches no label already placed (the nearest notes are placed first)
 				double[] box = isOpenNote(event) ? openGeo(f, event).labelBox(this.labels.openString(), f.h) : noteGeo(f, event).numberBox();
@@ -713,104 +693,36 @@ public final class ArcadeScene {
 				} else {
 					mine.add(box);
 				}
-			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD && index == expandedChord) {
-				ChordGeo g = chordGeo(f, event);
-				boolean note = this.cartouches[index].notCheckedSeparately() && state.ordinal() >= RenderState.READABLE.ordinal();
-				List<double[]> obstacles = new ArrayList<double[]>(taken);
-				if (next != null) {
-					obstacles.add(next);
-				}
-				// the diagram stays centred on its bar and inside the window; to leave the next playable event in view it can only be raised, by a longer stem
-				double raise = 0.0;
-				boolean placed = false;
-				for (double lift = 0.0; g.boxY - lift >= 2.0 + (note ? 14.0 : 0.0) && !placed; lift += 12.0) {
-					double[] box = g.cartoucheBox(g.boxX, note);
-					box[1] -= lift;
-					box[3] -= lift;
-					if (disjointFromAll(box, obstacles)) {
-						raise = lift;
-						placed = true;
-					}
-				}
-				double[] box = g.cartoucheBox(g.boxX, note);
-				box[1] -= raise;
-				box[3] -= raise;
-				mine.add(box);
-				plan.raise.put(index, raise);
-				plan.expanded.add(index);
 			} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD) {
-				bar = true;
+				// every chord of the set has its panel; its name only where it touches no label already placed (the active chord always has it)
+				double[] box = panelGeo(f, event).nameBox(headerText(event) + (this.cartouches[index].stroke() != ArcadeRenderEvent.Stroke.NONE ? "  \u2193" : ""), f.viewport.width());
+				boolean free = disjointFromAll(box, taken) && inside(box, f.viewport);
+				if (this.densityBudget && !isActive && !free) {
+					plan.noName.add(index);
+				} else {
+					mine.add(box);
+				}
 			} else {
 				ChordGeo g = chordGeo(f, event);
 				String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
 				mine.add(textBox(word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026));
 			}
-			if (this.densityBudget && !isActive && !bar && event.kind() != ArcadeRenderEvent.Kind.NOTE) {
+			if (this.densityBudget && !isActive && event.kind() != ArcadeRenderEvent.Kind.NOTE && event.kind() != ArcadeRenderEvent.Kind.CHORD) {
 				boolean free = true;
 				for (double[] box : mine) {
 					free &= disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || disjoint(box, next));
 				}
-				if (!free && event.kind() == ArcadeRenderEvent.Kind.CHORD) {
-					// a diagram that cannot be placed without touching a label becomes a timing bar: a chord of the set is never dropped (FR-062)
-					plan.expanded.remove(index);
-					plan.raise.remove(index);
-					mine.clear();
-					bar = true;
-				} else if (!free) {
+				if (!free) {
 					// the word of an automatic event that would touch another label is left out with the event: it is passed by itself
 					continue;
 				}
 			}
-			if (bar) {
-				plan.bars.add(index);
-			} else {
-				plan.detailed.add(index);
-			}
+			plan.detailed.add(index);
 			taken.addAll(mine);
-		}
-		// the names of the chords that are bars, nearest first, where nothing is touched
-		List<Integer> chords = new ArrayList<Integer>(plan.bars);
-		java.util.Collections.sort(chords);
-		for (int index : chords) {
-			ArcadeRenderEvent event = this.events.get(index);
-			if (event.display().source() == ChordNameResolver.Source.PITCH_SET) {
-				continue;
-			}
-			ChordGeo g = chordGeo(f, event);
-			double size = Math.max(9.0, f.h * 0.022);
-			double[] box = textBox(event.display().text(), g.centreX, g.barTop - size, size);
-			if (inside(box, f.viewport) && disjointFromAll(box, taken)) {
-				plan.chip.put(index, box);
-				taken.add(box);
-			}
 		}
 		return plan;
 	}
 
-	/**
-	 * The chord of the admitted set whose diagram is expanded (FR-063): the active event when it is a chord; otherwise the nearest admitted chord that has
-	 * reached the readable state. One at most, so that a frame never holds two diagrams; when it completes the next chord of the set takes its place in the same
-	 * update. Nothing here moves a bar: the onsets and the depths are those of the timeline.
-	 *
-	 * @param set the events that may be admitted, the active one first, in onset order
-	 * @return its index, or -1
-	 */
-	int expandedChord(Frame f, List<Integer> set, int active) {
-		if (active >= 0 && this.events.get(active).kind() == ArcadeRenderEvent.Kind.CHORD) {
-			return active;
-		}
-		for (int index : set) {
-			ArcadeRenderEvent event = this.events.get(index);
-			if (event.kind() != ArcadeRenderEvent.Kind.CHORD) {
-				continue;
-			}
-			RenderState state = f.stateOf(event);
-			if (state == RenderState.READABLE || state == RenderState.ARMED || state == RenderState.IMPACT) {
-				return index;
-			}
-		}
-		return -1;
-	}
 
 	/** True for an event that has its verdict: it is completed, whatever the state of its time. */
 	private static boolean isCompleted(Frame f, int index) {
@@ -860,33 +772,16 @@ public final class ArcadeScene {
 	 * An event that is not in the detailed set (FR-062): a small marker in the colour of its string, or a thin neutral bar, on its own lane and at its own
 	 * distance. No fret number, no diagram, no glow, no trail, no trajectory, nothing on the neck.
 	 */
-	private void drawChordBar(Frame f, int index, Plan plan) {
-		ArcadeRenderEvent event = this.events.get(index);
-		RenderState state = f.stateOf(event);
-		double alpha = alphaOf(state, f.now, event.onsetNanos(), f.settings) * 0.8;
-		{
-			ChordGeo g = chordGeo(f, event);
-			double t = Math.max(2.0, g.thickness * 0.5);
-			f.out.quad(Role.CHORD_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - t, g.pl.x(), g.pl.y() - t }, BAR_COLOUR, alpha,
-					event.index(), 0);
-			double[] chip = plan.chip.get(index);
-			if (chip != null) {
-				f.out.text(Role.CHORD_CHIP, event.display().text(), (chip[0] + chip[2]) / 2.0, (chip[1] + chip[3]) / 2.0, Math.max(9.0, f.h * 0.022), TEXT_COLOUR, alpha,
-						event.index(), 0);
-			}
-		}
-	}
-
 	private void drawDetailed(Frame f, int index, boolean active, Plan plan) {
 		ArcadeRenderEvent event = this.events.get(index);
 		RenderState state = f.stateOf(event);
 		double alpha = alphaOf(state, f.now, event.onsetNanos(), f.settings);
 		if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
 			drawNote(f, event, state, alpha, active);
-		} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD && !plan.expanded.contains(index)) {
-			drawChordBar(f, index, plan);
+		} else if (event.kind() == ArcadeRenderEvent.Kind.CHORD) {
+			drawChordPanel(f, event, state, alpha, active, plan);
 		} else {
-			drawBarEvent(f, event, state, alpha, active, plan.raise.get(index));
+			drawBarEvent(f, event, state, alpha);
 		}
 	}
 
@@ -979,25 +874,122 @@ public final class ArcadeScene {
 		}
 	}
 
-	private void drawBarEvent(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active, Double raise) {
+	/** An event the learner does not play (passed automatically, or not supported): a timing bar with its word. */
+	private void drawBarEvent(Frame f, ArcadeRenderEvent event, RenderState state, double alpha) {
 		Out out = f.out;
 		ChordGeo g = chordGeo(f, event);
 		out.quad(Role.TIMING_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - g.thickness, g.pl.x(), g.pl.y() - g.thickness },
 				BAR_COLOUR, alpha, event.index(), 0);
-		if (event.kind() != ArcadeRenderEvent.Kind.CHORD) {
-			String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
-			out.text(Role.EVENT_TEXT, word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026, TEXT_COLOUR, alpha, event.index(), 0);
-			return;
+		String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
+		out.text(Role.EVENT_TEXT, word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026, TEXT_COLOUR, alpha, event.index(), 0);
+	}
+
+	/** Where the panel of a chord is at its depth: the width of the lanes, its lower edge on the line of the lanes, its height growing with perspective (FR-074). */
+	private final class PanelGeo {
+		double left;
+		double right;
+		double bottom;
+		double top;
+		double scale;
+		double progress;
+
+		double height() {
+			return this.bottom - this.top;
 		}
-		ChordCartouche cartouche = this.cartouches[event.index()];
-		double boxX = g.boxX;
-		double boxY = g.boxY - (raise != null ? raise : 0.0);
-		out.line(Role.STEM, g.centreX, g.barTop, g.centreX, boxY + g.boxH, BAR_COLOUR, alpha, 2.0, event.index(), 0);
-		if (f.tier.shadows()) {
-			out.quad(Role.SHADOW, new double[] { boxX + 4, boxY + 5, boxX + g.boxW + 4, boxY + 5, boxX + g.boxW + 4, boxY + g.boxH + 5, boxX + 4, boxY + g.boxH + 5 },
-					0x000000, alpha * 0.35, event.index(), 0);
+
+		double nameSize() {
+			return Math.max(10.0, height() * 0.26);
 		}
-		drawCartouche(out, cartouche, event, state, boxX, boxY, g.boxW, g.boxH, alpha);
+
+		/** The room of the name above the left corner (and of the arrow of the stroke): it must overlap no other label. */
+		/** The middle y of the name: above the top edge of the panel, kept inside the window when the panel is high on the screen (far away). */
+		double nameY() {
+			double size = nameSize();
+			return Math.max(this.top - size * 0.75, size * 0.65 + 1.0);
+		}
+
+		double[] nameBox(String text, double viewportWidth) {
+			double size = nameSize();
+			double width = text.length() * size * 0.66;
+			double y = nameY();
+			double x = nameX(width, viewportWidth);
+			return new double[] { x, y - size * 0.6, x + width, y + size * 0.6 };
+		}
+
+		/** The name starts at the left corner of the panel, moved left only as far as it takes to stay whole inside the window. */
+		double nameX(double width, double viewportWidth) {
+			return Math.max(2.0, Math.min(this.left, viewportWidth - width - 2.0));
+		}
+	}
+
+	private PanelGeo panelGeo(Frame f, ArcadeRenderEvent event) {
+		double progress = Math.min(1.0, f.progressOf(event));
+		ScreenPoint left = f.projection.approach(f.cam.left(), progress, f.cam);
+		ScreenPoint right = f.projection.approach(f.cam.right(), progress, f.cam);
+		PanelGeo g = new PanelGeo();
+		g.left = left.x();
+		g.right = right.x();
+		g.bottom = left.y();
+		g.scale = left.scale();
+		g.top = g.bottom - Math.max(24.0, f.h * 0.30 * left.scale());
+		g.progress = progress;
+		return g;
+	}
+
+	/**
+	 * A chord (FR-074): a translucent panel across the lanes with luminous edges; inside it a rounded rectangle for every fretted position, at its fret
+	 * (horizontally, as the frets of the neck at this depth) and its string (vertically, the lowest string at the top), a line across for an open string;
+	 * the fret on the rectangles of the active chord; the name above the left corner.
+	 */
+	private void drawChordPanel(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active, Plan plan) {
+		Out out = f.out;
+		PanelGeo g = panelGeo(f, event);
+		int index = event.index();
+		int count = this.neck.layout().count();
+		out.quad(Role.CHORD_PANEL, new double[] { g.left, g.top, g.right, g.top, g.right, g.bottom, g.left, g.bottom }, PANEL_BODY_COLOUR, alpha * 0.14, index, 0);
+		double[][] edge = { { g.left, g.top, g.right, g.top }, { g.right, g.top, g.right, g.bottom }, { g.right, g.bottom, g.left, g.bottom }, { g.left, g.bottom, g.left, g.top } };
+		for (double[] e : edge) {
+			if (f.tier.glow()) {
+				out.line(Role.GLOW, e[0], e[1], e[2], e[3], PANEL_EDGE_COLOUR, alpha * 0.22, 7.0, index, 0);
+			}
+			out.line(Role.CHORD_PANEL_EDGE, e[0], e[1], e[2], e[3], PANEL_EDGE_COLOUR, alpha * 0.9, 2.0, index, 0);
+		}
+		double rowHeight = g.height() / count;
+		double ry = Math.max(1.5, rowHeight * 0.34);
+		for (ArcadeRenderEvent.Position position : event.positions()) {
+			int row = this.neck.layout().rowOf(position.tgString());
+			double y = g.top + rowHeight * (row + 0.5);
+			int colour = this.colours.of(position.tgString());
+			if (position.fret() == 0) {
+				out.line(Role.PANEL_OPEN_LINE, g.left, y, g.right, y, colour, alpha, Math.max(1.5, ry * 0.5), index, position.tgString());
+				continue;
+			}
+			double x = f.projection.approach(this.neck.fretCentreX(position.fret()), g.progress, f.cam).x();
+			double cell = Math.abs(f.projection.approach(this.neck.fretX(position.fret()), g.progress, f.cam).x() - f.projection.approach(this.neck.fretX(position.fret() - 1), g.progress, f.cam).x());
+			double rx = Math.max(ry * 1.6, Math.min(cell * 0.38, ry * 3.2));
+			if (f.tier.glow()) {
+				out.rounded(Role.GLOW, x, y, rx * 1.3, ry * 1.5, colour, alpha * 0.25, index, position.tgString());
+			}
+			out.rounded(Role.PANEL_NOTE, x, y, rx, ry, colour, alpha, index, position.tgString());
+			if (active) {
+				out.text(Role.PANEL_FRET, Integer.toString(position.fret()), x, y, Math.max(8.0, ry * 1.5), PANEL_FRET_COLOUR, alpha, index, position.tgString());
+			}
+		}
+		if (active || !plan.noName.contains(index)) {
+			String name = headerText(event);
+			double size = g.nameSize();
+			double y = g.nameY();
+			double nameX = g.nameX(name.length() * size * 0.66 + (this.cartouches[index].stroke() != ArcadeRenderEvent.Stroke.NONE ? size * 1.9 : 0.0), f.viewport.width());
+			out.text(Role.PANEL_NAME, name, nameX, y, size, TEXT_COLOUR, Math.max(alpha, 0.9), index, 0, SceneItem.Align.LEFT);
+			ChordCartouche cartouche = this.cartouches[index];
+			if (cartouche.stroke() != ArcadeRenderEvent.Stroke.NONE) {
+				out.text(Role.PANEL_STROKE, cartouche.stroke() == ArcadeRenderEvent.Stroke.DOWN ? "\u2193" : "\u2191", nameX + (name.length() + 1) * size * 0.66, y, size, TEXT_COLOUR,
+						Math.max(alpha, 0.9), index, 0, SceneItem.Align.LEFT);
+			}
+			if (cartouche.notCheckedSeparately() && state.ordinal() >= RenderState.READABLE.ordinal()) {
+				out.text(Role.PANEL_REMARK, this.labels.notCheckedSeparately(), (g.left + g.right) / 2.0, g.bottom + 10.0, 10.0, TEXT_COLOUR, alpha, index, 0);
+			}
+		}
 	}
 
 	private static final double HEADER_FONT_MIN = 9.0;
@@ -1011,64 +1003,6 @@ public final class ArcadeScene {
 	private String headerText(ArcadeRenderEvent event) {
 		ChordNameResolver.Display display = event.display();
 		return display.source() == ChordNameResolver.Source.PITCH_SET ? this.labels.pitchSet(display.text()) : display.text();
-	}
-
-	/** The width the header needs: the name (or the generic word), the arrow of the stroke, and a margin. */
-	private double headerWidth(ChordCartouche cartouche, ArcadeRenderEvent event, double boxHeight) {
-		String name = headerText(event);
-		double size = headerSize(boxHeight);
-		return name.length() * size * 0.66 + (cartouche.stroke() != ArcadeRenderEvent.Stroke.NONE ? size * 1.4 : 0.0) + 14.0;
-	}
-
-	private void drawCartouche(Out out, ChordCartouche cartouche, ArcadeRenderEvent event, RenderState state, double x, double y, double w, double h,
-			double alpha) {
-		int strings = cartouche.strings();
-		out.quad(Role.CARTOUCHE_FRAME, new double[] { x, y, x + w, y, x + w, y + h, x, y + h }, FRAME_COLOUR, alpha, event.index(), 0);
-		double nameBand = h * 0.22;
-		double markBand = h * 0.12;
-		out.quad(Role.CARTOUCHE_HEADER, new double[] { x, y, x + w, y, x + w, y + nameBand, x, y + nameBand }, HEADER_COLOUR, Math.max(alpha, 0.9), event.index(), 0);
-		double gridTop = y + nameBand + markBand;
-		double gridBottom = y + h - h * 0.04;
-		double gridLeft = x + w * 0.34;
-		double gridRight = x + w - w * 0.10;
-		double columnGap = strings == 1 ? 0.0 : (gridRight - gridLeft) / (strings - 1);
-		double rowHeight = (gridBottom - gridTop) / cartouche.rows();
-		String name = headerText(event);
-		double nameSize = headerSize(h);
-		boolean arrow = cartouche.stroke() != ArcadeRenderEvent.Stroke.NONE;
-		double arrowWidth = arrow ? nameSize * 1.4 : 0.0;
-		// the header stays at its full strength from the first state to the end of the feedback: the name is what the learner reads to know the chord
-		double headerAlpha = Math.max(alpha, 0.9);
-		out.text(Role.CARTOUCHE_NAME, name, x + (w - arrowWidth) / 2.0, y + nameBand / 2.0, nameSize, HEADER_TEXT_COLOUR, headerAlpha, event.index(), 0);
-		if (arrow) {
-			out.text(Role.CARTOUCHE_STROKE, cartouche.stroke() == ArcadeRenderEvent.Stroke.DOWN ? "\u2193" : "\u2191", x + w - arrowWidth / 2.0 - 3.0, y + nameBand / 2.0,
-					nameSize, HEADER_TEXT_COLOUR, headerAlpha, event.index(), 0);
-		}
-		for (int column = 0; column < strings; column++) {
-			double cx = gridLeft + column * columnGap;
-			out.line(Role.CARTOUCHE_STRING, cx, gridTop, cx, gridBottom, DIAGRAM_LINE, alpha, 1.0, event.index(), 0);
-			ChordCartouche.Mark mark = cartouche.markAt(column);
-			if (mark != ChordCartouche.Mark.NONE) {
-				out.text(Role.CARTOUCHE_MARK, mark == ChordCartouche.Mark.OPEN ? "O" : "X", cx, y + nameBand + markBand / 2.0, Math.max(7.0, markBand * 0.8),
-						TEXT_COLOUR, alpha, event.index(), this.neck.layout().tgStringAtRow(column));
-			}
-		}
-		for (int line = 0; line <= cartouche.rows(); line++) {
-			double ly = gridTop + line * rowHeight;
-			out.line(Role.CARTOUCHE_FRET, gridLeft, ly, gridRight, ly, DIAGRAM_LINE, alpha, line == 0 && cartouche.firstFret() == 1 ? 3.0 : 1.0, event.index(), 0);
-		}
-		if (cartouche.fretLabel() != null) {
-			out.text(Role.CARTOUCHE_FRET_LABEL, cartouche.fretLabel(), x + w * 0.13, gridTop + rowHeight / 2.0, Math.max(7.0, rowHeight * 0.55), TEXT_COLOUR,
-					alpha, event.index(), 0);
-		}
-		double dotRadius = Math.max(2.5, Math.min(columnGap == 0.0 ? rowHeight : columnGap, rowHeight) * 0.38);
-		for (ChordCartouche.Dot dot : cartouche.dots()) {
-			out.disc(Role.CARTOUCHE_DOT, gridLeft + dot.column() * columnGap, gridTop + (dot.row() + 0.5) * rowHeight, dotRadius, dotRadius,
-					this.colours.of(dot.tgString()), alpha, event.index(), dot.tgString());
-		}
-		if (cartouche.notCheckedSeparately() && state.ordinal() >= RenderState.READABLE.ordinal()) {
-			out.text(Role.CARTOUCHE_NOTE, this.labels.notCheckedSeparately(), x + w / 2.0, y - 8.0, 10.0, TEXT_COLOUR, alpha, event.index(), 0);
-		}
 	}
 
 	private void drawBadges(Frame f, Plan plan) {

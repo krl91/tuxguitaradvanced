@@ -71,11 +71,10 @@ public class ArcadeReferenceSceneTest {
 	}
 
 	@Test
-	public void theChordProgressionReferenceHasOneDiagramAndOneAxis() {
+	public void theChordProgressionReferenceHasAPanelForEveryChordOfTheSet() {
 		for (QualityTier tier : QualityTier.values()) {
 			Scene scene = ReferenceScenes.multiChord().scene(false, tier);
-			assertEquals(1, scene.withRole(Role.CARTOUCHE_FRAME).size());
-			assertTrue(scene.withRole(Role.CHORD_BAR).size() >= 2, "the other admitted chords are bars without diagram, at most three");
+			assertTrue(scene.withRole(Role.CHORD_PANEL).size() >= 2, "every chord of the visual set has its panel (FR-074)");
 			assertEquals(null, SceneBoxes.firstOverlap(SceneBoxes.labels(scene)));
 		}
 	}
@@ -91,7 +90,7 @@ public class ArcadeReferenceSceneTest {
 	public void theReferencesShowWhatTheyAreMeantToShow() {
 		Scene six = ReferenceScenes.sixStrings().scene(false, QualityTier.FULL);
 		assertEquals(6, six.withRole(Role.STRING).size());
-		assertTrue(!six.withRole(Role.BADGE).isEmpty() && !six.withRole(Role.CARTOUCHE_FRAME).isEmpty() && !six.withRole(Role.MARKER).isEmpty());
+		assertTrue(!six.withRole(Role.BADGE).isEmpty() && !six.withRole(Role.CHORD_PANEL).isEmpty() && !six.withRole(Role.MARKER).isEmpty());
 		Scene four = ReferenceScenes.fourStrings().scene(false, QualityTier.FULL);
 		assertEquals(4, four.withRole(Role.STRING).size());
 		assertTrue(!four.withRole(Role.BADGE).isEmpty() && !four.withRole(Role.MARKER).isEmpty());

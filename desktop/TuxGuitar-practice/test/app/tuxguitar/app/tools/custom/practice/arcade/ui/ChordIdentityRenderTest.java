@@ -44,7 +44,7 @@ public class ChordIdentityRenderTest {
 	}
 
 	private static String headerOf(Scene scene, int event) {
-		return scene.forEvent(event, Role.CARTOUCHE_NAME).get(0).text();
+		return scene.forEvent(event, Role.PANEL_NAME).get(0).text();
 	}
 
 	@Test
@@ -97,7 +97,7 @@ public class ChordIdentityRenderTest {
 			assertEquals("C", headerOf(scene, 1), "at " + share);
 		}
 		Scene feedback = fixture.scene(false).build(fixture.onset(1) + 300 * MS, SCREEN, null, 100);
-		assertTrue(feedback.forEvent(1, Role.CARTOUCHE_NAME).isEmpty() || headerOf(feedback, 1).equals("C"));
+		assertTrue(feedback.forEvent(1, Role.PANEL_NAME).isEmpty() || headerOf(feedback, 1).equals("C"));
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class ChordIdentityRenderTest {
 		SceneFixture fixture = fixture();
 		assertEquals(null, fixture.events.get(4).display());
 		Scene scene = fixture.scene(false).build(fixture.onset(4) - 500 * MS, SCREEN, app.tuxguitar.app.tools.custom.practice.arcade.view.SceneBoxesAccess.completedBefore(4, 5), 100);
-		assertTrue(scene.forEvent(4, Role.CARTOUCHE_NAME).isEmpty());
+		assertTrue(scene.forEvent(4, Role.PANEL_NAME).isEmpty());
 	}
 
 	@Test

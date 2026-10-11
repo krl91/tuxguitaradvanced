@@ -193,8 +193,8 @@ public class ArcadeCorpusProfilerTest {
 					.append(c.metrics).append("<br>");
 			for (QualityTier tier : new QualityTier[] { QualityTier.FULL, QualityTier.PERFORMANCE }) {
 				Scene scene = p.scene(false).build(now, CorpusScenes.SCREEN, CorpusScenes.runOf(p, anchor, Moment.ARMED), 100, tier);
-				assertTrue(!scene.withRole(Role.TARGET_RECT).isEmpty() || !scene.withRole(Role.OPEN_BAR).isEmpty() || !scene.withRole(Role.CARTOUCHE_FRAME).isEmpty()
-					|| !scene.withRole(Role.CHORD_BAR).isEmpty(), c.id + ": the capture must hold an active target (a chord of open strings has none on the neck: its diagram or bar is there)");
+				assertTrue(!scene.withRole(Role.TARGET_RECT).isEmpty() || !scene.withRole(Role.OPEN_BAR).isEmpty() || !scene.withRole(Role.CHORD_PANEL).isEmpty()
+					|| !scene.withRole(Role.CHORD_PANEL).isEmpty(), c.id + ": the capture must hold an active target (a chord of open strings has none on the neck: its diagram or bar is there)");
 				String name = c.id + "-" + tier.name().toLowerCase(Locale.ROOT) + ".png";
 				SceneImageWriter.write(scene, images.resolve(name).toFile(), tier);
 				html.append("<img src=\"").append(name).append("\" alt=\"").append(name).append("\">");

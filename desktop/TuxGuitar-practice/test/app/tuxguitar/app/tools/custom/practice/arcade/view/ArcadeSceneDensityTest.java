@@ -106,8 +106,8 @@ public class ArcadeSceneDensityTest {
 						assertFalse(scene.forEvent(completed, Role.MARKER_FRET).isEmpty(), "the fret number of the active note " + completed + " at " + offset);
 						assertFalse(scene.forEvent(completed, Role.TARGET_RECT).isEmpty(), "and its ring on the neck");
 					} else {
-						assertFalse(scene.forEvent(completed, Role.CARTOUCHE_FRAME).isEmpty(), "the diagram of the active chord " + completed + " at " + offset);
-						assertFalse(scene.forEvent(completed, Role.CARTOUCHE_NAME).isEmpty(), "and its header");
+						assertFalse(scene.forEvent(completed, Role.CHORD_PANEL).isEmpty(), "the diagram of the active chord " + completed + " at " + offset);
+						assertFalse(scene.forEvent(completed, Role.PANEL_NAME).isEmpty(), "and its header");
 						assertFalse(scene.forEvent(completed, Role.TARGET_RECT).isEmpty(), "and its ghost on the neck");
 					}
 				}
@@ -128,9 +128,9 @@ public class ArcadeSceneDensityTest {
 					for (Box box : boxes) {
 						assertTrue(box.x1 >= 0 && box.y1 >= 0 && box.x2 <= SCREEN.width() && box.y2 <= SCREEN.height(), "clipped: " + box);
 					}
-					for (SceneItem name : scene.withRole(Role.CARTOUCHE_NAME)) {
-						Box header = SceneBoxes.ofQuad(scene.forEvent(name.eventIndex(), Role.CARTOUCHE_HEADER).get(0));
-						assertTrue(header.contains(SceneBoxes.ofText(name)), "the name \"" + name.text() + "\" does not fit its header " + header + " vs " + SceneBoxes.ofText(name));
+					for (SceneItem name : scene.withRole(Role.PANEL_NAME)) {
+						Box box = SceneBoxes.ofText(name);
+						assertTrue(box.x1 >= 0 && box.x2 <= SCREEN.width(), "the name \"" + name.text() + "\" is whole inside the screen: " + box);
 					}
 				}
 			}
