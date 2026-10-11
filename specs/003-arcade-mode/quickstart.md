@@ -38,3 +38,9 @@ Before reviewing the 32 real-score screenshots, inspect the minimal lane fixture
 1. Use a score with open-string notes (fret 0) and start Arcade.
 2. An open note arrives as a thin horizontal bar in the colour of its string, as wide as the lanes, with the word *open*; there is no disk and no fret number.
 3. When it lands, its string is lit; inside a chord the open string shows as `O` in the diagram and is lit with the chord.
+
+## Manual check of the rounded rectangles (FR-070 to FR-072, owner, 2026-10-11)
+
+1. A fretted note arrives as a small solid rounded rectangle in the colour of its string, raised above its lane, with a thin thread to a footprint on the lane and its fret number under it.
+2. On the neck the target is a rounded rectangle filling the cell of the fret, on the string; the number of that fret is highlighted under the neck.
+3. A translucent blue band lights the approach zone; the lane of the active fret is slightly lighter.

@@ -171,3 +171,13 @@ Profile: event count, note/chord ratio, longest consecutive chord run, peak even
 **Alternatives.** Keeping a disk before the nut (the previous rule: ambiguous position and an extra lane); a bar the width of the whole screen (rejected: it would hide the camera context).
 
 **Consequences.** `FretArrivalLaneMap` drops the pre-nut lane for single notes; the scene gains an `OPEN_BAR` item; the chord cartouche is unchanged; labels `arcade.label.open` in the three languages. No change to judgement.
+
+## R23 - Rounded rectangles, thread and footprint (2026-10-11)
+
+**Decision.** The marker and the target of a fretted note become rounded rectangles; the marker is raised with a thread to a footprint on the lane carrying the fret number; the fret ruler highlights the active fret; a discreet blue band marks the approach zone (FR-070 to FR-072).
+
+**Evidence.** The owner's third reference image (a single fretted note): the rectangle, thread, footprint and number are the way the picture says "this fret, this string"; the rectangle on the neck fills the cell, which is easier to read than a small disk and matches the lane of the cell.
+
+**Alternatives.** Keeping the disks (the earlier approved look); rectangle only for the flying marker (rejected by the owner, Q19).
+
+**Consequences.** `drawNote`, `drawTargets`, the renderer (rounded-rectangle primitive), the reference scenes and the tests of SC-017/SC-023/SC-024 change shape without changing their intent. This increment (C3) comes after the palette, order, lit string and open-string bar (C2).

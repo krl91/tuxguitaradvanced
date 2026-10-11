@@ -59,3 +59,5 @@
 - [ ] The owner confirms on the built application the palette, the order (lowest string at the top) and the lit string (T100, T101).
 - [x] The open string as a bar (FR-069, SC-026) is specified and testable.
 - [ ] The owner confirms the open-string bar on the built application (T106).
+- [x] The rounded rectangles, thread, footprint, fret ruler and approach band (FR-070 to FR-072, SC-027) are specified; the owner answered Q19 to Q21.
+- [ ] The owner confirms the new graphics on the built application (T111).

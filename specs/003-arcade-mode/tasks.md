@@ -86,6 +86,14 @@
 - [ ] T105 Implement `OPEN_BAR` in `ArcadeScene` and `UiPainterRenderer`, remove the pre-nut lane for single notes in `FretArrivalLaneMap`, light the string at the onset (FR-068), add `arcade.label.open` in `share/lang/messages{,_fr,_es}.properties`; regenerate the reference scenes and local images (reference PNG not committed).
 - [ ] T106 [HUMAN] The owner judges the open-string bar, the dim and lit strings and the palette on the built application; T037, T038, T040, T043, T044, T062 and T066 stay open until then.
 
+## Increment C3 - Rounded rectangles, thread, footprint, ruler and band (owner, 2026-10-11; FR-070 to FR-072, SC-027), after C2
+
+- [ ] T107 Tests first (SC-027): marker and target are rounded rectangles in the string colour, the target fills its cell centred within 0.5 px, opaque, outlined 2-4 px with the SC-023 contrast, identical at every tier/theme/size/density, absent for an open string; the marker is raised with its thread to a footprint at the lane position of its progress and the fret number under the footprint (not in the marker) at 101 progress values; at the onset the footprint is on the middle of the upper edge of the cell; number left out on overlap without hiding the marker; the fret ruler highlights the fret of the active event; the band never hides a marker or a label. The tests of SC-017, SC-023 and SC-024 are rewritten for the new shapes with the same intent.
+- [ ] T108 Implement the rounded-rectangle primitive in the painter contract (`UIPainter` path, `Java2dPainter`, `PaintRecorder`) and the new roles; `drawNote`, `drawTargets`, `drawField` (band), the ruler; regenerate the reference scenes and the local images (reference PNG not committed).
+- [ ] T109 Native SWT pixel tests of the rectangles on the real canvas; corpus run; full macOS build.
+- [ ] T110 Update the manuals and the README screenshots only after the owner validates (the screenshots would show the old disks until then).
+- [ ] T111 [HUMAN] The owner judges the new graphics on the built application.
+
 ## Increment D - Interface and result (`SRC/arcade/ui`, `share/lang`)
 
 **Goal**: start, play, pause, stop and read the result, in three languages. **Independent test**: headless and native GUI tests, then the manual guide.

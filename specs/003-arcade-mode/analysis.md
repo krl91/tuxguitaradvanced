@@ -114,3 +114,7 @@ The owner supplied a visual reference and three decisions (Q15 to Q17): palette 
 ## 7. Change of 2026-10-11 (open string)
 
 Second reference image of the owner: an open note is a horizontal bar across the lanes in the string colour. Recorded as Q18, FR-069, SC-026, research R22; FR-065 (no disk for an open string) and FR-066 (no pre-nut lane for a single note) amended. Impact: `FretArrivalLaneMap` (pre-nut lane for single notes removed), a new scene item `OPEN_BAR`, the label `arcade.label.open` in three languages, the reference scenes with fret 0. Chords keep `O` in the cartouche. Not decided here: a first-run tutorial caption like the one on the image (noted in visual-design.md as a later possibility).
+
+## 8. Change of 2026-10-11 (rounded rectangles)
+
+Third reference image of the owner and three answers (Q19 to Q21): rounded rectangles for the marker and the target, thread, footprint and number under the footprint, highlighted fret ruler, a discreet approach band. Recorded as FR-070 to FR-072, SC-027, research R23; FR-065 reworded (the disk becomes a rounded rectangle, the tests keep their intent). Contradictions resolved with the owner: the disk is replaced everywhere (FR-060/FR-065), the number leaves the marker, the lanes stay the only lines from the horizon to the neck. Impact: scene roles, renderer primitive, every reference scene and test of the target and the marker.
