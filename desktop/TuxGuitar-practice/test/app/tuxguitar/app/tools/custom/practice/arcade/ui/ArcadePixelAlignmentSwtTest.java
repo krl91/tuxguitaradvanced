@@ -194,7 +194,9 @@ public class ArcadePixelAlignmentSwtTest {
 						SceneFixture fixture = note(string, fret, fret > 3 ? fret - 2 : fret + 2);
 						Harness harness = new Harness(display, factory, fixture, size[0], size[1]);
 						try {
-							for (double progress : new double[] { 0.5, 1.0 }) {
+							// at the onset the marker, with its halo, is on the target by design (Q31): the target alone is measured at the onset by the Java2D test, which
+							// paints the scene without the figure of the note; here the native painter is measured while the note is still coming
+							for (double progress : new double[] { 0.3, 0.6 }) {
 								check(harness, string, fret, progress, "fret " + fret + " string " + string + " " + size[0] + "x" + size[1] + " p=" + progress, true);
 								checked++;
 							}
