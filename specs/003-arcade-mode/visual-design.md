@@ -325,3 +325,7 @@ Third reference image: a single fretted note on string 2, fret 2. The flying mar
 ## The chord panel (FR-074, owner references of 2026-10-11)
 
 A chord is a translucent panel standing across the lane, with luminous cyan edges and a see-through body. Inside, the rectangles of its notes sit at their fret (horizontally, aligned with the frets of the neck) and their string (vertically, the lowest string at the top), in the string colours; the name of the chord is above the left corner, in a bold outlined type. The panels of the chords of the set come in perspective, each smaller and higher as it is farther, until the active one lands on the neck, where its string lines are lit and its note rectangles have their fret numbers. The numbers on the notes are the frets, not fingerings (Q23). This replaces the neutral timing bar and the diagram cartouche.
+
+## Transparent neck (FR-075, owner reference of 2026-10-11)
+
+In the references the neck has no opaque body: strings and fret wires float over the dark scene, with only a faint translucent tint under them. Everything that carries information (strings, wires, numbers, target rectangles) stays opaque.
