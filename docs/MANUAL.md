@@ -4,12 +4,13 @@
 
 TuxGuitarAdvanced is an advanced version of [TuxGuitar](https://www.tuxguitar.app/), the multitrack tablature editor and player. It keeps everything TuxGuitar does (**editing and creating** scores, playback, import and export of many formats) and adds **Practice** (interactive practice: the application listens to your guitar and checks what you play), a **steady tuner** and score-analysis tools.
 
-This manual has two parts:
+This manual has three parts:
 
 * **[Part A: editing and creating](#part-a-editing-and-creating)**: write, change, listen to and export a score;
-* **[Part B: Practice](#part-b-practice-interactive-practice)**: work on a score with your real guitar, in three modes (Wait for the right note, Follow the tempo, Arcade), plus the tuner and the recognition settings.
+* **[Part B: Practice](#part-b-practice-interactive-practice)**: work on a score with your real guitar, in three modes (Wait for the right note, Follow the tempo, Arcade), plus the tuner and the recognition settings;
+* **[Part C: A complete example](#part-c-a-complete-example-step-by-step)**: from an empty document to a three-track song (guitar, bass, drums), then practised in the three modes.
 
-*The screenshots come from the macOS version, with the French interface and the dark theme. On Linux and Windows the windows are the same; shortcuts that use ⌘ on macOS use Ctrl.*
+*The screenshots come from the macOS version, with the English interface and the dark theme. On Linux and Windows the windows are the same; shortcuts that use ⌘ on macOS use Ctrl.*
 
 ## Contents
 
@@ -40,6 +41,7 @@ This manual has two parts:
   * [B9. Score analysis (invalid measures)](#b9-score-analysis-invalid-measures)
   * [B10. Measured quality, limits and diagnostic trace](#b10-measured-quality-limits-and-diagnostic-trace)
   * [B11. FAQ and troubleshooting](#b11-faq-and-troubleshooting)
+* **[Part C: A complete example, step by step](#part-c-a-complete-example-step-by-step)**: create a three-track song, play it, practise it in the three modes
 
 ---
 
@@ -57,18 +59,18 @@ This manual has two parts:
 
 ## A1. The main window
 
-<img src="images/manual/main-window.png" width="900" alt="The main window of TuxGuitarAdvanced with a small score">
+<img src="images/manual-en/main-window.png" width="900" alt="The main window of TuxGuitarAdvanced with a small score">
 
 From top to bottom, the main window has:
 
-1. **The menu bar** (File, Edit, View, Composition, Track, Measure, Note, Marker, Player, Tools, Help).
+1. **The menu bar** (File, Edit, View, Composition, Track, Measure, Beat, Marker, Player, Tools, Help).
 2. **The main toolbar**: files, undo/redo, view, zoom, playback. The ♪ button next to Play is the **Practice** button (one press: practise the track under the cursor, see [B2](#b2-the-interactive-practice-window)).
 3. **The side toolbar** ("Edit"): edit modes, structure, durations, dynamics, effects, notes.
 4. **The score area**: the staff (notation) above and the **tablature** (one line per string) below. The grey rectangle is the **cursor**: actions apply to it. The tabs above the score are the open files.
 5. **The track list**, with the main volume, and the "transporter" (one box per measure) to move through the song.
 6. **The fretboard controls** and the **fretboard** (the black part at the bottom): it shows where to put your fingers and can also be clicked to enter notes.
 
-<img src="images/manual/toolbar.png" width="900" alt="The main toolbar">
+<img src="images/manual-en/toolbar.png" width="900" alt="The main toolbar">
 
 *Main toolbar: new, open, save, save as, preview, print, undo, redo, views (side toolbar, track list, fretboard, instruments), zoom, multitrack mode, keyboard, matrix, add/remove a measure, marker; in the centre, playback controls, time, tempo, metronome, count-in and play mode.*
 
@@ -80,55 +82,55 @@ All functions are in the menus. Shortcuts appear on the right of the entries; mo
 
 ### File
 
-<img src="images/manual/menu-fichier.png" width="300" alt="The File menu">
+<img src="images/manual-en/menu-fichier.png" width="300" alt="The File menu">
 
 *New* (empty song, or the "Blues Trio" and "Classical Guitar Duo" templates), *Open*, *Open URL*, *Set custom template* (new songs start from that file) and *Revert to default template*, *Close / Close others / Close all*, *Save* (⌘S), *Save as…* (F12), *Import* (MIDI), *Export* (submenu below), *Print preview*, *Print*, *History* (last 10 files), *Quit*.
 
-<img src="images/manual/menu-export.png" width="260" alt="The Export submenu">
+<img src="images/manual-en/menu-export.png" width="260" alt="The Export submenu">
 
 ### Edit
 
-<img src="images/manual/menu-edition.png" width="300" alt="The Edit menu">
+<img src="images/manual-en/menu-edition.png" width="300" alt="The Edit menu">
 
 *Cut, Copy, Paste, Repeat* (copies the selection and pastes it right after), *Undo / Redo*, *Select all*, *Select nothing*, *Extend the selection*, then the **edit modes** (selection, score edition, sharp/flat, free edition), *Show invalid measures*, and the choice of **voice 1 or 2**.
 
 ### View
 
-<img src="images/manual/menu-affichage.png" width="320" alt="The View menu">
+<img src="images/manual-en/menu-affichage.png" width="320" alt="The View menu">
 
 Toolbars, track list, fretboard; the *Instruments*, *Player*, *Keyboard* and *Matrix* windows; **page / linear / multitrack layout**; show the staff and/or the tablature; compact mode; chord style; zoom.
 
 ### Composition
 
-<img src="images/manual/menu-composition.png" width="320" alt="The Composition menu">
+<img src="images/manual-en/menu-composition.png" width="320" alt="The Composition menu">
 
 *Time signature*, *Tempo*, *Clef*, *Key signature*, *Shuffle*, *Open / Close repeat*, *Alternative endings*, *Song properties* (F5).
 
 ### Track
 
-<img src="images/manual/menu-piste.png" width="300" alt="The Track menu">
+<img src="images/manual-en/menu-piste.png" width="300" alt="The Track menu">
 
 Navigation between tracks, *Add track*, *Clone track*, *Remove track*, *Move up / down*, **Solo**, **Mute**, *Lyrics*, *Track properties*.
 
 ### Measure
 
-<img src="images/manual/menu-mesure.png" width="300" alt="The Measure menu">
+<img src="images/manual-en/menu-mesure.png" width="300" alt="The Measure menu">
 
 Navigation (first, previous, next, last measure), *Add measure*, *Clean measure* (empties the measure, keeps it), *Remove measure*, *Copy / Paste measure*, *Remove unused voice*, *Line break*.
 
-### Note
+### Beat
 
-<img src="images/manual/menu-note.png" width="340" alt="The Note menu">
+<img src="images/manual-en/menu-note.png" width="340" alt="The Note menu">
 
 *Insert rest*, *Delete note or rest*, *Clean note*, **Duration**, **Expression** (dynamics), **Effects**, **Chord**, *Insert text*, stem direction, **brush strokes** (up / down) and **pick strokes** (down / up), *Alternative enharmonic*, semitone and string up/down, *Move left / right*, *Custom beat move*.
 
 ### Marker, Player, Tools, Help
 
-<img src="images/manual/menu-marqueur.png" width="300" alt="The Marker menu"> <img src="images/manual/menu-lecteur.png" width="320" alt="The Player menu"> <img src="images/manual/menu-outils.png" width="280" alt="The Tools menu"> <img src="images/manual/menu-aide.png" width="360" alt="The Help menu">
+<img src="images/manual-en/menu-marqueur.png" width="300" alt="The Marker menu"> <img src="images/manual-en/menu-lecteur.png" width="320" alt="The Player menu"> <img src="images/manual-en/menu-outils.png" width="280" alt="The Tools menu"> <img src="images/manual-en/menu-aide.png" width="360" alt="The Help menu">
 
 * **Marker**: add, list and navigate between markers.
 * **Player**: play, stop, metronome, count-in, play mode, loop, highlight the played beat, continuous scrolling.
-* **Tools**: *Transposition*, *Scales list*, *Browser*, *Batch file converter*, **Interactive Practice**, **Tuner**, *Plugins*, *Shortcuts*, *Configuration* (F7).
+* **Tools**: *Transposition*, *Scale List*, *Browser*, *Batch File Converter*, **Interactive Practice**, **Guitar Tuner**, *Plugins*, *Shortcuts*, *Settings* (F7).
 * **Help**: the built-in help and the "About" window.
 
 ## A3. Creating a first song
@@ -137,18 +139,18 @@ Navigation (first, previous, next, last measure), *Add measure*, *Clean measure*
 
 **2. The song information.** *Composition > Song properties* (F5): name, performer, album, author, date, copyright, tablature creator, transcriber, comments. The **name** and the **author** are printed on the first page of exports: fill them in if the score leaves TuxGuitar.
 
-<img src="images/manual/song-properties.png" width="420" alt="The song properties">
+<img src="images/manual-en/song-properties.png" width="420" alt="The song properties">
 
 **3. The first track.** A new document already has one track. A track is an instrument: a song with two guitars and a bass has three tracks. **Double-click** the track in the list (or *Track > Track properties*):
 
-<img src="images/manual/track-properties.png" width="420" alt="The track properties">
+<img src="images/manual-en/track-properties.png" width="420" alt="The track properties">
 
 * **Name** and **colour** (shown in the track list);
 * **Instrument**: the playback sound (wrench button: detailed settings, see [A8](#a8-tracks-instruments-and-lyrics));
 * **Tuning**: click the wrench to choose the instrument, the number of strings (4 for a bass, 7, 8...) and the tuning, or define a custom one;
 * **Number of frets** (except percussion tracks).
 
-<img src="images/manual/track-tuning.png" width="460" alt="The Tuning window">
+<img src="images/manual-en/track-tuning.png" width="460" alt="The Tuning window">
 
 Give the **right tuning**: without it, the staff and the fret numbers would be wrong. When you change the tuning of a track that is already written, notes are kept as far as possible and fret numbers adapted; a note that becomes unplayable can be lost. The **capo** shifts the pitch at playback without changing the display.
 
@@ -158,11 +160,11 @@ Give the **right tuning**: without it, the staff and the fret numbers would be w
 
 ### Moving around
 
-Click where you want, or use the arrows: **← →** go to the next or previous note of the track, **⌘← ⌘→** (Ctrl on Windows/Linux) to the previous or next measure, **↑ ↓** change string in the tablature. *Configuration > General > Play the beat when moving the cursor* plays each note.
+Click where you want, or use the arrows: **← →** go to the next or previous note of the track, **⌘← ⌘→** (Ctrl on Windows/Linux) to the previous or next measure, **↑ ↓** change string in the tablature. *Settings > General > Play the beat when moving the cursor* plays each note.
 
 ### Writing in the tablature
 
-Put the cursor on a string and **type the fret number (0 to 29)**: the note is written with the **duration** and **dynamics** selected in the side toolbar. On an existing note, **⇧→ / ⇧←** raise or lower the fret on the same string, **⇧↑ / ⇧↓** move the note to the string above or below. You can also click the **fretboard** at the bottom of the window, or the **keyboard** (*View > Show keyboard*).
+Put the cursor on a string and **type the fret number (0 to 29)**: the note is written with the **duration** and **dynamics** selected in the side toolbar. On an existing note, **⇧→ / ⇧←** raise or lower the fret on the same string, **⇧↑ / ⇧↓** move the note to the string above or below. You can also click the **fretboard** at the bottom of the window, or the **keyboard** (*View > Show piano*).
 
 ### Writing on the staff
 
@@ -170,15 +172,15 @@ Switch to *Score edition mode* (*Edit* menu or side toolbar): a click on a line 
 
 ### Durations
 
-The sum of the durations of a measure must equal its time signature: TuxGuitar prevents irregular measures. Choose the duration in the side toolbar or *Note > Duration* (whole note to 64th); **+ / −** (numeric keypad) change it by one step. A **dotted note** is 50 % longer (a dotted half note = 3/4), a **double-dotted** one 75 %. The **division** menu (side toolbar, arrow on the right) creates **tuplets** (triplets...). The **tie** (key **L**) ties the note to the previous one: needed for a note that continues into the next measure, or for durations such as 5/16 (a quarter tied to a 16th). Keys: **\*** dotted, **/** triplet.
+The sum of the durations of a measure must equal its time signature: TuxGuitar prevents irregular measures. Choose the duration in the side toolbar or *Beat > Duration* (whole note to 64th); **+ / −** (numeric keypad) change it by one step. A **dotted note** is 50 % longer (a dotted half note = 3/4), a **double-dotted** one 75 %. The **division** menu (side toolbar, arrow on the right) creates **tuplets** (triplets...). The **tie** (key **L**) ties the note to the previous one: needed for a note that continues into the next measure, or for durations such as 5/16 (a quarter tied to a 16th). Keys: **\*** dotted, **/** triplet.
 
 ### Dynamics
 
-ppp, pp, p, mp, mf, f, ff, fff (side toolbar "Expression" or *Note > Expression*): a new note takes the chosen dynamics; clicking another dynamics with the cursor on a note changes that note.
+ppp, pp, p, mp, mf, f, ff, fff (side toolbar "Expression" or *Beat > Expression*): a new note takes the chosen dynamics; clicking another dynamics with the cursor on a note changes that note.
 
 ### Rests, deleting, shifting
 
-* *Note > Insert rest* (Ins) inserts a rest before the cursor (within the measure, if there is an empty beat at its end);
+* *Beat > Insert rest* (Ins) inserts a rest before the cursor (within the measure, if there is an empty beat at its end);
 * *Delete note or rest* (Del): deletes the note under the cursor; on an empty beat, shifts what follows to the left (within the measure);
 * *Clean note* (⌘Del): same, but does nothing on an already empty beat;
 * *Move left / right* and *Custom beat move*: shift all beats after the cursor;
@@ -197,13 +199,13 @@ Each track can have **two voices** (*Edit > Select voice 1 / 2*, ⌘1 / ⌘2) to
 
 *Measure > Add measure*: one or several measures before or after the cursor, or at the end, in all tracks.
 
-<img src="images/manual/add-measure.png" width="320" alt="The Add measure window">
+<img src="images/manual-en/add-measure.png" width="320" alt="The Add measure window">
 
 *Clean measure* empties the measure (in the current track); *Remove measure* removes it from **all** tracks; *Copy / Paste measure* copies one or several measures, from the current track or from all, with the markers if you want, and the number of pastes.
 
 ## A5. Playing effects
 
-Almost every effect has an icon in the "Effects" side toolbar and an entry in *Note > Effects*. With notes selected, the effect applies to the whole selection; otherwise to the note under the cursor. Effects are applied in the **tablature** (keep it displayed).
+Almost every effect has an icon in the "Effects" side toolbar and an entry in *Beat > Effects*. With notes selected, the effect applies to the whole selection; otherwise to the note under the cursor. Effects are applied in the **tablature** (keep it displayed).
 
 | Effect | Key | What it does |
 |---|---|---|
@@ -226,7 +228,7 @@ Almost every effect has an icon in the "Effects" side toolbar and an entry in *N
 | **Slap / Pop** | | "S" and "P" marks (no effect on the sound). |
 | **Fade in** | F | Volume rises gradually; "<" mark. |
 
-<img src="images/manual/bend-editor.png" width="420" alt="The bend editor">
+<img src="images/manual-en/bend-editor.png" width="420" alt="The bend editor">
 
 **The bend editor:** the list on the right offers the usual cases (Bend, Bend/release, Bend/release/bend, Pre-bend, Pre-bend/release), all of one tone (2 frets); then you adjust the curve by placing points (solid red lines: one tone; dashed red: a semitone; grey: a quarter tone). *Clean* removes the effect. In the tablature, the bend is a curved arrow with the amount of the shift.
 
@@ -234,29 +236,29 @@ The tremolo bar editor works the same way (from −12 to +12 frets around the or
 
 ## A6. Chords
 
-The **chord editor** (key **A**, or *Note > Chord*) composes, recognises, stores and inserts a chord. It is the only way to add a chord **name** or **diagram** to the tablature.
+The **chord editor** (key **A**, or *Beat > Chord*) composes, recognises, stores and inserts a chord. It is the only way to add a chord **name** or **diagram** to the tablature.
 
-<img src="images/manual/chord-editor.png" width="900" alt="The chord editor with fingering proposals for C major">
+<img src="images/manual-en/chord-editor.png" width="900" alt="The chord editor with fingering proposals for C major">
 
 * **On opening**, the notes at the cursor are loaded, the chord is recognised and you hear it.
 * **Left column**: the root (♯ or ♭), then the type (M, 7, maj7, 6, m, m7, sus2, sus4, dim, aug, 5...), extensions (9, 11, 13, with "add"), alterations (/5+, /5−, /9+...), and the **bass** (a bass different from the root gives an inversion).
 * **Centre: the diagram**: click to place dots, above the grid to switch a string between "open" and "not played" (×). The slider on the right sets the starting fret.
 * **Proposals** (bottom): fingerings generated for the chosen theory and your tuning; clicking a diagram loads it in the editor and gives its name.
 * **Recognised**: the possible names of what you drew, with a probability.
-* **Library**: *Add*, *Rename*, *Remove*; saved chords are then available through the arrow next to the chord icon (or *Note > Chord*).
-* **Configuration**: type (most common, open, closed, inversions), number of proposals, "open" chords and fret range; not remembered after closing.
+* **Library**: *Add*, *Rename*, *Remove*; saved chords are then available through the arrow next to the chord icon (or *Beat > Chord*).
+* **Settings**: type (most common, open, closed, inversions), number of proposals, "open" chords and fret range; not remembered after closing.
 * **Options**: *Insert diagram and notes* or *diagram only*.
 
 In *View > Chords* you choose how a chord is shown in the score: the **diagram**, the **name**, or both.
 
 ## A7. The structure of the song
 
-<img src="images/manual/time-signature.png" width="250" alt="Time signature"> <img src="images/manual/clef.png" width="240" alt="Clef"> <img src="images/manual/key-signature.png" width="330" alt="Key signature">
+<img src="images/manual-en/time-signature.png" width="250" alt="Time signature"> <img src="images/manual-en/clef.png" width="240" alt="Clef"> <img src="images/manual-en/key-signature.png" width="330" alt="Key signature">
 
 * **Time signature** (*Composition > Time signature* or the "4/4" icon): numerator and denominator; *Until the end* applies the change to the rest of the song (otherwise one measure only, then back to the previous one). It applies to all tracks and can change during the song.
 * **Tempo** (30 to 320 BPM, 120 by default): you can choose the beat value (quarter by default) and the extent: the whole song, until the end, or until the next tempo marker.
 
-<img src="images/manual/tempo.png" width="520" alt="Tempo">
+<img src="images/manual-en/tempo.png" width="520" alt="Tempo">
 
 * **Clef**: treble (default), bass, alto, tenor; can change during the song.
 * **Key signature**: the scale of the song (natural = C major, one flat = F major...), so as not to write every sharp or flat.
@@ -274,7 +276,7 @@ In *View > Chords* you choose how a chord is shown in the score: the **diagram**
 
 *View > Show instruments* (or the icon) opens the **Instruments** window: for each MIDI channel, the program (instrument) and bank, the **volume**, the **pan** and the effects (reverb, chorus, tremolo, phaser). Tick **Percussion channel** for a drum track. **Add** creates a new channel; the bar on the right sets the overall gain.
 
-<img src="images/manual/instruments.png" width="700" alt="The Instruments window">
+<img src="images/manual-en/instruments.png" width="700" alt="The Instruments window">
 
 **Channels:** MIDI has 16 channels, channel 9 being reserved for percussion. Each track uses a normal channel and an effect channel (to play a dead note or a harmonic together with a normal note, or to apply a bend, slide, vibrato or tremolo bar to some notes only). As long as you have fewer than 7 instruments and one percussion, TuxGuitar assigns channels on its own. Beyond that, make two tracks that never play together share a channel.
 
@@ -282,7 +284,7 @@ In *View > Chords* you choose how a chord is shown in the score: the **diagram**
 
 *Track > Lyrics* opens the track's lyrics editor. Choose the starting measure; each word (separated by a space or a new line) goes under the next note, rests are ignored; add spaces to skip notes.
 
-<img src="images/manual/lyrics.png" width="420" alt="The lyrics editor">
+<img src="images/manual-en/lyrics.png" width="420" alt="The lyrics editor">
 
 ## A9. The view
 
@@ -290,26 +292,26 @@ In *View > Chords* you choose how a chord is shown in the score: the **diagram**
 * **Show staff**, **show tablature** and **compact mode** (some details, such as bend details, are then hidden).
 * **Zoom**: *Zoom in*, *Zoom out*, *Reset the view*, or ⌘ + mouse wheel.
 * **The fretboard** (bottom) shows the frets to play and accepts clicks to enter notes; it exists for right- and left-handed players.
-* **The keyboard** (*Show keyboard*): enter notes with the mouse.
+* **The keyboard** (*Show piano*): enter notes with the mouse.
 
-<img src="images/manual/piano.png" width="720" alt="The keyboard editor">
+<img src="images/manual-en/piano.png" width="720" alt="The keyboard editor">
 
 * **The matrix** (*Show matrix*): mostly useful for **percussion** tracks; it splits the measure into boxes and a click adds or removes a sound. *Number of grids* sets the fineness; it does not lock the main window (duration, dynamics and current measure stay editable).
 
-<img src="images/manual/matrix-editor.png" width="520" alt="The matrix editor">
+<img src="images/manual-en/matrix-editor.png" width="520" alt="The matrix editor">
 
 ## A10. Playback
 
-The playback controls are in the toolbar, the *Player* menu and the **Player** window (*View > Show player*, ⌘T). **Space** plays and pauses. During playback the played note is coloured red and the current measure has a red background (adjustable in *Configuration > Styles*, option *Highlight played beat*).
+The playback controls are in the toolbar, the *Player* menu and the **Player** window (*View > Show player*, ⌘T). **Space** plays and pauses. During playback the played note is coloured red and the current measure has a red background (adjustable in *Settings > Styles*, option *Highlight played beat*).
 
-<img src="images/manual/player.png" width="320" alt="The Player window">
+<img src="images/manual-en/player.png" width="320" alt="The Player window">
 
 * **Metronome**: a click on every beat. **Count-in**: a measure of waiting before the start (4 beats in 4/4, adjustable in the Player window).
 * **Play mode** (F9):
   * **Simple mode**: a fixed tempo percentage (50 % = half speed), loop playback, range of measures to play (loop start and end);
   * **Training mode**: a starting tempo, an ending tempo and an increment; the tempo rises by the increment on every cycle (for example from 50 % to 100 % in steps of 5 %).
 
-<img src="images/manual/play-mode.png" width="330" alt="The play mode">
+<img src="images/manual-en/play-mode.png" width="330" alt="The play mode">
 
 * **Scrolling:** by default the page scrolls by one screen when playback reaches the edge; *Continuous scrolling* scrolls continuously.
 * **The "transporter"** in the track list can be used with the mouse and scrolls during playback.
@@ -327,46 +329,46 @@ The playback controls are in the toolbar, the *Player* menu and the **Player** w
 
 ### Transposition, scales, browser, converter
 
-<img src="images/manual/transposition.png" width="300" alt="Transposition"> <img src="images/manual/scales.png" width="520" alt="The scales list">
+<img src="images/manual-en/transposition.png" width="300" alt="Transposition"> <img src="images/manual-en/scales.png" width="520" alt="The scale list">
 
 * **Transposition**: shifts all or part of the song.
-* **Scales list**: scales are shown on the fretboard to help improvise or compose (*Scales* button under the score).
+* **Scale List**: scales are shown on the fretboard to help improvise or compose (*Scales* button under the score).
 * **Browser** (⌘B): a browser of file collections (local folders).
 
-<img src="images/manual/browser.png" width="420" alt="The browser">
+<img src="images/manual-en/browser.png" width="420" alt="The browser">
 
-* **Batch file converter**: input folder (subfolders included), output folder, output format; keeps names and changes the extension. A window shows progress and can be cancelled.
+* **Batch File Converter**: input folder (subfolders included), output folder, output format; keeps names and changes the extension. A window shows progress and can be cancelled.
 
-<img src="images/manual/converter.png" width="420" alt="The batch file converter">
+<img src="images/manual-en/converter.png" width="420" alt="The batch file converter">
 
 ### Plugins
 
 *Tools > Plugins* lists the plugins (file formats, sound outputs, others): enable or disable them, **Configure** sets those with options (for example the soundbank), **Info** gives version, author and description. A plugin is a `.jar` file to copy into `share/plugins/`.
 
-<img src="images/manual/plugins.png" width="360" alt="The plugins window">
+<img src="images/manual-en/plugins.png" width="360" alt="The plugins window">
 
 ### Shortcuts
 
 *Tools > Shortcuts*: a table of all actions and their shortcuts; double-click to change, *Clean* to remove, a filter at the top, *Defaults* to restore everything.
 
-<img src="images/manual/shortcuts.png" width="380" alt="The shortcut editor">
+<img src="images/manual-en/shortcuts.png" width="380" alt="The shortcut editor">
 
-### Configuration (F7)
+### Settings (F7)
 
-*Tools > Configuration* groups six pages:
+*Tools > Settings* groups six pages:
 
-<img src="images/manual/settings-general.png" width="760" alt="Configuration, General page">
+<img src="images/manual-en/settings-general.png" width="760" alt="Settings, General page">
 
 * **General**: window title (with variables such as `${appname}`, `${filename}`, `${songname}`), automatic table resizing, splash screen, play the beat when moving the cursor.
 * **Styles**: fonts and colours of the score, tablature and lyrics (colour of the played measure, etc.).
-* **Languages**: system language or a manual choice (French, English, Spanish, and TuxGuitar's other languages).
-* **Themes** ("skins"): icons and buttons, in light or dark version; a theme is chosen with a preview.
+* **Language**: system language or a manual choice (French, English, Spanish, and TuxGuitar's other languages).
+* **Skins** (themes): icons and buttons, in light or dark version; a theme is chosen with a preview.
 * **Sound**: audio output, that is the MIDI sequencer and MIDI port. Ports come from output plugins: on macOS, the TuxGuitar synthesizer, Java Sound (Gervill) and Audio Unit. The built-in synthesizer reads SF2 or DLS soundbanks (the "Magic Sound Font" is provided).
 * **Audio recognition**: the Practice and tuner settings ([B7](#b7-audio-recognition-settings)).
 
-<img src="images/manual/settings-styles.png" width="560" alt="Styles page"> <img src="images/manual/settings-languages.png" width="560" alt="Languages page">
+<img src="images/manual-en/settings-styles.png" width="560" alt="Styles page"> <img src="images/manual-en/settings-languages.png" width="560" alt="Language page">
 
-<img src="images/manual/settings-themes.png" width="560" alt="Themes page"> <img src="images/manual/settings-sound.png" width="560" alt="Sound page">
+<img src="images/manual-en/settings-themes.png" width="560" alt="Skins page"> <img src="images/manual-en/settings-sound.png" width="560" alt="Sound page">
 
 ## A13. Keyboard shortcuts
 
@@ -406,7 +408,7 @@ The playback controls are in the toolbar, the *Player* menu and the **Player** w
 | **Markers** | Add | Shift+Ins |
 | | First / previous / next / last | Alt+Shift+Left / Alt+Left / Alt+Right / Alt+Shift+Right |
 | **Windows** | Chord editor | A |
-| | Configuration | F7 |
+| | Settings | F7 |
 | | Player | Ctrl+T |
 | | Browser | Ctrl+B |
 | | Play mode | F9 |
@@ -442,13 +444,13 @@ Three ways to work, chosen in the *Mode* tab:
 
 ### "Track" tab
 
-<img src="images/manual/practice-track.png" width="480" alt="The Track tab">
+<img src="images/manual-en/practice-track.png" width="480" alt="The Track tab">
 
 Choose the **track to practise** (only usable tracks are offered, with the reason for the others). The window recalls the track's **tuning** and where practice starts (the cursor or the beginning). In **Arcade**, any pitched track is offered, whatever its number of strings (bass included).
 
 ### "Input" tab
 
-<img src="images/manual/practice-input.png" width="480" alt="The Input tab">
+<img src="images/manual-en/practice-input.png" width="480" alt="The Input tab">
 
 * **Input**: the list of audio inputs, one per mono device and one per usable channel of multichannel devices. The application never changes input by itself.
 * **Refresh**: reads the list again, for an interface plugged in **while** the application runs (the list is not watched).
@@ -458,15 +460,15 @@ Choose the **track to practise** (only usable tracks are offered, with the reaso
 
 ### "Mode" tab
 
-<img src="images/manual/practice-mode-follow.png" width="480" alt="The Mode tab with Follow the tempo">
+<img src="images/manual-en/practice-mode-follow.png" width="480" alt="The Mode tab with Follow the tempo">
 
 The **practice mode** (drop-down) and, for the timed modes, the **tempo** (20 to 150 % of the written tempo), the **timing tolerance** (strict, normal, lenient), the **rhythm calibration** and a manual **delay**; in Arcade, the **size of the incoming discs** (40 to 150 %). At the bottom, the window recalls the measured recognition delay (about 0.1 s, and that notes closer than 0.3 s may not be followed: practice then waits for you).
 
 ### "Passages" tab
 
-<img src="images/manual/practice-passages.png" width="480" alt="The Passages tab">
+<img src="images/manual-en/practice-passages.png" width="480" alt="The Passages tab">
 
-For the "Wait" mode: **repeat passages** (off, or every 1, 2, 4 measures) and **repeat when errors exceed** a threshold (as a percentage of notes and chords). Errors are wrong or skipped notes and chords; a passage is repeated twice at most. The choice is kept until the application is closed (it can also be set in *Configuration > Audio recognition > Passages*).
+For the "Wait" mode: **repeat passages** (off, or every 1, 2, 4 measures) and **repeat when errors exceed** a threshold (as a percentage of notes and chords). Errors are wrong or skipped notes and chords; a passage is repeated twice at most. The choice is kept until the application is closed (it can also be set in *Settings > Audio recognition > Passages*).
 
 ## B3. Input level, gain and noise
 
@@ -478,11 +480,11 @@ For the "Wait" mode: **repeat passages** (off, or every 1, 2, 4 measures) and **
 
 This is the original mode. **Choosing it:** *Mode* tab, "Wait for the right note". Then *Practise this track*.
 
-<img src="images/manual/practice-mode-wait.png" width="400" alt="The Mode tab, Wait for the right note mode">
+<img src="images/manual-en/practice-mode-wait.png" width="400" alt="The Mode tab, Wait for the right note mode">
 
 The score **waits**: the expected note or chord is **framed** on the score, the current passage is highlighted, and the practice **palette** stays displayed.
 
-<img src="images/manual/practice-wait-main.png" width="900" alt="Practice in Wait mode: framed note on the score and the palette">
+<img src="images/manual-en/practice-wait-main.png" width="900" alt="Practice in Wait mode: framed note on the score and the palette">
 
 The palette (the "Interactive Practice" window during practice) says:
 
@@ -509,13 +511,13 @@ A green tick means "heard", a red cross "another note was heard"; **nothing adva
 **Settings:**
 
 * **Tempo (% of the written tempo)**: 20 % to 150 %. Start slower and raise it step by step.
-* **Timing tolerance**: how far from its time a note may be and still count as on time; the window adapts to the tempo. Three levels: strict, normal, lenient (the initial value is the one in *Configuration > Audio recognition > Practice, notes*).
+* **Timing tolerance**: how far from its time a note may be and still count as on time; the window adapts to the tempo. Three levels: strict, normal, lenient (the initial value is the one in *Settings > Audio recognition > Practice, notes*).
 * **Rhythm calibration**: sound takes time to cross your input, your output and the audio format; without calibration, your notes may be judged a little early or late and the window says **"Reduced rhythmic precision"**. The **Calibrate…** button plays **8 clicks** (about 10 seconds): play one note on each click, with the guitar; **Cancel** stops the clicks at once. The calibration is valid for **this input, this output and this audio format**: changing one asks for a new calibration. Otherwise, type a **delay (ms)** by hand (positive when your notes are heard late, between −1000 and 1000 ms) with *Apply*, or *Forget*.
 * If the input delay is high or unstable (typically wireless), the window warns you: a wired input is steadier.
 
 During the run, the palette shows the verdict of the last note, the counter (on time, early, late, wrong, missed, extra, not judged) and the **next** note. At the end, a **summary** details the numbers; it is only kept while the window is open.
 
-<img src="images/manual/practice-follow-palette.png" width="400" alt="The Follow the tempo palette during a run"> <img src="images/manual/practice-follow-summary.png" width="400" alt="The summary at the end of a run">
+<img src="images/manual-en/practice-follow-palette.png" width="400" alt="The Follow the tempo palette during a run"> <img src="images/manual-en/practice-follow-summary.png" width="400" alt="The summary at the end of a run">
 
 **Pause, resume:** if you play the score from the main window, following stops (normal playback goes on); **Resume** restarts after a pause, the notes that went by meanwhile are not judged. The mode is not possible while the score is already playing: stop it first.
 
@@ -523,11 +525,11 @@ During the run, the palette shows the verdict of the last note, the counter (on 
 
 **Choosing it:** *Mode* tab, "Arcade". In the *Track* tab, choose the track you play (any pitched track, **bass included**), then **Start Arcade**. The practice window hides while the game window runs.
 
-<img src="images/manual/practice-mode-arcade.png" width="460" alt="The Mode tab, Arcade chosen">
+<img src="images/manual-en/practice-mode-arcade.png" width="460" alt="The Mode tab, Arcade chosen">
 
 It is the "Follow the tempo" mode (same tempo, tolerance and calibration) shown as a game. The track you choose is silent, all the others play.
 
-<img src="images/manual/arcade-run.png" width="760" alt="An Arcade run: notes coming from the horizon towards the neck">
+<img src="images/manual-en/arcade-run.png" width="760" alt="An Arcade run: notes coming from the horizon towards the neck">
 
 **How to read the screen:**
 
@@ -538,53 +540,53 @@ It is the "Follow the tempo" mode (same tempo, tolerance and calibration) shown 
 * **Verdicts** (on time, early, late, wrong, incomplete, missed) appear as a **badge** under the neck once the note is judged (the text always goes with the colour).
 * **Pause / Resume** and **Stop** are at the bottom right. Playing the score from the main window stops the game.
 
-<img src="images/manual/arcade-chord.png" width="760" alt="A chord: diagram and name, incoming notes and targets on the neck">
+<img src="images/manual-en/arcade-chord.png" width="760" alt="A chord: diagram and name, incoming notes and targets on the neck">
 
 **The size of the incoming discs** is a setting (40 % to 150 %, 100 % by default) in the *Mode* tab, for the discs that are not on the neck yet. It is kept until the application is closed.
 
 **At the end**, the **Result** window gives the score, the share of the maximum, the best streak and the count of each verdict. You can **play again from the start** or **from a measure** you choose (*From measure*, then *Play*). The techniques (hammer-on, slide, bend...) are reported apart and do not change the score.
 
-<img src="images/manual/arcade-result.png" width="330" alt="The result window">
+<img src="images/manual-en/arcade-result.png" width="330" alt="The result window">
 
 **Alpha, what is not verified:** see [B10](#b10-measured-quality-limits-and-diagnostic-trace). Notes **below G1 (49 Hz)** (the lowest of a standard bass) are shown but not judged. **Hearing your own guitar through the application is not offered**: play through your amplifier or through headphones plugged into the audio interface.
 
 ## B7. Audio recognition settings
 
-*Tools > Configuration > Audio recognition*. Each setting has a **recommended value** and a **Restore** button per category; *Restore all audio recognition settings* resets everything. Changes are saved with **OK**; **Cancel** keeps the previous values. Tuner settings apply at once, practice settings at the **next Start**; level and attack settings briefly restart listening. Hover a setting's name to see its effect. The screenshots show the values of the test machine, not always the recommended ones (given below).
+*Tools > Settings > Audio recognition*. Each setting has a **recommended value** and a **Restore** button per category; *Restore all audio recognition settings* resets everything. Changes are saved with **OK**; **Cancel** keeps the previous values. Tuner settings apply at once, practice settings at the **next Start**; level and attack settings briefly restart listening. Hover a setting's name to see its effect. The screenshots show the values of the test machine, not always the recommended ones (given below).
 
-<img src="images/manual/rec-input.png" width="700" alt="Audio input category">
+<img src="images/manual-en/rec-input.png" width="700" alt="Audio input category">
 
 **"Audio input" category**: the **input** (shared by the tuner and practice; it changes at once and is not remembered after the application is closed, **Refresh** button included), the **minimum usable level** (−40 dBFS recommended), the **high-level alert** (−6 dBFS), **Reduce background noise** (off) and **Suggest an input gain** (on).
 
-<img src="images/manual/rec-tuner.png" width="700" alt="Tuner category">
+<img src="images/manual-en/rec-tuner.png" width="700" alt="Tuner category">
 
 **"Tuner"**: the **deviation considered in tune** (5 cents) and **Keep the last note** (on: the grey needle keeps the last reading when the string goes silent).
 
-<img src="images/manual/rec-notes.png" width="700" alt="Practice, notes category">
+<img src="images/manual-en/rec-notes.png" width="700" alt="Practice, notes category">
 
 **"Practice, notes"**: the **accepted pitch deviation** (35 cents recommended); the detector's **minimum certainty** (80 %) before a note is judged; the **note confirmation time** (107 ms); the **attack sensitivity** (4.5 dB); the handling of **legato, pull-offs and slides** (a new attack is required for each note, the only choice in this version); **Check playing techniques** (on); the **timing tolerance** for playing at tempo (normal).
 
-<img src="images/manual/rec-chords.png" width="700" alt="Practice, chords category">
+<img src="images/manual-en/rec-chords.png" width="700" alt="Practice, chords category">
 
 **"Practice, chords"**: the **chord strictness** (33 %), the **strum window** (600 ms: the maximum time of a pick stroke across several strings), the **required strings** (all checkable strings) and the **extra strings** (not checked yet).
 
-<img src="images/manual/rec-passages.png" width="700" alt="Passages category">
+<img src="images/manual-en/rec-passages.png" width="700" alt="Passages category">
 
 **"Passages"**: repeat passages (every 2 measures), repeat when errors exceed a percentage (50 %), **maximum number of repeats** (2).
 
-<img src="images/manual/rec-engine.png" width="700" alt="Recognition engine category">
+<img src="images/manual-en/rec-engine.png" width="700" alt="Recognition engine category">
 
 **"Recognition engine"**: the pitch detection engine (automatic, FastYin; the only choice in this version).
 
-<img src="images/manual/rec-advanced.png" width="700" alt="Advanced category">
+<img src="images/manual-en/rec-advanced.png" width="700" alt="Advanced category">
 
 **"Advanced"**: the "too sharp" allowance per fret (0.7 cent: fretted notes sound a little sharper towards the high end of the neck; this setting adds those cents on the sharp side only, 0 turns it off), the saturated sample level (99 %), the share of saturated samples (10 %), the tuner's minimum certainty (80 %), the attack detection threshold (−50 dBFS), the harmonics per string for chords (2) and the chord confirmation time (43 ms).
 
 ## B8. The tuner
 
-*Tools > Tuner* opens the tuner; it shares its pitch detection with practice.
+*Tools > Guitar Tuner* opens the tuner; it shares its pitch detection with practice.
 
-<img src="images/manual/tuner.png" width="460" alt="The guided tuner">
+<img src="images/manual-en/tuner.png" width="460" alt="The guided tuner">
 
 * **Two modes**: *Guided (6 strings)* walks you through the strings; *Chromatic* shows the nearest note of whatever you play.
 * **Tuning**: a preset, *Custom…* (one note per string) or the **tuning of a track** of the open song.
@@ -637,6 +639,150 @@ On an **independent dataset** (GuitarSet, rhythmic comping on an acoustic guitar
 
 **A Guitar Pro score reads badly or practice refuses the track.** Practice keeps only pitched tracks; percussion tracks are excluded, and the reason is shown in the *Track* tab. *Show invalid measures* helps find measures whose duration is wrong.
 
-**I want more or less strictness.** In *Configuration > Audio recognition*, adjust the accepted pitch deviation, the minimum certainty, the confirmation time and, for chords, the chord strictness; *Restore* goes back to the measured values.
+**I want more or less strictness.** In *Settings > Audio recognition*, adjust the accepted pitch deviation, the minimum certainty, the confirmation time and, for chords, the chord strictness; *Restore* goes back to the measured values.
 
 **Where to find more details?** [PRACTICE.md](PRACTICE.md) (Practice guide, quality measures), [README.md](README.md) and the release notes.
+
+---
+
+# Part C: A complete example, step by step
+
+This chapter takes you from an empty document to a **three-track song** (guitar, bass, drums), plays it, then practises the guitar part in the **three modes**: Wait for the right note, Follow the tempo and Arcade. Every step has its screenshot. It takes about 20 minutes. The song is four measures long, in 4/4 at 120 BPM, so that everything stays simple.
+
+**About the guitar in the screenshots.** To show the practice modes without playing a real guitar, the test computer plays a synthetic plucked-string sound through its own speakers, and its built-in microphone hears it (the "Default Audio Device" input). The notes are the right ones, so you will see real verdicts ("Correct", "On time"); some are late, wrong or missed because the sound comes from a speaker and the timing is not that of a player. **With your own guitar the result is yours.** If you have no guitar at hand, you can do the same: play any sound near the microphone.
+
+## C1. Create the song
+
+**Step 1. Start from an empty document.** At launch you get an empty document with one guitar track and one measure (*File > New* makes another one).
+
+<img src="images/manual-en/tut-01-blank.png" width="760" alt="An empty document">
+
+**Step 2. Name the song.** *Composition > Properties* (F5): type a name and an author, then **OK**.
+
+<img src="images/manual-en/tut-02-properties.png" width="380" alt="The song properties filled in">
+
+**Step 3. Name the guitar track.** Double-click the track in the list at the bottom (or *Track > Properties*). Replace the name by *Guitar*; the instrument (Steel String Acoustic Guitar 1) and the tuning (E A D G B E) are right for a standard guitar. Close the window.
+
+<img src="images/manual-en/tut-03-guitar-track.png" width="380" alt="The guitar track properties">
+
+**Step 4. Write the guitar notes.** Click the first measure of the tablature, then pick the **quarter note** duration in the side toolbar. On the third string (the G string), type the frets **5 5 7 5**: each number writes a note and the cursor moves to the next beat (press → to move). Measure 2: **3 3 5 3**. Measure 3: **5 5 7 5** again. In measure 4, pick the **whole note** and write a C chord of three notes: **5 on string 3, 5 on string 4 and 3 on string 5** (move between strings with ↑ ↓ and type each number on the same beat). New measures are added with *Measure > Add Measure* when the song needs more room (here, four measures).
+
+<img src="images/manual-en/tut-04-guitar-notes.png" width="760" alt="The four measures of the guitar track">
+
+## C2. Add the bass
+
+**Step 5. Add a track.** *Track > Add Track* (the green + button). A new track appears in the list, with the same guitar sound.
+
+<img src="images/manual-en/tut-05-added-track.png" width="760" alt="A second track added">
+
+**Step 6. Make it a bass.** Double-click the new track and name it *Bass*. Click the wrench next to **Instrument** (or *View > Show Instruments*) and choose **Fingered Electric Bass** as the program of its channel.
+
+<img src="images/manual-en/tut-06-bass-instrument.png" width="560" alt="The instrument of the bass track">
+
+**Step 7. Give it four strings.** In the track properties, click the wrench next to **Tuning**: choose *Bass*, *4-String* and *E Tuning - E A D G* (strings E1 A1 D2 G2). **OK**, then **Close**.
+
+<img src="images/manual-en/tut-07-bass-tuning.png" width="400" alt="The bass tuning window">
+
+**Step 8. Write the bass line.** Pick the **half note** duration. Measure 1: **3 3** on the third string. Measure 2: **1 1**. Measure 3: **3 3**. Measure 4: **3 3**.
+
+<img src="images/manual-en/tut-08-bass-notes.png" width="760" alt="The bass line">
+
+## C3. Add the drums
+
+**Step 9. Add a third track and make it a drum kit.** *Track > Add Track*, double-click it, name it *Drums* and choose the **DrumKit** instrument. The tuning and fret fields become empty: a drum track has no strings.
+
+<img src="images/manual-en/tut-09-drums-track.png" width="400" alt="The drums track properties">
+
+**Step 10. Draw the beat in the matrix.** *View > Show Matrix* opens the matrix editor: each row is a drum sound. Scroll to **Acoustic Bass Drum** (the kick) and **Acoustic Snare**, and click the boxes: kick on beats 1 and 3, snare on beats 2 and 4.
+
+<img src="images/manual-en/tut-10-drums-matrix.png" width="560" alt="The matrix editor with a kick and snare pattern">
+
+**Step 11. Copy the measure.** With the cursor in measure 1, *Measure > Copy Measure*, then move to measure 2 and *Measure > Paste Measure*; repeat for measures 3 and 4.
+
+<img src="images/manual-en/tut-11-drums-done.png" width="760" alt="The four measures of drums">
+
+**Step 12. See the three tracks together.** *View > Multitrack* shows all the tracks at once (the layout switches to linear); *View > Zoom out* makes everything fit.
+
+<img src="images/manual-en/tut-12-three-tracks.png" width="760" alt="The three tracks of the song">
+
+Save the song with *File > Save* (⌘S) and a name of your choice.
+
+## C4. Play the song
+
+**Step 13. Normal playback.** Press **Space** (or the Play button). The three tracks sound; the played beat is red and the measure is highlighted.
+
+<img src="images/manual-en/tut-13-playing.png" width="760" alt="The song playing: the current beat is red">
+
+Use *Player > Play Mode* to slow it down (for example 60 %) or to loop a few measures: this is the normal way to listen to a score; the practice modes below ask **you** to play.
+
+## C5. Practise: three modes
+
+Make sure the audio input works first: open **Tools > Interactive Practice**. In the *Input* tab, pick your input and check the level (play a string).
+
+<img src="images/manual-en/practice-input.png" width="420" alt="The Input tab with the level meter">
+
+### Mode 1: Wait for the right note
+
+**Step 14. Start.** In the *Track* tab, choose the *Guitar* track; in the *Mode* tab, choose **Wait for the right note**; press **Practise this track**.
+
+<img src="images/manual-en/practice-track.png" width="400" alt="The Track tab with the guitar chosen"> <img src="images/manual-en/practice-mode-wait.png" width="400" alt="The Mode tab, Wait for the right note">
+
+**Step 15. Play what is framed.** The note to play is **framed** on the score, and the palette says "Play C4". The score waits for you.
+
+<img src="images/manual-en/tut-16-wait-main.png" width="760" alt="The framed note on the score and the palette">
+
+**Step 16. Read the answer.** When the right note is heard, the palette says "Correct" with the note; a wrong note says what was heard and what to play.
+
+<img src="images/manual-en/tut-14-wait-palette.png" width="380" alt="The palette waiting for C4"> <img src="images/manual-en/tut-15-wait-correct.png" width="380" alt="The palette after the right note">
+
+**Step 17. The end.** After the last note or chord, the palette says "Well done, you reached the end" with the count of passages passed first time. **Restart** starts again, **Stop** closes the practice. The *Passages* tab sets what happens when a passage has too many errors (it is repeated).
+
+<img src="images/manual-en/tut-17-wait-done.png" width="380" alt="The end of the practice in Wait mode">
+
+### Mode 2: Follow the tempo
+
+**Step 18. Choose the mode.** Back in the practice window, *Mode* tab: choose **Follow the tempo**. The tempo (100 % = as written), the timing tolerance and the rhythm calibration appear. For a first try, leave 100 %, or lower it if the song is hard for you. Then press **Follow the tempo of this track**.
+
+<img src="images/manual-en/practice-mode-follow.png" width="480" alt="The Mode tab with Follow the tempo">
+
+**Step 19. Play along.** The score plays at its tempo, after a count-in, with the bass and drums; the guitar is silent for you to play. Each note is judged on time.
+
+<img src="images/manual-en/tut-19-follow-main.png" width="760" alt="The score running at tempo with the palette">
+
+**Step 20. Read the verdicts.** The palette shows the verdict of the last note ("Right note, late (163 ms)"), the counters (on time, early, late, wrong, missed, extra) and the next note.
+
+<img src="images/manual-en/tut-20-follow-palette.png" width="380" alt="The palette during the run">
+
+**Step 21. The summary.** At the end, a summary lists the numbers. If your notes are often early or late for the same amount, use **Calibrate…** (or type the delay by hand) in the *Mode* tab: see [B5](#b5-follow-the-tempo-mode).
+
+<img src="images/manual-en/tut-21-follow-summary.png" width="380" alt="The summary of the run">
+
+### Mode 3: Arcade (alpha)
+
+**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the tolerance and the calibration are the same as before; a new line sets the **size of the incoming discs**. Press **Start Arcade**.
+
+<img src="images/manual-en/practice-mode-arcade.png" width="480" alt="The Mode tab with Arcade">
+
+**Step 23. Play the notes as they reach the neck.** A new window shows a neck at the bottom. Every note comes from the horizon during five seconds, on the lane of its fret; when it reaches the neck, play it. The disk shows the fret number, its colour is the colour of its string. At the top: your streak, the tempo and the next note. The badges under the neck tell the last verdicts ("On time", "Wrong").
+
+<img src="images/manual-en/tut-23-arcade-run.png" width="760" alt="Arcade: notes coming towards the neck, with the verdicts under it">
+
+**Step 24. Chords.** A chord is a bar on the centre axis, with its diagram and its name above it.
+
+<img src="images/manual-en/tut-24-arcade-chord.png" width="760" alt="Arcade: a chord with its diagram">
+
+**Step 25. The result.** At the end, the result window gives the score, the share of the maximum, the best streak and the count of each verdict. **From the start** or **From measure + Play** plays again.
+
+<img src="images/manual-en/tut-25-arcade-result.png" width="300" alt="The Arcade result">
+
+**Step 26. Back to the preparation window.** Close the result: the practice window is back, with your settings. Open it again at any time with *Tools > Interactive Practice*.
+
+<img src="images/manual-en/tut-26-back.png" width="400" alt="The practice window again after the run">
+
+### Last check: the tuner
+
+Before a real session, tune the guitar: *Tools > Guitar Tuner*. In the screenshot, the G string is sounding and the needle is at the centre.
+
+<img src="images/manual-en/tut-27-tuner.png" width="380" alt="The guitar tuner reading a G">
+
+You have written, played and practised a three-track song. To go further: [B7](#b7-audio-recognition-settings) for the recognition settings, [A5](#a5-playing-effects) for the effects and [A6](#a6-chords) for chords.
