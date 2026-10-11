@@ -1,8 +1,8 @@
 # Builds TuxGuitarAdvanced for macOS (Apple Silicon), Linux and Windows and publishes
 # the packages as a GitHub Release.
 #
-# Trigger: push a tag such as v1.0.0, or run the workflow manually
-# (Actions > Release > Run workflow) and give the tag to create.
+# Trigger: only by hand (Actions > Release > Run workflow), giving the tag such as v1.0.0:
+# a push or a tag push starts nothing.
 #
 # Notes:
 #  - All three packages include the Interactive Practice modules (audio-engine, tuner-next,
@@ -17,8 +17,6 @@
 name: Release
 
 on:
-  push:
-    tags: [ 'v*' ]
   workflow_dispatch:
     inputs:
       tag:

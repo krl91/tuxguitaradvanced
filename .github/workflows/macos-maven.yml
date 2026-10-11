@@ -8,7 +8,9 @@
 
 name: MacOS Java CI with Maven
 
-on: [push]
+# only when asked (Actions > Run workflow): a push no longer starts it
+on:
+  workflow_dispatch:
 #on:
 #  push:
 #    branches: [ "master" ]
