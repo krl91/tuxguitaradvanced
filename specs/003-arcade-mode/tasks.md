@@ -104,6 +104,8 @@
 
 - [x] T118 (done 2026-10-11) The panel spans the first to the last fret of the chord (Q25) and the neck tint at 10 % with the band under it (Q27), with tests (`ChordPanelTest`, `RoundedRectTest`).
 - [x] T119 (done 2026-10-11) The floating measure (Q26, FR-076): `CameraTrack.Settings.withLookAhead`, `ArcadeSession.measureNanos` (minimum one second) used at the start of a run, tests in `FloatingMeasureTest`; the tests of the former five seconds keep the standard settings. [HUMAN] the owner judges the readability of one measure and says whether a shorter or longer window is wanted.
+- [x] T120 (done 2026-10-11) The flying rectangle has the width of its fret cell at its depth and lands on its target (Q28, FR-070, FR-073): red tests in `RoundedRectTest`, `MarkerSizeTest` rewritten.
+- [x] T121 (done 2026-10-11) The lanes go on under the see-through neck as faint `NECK_LANE` guides (Q28, FR-066): red test in `RoundedRectTest`, outside the fallback. Owner validation pending (with T111/T117).
 
 ## Increment D - Interface and result (`SRC/arcade/ui`, `share/lang`)
 

@@ -35,7 +35,7 @@ public final class SceneItem {
 		/** The open string (fret 0): a horizontal bar across the lanes, its bright cap at the left end and its word (FR-069). */
 		OPEN_BAR, OPEN_CAP, OPEN_LABEL,
 		/** The thread and the footprint of a fretted marker (FR-071), the highlighted number of the active fret on the ruler, the approach band (FR-072). */
-		MARKER_THREAD, MARKER_FOOTPRINT, FRET_RULER_ACTIVE, APPROACH_BAND,
+		MARKER_THREAD, MARKER_FOOTPRINT, FRET_RULER_ACTIVE, APPROACH_BAND, NECK_LANE,
 		/** The chord panel (FR-074): the translucent body, its luminous edge, a rounded rectangle per fretted position, a line per open string, the fret on a rectangle of the active chord, the name above the left corner, the arrow of the stroke and the remark. */
 		CHORD_PANEL, CHORD_PANEL_EDGE, PANEL_NOTE, PANEL_OPEN_LINE, PANEL_FRET, PANEL_NAME, PANEL_STROKE, PANEL_REMARK,
 		BADGE, BADGE_SYMBOL, BADGE_TEXT,

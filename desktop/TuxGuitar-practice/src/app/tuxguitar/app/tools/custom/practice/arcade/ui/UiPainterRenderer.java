@@ -57,7 +57,7 @@ public final class UiPainterRenderer extends PainterRenderer {
 
 	/** True for what the minimal path leaves out: decoration, the depth cues of the field and the inlays of the neck. */
 	private static boolean leftOutByFallback(SceneItem item) {
-		return item.role().isDecoration() || item.role() == SceneItem.Role.FIELD_GUIDE || item.role() == SceneItem.Role.INLAY;
+		return item.role().isDecoration() || item.role() == SceneItem.Role.FIELD_GUIDE || item.role() == SceneItem.Role.NECK_LANE || item.role() == SceneItem.Role.INLAY;
 	}
 
 	private UIColor colour(int rgb) {

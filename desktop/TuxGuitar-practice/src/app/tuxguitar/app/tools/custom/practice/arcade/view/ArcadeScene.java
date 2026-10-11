@@ -121,8 +121,7 @@ public final class ArcadeScene {
 	public static final double CHORD_HALF_WIDTH = 0.26;
 	/** The alpha of a string that no event of the active moment targets (FR-068); the string of the active event is at 1. */
 	static final double STRING_DIM_ALPHA = 0.35;
-	/** The size of a marker at the setting of 100 %: three quarters of the former size (owner, 2026-10-11, FR-073); at 0 % it is one pixel across. */
-	static final double MARKER_SHARE = 0.75;
+	/** At the setting of 100 % a marker lands on the size of its target rectangle (owner, 2026-10-11, FR-073); at 0 % it is one pixel across. */
 	static final double MARKER_MIN_RADIUS = 0.5;
 	/** The gap kept between two labels, in pixels. */
 	static final double GAP = 4.0;
@@ -272,15 +271,26 @@ public final class ArcadeScene {
 	 * positions and only those, as one group. The core is the same size, at the same place and as opaque in every quality tier, in the fallback, at every
 	 * window size and in every theme; a halo may surround it as decoration, it never replaces or weakens it.
 	 */
+	/** Half the height of the target rectangle on the neck (FR-065, FR-070): the rule of the former diameter; the flying marker lands on this size. */
+	private double targetHalfHeight(Frame f) {
+		int count = this.neck.layout().count();
+		double spacing = count > 1 ? Math.abs(f.projection.stringY(1, count) - f.projection.stringY(0, count)) : 40.0;
+		return Math.max(TARGET_MIN_PX * this.uiScale, Math.min(TARGET_MAX_PX * this.uiScale, TARGET_SPACING_SHARE * spacing)) / 2.0;
+	}
+
+	/** Half the width of a rectangle on a fret: the cell between its two wires, less a margin (the target's rule), at the depth given. */
+	private double halfWidthOfCell(Frame f, int fret, double progress) {
+		double cell = Math.abs(f.projection.approach(this.neck.fretX(fret), progress, f.cam).x() - f.projection.approach(this.neck.fretX(fret - 1), progress, f.cam).x());
+		return (cell - Math.max(3.0, cell * 0.14)) / 2.0;
+	}
+
 	private void drawTargets(Frame f, int active) {
 		if (active < 0) {
 			return;
 		}
 		ArcadeRenderEvent event = this.events.get(active);
 		int count = this.neck.layout().count();
-		double spacing = count > 1 ? Math.abs(f.projection.stringY(1, count) - f.projection.stringY(0, count)) : 40.0;
-		double diameter = Math.max(TARGET_MIN_PX * this.uiScale, Math.min(TARGET_MAX_PX * this.uiScale, TARGET_SPACING_SHARE * spacing));
-		double radius = diameter / 2.0;
+		double radius = targetHalfHeight(f);
 		for (ArcadeRenderEvent.Position position : event.positions()) {
 			if (position.fret() == 0) {
 				// an open string has no target on the neck: its bar lands and the string is lit (FR-069)
@@ -288,10 +298,7 @@ public final class ArcadeScene {
 			}
 			ScreenPoint at = f.projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, f.cam);
 			// the rectangle fills the cell of the fret between its two painted wires, less a margin (FR-070)
-			double wireLeft = f.projection.neckX(this.neck.fretX(position.fret() - 1), f.cam);
-			double wireRight = f.projection.neckX(this.neck.fretX(position.fret()), f.cam);
-			double cell = Math.abs(wireRight - wireLeft);
-			double halfWidth = Math.max(radius * 0.7, (cell - Math.max(3.0, cell * 0.14)) / 2.0);
+			double halfWidth = Math.max(radius * 0.7, halfWidthOfCell(f, position.fret(), 1.0));
 			int colour = this.colours.of(position.tgString());
 			if (f.tier.glow()) {
 				f.out.rounded(Role.TARGET_HALO, at.x(), at.y(), halfWidth * 1.12, radius * 1.6, colour, 0.28, event.index(), position.tgString());
@@ -325,6 +332,16 @@ public final class ArcadeScene {
 					out.quad(Role.APPROACH_BAND, new double[] { a0.x(), a0.y(), b0.x(), b0.y(), b1.x(), b1.y(), a1.x(), a1.y() }, BAND_LANE_COLOUR, 0.14, -1, 0);
 				}
 			}
+		}
+		// the neck is see-through: the lanes go on under it, down to its bottom, as faint lines (FR-066 amended, FR-075)
+		double neckBottomY = f.h * IsometricProjection.NECK_NEAR_EDGE;
+		for (int fret = 1; fret < f.lanes.size(); fret++) {
+			FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(fret);
+			if (!f.grid.isPainted(Math.max(0, fret - 1)) || !f.grid.isPainted(fret) || lane.end().y() <= lane.origin().y()) {
+				continue;
+			}
+			double x2 = lane.end().x() + (lane.end().x() - lane.origin().x()) * (neckBottomY - lane.end().y()) / (lane.end().y() - lane.origin().y());
+			out.line(Role.NECK_LANE, lane.end().x(), lane.end().y(), x2, neckBottomY, WIRE_COLOUR, 0.16, 1.0, -1, 0);
 		}
 		// no lane for fret 0: an open string is a bar across the lanes (FR-069)
 		for (int fret = 1; fret < f.lanes.size(); fret++) {
@@ -487,22 +504,24 @@ public final class ArcadeScene {
 	/** Where a note is on the screen, and how big. */
 	private static final class NoteGeo {
 		ScreenPoint at;
-		double radius;
+		/** Half height of the marker: the target's at the onset, in perspective before, times the setting of the size. */
+		double halfHeight;
+		/** Half width of the marker: the width of its cell at its depth (a higher fret is a narrower cell), times the setting of the size. */
+		double halfWidth;
 		double x;
 		int fret;
 
-		/** Half width and half height of the marker (FR-070): a rounded rectangle about twice as wide as high. */
 		double rx() {
-			return this.radius * 1.2;
+			return this.halfWidth;
 		}
 
 		double ry() {
-			return this.radius * 0.6;
+			return this.halfHeight;
 		}
 
 		/** How high the marker floats above its footprint on the lane (FR-071). */
 		double lift() {
-			return this.radius * 2.6;
+			return this.halfHeight * 4.3;
 		}
 
 		double markerY() {
@@ -510,7 +529,7 @@ public final class ArcadeScene {
 		}
 
 		double numberSize() {
-			return Math.max(8.0, this.radius * 1.3);
+			return Math.max(8.0, this.halfHeight * 2.2);
 		}
 
 		double numberY() {
@@ -523,7 +542,12 @@ public final class ArcadeScene {
 			return new double[] { this.at.x() - w / 2.0, numberY() - numberSize() * 0.6, this.at.x() + w / 2.0, numberY() + numberSize() * 0.6 };
 		}
 
-		/** The whole figure, from the top of the marker to the bottom of the number: what must stay in view. */
+		/** The marker alone: what must stay in view when something else is placed near it. */
+		double[] markerBox() {
+			return new double[] { this.at.x() - rx(), markerY() - ry(), this.at.x() + rx(), markerY() + ry() };
+		}
+
+		/** The whole figure, from the top of the marker to the bottom of the number. */
 		double[] box() {
 			double[] number = numberBox();
 			return new double[] { this.at.x() - rx(), markerY() - ry(), this.at.x() + rx(), number[3] };
@@ -559,7 +583,9 @@ public final class ArcadeScene {
 		g.at = f.lanes.laneForFret(position.fret()).at(f.progressOf(event));
 		// smaller in the distance than on the neck (the owner, 2026-10-09: the disks off the neck were too big), and adjustable by the learner
 		g.fret = position.fret();
-		g.radius = Math.max(MARKER_MIN_RADIUS, f.h * 0.036 * MARKER_SHARE * this.markerSize * (0.35 + 0.65 * g.at.scale()));
+		double progress = Math.min(1.0, f.progressOf(event));
+		g.halfHeight = Math.max(MARKER_MIN_RADIUS, targetHalfHeight(f) * this.markerSize * (0.35 + 0.65 * g.at.scale()));
+		g.halfWidth = Math.max(MARKER_MIN_RADIUS, halfWidthOfCell(f, position.fret(), progress) * this.markerSize);
 		return g;
 	}
 
@@ -749,7 +775,7 @@ public final class ArcadeScene {
 				ArcadeRenderEvent event = this.events.get(other);
 				// a next note must stay in view; the bar of a next chord is on the same axis as this diagram by rule (FR-063): it passes behind it and stays
 				// visible on both sides, because a bar is much wider than a diagram
-				return event.kind() == ArcadeRenderEvent.Kind.NOTE ? noteGeo(f, event).box() : null;
+				return event.kind() == ArcadeRenderEvent.Kind.NOTE ? noteGeo(f, event).markerBox() : null;
 			}
 		}
 		return null;
@@ -861,14 +887,14 @@ public final class ArcadeScene {
 		out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
 		if (f.tier.trails()) {
 			ScreenPoint behind = lane.at(Math.max(0.0, f.progressOf(event) - 0.12));
-			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.35, g.radius, event.index(), position.tgString());
+			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.35, g.halfHeight * 2.0, event.index(), position.tgString());
 		}
 		double my = g.markerY();
 		if (f.tier.glow()) {
 			out.rounded(Role.GLOW, g.at.x(), my, g.rx() * 1.45, g.ry() * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
 		}
 		// the marker floats above its lane, joined by a thin thread to its footprint on the lane (FR-071)
-		out.line(Role.MARKER_THREAD, g.at.x(), my + g.ry(), g.at.x(), g.at.y(), colour, alpha * 0.85, Math.max(1.0, g.radius * 0.12), event.index(), position.tgString());
+		out.line(Role.MARKER_THREAD, g.at.x(), my + g.ry(), g.at.x(), g.at.y(), colour, alpha * 0.85, Math.max(1.0, g.halfHeight * 0.2), event.index(), position.tgString());
 		out.rounded(Role.MARKER_FOOTPRINT, g.at.x(), g.at.y(), g.rx(), g.ry() * 0.3, colour, alpha * 0.55, event.index(), position.tgString());
 		out.rounded(Role.MARKER, g.at.x(), my, g.rx(), g.ry(), colour, alpha, event.index(), position.tgString());
 		// the number of the fret is written on the lane under the footprint, never in the marker; it is left out where it would overlap a label

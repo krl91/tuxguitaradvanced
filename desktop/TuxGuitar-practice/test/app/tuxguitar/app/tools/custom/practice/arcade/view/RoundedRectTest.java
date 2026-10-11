@@ -45,7 +45,6 @@ public class RoundedRectTest {
 				String where = tier + " p=" + progress;
 				assertEquals(SceneItem.Shape.ROUNDED, marker.shape(), where + ": a rounded rectangle, not a disc");
 				assertEquals(StringColours.forStrings(6).of(3), marker.colour(), where);
-				assertTrue(marker.value(2) > marker.value(3) * 1.8 && marker.value(2) < marker.value(3) * 2.2, where + ": about twice as wide as high");
 				assertTrue(marker.value(1) < footprint.value(1), where + ": the marker floats above its footprint");
 				assertEquals(footprint.value(0), marker.value(0), 1e-9, where + ": on the same vertical");
 				assertEquals(SceneItem.Shape.LINE, thread.shape());
@@ -138,5 +137,60 @@ public class RoundedRectTest {
 		}
 		assertTrue(under, "a band reaches the bottom of the neck: the neck is see-through");
 		assertTrue(scene.withRole(Role.NECK_BODY).get(0).alpha() <= 0.15, "and the neck's own tint is faint");
+	}
+
+	/**
+	 * Bug (owner, 2026-10-11): the markers were all of the same size whatever the fret, but the rectangle that comes must land exactly on the rectangle of its
+	 * cell on the neck: its width is the width of its cell at its depth (a higher fret is a narrower cell) and, at the onset, it is the target's rectangle.
+	 */
+	@Test
+	public void theMarkerHasTheWidthOfItsCellAtItsDepthAndLandsOnTheSizeOfItsTargetRectangleAtEveryFret() {
+		for (int fret : new int[] { 1, 3, 5, 9, 12, 17 }) {
+			SongFixture song = new SongFixture(2);
+			song.quarter(1, 0, 3, fret);
+			song.quarter(1, 1, 3, fret);
+			SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+			IsometricProjection projection = new IsometricProjection(SCREEN);
+			long look = CameraTrack.Settings.standard().lookAheadNanos;
+			double previousWidth = Double.MAX_VALUE;
+			for (int step = 10; step <= 100; step += 15) {
+				double progress = step / 100.0;
+				long now = fixture.onset(0) - (long) ((1.0 - progress) * look);
+				Scene scene = fixture.scene(false).build(now, SCREEN, null, 100, QualityTier.FULL);
+				Camera cam = fixture.camera.at(now);
+				SceneItem marker = scene.forEvent(0, Role.MARKER).get(0);
+				double cell = Math.abs(projection.approach(fixture.neck.fretX(fret), progress, cam).x() - projection.approach(fixture.neck.fretX(fret - 1), progress, cam).x());
+				assertEquals((cell - Math.max(3.0, cell * 0.14)) / 2.0, marker.value(2), Math.max(0.6, cell * 0.02), "fret " + fret + " p=" + progress + ": the width of its cell at its depth, less the margin");
+				assertTrue(marker.value(2) <= previousWidth * 1.001 || progress > 0.0, "growing with the depth");
+			}
+			Scene onset = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100, QualityTier.FULL);
+			SceneItem marker = onset.forEvent(0, Role.MARKER).get(0);
+			SceneItem target = onset.forEvent(0, Role.TARGET_RECT).get(0);
+			assertEquals(target.value(2), marker.value(2), 0.6, "fret " + fret + ": at the onset the marker is as wide as the target rectangle");
+			assertEquals(target.value(3), marker.value(3), 0.6, "fret " + fret + ": and as high");
+		}
+		// the cells narrow towards the body: the rectangle of a high fret is narrower than that of a low one
+		SongFixture two = new SongFixture(2);
+		two.quarter(1, 0, 3, 2);
+		two.quarter(1, 1, 3, 17);
+		SceneFixture f2 = new SceneFixture(two, SceneFixture.sixStrings(), 100);
+		assertTrue(f2.scene(false).build(f2.onset(0), SCREEN, null, 100, QualityTier.FULL).forEvent(0, Role.MARKER).get(0).value(2) > 
+				f2.scene(false).build(f2.onset(1), SCREEN, ArcadeSceneTest.completedBefore(1, 2), 100, QualityTier.FULL).forEvent(1, Role.MARKER).get(0).value(2), "a high fret is a narrower rectangle");
+	}
+
+	/** Bug (owner, 2026-10-11): the neck is see-through, so the lanes must be seen going on under the strings, down to the bottom of the neck. */
+	@Test
+	public void theLanesGoOnUnderTheSeeThroughNeckAsFaintLines() {
+		SceneFixture fixture = notes();
+		Scene scene = fixture.scene(false).build(fixture.onset(0) - 800 * MS, SCREEN, null, 100, QualityTier.FULL);
+		double neckBottom = scene.withRole(Role.NECK_BODY).get(0).value(5);
+		double top = scene.withRole(Role.NECK_BODY).get(0).value(1);
+		java.util.List<SceneItem> lanes = scene.withRole(Role.NECK_LANE);
+		assertFalse(lanes.isEmpty(), "the lanes go on under the neck");
+		for (SceneItem lane : lanes) {
+			assertEquals(top, Math.min(lane.value(1), lane.value(3)), 0.5, "from the top edge of the neck");
+			assertEquals(neckBottom, Math.max(lane.value(1), lane.value(3)), 0.5, "to its bottom");
+			assertTrue(lane.alpha() <= 0.3, "faint");
+		}
 	}
 }

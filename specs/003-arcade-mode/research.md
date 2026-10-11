@@ -191,3 +191,11 @@ Profile: event count, note/chord ratio, longest consecutive chord run, peak even
 **Alternatives.** Keeping the neutral bar and the diagram (rejected by the owner, Q22); a panel only for the nearest chord (rejected).
 
 **Consequences.** The chord drawing, its name placement, the density rules and the many chord tests change; the "bar without diagram" rule of FR-063 disappears; fret numbers on the active chord instead of the diagram's `5fr` label. Increment C4, after C3.
+
+## R25 - Marker as the target in perspective, lanes under the neck (2026-10-11)
+
+**Decision.** A flying rectangle takes the width of the cell of its fret at its current depth (`halfWidthOfCell(f, fret, progress)`) and the height of the target scaled by its perspective; at progress 1 it equals the target rectangle. The lanes are extended in a straight line below the top edge of the neck down to its bottom edge as `NECK_LANE` items (alpha 0.16, outside the fallback), because the neck body is only a 10 % tint.
+
+**Alternatives.** A constant-size marker (rejected by the owner); lanes ending at the neck (hid the see-through neck).
+
+**Consequences.** FR-066 loses its "never continues across the neck" sentence; the size setting is relative to the target size.

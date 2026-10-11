@@ -97,7 +97,7 @@ public class FallbackRendererTest {
 			assertEquals(selectedCalls.texts, fallbackCalls.texts, reference.name + ": the same texts at the same places");
 			int shapes = 0;
 			for (SceneItem item : scene.items()) {
-				boolean left = item.role().isDecoration() || item.role() == SceneItem.Role.FIELD_GUIDE || item.role() == SceneItem.Role.INLAY;
+				boolean left = item.role().isDecoration() || item.role() == SceneItem.Role.FIELD_GUIDE || item.role() == SceneItem.Role.NECK_LANE || item.role() == SceneItem.Role.INLAY;
 				if (item.shape() != SceneItem.Shape.TEXT && !left) {
 					shapes++;
 				}
