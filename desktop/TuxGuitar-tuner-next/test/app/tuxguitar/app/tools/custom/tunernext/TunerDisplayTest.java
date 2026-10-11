@@ -23,7 +23,8 @@ public class TunerDisplayTest {
 		assertEquals(TunerDisplay.State.FLAT, flat.getState());
 		assertEquals("A", flat.getReading().getNoteName());
 		assertEquals(3, flat.getReading().getOctave());
-		assertEquals(-0.4, flat.getNeedlePosition(), 0.01);
+		// outside the in-tune range the needle moves from the edge of that range (5 cents) to the end of the dial (50 cents)
+		assertEquals(-15.0 / 45.0, flat.getNeedlePosition(), 0.01);
 
 		TunerDisplay inTune = display(hz(57, 3), LevelState.SUITABLE, null, 0);
 		assertEquals(TunerDisplay.State.IN_TUNE, inTune.getState());
@@ -31,7 +32,26 @@ public class TunerDisplayTest {
 
 		TunerDisplay sharp = display(hz(57, 30), LevelState.SUITABLE, null, 0);
 		assertEquals(TunerDisplay.State.SHARP, sharp.getState());
-		assertEquals(0.6, sharp.getNeedlePosition(), 0.01);
+		assertEquals(25.0 / 45.0, sharp.getNeedlePosition(), 0.01);
+	}
+
+	/**
+	 * Bug (owner, 2026-10-11): a note only a little off still tilted the needle although the tuner said "in tune"; the needle must be exactly
+	 * vertical for every deviation inside the in-tune range (either side), and move continuously from its edge, with no jump.
+	 */
+	@Test
+	public void theNeedleIsExactlyVerticalInsideTheInTuneRangeAndMovesContinuouslyFromItsEdge() {
+		for( double cents : new double[] { -4.9, -3.0, -1.0, 0.0, 1.0, 3.0, 4.9 } ) {
+			TunerDisplay shown = display(hz(57, cents), LevelState.SUITABLE, null, 0);
+			assertEquals(TunerDisplay.State.IN_TUNE, shown.getState(), "state at " + cents + " cents");
+			assertEquals(0.0, shown.getNeedlePosition(), 1e-9, "needle at " + cents + " cents");
+		}
+		TunerDisplay justOut = display(hz(57, 5.5), LevelState.SUITABLE, null, 0);
+		assertEquals(TunerDisplay.State.SHARP, justOut.getState());
+		assertEquals(0.5 / 45.0, justOut.getNeedlePosition(), 0.002);
+		assertEquals(44.0 / 45.0, display(hz(57, 49), LevelState.SUITABLE, null, 0).getNeedlePosition(), 0.002);
+		// a string far from its target (guided mode) pins the needle at the end of the dial
+		assertEquals(-1.0, display(hz(38, 0), LevelState.SUITABLE, STANDARD, 0).getNeedlePosition(), 1e-9);
 	}
 
 	@Test

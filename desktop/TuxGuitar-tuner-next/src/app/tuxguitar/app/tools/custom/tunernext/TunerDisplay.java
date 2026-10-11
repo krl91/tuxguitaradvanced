@@ -28,13 +28,15 @@ public final class TunerDisplay {
 	private final double frequencyHz;
 	private final double deviationCents;
 	private final int targetString;
+	private final double inTuneCents;
 
-	private TunerDisplay(State state, PitchReading reading, double frequencyHz, double deviationCents, int targetString) {
+	private TunerDisplay(State state, PitchReading reading, double frequencyHz, double deviationCents, int targetString, double inTuneCents) {
 		this.state = state;
 		this.reading = reading;
 		this.frequencyHz = frequencyHz;
 		this.deviationCents = deviationCents;
 		this.targetString = targetString;
+		this.inTuneCents = inTuneCents;
 	}
 
 	/**
@@ -44,13 +46,13 @@ public final class TunerDisplay {
 	 */
 	public static TunerDisplay of(AnalysisFrame frame, PitchReading reading, int[] targets, int selectedString, double inTuneCents) {
 		if( frame.getLevelState() == AnalysisFrame.LevelState.CLIPPING ) {
-			return new TunerDisplay(State.INPUT_CLIPPING, PitchReading.noReading(), Double.NaN, 0, selectedString);
+			return new TunerDisplay(State.INPUT_CLIPPING, PitchReading.noReading(), Double.NaN, 0, selectedString, inTuneCents);
 		}
 		if( !reading.hasPitch() || !reading.isReliable() ) {
-			return new TunerDisplay(State.NO_READING, PitchReading.noReading(), Double.NaN, 0, selectedString);
+			return new TunerDisplay(State.NO_READING, PitchReading.noReading(), Double.NaN, 0, selectedString, inTuneCents);
 		}
 		if( frame.getLevelState() == AnalysisFrame.LevelState.TOO_LOW ) {
-			return new TunerDisplay(State.INPUT_TOO_LOW, PitchReading.noReading(), Double.NaN, 0, selectedString);
+			return new TunerDisplay(State.INPUT_TOO_LOW, PitchReading.noReading(), Double.NaN, 0, selectedString, inTuneCents);
 		}
 		double frequency = frame.getF0Hz();
 		double deviation = reading.getCents();
@@ -60,7 +62,7 @@ public final class TunerDisplay {
 			deviation = 1200.0 * Math.log(frequency / hz(targets[target - 1])) / Math.log(2.0);
 		}
 		State state = (Math.abs(deviation) <= inTuneCents ? State.IN_TUNE : (deviation < 0 ? State.FLAT : State.SHARP));
-		return new TunerDisplay(state, reading, frequency, deviation, target);
+		return new TunerDisplay(state, reading, frequency, deviation, target, inTuneCents);
 	}
 
 	private static int nearestString(double frequency, int[] targets) {
@@ -99,9 +101,17 @@ public final class TunerDisplay {
 		return this.deviationCents;
 	}
 
-	/** Needle position from −1 (flat) through 0 (in tune) to +1 (sharp). */
+	/**
+	 * Needle position from −1 (flat) through 0 (in tune) to +1 (sharp). The needle is exactly vertical for every deviation inside the in-tune range
+	 * (what the tuner calls "in tune" must look in tune), then moves from the edge of that range to the end of the dial, with no jump.
+	 */
 	public double getNeedlePosition() {
-		return Math.max(-1.0, Math.min(1.0, this.deviationCents / NEEDLE_RANGE_CENTS));
+		double magnitude = Math.abs(this.deviationCents);
+		if( magnitude <= this.inTuneCents || NEEDLE_RANGE_CENTS <= this.inTuneCents ) {
+			return 0.0;
+		}
+		double position = Math.min(1.0, (magnitude - this.inTuneCents) / (NEEDLE_RANGE_CENTS - this.inTuneCents));
+		return (this.deviationCents < 0 ? -position : position);
 	}
 
 	/** Target string in guided mode (1–6); 0 in chromatic mode or without a reading. */

@@ -36,7 +36,7 @@ public class TunerHoldTest {
 		assertTrue(decayed.isHeld());
 		assertSame(live, decayed.getDisplay());
 		assertEquals(TunerDisplay.State.FLAT, decayed.getDisplay().getState());
-		assertEquals(-12.0 / TunerDisplay.NEEDLE_RANGE_CENTS, decayed.getDisplay().getNeedlePosition(), 0.01);
+		assertEquals(-(12.0 - 5.0) / (TunerDisplay.NEEDLE_RANGE_CENTS - 5.0), decayed.getDisplay().getNeedlePosition(), 0.01);
 		assertEquals(TunerDisplay.State.NO_READING, decayed.getLiveState());
 
 		TunerHold.Shown quiet = hold.update(display(hz(45, 0), 0.95, LevelState.TOO_LOW));
