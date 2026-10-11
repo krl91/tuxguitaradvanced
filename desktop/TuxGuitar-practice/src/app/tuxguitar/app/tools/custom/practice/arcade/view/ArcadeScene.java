@@ -441,7 +441,7 @@ public final class ArcadeScene {
 			if (lit.contains(tgString)) {
 				// the string of the active note or chord: bright, with a glow along its length (FR-068); the glow is decoration, the bright colour is not
 				if (f.tier.glow()) {
-					out.line(Role.GLOW, 0, y, w, y, colour, 0.30, width * 3.2, -1, tgString);
+					out.line(Role.GLOW, 0, y, w, y, colour, 0.22, width * 2.2, -1, tgString);
 				}
 				out.line(Role.STRING, 0, y, w, y, colour, 1.0, width * 1.5, -1, tgString);
 			} else {
@@ -904,18 +904,19 @@ public final class ArcadeScene {
 		// the trajectory of a note is its lane, the one of its fret (FR-066): from the horizon to the middle of the top edge of its cell, where it stops; nothing
 		// continues across the neck to the string, the target disk of the neck tells the string
 		ScreenPoint end = lane.end();
-		out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.4, 1.0, event.index(), position.tgString());
-		if (f.tier.trails()) {
+		out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.3, 1.0, event.index(), position.tgString());
+		if (f.tier.trails() && active) {
 			ScreenPoint behind = footAt(f, position.fret(), Math.max(0.0, f.progressOf(event) - 0.12));
-			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.30, Math.max(1.0, g.halfHeight * 0.6), event.index(), position.tgString());
+			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.30, 1.0, event.index(), position.tgString());
 		}
 		double my = g.markerY();
-		if (f.tier.glow()) {
-			out.rounded(Role.GLOW, g.at.x(), my, g.rx() * 1.45, g.ry() * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
+		// only the active note glows: a halo on every marker makes the picture heavy and blurred
+		if (f.tier.glow() && active) {
+			out.rounded(Role.GLOW, g.at.x(), my, g.rx() * 1.25, g.ry() * 1.45, colour, alpha * 0.18, event.index(), position.tgString());
 		}
 		// the marker comes down the neck towards its target, joined by a thin thread to its footprint on the lane (FR-071)
-		out.line(Role.MARKER_THREAD, g.at.x(), g.at.y(), g.at.x(), Math.min(g.at.y(), my + g.ry()), colour, alpha * 0.85, Math.max(1.0, g.halfHeight * 0.2), event.index(), position.tgString());
-		out.rounded(Role.MARKER_FOOTPRINT, g.at.x(), g.at.y(), g.rx(), g.ry() * 0.3, colour, alpha * 0.55, event.index(), position.tgString());
+		out.line(Role.MARKER_THREAD, g.at.x(), g.at.y(), g.at.x(), Math.min(g.at.y(), my + g.ry()), colour, alpha * 0.7, 1.0, event.index(), position.tgString());
+		out.rounded(Role.MARKER_FOOTPRINT, g.at.x(), g.at.y(), g.rx(), Math.max(0.8, g.ry() * 0.16), colour, alpha * 0.5, event.index(), position.tgString());
 		out.rounded(Role.MARKER, g.at.x(), my, g.rx(), g.ry(), colour, alpha, event.index(), position.tgString());
 		// the number of the fret is written under the footprint, never in the marker; it is left out where it would overlap a label, or once the footprint is in the
 		// neck: the ruler of the frets under the neck then says the fret of the active note itself

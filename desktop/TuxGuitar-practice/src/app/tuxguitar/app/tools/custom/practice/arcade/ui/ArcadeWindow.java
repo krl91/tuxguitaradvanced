@@ -100,6 +100,8 @@ public final class ArcadeWindow {
 	public void open() {
 		this.window.pack();
 		this.window.open();
+		// the game fills the screen (owner, 2026-10-11)
+		this.window.setFullScreen(true);
 		this.canvas.start();
 	}
 

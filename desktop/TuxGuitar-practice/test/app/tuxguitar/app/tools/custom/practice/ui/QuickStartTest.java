@@ -41,4 +41,14 @@ public class QuickStartTest {
 		// once the level check says the input is suitable, the same request starts practice
 		assertTrue(QuickStart.startNow(requested, QuickStart.canStart(true, InputAssessment.Status.SUITABLE)));
 	}
+
+	/** The Arcade button of the transport bar (owner, 2026-10-11) starts at once with the input as it is: only an unusable input or no track stops it. */
+	@Test
+	public void anImmediateStartDoesNotWaitForTheLevelCheck() {
+		for( InputAssessment.Status status : InputAssessment.Status.values() ) {
+			assertEquals(status != InputAssessment.Status.UNUSABLE, QuickStart.canStart(true, status, true), status.name());
+			assertFalse(QuickStart.canStart(false, status, true), status.name());
+			assertEquals(QuickStart.canStart(true, status), QuickStart.canStart(true, status, false), status.name());
+		}
+	}
 }

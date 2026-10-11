@@ -8,6 +8,7 @@ import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeResult;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeStarter;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeController;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeEndRouter;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeResultWindow;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeRunPort;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSceneLabels;
@@ -127,6 +128,8 @@ public class PracticeWindow {
 	/** A one-click start is waiting for the input to become usable (see {@link QuickStart}). */
 	private boolean autoStart;
 	private boolean quickStartRequested;
+	/** The one-click start does not wait for the level check (the coloured Arcade button). */
+	private boolean immediateStart;
 	/** False while a one-click start has not needed the preparation window (it exists but was never shown). */
 	private boolean windowShown;
 	private static final long QUICK_START_PATIENCE_MILLIS = 2500L;
@@ -143,6 +146,7 @@ public class PracticeWindow {
 	private int followShownExtras;
 	// ---- Arcade (spec 003 Increment D): the same run as the tempo-following mode (followPlan), seen on the isometric view
 	private ArcadeController arcadeController;
+	private final ArcadeEndRouter arcadeEnds = new ArcadeEndRouter();
 	private ArcadeSession arcadeSession;
 	private ArcadeWindow arcadeWindow;
 	private ArcadeResultWindow arcadeResult;
@@ -190,6 +194,7 @@ public class PracticeWindow {
 	 */
 	public void openAndStartArcade() {
 		FollowSettings.getInstance(this.context).setMode(FollowSettings.Mode.ARCADE);
+		this.immediateStart = true;
 		if( isOpen() ) {
 			if( this.arcadeWindow != null && this.arcadeWindow.isOpen() ) {
 				this.arcadeWindow.getWindow().moveToTop();
@@ -197,6 +202,7 @@ public class PracticeWindow {
 			}
 			open();
 			modeChanged();
+			this.immediateStart = false;
 			startSession();
 			return;
 		}
@@ -254,6 +260,7 @@ public class PracticeWindow {
 				PracticeWindow.this.shared.setPracticeTrack(null);
 				RecognitionSettingsStore.getInstance(PracticeWindow.this.context).removeListener(PracticeWindow.this.settingsListener);
 				PracticeWindow.this.autoStart = false;
+				PracticeWindow.this.immediateStart = false;
 				PracticeWindow.this.window = null;
 				PracticeWindow.this.plugin.windowStateChanged(PracticeWindow.this.context);
 			}
@@ -589,7 +596,7 @@ public class PracticeWindow {
 	}
 
 	private void updateStartButton() {
-		boolean canStart = QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus());
+		boolean canStart = QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus(), this.immediateStart && this.autoStart);
 		this.startButton.setEnabled(canStart);
 		FollowSettings modes = FollowSettings.getInstance(this.context);
 		this.startButton.setText(modes.isArcade() ? TuxGuitar.getProperty("practice.start.arcade", new String[] { TuxGuitar.getProperty("arcade.name") })
@@ -601,8 +608,9 @@ public class PracticeWindow {
 			// after the window is shown: the start hides it
 			TGSynchronizer.getInstance(this.context).executeLater(() -> {
 				if( isOpen() && this.autoStart && this.session == null
-						&& QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus()) ) {
+						&& QuickStart.canStart(this.tracks.getSelectedValue() != null, this.assessment.getStatus(), this.immediateStart) ) {
 					this.autoStart = false;
+					this.immediateStart = false;
 					startSession();
 				}
 			});
@@ -731,11 +739,13 @@ public class PracticeWindow {
 		this.arcadeFull = full;
 		final TrackTuning arcadeTuning = TrackTuning.ofAnyStrings(candidate.getTrack());
 		FollowStarter.Plan plan;
+		// the end of this run is told to its own controller only: a run given back by a restart reports its end later, when the next run exists
+		final ArcadeEndRouter.Run endRun = this.arcadeEnds.next();
 		try {
 			plan = ArcadeStarter.prepareFrom(this.context, this.song, candidate.getTrack(), full, FollowSettings.getInstance(this.context), parameters,
 					new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
 					() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()), this.followAdapter, this::renderArcade,
-					runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), this::arcadeRunEnded,
+					runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), endRun::ended,
 					(loop, handler) -> new FollowEvents(this.context, loop, handler, this.engine.getSelection(), this.shared),
 					() -> TGSynchronizer.getInstance(this.context).executeLater(this::restartArcade));
 		} catch( IllegalArgumentException exception ) {
@@ -773,6 +783,7 @@ public class PracticeWindow {
 			}
 		});
 		final ArcadeController controller = this.arcadeController;
+		endRun.attach(controller);
 		this.arcadeWindow = new ArcadeWindow(TGApplication.getInstance(this.context).getFactory(), TGWindow.getInstance(this.context).getWindow(),
 				session.frameSource(this.followAdapter.player().clock(), ArcadeWindow.newQuality(), () -> plan.percent()),
 				task -> TGSynchronizer.getInstance(this.context).executeLater(task), ARCADE_TEXTS, new ArcadeWindow.Actions() {
@@ -805,14 +816,6 @@ public class PracticeWindow {
 		ArcadeSession session = this.arcadeSession;
 		if( session != null ) {
 			session.accept(snapshot);
-		}
-	}
-
-	/** The run ended, for any cause (UI thread): the controller says it once. */
-	private void arcadeRunEnded(FollowRun.Ended reason) {
-		ArcadeController controller = this.arcadeController;
-		if( controller != null ) {
-			controller.ended(reason);
 		}
 	}
 

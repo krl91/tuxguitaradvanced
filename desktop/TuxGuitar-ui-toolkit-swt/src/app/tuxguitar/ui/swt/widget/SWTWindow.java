@@ -84,6 +84,10 @@ public class SWTWindow extends SWTLayoutContainer<Shell> implements UIWindow {
 		}
 	}
 
+	public void setFullScreen(boolean fullScreen) {
+		this.getControl().setFullScreen(fullScreen);
+	}
+
 	public void maximize() {
 		if((this.getControl().getStyle() & SWT.MAX) != 0) {
 			this.getControl().setMaximized(true);

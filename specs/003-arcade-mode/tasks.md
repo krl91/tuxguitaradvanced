@@ -111,6 +111,7 @@
 - [x] T124 (done 2026-10-11) Restart button in `ArcadeWindow` and `PracticeWindow.restartArcadeFromStart` (Q30); the click is not tested natively, to check by hand.
 - [x] T125 (done 2026-10-11) Coloured Arcade button in the transport bar (`PracticeArcadeAction`, `arcade_toolbar.png` in the six skins, `PracticeWindow.openAndStartArcade`) (Q30); to check by hand.
 - [x] T126 (done 2026-10-11) The note arrives at the foot of the neck (Q31): `footAt` in `ArcadeScene`, red test `RoundedRectTest.theMarkerMergesWithItsTargetAtTheOnsetAndItsThreadFollowsTheStringOfTheNeck` (red then, adjusted to red longest), pixel tests measure the target without the figure of the note; the tests that placed the footprint on the hit line now place it at the foot. The mockups approved by the owner are in `mockups/`. Owner validation of the built application pending.
+- [x] T127 (done 2026-10-11) Regressions (Q32): `ArcadeEndRouterTest` and `QuickStartTest.anImmediateStartDoesNotWaitForTheLevelCheck` (compile-level red, then green), calmer picture (glow and trail on the active note only, thinner threads), full-screen game window (`UIWindow.setFullScreen`, SWT). The real click on Restart and on the coloured button is to be checked by hand: the cause of the Restart regression was found by reading the code (stale end of the old run), not reproduced in the application.
 
 ## Increment D - Interface and result (`SRC/arcade/ui`, `share/lang`)
 

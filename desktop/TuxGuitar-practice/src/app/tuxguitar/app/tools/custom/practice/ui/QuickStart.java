@@ -18,6 +18,14 @@ final class QuickStart {
 	}
 
 	/**
+	 * The Arcade button of the transport bar starts at once with the input as it is, the last one used or the remembered default, without waiting for the
+	 * level check: only an unusable input (or no track) stops it.
+	 */
+	static boolean canStart(boolean trackSelected, InputAssessment.Status status, boolean immediate) {
+		return immediate ? (trackSelected && status != InputAssessment.Status.UNUSABLE) : canStart(trackSelected, status);
+	}
+
+	/**
 	 * A one-click start only applies to the track under the cursor: if that track cannot be practised,
 	 * the learner must choose a track in the preparation window, so nothing starts by itself.
 	 */
