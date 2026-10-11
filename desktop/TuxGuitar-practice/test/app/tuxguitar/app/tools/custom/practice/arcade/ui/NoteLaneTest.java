@@ -36,7 +36,8 @@ public class NoteLaneTest {
 
 	private static final Viewport[] SIZES = { new Viewport(640, 360), new Viewport(1280, 720), new Viewport(2560, 1440) };
 	private static final double TOLERANCE = 0.5;
-	private static final int[] FRETS = { 0, 1, 5, 10, 12, 20 };
+	/** Fret 0 is not here: an open string is a bar across the lanes (FR-069, OpenBarTest). */
+	private static final int[] FRETS = { 1, 5, 10, 12, 20 };
 
 	private static TrackTuning bass() {
 		return TrackTuningFactory.any(43, 38, 33, 28);
@@ -207,7 +208,7 @@ public class NoteLaneTest {
 	@Test
 	public void everyFretFromTheOpenStringToTheLastHasItsLane() {
 		long look = CameraTrack.Settings.standard().lookAheadNanos;
-		for (int fret = 0; fret <= 24; fret++) {
+		for (int fret = 1; fret <= 24; fret++) {
 			SceneFixture fixture = note(SceneFixture.sixStrings(), 1 + fret % 6, fret);
 			for (int step = 0; step <= 100; step += 10) {
 				long now = fixture.onset(0) - (long) ((1.0 - step / 100.0) * look);

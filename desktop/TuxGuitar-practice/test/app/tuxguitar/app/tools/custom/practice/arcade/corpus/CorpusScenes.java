@@ -210,18 +210,28 @@ public final class CorpusScenes {
 				failures.add(where + ": neck targets without an active event " + owners);
 			}
 		} else {
-			if (!owners.equals(Set.of(active))) {
+			ArcadeRenderEvent event = p.events.get(active);
+			// an open string (fret 0) has no target on the neck: its bar lands and its string is lit (FR-069)
+			int fretted = 0;
+			for (ArcadeRenderEvent.Position position : event.positions()) {
+				if (position.fret() > 0) {
+					fretted++;
+				}
+			}
+			if (!owners.equals(fretted > 0 ? Set.of(active) : Set.<Integer>of())) {
 				failures.add(where + ": the neck targets belong to " + owners + ", the active event is " + active);
 			}
-			ArcadeRenderEvent event = p.events.get(active);
-			if (disks.size() != event.positions().size()) {
-				failures.add(where + ": " + disks.size() + " disks for " + event.positions().size() + " written positions");
+			if (disks.size() != fretted) {
+				failures.add(where + ": " + disks.size() + " disks for " + fretted + " written fretted positions");
 			}
 			IsometricProjection projection = new IsometricProjection(SCREEN);
 			int count = p.neck.layout().count();
 			double spacing = count > 1 ? Math.abs(projection.stringY(1, count) - projection.stringY(0, count)) : 40.0;
 			double diameter = Math.max(24.0, Math.min(42.0, 0.6 * spacing));
 			for (ArcadeRenderEvent.Position position : event.positions()) {
+				if (position.fret() == 0) {
+					continue;
+				}
 				ScreenPoint at = projection.neck(p.neck.fretCentreX(position.fret()), p.neck.layout().rowOf(position.tgString()), count, p.camera.at(now));
 				boolean found = false;
 				for (SceneItem disk : disks) {

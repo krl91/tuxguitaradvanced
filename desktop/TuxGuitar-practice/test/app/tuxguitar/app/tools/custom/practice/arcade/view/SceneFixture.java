@@ -45,6 +45,11 @@ public final class SceneFixture {
 		}
 
 		@Override
+		public String openString() {
+			return "Open string";
+		}
+
+		@Override
 		public String automatic() {
 			return "Automatic";
 		}

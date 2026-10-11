@@ -2,7 +2,7 @@ package app.tuxguitar.app.tools.custom.practice.arcade.view;
 
 /**
  * Where each string of a track is drawn (spec 003 FR-027, visual-design.md). TuxGuitar numbers the strings from 1, the highest, to N, the lowest; the
- * approved neck draws the low string at the bottom and a chord diagram reads from the low string on the left to the high one on the right. Every
+ * neck draws the low string at the top and the high one at the bottom (the owner's reference of 2026-10-11, FR-067) and a chord diagram reads from the low string on the left to the high one on the right. Every
  * conversion goes through this one class, so that no widget reverses the strings on its own.
  */
 public final class StringLayout {
@@ -25,13 +25,13 @@ public final class StringLayout {
 		return this.count;
 	}
 
-	/** The row of a string on the neck, counted from the bottom: 0 for the lowest string, {@code count - 1} for the highest (string 1). */
+	/** The row of a string on the neck: 0 for the lowest string (drawn at the top), {@code count - 1} for the highest (string 1, at the bottom). */
 	public int rowOf(int tgString) {
 		check(tgString);
 		return this.count - tgString;
 	}
 
-	/** The TuxGuitar string number drawn at a row counted from the bottom. */
+	/** The TuxGuitar string number drawn at a row (row 0 is the lowest string). */
 	public int tgStringAtRow(int row) {
 		if (row < 0 || row >= this.count) {
 			throw new IllegalArgumentException("no such row: " + row);

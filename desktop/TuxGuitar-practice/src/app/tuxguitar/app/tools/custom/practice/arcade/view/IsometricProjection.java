@@ -42,14 +42,14 @@ public final class IsometricProjection {
 		return margin + (xMm - camera.left()) / camera.span() * usable;
 	}
 
-	/** The screen y of a string row on the neck (row 0 is the lowest string, at the bottom; the highest is nearest the hit line). */
+	/** The screen y of a string row on the neck (row 0 is the lowest string, at the top, nearest the hit line; the highest is at the bottom: FR-067). */
 	public double stringY(int row, int stringCount) {
 		double top = this.viewport.height() * (HIT_LINE + 0.05);
 		double bottom = this.viewport.height() * (NECK_NEAR_EDGE - 0.03);
 		if (stringCount == 1) {
 			return (top + bottom) / 2.0;
 		}
-		return top + (stringCount - 1 - row) * (bottom - top) / (stringCount - 1);
+		return top + row * (bottom - top) / (stringCount - 1);
 	}
 
 	/** A point on the neck plane: the column of a position along the neck and the row of a string. */

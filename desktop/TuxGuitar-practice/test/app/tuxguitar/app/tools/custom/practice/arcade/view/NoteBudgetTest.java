@@ -95,7 +95,7 @@ public class NoteBudgetTest {
 								assertTrue(false, where + ": event " + index + " left " + scene.forEvent(index).size() + " primitives, the first a " + scene.forEvent(index).get(0).role());
 							}
 							if (due && fixture.events.get(index).kind() == app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent.Kind.NOTE) {
-								assertEquals(1, scene.forEvent(index, Role.MARKER).size(), where + ": the marker of event " + index + " is drawn, whatever its number of neighbours");
+								assertEquals(1, scene.forEvent(index, fixture.events.get(index).positions().get(0).fret() == 0 ? Role.OPEN_BAR : Role.MARKER).size(), where + ": the marker of event " + index + " is drawn, whatever its number of neighbours");
 							}
 						}
 						assertNull(SceneBoxes.firstOverlap(SceneBoxes.labels(scene)), where + ": no two labels touch");

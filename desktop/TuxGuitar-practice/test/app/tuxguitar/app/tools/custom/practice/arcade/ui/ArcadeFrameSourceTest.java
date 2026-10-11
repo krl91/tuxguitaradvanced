@@ -47,7 +47,7 @@ public class ArcadeFrameSourceTest {
 
 	public ArcadeFrameSourceTest() {
 		for (int i = 0; i < 8; i++) {
-			song.quarter(i / 4, i % 4, 1 + i % 6, i * 2);
+			song.quarter(i / 4, i % 4, 1 + i % 6, i * 2 + 1);
 		}
 		song.tempoChange(1, 150);
 		this.timeline = FollowTimeline.build(song.song, song.sequence(), 100);

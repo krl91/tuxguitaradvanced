@@ -50,12 +50,12 @@ public class IsometricProjectionTest {
 	}
 
 	@Test
-	public void theNeckIsBelowTheHitLineWithTheLowStringAtTheBottom() {
+	public void theNeckIsBelowTheHitLineWithTheLowStringAtTheTop() {
 		int strings = 6;
-		double previous = Double.MAX_VALUE;
+		double previous = -Double.MAX_VALUE;
 		for (int row = 0; row < strings; row++) {
 			double y = this.projection.stringY(row, strings);
-			assertTrue(y < previous, "a higher string is higher on the screen");
+			assertTrue(y > previous, "a higher string is lower on the screen: the lowest string is at the top (FR-067)");
 			assertTrue(y > this.projection.hitLineY(), "the strings are below the hit line");
 			assertTrue(y < VIEW.height());
 			previous = y;

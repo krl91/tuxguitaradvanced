@@ -74,10 +74,10 @@ public class PaintedAlignmentTest {
 	}
 
 	@Test
-	public void aMovingCameraAndTheOpenStringKeepTheDiskOnItsPaintedString() throws Exception {
+	public void aMovingCameraKeepsTheDiskOnItsPaintedString() throws Exception {
 		long look = CameraTrack.Settings.standard().lookAheadNanos;
 		int checked = 0;
-		for (int fret : new int[] { 0, 3, 14, 22 }) {
+		for (int fret : new int[] { 1, 3, 14, 22 }) {
 			for (int string = 1; string <= 6; string++) {
 				// the next note is far away, so the camera pans while this one comes in: the wires of its cell may be out of the picture, the disk and its string are not
 				SceneFixture fixture = note(string, fret, fret < 10 ? 23 : 1);

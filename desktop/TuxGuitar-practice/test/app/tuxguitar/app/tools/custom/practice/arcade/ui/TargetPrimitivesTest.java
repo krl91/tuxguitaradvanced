@@ -166,7 +166,7 @@ public class TargetPrimitivesTest {
 			assertEquals(outline.colour(), ring.foreground, what + ": the contrasting colour");
 			assertTrue(ring.lineWidth >= 2.0 && ring.lineWidth <= 4.0, what + ": two to four pixels: " + ring.lineWidth);
 		}
-		assertTrue(targets > 0, what + ": the scene has a target");
+		assertTrue(targets > 0 || !scene.withRole(Role.OPEN_BAR).isEmpty(), what + ": the scene has a target, or the bar of an open string (which has none: FR-069)");
 	}
 
 	@Test

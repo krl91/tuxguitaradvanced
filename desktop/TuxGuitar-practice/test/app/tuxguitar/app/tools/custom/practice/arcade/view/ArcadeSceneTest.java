@@ -27,7 +27,7 @@ public class ArcadeSceneTest {
 	/** Six quarter notes, one per string, from the lowest to the highest, at frets 3, 5, 7, 5, 3, 0. */
 	private static SceneFixture oneNotePerString(int percent) {
 		SongFixture song = new SongFixture(2);
-		int[] frets = { 3, 5, 7, 5, 3, 0 };
+		int[] frets = { 3, 5, 7, 5, 3, 2 };
 		for (int i = 0; i < 6; i++) {
 			song.quarter(i / 4, i % 4, 6 - i, frets[i]);
 		}
@@ -186,7 +186,7 @@ public class ArcadeSceneTest {
 		Scene picture = six.scene(false).build(0, SCREEN, null, 100);
 		assertEquals(6, picture.withRole(Role.STRING).size());
 		List<SceneItem> labels = picture.withRole(Role.STRING_LABEL);
-		assertEquals(List.of("E2", "A2", "D3", "G3", "B3", "E4"), texts(sortedByYDescending(labels)), "the low string at the bottom");
+		assertEquals(List.of("E4", "B3", "G3", "D3", "A2", "E2"), texts(sortedByYDescending(labels)), "the low string at the top (FR-067): from the bottom, the high string first");
 
 		SongFixture song = new SongFixture(1);
 		song.quarter(0, 0, 4, 0);
@@ -194,9 +194,10 @@ public class ArcadeSceneTest {
 		SceneFixture bass = new SceneFixture(song, TrackTuningFactory.any(43, 38, 33, 28), 100);
 		Scene fourStrings = bass.scene(false).build(0, SCREEN, null, 100);
 		assertEquals(4, fourStrings.withRole(Role.STRING).size());
-		assertEquals(List.of("E1", "A1", "D2", "G2"), texts(sortedByYDescending(fourStrings.withRole(Role.STRING_LABEL))));
+		assertEquals(List.of("G2", "D2", "A1", "E1"), texts(sortedByYDescending(fourStrings.withRole(Role.STRING_LABEL))));
 		assertEquals(4, new java.util.HashSet<Integer>(java.util.Arrays.asList(bass.colours.of(1), bass.colours.of(2), bass.colours.of(3), bass.colours.of(4))).size());
-		assertEquals("0", fourStrings.forEvent(0, Role.MARKER_FRET).get(0).text(), "an open string says 0");
+		assertEquals(1, fourStrings.forEvent(0, Role.OPEN_BAR).size(), "an open string is a bar across the lanes (FR-069)");
+		assertTrue(fourStrings.forEvent(0, Role.MARKER_FRET).isEmpty(), "and has no fret number");
 	}
 
 	private static List<SceneItem> sortedByYDescending(List<SceneItem> items) {

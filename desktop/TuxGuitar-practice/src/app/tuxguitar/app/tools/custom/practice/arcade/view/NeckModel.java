@@ -137,11 +137,11 @@ public final class NeckModel {
 		return this.nutWidth + (this.widthAtTwelfth - this.nutWidth) * (xMm / (this.scaleLength / 2.0));
 	}
 
-	/** The height of the string of a row above the centre line of the neck at a distance from the nut, in millimetres (the high strings are higher). */
+	/** The height of the string of a row above the centre line of the neck at a distance from the nut, in millimetres (the low strings are higher: the lowest is at the top, FR-067). */
 	public double stringY(int row, double xMm) {
 		int count = this.layout.count();
 		double usable = widthAt(xMm) - 2.0 * 3.5;
 		double spacing = count == 1 ? 0.0 : usable / (count - 1);
-		return (row - (count - 1) / 2.0) * spacing;
+		return ((count - 1) / 2.0 - row) * spacing;
 	}
 }

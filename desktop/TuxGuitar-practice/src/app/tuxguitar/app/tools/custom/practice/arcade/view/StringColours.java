@@ -1,24 +1,24 @@
 package app.tuxguitar.app.tools.custom.practice.arcade.view;
 
 /**
- * One stable colour per string (spec 003 FR-025, visual-design.md): the same for the string's label, its incoming notes, trajectories, target rings and
- * the dots of a chord diagram, from the first frame to the impact. For six strings the approved palette, low to high: cobalt, cyan, teal, gold, violet,
- * magenta. Other counts take distinct colours from the same family, always keeping the low and the high end of the palette, so that a bass looks
- * like the ends of a guitar. The map is fixed for the run. Colours are plain RGB integers (0xRRGGBB); colour is never the only signal.
+ * One stable colour per string (spec 003 FR-025, FR-067, visual-design.md): the same for the string's label, its incoming notes, trajectories, target
+ * disks and the dots of a chord diagram, from the first frame to the impact. For six strings the owner's palette of 2026-10-11, low to high: red,
+ * yellow, light blue, orange, green, violet (violet is the highest string). Other counts take distinct colours from the same family, always keeping red
+ * for the lowest and violet for the highest string. The map is fixed for the run. Colours are plain RGB integers (0xRRGGBB); colour is never the only signal.
  */
 public final class StringColours {
 
-	public static final int COBALT = 0x3B6FE0;
-	public static final int CYAN = 0x2CC4E0;
-	public static final int TEAL = 0x1FA58F;
-	public static final int GOLD = 0xE0A91F;
-	public static final int VIOLET = 0x8C5CE0;
-	public static final int MAGENTA = 0xE0479C;
-	public static final int LIME = 0x8DC63F;
-	public static final int ORANGE = 0xE86A2E;
+	public static final int RED = 0xE5453B;
+	public static final int YELLOW = 0xF5E642;
+	public static final int LIGHT_BLUE = 0x5CB8F0;
+	public static final int ORANGE = 0xF58A2E;
+	public static final int GREEN = 0x3DE0A0;
+	public static final int VIOLET = 0x9B59D0;
+	private static final int COBALT = 0x3B6FE0;
+	private static final int MAGENTA = 0xE0479C;
 
-	private static final int[] SIX = { COBALT, CYAN, TEAL, GOLD, VIOLET, MAGENTA };
-	private static final int[] EIGHT = { COBALT, CYAN, TEAL, LIME, GOLD, ORANGE, VIOLET, MAGENTA };
+	private static final int[] SIX = { RED, YELLOW, LIGHT_BLUE, ORANGE, GREEN, VIOLET };
+	private static final int[] EIGHT = { RED, YELLOW, COBALT, LIGHT_BLUE, ORANGE, GREEN, MAGENTA, VIOLET };
 
 	private final int[] lowToHigh;
 	private final StringLayout layout;

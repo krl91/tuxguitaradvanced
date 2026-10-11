@@ -99,13 +99,13 @@ public class NeckModelTest {
 	}
 
 	@Test
-	public void theNeckWidensTowardsTheBodyAndTheLowStringIsBelowTheHighOne() {
+	public void theNeckWidensTowardsTheBodyAndTheLowStringIsAboveTheHighOne() {
 		NeckModel neck = guitar();
 		assertTrue(neck.widthAt(neck.fretX(12)) > neck.widthAt(0.0));
 		assertTrue(neck.widthAt(neck.fretX(24)) > neck.widthAt(neck.fretX(12)));
 		for (double x : new double[] { 0.0, neck.fretX(12), neck.fretX(24) }) {
 			for (int row = 1; row < neck.layout().count(); row++) {
-				assertTrue(neck.stringY(row, x) > neck.stringY(row - 1, x), "the higher string is higher on the neck");
+				assertTrue(neck.stringY(row, x) < neck.stringY(row - 1, x), "the higher string is lower on the neck: the lowest is at the top (FR-067)");
 			}
 			double centre = (neck.stringY(0, x) + neck.stringY(neck.layout().count() - 1, x)) / 2.0;
 			assertEquals(0.0, centre, 1e-9, "the strings are centred on the neck");

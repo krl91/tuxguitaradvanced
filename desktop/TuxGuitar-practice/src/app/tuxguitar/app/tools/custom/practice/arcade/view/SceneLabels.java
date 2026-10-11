@@ -12,6 +12,9 @@ public interface SceneLabels {
 	String pitchSet(String notes);
 
 	/** An event the mode shows as automatic (it is passed without being judged). */
+	/** The word shown on the bar of an open string (FR-069). */
+	String openString();
+
 	String automatic();
 
 	/** An event the mode cannot present as a recognised chord. */

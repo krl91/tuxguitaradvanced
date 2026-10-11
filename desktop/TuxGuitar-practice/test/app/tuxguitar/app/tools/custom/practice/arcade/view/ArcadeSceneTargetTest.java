@@ -32,7 +32,7 @@ public class ArcadeSceneTargetTest {
 		song.quarter(1, 0, 3, 5);
 		song.chord(1, 1, new int[] { 6, 5, 4, 2 }, new int[] { 3, 5, 5, 4 });
 		song.quarter(1, 2, 1, 12);
-		song.quarter(1, 3, 6, 0);
+		song.quarter(1, 3, 6, 1);
 		song.quarter(2, 0, 2, 8);
 		song.quarter(2, 1, 4, 9);
 		song.quarter(2, 2, 5, 7);

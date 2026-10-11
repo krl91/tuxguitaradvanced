@@ -56,9 +56,9 @@ public class ChordCartoucheTest {
 		assertEquals(2, cartouche.dots().get(1).row());
 		assertEquals(2, cartouche.dots().get(2).row());
 		StringColours colours = StringColours.forStrings(6);
-		assertEquals(StringColours.COBALT, colours.of(cartouche.dots().get(0).tgString()), "low E: cobalt");
-		assertEquals(StringColours.CYAN, colours.of(cartouche.dots().get(1).tgString()), "A: cyan");
-		assertEquals(StringColours.TEAL, colours.of(cartouche.dots().get(2).tgString()), "D: teal");
+		assertEquals(StringColours.RED, colours.of(cartouche.dots().get(0).tgString()), "low E: red");
+		assertEquals(StringColours.YELLOW, colours.of(cartouche.dots().get(1).tgString()), "A: yellow");
+		assertEquals(StringColours.LIGHT_BLUE, colours.of(cartouche.dots().get(2).tgString()), "D: light blue");
 		assertNull(cartouche.name(), "no name written, none invented");
 	}
 

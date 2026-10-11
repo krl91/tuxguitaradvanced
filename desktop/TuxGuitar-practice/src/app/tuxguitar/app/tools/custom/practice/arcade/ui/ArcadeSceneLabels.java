@@ -23,6 +23,11 @@ public final class ArcadeSceneLabels implements SceneLabels {
 	}
 
 	@Override
+	public String openString() {
+		return this.texts.get("arcade.label.open");
+	}
+
+	@Override
 	public String automatic() {
 		return this.texts.get("arcade.label.automatic");
 	}

@@ -110,6 +110,8 @@ public final class ArcadeScene {
 	public static final double CHORD_AXIS = 0.5;
 	/** The half width of a chord bar at the hit line, as a share of the width of the view; it shrinks with the distance as everything does. */
 	public static final double CHORD_HALF_WIDTH = 0.26;
+	/** The alpha of a string that no event of the active moment targets (FR-068); the string of the active event is at 1. */
+	static final double STRING_DIM_ALPHA = 0.35;
 	/** The gap kept between two labels, in pixels. */
 	static final double GAP = 4.0;
 
@@ -178,10 +180,9 @@ public final class ArcadeScene {
 		// the grid of the neck as it is painted, and the lanes built from it, once for this camera snapshot: the neck, the lanes and every marker below use these
 		f.grid = PaintedFretGrid.of(this.neck, f.projection, f.cam);
 		f.lanes = FretArrivalLaneMap.fromPaintedFrets(f.grid, f.projection);
-		drawNeck(out, f, viewport);
-
 		List<Integer> visible = visibleEvents(nowNanos, f.settings);
 		int active = activeEvent(visible, run);
+		drawNeck(out, f, viewport, litStrings(active));
 		Plan plan = plan(f, visible, active, speedPercent);
 		f.noLabel = plan.noLabel;
 		// the events of the admitted set are drawn, the farthest first; every other event is absent: no marker, no lane, no bar, no label (FR-062)
@@ -270,6 +271,10 @@ public final class ArcadeScene {
 		double diameter = Math.max(TARGET_MIN_PX * this.uiScale, Math.min(TARGET_MAX_PX * this.uiScale, TARGET_SPACING_SHARE * spacing));
 		double radius = diameter / 2.0;
 		for (ArcadeRenderEvent.Position position : event.positions()) {
+			if (position.fret() == 0) {
+				// an open string has no target on the neck: its bar lands and the string is lit (FR-069)
+				continue;
+			}
 			ScreenPoint at = f.projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, f.cam);
 			int colour = this.colours.of(position.tgString());
 			if (f.tier.glow()) {
@@ -286,7 +291,8 @@ public final class ArcadeScene {
 	 * lines across at fixed shares of the way. A note follows one of these lanes and no other line goes from the horizon to the neck.
 	 */
 	private void drawField(Out out, Frame f) {
-		for (int fret = 0; fret < f.lanes.size(); fret++) {
+		// no lane for fret 0: an open string is a bar across the lanes (FR-069)
+		for (int fret = 1; fret < f.lanes.size(); fret++) {
 			FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(fret);
 			if (!f.grid.isPainted(Math.max(0, fret - 1)) || !f.grid.isPainted(fret)) {
 				continue;
@@ -300,7 +306,18 @@ public final class ArcadeScene {
 		}
 	}
 
-	private void drawNeck(Out out, Frame f, Viewport viewport) {
+	/** The strings the active event targets (FR-068): the written strings of the active note or chord, none without an active event. */
+	private java.util.Set<Integer> litStrings(int active) {
+		java.util.Set<Integer> lit = new java.util.TreeSet<Integer>();
+		if (active >= 0) {
+			for (ArcadeRenderEvent.Position position : this.events.get(active).positions()) {
+				lit.add(position.tgString());
+			}
+		}
+		return lit;
+	}
+
+	private void drawNeck(Out out, Frame f, Viewport viewport, java.util.Set<Integer> lit) {
 		IsometricProjection projection = f.projection;
 		Camera cam = f.cam;
 		int count = this.neck.layout().count();
@@ -311,8 +328,8 @@ public final class ArcadeScene {
 		double top = f.grid.neckTopY();
 		double bottom = h * IsometricProjection.NECK_NEAR_EDGE;
 		out.quad(Role.NECK_BODY, new double[] { 0, top, w, top, w, bottom, 0, bottom }, NECK_COLOUR, 1.0, -1, 0);
-		double wireTop = projection.stringY(count - 1, count) - h * 0.012;
-		double wireBottom = projection.stringY(0, count) + h * 0.012;
+		double wireTop = projection.stringY(0, count) - h * 0.012;
+		double wireBottom = projection.stringY(count - 1, count) + h * 0.012;
 		double lastNumberRight = -1000.0;
 		for (int n = 0; n <= this.neck.fretCount(); n++) {
 			if (!f.grid.isPainted(n)) {
@@ -351,7 +368,16 @@ public final class ArcadeScene {
 			int tgString = layout.tgStringAtRow(row);
 			double y = projection.stringY(row, count);
 			int colour = this.colours.of(tgString);
-			out.line(Role.STRING, 0, y, w, y, colour, 0.9, 1.0 + this.neck.gauge(row) * 1.2, -1, tgString);
+			double width = 1.0 + this.neck.gauge(row) * 1.2;
+			if (lit.contains(tgString)) {
+				// the string of the active note or chord: bright, with a glow along its length (FR-068); the glow is decoration, the bright colour is not
+				if (f.tier.glow()) {
+					out.line(Role.GLOW, 0, y, w, y, colour, 0.30, width * 3.2, -1, tgString);
+				}
+				out.line(Role.STRING, 0, y, w, y, colour, 1.0, width * 1.5, -1, tgString);
+			} else {
+				out.line(Role.STRING, 0, y, w, y, colour, STRING_DIM_ALPHA, width, -1, tgString);
+			}
 			out.text(Role.STRING_LABEL, PitchNames.of(this.neck.openMidi(row)), w * 0.028, y, h * 0.026, colour, 1.0, -1, tgString, SceneItem.Align.LEFT);
 		}
 		out.line(Role.HIT_LINE, 0, projection.hitLineY(), w, projection.hitLineY(), HIT_COLOUR, 1.0, 2.0, -1, 0);
@@ -595,7 +621,7 @@ public final class ArcadeScene {
 			boolean bar = false;
 			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
 				// the marker is always drawn; its fret number only where it touches no label already placed (the nearest notes are placed first)
-				double[] box = noteGeo(f, event).box();
+				double[] box = isOpenNote(event) ? openGeo(f, event).labelBox(this.labels.openString(), f.h) : noteGeo(f, event).box();
 				boolean free = disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || disjoint(box, next));
 				if (this.densityBudget && !isActive && !free) {
 					plan.noLabel.add(index);
@@ -639,7 +665,13 @@ public final class ArcadeScene {
 				for (double[] box : mine) {
 					free &= disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || disjoint(box, next));
 				}
-				if (!free) {
+				if (!free && event.kind() == ArcadeRenderEvent.Kind.CHORD) {
+					// a diagram that cannot be placed without touching a label becomes a timing bar: a chord of the set is never dropped (FR-062)
+					plan.expanded.remove(index);
+					plan.raise.remove(index);
+					mine.clear();
+					bar = true;
+				} else if (!free) {
 					// the word of an automatic event that would touch another label is left out with the event: it is passed by itself
 					continue;
 				}
@@ -773,19 +805,73 @@ public final class ArcadeScene {
 		}
 	}
 
+	/** A single note written at fret 0: the open string, drawn as a bar across the lanes (FR-069). */
+	private static boolean isOpenNote(ArcadeRenderEvent event) {
+		return event.kind() == ArcadeRenderEvent.Kind.NOTE && event.positions().get(0).fret() == 0;
+	}
+
+	/** Where the bar of an open string is: the width of the lanes at its depth, its lower edge on the line of the lanes, a thickness growing with perspective. */
+	private final class OpenGeo {
+		double left;
+		double right;
+		double bottom;
+		double thickness;
+
+		double[] labelBox(String word, double h) {
+			double size = Math.max(9.0, h * 0.024);
+			return textBox(word, (this.left + this.right) / 2.0, this.bottom - this.thickness - size, size);
+		}
+	}
+
+	private OpenGeo openGeo(Frame f, ArcadeRenderEvent event) {
+		double progress = Math.min(1.0, f.progressOf(event));
+		ScreenPoint left = f.projection.approach(f.cam.left(), progress, f.cam);
+		ScreenPoint right = f.projection.approach(f.cam.right(), progress, f.cam);
+		OpenGeo g = new OpenGeo();
+		g.left = left.x();
+		g.right = right.x();
+		g.bottom = left.y();
+		g.thickness = Math.max(3.0, f.h * 0.014 * left.scale());
+		return g;
+	}
+
+	private void drawOpenBar(Frame f, ArcadeRenderEvent event, double alpha) {
+		Out out = f.out;
+		int tgString = event.positions().get(0).tgString();
+		int colour = this.colours.of(tgString);
+		OpenGeo g = openGeo(f, event);
+		double top = g.bottom - g.thickness;
+		if (f.tier.glow()) {
+			out.quad(Role.GLOW, new double[] { g.left, top - g.thickness, g.right, top - g.thickness, g.right, g.bottom + g.thickness * 0.5, g.left, g.bottom + g.thickness * 0.5 },
+					colour, alpha * 0.20, event.index(), tgString);
+		}
+		out.quad(Role.OPEN_BAR, new double[] { g.left, top, g.right, top, g.right, g.bottom, g.left, g.bottom }, colour, alpha, event.index(), tgString);
+		double cap = Math.max(3.0, g.thickness * 0.9);
+		out.quad(Role.OPEN_CAP, new double[] { g.left, top - g.thickness * 2.0, g.left + cap, top - g.thickness * 2.0, g.left + cap, g.bottom, g.left, g.bottom }, 0xFFFFFF, alpha,
+				event.index(), tgString);
+		if (f.noLabel == null || !f.noLabel.contains(event.index())) {
+			double size = Math.max(9.0, f.h * 0.024);
+			out.text(Role.OPEN_LABEL, this.labels.openString(), (g.left + g.right) / 2.0, g.bottom - g.thickness - size / 2.0, size, TEXT_COLOUR, alpha, event.index(), tgString);
+		}
+	}
+
 	private void drawNote(Frame f, ArcadeRenderEvent event, RenderState state, double alpha, boolean active) {
 		Out out = f.out;
 		ArcadeRenderEvent.Position position = event.positions().get(0);
 		int count = this.neck.layout().count();
 		int row = this.neck.layout().rowOf(position.tgString());
 		int colour = this.colours.of(position.tgString());
-		NoteGeo g = noteGeo(f, event);
-		FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(position.fret());
-		ScreenPoint far = lane.origin();
 		// a note that has its verdict is gone from the lane: the badge says the rest, and the next note of the same fret, which comes on the same lane, finds it free
 		if (isJudged(f, event.index(), state)) {
 			return;
 		}
+		if (isOpenNote(event)) {
+			drawOpenBar(f, event, alpha);
+			return;
+		}
+		NoteGeo g = noteGeo(f, event);
+		FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(position.fret());
+		ScreenPoint far = lane.origin();
 		// the trajectory of a note is its lane, the one of its fret (FR-066): from the horizon to the middle of the top edge of its cell, where it stops; nothing
 		// continues across the neck to the string, the target disk of the neck tells the string
 		ScreenPoint end = lane.end();
