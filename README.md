@@ -6,7 +6,7 @@
 
 **Press play on a tab. Play the notes as they fly towards your fretboard. Get judged on pitch *and* timing, in real time, with your own guitar.**
 
-<p align="center"><img src="docs/images/manual-en/arcade-run.png" width="760" alt="Arcade mode: notes fly from the horizon towards the neck, coloured like the strings, and are judged as they land"></p>
+<p align="center"><img src="docs/images/manual-en/arcade-run.png" width="760" alt="Arcade mode: rectangles come from the horizon towards the neck in a straight line, coloured like the strings, and are judged as they land"></p>
 
 TuxGuitarAdvanced is a free, open source tablature editor that **listens to your guitar** (a microphone or an audio interface is all you need). Open any score (Guitar Pro, MIDI, TuxGuitar...), pick a track, and play along with the rest of the band. No subscription, no catalogue, no account: **your songs, your guitar, your machine**.
 
@@ -20,9 +20,9 @@ TuxGuitarAdvanced is a free, open source tablature editor that **listens to your
 |---|---|---|
 | 🎯 | **Wait for the right note** | The score **waits for you**. The next note is framed on the tab; play it and a green tick lights up. No pressure, perfect for learning a new piece. |
 | 🥁 | **Follow the tempo** | The band starts (count-in, bass, drums, everything but your track) and you play **in time**. Every note is *on time, early, late, wrong or missed*. Raise the tempo step by step from 20 % to 150 %. |
-| 🕹️ | **Arcade** (alpha) | Same band, but as a **game**: notes fly from the horizon, five seconds ahead, on the lane of their fret, coloured like their string. Chase streaks, read the verdict badges, beat your score. |
+| 🕹️ | **Arcade** (alpha) | Same band, but as a **game**: rounded rectangles come from the horizon in one straight line, a measure ahead, to their fret on the neck, coloured like their string. One click on the coloured button of the transport bar starts it at once. Chase streaks, read the verdict badges, beat your score. |
 
-<p align="center"><img src="docs/images/manual/arcade-chord.png" width="700" alt="Arcade mode: a chord arrives with its diagram and its name (French interface)"></p>
+<p align="center"><img src="docs/images/manual/arcade-chord.png" width="700" alt="Arcade mode: a chord arrives as a translucent panel with its name (French interface)"></p>
 
 *Chords come as a bar with the diagram and the name of the next chord, so you can get your hand ready. (This screenshot is in French: the interface is available in English, French and Spanish, and more languages can be added.)*
 
@@ -63,7 +63,7 @@ This is a young project and every kind of help changes it. You do **not** need t
 
 ### Where it stands today
 
-Available now (version 0.5.0-alpha.2): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, five seconds ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
+Available now (version 0.5.0-alpha.4): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, a measure ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
 
 **User manual** (editing and creating a score, and the whole Practice, with screenshots): [English](docs/MANUAL.md) · [Français](docs/MANUAL-FR.md).
 
@@ -76,7 +76,7 @@ Available now (version 0.5.0-alpha.2): practice note by note and chord by chord 
 | | Feature | In short |
 |---|---|---|
 | <img src="docs/images/features/practice.png" width="44" alt="Practice button"> | **Interactive Practice** | One click on the Practice button next to Play: the track under the score cursor is practised, note by note and chord by chord, with immediate feedback. [User guide](docs/PRACTICE.md) |
-| | **Follow the tempo and Arcade (alpha)** | The score plays at its tempo, the other tracks as a backing; each note is judged on time. Arcade shows the run as a game: notes come from the horizon towards the neck, five seconds ahead. [Guide](docs/PRACTICE.md#practising-with-the-band-follow-the-tempo-and-arcade-alpha) |
+| | **Follow the tempo and Arcade (alpha)** | The score plays at its tempo, the other tracks as a backing; each note is judged on time. Arcade shows the run as a game: rectangles come from the horizon towards the neck in a straight line, a measure ahead; a coloured button of the transport bar starts it at once. [Guide](docs/PRACTICE.md#practising-with-the-band-follow-the-tempo-and-arcade-alpha) |
 | | **Polyphonic recognition** | Notes and chords are recognised from what each attack adds to the sound, so a note is found even over a string that still rings (fingerstyle, arpeggios, bass under a melody). |
 | | **Steady tuner** | The needle shows the median of the confident readings of the last quarter second: no shaking, no freezing on a fading string. |
 | | **Input gain and noise reduction** | A gain slider (-6 to +18 dB) in the practice window and in the tuner, an optional noise gate / background-noise subtraction and a suggested gain. |
