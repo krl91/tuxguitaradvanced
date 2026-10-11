@@ -59,9 +59,9 @@ The renderer may introduce an immutable UI-only projection such as `ArcadeRender
 
 ### Physical display order
 
-TuxGuitar numbers string 1 as the highest string. The approved neck draws the low string at the bottom and high string at the top. Therefore, for `N` strings:
+TuxGuitar numbers string 1 as the highest string. Since the owner's reference of 2026-10-11 the neck draws the **low string at the top and the high string (violet) at the bottom** (FR-067). Therefore, for `N` strings:
 
-- screen row from bottom to top uses TuxGuitar string numbers `N, N-1, ... 1`;
+- screen row from top to bottom uses TuxGuitar string numbers `N, N-1, ... 1`;
 - a traditional chord diagram from left to right also uses `N, N-1, ... 1`;
 - all conversion goes through one tested mapping function; do not reverse strings separately in each widget.
 
@@ -79,12 +79,14 @@ Default position markers may use single dots at 3, 5, 7, 9, 15, 17, 19 and 21 an
 
 Assign one colour to each physical string when the Arcade run starts and keep it for the entire run. For the approved six-string palette, low to high:
 
-1. low E: cobalt blue;
-2. A: cyan;
-3. D: teal;
-4. G: gold;
-5. B: violet;
-6. high e: magenta.
+1. low E: red `#E5453B`;
+2. A: yellow `#F5E642` (glow core `#F2F2A2`);
+3. D: light blue `#5CB8F0` (core `#A2D7F0`);
+4. G: orange `#F58A2E` (core `#F5AE68`);
+5. B: green `#3DE0A0` (core `#A0E1D1`);
+6. high e: violet `#9B59D0` (dim line `#4C3C60`).
+
+The values come from the owner's visual reference of 2026-10-11 (sampled from the image; the red of the lowest string is by the convention of guitar games). **Lit string (FR-068):** a string is drawn dim (its colour at low brightness, no glow) while no event of the active moment targets it, and bright with a glow in its colour along its length while the active note or chord targets it; the other strings stay dim at the same instant.
 
 The exact chain is:
 

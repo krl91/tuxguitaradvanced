@@ -16,9 +16,9 @@ All objects are in memory for one run (FR-026). "Source" names the existing clas
 
 | Entity | Fields | Source / rule |
 |---|---|---|
-| `StringLayout` | `count`, `openMidi[]`, `scaleLengthMillimetres`, physical order (low at the bottom) | `TGTrack.stringCount()`, `getString(n).getValue()`, `getOffset()`; one mapping function string number <-> row used everywhere (visual-design.md). Default scale length by string count (guitar 648 mm, bass 864 mm) unless a model overrides. |
+| `StringLayout` | `count`, `openMidi[]`, `scaleLengthMillimetres`, physical order (low at the top, FR-067) | `TGTrack.stringCount()`, `getString(n).getValue()`, `getOffset()`; one mapping function string number <-> row used everywhere (visual-design.md). Default scale length by string count (guitar 648 mm, bass 864 mm) unless a model overrides. |
 | `NeckModel` | `StringLayout`, `fretCount`, `fretX(n) = L (1 - 2^(-n/12))`, string gauges, markers (3, 5, 7, 9, 15, 17, 19, 21 single; 12, 24 double) | Pure model space; fret 12 at L/2 (SC-011). |
-| `StringColours` | frozen map string number -> colour | Six-string palette of visual-design.md low to high (cobalt, cyan, teal, gold, violet, magenta); other counts: distinct colours from the accessible palette, frozen for the run. |
+| `StringColours` | frozen map string number -> colour | Six-string palette of FR-067 low to high (red, yellow, light blue, orange, green, violet); other counts: distinct colours of the same family keeping red low and violet high, frozen for the run. Each string also has a lit flag per frame (FR-068): true only for the strings of the active event. |
 | `ArcadeRenderEvent` | `eventIndex`, `kind` (NOTE/CHORD/AUTO/UNSUPPORTED), `onsetNanos` (from `FollowTimeline.targetNanos`), `positions[]` (string, fret), `chordName?`, `stroke`, `fretSpan` | Built from `PracticeEvent` + `FollowTimeline` only (no second score parser). `MULTI_NOTE` and `AUTO_PASS` are shown as what they are. |
 | `CameraTrack` | keyframes `(timeNanos, centreFret, zoom)`; `at(t)` | R4; built once per run; continuous; pure. |
 | `IsometricProjection` | `project(modelX, modelY, depth) -> (screenX, screenY, scale)` for a viewport | One affine isometric transform plus depth scaling; the hit line is a fixed depth. |

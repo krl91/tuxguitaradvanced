@@ -152,3 +152,12 @@ Profile: event count, note/chord ratio, longest consecutive chord run, peak even
 
 **Rejected.** Any reduced form of an event outside the set (dots, bars, chips, ghosts, summaries); a separate budget for chords; keeping the cartouche or the marker of a completed event for the feedback; a number of visible events that depends on the quality tier.
 
+## R21 - The owner's palette and the lit string (2026-10-11)
+
+**Decision.** The six-string palette, low to high, is red, yellow, light blue, orange, green, violet (FR-067), the lowest string at the top of the neck and violet at the bottom, as in the owner's reference image; a string is dim unless the active event targets it, then bright with a glow (FR-068, SC-025).
+
+**Evidence.** The five visible strings of the image were sampled pixel by pixel: the saturated hue of each line (yellow ≈ 60°, light blue ≈ 200°, orange ≈ 28°, green ≈ 165°, violet ≈ 265° at `#4C3C60` when idle) and the lit core of the glow (`#F2F2A2`, `#A2D7F0`, `#F5AE68`, `#A0E1D1`). The glow cores are blown out by the bloom, so the palette keeps the saturated hue and uses the core only as the "bright" state. The lowest string is outside the image: red by the convention of guitar games (the owner accepted it).
+
+**Alternatives.** Keeping the old cobalt-to-magenta palette (rejected by the owner); lighting the string only at the impact (rejected: the string must tell the learner where to look while the note approaches, from its activation to its judgement).
+
+**Consequences.** `StringColours`, `StringLayout`/the neck rows, the neck painting and every reference scene and image change; the lit state is a per-frame function of the active event; the monochrome look signals a lit string by thickness or brightness. No change to the judgement.

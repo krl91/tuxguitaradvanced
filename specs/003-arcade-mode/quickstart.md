@@ -26,3 +26,9 @@ mvn -e clean verify -P native-modules                                           
 ### Visual lane gate before corpus approval
 
 Before reviewing the 32 real-score screenshots, inspect the minimal lane fixtures required by T066. For every visible fret, its approach lane must meet the midpoint of the fret cell's upper edge. Notes on different strings but the same fret must travel on the same lane while keeping different string colours. At onset the moving marker must be centred on that endpoint; no approach line or connector may continue into or across the physical neck. Reject T044 if any note floats beside a lane, lands on a fret wire, uses a string-specific trajectory or draws a diagonal through the neck.
+
+## Manual check of the palette and the lit string (FR-067, FR-068, owner, 2026-10-11)
+
+1. Start an Arcade run on a six-string track. The strings, from the top to the bottom of the neck, are red, yellow, light blue, orange, green, violet; violet is the highest string.
+2. While no event is active the strings are dim. When a note is the active event, its string is bright with a glow and the other strings stay dim; for a chord, every written string is bright together. The light goes out at the judgement.
+3. In the monochrome look and at `PERFORMANCE`, the targeted string is still visibly brighter or thicker.

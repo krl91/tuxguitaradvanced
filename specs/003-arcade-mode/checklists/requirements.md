@@ -55,3 +55,5 @@
 - Planning must define the latency fixture and protocol before claiming monitoring support. Electrical loopback is preferred; an acoustic built-in-microphone/speaker test is useful only with propagation and room uncertainty documented.
 - The later effects plan must preserve the candidate matrix and raw benchmark results. It may select no third-party library when none meets the licence, integration and 22 ms constraints.
 - The approved concept art is a composition/readability reference, not a resolution target. The simplest renderer that passes SC-014 to SC-016 wins; retaining the existing toolkit renderer is a valid and preferred result when it passes.
+- [x] The string palette and order of 2026-10-11 (FR-067) and the lit string (FR-068) are specified and testable (SC-012, SC-025).
+- [ ] The owner confirms on the built application the palette, the order (lowest string at the top) and the lit string (T100, T101).

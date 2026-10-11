@@ -18,7 +18,7 @@ final class ArcadeScene { static List<Shape> build(ArcadeRun.View run, CameraTra
 
 ## Invariants, each with a test
 
-1. **Strings.** String 1 of TuxGuitar is the high string and is drawn at the top of the neck and at the right of a chord diagram; for 4, 6 and 7 strings the mapping is one tested function; colours never swap between strings.
+1. **Strings.** String 1 of TuxGuitar is the high string and is drawn at the **bottom** of the neck (FR-067: the lowest string is at the top) and at the right of a chord diagram; each string carries a `lit` flag (FR-068) true only for the strings of the active event; for 4, 6 and 7 strings the mapping is one tested function; colours never swap between strings.
 2. **Frets.** `fretX(12) == L / 2` and every `fretX(n)` equals `L (1 - 2^(-n/12))` to 1e-9; markers at 3, 5, 7, 9, 15, 17, 19, 21 single and 12, 24 double.
 3. **Hit line.** For every event, `progress(onset) == 1` exactly (for a single note the middle of the upper edge of its cell, FR-066); at any other time progress is a function of `(onset - now)` and the look-ahead only, so pause, restart, speed and tempo changes cannot drift (the onset comes from `FollowTimeline`).
 4. **Visibility.** For every event and every instant from its first visible frame to its judgement, every target fret (every `ChordNote` of a chord) lies inside the camera window with the margin (SC-010), over single notes, wide chords and large jumps; the camera track is continuous (bounded step between consecutive samples, no teleport) and identical for the same timeline.
