@@ -15,6 +15,10 @@ public final class SceneItem {
 		DISC,
 		/** Centre x, centre y, radius x, radius y; only the outline. */
 		RING,
+		/** Centre x, centre y, half width, half height; a filled rounded rectangle (FR-070). */
+		ROUNDED,
+		/** Centre x, centre y, half width, half height; only the outline of a rounded rectangle. */
+		ROUNDED_RING,
 		/** x (see {@link #align()}), middle y, font height in pixels. */
 		TEXT
 	}
@@ -26,10 +30,12 @@ public final class SceneItem {
 
 	public enum Role {
 		FIELD_GUIDE, NECK_BODY, STRING, STRING_LABEL, FRET_WIRE, NUT, FRET_NUMBER, INLAY, HIT_LINE,
-		MARKER, MARKER_FRET, CHORD_BAR, TRAJECTORY, TARGET_DISK, TARGET_OUTLINE,
+		MARKER, MARKER_FRET, CHORD_BAR, TRAJECTORY, TARGET_RECT, TARGET_OUTLINE,
 		TIMING_BAR, STEM, EVENT_TEXT, CHORD_CHIP,
 		/** The open string (fret 0): a horizontal bar across the lanes, its bright cap at the left end and its word (FR-069). */
 		OPEN_BAR, OPEN_CAP, OPEN_LABEL,
+		/** The thread and the footprint of a fretted marker (FR-071), the highlighted number of the active fret on the ruler, the approach band (FR-072). */
+		MARKER_THREAD, MARKER_FOOTPRINT, FRET_RULER_ACTIVE, APPROACH_BAND,
 		CARTOUCHE_FRAME, CARTOUCHE_HEADER, CARTOUCHE_STRING, CARTOUCHE_FRET, CARTOUCHE_DOT, CARTOUCHE_MARK, CARTOUCHE_FRET_LABEL, CARTOUCHE_NAME, CARTOUCHE_STROKE,
 		CARTOUCHE_NOTE,
 		BADGE, BADGE_SYMBOL, BADGE_TEXT,
@@ -38,7 +44,7 @@ public final class SceneItem {
 		GLOW, TRAIL, SHADOW, TARGET_HALO;
 
 		public boolean isDecoration() {
-			return this == GLOW || this == TRAIL || this == SHADOW || this == TARGET_HALO;
+			return this == GLOW || this == TRAIL || this == SHADOW || this == TARGET_HALO || this == APPROACH_BAND;
 		}
 	}
 

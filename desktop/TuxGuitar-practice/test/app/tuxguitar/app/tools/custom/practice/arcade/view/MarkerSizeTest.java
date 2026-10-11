@@ -19,7 +19,8 @@ public class MarkerSizeTest {
 		song.quarter(1, 0, 3, 5);
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
 		Scene scene = fixture.scene(false).withMarkerSize(factor).build(fixture.onset(0) - beforeOnset * MS, SCREEN, null, 100, QualityTier.FULL);
-		return scene.forEvent(0, Role.MARKER).get(0).value(2);
+		// the marker is a rounded rectangle twice as wide as high: the radius of the setting is its half height over 0.6
+		return scene.forEvent(0, Role.MARKER).get(0).value(3) / 0.6;
 	}
 
 	@Test

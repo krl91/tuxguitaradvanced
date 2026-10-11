@@ -138,7 +138,7 @@ public class LitStringTest {
 		for (Theme theme : Theme.values()) {
 			for (boolean mono : new boolean[] { false, true }) {
 				Scene scene = fixture.scene(mono).withTheme(theme).build(now, SCREEN, null, 100, QualityTier.FULL);
-				assertEquals(1, scene.withRole(Role.TARGET_DISK).size(), "the target disk is still there");
+				assertEquals(1, scene.withRole(Role.TARGET_RECT).size(), "the target disk is still there");
 				assertEquals(6, scene.withRole(Role.STRING_LABEL).size(), "and the six labels of the strings");
 				SceneItem litLine = stringLine(scene, 3);
 				SceneItem dimLine = stringLine(scene, 1);

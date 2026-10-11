@@ -143,16 +143,18 @@ public class TargetPrimitivesTest {
 	}
 
 	private void check(PainterRenderer renderer, Scene scene, QualityTier tier, String what) {
-		StatefulPainter painter = paint(renderer, scene, tier);
+		PaintRecorder painter = PaintRecorder.record(renderer, scene, tier);
 		int targets = 0;
-		for (SceneItem item : scene.withRole(Role.TARGET_DISK)) {
+		for (SceneItem item : scene.withRole(Role.TARGET_RECT)) {
 			targets++;
-			double diameter = 2.0 * item.value(2);
-			Circle core = find(painter, UIPainter.PATH_FILL, item.value(0), item.value(1), diameter);
-			assertNotNull(core, what + ": the filled core was sent to the painter, centred, of that diameter");
+			double height = 2.0 * item.value(3);
+			PaintRecorder.Polygon core = painter.roundedAt(item.value(0), item.value(1), 2.0 * item.value(2));
+			assertNotNull(core, what + ": the filled rounded rectangle was sent to the painter, centred");
 			assertEquals(255, core.alpha, what + ": fully opaque when it is drawn");
-			assertEquals(item.colour(), core.background, what + ": in the colour of its string");
-			assertTrue(diameter >= 24.0 - 1e-9 && diameter <= 42.0 + 1e-9 || diameter >= 48.0 - 1e-9, what + ": a size of the rule");
+			assertEquals(item.colour(), core.fill, what + ": in the colour of its string");
+			assertEquals(2.0 * item.value(2), core.maxX() - core.minX(), 1e-3, what + ": as wide as the scene says");
+			assertEquals(height, core.maxY() - core.minY(), 1e-3, what + ": as high as the scene says");
+			assertTrue(height >= 24.0 - 1e-9 && height <= 42.0 + 1e-9 || height >= 48.0 - 1e-9, what + ": a height of the rule");
 			SceneItem outline = null;
 			for (SceneItem candidate : scene.forEvent(item.eventIndex(), Role.TARGET_OUTLINE)) {
 				if (Math.abs(candidate.value(0) - item.value(0)) < 1e-9 && Math.abs(candidate.value(1) - item.value(1)) < 1e-9) {
@@ -160,10 +162,15 @@ public class TargetPrimitivesTest {
 				}
 			}
 			assertNotNull(outline);
-			Circle ring = find(painter, UIPainter.PATH_DRAW, outline.value(0), outline.value(1), 2.0 * outline.value(2));
+			PaintRecorder.Polygon ring = null;
+			for (PaintRecorder.Polygon candidate : painter.outlines) {
+				if (Math.abs((candidate.minX() + candidate.maxX()) / 2.0 - outline.value(0)) < 0.01 && Math.abs((candidate.minY() + candidate.maxY()) / 2.0 - outline.value(1)) < 0.01) {
+					ring = candidate;
+				}
+			}
 			assertNotNull(ring, what + ": the outline was sent too");
 			assertEquals(255, ring.alpha);
-			assertEquals(outline.colour(), ring.foreground, what + ": the contrasting colour");
+			assertEquals(outline.colour(), ring.fill, what + ": the contrasting colour");
 			assertTrue(ring.lineWidth >= 2.0 && ring.lineWidth <= 4.0, what + ": two to four pixels: " + ring.lineWidth);
 		}
 		assertTrue(targets > 0 || !scene.withRole(Role.OPEN_BAR).isEmpty(), what + ": the scene has a target, or the bar of an open string (which has none: FR-069)");

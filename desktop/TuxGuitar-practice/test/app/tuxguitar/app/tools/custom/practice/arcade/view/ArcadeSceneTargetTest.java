@@ -45,6 +45,14 @@ public class ArcadeSceneTargetTest {
 		return new double[] { at.x(), at.y() };
 	}
 
+	/** The half width of the target of a fret: the cell between its two painted wires, less a margin of 14 % (3 pixels at the least); never narrower than 0.7 of the half height. */
+	static double expectedHalfWidth(SceneFixture fixture, long now, Viewport viewport, int fret, double halfHeight) {
+		IsometricProjection projection = new IsometricProjection(viewport);
+		Camera cam = fixture.camera.at(now);
+		double cell = Math.abs(projection.neckX(fixture.neck.fretX(fret), cam) - projection.neckX(fixture.neck.fretX(fret - 1), cam));
+		return Math.max(halfHeight * 0.7, (cell - Math.max(3.0, cell * 0.14)) / 2.0);
+	}
+
 	static double expectedDiameter(Viewport viewport, int strings, double uiScale) {
 		IsometricProjection projection = new IsometricProjection(viewport);
 		double spacing = Math.abs(projection.stringY(1, strings) - projection.stringY(0, strings));
@@ -84,21 +92,21 @@ public class ArcadeSceneTargetTest {
 		for (Viewport viewport : SIZES) {
 			for (double uiScale : new double[] { 1.0, 2.0 }) {
 				for (Scene scene : everyKind(fixture, now, null, viewport, uiScale)) {
-					List<SceneItem> disks = scene.forEvent(0, Role.TARGET_DISK);
+					List<SceneItem> disks = scene.forEvent(0, Role.TARGET_RECT);
 					assertEquals(1, disks.size(), "one disk for a note");
-					assertEquals(1, scene.withRole(Role.TARGET_DISK).size(), "and nothing else on the neck");
+					assertEquals(1, scene.withRole(Role.TARGET_RECT).size(), "and nothing else on the neck");
 					SceneItem disk = disks.get(0);
-					assertEquals(SceneItem.Shape.DISC, disk.shape());
+					assertEquals(SceneItem.Shape.ROUNDED, disk.shape(), "a rounded rectangle (FR-070), not a disc");
 					assertEquals(1.0, disk.alpha(), 0.0, "fully opaque");
-					assertEquals(expectedDiameter(viewport, 6, uiScale), 2.0 * disk.value(2), 1e-9, "the diameter of the rule at " + viewport.width() + " x" + uiScale);
-					assertEquals(disk.value(2), disk.value(3), 0.0, "a disk, not an ellipse");
+					assertEquals(expectedDiameter(viewport, 6, uiScale), 2.0 * disk.value(3), 1e-9, "the height of the rule at " + viewport.width() + " x" + uiScale);
+					assertEquals(expectedHalfWidth(fixture, now, viewport, 5, expectedDiameter(viewport, 6, uiScale) / 2.0), disk.value(2), 1e-9, "it fills the cell of its fret between the two painted wires, less a margin");
 					double[] centre = expectedCentre(fixture, now, viewport, 3, 5);
 					assertEquals(centre[0], disk.value(0), 1e-9, "the exact fret");
 					assertEquals(centre[1], disk.value(1), 1e-9, "the exact string");
 					assertEquals(3, disk.tgString());
 
 					SceneItem outline = scene.forEvent(0, Role.TARGET_OUTLINE).get(0);
-					assertEquals(SceneItem.Shape.RING, outline.shape());
+					assertEquals(SceneItem.Shape.ROUNDED_RING, outline.shape());
 					assertTrue(outline.lineWidth() >= 2.0 && outline.lineWidth() <= 4.0, "an outline of 2 to 4 pixels: " + outline.lineWidth());
 					assertEquals(1.0, outline.alpha(), 0.0);
 					assertEquals(disk.value(2) + outline.lineWidth() / 2.0, outline.value(2), 1e-9, "the outline is just outside the core");
@@ -116,7 +124,7 @@ public class ArcadeSceneTargetTest {
 		for (Theme theme : Theme.values()) {
 			for (boolean mono : new boolean[] { false, true }) {
 				Scene scene = fixture.scene(mono).withTheme(theme).build(now, SCREEN, null, 100, QualityTier.FULL);
-				SceneItem disk = scene.forEvent(0, Role.TARGET_DISK).get(0);
+				SceneItem disk = scene.forEvent(0, Role.TARGET_RECT).get(0);
 				SceneItem outline = scene.forEvent(0, Role.TARGET_OUTLINE).get(0);
 				SceneItem neck = scene.withRole(Role.NECK_BODY).get(0);
 				if (!mono) {
@@ -141,7 +149,7 @@ public class ArcadeSceneTargetTest {
 				Scene scene = fixture.scene(false).build(now, viewport, null, 100, tier);
 				StringBuilder core = new StringBuilder();
 				for (SceneItem item : scene.items()) {
-					if (item.role() == Role.TARGET_DISK || item.role() == Role.TARGET_OUTLINE) {
+					if (item.role() == Role.TARGET_RECT || item.role() == Role.TARGET_OUTLINE) {
 						core.append(item).append('\n');
 					}
 				}
@@ -164,14 +172,14 @@ public class ArcadeSceneTargetTest {
 		ArcadeRun.View run = ArcadeSceneTest.completedBefore(1, fixture.events.size());
 		for (Viewport viewport : SIZES) {
 			for (Scene scene : everyKind(fixture, now, run, viewport, 1.0)) {
-				List<SceneItem> disks = scene.withRole(Role.TARGET_DISK);
+				List<SceneItem> disks = scene.withRole(Role.TARGET_RECT);
 				assertEquals(4, disks.size(), "one disk for each written position, no more");
 				Set<Integer> owners = new TreeSet<Integer>();
 				Set<String> placed = new TreeSet<String>();
 				for (SceneItem disk : disks) {
 					owners.add(disk.eventIndex());
 					assertEquals(1.0, disk.alpha(), 0.0);
-					assertEquals(expectedDiameter(viewport, 6, 1.0), 2.0 * disk.value(2), 1e-9);
+					assertEquals(expectedDiameter(viewport, 6, 1.0), 2.0 * disk.value(3), 1e-9);
 					placed.add(disk.tgString() + "@" + Math.round(disk.value(0) * 10) + "," + Math.round(disk.value(1) * 10));
 				}
 				assertEquals(Set.of(1), owners, "one event owns them all");
@@ -193,7 +201,7 @@ public class ArcadeSceneTargetTest {
 		Scene scene = fixture.scene(false).build(now, SCREEN, null, 100);
 		Set<Integer> owners = new TreeSet<Integer>();
 		for (SceneItem item : scene.items()) {
-			if (item.role() == Role.TARGET_DISK || item.role() == Role.TARGET_OUTLINE || item.role() == Role.TARGET_HALO) {
+			if (item.role() == Role.TARGET_RECT || item.role() == Role.TARGET_OUTLINE || item.role() == Role.TARGET_HALO) {
 				owners.add(item.eventIndex());
 			}
 		}
@@ -202,7 +210,7 @@ public class ArcadeSceneTargetTest {
 			Scene next = fixture.scene(false).build(now, SCREEN, ArcadeSceneTest.completedBefore(completed, fixture.events.size()), 100);
 			Set<Integer> now2 = new TreeSet<Integer>();
 			for (SceneItem item : next.items()) {
-				if (item.role() == Role.TARGET_DISK) {
+				if (item.role() == Role.TARGET_RECT) {
 					now2.add(item.eventIndex());
 				}
 			}
@@ -215,7 +223,7 @@ public class ArcadeSceneTargetTest {
 		SceneFixture fixture = mixed();
 		for (long offset = -2900; offset <= 780; offset += 20) {
 			Scene scene = fixture.scene(false).build(fixture.onset(0) + offset * MS, SCREEN, null, 100);
-			List<SceneItem> disks = scene.forEvent(0, Role.TARGET_DISK);
+			List<SceneItem> disks = scene.forEvent(0, Role.TARGET_RECT);
 			assertEquals(1, disks.size(), "at " + offset);
 			assertEquals(1.0, disks.get(0).alpha(), 0.0, "never faded, at " + offset);
 		}
@@ -229,7 +237,7 @@ public class ArcadeSceneTargetTest {
 		int lastBefore = -1;
 		for (int i = 0; i < scene.items().size(); i++) {
 			SceneItem item = scene.items().get(i);
-			if (item.role() == Role.TARGET_HALO || item.role() == Role.TARGET_DISK || item.role() == Role.TARGET_OUTLINE) {
+			if (item.role() == Role.TARGET_HALO || item.role() == Role.TARGET_RECT || item.role() == Role.TARGET_OUTLINE) {
 				firstDisk = firstDisk < 0 ? i : firstDisk;
 			} else if (item.eventIndex() >= 0 && item.role() != Role.BADGE && item.role() != Role.BADGE_TEXT && item.role() != Role.BADGE_SYMBOL || item.role() == Role.STRING
 					|| item.role() == Role.NECK_BODY || item.role() == Role.FRET_WIRE) {
@@ -246,7 +254,7 @@ public class ArcadeSceneTargetTest {
 		song.quarter(1, 0, 4, 3);
 		SceneFixture bass = new SceneFixture(song, TrackTuningFactory.any(43, 38, 33, 28), 100);
 		Scene scene = bass.scene(false).build(bass.onset(0) - 500 * MS, SCREEN, null, 100);
-		double diameter = 2.0 * scene.forEvent(0, Role.TARGET_DISK).get(0).value(2);
+		double diameter = 2.0 * scene.forEvent(0, Role.TARGET_RECT).get(0).value(3);
 		assertEquals(expectedDiameter(SCREEN, 4, 1.0), diameter, 1e-9);
 		assertTrue(diameter > expectedDiameter(SCREEN, 6, 1.0));
 		assertTrue(diameter <= 42.0);

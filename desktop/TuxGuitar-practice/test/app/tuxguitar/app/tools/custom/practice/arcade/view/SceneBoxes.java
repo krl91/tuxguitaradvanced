@@ -92,10 +92,10 @@ public final class SceneBoxes {
 		List<Box> boxes = new ArrayList<Box>();
 		for (SceneItem item : scene.items()) {
 			switch (item.role()) {
-				case MARKER:
-					if (numbered.contains(item.eventIndex())) {
-						boxes.add(ofDisc(item));
-					}
+				case MARKER_FRET:
+				case OPEN_LABEL:
+				case FRET_RULER_ACTIVE:
+					boxes.add(ofText(item));
 					break;
 				case CARTOUCHE_FRAME:
 				case BADGE:

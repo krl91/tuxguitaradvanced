@@ -61,6 +61,17 @@ public class NoteLaneTest {
 		return null;
 	}
 
+	/** The centre of a painted shape. */
+	private static final class Centre {
+		final double cx;
+		final double cy;
+
+		Centre(double cx, double cy) {
+			this.cx = cx;
+			this.cy = cy;
+		}
+	}
+
 	private static PaintRecorder.Circle paintedCircle(PaintRecorder recorder, SceneItem item) {
 		for (PaintRecorder.Circle circle : recorder.circles) {
 			if (circle.style == app.tuxguitar.ui.resource.UIPainter.PATH_FILL && Math.abs(circle.cx - item.value(0)) < 0.01 && Math.abs(circle.cy - item.value(1)) < 0.01
@@ -147,18 +158,20 @@ public class NoteLaneTest {
 			if (item.shape() == SceneItem.Shape.LINE && (item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL || item.role() == Role.FIELD_GUIDE)) {
 				assertTrue(Math.max(item.value(1), item.value(3)) <= neck.top + TOLERANCE, where + ": a line of the approach goes into the neck: " + item.role());
 			}
-			if (item.role() == Role.MARKER) {
+			if (item.role() == Role.MARKER || item.role() == Role.MARKER_FOOTPRINT) {
 				assertTrue(item.value(1) <= neck.top + TOLERANCE, where + ": a marker is below the top edge of the neck");
 			}
 			if (item.eventIndex() == 0 && item.shape() == SceneItem.Shape.LINE) {
-				assertTrue(item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL, where + ": nothing but the lane and its trail is drawn for the note: " + item.role());
+				assertTrue(item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL || item.role() == Role.MARKER_THREAD, where + ": nothing but the lane and its trail is drawn for the note: " + item.role());
 			}
 		}
 
 		// 3. the marker really painted is on the lane at every progress, and at its end at the onset
-		SceneItem markerItem = scene.forEvent(0, Role.MARKER).get(0);
-		PaintRecorder.Circle marker = paintedCircle(recorder, markerItem);
-		assertNotNull(marker, where + ": the marker was sent to the painter");
+		// the footprint of the marker stands on the lane (the marker floats above it, FR-071)
+		SceneItem markerItem = scene.forEvent(0, Role.MARKER_FOOTPRINT).get(0);
+		PaintRecorder.Polygon painted = recorder.roundedAt(markerItem.value(0), markerItem.value(1));
+		assertNotNull(painted, where + ": the footprint of the marker was sent to the painter");
+		Centre marker = new Centre((painted.minX() + painted.maxX()) / 2.0, (painted.minY() + painted.maxY()) / 2.0);
 		assertTrue(distanceToSegment(marker.cx, marker.cy, lane.x1, lane.y1, lane.x2, lane.y2) <= TOLERANCE,
 				where + ": the marker leaves its lane by " + distanceToSegment(marker.cx, marker.cy, lane.x1, lane.y1, lane.x2, lane.y2));
 		double p = IsometricProjection.depthShare(progress);
@@ -292,7 +305,7 @@ public class NoteLaneTest {
 				}
 				moved |= Math.abs(camera.left() - firstLeft) > 1.0;
 				for (SceneItem item : scene.items()) {
-					if (item.role() != Role.MARKER || item.eventIndex() < 0) {
+					if (item.role() != Role.MARKER_FOOTPRINT || item.eventIndex() < 0) {
 						continue;
 					}
 					int fret = fixture.events.get(item.eventIndex()).positions().get(0).fret();

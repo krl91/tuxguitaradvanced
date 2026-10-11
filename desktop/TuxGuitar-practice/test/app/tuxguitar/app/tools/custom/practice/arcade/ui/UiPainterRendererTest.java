@@ -116,6 +116,7 @@ public class UiPainterRendererTest {
 					break;
 				case QUAD:
 				case DISC:
+				case ROUNDED:
 					fills++;
 					break;
 				default:

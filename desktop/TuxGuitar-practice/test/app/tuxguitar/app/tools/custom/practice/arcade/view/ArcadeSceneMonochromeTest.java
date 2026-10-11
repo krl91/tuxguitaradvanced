@@ -64,7 +64,7 @@ public class ArcadeSceneMonochromeTest {
 		}
 		assertEquals(6, labels.size(), "six labels, one per string");
 		assertEquals(6, rows.size(), "six rows");
-		SceneItem ring = picture.forEvent(1, Role.TARGET_DISK).get(0);
+		SceneItem ring = picture.forEvent(1, Role.TARGET_RECT).get(0);
 		SceneItem string = null;
 		for (SceneItem item : picture.withRole(Role.STRING_LABEL)) {
 			if (item.tgString() == 3) {
@@ -74,8 +74,8 @@ public class ArcadeSceneMonochromeTest {
 		assertEquals(string.value(1), ring.value(1), 1e-9, "the target sits on the row of its string, whose label says which one");
 		assertEquals("5", picture.forEvent(1, Role.MARKER_FRET).get(0).text());
 		SceneItem fretFive = null;
-		for (SceneItem number : picture.withRole(Role.FRET_NUMBER)) {
-			if ("5".equals(number.text())) {
+		for (SceneItem number : picture.items()) {
+			if ((number.role() == Role.FRET_NUMBER || number.role() == Role.FRET_RULER_ACTIVE) && "5".equals(number.text())) {
 				fretFive = number;
 			}
 		}

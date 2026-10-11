@@ -104,11 +104,11 @@ public class ArcadeSceneDensityTest {
 					ArcadeRenderEvent active = fixture.events.get(completed);
 					if (active.kind() == ArcadeRenderEvent.Kind.NOTE) {
 						assertFalse(scene.forEvent(completed, Role.MARKER_FRET).isEmpty(), "the fret number of the active note " + completed + " at " + offset);
-						assertFalse(scene.forEvent(completed, Role.TARGET_DISK).isEmpty(), "and its ring on the neck");
+						assertFalse(scene.forEvent(completed, Role.TARGET_RECT).isEmpty(), "and its ring on the neck");
 					} else {
 						assertFalse(scene.forEvent(completed, Role.CARTOUCHE_FRAME).isEmpty(), "the diagram of the active chord " + completed + " at " + offset);
 						assertFalse(scene.forEvent(completed, Role.CARTOUCHE_NAME).isEmpty(), "and its header");
-						assertFalse(scene.forEvent(completed, Role.TARGET_DISK).isEmpty(), "and its ghost on the neck");
+						assertFalse(scene.forEvent(completed, Role.TARGET_RECT).isEmpty(), "and its ghost on the neck");
 					}
 				}
 			}
@@ -171,7 +171,7 @@ public class ArcadeSceneDensityTest {
 			for (Scene scene : allVariants(fixture, now, null)) {
 				Set<Integer> owners = new TreeSet<Integer>();
 				for (SceneItem item : scene.items()) {
-					if (item.role() == Role.TARGET_DISK) {
+					if (item.role() == Role.TARGET_RECT) {
 						owners.add(item.eventIndex());
 					}
 				}
@@ -182,7 +182,7 @@ public class ArcadeSceneDensityTest {
 			Scene next = fixture.scene(false).build(now, SCREEN, ArcadeSceneTest.completedBefore(1, fixture.events.size()), 100);
 			Set<Integer> owners = new TreeSet<Integer>();
 			for (SceneItem item : next.items()) {
-				if (item.role() == Role.TARGET_DISK) {
+				if (item.role() == Role.TARGET_RECT) {
 					owners.add(item.eventIndex());
 				}
 			}
@@ -195,9 +195,9 @@ public class ArcadeSceneDensityTest {
 		SceneFixture fixture = crowded(16);
 		Scene scene = fixture.scene(false).build(fixture.onset(0) - 150 * MS, SCREEN, null, 100);
 		assertEquals(fixture.events.get(0).kind(), ArcadeRenderEvent.Kind.CHORD);
-		assertEquals(fixture.events.get(0).positions().size(), scene.forEvent(0, Role.TARGET_DISK).size());
+		assertEquals(fixture.events.get(0).positions().size(), scene.forEvent(0, Role.TARGET_RECT).size());
 		for (SceneItem item : scene.items()) {
-			if (item.role() == Role.TARGET_DISK) {
+			if (item.role() == Role.TARGET_RECT) {
 				assertEquals(0, item.eventIndex());
 			}
 		}

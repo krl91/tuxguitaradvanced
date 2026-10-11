@@ -80,8 +80,8 @@ public class OpenBarTest {
 			assertEquals(1, words.size(), "the word of the open string");
 			assertEquals("Open string", words.get(0).text());
 			assertEquals(1, scene.forEvent(0, Role.OPEN_CAP).size(), "the bright cap at the left end");
-			assertTrue(scene.forEvent(0, Role.TARGET_DISK).isEmpty(), "an open string has no target disk");
-			assertTrue(scene.withRole(Role.TARGET_DISK).isEmpty(), "and none from any other event");
+			assertTrue(scene.forEvent(0, Role.TARGET_RECT).isEmpty(), "an open string has no target disk");
+			assertTrue(scene.withRole(Role.TARGET_RECT).isEmpty(), "and none from any other event");
 		}
 	}
 
@@ -97,7 +97,7 @@ public class OpenBarTest {
 			open |= "O".equals(mark.text());
 		}
 		assertTrue(open, "the O of the diagram");
-		assertTrue(scene.withRole(Role.TARGET_DISK).stream().noneMatch(d -> d.tgString() == 3), "no disk on an open string of the chord");
-		assertEquals(3, scene.withRole(Role.TARGET_DISK).size() + 1, "the two fretted positions have their disks (the open one has none)");
+		assertTrue(scene.withRole(Role.TARGET_RECT).stream().noneMatch(d -> d.tgString() == 3), "no disk on an open string of the chord");
+		assertEquals(3, scene.withRole(Role.TARGET_RECT).size() + 1, "the two fretted positions have their disks (the open one has none)");
 	}
 }

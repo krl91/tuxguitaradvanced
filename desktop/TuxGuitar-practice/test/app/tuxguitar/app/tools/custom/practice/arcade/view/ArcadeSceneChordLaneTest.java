@@ -230,11 +230,11 @@ public class ArcadeSceneChordLaneTest {
 		SceneFixture fixture = chords(8, 0, true);
 		Scene scene = fixture.scene(false).build(fixture.onset(0) - 1000 * MS, SCREEN, null, 100);
 		for (SceneItem item : scene.items()) {
-			if (item.role() == Role.TARGET_DISK) {
+			if (item.role() == Role.TARGET_RECT) {
 				assertEquals(0, item.eventIndex());
 			}
 		}
-		assertEquals(4, scene.forEvent(0, Role.TARGET_DISK).size());
+		assertEquals(4, scene.forEvent(0, Role.TARGET_RECT).size());
 		for (int i = 1; i < 8; i++) {
 			for (SceneItem item : scene.forEvent(i)) {
 				assertTrue(item.role() == Role.CHORD_BAR || item.role() == Role.CHORD_CHIP, "chord " + i + " is a bar without diagram, perhaps with its name: " + item);

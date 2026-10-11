@@ -199,9 +199,9 @@ public final class CorpusScenes {
 		int active = expectedActive(p, now, run);
 		// FR-060, FR-065: one event owns the targets, all of its positions and only them, opaque, of the right size, on the right intersections
 		Set<Integer> owners = new TreeSet<Integer>();
-		List<SceneItem> disks = scene.withRole(Role.TARGET_DISK);
+		List<SceneItem> disks = scene.withRole(Role.TARGET_RECT);
 		for (SceneItem item : scene.items()) {
-			if (item.role() == Role.TARGET_DISK || item.role() == Role.TARGET_OUTLINE || item.role() == Role.TARGET_HALO) {
+			if (item.role() == Role.TARGET_RECT || item.role() == Role.TARGET_OUTLINE || item.role() == Role.TARGET_HALO) {
 				owners.add(item.eventIndex());
 			}
 		}
@@ -237,7 +237,7 @@ public final class CorpusScenes {
 				for (SceneItem disk : disks) {
 					if (Math.abs(disk.value(0) - at.x()) < 1e-6 && Math.abs(disk.value(1) - at.y()) < 1e-6 && disk.tgString() == position.tgString()) {
 						found = true;
-						if (disk.alpha() != 1.0 || Math.abs(2.0 * disk.value(2) - diameter) > 1e-6 || (!mono && disk.colour() != p.colours.of(position.tgString()))) {
+						if (disk.alpha() != 1.0 || Math.abs(2.0 * disk.value(3) - diameter) > 1e-6 || (!mono && disk.colour() != p.colours.of(position.tgString()))) {
 							failures.add(where + ": a target disk is not opaque, of the rule's size and of its string's colour");
 						}
 					}
@@ -361,7 +361,7 @@ public final class CorpusScenes {
 		}
 		int count = p.neck.layout().count();
 		for (SceneItem marker : scene.items()) {
-			if (marker.role() != Role.MARKER || marker.eventIndex() < 0) {
+			if (marker.role() != Role.MARKER_FOOTPRINT || marker.eventIndex() < 0) {
 				continue;
 			}
 			ArcadeRenderEvent event = p.events.get(marker.eventIndex());

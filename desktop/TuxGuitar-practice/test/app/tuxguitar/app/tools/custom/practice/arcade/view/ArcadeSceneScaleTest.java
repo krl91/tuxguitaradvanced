@@ -20,7 +20,7 @@ public class ArcadeSceneScaleTest {
 		for (ReferenceScenes.Reference reference : ReferenceScenes.all()) {
 			Scene one = reference.fixture.scene(false).build(reference.nowNanos, new Viewport(1280, 720), reference.run, 100);
 			Scene two = reference.fixture.scene(false).withUiScale(2.0).build(reference.nowNanos, new Viewport(2560, 1440), reference.run, 100);
-			for (Role role : new Role[] { Role.HIT_LINE, Role.STRING, Role.NUT, Role.FRET_WIRE, Role.STRING_LABEL, Role.FRET_NUMBER, Role.TARGET_DISK, Role.TARGET_OUTLINE }) {
+			for (Role role : new Role[] { Role.HIT_LINE, Role.STRING, Role.NUT, Role.FRET_WIRE, Role.STRING_LABEL, Role.FRET_NUMBER, Role.TARGET_RECT, Role.TARGET_OUTLINE }) {
 				assertEquals(one.withRole(role).size(), two.withRole(role).size(), reference.name + " " + role);
 				for (int i = 0; i < one.withRole(role).size(); i++) {
 					SceneItem a = one.withRole(role).get(i);

@@ -124,6 +124,21 @@ public final class UiPainterRenderer extends PainterRenderer {
 					p.addCircle((float) item.value(0), (float) item.value(1), (float) (2.0 * item.value(2)));
 					p.closePath();
 					break;
+				case ROUNDED:
+					p.setBackground(colour(item.colour()));
+					p.initPath(UIPainter.PATH_FILL);
+					roundedPath(p, item);
+					p.closePath();
+					break;
+				case ROUNDED_RING:
+					p.setForeground(colour(item.colour()));
+					p.setLineWidth((float) item.lineWidth());
+					p.initPath(UIPainter.PATH_DRAW);
+					roundedPath(p, item);
+					// the last side is drawn explicitly: a stroked path is not closed by every painter
+					p.lineTo((float) (item.value(0) + (item.value(2) - Math.max(0.0, Math.min(item.value(2), item.value(3)) * 0.45))), (float) (item.value(1) - item.value(3)));
+					p.closePath();
+					break;
 				case TEXT:
 					p.setFont(font(item.value(2)));
 					p.setForeground(colour(item.colour()));
@@ -137,6 +152,33 @@ public final class UiPainterRenderer extends PainterRenderer {
 			}
 		}
 		p.setAlpha(255);
+	}
+
+	/** The outline of a rounded rectangle as straight segments (three per corner), so that every painter and the tests see the same shape. */
+	static void roundedPath(UIPainter p, SceneItem item) {
+		double cx = item.value(0);
+		double cy = item.value(1);
+		double rx = item.value(2);
+		double ry = item.value(3);
+		double r = Math.max(0.0, Math.min(rx, ry) * 0.45);
+		double[][] corner = { { 1, -1 }, { 1, 1 }, { -1, 1 }, { -1, -1 } };
+		double[] start = { -90, 0, 90, 180 };
+		boolean first = true;
+		for (int c = 0; c < 4; c++) {
+			double ccx = cx + corner[c][0] * (rx - r);
+			double ccy = cy + corner[c][1] * (ry - r);
+			for (int k = 0; k <= 2; k++) {
+				double angle = Math.toRadians(start[c] + 45.0 * k);
+				float x = (float) (ccx + r * Math.cos(angle));
+				float y = (float) (ccy + r * Math.sin(angle));
+				if (first) {
+					p.moveTo(x, y);
+					first = false;
+				} else {
+					p.lineTo(x, y);
+				}
+			}
+		}
 	}
 
 	@Override

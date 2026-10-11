@@ -119,7 +119,7 @@ public class NoteBudgetTest {
 						Camera camera = fixture.camera.at(now);
 						PaintedFretGrid grid = PaintedFretGrid.of(fixture.neck, projection, camera);
 						FretArrivalLaneMap lanes = FretArrivalLaneMap.fromPaintedFrets(grid, projection);
-						for (SceneItem marker : scene.withRole(Role.MARKER)) {
+						for (SceneItem marker : scene.withRole(Role.MARKER_FOOTPRINT)) {
 							int index = marker.eventIndex();
 							int fret = fixture.events.get(index).positions().get(0).fret();
 							double progress = Math.max(0.0, Math.min(1.0, 1.0 - (double) (fixture.onset(index) - now) / look));
@@ -168,7 +168,7 @@ public class NoteBudgetTest {
 					Scene scene = fixture.scene(false).build(now, viewport, null, 100);
 					Set<Integer> owners = new HashSet<Integer>();
 					for (SceneItem item : scene.items()) {
-						if (item.role() == Role.TARGET_DISK || item.role() == Role.TARGET_OUTLINE || item.role() == Role.TARGET_HALO) {
+						if (item.role() == Role.TARGET_RECT || item.role() == Role.TARGET_OUTLINE || item.role() == Role.TARGET_HALO) {
 							owners.add(item.eventIndex());
 						}
 					}
@@ -178,7 +178,7 @@ public class NoteBudgetTest {
 				Scene afterOne = fixture.scene(false).build(fixture.onset(0) + 10 * MS, viewport, ArcadeSceneTest.completedBefore(1, fixture.events.size()), 100);
 				Set<Integer> owners = new HashSet<Integer>();
 				for (SceneItem item : afterOne.items()) {
-					if (item.role() == Role.TARGET_DISK) {
+					if (item.role() == Role.TARGET_RECT) {
 						owners.add(item.eventIndex());
 					}
 				}
@@ -196,18 +196,18 @@ public class NoteBudgetTest {
 			// a note that has just come inside the look-ahead is at the horizon, small; it then goes down its lane for the five seconds
 			long now = fixture.onset(0) - look + 20 * MS;
 			Scene entering = fixture.scene(false).build(now, new Viewport(1280, 720), null, 100);
-			SceneItem marker = entering.forEvent(0, Role.MARKER).get(0);
+			SceneItem marker = entering.forEvent(0, Role.MARKER_FOOTPRINT).get(0);
 			double travelled = (marker.value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
 			assertTrue(travelled < 0.02, "the note comes in at the horizon: " + travelled);
 			double previous = travelled;
 			for (long left = look - 20 * MS; left >= 0; left -= 100 * MS) {
 				Scene scene = fixture.scene(false).build(fixture.onset(0) - left, new Viewport(1280, 720), null, 100);
-				double now2 = (scene.forEvent(0, Role.MARKER).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+				double now2 = (scene.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
 				assertTrue(now2 >= previous, "it only goes down");
 				previous = now2;
 			}
 			Scene onset = fixture.scene(false).build(fixture.onset(0), new Viewport(1280, 720), null, 100);
-			double arrived = (onset.forEvent(0, Role.MARKER).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+			double arrived = (onset.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
 			assertTrue(arrived >= previous);
 			assertEquals(1.0, arrived, 1e-9, "and reaches the neck at its onset");
 		}

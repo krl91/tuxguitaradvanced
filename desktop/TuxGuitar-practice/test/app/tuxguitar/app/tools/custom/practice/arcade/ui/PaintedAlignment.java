@@ -98,11 +98,12 @@ final class PaintedAlignment {
 	}
 
 	private static void measure(Scene scene, Picture picture, int fret, double progress, String where, boolean cellRequired) throws Exception {
-		SceneItem disk = scene.forEvent(0, Role.TARGET_DISK).get(0);
+		SceneItem disk = scene.forEvent(0, Role.TARGET_RECT).get(0);
 		int expected = disk.colour();
 		int cx = (int) Math.round(disk.value(0));
 		int cy = (int) Math.round(disk.value(1));
 		double radius = disk.value(2);
+		double halfHeight = disk.value(3);
 
 		// 1. the painter really put the opaque disk there, in the colour of the string (the system may shift the colours a little: the colour that was painted
 		// is the one at the centre, and it must be that of the string within a wide margin, and the same all over the core)
@@ -118,22 +119,22 @@ final class PaintedAlignment {
 		}
 
 		// 2. the painted disk is measured, not assumed: from the middle of its core, the first light pixel on each side is its outline
-		int reach = (int) Math.ceil(radius + 8);
+		int reach = (int) Math.ceil(Math.max(radius, halfHeight) + 8);
 		int outlineLeft = Integer.MIN_VALUE;
 		int outlineRight = Integer.MIN_VALUE;
 		int outlineTop = Integer.MIN_VALUE;
 		int outlineBottom = Integer.MIN_VALUE;
 		for (int d = 1; d <= reach; d++) {
-			if (outlineLeft == Integer.MIN_VALUE && lighterThan(picture.at(cx - d, cy), 0xE8E8E8)) {
+			if (outlineLeft == Integer.MIN_VALUE && d <= radius + 8 && lighterThan(picture.at(cx - d, cy), 0xE8E8E8)) {
 				outlineLeft = cx - d;
 			}
-			if (outlineRight == Integer.MIN_VALUE && lighterThan(picture.at(cx + d, cy), 0xE8E8E8)) {
+			if (outlineRight == Integer.MIN_VALUE && d <= radius + 8 && lighterThan(picture.at(cx + d, cy), 0xE8E8E8)) {
 				outlineRight = cx + d;
 			}
-			if (outlineTop == Integer.MIN_VALUE && lighterThan(picture.at(cx, cy - d), 0xE8E8E8)) {
+			if (outlineTop == Integer.MIN_VALUE && d <= halfHeight + 8 && lighterThan(picture.at(cx, cy - d), 0xE8E8E8)) {
 				outlineTop = cy - d;
 			}
-			if (outlineBottom == Integer.MIN_VALUE && lighterThan(picture.at(cx, cy + d), 0xE8E8E8)) {
+			if (outlineBottom == Integer.MIN_VALUE && d <= halfHeight + 8 && lighterThan(picture.at(cx, cy + d), 0xE8E8E8)) {
 				outlineBottom = cy + d;
 			}
 		}
@@ -147,9 +148,20 @@ final class PaintedAlignment {
 
 		// 3. the painted wires of the neck on both sides of the disk: the row is above the top string, inside the neck
 		List<SceneItem> strings = scene.withRole(Role.STRING);
-		double first = Math.min(strings.get(0).value(1), strings.get(1).value(1));
-		double second = Math.max(strings.get(0).value(1), strings.get(1).value(1));
-		int wireRow = (int) Math.round((first + second) / 2.0);
+		// the row between two strings, the farthest from the target rectangle (which stands on its string and is up to a half spacing high): only wires cross it
+		java.util.List<Double> rows = new java.util.ArrayList<Double>();
+		for (SceneItem string : strings) {
+			rows.add(string.value(1));
+		}
+		java.util.Collections.sort(rows);
+		double bestRow = (rows.get(0) + rows.get(1)) / 2.0;
+		for (int i = 0; i + 1 < rows.size(); i++) {
+			double mid = (rows.get(i) + rows.get(i + 1)) / 2.0;
+			if (Math.abs(mid - paintedY) > Math.abs(bestRow - paintedY)) {
+				bestRow = mid;
+			}
+		}
+		int wireRow = (int) Math.round(bestRow);
 		List<Double> wires = verticalLines(picture, wireRow, 0x505060, 0, picture.width - 1);
 		double left = Double.NaN;
 		double right = Double.NaN;
@@ -193,9 +205,10 @@ final class PaintedAlignment {
 					break;
 				}
 			}
-			int[] column = new int[13];
+			// a window wide enough that the glow of a lit string (about ten rows) is less than half of it: the background is the median
+			int[] column = new int[25];
 			for (int k = 0; k < column.length; k++) {
-				column[k] = picture.at(probe, (int) Math.round(paintedY) - 6 + k);
+				column[k] = picture.at(probe, (int) Math.round(paintedY) - 12 + k);
 			}
 			int[] sorted = column.clone();
 			java.util.Arrays.sort(sorted);
@@ -210,7 +223,7 @@ final class PaintedAlignment {
 						+ Math.abs((column[k] & 0xFF) - (background & 0xFF));
 				if (deviation > 30) {
 					weight += deviation;
-					moment += deviation * (Math.round(paintedY) - 6 + k + 0.5);
+					moment += deviation * (Math.round(paintedY) - 12 + k + 0.5);
 				}
 			}
 			if (weight > 0) {

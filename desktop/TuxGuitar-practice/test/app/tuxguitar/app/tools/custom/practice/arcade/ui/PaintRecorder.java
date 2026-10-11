@@ -68,10 +68,41 @@ public final class PaintRecorder implements InvocationHandler {
 		public final int alpha;
 		public final int fill;
 
+		public final double lineWidth;
+
 		Polygon(double[] xy, int alpha, int fill) {
+			this(xy, alpha, fill, 0.0);
+		}
+
+		Polygon(double[] xy, int alpha, int fill, double lineWidth) {
 			this.xy = xy;
 			this.alpha = alpha;
 			this.fill = fill;
+			this.lineWidth = lineWidth;
+		}
+
+		public double minX() {
+			double min = Double.MAX_VALUE;
+			for (int i = 0; i < this.xy.length; i += 2) {
+				min = Math.min(min, this.xy[i]);
+			}
+			return min;
+		}
+
+		public double maxX() {
+			double max = -Double.MAX_VALUE;
+			for (int i = 0; i < this.xy.length; i += 2) {
+				max = Math.max(max, this.xy[i]);
+			}
+			return max;
+		}
+
+		public double maxY() {
+			double max = -Double.MAX_VALUE;
+			for (int i = 1; i < this.xy.length; i += 2) {
+				max = Math.max(max, this.xy[i]);
+			}
+			return max;
 		}
 
 		public double minY() {
@@ -85,6 +116,28 @@ public final class PaintRecorder implements InvocationHandler {
 
 	public final List<Segment> segments = new ArrayList<Segment>();
 	public final List<Polygon> polygons = new ArrayList<Polygon>();
+	/** The outlines of rounded rectangles that were drawn (stroke colour in {@code fill}). */
+	/** The filled rounded rectangle (twelve points) whose bounding box is centred on the given point, or null. */
+	public Polygon roundedAt(double cx, double cy, double width) {
+		for (Polygon polygon : this.polygons) {
+			if (polygon.xy.length == 24 && Math.abs((polygon.minX() + polygon.maxX()) / 2.0 - cx) < 0.01 && Math.abs((polygon.minY() + polygon.maxY()) / 2.0 - cy) < 0.01
+					&& Math.abs(polygon.maxX() - polygon.minX() - width) < 0.01) {
+				return polygon;
+			}
+		}
+		return null;
+	}
+
+	public Polygon roundedAt(double cx, double cy) {
+		for (Polygon polygon : this.polygons) {
+			if (polygon.xy.length == 24 && Math.abs((polygon.minX() + polygon.maxX()) / 2.0 - cx) < 0.01 && Math.abs((polygon.minY() + polygon.maxY()) / 2.0 - cy) < 0.01) {
+				return polygon;
+			}
+		}
+		return null;
+	}
+
+	public final List<Polygon> outlines = new ArrayList<Polygon>();
 	public final List<Circle> circles = new ArrayList<Circle>();
 	public final List<String> texts = new ArrayList<String>();
 	private int alpha = 255;
@@ -92,7 +145,7 @@ public final class PaintRecorder implements InvocationHandler {
 	private int stroke;
 	private double lineWidth = 1.0;
 	private int style;
-	private final double[] points = new double[8];
+	private final double[] points = new double[64];
 	private int pointCount;
 
 	private static int rgb(UIColor colour) {
@@ -120,7 +173,7 @@ public final class PaintRecorder implements InvocationHandler {
 				return null;
 			case "moveTo":
 			case "lineTo":
-				if (this.pointCount < 4) {
+				if (this.pointCount < 32) {
 					this.points[2 * this.pointCount] = (Float) args[0];
 					this.points[2 * this.pointCount + 1] = (Float) args[1];
 					this.pointCount++;
@@ -130,8 +183,12 @@ public final class PaintRecorder implements InvocationHandler {
 				if (this.style == UIPainter.PATH_DRAW && this.pointCount == 2) {
 					this.segments.add(new Segment(this.points[0], this.points[1], this.points[2], this.points[3], this.lineWidth, this.alpha, this.stroke));
 				}
-				if (this.style == UIPainter.PATH_FILL && this.pointCount == 4) {
-					this.polygons.add(new Polygon(java.util.Arrays.copyOf(this.points, 8), this.alpha, this.fill));
+				if (this.style == UIPainter.PATH_FILL && (this.pointCount == 4 || this.pointCount == 12)) {
+					// four corners (a quadrilateral) or twelve points (a rounded rectangle: three segments per corner)
+					this.polygons.add(new Polygon(java.util.Arrays.copyOf(this.points, 2 * this.pointCount), this.alpha, this.fill));
+				}
+				if (this.style == UIPainter.PATH_DRAW && (this.pointCount == 12 || this.pointCount == 13)) {
+					this.outlines.add(new Polygon(java.util.Arrays.copyOf(this.points, 24), this.alpha, this.stroke, this.lineWidth));
 				}
 				this.pointCount = 0;
 				return null;

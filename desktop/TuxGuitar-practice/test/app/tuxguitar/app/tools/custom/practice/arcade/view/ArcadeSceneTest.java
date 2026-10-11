@@ -64,7 +64,7 @@ public class ArcadeSceneTest {
 			int expected = fixture.colours.of(tgString);
 			for (long offset = -2900; offset <= 0; offset += 100) {
 				Scene picture = scene.build(fixture.onset(index) + offset * MS, SCREEN, completedBefore(index, 6), 100);
-				for (Role role : new Role[] { Role.MARKER, Role.TRAJECTORY, Role.TARGET_DISK }) {
+				for (Role role : new Role[] { Role.MARKER, Role.TRAJECTORY, Role.TARGET_RECT }) {
 					List<SceneItem> items = picture.forEvent(index, role);
 					assertEquals(1, items.size(), "event " + index + " " + role + " at " + offset + " ms");
 					assertEquals(expected, items.get(0).colour(), "event " + index + " " + role + " at " + offset + " ms");
@@ -97,13 +97,13 @@ public class ArcadeSceneTest {
 			ArcadeScene scene = fixture.scene(false);
 			IsometricProjection projection = new IsometricProjection(SCREEN);
 			for (int index = 0; index < 6; index++) {
-				SceneItem at = scene.build(fixture.onset(index), SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.MARKER).get(0);
+				SceneItem at = scene.build(fixture.onset(index), SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.MARKER_FOOTPRINT).get(0);
 				assertEquals(projection.hitLineY(), at.value(1), 0.0, "event " + index + " at " + percent + " %");
-				SceneItem ring = scene.build(fixture.onset(index), SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.TARGET_DISK).get(0);
+				SceneItem ring = scene.build(fixture.onset(index), SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.TARGET_RECT).get(0);
 				assertEquals(ring.value(0), at.value(0), 1e-9, "the marker arrives on the column of its target");
 				double previous = Double.NEGATIVE_INFINITY;
 				for (long offset = -2900; offset <= 0; offset += 100) {
-					SceneItem marker = scene.build(fixture.onset(index) + offset * MS, SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.MARKER).get(0);
+					SceneItem marker = scene.build(fixture.onset(index) + offset * MS, SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.MARKER_FOOTPRINT).get(0);
 					assertTrue(marker.value(1) >= previous, "the marker only moves towards the hit line");
 					assertTrue(marker.value(1) <= projection.hitLineY());
 					previous = marker.value(1);

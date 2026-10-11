@@ -17,6 +17,12 @@ import app.tuxguitar.app.tools.custom.practice.arcade.view.SceneItem.Shape;
 public final class ArcadeScene {
 
 	static final int NECK_COLOUR = 0x1B2028;
+	/** The body of the neck is a faint tint: the scene behind stays visible (FR-075). */
+	static final double NECK_ALPHA = 0.30;
+	/** The number of the fret of the active event on the ruler of the neck. */
+	static final int RULER_ACTIVE_COLOUR = 0xFFB347;
+	static final int BAND_COLOUR = 0x2D5FA6;
+	static final int BAND_LANE_COLOUR = 0x8FBBFF;
 	static final int WIRE_COLOUR = 0x8A93A0;
 	static final int INLAY_COLOUR = 0x59616E;
 	static final int HIT_COLOUR = 0xF2F4F7;
@@ -185,6 +191,7 @@ public final class ArcadeScene {
 		f.lanes = FretArrivalLaneMap.fromPaintedFrets(f.grid, f.projection);
 		List<Integer> visible = visibleEvents(nowNanos, f.settings);
 		int active = activeEvent(visible, run);
+		f.activeFrets = activeFrets(active);
 		drawNeck(out, f, viewport, litStrings(active));
 		Plan plan = plan(f, visible, active, speedPercent);
 		f.noLabel = plan.noLabel;
@@ -279,13 +286,17 @@ public final class ArcadeScene {
 				continue;
 			}
 			ScreenPoint at = f.projection.neck(this.neck.fretCentreX(position.fret()), this.neck.layout().rowOf(position.tgString()), count, f.cam);
+			// the rectangle fills the cell of the fret between its two painted wires, less a margin (FR-070)
+			double wireLeft = f.projection.neckX(this.neck.fretX(position.fret() - 1), f.cam);
+			double wireRight = f.projection.neckX(this.neck.fretX(position.fret()), f.cam);
+			double cell = Math.abs(wireRight - wireLeft);
+			double halfWidth = Math.max(radius * 0.7, (cell - Math.max(3.0, cell * 0.14)) / 2.0);
 			int colour = this.colours.of(position.tgString());
 			if (f.tier.glow()) {
-				f.out.disc(Role.TARGET_HALO, at.x(), at.y(), radius * 1.7, radius * 1.7, colour, 0.28, event.index(), position.tgString());
+				f.out.rounded(Role.TARGET_HALO, at.x(), at.y(), halfWidth * 1.12, radius * 1.6, colour, 0.28, event.index(), position.tgString());
 			}
-			f.out.disc(Role.TARGET_DISK, at.x(), at.y(), radius, radius, colour, 1.0, event.index(), position.tgString());
-			f.out.ring(Role.TARGET_OUTLINE, at.x(), at.y(), radius + OUTLINE_PX / 2.0, radius + OUTLINE_PX / 2.0, OUTLINE_COLOUR, 1.0, OUTLINE_PX, event.index(),
-					position.tgString());
+			f.out.rounded(Role.TARGET_RECT, at.x(), at.y(), halfWidth, radius, colour, 1.0, event.index(), position.tgString());
+			f.out.roundedRing(Role.TARGET_OUTLINE, at.x(), at.y(), halfWidth + OUTLINE_PX / 2.0, radius + OUTLINE_PX / 2.0, OUTLINE_COLOUR, 1.0, OUTLINE_PX, event.index(), position.tgString());
 		}
 	}
 
@@ -294,6 +305,23 @@ public final class ArcadeScene {
 	 * lines across at fixed shares of the way. A note follows one of these lanes and no other line goes from the horizon to the neck.
 	 */
 	private void drawField(Out out, Frame f) {
+		if (f.tier.glow()) {
+			// the approach band (FR-072): a faint blue zone behind the lanes, from the horizon to the neck, the lane of the active fret a little lighter
+			ScreenPoint farLeft = f.projection.approach(f.cam.left(), 0.0, f.cam);
+			ScreenPoint farRight = f.projection.approach(f.cam.right(), 0.0, f.cam);
+			ScreenPoint nearLeft = f.projection.approach(f.cam.left(), 1.0, f.cam);
+			ScreenPoint nearRight = f.projection.approach(f.cam.right(), 1.0, f.cam);
+			out.quad(Role.APPROACH_BAND, new double[] { farLeft.x(), farLeft.y(), farRight.x(), farRight.y(), nearRight.x(), nearRight.y(), nearLeft.x(), nearLeft.y() }, BAND_COLOUR, 0.16, -1, 0);
+			for (int fret : f.activeFrets) {
+				if (f.cam.shows(this.neck.fretX(fret - 1), 0.0) || f.cam.shows(this.neck.fretX(fret), 0.0)) {
+					ScreenPoint a0 = f.projection.approach(this.neck.fretX(fret - 1), 0.0, f.cam);
+					ScreenPoint b0 = f.projection.approach(this.neck.fretX(fret), 0.0, f.cam);
+					ScreenPoint a1 = f.projection.approach(this.neck.fretX(fret - 1), 1.0, f.cam);
+					ScreenPoint b1 = f.projection.approach(this.neck.fretX(fret), 1.0, f.cam);
+					out.quad(Role.APPROACH_BAND, new double[] { a0.x(), a0.y(), b0.x(), b0.y(), b1.x(), b1.y(), a1.x(), a1.y() }, BAND_LANE_COLOUR, 0.14, -1, 0);
+				}
+			}
+		}
 		// no lane for fret 0: an open string is a bar across the lanes (FR-069)
 		for (int fret = 1; fret < f.lanes.size(); fret++) {
 			FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(fret);
@@ -320,6 +348,19 @@ public final class ArcadeScene {
 		return lit;
 	}
 
+	/** The frets of the fretted positions of the active event (FR-071: the ruler highlights them, FR-072: the band lights their lane). */
+	private java.util.Set<Integer> activeFrets(int active) {
+		java.util.Set<Integer> frets = new java.util.TreeSet<Integer>();
+		if (active >= 0) {
+			for (ArcadeRenderEvent.Position position : this.events.get(active).positions()) {
+				if (position.fret() > 0) {
+					frets.add(position.fret());
+				}
+			}
+		}
+		return frets;
+	}
+
 	private void drawNeck(Out out, Frame f, Viewport viewport, java.util.Set<Integer> lit) {
 		IsometricProjection projection = f.projection;
 		Camera cam = f.cam;
@@ -330,7 +371,7 @@ public final class ArcadeScene {
 		// the top edge of the neck is where the lanes end
 		double top = f.grid.neckTopY();
 		double bottom = h * IsometricProjection.NECK_NEAR_EDGE;
-		out.quad(Role.NECK_BODY, new double[] { 0, top, w, top, w, bottom, 0, bottom }, NECK_COLOUR, 1.0, -1, 0);
+		out.quad(Role.NECK_BODY, new double[] { 0, top, w, top, w, bottom, 0, bottom }, NECK_COLOUR, NECK_ALPHA, -1, 0);
 		double wireTop = projection.stringY(0, count) - h * 0.012;
 		double wireBottom = projection.stringY(count - 1, count) + h * 0.012;
 		double lastNumberRight = -1000.0;
@@ -346,7 +387,11 @@ public final class ArcadeScene {
 				double half = Integer.toString(n).length() * h * 0.022 * 0.33;
 				// and only where it does not touch the one before: in a wide view of high frets the numbers are close, and some are left out
 				if (centre - half >= 0 && centre + half <= w && centre - half >= lastNumberRight + GAP) {
-					out.text(Role.FRET_NUMBER, Integer.toString(n), centre, h * 0.905, h * 0.022, WIRE_COLOUR, 1.0, -1, 0);
+					if (f.activeFrets.contains(n)) {
+						out.text(Role.FRET_RULER_ACTIVE, Integer.toString(n), centre, h * 0.905, h * 0.029, RULER_ACTIVE_COLOUR, 1.0, -1, 0);
+					} else {
+						out.text(Role.FRET_NUMBER, Integer.toString(n), centre, h * 0.905, h * 0.022, WIRE_COLOUR, 1.0, -1, 0);
+					}
 					lastNumberRight = centre + half;
 				}
 			}
@@ -401,6 +446,7 @@ public final class ArcadeScene {
 		final double h;
 		PaintedFretGrid grid;
 		java.util.Set<Integer> noLabel;
+		java.util.Set<Integer> activeFrets = new java.util.TreeSet<Integer>();
 		FretArrivalLaneMap lanes;
 
 		Frame(Out out, IsometricProjection projection, Camera cam, Viewport viewport, QualityTier tier, long now, CameraTrack.Settings settings, ArcadeRun.View run) {
@@ -445,9 +491,44 @@ public final class ArcadeScene {
 		ScreenPoint at;
 		double radius;
 		double x;
+		int fret;
 
+		/** Half width and half height of the marker (FR-070): a rounded rectangle about twice as wide as high. */
+		double rx() {
+			return this.radius * 1.2;
+		}
+
+		double ry() {
+			return this.radius * 0.6;
+		}
+
+		/** How high the marker floats above its footprint on the lane (FR-071). */
+		double lift() {
+			return this.radius * 2.6;
+		}
+
+		double markerY() {
+			return this.at.y() - lift();
+		}
+
+		double numberSize() {
+			return Math.max(8.0, this.radius * 1.3);
+		}
+
+		double numberY() {
+			return this.at.y() + this.ry() * 0.3 + numberSize() * 0.75;
+		}
+
+		/** The box of the fret number under the footprint, where it must overlap no other label. */
+		double[] numberBox() {
+			double w = numberSize() * 0.66 * Integer.toString(this.fret).length();
+			return new double[] { this.at.x() - w / 2.0, numberY() - numberSize() * 0.6, this.at.x() + w / 2.0, numberY() + numberSize() * 0.6 };
+		}
+
+		/** The whole figure, from the top of the marker to the bottom of the number: what must stay in view. */
 		double[] box() {
-			return new double[] { this.at.x() - this.radius, this.at.y() - this.radius, this.at.x() + this.radius, this.at.y() + this.radius };
+			double[] number = numberBox();
+			return new double[] { this.at.x() - rx(), markerY() - ry(), this.at.x() + rx(), number[3] };
 		}
 	}
 
@@ -479,6 +560,7 @@ public final class ArcadeScene {
 		// the lane of the fret of the note, whatever its string: the same line for every note written on that fret
 		g.at = f.lanes.laneForFret(position.fret()).at(f.progressOf(event));
 		// smaller in the distance than on the neck (the owner, 2026-10-09: the disks off the neck were too big), and adjustable by the learner
+		g.fret = position.fret();
 		g.radius = Math.max(MARKER_MIN_RADIUS, f.h * 0.036 * MARKER_SHARE * this.markerSize * (0.35 + 0.65 * g.at.scale()));
 		return g;
 	}
@@ -624,7 +706,7 @@ public final class ArcadeScene {
 			boolean bar = false;
 			if (event.kind() == ArcadeRenderEvent.Kind.NOTE) {
 				// the marker is always drawn; its fret number only where it touches no label already placed (the nearest notes are placed first)
-				double[] box = isOpenNote(event) ? openGeo(f, event).labelBox(this.labels.openString(), f.h) : noteGeo(f, event).box();
+				double[] box = isOpenNote(event) ? openGeo(f, event).labelBox(this.labels.openString(), f.h) : noteGeo(f, event).numberBox();
 				boolean free = disjointFromAll(box, taken) && inside(box, f.viewport) && (next == null || disjoint(box, next));
 				if (this.densityBudget && !isActive && !free) {
 					plan.noLabel.add(index);
@@ -822,7 +904,7 @@ public final class ArcadeScene {
 
 		double[] labelBox(String word, double h) {
 			double size = Math.max(9.0, h * 0.024);
-			return textBox(word, (this.left + this.right) / 2.0, this.bottom - this.thickness - size, size);
+			return textBox(word, (this.left + this.right) / 2.0, this.bottom - this.thickness - size / 2.0, size);
 		}
 	}
 
@@ -883,12 +965,17 @@ public final class ArcadeScene {
 			ScreenPoint behind = lane.at(Math.max(0.0, f.progressOf(event) - 0.12));
 			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.35, g.radius, event.index(), position.tgString());
 		}
+		double my = g.markerY();
 		if (f.tier.glow()) {
-			out.disc(Role.GLOW, g.at.x(), g.at.y(), g.radius * 1.9, g.radius * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
+			out.rounded(Role.GLOW, g.at.x(), my, g.rx() * 1.45, g.ry() * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
 		}
-		out.disc(Role.MARKER, g.at.x(), g.at.y(), g.radius, g.radius, colour, alpha, event.index(), position.tgString());
-		if (f.noLabel == null || !f.noLabel.contains(event.index())) {
-			out.text(Role.MARKER_FRET, Integer.toString(position.fret()), g.at.x(), g.at.y(), Math.max(8.0, g.radius * 1.1), 0xFFFFFF, alpha, event.index(), position.tgString());
+		// the marker floats above its lane, joined by a thin thread to its footprint on the lane (FR-071)
+		out.line(Role.MARKER_THREAD, g.at.x(), my + g.ry(), g.at.x(), g.at.y(), colour, alpha * 0.85, Math.max(1.0, g.radius * 0.12), event.index(), position.tgString());
+		out.rounded(Role.MARKER_FOOTPRINT, g.at.x(), g.at.y(), g.rx(), g.ry() * 0.3, colour, alpha * 0.55, event.index(), position.tgString());
+		out.rounded(Role.MARKER, g.at.x(), my, g.rx(), g.ry(), colour, alpha, event.index(), position.tgString());
+		// the number of the fret is written on the lane under the footprint, never in the marker; it is left out where it would overlap a label
+		if ((f.noLabel == null || !f.noLabel.contains(event.index()))) {
+			out.text(Role.MARKER_FRET, Integer.toString(position.fret()), g.at.x(), g.numberY(), g.numberSize(), RULER_ACTIVE_COLOUR, alpha, event.index(), position.tgString());
 		}
 	}
 
@@ -1080,6 +1167,14 @@ public final class ArcadeScene {
 
 		void disc(Role role, double cx, double cy, double rx, double ry, int colour, double alpha, int event, int string) {
 			this.items.add(new SceneItem(Shape.DISC, role, new double[] { cx, cy, rx, ry }, colour(colour), alpha, 0.0, null, event, string, null));
+		}
+
+		void rounded(Role role, double cx, double cy, double rx, double ry, int colour, double alpha, int event, int string) {
+			this.items.add(new SceneItem(Shape.ROUNDED, role, new double[] { cx, cy, rx, ry }, colour(colour), alpha, 0.0, null, event, string, null));
+		}
+
+		void roundedRing(Role role, double cx, double cy, double rx, double ry, int colour, double alpha, double width, int event, int string) {
+			this.items.add(new SceneItem(Shape.ROUNDED_RING, role, new double[] { cx, cy, rx, ry }, colour(colour), alpha, width, null, event, string, null));
 		}
 
 		void ring(Role role, double cx, double cy, double rx, double ry, int colour, double alpha, double width, int event, int string) {
