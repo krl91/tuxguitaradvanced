@@ -45,19 +45,19 @@ public class RoundedRectTest {
 				String where = tier + " p=" + progress;
 				assertEquals(SceneItem.Shape.ROUNDED, marker.shape(), where + ": a rounded rectangle, not a disc");
 				assertEquals(StringColours.forStrings(6).of(3), marker.colour(), where);
-				assertTrue(marker.value(1) < footprint.value(1), where + ": the marker floats above its footprint");
+				assertTrue(marker.value(1) >= footprint.value(1), where + ": the marker is under its footprint, on its way down the neck to its target (Q29)");
 				assertEquals(footprint.value(0), marker.value(0), 1e-9, where + ": on the same vertical");
 				assertEquals(SceneItem.Shape.LINE, thread.shape());
 				assertEquals(marker.value(0), thread.value(0), 1e-9, where + ": the thread is vertical, under the marker");
 				assertEquals(thread.value(0), thread.value(2), 1e-9, where);
-				assertEquals(marker.value(1) + marker.value(3), thread.value(1), 1e-9, where + ": from the bottom of the marker");
-				assertEquals(footprint.value(1), thread.value(3), 1e-9, where + ": to the footprint");
+				assertEquals(footprint.value(1), thread.value(1), 1e-9, where + ": from the footprint");
+				assertEquals(Math.max(footprint.value(1), marker.value(1) - marker.value(3)), thread.value(3), 1e-9, where + ": to the top of the marker");
 				assertTrue(footprint.value(3) < marker.value(3), where + ": the footprint is flat");
 				List<SceneItem> numbers = scene.forEvent(0, Role.MARKER_FRET);
 				for (SceneItem number : numbers) {
 					assertEquals("5", number.text());
 					assertEquals(footprint.value(0), number.value(0), 1e-9, where + ": centred under the footprint");
-					assertTrue(number.value(1) > footprint.value(1), where + ": the number is written under the footprint, not in the marker");
+					assertTrue(number.value(1) < footprint.value(1), where + ": the number is written above the footprint, on the lane, not in the marker");
 				}
 				assertTrue(numbers.size() <= 1, where);
 			}
@@ -176,6 +176,36 @@ public class RoundedRectTest {
 		SceneFixture f2 = new SceneFixture(two, SceneFixture.sixStrings(), 100);
 		assertTrue(f2.scene(false).build(f2.onset(0), SCREEN, null, 100, QualityTier.FULL).forEvent(0, Role.MARKER).get(0).value(2) > 
 				f2.scene(false).build(f2.onset(1), SCREEN, ArcadeSceneTest.completedBefore(1, 2), 100, QualityTier.FULL).forEvent(1, Role.MARKER).get(0).value(2), "a high fret is a narrower rectangle");
+	}
+
+	/**
+	 * Bug (owner, 2026-10-11): the marker must merge with its target on the neck at the onset and nothing stays at the top of the neck; the vertical thread
+	 * is the distance, in perspective, from the top edge of the neck to the target of its string, so it is longer for a string far from the top edge.
+	 */
+	@Test
+	public void theMarkerMergesWithItsTargetAtTheOnsetAndItsThreadFollowsTheStringOfTheNeck() {
+		double previousThread = -1.0;
+		for (int string : new int[] { 6, 4, 2, 1 }) {
+			SongFixture song = new SongFixture(2);
+			song.quarter(1, 0, string, 5);
+			song.quarter(1, 1, string, 5);
+			SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+			Scene onset = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100, QualityTier.FULL);
+			SceneItem marker = onset.forEvent(0, Role.MARKER).get(0);
+			SceneItem target = onset.forEvent(0, Role.TARGET_RECT).get(0);
+			assertEquals(target.value(0), marker.value(0), 0.6, "string " + string + ": same column at the onset");
+			assertEquals(target.value(1), marker.value(1), 0.6, "string " + string + ": the marker is on its target at the onset");
+			long now = fixture.onset(0) - 1500 * MS;
+			Scene coming = fixture.scene(false).build(now, SCREEN, null, 100, QualityTier.FULL);
+			SceneItem thread = coming.forEvent(0, Role.MARKER_THREAD).get(0);
+			SceneItem foot = coming.forEvent(0, Role.MARKER_FOOTPRINT).get(0);
+			SceneItem coming0 = coming.forEvent(0, Role.MARKER).get(0);
+			assertEquals(foot.value(1), Math.min(thread.value(1), thread.value(3)), 0.6, "the thread starts at the footprint on the lane");
+			assertEquals(coming0.value(1) - coming0.value(3), Math.max(thread.value(1), thread.value(3)), 0.6, "and ends at the marker");
+			double length = Math.abs(thread.value(3) - thread.value(1));
+			assertTrue(length > previousThread, "string " + string + ": a string farther from the top edge has a longer thread");
+			previousThread = length;
+		}
 	}
 
 	/** Bug (owner, 2026-10-11): the neck is see-through, so the lanes must be seen going on under the strings, down to the bottom of the neck. */

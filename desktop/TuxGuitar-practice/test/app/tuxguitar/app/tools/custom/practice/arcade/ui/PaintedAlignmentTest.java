@@ -63,7 +63,7 @@ public class PaintedAlignmentTest {
 						for (QualityTier tier : QualityTier.values()) {
 							long now = fixture.onset(0) - (long) ((1.0 - progress) * look);
 							Scene scene = fixture.scene(false).build(now, viewport, null, 100, tier);
-							PaintedAlignment.check(scene, paint(scene, tier), fret, progress, "fret " + fret + " string " + string + " " + viewport.width() + " p=" + progress + " " + tier, true);
+							PaintedAlignment.check(scene, paint(app.tuxguitar.app.tools.custom.practice.arcade.view.SceneFilter.withoutTheMarker(scene), tier), fret, progress, "fret " + fret + " string " + string + " " + viewport.width() + " p=" + progress + " " + tier, true);
 							checked++;
 						}
 					}
@@ -84,7 +84,7 @@ public class PaintedAlignmentTest {
 				for (double progress : new double[] { 0.2, 0.5, 0.9, 1.0 }) {
 					long now = fixture.onset(0) - (long) ((1.0 - progress) * look);
 					Scene scene = fixture.scene(false).build(now, new Viewport(1280, 720), null, 100, QualityTier.FULL);
-					PaintedAlignment.check(scene, paint(scene, QualityTier.FULL), fret, progress, "moving camera fret " + fret + " string " + string + " p=" + progress, false);
+					PaintedAlignment.check(scene, paint(app.tuxguitar.app.tools.custom.practice.arcade.view.SceneFilter.withoutTheMarker(scene), QualityTier.FULL), fret, progress, "moving camera fret " + fret + " string " + string + " p=" + progress, false);
 					checked++;
 				}
 			}

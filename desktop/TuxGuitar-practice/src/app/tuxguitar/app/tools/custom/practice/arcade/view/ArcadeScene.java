@@ -341,7 +341,7 @@ public final class ArcadeScene {
 				continue;
 			}
 			double x2 = lane.end().x() + (lane.end().x() - lane.origin().x()) * (neckBottomY - lane.end().y()) / (lane.end().y() - lane.origin().y());
-			out.line(Role.NECK_LANE, lane.end().x(), lane.end().y(), x2, neckBottomY, WIRE_COLOUR, 0.16, 1.0, -1, 0);
+			out.line(Role.NECK_LANE, lane.end().x(), lane.end().y(), x2, neckBottomY, WIRE_COLOUR, 0.10, 1.0, -1, 0);
 		}
 		// no lane for fret 0: an open string is a bar across the lanes (FR-069)
 		for (int fret = 1; fret < f.lanes.size(); fret++) {
@@ -349,7 +349,7 @@ public final class ArcadeScene {
 			if (!f.grid.isPainted(Math.max(0, fret - 1)) || !f.grid.isPainted(fret)) {
 				continue;
 			}
-			out.line(Role.FIELD_GUIDE, lane.origin().x(), lane.origin().y(), lane.end().x(), lane.end().y(), WIRE_COLOUR, 0.16, 1.0, -1, 0);
+			out.line(Role.FIELD_GUIDE, lane.origin().x(), lane.origin().y(), lane.end().x(), lane.end().y(), WIRE_COLOUR, 0.10, 1.0, -1, 0);
 		}
 		for (double progress : new double[] { 0.0, 0.35, 0.65, 0.85 }) {
 			ScreenPoint left = f.projection.approach(f.cam.left(), progress, f.cam);
@@ -519,13 +519,11 @@ public final class ArcadeScene {
 			return this.halfHeight;
 		}
 
-		/** How high the marker floats above its footprint on the lane (FR-071). */
-		double lift() {
-			return this.halfHeight * 4.3;
-		}
+		/** How far the marker is from its footprint on the lane: the distance from the top edge of the neck to its string, in perspective (FR-071, Q29). */
+		double drop;
 
 		double markerY() {
-			return this.at.y() - lift();
+			return this.at.y() + this.drop;
 		}
 
 		double numberSize() {
@@ -533,7 +531,7 @@ public final class ArcadeScene {
 		}
 
 		double numberY() {
-			return this.at.y() + this.ry() * 0.3 + numberSize() * 0.75;
+			return this.at.y() - this.ry() * 0.6 - numberSize() * 0.75;
 		}
 
 		/** The box of the fret number under the footprint, where it must overlap no other label. */
@@ -550,7 +548,7 @@ public final class ArcadeScene {
 		/** The whole figure, from the top of the marker to the bottom of the number. */
 		double[] box() {
 			double[] number = numberBox();
-			return new double[] { this.at.x() - rx(), markerY() - ry(), this.at.x() + rx(), number[3] };
+			return new double[] { this.at.x() - rx(), Math.min(number[1], markerY() - ry()), this.at.x() + rx(), Math.max(number[3], markerY() + ry()) };
 		}
 	}
 
@@ -586,6 +584,9 @@ public final class ArcadeScene {
 		double progress = Math.min(1.0, f.progressOf(event));
 		g.halfHeight = Math.max(MARKER_MIN_RADIUS, targetHalfHeight(f) * this.markerSize * (0.35 + 0.65 * g.at.scale()));
 		g.halfWidth = Math.max(MARKER_MIN_RADIUS, halfWidthOfCell(f, position.fret(), progress) * this.markerSize);
+		// the marker goes down the neck as it comes: at the onset it is on its target, the footprint stays on the lane at the top edge
+		double stringY = f.projection.stringY(this.neck.layout().rowOf(position.tgString()), this.neck.layout().count());
+		g.drop = (stringY - f.projection.hitLineY()) * g.at.scale();
 		return g;
 	}
 
@@ -858,7 +859,8 @@ public final class ArcadeScene {
 		double cap = Math.max(3.0, g.thickness * 0.9);
 		out.quad(Role.OPEN_CAP, new double[] { g.left, top - g.thickness * 2.0, g.left + cap, top - g.thickness * 2.0, g.left + cap, g.bottom, g.left, g.bottom }, 0xFFFFFF, alpha,
 				event.index(), tgString);
-		if (f.noLabel == null || !f.noLabel.contains(event.index())) {
+		// only the near bars are named: a label on each far bar makes the top of the screen busy
+		if (f.progressOf(event) >= 0.7 && (f.noLabel == null || !f.noLabel.contains(event.index()))) {
 			double size = Math.max(9.0, f.h * 0.024);
 			out.text(Role.OPEN_LABEL, this.labels.openString(), (g.left + g.right) / 2.0, g.bottom - g.thickness - size / 2.0, size, TEXT_COLOUR, alpha, event.index(), tgString);
 		}
@@ -884,7 +886,7 @@ public final class ArcadeScene {
 		// the trajectory of a note is its lane, the one of its fret (FR-066): from the horizon to the middle of the top edge of its cell, where it stops; nothing
 		// continues across the neck to the string, the target disk of the neck tells the string
 		ScreenPoint end = lane.end();
-		out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.6, 2.0, event.index(), position.tgString());
+		out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.4, 1.0, event.index(), position.tgString());
 		if (f.tier.trails()) {
 			ScreenPoint behind = lane.at(Math.max(0.0, f.progressOf(event) - 0.12));
 			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.35, g.halfHeight * 2.0, event.index(), position.tgString());
@@ -893,8 +895,8 @@ public final class ArcadeScene {
 		if (f.tier.glow()) {
 			out.rounded(Role.GLOW, g.at.x(), my, g.rx() * 1.45, g.ry() * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
 		}
-		// the marker floats above its lane, joined by a thin thread to its footprint on the lane (FR-071)
-		out.line(Role.MARKER_THREAD, g.at.x(), my + g.ry(), g.at.x(), g.at.y(), colour, alpha * 0.85, Math.max(1.0, g.halfHeight * 0.2), event.index(), position.tgString());
+		// the marker comes down the neck towards its target, joined by a thin thread to its footprint on the lane (FR-071)
+		out.line(Role.MARKER_THREAD, g.at.x(), g.at.y(), g.at.x(), Math.max(g.at.y(), my - g.ry()), colour, alpha * 0.85, Math.max(1.0, g.halfHeight * 0.2), event.index(), position.tgString());
 		out.rounded(Role.MARKER_FOOTPRINT, g.at.x(), g.at.y(), g.rx(), g.ry() * 0.3, colour, alpha * 0.55, event.index(), position.tgString());
 		out.rounded(Role.MARKER, g.at.x(), my, g.rx(), g.ry(), colour, alpha, event.index(), position.tgString());
 		// the number of the fret is written on the lane under the footprint, never in the marker; it is left out where it would overlap a label

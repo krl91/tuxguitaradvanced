@@ -158,8 +158,8 @@ public class NoteLaneTest {
 			if (item.shape() == SceneItem.Shape.LINE && (item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL || item.role() == Role.FIELD_GUIDE)) {
 				assertTrue(Math.max(item.value(1), item.value(3)) <= neck.top + TOLERANCE, where + ": a line of the approach goes into the neck: " + item.role());
 			}
-			if (item.role() == Role.MARKER || item.role() == Role.MARKER_FOOTPRINT) {
-				assertTrue(item.value(1) <= neck.top + TOLERANCE, where + ": a marker is below the top edge of the neck");
+			if (item.role() == Role.MARKER_FOOTPRINT) {
+				assertTrue(item.value(1) <= neck.top + TOLERANCE, where + ": a footprint is below the top edge of the neck");
 			}
 			if (item.eventIndex() == 0 && item.shape() == SceneItem.Shape.LINE) {
 				assertTrue(item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL || item.role() == Role.MARKER_THREAD, where + ": nothing but the lane and its trail is drawn for the note: " + item.role());

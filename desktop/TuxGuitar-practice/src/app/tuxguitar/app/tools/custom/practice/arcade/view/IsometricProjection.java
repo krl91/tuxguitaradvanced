@@ -13,7 +13,7 @@ public final class IsometricProjection {
 	static final double HORIZON = 0.04;
 	static final double NECK_NEAR_EDGE = 0.90;
 	/** The scale of what is drawn at the horizon. */
-	static final double FAR_SCALE = 0.35;
+	static final double FAR_SCALE = 0.5;
 	/** The margin left and right of the shown part of the neck, as a share of the width. */
 	static final double SIDE_MARGIN = 0.05;
 
