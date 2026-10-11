@@ -223,4 +223,17 @@ public class RoundedRectTest {
 			assertTrue(lane.alpha() <= 0.3, "faint");
 		}
 	}
+
+	/** The tilt of the plane is the learner's: the scene takes the scale at the horizon and the height of the horizon it is given. */
+	@Test
+	public void theSceneTakesTheTiltItIsGiven() {
+		SceneFixture fixture = notes();
+		long look = CameraTrack.Settings.standard().lookAheadNanos;
+		long now = fixture.onset(0) - look + 10 * MS;
+		SceneItem normal = fixture.scene(false).build(now, SCREEN, null, 100, QualityTier.FULL).forEvent(0, Role.MARKER_FOOTPRINT).get(0);
+		SceneItem flat = fixture.scene(false).withPerspective(0.75, 0.04).build(now, SCREEN, null, 100, QualityTier.FULL).forEvent(0, Role.MARKER_FOOTPRINT).get(0);
+		assertEquals(0.18 * SCREEN.height(), normal.value(1), 0.05 * SCREEN.height(), "by default the horizon is at 18 %");
+		assertEquals(0.04 * SCREEN.height(), flat.value(1), 0.05 * SCREEN.height(), "the horizon asked for is used");
+		assertTrue(flat.value(1) < normal.value(1) - 0.05 * SCREEN.height(), "a higher horizon is far from the default one");
+	}
 }

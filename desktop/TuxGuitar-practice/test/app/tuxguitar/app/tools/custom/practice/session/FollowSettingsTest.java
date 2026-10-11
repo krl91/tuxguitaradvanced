@@ -133,4 +133,17 @@ public class FollowSettingsTest {
 		assertFalse(settings.isTimed());
 		assertEquals(80, settings.getPercent(), "the choices stay for the next time, in memory only");
 	}
+
+	/** The tilt of the Arcade plane (owner, 2026-10-11): the scale at the horizon and the height of the horizon, in percent, kept within bounds. */
+	@Test
+	public void theTiltOfTheArcadePlaneHasTheOwnersDefaultsAndStaysWithinItsBounds() {
+		FollowSettings settings = new FollowSettings();
+		assertEquals(35, settings.getFarScalePercent());
+		assertEquals(18, settings.getHorizonPercent());
+		assertEquals(FollowSettings.MAX_FAR_SCALE_PERCENT, settings.setFarScalePercent(500));
+		assertEquals(FollowSettings.MIN_FAR_SCALE_PERCENT, settings.setFarScalePercent(-3));
+		assertEquals(FollowSettings.MAX_HORIZON_PERCENT, settings.setHorizonPercent(90));
+		assertEquals(FollowSettings.MIN_HORIZON_PERCENT, settings.setHorizonPercent(-1));
+		assertEquals(40, settings.setHorizonPercent(40));
+	}
 }

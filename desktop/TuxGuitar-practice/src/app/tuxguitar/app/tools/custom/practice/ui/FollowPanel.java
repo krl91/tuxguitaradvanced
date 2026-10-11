@@ -65,6 +65,10 @@ public final class FollowPanel {
 	private final UISpinner percent;
 	private final UILabel markerLabel;
 	private final UISpinner marker;
+	private final UILabel farScaleLabel;
+	private final UISpinner farScale;
+	private final UILabel horizonLabel;
+	private final UISpinner horizon;
 	private final UILabel percentHint;
 	private final UILabel toleranceLabel;
 	private final UIDropDownSelect<TimingTolerance.Preset> tolerance;
@@ -129,6 +133,24 @@ public final class FollowPanel {
 		this.marker.setMaximum(FollowSettings.MAX_MARKER_PERCENT);
 		this.marker.setIncrement(5);
 		layout.set(this.marker, 15, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+
+		// the tilt of the plane (owner, 2026-10-11): the scale at the horizon (the lower, the more tilted) and the height of the horizon
+		this.farScaleLabel = uiFactory.createLabel(this.panel);
+		this.farScaleLabel.setText(TuxGuitar.getProperty("arcade.tilt.scale"));
+		layout.set(this.farScaleLabel, 16, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.farScale = uiFactory.createSpinner(this.panel);
+		this.farScale.setMinimum(FollowSettings.MIN_FAR_SCALE_PERCENT);
+		this.farScale.setMaximum(FollowSettings.MAX_FAR_SCALE_PERCENT);
+		this.farScale.setIncrement(5);
+		layout.set(this.farScale, 16, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.horizonLabel = uiFactory.createLabel(this.panel);
+		this.horizonLabel.setText(TuxGuitar.getProperty("arcade.tilt.horizon"));
+		layout.set(this.horizonLabel, 17, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.horizon = uiFactory.createSpinner(this.panel);
+		this.horizon.setMinimum(FollowSettings.MIN_HORIZON_PERCENT);
+		this.horizon.setMaximum(FollowSettings.MAX_HORIZON_PERCENT);
+		this.horizon.setIncrement(2);
+		layout.set(this.horizon, 17, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 
 		this.toleranceLabel = uiFactory.createLabel(this.panel);
 		this.toleranceLabel.setText(TuxGuitar.getProperty("practice.follow.tolerance"));
@@ -215,6 +237,22 @@ public final class FollowPanel {
 				this.updating = false;
 			}
 		}));
+		this.farScale.addSelectionListener(selected(() -> {
+			int value = this.settings.setFarScalePercent(this.farScale.getValue());
+			if (value != this.farScale.getValue()) {
+				this.updating = true;
+				this.farScale.setValue(value);
+				this.updating = false;
+			}
+		}));
+		this.horizon.addSelectionListener(selected(() -> {
+			int value = this.settings.setHorizonPercent(this.horizon.getValue());
+			if (value != this.horizon.getValue()) {
+				this.updating = true;
+				this.horizon.setValue(value);
+				this.updating = false;
+			}
+		}));
 		this.tolerance.addSelectionListener(selected(() -> {
 			TimingTolerance.Preset chosen = this.tolerance.getSelectedValue();
 			if (chosen != null) {
@@ -273,6 +311,12 @@ public final class FollowPanel {
 			this.marker.setValue(this.settings.getMarkerPercent());
 			this.markerLabel.setVisible(this.settings.isArcade());
 			this.marker.setVisible(this.settings.isArcade());
+			this.farScale.setValue(this.settings.getFarScalePercent());
+			this.horizon.setValue(this.settings.getHorizonPercent());
+			this.farScaleLabel.setVisible(this.settings.isArcade());
+			this.farScale.setVisible(this.settings.isArcade());
+			this.horizonLabel.setVisible(this.settings.isArcade());
+			this.horizon.setVisible(this.settings.isArcade());
 			this.tolerance.setSelectedValue(this.settings.getTolerance());
 			this.modeHint.setText(this.settings.isArcade() ? TuxGuitar.getProperty("practice.mode.arcade.hint") + "\n" + TuxGuitar.getProperty("arcade.monitoring.unavailable")
 					: TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
@@ -301,6 +345,8 @@ public final class FollowPanel {
 			this.mode.setEnabled(idle);
 			this.percent.setEnabled(idle);
 			this.marker.setEnabled(idle);
+			this.farScale.setEnabled(idle);
+			this.horizon.setEnabled(idle);
 			this.tolerance.setEnabled(idle);
 			this.manual.setEnabled(idle);
 			AudioRoute route = this.backend.route();

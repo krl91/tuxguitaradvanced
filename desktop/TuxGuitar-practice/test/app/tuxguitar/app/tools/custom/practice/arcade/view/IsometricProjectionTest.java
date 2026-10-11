@@ -94,4 +94,19 @@ public class IsometricProjectionTest {
 		assertTrue(IsometricProjection.depthShare(1.0 / 3.0) < 0.25, "the first third covers little");
 		assertEquals(IsometricProjection.depthShare(0.5), (this.projection.approach(250.0, 0.5, CAMERA).y() - this.projection.horizonY()) / (this.projection.hitLineY() - this.projection.horizonY()), 1e-9);
 	}
+
+	/** The tilt of the plane is the learner's (owner, 2026-10-11): the scale at the horizon and the height of the horizon, 0.35 and 0.18 by default. */
+	@Test
+	public void theScaleAtTheHorizonAndTheHeightOfTheHorizonAreSettableAndDefaultToTheOwnersChoice() {
+		assertEquals(0.35, IsometricProjection.DEFAULT_FAR_SCALE, 0.0);
+		assertEquals(0.18, IsometricProjection.DEFAULT_HORIZON, 0.0);
+		assertEquals(0.18 * VIEW.height(), this.projection.horizonY(), 1e-9);
+		assertEquals(0.35, this.projection.approach(250.0, 0.0, CAMERA).scale(), 1e-12);
+		IsometricProjection flatter = new IsometricProjection(VIEW, 0.75, 0.04);
+		assertEquals(0.04 * VIEW.height(), flatter.horizonY(), 1e-9);
+		assertEquals(0.75, flatter.approach(250.0, 0.0, CAMERA).scale(), 1e-12);
+		assertEquals(0.75, flatter.farScale(), 0.0);
+		assertEquals(flatter.hitLineY(), flatter.approach(250.0, 1.0, CAMERA).y(), 1e-9, "the hit line stays where it is");
+		assertEquals(0.75, flatter.horizonOrigin(600.0).scale(), 1e-12);
+	}
 }

@@ -130,6 +130,8 @@ public final class ArcadeScene {
 	private Theme theme = Theme.DARK;
 	private double uiScale = 1.0;
 	private double markerSize = 1.0;
+	private double farScale = IsometricProjection.DEFAULT_FAR_SCALE;
+	private double horizon = IsometricProjection.DEFAULT_HORIZON;
 
 	/**
 	 * Switches the density budget off, for the measurement of the unreduced cost and for the proof that the budget changes nothing of the judgement
@@ -155,6 +157,17 @@ public final class ArcadeScene {
 		return copy;
 	}
 
+	/**
+	 * The same scene with another tilt of the plane (the learner's setting): {@code farScale} is the scale at the horizon, the lower the more tilted, and
+	 * {@code horizon} the height of the horizon as a share of the height of the picture.
+	 */
+	public ArcadeScene withPerspective(double farScale, double horizon) {
+		ArcadeScene copy = copy();
+		copy.farScale = Math.max(0.05, Math.min(1.0, farScale));
+		copy.horizon = Math.max(0.0, Math.min(0.5, horizon));
+		return copy;
+	}
+
 	/** The same scene for a display of another density: 1 is a normal one, 2 a Retina one. The target on the neck grows with it (FR-065). */
 	public ArcadeScene withUiScale(double scale) {
 		ArcadeScene copy = copy();
@@ -168,6 +181,8 @@ public final class ArcadeScene {
 		copy.theme = this.theme;
 		copy.uiScale = this.uiScale;
 		copy.markerSize = this.markerSize;
+		copy.farScale = this.farScale;
+		copy.horizon = this.horizon;
 		return copy;
 	}
 
@@ -187,7 +202,7 @@ public final class ArcadeScene {
 	 */
 	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier) {
 		Out out = new Out(this.monochrome, this.theme);
-		Frame f = new Frame(out, new IsometricProjection(viewport), this.camera.at(nowNanos), viewport, tier, nowNanos, this.camera.settings(), run);
+		Frame f = new Frame(out, new IsometricProjection(viewport, this.farScale, this.horizon), this.camera.at(nowNanos), viewport, tier, nowNanos, this.camera.settings(), run);
 		// the grid of the neck as it is painted, and the lanes built from it, once for this camera snapshot: the neck, the lanes and every marker below use these
 		f.grid = PaintedFretGrid.of(this.neck, f.projection, f.cam);
 		f.lanes = FretArrivalLaneMap.fromPaintedFrets(f.grid, f.projection);
@@ -603,7 +618,7 @@ public final class ArcadeScene {
 		double yf = hor + (bottom - hor) * IsometricProjection.depthShare(Math.max(0.0, Math.min(1.0, progress)));
 		if (yf <= top) {
 			double v = (yf - hor) / (top - hor);
-			return new ScreenPoint(lane.origin().x() + (lane.end().x() - lane.origin().x()) * v, yf, IsometricProjection.FAR_SCALE + (1.0 - IsometricProjection.FAR_SCALE) * v);
+			return new ScreenPoint(lane.origin().x() + (lane.end().x() - lane.origin().x()) * v, yf, f.projection.farScale() + (1.0 - f.projection.farScale()) * v);
 		}
 		return new ScreenPoint(lane.end().x(), yf, 1.0);
 	}

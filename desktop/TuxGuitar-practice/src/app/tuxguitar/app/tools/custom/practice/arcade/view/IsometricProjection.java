@@ -10,17 +10,34 @@ public final class IsometricProjection {
 
 	/** The share of the height at which the hit line lies, and the horizon, and the near edge of the neck. */
 	static final double HIT_LINE = 0.60;
-	static final double HORIZON = 0.04;
+	/** The default height of the horizon, as a share of the height (the owner's choice of 2026-10-11, settable by the learner). */
+	public static final double DEFAULT_HORIZON = 0.18;
+	static final double HORIZON = DEFAULT_HORIZON;
 	public static final double NECK_NEAR_EDGE = 0.90;
 	/** The scale of what is drawn at the horizon. */
-	static final double FAR_SCALE = 0.75;
+	/** The default scale of what is drawn at the horizon (the owner's choice of 2026-10-11, settable by the learner). */
+	public static final double DEFAULT_FAR_SCALE = 0.35;
+	static final double FAR_SCALE = DEFAULT_FAR_SCALE;
 	/** The margin left and right of the shown part of the neck, as a share of the width. */
 	static final double SIDE_MARGIN = 0.05;
 
 	private final Viewport viewport;
+	private final double farScale;
+	private final double horizon;
 
 	public IsometricProjection(Viewport viewport) {
+		this(viewport, DEFAULT_FAR_SCALE, DEFAULT_HORIZON);
+	}
+
+	/** @param farScale the scale at the horizon (the lower, the more the plane is tilted), @param horizon the height of the horizon as a share of the height */
+	public IsometricProjection(Viewport viewport, double farScale, double horizon) {
 		this.viewport = viewport;
+		this.farScale = farScale;
+		this.horizon = horizon;
+	}
+
+	public double farScale() {
+		return this.farScale;
 	}
 
 	public Viewport viewport() {
@@ -32,7 +49,7 @@ public final class IsometricProjection {
 	}
 
 	public double horizonY() {
-		return this.viewport.height() * HORIZON;
+		return this.viewport.height() * this.horizon;
 	}
 
 	/** The screen x of a position along the neck, on the neck plane and on the hit line, for the camera. */
@@ -64,7 +81,7 @@ public final class IsometricProjection {
 	public ScreenPoint approach(double xMm, double progress, Camera camera) {
 		double q = depthShare(progress);
 		double away = 1.0 - q;
-		double scale = 1.0 - (1.0 - FAR_SCALE) * away;
+		double scale = 1.0 - (1.0 - this.farScale) * away;
 		double y = hitLineY() - (hitLineY() - horizonY()) * away;
 		double centre = this.viewport.width() / 2.0;
 		double x = centre + (neckX(xMm, camera) - centre) * scale;
@@ -98,6 +115,6 @@ public final class IsometricProjection {
 	 */
 	public ScreenPoint horizonOrigin(double endX) {
 		double centre = this.viewport.width() / 2.0;
-		return new ScreenPoint(centre + (endX - centre) * FAR_SCALE, horizonY(), FAR_SCALE);
+		return new ScreenPoint(centre + (endX - centre) * this.farScale, horizonY(), this.farScale);
 	}
 }

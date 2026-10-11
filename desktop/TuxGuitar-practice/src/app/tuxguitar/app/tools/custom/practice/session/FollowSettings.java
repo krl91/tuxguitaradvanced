@@ -35,7 +35,17 @@ public final class FollowSettings {
 	public static final int MAX_MARKER_PERCENT = 150;
 	public static final int DEFAULT_MARKER_PERCENT = 100;
 
+	/** The tilt of the Arcade plane (owner, 2026-10-11): the scale at the horizon and the height of the horizon, in percent. The defaults are the owner's choice. */
+	public static final int MIN_FAR_SCALE_PERCENT = 20;
+	public static final int MAX_FAR_SCALE_PERCENT = 100;
+	public static final int DEFAULT_FAR_SCALE_PERCENT = 35;
+	public static final int MIN_HORIZON_PERCENT = 0;
+	public static final int MAX_HORIZON_PERCENT = 40;
+	public static final int DEFAULT_HORIZON_PERCENT = 18;
+
 	private final RecognitionSettingsStore store;
+	private int farScalePercent = DEFAULT_FAR_SCALE_PERCENT;
+	private int horizonPercent = DEFAULT_HORIZON_PERCENT;
 	private int markerPercent = DEFAULT_MARKER_PERCENT;
 	private Mode mode = Mode.WAIT;
 	private int percent = DEFAULT_PERCENT;
@@ -103,6 +113,26 @@ public final class FollowSettings {
 	public synchronized int setMarkerPercent(int percent) {
 		this.markerPercent = Math.max(MIN_MARKER_PERCENT, Math.min(MAX_MARKER_PERCENT, percent));
 		return this.markerPercent;
+	}
+
+	public synchronized int getFarScalePercent() {
+		return this.farScalePercent;
+	}
+
+	/** The scale at the horizon in percent (the lower, the more the plane is tilted), kept within the bounds. */
+	public synchronized int setFarScalePercent(int percent) {
+		this.farScalePercent = Math.max(MIN_FAR_SCALE_PERCENT, Math.min(MAX_FAR_SCALE_PERCENT, percent));
+		return this.farScalePercent;
+	}
+
+	public synchronized int getHorizonPercent() {
+		return this.horizonPercent;
+	}
+
+	/** The height of the horizon in percent of the height of the picture, kept within the bounds. */
+	public synchronized int setHorizonPercent(int percent) {
+		this.horizonPercent = Math.max(MIN_HORIZON_PERCENT, Math.min(MAX_HORIZON_PERCENT, percent));
+		return this.horizonPercent;
 	}
 
 	public synchronized TimingTolerance.Preset getTolerance() {

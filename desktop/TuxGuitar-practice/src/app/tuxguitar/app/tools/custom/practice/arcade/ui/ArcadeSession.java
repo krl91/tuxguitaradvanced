@@ -11,6 +11,7 @@ import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeScoring;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeScene;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.CameraTrack;
+import app.tuxguitar.app.tools.custom.practice.arcade.view.IsometricProjection;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.NeckModel;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.QualityController;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.SceneLabels;
@@ -68,6 +69,12 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 	 *        beats whatever the notes (FR-076)
 	 */
 	public static ArcadeSession of(FollowStarter.Plan plan, TrackTuning tuning, SceneLabels labels, boolean monochrome, double markerSize, long lookAheadNanos) {
+		return of(plan, tuning, labels, monochrome, markerSize, lookAheadNanos, IsometricProjection.DEFAULT_FAR_SCALE, IsometricProjection.DEFAULT_HORIZON);
+	}
+
+	/** @param farScale the scale at the horizon and @param horizon its height as a share of the picture: the tilt of the plane, the learner's setting */
+	public static ArcadeSession of(FollowStarter.Plan plan, TrackTuning tuning, SceneLabels labels, boolean monochrome, double markerSize, long lookAheadNanos,
+			double farScale, double horizon) {
 		List<ArcadeRenderEvent> events = new ArrayList<ArcadeRenderEvent>();
 		List<PracticeEvent> practice = plan.sequence().getEvents();
 		for (int i = 0; i < practice.size(); i++) {
@@ -75,7 +82,7 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 		}
 		NeckModel neck = NeckModel.of(tuning, 24);
 		ArcadeScene scene = new ArcadeScene(events, neck, StringColours.forStrings(tuning.getStringCount()), CameraTrack.build(events, neck, CameraTrack.Settings.standard().withLookAhead(lookAheadNanos)),
-				labels, monochrome).withMarkerSize(markerSize);
+				labels, monochrome).withMarkerSize(markerSize).withPerspective(farScale, horizon);
 		return new ArcadeSession(plan, new ArcadeRun(plan.sequence(), ArcadeScoring.standard()), scene);
 	}
 
