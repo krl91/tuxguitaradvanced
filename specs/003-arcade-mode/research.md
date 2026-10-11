@@ -181,3 +181,13 @@ Profile: event count, note/chord ratio, longest consecutive chord run, peak even
 **Alternatives.** Keeping the disks (the earlier approved look); rectangle only for the flying marker (rejected by the owner, Q19).
 
 **Consequences.** `drawNote`, `drawTargets`, the renderer (rounded-rectangle primitive), the reference scenes and the tests of SC-017/SC-023/SC-024 change shape without changing their intent. This increment (C3) comes after the palette, order, lit string and open-string bar (C2).
+
+## R24 - The chord as a panel (2026-10-11)
+
+**Decision.** A chord is a translucent panel standing across the lane with the rectangles of its notes at their fret and string, its name above the left corner, every chord of the set with its own panel (FR-074); the active panel lands on the neck.
+
+**Evidence.** The owner's fourth and fifth reference images: a single chord arriving and a series of chords in perspective with one on the neck; the panel makes the chord readable as a position on the neck itself, aligned with the frets, which a separate diagram does not.
+
+**Alternatives.** Keeping the neutral bar and the diagram (rejected by the owner, Q22); a panel only for the nearest chord (rejected).
+
+**Consequences.** The chord drawing, its name placement, the density rules and the many chord tests change; the "bar without diagram" rule of FR-063 disappears; fret numbers on the active chord instead of the diagram's `5fr` label. Increment C4, after C3.

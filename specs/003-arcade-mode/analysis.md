@@ -118,3 +118,7 @@ Second reference image of the owner: an open note is a horizontal bar across the
 ## 8. Change of 2026-10-11 (rounded rectangles)
 
 Third reference image of the owner and three answers (Q19 to Q21): rounded rectangles for the marker and the target, thread, footprint and number under the footprint, highlighted fret ruler, a discreet approach band. Recorded as FR-070 to FR-072, SC-027, research R23; FR-065 reworded (the disk becomes a rounded rectangle, the tests keep their intent). Contradictions resolved with the owner: the disk is replaced everywhere (FR-060/FR-065), the number leaves the marker, the lanes stay the only lines from the horizon to the neck. Impact: scene roles, renderer primitive, every reference scene and test of the target and the marker.
+
+## 9. Change of 2026-10-11 (chord panel) and size setting
+
+Fourth and fifth reference images: a chord as a translucent panel with its note rectangles at fret and string, name above the left corner (Q22), fret numbers on the active chord (Q23). Recorded as FR-074, SC-028, research R24; FR-028 and FR-063 superseded for the chord's form. Also FR-073 (size setting: 0 % one pixel, 100 % three quarters of the former size, implemented 2026-10-11). Impact: chord drawing, name placement, density rules and chord tests; the corpus contact sheet follows. Open: the visual density of panels in a very dense passage (to be judged by the owner).

@@ -61,3 +61,5 @@
 - [ ] The owner confirms the open-string bar on the built application (T106).
 - [x] The rounded rectangles, thread, footprint, fret ruler and approach band (FR-070 to FR-072, SC-027) are specified; the owner answered Q19 to Q21.
 - [ ] The owner confirms the new graphics on the built application (T111).
+- [x] The chord panel (FR-074, SC-028) is specified; the owner answered Q22 and Q23.
+- [ ] The owner confirms the chord panel on the built application (T117).

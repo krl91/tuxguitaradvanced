@@ -44,3 +44,9 @@ Before reviewing the 32 real-score screenshots, inspect the minimal lane fixture
 1. A fretted note arrives as a small solid rounded rectangle in the colour of its string, raised above its lane, with a thin thread to a footprint on the lane and its fret number under it.
 2. On the neck the target is a rounded rectangle filling the cell of the fret, on the string; the number of that fret is highlighted under the neck.
 3. A translucent blue band lights the approach zone; the lane of the active fret is slightly lighter.
+
+## Manual check of the chord panel (FR-074, owner, 2026-10-11)
+
+1. A chord arrives as a translucent panel across the lane with the rectangles of its notes at their frets and strings, and its name above the left corner.
+2. Several chords in a row come as panels in perspective; the active one lands on the neck, its strings are lit and its rectangles carry the fret numbers.
+3. An open string of a chord is a line across the panel; no bar or diagram cartouche remains.
