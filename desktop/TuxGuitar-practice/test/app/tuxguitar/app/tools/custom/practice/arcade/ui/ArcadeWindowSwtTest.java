@@ -63,6 +63,11 @@ public class ArcadeWindowSwtTest {
 		final AtomicInteger stops = new AtomicInteger();
 		final AtomicInteger pauses = new AtomicInteger();
 		final AtomicInteger resumes = new AtomicInteger();
+		final AtomicInteger restarts = new AtomicInteger();
+
+		public void restart() {
+			this.restarts.incrementAndGet();
+		}
 
 		public void pause() {
 			this.pauses.incrementAndGet();

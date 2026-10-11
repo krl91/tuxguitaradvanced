@@ -17,13 +17,20 @@ public final class PracticeLauncherItem extends TGMainToolBarItemUpdater {
 
 	private final String itemName;
 	private final java.util.function.BooleanSupplier windowOpen;
+	private final java.util.function.Predicate<TGSong> practicable;
 	private TGSong checkedSong;
 	private boolean checkedSongHasTrack;
 	private long checkedAtNanos;
 
 	public PracticeLauncherItem(String itemName, java.util.function.BooleanSupplier windowOpen) {
+		this(itemName, windowOpen, song -> !PracticeTrackCandidates.evaluate(song, null).getCandidates().isEmpty());
+	}
+
+	/** @param practicable whether a song has a track the button can work on (the Arcade button accepts more tracks than Practice) */
+	public PracticeLauncherItem(String itemName, java.util.function.BooleanSupplier windowOpen, java.util.function.Predicate<TGSong> practicable) {
 		this.itemName = itemName;
 		this.windowOpen = windowOpen;
+		this.practicable = practicable;
 	}
 
 	private synchronized LauncherState state() {
@@ -34,7 +41,7 @@ public final class PracticeLauncherItem extends TGMainToolBarItemUpdater {
 			long now = System.nanoTime();
 			if( song != this.checkedSong || now - this.checkedAtNanos > TRACK_CHECK_INTERVAL_NANOS ) {
 				this.checkedSong = song;
-				this.checkedSongHasTrack = !PracticeTrackCandidates.evaluate(song, null).getCandidates().isEmpty();
+				this.checkedSongHasTrack = this.practicable.test(song);
 				this.checkedAtNanos = now;
 			}
 			hasTrack = this.checkedSongHasTrack;

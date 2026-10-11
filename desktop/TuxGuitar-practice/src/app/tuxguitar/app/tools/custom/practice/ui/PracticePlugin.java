@@ -27,6 +27,9 @@ public class PracticePlugin extends TGToolItemPlugin {
 	public static final String TOOLBAR_ITEM = "transport.practice";
 	private static final String TOOLBAR_ICON = "practice_toolbar.png";
 	private static final String TOOLBAR_AFTER = "transport.start";
+	/** The coloured Arcade button, right after the Practice button. */
+	public static final String ARCADE_TOOLBAR_ITEM = "transport.arcade";
+	private static final String ARCADE_TOOLBAR_ICON = "arcade_toolbar.png";
 
 	private static final String[] ACTION_IDS = {
 		PracticeAction.START, PracticeAction.SKIP, PracticeAction.RESUME, PracticeAction.STOP
@@ -70,6 +73,14 @@ public class PracticePlugin extends TGToolItemPlugin {
 		}
 	}
 
+	/** The transport-bar Arcade button: Arcade starts now on the track under the cursor. */
+	void startArcadeNow(TGContext context) {
+		if( this.window == null ) {
+			this.window = new PracticeWindow(context, this);
+		}
+		this.window.openAndStartArcade();
+	}
+
 	boolean isWindowOpen() {
 		PracticeWindow current = this.window;
 		return (current != null && current.isOpen());
@@ -99,6 +110,12 @@ public class PracticePlugin extends TGToolItemPlugin {
 			adapterManager.getSyncThreadInterceptor().addActionId(PracticeToggleAction.NAME);
 			TGMainToolBarItemRegistry.getInstance(context).register(new TGMainToolBarPluginItem(TOOLBAR_ITEM, "transport",
 					PracticeToggleAction.NAME, TOOLBAR_ICON, true, new PracticeLauncherItem(TOOLBAR_ITEM, this::isWindowOpen), TOOLBAR_AFTER));
+			TuxGuitar.getInstance().getActionManager().mapAction(PracticeArcadeAction.NAME, new PracticeArcadeAction(context, this));
+			adapterManager.getKeyBindingActionIds().addActionId(PracticeArcadeAction.NAME);
+			adapterManager.getSyncThreadInterceptor().addActionId(PracticeArcadeAction.NAME);
+			TGMainToolBarItemRegistry.getInstance(context).register(new TGMainToolBarPluginItem(ARCADE_TOOLBAR_ITEM, "transport",
+					PracticeArcadeAction.NAME, ARCADE_TOOLBAR_ICON, false, new PracticeLauncherItem(ARCADE_TOOLBAR_ITEM, () -> false,
+					song -> !app.tuxguitar.app.tools.custom.practice.model.ArcadeTrackCandidates.evaluate(song, null).getCandidates().isEmpty()), TOOLBAR_ITEM));
 			// "Audio recognition" rubric of the Configuration window (T102)
 			TGSettingsOptionRegistry.getInstance(context).register(AudioRecognitionOption.factory());
 		} catch (Throwable throwable) {
@@ -112,6 +129,10 @@ public class PracticePlugin extends TGToolItemPlugin {
 			this.window = null;
 		}
 		try {
+			TGMainToolBarItemRegistry.getInstance(context).unregister(ARCADE_TOOLBAR_ITEM);
+			TuxGuitar.getInstance().getActionManager().unmapAction(PracticeArcadeAction.NAME);
+			TGActionAdapterManager.getInstance(context).getSyncThreadInterceptor().removeActionId(PracticeArcadeAction.NAME);
+			TGActionAdapterManager.getInstance(context).getKeyBindingActionIds().removeActionId(PracticeArcadeAction.NAME);
 			TGMainToolBarItemRegistry.getInstance(context).unregister(TOOLBAR_ITEM);
 			TuxGuitar.getInstance().getActionManager().unmapAction(PracticeToggleAction.NAME);
 			TGActionAdapterManager toolbarAdapter = TGActionAdapterManager.getInstance(context);

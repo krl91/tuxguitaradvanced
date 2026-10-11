@@ -15,7 +15,7 @@ import app.tuxguitar.ui.widget.UIWindow;
 
 /**
  * The window of an Arcade run (spec 003 T053): the canvas with the isometric view (the streak, the speed and the next event are drawn on it, never the
- * score), and under it Pause/Resume and Stop. Closing the window is stopping the run. It owns the canvas and its timer, and gives them back when it closes.
+ * score), and under it Restart, Pause/Resume and Stop. Closing the window is stopping the run. It owns the canvas and its timer, and gives them back when it closes.
  * UI thread only.
  */
 public final class ArcadeWindow {
@@ -27,6 +27,9 @@ public final class ArcadeWindow {
 		void resume();
 
 		void stop();
+
+		/** Starts the piece again from its beginning. */
+		void restart();
 	}
 
 	private final ArcadeTexts texts;
@@ -54,12 +57,15 @@ public final class ArcadeWindow {
 		layout.set(buttons, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.state = factory.createLabel(buttons);
 		buttonsLayout.set(this.state, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
+		UIButton restart = factory.createButton(buttons);
+		restart.setText(texts.get("arcade.button.restart"));
+		buttonsLayout.set(restart, 1, 2, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, false, false, 1, 1, 110f, 28f, null);
 		this.pause = factory.createButton(buttons);
 		this.pause.setText(texts.get("arcade.button.pause"));
-		buttonsLayout.set(this.pause, 1, 2, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, false, false, 1, 1, 90f, 28f, null);
+		buttonsLayout.set(this.pause, 1, 3, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, false, false, 1, 1, 90f, 28f, null);
 		UIButton stop = factory.createButton(buttons);
 		stop.setText(texts.get("arcade.button.stop"));
-		buttonsLayout.set(stop, 1, 3, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, false, false, 1, 1, 90f, 28f, null);
+		buttonsLayout.set(stop, 1, 4, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, false, false, 1, 1, 90f, 28f, null);
 		this.pause.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
 				if (ArcadeWindow.this.paused) {
@@ -67,6 +73,11 @@ public final class ArcadeWindow {
 				} else {
 					ArcadeWindow.this.actions.pause();
 				}
+			}
+		});
+		restart.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				ArcadeWindow.this.actions.restart();
 			}
 		});
 		stop.addSelectionListener(new UISelectionListener() {

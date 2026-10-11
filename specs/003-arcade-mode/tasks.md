@@ -107,6 +107,9 @@
 - [x] T120 (done 2026-10-11) The flying rectangle has the width of its fret cell at its depth and lands on its target (Q28, FR-070, FR-073): red tests in `RoundedRectTest`, `MarkerSizeTest` rewritten.
 - [x] T121 (done 2026-10-11) The lanes go on under the see-through neck as faint `NECK_LANE` guides (Q28, FR-066): red test in `RoundedRectTest`, outside the fallback. Owner validation pending (with T111/T117).
 - [x] T122 (done 2026-10-11) The marker merges with its target at the onset, thread = perspective distance to the string, number above the footprint, calmer picture (Q29): red test `RoundedRectTest.theMarkerMergesWithItsTargetAtTheOnsetAndItsThreadFollowsTheStringOfTheNeck`; the pixel tests measure the target without the marker (`SceneFilter`). Owner validation pending.
+- [x] T123 (done 2026-10-11) Default input memory (Q30): `InputDefaultPolicy` (5 tests first, red at compile), `InputDefaultStore`, button in `InputSelectorPanel`. The panel wiring and the file are not covered by an automatic test; to check by hand.
+- [x] T124 (done 2026-10-11) Restart button in `ArcadeWindow` and `PracticeWindow.restartArcadeFromStart` (Q30); the click is not tested natively, to check by hand.
+- [x] T125 (done 2026-10-11) Coloured Arcade button in the transport bar (`PracticeArcadeAction`, `arcade_toolbar.png` in the six skins, `PracticeWindow.openAndStartArcade`) (Q30); to check by hand.
 
 ## Increment D - Interface and result (`SRC/arcade/ui`, `share/lang`)
 

@@ -1,8 +1,11 @@
 package app.tuxguitar.app.tools.custom.practice.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.tools.custom.practice.session.InputDefaultPolicy;
+import app.tuxguitar.app.tools.custom.practice.session.InputDefaultStore;
 import app.tuxguitar.audio.engine.AudioEngine;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
@@ -38,6 +41,8 @@ public final class InputSelectorPanel {
 	private final UILabel hint;
 	private final CurrentInputSelection.Listener selectionListener;
 	private boolean updating;
+	/** The remembered default input was in the previous reading of the list (it is selected again when it appears after an absence). */
+	private boolean rememberedWasThere;
 	private Runnable contentListener;
 
 	public InputSelectorPanel(TGContext context, AudioEngine engine, UIFactory uiFactory, UIContainer parent) {
@@ -71,8 +76,18 @@ public final class InputSelectorPanel {
 		});
 		layout.set(refresh, 1, 3, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, false, false);
 
+		// the learner's default input: kept in the configuration, taken back when it is there (it replaces the one that was remembered)
+		UIButton remember = uiFactory.createButton(this.panel);
+		remember.setText(TuxGuitar.getProperty("practice.input.remember"));
+		remember.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				remember();
+			}
+		});
+		layout.set(remember, 1, 4, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, false, false);
+
 		this.hint = uiFactory.createWrapLabel(this.panel);
-		layout.set(this.hint, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
+		layout.set(this.hint, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 4);
 		layout.set(this.hint, UITableLayout.PACKED_WIDTH, WRAP_WIDTH);
 
 		this.selectionListener = snapshot -> TGSynchronizer.getInstance(this.context).executeLater(() -> {
@@ -98,6 +113,14 @@ public final class InputSelectorPanel {
 		List<AudioInputDescriptor> available = this.engine.getCatalog().listInputs();
 		CurrentInputSelection.Snapshot snapshot = this.engine.getSelection().snapshot();
 		AudioInputDescriptor current = null;
+		String remembered = InputDefaultStore.get(this.context);
+		List<String> ids = new ArrayList<String>();
+		for( AudioInputDescriptor input : available ) {
+			ids.add(input.getId());
+		}
+		String currentId = snapshot.getInput() != null ? snapshot.getInput().getId() : null;
+		String chosen = InputDefaultPolicy.choose(ids, currentId, remembered, this.rememberedWasThere);
+		this.rememberedWasThere = remembered != null && ids.contains(remembered);
 		this.updating = true;
 		try {
 			this.inputs.removeItems();
@@ -110,8 +133,21 @@ public final class InputSelectorPanel {
 			if( current != null ) {
 				this.inputs.setSelectedValue(current);
 			}
+			for( AudioInputDescriptor input : available ) {
+				if( chosen != null && input.getId().equals(chosen) ) {
+					this.inputs.setSelectedValue(input);
+				}
+			}
 		} finally {
 			this.updating = false;
+		}
+		if( chosen != null ) {
+			for( AudioInputDescriptor input : available ) {
+				if( input.getId().equals(chosen) ) {
+					select(input);
+					return;
+				}
+			}
 		}
 		if( available.isEmpty() ) {
 			this.hint.setText(TuxGuitar.getProperty("practice.input.none"));
@@ -125,6 +161,17 @@ public final class InputSelectorPanel {
 			}
 		} else {
 			updateHint(snapshot);
+		}
+	}
+
+	/** The input shown becomes the default input of the learner, over the one that was remembered. */
+	private void remember() {
+		AudioInputDescriptor input = this.inputs.getSelectedValue();
+		if( input != null ) {
+			InputDefaultStore.set(this.context, input.getId());
+			this.rememberedWasThere = true;
+			this.hint.setText(TuxGuitar.getProperty("practice.input.remembered", new String[] { input.getDisplayName() }));
+			contentChanged();
 		}
 	}
 

@@ -148,6 +148,8 @@ public class PracticeWindow {
 	private ArcadeResultWindow arcadeResult;
 	private PracticeTrackCandidate arcadeCandidate;
 	private PracticeSequence arcadeFull;
+	/** The whole piece as the preparation gave it: the button Restart of the game starts again from its first event, whatever replayed section it is in. */
+	private PracticeSequence arcadeWhole;
 	private static final ArcadeTexts ARCADE_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
@@ -179,6 +181,25 @@ public class PracticeWindow {
 		this.quickStartRequested = !isOpen();
 		open();
 		this.quickStartRequested = false;
+	}
+
+	/**
+	 * The coloured button of the transport bar (owner, 2026-10-11): Arcade on the track under the cursor right now, with the input as it is (the last
+	 * one used, or the remembered default), without going through the choices of the preparation window.
+	 */
+	public void openAndStartArcade() {
+		FollowSettings.getInstance(this.context).setMode(FollowSettings.Mode.ARCADE);
+		if( isOpen() ) {
+			if( this.arcadeWindow != null && this.arcadeWindow.isOpen() ) {
+				this.arcadeWindow.getWindow().moveToTop();
+				return;
+			}
+			open();
+			modeChanged();
+			startSession();
+			return;
+		}
+		openAndStart();
 	}
 
 	/** Opens the window, or brings it to the front when it is already open. */
@@ -595,6 +616,7 @@ public class PracticeWindow {
 			return;
 		}
 		if( FollowSettings.getInstance(this.context).isArcade() ) {
+			this.arcadeWhole = this.preparedSequence;
 			startArcade(candidate, this.preparedSequence);
 			return;
 		}
@@ -765,6 +787,10 @@ public class PracticeWindow {
 					public void stop() {
 						controller.stop();
 					}
+
+					public void restart() {
+						TGSynchronizer.getInstance(PracticeWindow.this.context).executeLater(PracticeWindow.this::restartArcadeFromStart);
+					}
 				});
 		controller.start();
 		if( controller.state() == ArcadeController.State.RUNNING ) {
@@ -854,6 +880,17 @@ public class PracticeWindow {
 		}
 		teardownSession();
 		startArcade(candidate, full);
+	}
+
+	/** The button Restart of the game window: the same track and settings, from the beginning of the piece. */
+	private void restartArcadeFromStart() {
+		PracticeTrackCandidate candidate = this.arcadeCandidate;
+		PracticeSequence whole = this.arcadeWhole != null ? this.arcadeWhole : this.arcadeFull;
+		if( !isOpen() || candidate == null || whole == null ) {
+			return;
+		}
+		teardownSession();
+		startArcade(candidate, whole);
 	}
 
 	/** Gives the window and the controller of the run back; the run itself is stopped by {@link #teardownFollow}. */
