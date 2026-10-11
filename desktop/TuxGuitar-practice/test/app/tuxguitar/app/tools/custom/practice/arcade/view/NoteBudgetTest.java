@@ -124,7 +124,9 @@ public class NoteBudgetTest {
 							int fret = fixture.events.get(index).positions().get(0).fret();
 							double progress = Math.max(0.0, Math.min(1.0, 1.0 - (double) (fixture.onset(index) - now) / look));
 							FretArrivalLaneMap.Lane lane = lanes.laneForFret(fret);
-							ScreenPoint at = lane.at(progress);
+							double footY = projection.horizonY() + (viewport.height() * IsometricProjection.NECK_NEAR_EDGE - projection.horizonY()) * IsometricProjection.depthShare(progress);
+							double footX = footY <= lane.end().y() ? lane.origin().x() + (lane.end().x() - lane.origin().x()) * (footY - lane.origin().y()) / (lane.end().y() - lane.origin().y()) : lane.end().x();
+							ScreenPoint at = new ScreenPoint(footX, footY, 1.0);
 							String where = count + " notes " + viewport.width() + " " + tier + " event " + index + " fret " + fret + " p=" + progress;
 							assertEquals(at.x(), marker.value(0), 1e-6, where + ": the centre is on its lane");
 							assertEquals(at.y(), marker.value(1), 1e-6, where);
@@ -132,8 +134,8 @@ public class NoteBudgetTest {
 							assertEquals((grid.cellLeftX(fret) + grid.cellRightX(fret)) / 2.0, lane.end().x(), 1e-9, where);
 							assertEquals(grid.neckTopY(), lane.end().y(), 1e-9, where);
 							if (progress >= 1.0) {
-								assertEquals(lane.end().x(), marker.value(0), 1e-6, where + ": at the onset, the middle of the top of the cell");
-								assertEquals(lane.end().y(), marker.value(1), 1e-6, where);
+								assertEquals(lane.end().x(), marker.value(0), 1e-6, where + ": at the onset, the middle of its cell");
+								assertEquals(viewport.height() * IsometricProjection.NECK_NEAR_EDGE, marker.value(1), 1e-6, where + ": at the foot of the neck");
 							}
 						}
 					}
@@ -197,17 +199,17 @@ public class NoteBudgetTest {
 			long now = fixture.onset(0) - look + 20 * MS;
 			Scene entering = fixture.scene(false).build(now, new Viewport(1280, 720), null, 100);
 			SceneItem marker = entering.forEvent(0, Role.MARKER_FOOTPRINT).get(0);
-			double travelled = (marker.value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+			double travelled = (marker.value(1) - projection.horizonY()) / (720 * IsometricProjection.NECK_NEAR_EDGE - projection.horizonY());
 			assertTrue(travelled < 0.02, "the note comes in at the horizon: " + travelled);
 			double previous = travelled;
 			for (long left = look - 20 * MS; left >= 0; left -= 100 * MS) {
 				Scene scene = fixture.scene(false).build(fixture.onset(0) - left, new Viewport(1280, 720), null, 100);
-				double now2 = (scene.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+				double now2 = (scene.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1) - projection.horizonY()) / (720 * IsometricProjection.NECK_NEAR_EDGE - projection.horizonY());
 				assertTrue(now2 >= previous, "it only goes down");
 				previous = now2;
 			}
 			Scene onset = fixture.scene(false).build(fixture.onset(0), new Viewport(1280, 720), null, 100);
-			double arrived = (onset.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1) - projection.horizonY()) / (projection.hitLineY() - projection.horizonY());
+			double arrived = (onset.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1) - projection.horizonY()) / (720 * IsometricProjection.NECK_NEAR_EDGE - projection.horizonY());
 			assertTrue(arrived >= previous);
 			assertEquals(1.0, arrived, 1e-9, "and reaches the neck at its onset");
 		}

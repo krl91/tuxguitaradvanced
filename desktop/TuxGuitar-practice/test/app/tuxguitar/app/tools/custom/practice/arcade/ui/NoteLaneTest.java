@@ -155,11 +155,11 @@ public class NoteLaneTest {
 
 		// 2. nothing of the approach goes below the top edge of the neck: no line of the lanes, of the trails, no connector, no marker centre
 		for (SceneItem item : scene.items()) {
-			if (item.shape() == SceneItem.Shape.LINE && (item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL || item.role() == Role.FIELD_GUIDE)) {
+			if (item.shape() == SceneItem.Shape.LINE && (item.role() == Role.TRAJECTORY || item.role() == Role.FIELD_GUIDE)) {
 				assertTrue(Math.max(item.value(1), item.value(3)) <= neck.top + TOLERANCE, where + ": a line of the approach goes into the neck: " + item.role());
 			}
 			if (item.role() == Role.MARKER_FOOTPRINT) {
-				assertTrue(item.value(1) <= neck.top + TOLERANCE, where + ": a footprint is below the top edge of the neck");
+				assertTrue(item.value(1) <= viewport.height() * IsometricProjection.NECK_NEAR_EDGE + TOLERANCE, where + ": a footprint is below the bottom edge of the neck");
 			}
 			if (item.eventIndex() == 0 && item.shape() == SceneItem.Shape.LINE) {
 				assertTrue(item.role() == Role.TRAJECTORY || item.role() == Role.TRAIL || item.role() == Role.MARKER_THREAD, where + ": nothing but the lane and its trail is drawn for the note: " + item.role());
@@ -172,14 +172,21 @@ public class NoteLaneTest {
 		PaintRecorder.Polygon painted = recorder.roundedAt(markerItem.value(0), markerItem.value(1));
 		assertNotNull(painted, where + ": the footprint of the marker was sent to the painter");
 		Centre marker = new Centre((painted.minX() + painted.maxX()) / 2.0, (painted.minY() + painted.maxY()) / 2.0);
-		assertTrue(distanceToSegment(marker.cx, marker.cy, lane.x1, lane.y1, lane.x2, lane.y2) <= TOLERANCE,
-				where + ": the marker leaves its lane by " + distanceToSegment(marker.cx, marker.cy, lane.x1, lane.y1, lane.x2, lane.y2));
+		// the footprint goes down the lane to the top edge of the neck, then straight down the middle of its cell to the bottom edge, where it is at the onset (Q31)
+		double bottom = viewport.height() * IsometricProjection.NECK_NEAR_EDGE;
 		double p = IsometricProjection.depthShare(progress);
-		assertEquals(lane.x1 + (lane.x2 - lane.x1) * p, marker.cx, TOLERANCE, where + ": the marker is at its share of the lane");
-		assertEquals(lane.y1 + (lane.y2 - lane.y1) * p, marker.cy, TOLERANCE, where);
+		double footY = lane.y1 + (bottom - lane.y1) * p;
+		if (footY <= lane.y2) {
+			assertTrue(distanceToSegment(marker.cx, marker.cy, lane.x1, lane.y1, lane.x2, lane.y2) <= TOLERANCE,
+					where + ": the marker leaves its lane by " + distanceToSegment(marker.cx, marker.cy, lane.x1, lane.y1, lane.x2, lane.y2));
+			assertEquals(lane.x1 + (lane.x2 - lane.x1) * (footY - lane.y1) / (lane.y2 - lane.y1), marker.cx, TOLERANCE, where + ": the marker is at its share of the lane");
+		} else {
+			assertEquals(lane.x2, marker.cx, TOLERANCE, where + ": in the neck the footprint is on the middle of its cell");
+		}
+		assertEquals(footY, marker.cy, TOLERANCE, where);
 		if (progress >= 1.0) {
-			assertEquals(lane.x2, marker.cx, TOLERANCE, where + ": at the onset the marker is at the end of its lane");
-			assertEquals(lane.y2, marker.cy, TOLERANCE, where);
+			assertEquals(lane.x2, marker.cx, TOLERANCE, where + ": at the onset the marker is at the foot of its cell");
+			assertEquals(bottom, marker.cy, TOLERANCE, where);
 		}
 
 		// 4. the colour is that of the string
@@ -318,8 +325,11 @@ public class NoteLaneTest {
 						}
 					}
 					assertNotNull(lane, "event " + item.eventIndex() + " fret " + fret + ": no painted lane ends at the middle of its painted cell (" + wanted + ")");
-					assertTrue(distanceToSegment(item.value(0), item.value(1), lane.x1, lane.y1, lane.x2, lane.y2) <= TOLERANCE, "event " + item.eventIndex() + " " + item.role() + ": off its lane");
-					assertTrue(item.value(1) <= neck.top + TOLERANCE);
+					if (item.value(1) <= neck.top) {
+						assertTrue(distanceToSegment(item.value(0), item.value(1), lane.x1, lane.y1, lane.x2, lane.y2) <= TOLERANCE, "event " + item.eventIndex() + " " + item.role() + ": off its lane");
+					} else {
+						assertEquals(lane.x2, item.value(0), TOLERANCE, "event " + item.eventIndex() + " " + item.role() + ": in the neck, on the middle of its cell");
+					}
 					checked++;
 				}
 			}

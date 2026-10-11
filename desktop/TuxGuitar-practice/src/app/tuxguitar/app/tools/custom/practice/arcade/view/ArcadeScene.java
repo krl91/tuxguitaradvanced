@@ -340,7 +340,7 @@ public final class ArcadeScene {
 			if (!f.grid.isPainted(Math.max(0, fret - 1)) || !f.grid.isPainted(fret) || lane.end().y() <= lane.origin().y()) {
 				continue;
 			}
-			double x2 = lane.end().x() + (lane.end().x() - lane.origin().x()) * (neckBottomY - lane.end().y()) / (lane.end().y() - lane.origin().y());
+			double x2 = lane.end().x();
 			out.line(Role.NECK_LANE, lane.end().x(), lane.end().y(), x2, neckBottomY, WIRE_COLOUR, 0.10, 1.0, -1, 0);
 		}
 		// no lane for fret 0: an open string is a bar across the lanes (FR-069)
@@ -531,7 +531,7 @@ public final class ArcadeScene {
 		}
 
 		double numberY() {
-			return this.at.y() - this.ry() * 0.6 - numberSize() * 0.75;
+			return this.at.y() + this.ry() * 0.6 + numberSize() * 0.75;
 		}
 
 		/** The box of the fret number under the footprint, where it must overlap no other label. */
@@ -586,8 +586,26 @@ public final class ArcadeScene {
 		g.halfWidth = Math.max(MARKER_MIN_RADIUS, halfWidthOfCell(f, position.fret(), progress) * this.markerSize);
 		// the marker goes down the neck as it comes: at the onset it is on its target, the footprint stays on the lane at the top edge
 		double stringY = f.projection.stringY(this.neck.layout().rowOf(position.tgString()), this.neck.layout().count());
-		g.drop = (stringY - f.projection.hitLineY()) * g.at.scale();
+		// the foot of the neck (owner's mockups A-corde-rouge and A-corde-violette, Q31): the footprint goes down the middle of its cell, through the
+		// see-through neck, and is at its bottom edge at the onset; the marker stands above it, as high as its string is from that edge, so that it
+		// is on its target at the onset: the red string, at the top of the neck, has the longest thread, the violet one the shortest
+		g.at = footAt(f, position.fret(), progress);
+		g.drop = -(f.h * IsometricProjection.NECK_NEAR_EDGE - stringY) * g.at.scale();
 		return g;
+	}
+
+	/** The footprint of a note of the given fret at the given progress: down its lane to the top edge of the neck, then straight down its cell to the bottom edge. */
+	private static ScreenPoint footAt(Frame f, int fret, double progress) {
+		double bottom = f.h * IsometricProjection.NECK_NEAR_EDGE;
+		double top = f.projection.hitLineY();
+		double hor = f.projection.horizonY();
+		FretArrivalLaneMap.Lane lane = f.lanes.laneForFret(fret);
+		double yf = hor + (bottom - hor) * IsometricProjection.depthShare(Math.max(0.0, Math.min(1.0, progress)));
+		if (yf <= top) {
+			double v = (yf - hor) / (top - hor);
+			return new ScreenPoint(lane.origin().x() + (lane.end().x() - lane.origin().x()) * v, yf, IsometricProjection.FAR_SCALE + (1.0 - IsometricProjection.FAR_SCALE) * v);
+		}
+		return new ScreenPoint(lane.end().x(), yf, 1.0);
 	}
 
 	private ChordGeo chordGeo(Frame f, ArcadeRenderEvent event) {
@@ -888,19 +906,20 @@ public final class ArcadeScene {
 		ScreenPoint end = lane.end();
 		out.line(Role.TRAJECTORY, far.x(), far.y(), end.x(), end.y(), colour, alpha * 0.4, 1.0, event.index(), position.tgString());
 		if (f.tier.trails()) {
-			ScreenPoint behind = lane.at(Math.max(0.0, f.progressOf(event) - 0.12));
-			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.35, g.halfHeight * 2.0, event.index(), position.tgString());
+			ScreenPoint behind = footAt(f, position.fret(), Math.max(0.0, f.progressOf(event) - 0.12));
+			out.line(Role.TRAIL, behind.x(), behind.y(), g.at.x(), g.at.y(), colour, alpha * 0.30, Math.max(1.0, g.halfHeight * 0.6), event.index(), position.tgString());
 		}
 		double my = g.markerY();
 		if (f.tier.glow()) {
 			out.rounded(Role.GLOW, g.at.x(), my, g.rx() * 1.45, g.ry() * 1.9, colour, alpha * 0.22, event.index(), position.tgString());
 		}
 		// the marker comes down the neck towards its target, joined by a thin thread to its footprint on the lane (FR-071)
-		out.line(Role.MARKER_THREAD, g.at.x(), g.at.y(), g.at.x(), Math.max(g.at.y(), my - g.ry()), colour, alpha * 0.85, Math.max(1.0, g.halfHeight * 0.2), event.index(), position.tgString());
+		out.line(Role.MARKER_THREAD, g.at.x(), g.at.y(), g.at.x(), Math.min(g.at.y(), my + g.ry()), colour, alpha * 0.85, Math.max(1.0, g.halfHeight * 0.2), event.index(), position.tgString());
 		out.rounded(Role.MARKER_FOOTPRINT, g.at.x(), g.at.y(), g.rx(), g.ry() * 0.3, colour, alpha * 0.55, event.index(), position.tgString());
 		out.rounded(Role.MARKER, g.at.x(), my, g.rx(), g.ry(), colour, alpha, event.index(), position.tgString());
-		// the number of the fret is written on the lane under the footprint, never in the marker; it is left out where it would overlap a label
-		if ((f.noLabel == null || !f.noLabel.contains(event.index()))) {
+		// the number of the fret is written under the footprint, never in the marker; it is left out where it would overlap a label, or once the footprint is in the
+		// neck: the ruler of the frets under the neck then says the fret of the active note itself
+		if (g.at.y() < f.projection.hitLineY() && (f.noLabel == null || !f.noLabel.contains(event.index()))) {
 			out.text(Role.MARKER_FRET, Integer.toString(position.fret()), g.at.x(), g.numberY(), g.numberSize(), RULER_ACTIVE_COLOUR, alpha, event.index(), position.tgString());
 		}
 	}

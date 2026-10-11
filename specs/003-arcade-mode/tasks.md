@@ -110,6 +110,7 @@
 - [x] T123 (done 2026-10-11) Default input memory (Q30): `InputDefaultPolicy` (5 tests first, red at compile), `InputDefaultStore`, button in `InputSelectorPanel`. The panel wiring and the file are not covered by an automatic test; to check by hand.
 - [x] T124 (done 2026-10-11) Restart button in `ArcadeWindow` and `PracticeWindow.restartArcadeFromStart` (Q30); the click is not tested natively, to check by hand.
 - [x] T125 (done 2026-10-11) Coloured Arcade button in the transport bar (`PracticeArcadeAction`, `arcade_toolbar.png` in the six skins, `PracticeWindow.openAndStartArcade`) (Q30); to check by hand.
+- [x] T126 (done 2026-10-11) The note arrives at the foot of the neck (Q31): `footAt` in `ArcadeScene`, red test `RoundedRectTest.theMarkerMergesWithItsTargetAtTheOnsetAndItsThreadFollowsTheStringOfTheNeck` (red then, adjusted to red longest), pixel tests measure the target without the figure of the note; the tests that placed the footprint on the hit line now place it at the foot. The mockups approved by the owner are in `mockups/`. Owner validation of the built application pending.
 
 ## Increment D - Interface and result (`SRC/arcade/ui`, `share/lang`)
 

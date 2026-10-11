@@ -98,14 +98,14 @@ public class ArcadeSceneTest {
 			IsometricProjection projection = new IsometricProjection(SCREEN);
 			for (int index = 0; index < 6; index++) {
 				SceneItem at = scene.build(fixture.onset(index), SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.MARKER_FOOTPRINT).get(0);
-				assertEquals(projection.hitLineY(), at.value(1), 0.0, "event " + index + " at " + percent + " %");
+				assertEquals(SCREEN.height() * IsometricProjection.NECK_NEAR_EDGE, at.value(1), 1e-9, "event " + index + " at " + percent + " %");
 				SceneItem ring = scene.build(fixture.onset(index), SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.TARGET_RECT).get(0);
 				assertEquals(ring.value(0), at.value(0), 1e-9, "the marker arrives on the column of its target");
 				double previous = Double.NEGATIVE_INFINITY;
 				for (long offset = -2900; offset <= 0; offset += 100) {
 					SceneItem marker = scene.build(fixture.onset(index) + offset * MS, SCREEN, completedBefore(index, 6), percent).forEvent(index, Role.MARKER_FOOTPRINT).get(0);
 					assertTrue(marker.value(1) >= previous, "the marker only moves towards the hit line");
-					assertTrue(marker.value(1) <= projection.hitLineY());
+					assertTrue(marker.value(1) <= SCREEN.height() * IsometricProjection.NECK_NEAR_EDGE + 1e-9);
 					previous = marker.value(1);
 				}
 			}
@@ -217,7 +217,7 @@ public class ArcadeSceneTest {
 	@Test
 	public void theFretIsReadableOnTheMarkerAndOnTheNeck() {
 		SceneFixture fixture = oneNotePerString(100);
-		Scene picture = fixture.scene(false).build(fixture.onset(1) - 500 * MS, SCREEN, null, 100);
+		Scene picture = fixture.scene(false).build(fixture.onset(1) - 1500 * MS, SCREEN, null, 100);
 		assertEquals("5", picture.forEvent(1, Role.MARKER_FRET).get(0).text());
 		assertFalse(picture.withRole(Role.FRET_NUMBER).isEmpty(), "the fret numbers are under the neck");
 		assertNotEquals(0, picture.withRole(Role.FRET_WIRE).size());

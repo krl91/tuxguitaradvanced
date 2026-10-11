@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import app.tuxguitar.app.tools.custom.practice.arcade.view.IsometricProjection;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeScene;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.CameraTrack;
@@ -85,7 +86,7 @@ public class ArcadeFrameSourceTest {
 			clock.setNow(wall);
 			Scene picture = source.frame(wall, SCREEN);
 			SceneItem marker = picture.forEvent(i, Role.MARKER_FOOTPRINT).get(0);
-			assertEquals(SCREEN.height() * 0.60, marker.value(1), 0.5, "event " + i);
+			assertEquals(SCREEN.height() * IsometricProjection.NECK_NEAR_EDGE, marker.value(1), 0.5, "event " + i);
 		}
 	}
 
@@ -118,7 +119,7 @@ public class ArcadeFrameSourceTest {
 
 		clock.seek(FIRST_TICK + timeline.targetTicks(5));
 		Scene afterSeek = source.frame(clock.nowNanos(), SCREEN);
-		assertEquals(SCREEN.height() * 0.60, afterSeek.forEvent(5, Role.MARKER_FOOTPRINT).get(0).value(1), 0.5, "the seek is followed immediately");
+		assertEquals(SCREEN.height() * IsometricProjection.NECK_NEAR_EDGE, afterSeek.forEvent(5, Role.MARKER_FOOTPRINT).get(0).value(1), 0.5, "the seek is followed immediately");
 
 		clock.setReady(false);
 		assertEquals(ArcadeFrameSource.NOT_READY_NANOS, source.timelineNanosAt(clock.nowNanos()));

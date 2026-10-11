@@ -45,19 +45,19 @@ public class RoundedRectTest {
 				String where = tier + " p=" + progress;
 				assertEquals(SceneItem.Shape.ROUNDED, marker.shape(), where + ": a rounded rectangle, not a disc");
 				assertEquals(StringColours.forStrings(6).of(3), marker.colour(), where);
-				assertTrue(marker.value(1) >= footprint.value(1), where + ": the marker is under its footprint, on its way down the neck to its target (Q29)");
+				assertTrue(marker.value(1) < footprint.value(1), where + ": the marker stands above its footprint, which is at the foot of its cell at the onset (Q31)");
 				assertEquals(footprint.value(0), marker.value(0), 1e-9, where + ": on the same vertical");
 				assertEquals(SceneItem.Shape.LINE, thread.shape());
 				assertEquals(marker.value(0), thread.value(0), 1e-9, where + ": the thread is vertical, under the marker");
 				assertEquals(thread.value(0), thread.value(2), 1e-9, where);
 				assertEquals(footprint.value(1), thread.value(1), 1e-9, where + ": from the footprint");
-				assertEquals(Math.max(footprint.value(1), marker.value(1) - marker.value(3)), thread.value(3), 1e-9, where + ": to the top of the marker");
+				assertEquals(Math.min(footprint.value(1), marker.value(1) + marker.value(3)), thread.value(3), 1e-9, where + ": up to the bottom of the marker");
 				assertTrue(footprint.value(3) < marker.value(3), where + ": the footprint is flat");
 				List<SceneItem> numbers = scene.forEvent(0, Role.MARKER_FRET);
 				for (SceneItem number : numbers) {
 					assertEquals("5", number.text());
 					assertEquals(footprint.value(0), number.value(0), 1e-9, where + ": centred under the footprint");
-					assertTrue(number.value(1) < footprint.value(1), where + ": the number is written above the footprint, on the lane, not in the marker");
+					assertTrue(number.value(1) > footprint.value(1), where + ": the number is written under the footprint, not in the marker");
 				}
 				assertTrue(numbers.size() <= 1, where);
 			}
@@ -67,8 +67,8 @@ public class RoundedRectTest {
 	@Test
 	public void theNumberIsOnTheActiveNoteAndThereIsNeverANumberInsideAnyMarker() {
 		SceneFixture fixture = notes();
-		Scene scene = fixture.scene(false).build(fixture.onset(0) - 500 * MS, SCREEN, null, 100, QualityTier.FULL);
-		assertFalse(scene.forEvent(0, Role.MARKER_FRET).isEmpty(), "the active note has its number");
+		Scene scene = fixture.scene(false).build(fixture.onset(0) - 1500 * MS, SCREEN, null, 100, QualityTier.FULL);
+		assertFalse(scene.forEvent(0, Role.MARKER_FRET).isEmpty(), "the active note has its number while it comes down to the neck");
 		SceneItem marker = scene.forEvent(0, Role.MARKER).get(0);
 		for (SceneItem number : scene.withRole(Role.MARKER_FRET)) {
 			boolean inside = Math.abs(number.value(0) - marker.value(0)) < marker.value(2) && Math.abs(number.value(1) - marker.value(1)) < marker.value(3);
@@ -184,7 +184,7 @@ public class RoundedRectTest {
 	 */
 	@Test
 	public void theMarkerMergesWithItsTargetAtTheOnsetAndItsThreadFollowsTheStringOfTheNeck() {
-		double previousThread = -1.0;
+		double previousThread = Double.MAX_VALUE;
 		for (int string : new int[] { 6, 4, 2, 1 }) {
 			SongFixture song = new SongFixture(2);
 			song.quarter(1, 0, string, 5);
@@ -200,10 +200,10 @@ public class RoundedRectTest {
 			SceneItem thread = coming.forEvent(0, Role.MARKER_THREAD).get(0);
 			SceneItem foot = coming.forEvent(0, Role.MARKER_FOOTPRINT).get(0);
 			SceneItem coming0 = coming.forEvent(0, Role.MARKER).get(0);
-			assertEquals(foot.value(1), Math.min(thread.value(1), thread.value(3)), 0.6, "the thread starts at the footprint on the lane");
-			assertEquals(coming0.value(1) - coming0.value(3), Math.max(thread.value(1), thread.value(3)), 0.6, "and ends at the marker");
+			assertEquals(foot.value(1), Math.max(thread.value(1), thread.value(3)), 0.6, "the thread starts at the footprint");
+			assertEquals(coming0.value(1) + coming0.value(3), Math.min(thread.value(1), thread.value(3)), 0.6, "and ends at the bottom of the marker");
 			double length = Math.abs(thread.value(3) - thread.value(1));
-			assertTrue(length > previousThread, "string " + string + ": a string farther from the top edge has a longer thread");
+			assertTrue(length < previousThread, "string " + string + ": the red string, at the top of the neck, has the longest thread and the violet one the shortest");
 			previousThread = length;
 		}
 	}

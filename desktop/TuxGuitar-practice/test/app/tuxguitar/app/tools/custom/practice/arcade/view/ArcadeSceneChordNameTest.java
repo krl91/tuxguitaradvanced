@@ -95,7 +95,7 @@ public class ArcadeSceneChordNameTest {
 	@Test
 	public void aSingleNoteNeverHasAChordHeader() {
 		SceneFixture fixture = fixture();
-		for (Scene scene : variants(fixture, fixture.onset(2) - 600 * MS, ArcadeSceneTest.completedBefore(2, 5))) {
+		for (Scene scene : variants(fixture, fixture.onset(2) - 1500 * MS, ArcadeSceneTest.completedBefore(2, 5))) {
 			assertTrue(scene.forEvent(2, Role.PANEL_NAME).isEmpty());
 			assertTrue(scene.forEvent(2, Role.CHORD_PANEL).isEmpty());
 			assertEquals("5", scene.forEvent(2, Role.MARKER_FRET).get(0).text(), "a note shows its fret, and only that");

@@ -47,7 +47,7 @@ public class FloatingMeasureTest {
 		Scene entering = fixture.scene(false).build(fixture.onset(0) - measure + 20 * MS, SCREEN, null, 100, QualityTier.FULL);
 		assertTrue(entering.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1) < projection.horizonY() + 0.05 * (projection.hitLineY() - projection.horizonY()), "at the horizon");
 		Scene onset = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100, QualityTier.FULL);
-		assertEquals(projection.hitLineY(), onset.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1), 0.5, "on the neck at the onset");
+		assertEquals(SCREEN.height() * IsometricProjection.NECK_NEAR_EDGE, onset.forEvent(0, Role.MARKER_FOOTPRINT).get(0).value(1), 0.5, "at the foot of the neck at the onset");
 	}
 
 	@Test

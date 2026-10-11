@@ -103,7 +103,9 @@ public class ArcadeSceneDensityTest {
 					}
 					ArcadeRenderEvent active = fixture.events.get(completed);
 					if (active.kind() == ArcadeRenderEvent.Kind.NOTE) {
-						assertFalse(scene.forEvent(completed, Role.MARKER_FRET).isEmpty(), "the fret number of the active note " + completed + " at " + offset);
+						// the number is written under the footprint while it is above the neck; in the neck the ruler of the frets says it (Q31)
+						boolean aboveTheNeck = scene.forEvent(completed, Role.MARKER_FOOTPRINT).get(0).value(1) < SCREEN.height() * IsometricProjection.HIT_LINE;
+						assertEquals(aboveTheNeck, !scene.forEvent(completed, Role.MARKER_FRET).isEmpty(), "the fret number of the active note " + completed + " at " + offset);
 						assertFalse(scene.forEvent(completed, Role.TARGET_RECT).isEmpty(), "and its ring on the neck");
 					} else {
 						assertFalse(scene.forEvent(completed, Role.CHORD_PANEL).isEmpty(), "the diagram of the active chord " + completed + " at " + offset);
