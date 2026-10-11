@@ -54,27 +54,27 @@ Both timed modes share the **tempo** (20 % to 150 % of the written tempo), the *
 
 ### Arcade
 
-Choose **Arcade** in the Mode tab, choose the track you play in the Track tab (any pitched track, bass included), then press *Start Arcade*. The practice window hides while the game window runs.
+Two ways to start it: the **coloured Arcade button** of the transport bar (right after the ♪ Practice button) starts Arcade **at once** on the track under the score cursor, with the current input, without the preparation window; or choose **Arcade** in the Mode tab, choose the track you play in the Track tab (any pitched track, bass included), then press *Start Arcade*. The practice window hides while the game window runs.
 
 <img src="images/features/practice-modes.png" width="480" alt="Choice of the mode">
 
-<img src="images/features/practice-mode-arcade.png" width="420" alt="Mode tab with Arcade chosen">
+<img src="images/features/practice-mode-arcade.png" width="420" alt="Mode tab with Arcade chosen, with the size of the rectangles and the tilt of the plane">
 
-<img src="images/features/arcade-notes.png" width="640" alt="Arcade run: notes coming from the horizon, one reaching the neck">
+<img src="images/features/arcade-notes.png" width="640" alt="Arcade run: rectangles coming from the horizon in a straight line, one landing on its target on the neck">
 
-* **Every note is seen coming for five seconds**, from the horizon, whatever the number of notes. A note written at fret *n* always follows the same lane to the middle of its fret on the neck; only its colour (that of its string) depends on the string. The disk that reaches the neck is the one you play now.
-* **Chords** are a bar on a central axis; the next chord shows its diagram and name, the others are bars without diagram.
+* **You see one measure ahead** (one second at least), whatever the tempo. A note is a **rounded rectangle** in the colour of its string; it comes **in one straight line** from the horizon to the middle of its fret at the foot of the neck, through the see-through neck, and is as wide as the cell of its fret. At the moment to play it is exactly on its target on the neck.
+* **Chords** are a translucent panel from the first to the last fret of the chord, with a rectangle for every note and the name above the left corner.
 * **Verdicts** (on time, early, late, wrong, incomplete, missed) appear as a badge once the note is judged. The top of the window shows your streak, the tempo and what comes next.
-* **Pause, resume and stop** are in the window. Playing the score from the main window stops the run.
-* **Size of the incoming discs:** a setting (40 % to 150 %) in the Mode tab, for the discs that are not on the neck yet.
+* **Restart, pause, resume and stop** are in the window. *Restart* begins again from the start of the piece (or of the passage) without leaving the game. Playing the score from the main window stops the run.
+* **Settings of the picture** (Mode tab): the **size of the incoming rectangles** (0 % to 150 % of the size of the target) and the **tilt of the plane** (scale at the horizon 20 % to 100 %, 35 % by default; height of the horizon 0 % to 40 %, 18 % by default).
 * At the end the **result** gives the score, the share of the maximum, the best streak and the count of each judgement; you can **play again from the start or from a measure**.
-* **Inputs:** the *Refresh* button of the Input tab lists the audio inputs again, for an interface plugged in while the application runs.
+* **Inputs:** the *Refresh* button of the Input tab lists the audio inputs again; *Remember as default* stores the chosen input in the configuration (selected when it is there, and again when it comes back after an absence).
 
-<img src="images/features/arcade-chord.png" width="640" alt="A chord: its named diagram, the incoming notes and the targets on the neck">
+<img src="images/features/arcade-chord.png" width="640" alt="A chord: a translucent panel with its name, a rectangle for every note, and the target on the neck">
 
 <img src="images/features/arcade-result.png" width="300" alt="Result window at the end of a run">
 
-<img src="images/features/practice-input-refresh.png" width="420" alt="The Input tab with the Refresh button">
+<img src="images/features/practice-input-refresh.png" width="420" alt="The Input tab with the Refresh and Remember as default buttons">
 
 *Screenshots of the application, shown with its French interface.*
 

@@ -54,21 +54,21 @@ Les deux modes chronométrés partagent le **tempo** (20 % à 150 % du tempo éc
 
 ### Arcade
 
-Choisissez **Arcade** dans l'onglet Mode, la piste que vous jouez dans l'onglet Piste (toute piste avec hauteur, basse comprise), puis *Démarrer Arcade*. La fenêtre de pratique se masque pendant que la fenêtre du jeu tourne.
+Deux façons de le lancer : le **bouton Arcade coloré** de la barre de transport (juste après le bouton ♪ Pratique) lance Arcade **tout de suite** sur la piste sous le curseur, avec l'entrée actuelle, sans la fenêtre de préparation ; ou choisissez **Arcade** dans l'onglet Mode, la piste que vous jouez dans l'onglet Piste (toute piste avec hauteur, basse comprise), puis *Démarrer Arcade*. La fenêtre de pratique se masque pendant que la fenêtre du jeu tourne.
 
 <img src="images/features/practice-modes.png" width="480" alt="Choix du mode">
 
-<img src="images/features/practice-mode-arcade.png" width="420" alt="Onglet Mode avec Arcade choisi">
+<img src="images/features/practice-mode-arcade.png" width="420" alt="Onglet Mode avec Arcade choisi, avec la taille des rectangles et l'inclinaison du plan">
 
-<img src="images/features/arcade-notes.png" width="640" alt="Une partie Arcade : des notes viennent de l'horizon, l'une atteint le manche">
+<img src="images/features/arcade-notes.png" width="640" alt="Une partie Arcade : des rectangles viennent de l'horizon en ligne droite, l'un se pose sur sa cible sur le manche">
 
-* **Chaque note se voit venir pendant cinq secondes**, depuis l'horizon, quel que soit le nombre de notes. Une note écrite à la case *n* suit toujours la même voie jusqu'au milieu de sa case sur le manche ; seule sa couleur (celle de sa corde) dépend de la corde. Le disque qui atteint le manche est celui que vous jouez maintenant.
-* **Les accords** sont une barre sur un axe central ; le prochain accord montre son diagramme et son nom, les autres sont des barres sans diagramme.
+* **Vous voyez une mesure à l'avance** (une seconde au moins), quel que soit le tempo. Une note est un **rectangle arrondi** de la couleur de sa corde ; elle arrive **en ligne droite** depuis l'horizon jusqu'au milieu de sa case au pied du manche, à travers le manche transparent, et a la largeur de la case de sa frette. Au moment de jouer, elle est exactement sur sa cible sur le manche.
+* **Les accords** sont un panneau translucide de la première à la dernière case de l'accord, avec un rectangle par note et le nom au-dessus du coin gauche.
 * **Les verdicts** (à l'heure, en avance, en retard, faux, incomplet, manqué) apparaissent en badge une fois la note jugée. Le haut de la fenêtre montre votre série, le tempo et la suite.
-* **Pause, reprise et arrêt** sont dans la fenêtre. Jouer la partition depuis la fenêtre principale arrête la partie.
-* **Taille des disques qui arrivent :** un réglage (40 % à 150 %) dans l'onglet Mode, pour les disques qui ne sont pas encore sur le manche.
+* **Recommencer, pause, reprise et arrêt** sont dans la fenêtre. *Recommencer* repart du début du morceau (ou du passage) sans quitter le jeu. Jouer la partition depuis la fenêtre principale arrête la partie.
+* **Réglages de l'image** (onglet Mode) : la **taille des rectangles qui arrivent** (0 % à 150 % de la taille de la cible) et l'**inclinaison du plan** (échelle à l'horizon 20 % à 100 %, 35 % par défaut ; hauteur de l'horizon 0 % à 40 %, 18 % par défaut).
 * À la fin, le **résultat** donne le score, la part du maximum, la meilleure série et le décompte de chaque jugement ; vous pouvez **rejouer depuis le début ou depuis une mesure**.
-* **Entrées :** le bouton *Actualiser* de l'onglet Entrée relit la liste des entrées audio, pour une interface branchée pendant que l'application tourne.
+* **Entrées :** le bouton *Actualiser* de l'onglet Entrée relit la liste des entrées audio ; *Mémoriser par défaut* enregistre l'entrée choisie dans la configuration (sélectionnée quand elle est là, et de nouveau quand elle revient après une absence).
 
 <img src="images/features/arcade-chord.png" width="640" alt="Un accord : son diagramme nommé, les notes qui arrivent et les cibles sur le manche">
 

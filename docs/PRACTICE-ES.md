@@ -40,17 +40,18 @@ Elige **Arcade** en la pestaña Modo, la pista que tocas en la pestaña Pista (c
 
 <img src="images/features/practice-modes.png" width="480" alt="Elección del modo">
 
-<img src="images/features/practice-mode-arcade.png" width="420" alt="Pestaña Modo con Arcade elegido">
+<img src="images/features/practice-mode-arcade.png" width="420" alt="Pestaña Modo con Arcade elegido, con el tamaño de los rectángulos y la inclinación del plano">
 
-<img src="images/features/arcade-notes.png" width="640" alt="Una partida Arcade: notas que vienen del horizonte, una llega al mástil">
+<img src="images/features/arcade-notes.png" width="640" alt="Una partida Arcade: rectángulos que vienen del horizonte en línea recta, uno se posa en su objetivo en el mástil">
 
-* **Cada nota se ve venir durante cinco segundos**, desde el horizonte, sea cual sea el número de notas. Una nota escrita en el traste *n* sigue siempre el mismo carril hasta el centro de su traste en el mástil; solo su color (el de su cuerda) depende de la cuerda. El disco que llega al mástil es el que tocas ahora.
-* **Los acordes** son una barra sobre un eje central; el próximo acorde muestra su diagrama y su nombre, los demás son barras sin diagrama.
+* **Se ve un compás por adelantado** (un segundo como mínimo), sea cual sea el tempo. Una nota es un **rectángulo redondeado** del color de su cuerda; llega **en línea recta** desde el horizonte hasta el centro de su traste al pie del mástil, a través del mástil transparente, y tiene el ancho de la casilla de su traste. En el momento de tocar está exactamente sobre su objetivo en el mástil.
+* **Los acordes** son un panel translúcido desde el primer hasta el último traste del acorde, con un rectángulo por nota y el nombre sobre la esquina izquierda.
 * **Los veredictos** (a tiempo, pronto, tarde, erróneo, incompleto, fallado) aparecen como insignia una vez juzgada la nota. La parte superior muestra tu racha, el tempo y lo que viene.
-* **Pausa, reanudar y parar** están en la ventana. Reproducir la partitura desde la ventana principal detiene la partida.
-* **Tamaño de los discos que llegan:** un ajuste (40 % a 150 %) en la pestaña Modo, para los discos que aún no están en el mástil.
+* **Reiniciar, pausa, reanudar y parar** están en la ventana. *Reiniciar* vuelve a empezar desde el principio de la pieza (o del pasaje) sin salir del juego. Reproducir la partitura desde la ventana principal detiene la partida.
+* **Ajustes de la imagen** (pestaña Modo): el **tamaño de los rectángulos que llegan** (0 % a 150 % del tamaño del objetivo) y la **inclinación del plano** (escala en el horizonte 20 % a 100 %, 35 % por defecto; altura del horizonte 0 % a 40 %, 18 % por defecto).
 * Al final, el **resultado** da la puntuación, la parte del máximo, la mejor racha y el recuento de cada juicio; puedes **repetir desde el principio o desde un compás**.
-* **Entradas:** el botón *Actualizar* de la pestaña Entrada vuelve a listar las entradas de audio, para una interfaz conectada con la aplicación en marcha.
+* **Entradas:** el botón *Actualizar* de la pestaña Entrada vuelve a listar las entradas de audio; *Recordar como predeterminada* guarda la entrada elegida en la configuración (se selecciona cuando está y de nuevo cuando vuelve tras una ausencia).
+* **Arranque directo:** el **botón Arcade de color** de la barra de transporte (justo después del botón ♪ Práctica) lanza Arcade de inmediato en la pista bajo el cursor, con la entrada actual, sin la ventana de preparación.
 
 <img src="images/features/arcade-chord.png" width="640" alt="Un acorde: su diagrama con nombre, las notas que llegan y los objetivos en el mástil">
 

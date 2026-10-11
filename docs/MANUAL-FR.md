@@ -440,7 +440,7 @@ Trois modes de travail, choisis dans l'onglet *Mode* :
 
 ## B2. La fenêtre Pratique interactive
 
-**Pour l'ouvrir :** *Outils > Pratique interactive*, ou le bouton **♪** à côté de Lecture : une pression travaille la piste sous le curseur de la partition, à partir du curseur, dès que l'entrée est utilisable. La fenêtre est organisée en **quatre onglets** ; les boutons *Travailler cette piste* (ou *Suivre le tempo de cette piste* / *Démarrer Arcade* selon le mode) et *Fermer* restent visibles quel que soit l'onglet.
+**Pour l'ouvrir :** *Outils > Pratique interactive*, ou le bouton **♪** à côté de Lecture : une pression travaille la piste sous le curseur de la partition, à partir du curseur, dès que l'entrée est utilisable. Le **bouton coloré** juste après (<img src="images/manual/arcade-button.png" width="40" alt="Le bouton Arcade coloré">) lance **Arcade** tout de suite à la place : voir [B6](#b6-mode-arcade-alpha). La fenêtre est organisée en **quatre onglets** ; les boutons *Travailler cette piste* (ou *Suivre le tempo de cette piste* / *Démarrer Arcade* selon le mode) et *Fermer* restent visibles quel que soit l'onglet.
 
 ### Onglet « Piste »
 
@@ -454,6 +454,7 @@ Choisissez la **piste à travailler** (seules les pistes utilisables sont propos
 
 * **Entrée** : la liste des entrées audio, une par appareil mono et une par canal utilisable des appareils multicanaux. L'application ne change jamais d'entrée seule.
 * **Actualiser** : relit la liste, pour une interface branchée **pendant** que l'application tourne (la liste n'est pas surveillée).
+* **Mémoriser par défaut** : enregistre l'entrée affichée dans la configuration, à la place de celle mémorisée avant. Quand la liste est lue, cette entrée est sélectionnée si elle est là, et sélectionnée de nouveau quand elle revient après une absence (une interface débranchée puis rebranchée) ; un choix fait pendant qu'elle était là est conservé ; tant qu'elle est absente, l'entrée par défaut du système s'applique.
 * **Niveau** : un indicateur et un message (bon, trop faible, trop fort, saturé) ; *Vérifier à nouveau le niveau* relance la mesure (jouez une corde).
 * **Gain d'entrée**, *Remise à zéro*, *Suggérer un gain*, *Appliquer* : voir [B3](#b3-niveau-dentrée-gain-et-bruit).
 * Un conseil rappelle de préférer un casque.
@@ -462,7 +463,7 @@ Choisissez la **piste à travailler** (seules les pistes utilisables sont propos
 
 <img src="images/manual/practice-mode-follow.png" width="480" alt="L'onglet Mode avec Suivre le tempo">
 
-Le **mode d'entraînement** (liste déroulante) et, pour les modes chronométrés, le **tempo** (20 à 150 % du tempo écrit), la **tolérance de timing** (stricte, souple, normale), le **calibrage du rythme** et un **retard** manuel ; en Arcade, la **taille des disques qui arrivent** (40 à 150 %). En bas, la fenêtre rappelle le délai de reconnaissance mesuré (environ 0,1 s, et que des notes plus rapprochées que 0,3 s peuvent ne pas être suivies : la pratique vous attend alors).
+Le **mode d'entraînement** (liste déroulante) et, pour les modes chronométrés, le **tempo** (20 à 150 % du tempo écrit), la **tolérance de timing** (stricte, souple, normale), le **calibrage du rythme** et un **retard** manuel ; en Arcade, la **taille des rectangles qui arrivent** (0 à 150 %, 100 % étant la taille de la cible sur le manche) et l'**inclinaison du plan** (l'échelle à l'horizon et la hauteur de l'horizon), voir [B6](#b6-mode-arcade-alpha). En bas, la fenêtre rappelle le délai de reconnaissance mesuré (environ 0,1 s, et que des notes plus rapprochées que 0,3 s peuvent ne pas être suivies : la pratique vous attend alors).
 
 ### Onglet « Passages »
 
@@ -523,32 +524,40 @@ Pendant la partie, la palette montre le verdict de la dernière note, le compteu
 
 ## B6. Mode Arcade (alpha)
 
-**Choix du mode :** onglet *Mode*, « Arcade ». Dans l'onglet *Piste*, choisissez la piste que vous jouez (toute piste avec hauteur, **basse comprise**), puis **Démarrer Arcade**. La fenêtre de pratique se masque pendant que la fenêtre du jeu tourne.
+**Deux façons de le lancer.**
 
-<img src="images/manual/practice-mode-arcade.png" width="460" alt="L'onglet Mode, Arcade choisi">
+* **Le bouton coloré** de la barre de transport (juste après le bouton ♪ Pratique, <img src="images/manual/arcade-button.png" width="40" alt="Le bouton Arcade coloré">) : un clic lance Arcade **tout de suite** sur la piste sous le curseur de la partition, avec l'entrée actuelle (celle que vous avez mémorisée par défaut, voir [B2](#b2-la-fenêtre-pratique-interactive)), sans la fenêtre de préparation. La fenêtre du jeu occupe toute la largeur de l'écran. Il démarre même si vous ne jouez pas encore.
+* **La fenêtre de préparation** : onglet *Mode*, « Arcade » ; dans l'onglet *Piste*, choisissez la piste que vous jouez (toute piste avec hauteur, **basse comprise**), puis **Démarrer Arcade**. La fenêtre de pratique se masque pendant que la fenêtre du jeu tourne.
+
+<img src="images/manual/practice-mode-arcade.png" width="460" alt="L'onglet Mode, Arcade choisi, avec la taille des rectangles et l'inclinaison du plan">
 
 C'est le mode « Suivre le tempo » (mêmes tempo, tolérance et calibrage) présenté sous forme de jeu. La piste que vous choisissez est muette, toutes les autres jouent.
 
-<img src="images/manual/arcade-run.png" width="760" alt="Une partie Arcade : des notes viennent de l'horizon vers le manche">
+<img src="images/manual/arcade-run.png" width="760" alt="Une partie Arcade : des rectangles viennent de l'horizon en ligne droite vers leur case sur le manche">
 
 **Comment lire l'écran :**
 
-* **Chaque note se voit venir pendant cinq secondes**, depuis l'horizon, quel que soit le nombre de notes. Une note écrite à la case *n* suit toujours **la même voie** jusqu'au **milieu de sa case** sur le manche ; seule sa **couleur** (celle de sa corde) dépend de la corde. Le disque qui atteint le manche est celui que vous jouez maintenant. Le chiffre dans le disque est le numéro de case.
-* **Le manche** (en bas) montre les cordes (avec leurs notes à vide, de la plus aiguë en haut) et les cases numérotées. La cible de la note à jouer est un disque plein sur la case et la corde exactes.
-* **Les accords** sont une barre sur un axe central ; le prochain accord montre son **diagramme** et son **nom**, les autres sont des barres sans diagramme.
-* **En haut** : votre **série** (à gauche), le **tempo** en pourcentage et la **suite** (à droite : « Suivante : corde 3, case 2 » ou « Suivant : accord »).
+* **Vous voyez une mesure à l'avance.** L'image contient les notes de la mesure suivante de la piste (une seconde au moins), quel que soit le tempo, pour qu'elle ne soit jamais surchargée.
+* **Une note est un rectangle arrondi de la couleur de sa corde, et elle arrive en ligne droite** depuis l'horizon jusqu'au **milieu de sa case, au pied du manche** (le bord bas), à travers le manche, qui est transparent. Le rectangle a la largeur de la case de sa frette (une case plus haute est plus étroite). Il se tient au-dessus d'une petite empreinte sur cette ligne, reliée par un fil fin ; **au moment de jouer, le rectangle est exactement sur sa cible sur le manche**. Le fil est long pour la corde en haut du manche et court pour celle du bas. Le numéro de case est écrit sous l'empreinte tant qu'elle est au-dessus du manche, et la règle des cases sous le manche met en évidence la case de la note à jouer.
+* **Le manche** (en bas) montre les cordes et les cases numérotées. Les cordes sont, de la plus grave à la plus aiguë sur une guitare : **rouge, jaune, bleu clair, orange, vert, violet** ; la plus grave est en haut du manche. **La corde à jouer est allumée** (une lueur), les autres sont ternes ; la lumière s'éteint quand la note est jugée.
+* **Une corde à vide** est une fine barre horizontale de la couleur de sa corde, avec un capuchon clair à gauche et les mots « Corde à vide », qui descend sur le manche.
+* **Un accord** est un panneau translucide, de sa première à sa dernière case, avec un rectangle arrondi pour chaque note, son **nom** au-dessus de son coin gauche et les numéros de case sur l'accord à jouer.
+* **En haut** : votre **série** (à gauche), le **tempo** en pourcentage et la **suite** (à droite).
 * **Les verdicts** (à l'heure, en avance, en retard, faux, incomplet, manqué) apparaissent en **badge** sous le manche une fois la note jugée (le texte accompagne toujours la couleur).
-* **Pause / Reprendre** et **Arrêter** sont en bas à droite. Jouer la partition depuis la fenêtre principale arrête la partie.
+* **Recommencer, Pause / Reprendre** et **Arrêter** sont en bas à droite. **Recommencer** repart du début du morceau (ou du passage que vous avez lancé) **sans quitter le jeu**. Jouer la partition depuis la fenêtre principale arrête la partie.
 
-<img src="images/manual/arcade-chord.png" width="760" alt="Un accord : diagramme et nom, notes qui arrivent et cibles sur le manche">
+<img src="images/manual/arcade-chord.png" width="760" alt="Un accord : un panneau translucide avec son nom, un rectangle par note, et la cible sur le manche">
 
-**La taille des disques** qui arrivent se règle (40 % à 150 %, 100 % par défaut) dans l'onglet *Mode*, pour les disques qui ne sont pas encore sur le manche. Elle est conservée jusqu'à la fermeture de l'application.
+**Réglages de l'image** (onglet *Mode*, conservés jusqu'à la fermeture de l'application, lus au démarrage d'une partie) :
+
+* **Taille des rectangles qui arrivent** : de 0 à 150 % de la taille de la cible sur le manche (100 % par défaut : le rectangle qui arrive a la taille de sa cible ; 0 % le réduit à un pixel).
+* **Inclinaison du plan** : l'**échelle à l'horizon** (20 à 100 %, 35 % par défaut : plus c'est bas, plus le plan est incliné) et la **hauteur de l'horizon** (0 à 40 % de la hauteur de la fenêtre, 18 % par défaut).
 
 **À la fin**, la fenêtre **Résultat** donne le score, la part du maximum, la meilleure série et le décompte de chaque verdict. Vous pouvez **rejouer depuis le début** ou **depuis une mesure** choisie (*Depuis la mesure*, puis *Jouer*). Les techniques (hammer-on, slide, bend...) sont signalées à part et ne changent pas le score.
 
 <img src="images/manual/arcade-result.png" width="330" alt="La fenêtre de résultat">
 
-**Alpha, ce qui n'est pas vérifié :** voir [B10](#b10-qualité-mesurée-limites-et-trace-de-diagnostic). Les notes **sous sol 1 (49 Hz)** (les plus graves d'une basse standard) sont affichées mais pas jugées. L'**écoute de votre propre guitare à travers l'application n'est pas proposée** : jouez par votre ampli ou par un casque branché sur l'interface audio.
+**Alpha, ce qui n'est pas vérifié :** voir [B10](#b10-qualité-mesurée-limites-et-trace-de-diagnostic). Les notes **sous sol 1 (49 Hz)** (les plus graves d'une basse standard) sont affichées mais pas jugées. L'**écoute de votre propre guitare à travers l'application n'est pas proposée** : jouez par votre ampli ou par un casque branché sur l'interface audio. La fenêtre du jeu occupe la largeur de l'écran mais n'est pas le plein écran natif de macOS.
 
 ## B7. Les réglages de reconnaissance audio
 
@@ -556,7 +565,7 @@ C'est le mode « Suivre le tempo » (mêmes tempo, tolérance et calibrage) pré
 
 <img src="images/manual/rec-input.png" width="700" alt="Catégorie Entrée audio">
 
-**Catégorie « Entrée audio »** : l'**entrée** (partagée par l'accordeur et la pratique ; elle change immédiatement et n'est pas mémorisée après la fermeture de l'application, bouton **Actualiser** compris), le **niveau minimal utilisable** (−40 dBFS recommandé), l'**alerte de niveau élevé** (−6 dBFS), **Réduire le bruit de fond** (désactivé) et **Suggérer un gain d'entrée** (activé).
+**Catégorie « Entrée audio »** : l'**entrée** (partagée par l'accordeur et la pratique ; elle change immédiatement et n'est pas mémorisée après la fermeture de l'application, sauf si vous appuyez sur **Mémoriser par défaut** dans la fenêtre de pratique ; bouton **Actualiser** compris), le **niveau minimal utilisable** (−40 dBFS recommandé), l'**alerte de niveau élevé** (−6 dBFS), **Réduire le bruit de fond** (désactivé) et **Suggérer un gain d'entrée** (activé).
 
 <img src="images/manual/rec-tuner.png" width="700" alt="Catégorie Accordeur">
 
@@ -761,17 +770,17 @@ Assurez-vous d'abord que l'entrée audio fonctionne : ouvrez **Outils > Pratique
 
 ### Mode 3 : Arcade (alpha)
 
-**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la tolérance et le calibrage sont les mêmes ; une nouvelle ligne règle la **taille des disques qui arrivent**. Appuyez sur **Démarrer Arcade**.
+**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la tolérance et le calibrage sont les mêmes ; de nouvelles lignes règlent la **taille des rectangles qui arrivent** et l'**inclinaison du plan**. Appuyez sur **Démarrer Arcade** (ou, la prochaine fois, cliquez sur le bouton Arcade coloré de la barre de transport, qui démarre tout de suite sur la piste sous le curseur). Appuyez sur **Démarrer Arcade**.
 
 <img src="images/manual-en/practice-mode-arcade.png" width="480" alt="L'onglet Mode avec Arcade">
 
-**Étape 23. Jouer les notes quand elles atteignent le manche.** Une nouvelle fenêtre montre un manche en bas. Chaque note vient de l'horizon pendant cinq secondes, sur la voie de sa case ; quand elle atteint le manche, jouez-la. Le disque porte le numéro de case, sa couleur est celle de sa corde. En haut : votre série, le tempo et la note suivante. Les badges sous le manche donnent les derniers verdicts (« On time » à l'heure, « Wrong » faux).
+**Étape 23. Jouer les notes quand elles atteignent le manche.** Une nouvelle fenêtre montre un manche en bas. Chaque note vient de l'horizon en ligne droite, sur la voie de sa case, et se pose sur sa cible sur le manche au moment où vous devez la jouer. Le rectangle arrondi a la couleur de sa corde ; son numéro de case est écrit sous son empreinte. En haut : votre série, le tempo et la note suivante. Les badges sous le manche disent les derniers verdicts (« À l'heure », « Faux »). **Recommencer** repart du début, **Pause** et **Arrêter** sont à côté.
 
-<img src="images/manual-en/tut-23-arcade-run.png" width="760" alt="Arcade : des notes viennent vers le manche, avec les verdicts dessous">
+<img src="images/manual-en/tut-23-arcade-run.png" width="760" alt="Arcade : des rectangles viennent vers le manche en ligne droite">
 
-**Étape 24. Les accords.** Un accord est une barre sur l'axe central, avec son diagramme et son nom au-dessus.
+**Étape 24. Les accords.** Un accord est un panneau translucide avec son nom au-dessus de son coin gauche et un rectangle pour chaque note de l'accord.
 
-<img src="images/manual-en/tut-24-arcade-chord.png" width="760" alt="Arcade : un accord avec son diagramme">
+<img src="images/manual-en/tut-24-arcade-chord.png" width="760" alt="Arcade : un accord en panneau translucide">
 
 **Étape 25. Le résultat.** À la fin, la fenêtre de résultat donne le score, la part du maximum, la meilleure série et le décompte de chaque verdict. **From the start** (depuis le début) ou **From measure** + **Play** (depuis une mesure) rejoue.
 

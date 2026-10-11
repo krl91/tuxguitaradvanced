@@ -440,7 +440,7 @@ Three ways to work, chosen in the *Mode* tab:
 
 ## B2. The Interactive Practice window
 
-**To open it:** *Tools > Interactive Practice*, or the **♪** button next to Play: one press practises the track under the score cursor, from the cursor, as soon as the input is usable. The window has **four tabs**; the *Practise this track* button (or *Follow the tempo of this track* / *Start Arcade* depending on the mode) and *Close* are always visible, whatever the tab.
+**To open it:** *Tools > Interactive Practice*, or the **♪** button next to Play: one press practises the track under the score cursor, from the cursor, as soon as the input is usable. The **coloured button** right after it (<img src="images/manual-en/arcade-button.png" width="40" alt="The coloured Arcade button">) starts **Arcade** at once instead: see [B6](#b6-arcade-mode-alpha). The window has **four tabs**; the *Practise this track* button (or *Follow the tempo of this track* / *Start Arcade* depending on the mode) and *Close* are always visible, whatever the tab.
 
 ### "Track" tab
 
@@ -454,6 +454,7 @@ Choose the **track to practise** (only usable tracks are offered, with the reaso
 
 * **Input**: the list of audio inputs, one per mono device and one per usable channel of multichannel devices. The application never changes input by itself.
 * **Refresh**: reads the list again, for an interface plugged in **while** the application runs (the list is not watched).
+* **Remember as default**: stores the input shown in the configuration, over the one remembered before. When the list is read, that input is selected if it is there, and selected again when it comes back after an absence (an interface unplugged then plugged in); a choice you made while it was there is kept; while it is away the system default applies.
 * **Level**: an indicator and a message (good, too low, too high, clipping); *Check level again* restarts the measure (play a string).
 * **Input gain**, *Reset*, *Suggest a gain*, *Apply*: see [B3](#b3-input-level-gain-and-noise).
 * A tip recalls that headphones are better.
@@ -462,7 +463,7 @@ Choose the **track to practise** (only usable tracks are offered, with the reaso
 
 <img src="images/manual-en/practice-mode-follow.png" width="480" alt="The Mode tab with Follow the tempo">
 
-The **practice mode** (drop-down) and, for the timed modes, the **tempo** (20 to 150 % of the written tempo), the **timing tolerance** (strict, normal, lenient), the **rhythm calibration** and a manual **delay**; in Arcade, the **size of the incoming discs** (40 to 150 %). At the bottom, the window recalls the measured recognition delay (about 0.1 s, and that notes closer than 0.3 s may not be followed: practice then waits for you).
+The **practice mode** (drop-down) and, for the timed modes, the **tempo** (20 to 150 % of the written tempo), the **timing tolerance** (strict, normal, lenient), the **rhythm calibration** and a manual **delay**; in Arcade, the **size of the incoming rectangles** (0 to 150 %, 100 % being the size of the target on the neck) and the **tilt of the plane** (the scale at the horizon and the height of the horizon), see [B6](#b6-arcade-mode-alpha). At the bottom, the window recalls the measured recognition delay (about 0.1 s, and that notes closer than 0.3 s may not be followed: practice then waits for you).
 
 ### "Passages" tab
 
@@ -523,32 +524,40 @@ During the run, the palette shows the verdict of the last note, the counter (on 
 
 ## B6. Arcade mode (alpha)
 
-**Choosing it:** *Mode* tab, "Arcade". In the *Track* tab, choose the track you play (any pitched track, **bass included**), then **Start Arcade**. The practice window hides while the game window runs.
+**Two ways to start it.**
 
-<img src="images/manual-en/practice-mode-arcade.png" width="460" alt="The Mode tab, Arcade chosen">
+* **The coloured button** of the transport bar (right after the ♪ Practice button, <img src="images/manual-en/arcade-button.png" width="40" alt="The coloured Arcade button">): one click starts Arcade **at once** on the track under the score cursor, with the current input (the one you remembered as default, see [B2](#b2-the-interactive-practice-window)), without the preparation window. The game window fills the width of the screen. It starts even if you do not play yet.
+* **The preparation window**: *Mode* tab, "Arcade"; in the *Track* tab, choose the track you play (any pitched track, **bass included**), then **Start Arcade**. The practice window hides while the game window runs.
+
+<img src="images/manual-en/practice-mode-arcade.png" width="460" alt="The Mode tab, Arcade chosen, with the size of the rectangles and the tilt of the plane">
 
 It is the "Follow the tempo" mode (same tempo, tolerance and calibration) shown as a game. The track you choose is silent, all the others play.
 
-<img src="images/manual-en/arcade-run.png" width="760" alt="An Arcade run: notes coming from the horizon towards the neck">
+<img src="images/manual-en/arcade-run.png" width="760" alt="An Arcade run: rectangles coming from the horizon in a straight line towards their cell on the neck">
 
 **How to read the screen:**
 
-* **Every note is seen coming for five seconds**, from the horizon, whatever the number of notes. A note written at fret *n* always follows **the same lane** to the **middle of its fret** on the neck; only its **colour** (that of its string) depends on the string. The disk that reaches the neck is the one you play now. The number in the disk is the fret number.
-* **The neck** (bottom) shows the strings (with their open notes, the highest on top) and the numbered frets. The target of the note to play is a solid disk on the exact fret and string.
-* **Chords** are a bar on a central axis; the next chord shows its **diagram** and **name**, the others are bars without diagram.
-* **At the top**: your **streak** (left), the **tempo** as a percentage and **what comes next** (right: "Next: string 3, fret 2" or "Next: chord").
+* **You see one measure ahead.** The picture holds the notes of the next measure of the track (one second at least), whatever the tempo, so that it is never crowded.
+* **A note is a rounded rectangle in the colour of its string, and it comes in one straight line** from the horizon to the **middle of its fret, at the foot of the neck** (the bottom edge), through the neck, which is see-through. The rectangle is as wide as the cell of its fret (a higher fret is a narrower cell). It stands above a small footprint on that line, joined to it by a thin thread; **at the moment to play, the rectangle is exactly on its target on the neck**. The thread is long for the string at the top of the neck and short for the one at the bottom. The fret number is written under the footprint while it is above the neck, and the fret ruler under the neck highlights the fret of the note to play.
+* **The neck** (bottom) shows the strings and the numbered frets. The strings are, from the lowest to the highest on a guitar: **red, yellow, light blue, orange, green, violet**; the lowest is at the top of the neck. **The string to play is lit** (a glow), the others are dim; the light goes out when the note is judged.
+* **An open string** is a thin horizontal bar in the colour of its string, with a bright cap at its left end and the words "Open string", that comes down onto the neck.
+* **A chord** is a translucent panel, from its first to its last fret, with a rounded rectangle for every note, its **name** above its left corner and the fret numbers on the chord to play.
+* **At the top**: your **streak** (left), the **tempo** as a percentage and **what comes next** (right).
 * **Verdicts** (on time, early, late, wrong, incomplete, missed) appear as a **badge** under the neck once the note is judged (the text always goes with the colour).
-* **Pause / Resume** and **Stop** are at the bottom right. Playing the score from the main window stops the game.
+* **Restart, Pause / Resume and Stop** are at the bottom right. **Restart** begins again from the start of the piece (or of the passage you started) **without leaving the game**. Playing the score from the main window stops the game.
 
-<img src="images/manual-en/arcade-chord.png" width="760" alt="A chord: diagram and name, incoming notes and targets on the neck">
+<img src="images/manual-en/arcade-chord.png" width="760" alt="A chord: a translucent panel with its name, a rectangle for each note, and the target on the neck">
 
-**The size of the incoming discs** is a setting (40 % to 150 %, 100 % by default) in the *Mode* tab, for the discs that are not on the neck yet. It is kept until the application is closed.
+**Settings of the picture** (*Mode* tab, kept until the application is closed, read when a run starts):
+
+* **Size of the incoming rectangles**: 0 to 150 % of the size of the target on the neck (100 % by default: the rectangle that arrives has the size of its target; 0 % makes them a single pixel).
+* **Tilt of the plane**: the **scale at the horizon** (20 to 100 %, 35 % by default: the lower, the more tilted) and the **height of the horizon** (0 to 40 % of the height of the window, 18 % by default).
 
 **At the end**, the **Result** window gives the score, the share of the maximum, the best streak and the count of each verdict. You can **play again from the start** or **from a measure** you choose (*From measure*, then *Play*). The techniques (hammer-on, slide, bend...) are reported apart and do not change the score.
 
 <img src="images/manual-en/arcade-result.png" width="330" alt="The result window">
 
-**Alpha, what is not verified:** see [B10](#b10-measured-quality-limits-and-diagnostic-trace). Notes **below G1 (49 Hz)** (the lowest of a standard bass) are shown but not judged. **Hearing your own guitar through the application is not offered**: play through your amplifier or through headphones plugged into the audio interface.
+**Alpha, what is not verified:** see [B10](#b10-measured-quality-limits-and-diagnostic-trace). Notes **below G1 (49 Hz)** (the lowest of a standard bass) are shown but not judged. **Hearing your own guitar through the application is not offered**: play through your amplifier or through headphones plugged into the audio interface. The game window fills the width of the screen but is not the native macOS full screen.
 
 ## B7. Audio recognition settings
 
@@ -759,17 +768,17 @@ Make sure the audio input works first: open **Tools > Interactive Practice**. In
 
 ### Mode 3: Arcade (alpha)
 
-**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the tolerance and the calibration are the same as before; a new line sets the **size of the incoming discs**. Press **Start Arcade**.
+**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the tolerance and the calibration are the same as before; new lines set the **size of the incoming rectangles** and the **tilt of the plane**. Press **Start Arcade** (or, next time, click the coloured Arcade button of the transport bar, which starts at once on the track under the cursor).
 
 <img src="images/manual-en/practice-mode-arcade.png" width="480" alt="The Mode tab with Arcade">
 
-**Step 23. Play the notes as they reach the neck.** A new window shows a neck at the bottom. Every note comes from the horizon during five seconds, on the lane of its fret; when it reaches the neck, play it. The disk shows the fret number, its colour is the colour of its string. At the top: your streak, the tempo and the next note. The badges under the neck tell the last verdicts ("On time", "Wrong").
+**Step 23. Play the notes as they reach the neck.** A new window shows a neck at the bottom. Every note comes from the horizon in one straight line, on the lane of its fret, and lands on its target on the neck when you must play it. The rounded rectangle has the colour of its string; its fret number is written under its footprint. At the top: your streak, the tempo and the next note. The badges under the neck tell the last verdicts ("On time", "Wrong"). **Restart** begins again, **Pause** and **Stop** are next to it.
 
-<img src="images/manual-en/tut-23-arcade-run.png" width="760" alt="Arcade: notes coming towards the neck, with the verdicts under it">
+<img src="images/manual-en/tut-23-arcade-run.png" width="760" alt="Arcade: rectangles coming towards the neck in a straight line">
 
-**Step 24. Chords.** A chord is a bar on the centre axis, with its diagram and its name above it.
+**Step 24. Chords.** A chord is a translucent panel with its name above its left corner and a rectangle for every note of the chord.
 
-<img src="images/manual-en/tut-24-arcade-chord.png" width="760" alt="Arcade: a chord with its diagram">
+<img src="images/manual-en/tut-24-arcade-chord.png" width="760" alt="Arcade: a chord as a translucent panel">
 
 **Step 25. The result.** At the end, the result window gives the score, the share of the maximum, the best streak and the count of each verdict. **From the start** or **From measure + Play** plays again.
 
