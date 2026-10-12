@@ -1,0 +1,59 @@
+name: Install SWT
+description: >
+  SWT is not on Maven Central: downloads the SWT archive of the platform (kept in the cache of the repository between runs)
+  and installs its jar into the local Maven repository, with the artifactId the build scripts expect.
+
+inputs:
+  platform:
+    description: 'macos (cocoa, the architecture of the runner), linux (gtk, the architecture of the runner) or windows (win32, x86_64)'
+    required: true
+  version:
+    description: 'SWT version'
+    default: '4.37'
+  drop:
+    description: 'Eclipse drop that holds that SWT version'
+    default: 'R-4.37-202509050730'
+
+runs:
+  using: composite
+  steps:
+    - name: Work out the SWT package of the platform
+      id: swt
+      shell: bash
+      env:
+        PLATFORM: ${{ inputs.platform }}
+        SWT_VERSION: ${{ inputs.version }}
+      run: |
+        case "$PLATFORM" in
+          macos)   FILE="swt-${SWT_VERSION}-cocoa-macosx-$(uname -m | sed 's/arm64/aarch64/').zip"; ARTIFACT=org.eclipse.swt.cocoa.macosx ;;
+          linux)   FILE="swt-${SWT_VERSION}-gtk-linux-$(uname -m).zip"; ARTIFACT=org.eclipse.swt.gtk.linux ;;
+          windows) FILE="swt-${SWT_VERSION}-win32-win32-x86_64.zip"; ARTIFACT=org.eclipse.swt.win32.win32 ;;
+          *) echo "unknown platform: $PLATFORM" >&2; exit 1 ;;
+        esac
+        echo "file=$FILE" >> "$GITHUB_OUTPUT"
+        echo "artifact=$ARTIFACT" >> "$GITHUB_OUTPUT"
+    - name: Restore the SWT archive from the cache
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/swt-archive/${{ steps.swt.outputs.file }}
+        key: swt-${{ inputs.drop }}-${{ steps.swt.outputs.file }}
+    - name: Download the SWT archive
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        FILE: ${{ steps.swt.outputs.file }}
+        SWT_DROP: ${{ inputs.drop }}
+      run: |
+        mkdir -p "$RUNNER_TEMP/swt-archive"
+        curl -fL --retry 3 -o "$RUNNER_TEMP/swt-archive/$FILE" "https://archive.eclipse.org/eclipse/downloads/drops4/${SWT_DROP}/${FILE}"
+    - name: Install SWT into the local Maven repository
+      shell: bash
+      env:
+        FILE: ${{ steps.swt.outputs.file }}
+        ARTIFACT: ${{ steps.swt.outputs.artifact }}
+        SWT_VERSION: ${{ inputs.version }}
+      run: |
+        rm -rf "$RUNNER_TEMP/swt" && mkdir -p "$RUNNER_TEMP/swt"
+        unzip -q "$RUNNER_TEMP/swt-archive/$FILE" -d "$RUNNER_TEMP/swt"
+        mvn -B --no-transfer-progress install:install-file -Dfile="$RUNNER_TEMP/swt/swt.jar" -DgroupId=org.eclipse.swt -DartifactId="$ARTIFACT" -Dpackaging=jar -Dversion="$SWT_VERSION"

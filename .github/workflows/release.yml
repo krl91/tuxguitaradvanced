@@ -1,5 +1,6 @@
-# Builds TuxGuitarAdvanced for macOS (Apple Silicon), Linux and Windows and publishes
-# the packages as a GitHub Release.
+# Builds TuxGuitarAdvanced for macOS (Apple Silicon), Windows and Linux, one after the other, and publishes
+# the packages as a GitHub Release. Each platform is built only if the one before succeeded (a macOS minute
+# counts ten times and a Windows minute twice on a private repository: a failure stops the chain early).
 #
 # Trigger: only by hand (Actions > Release > Run workflow), giving the tag such as v1.0.0:
 # a push or a tag push starts nothing.
@@ -7,7 +8,8 @@
 # Notes:
 #  - All three packages include the Interactive Practice modules (audio-engine, tuner-next,
 #    practice). macOS arm64 embeds a Temurin 21 JRE in the .app (the build itself does not do it).
-#  - Linux and Windows use the SWT build scripts of the same name.
+#  - Linux uses the Debian variant of the SWT build (it wraps the tuxguitar-linux-swt bundle): the same build gives the
+#    tar.gz and the .deb (amd64). Windows uses the SWT build script of the same name.
 #  - The Windows build is cross-compiled on Linux with Mingw-w64 and does not
 #    embed a JRE: Java 17+ must be installed on the target machine.
 #  - The macOS launcher is signed with a stable self-signed certificate when the secrets
@@ -27,9 +29,12 @@ on:
 permissions:
   contents: write   # create the draft release and attach the packages
 
+# one run per tag at a time; a second one waits instead of racing the first on the same draft release
+concurrency:
+  group: release-${{ github.event.inputs.tag }}
+  cancel-in-progress: false
+
 env:
-  SWT_VERSION: '4.37'
-  SWT_DROP: 'R-4.37-202509050730'
   TG_VERSION: '9.99-SNAPSHOT'
   RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
@@ -61,13 +66,12 @@ jobs:
           distribution: 'temurin'
           architecture: aarch64
           cache: maven
-      - name: Download and install SWT (cocoa, aarch64)
-        run: |
-          curl -fL -o swt.zip "https://archive.eclipse.org/eclipse/downloads/drops4/${SWT_DROP}/swt-${SWT_VERSION}-cocoa-macosx-aarch64.zip"
-          mkdir swt && cd swt && unzip -q ../swt.zip
-          mvn -B install:install-file -Dfile=swt.jar -DgroupId=org.eclipse.swt -DartifactId=org.eclipse.swt.cocoa.macosx -Dpackaging=jar -Dversion=${SWT_VERSION}
+      - name: Install SWT
+        uses: ./.github/actions/install-swt
+        with:
+          platform: macos
       - name: Build
-        run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B -e clean verify -P native-modules -DskipTests
+        run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests
       - name: Embed the JRE
         run: |
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
@@ -90,7 +94,7 @@ jobs:
         run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-macos-arm64.zip --repo "$GITHUB_REPOSITORY" --clobber
 
   build-linux:
-    needs: create-release
+    needs: build-windows   # Linux only if macOS and Windows succeeded
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -103,28 +107,29 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip git build-essential libwebkit2gtk-4.1-0 libfluidsynth-dev libjack-jackd2-dev libasound2-dev liblilv-dev libsuil-dev qtbase5-dev
-      - name: Download and install SWT (gtk, linux)
-        run: |
-          ARCH=$(uname -m)
-          curl -fL -o swt.zip "https://archive.eclipse.org/eclipse/downloads/drops4/${SWT_DROP}/swt-${SWT_VERSION}-gtk-linux-${ARCH}.zip"
-          mkdir swt && cd swt && unzip -q ../swt.zip
-          mvn -B install:install-file -Dfile=swt.jar -DgroupId=org.eclipse.swt -DartifactId=org.eclipse.swt.gtk.linux -Dpackaging=jar -Dversion=${SWT_VERSION}
+          sudo apt-get install -y wget unzip git build-essential fakeroot libwebkit2gtk-4.1-0 libfluidsynth-dev libjack-jackd2-dev libasound2-dev liblilv-dev libsuil-dev qtbase5-dev
+      - name: Install SWT
+        uses: ./.github/actions/install-swt
+        with:
+          platform: linux
+      # the Debian variant builds the tuxguitar-linux-swt bundle first, then wraps it in a .deb of the architecture of the runner (amd64)
       - name: Build
-        run: cd desktop/build-scripts/tuxguitar-linux-swt && mvn -B -e clean verify -P native-modules -DskipTests
+        run: cd desktop/build-scripts/tuxguitar-linux-swt-deb && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests
       - name: Package
         run: |
           cd desktop/build-scripts/tuxguitar-linux-swt/target
           # the top-level folder carries the product name
           mv "tuxguitar-${TG_VERSION}-linux-swt" TuxGuitarAdvanced
           tar -czf "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" TuxGuitarAdvanced
-      - name: Attach the package to the release
+          cp "$GITHUB_WORKSPACE/desktop/build-scripts/tuxguitar-linux-swt-deb/target/tuxguitar-${TG_VERSION}-linux-swt.deb" "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb"
+          dpkg-deb --info "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb" | grep -E "Package|Version|Architecture"
+      - name: Attach the packages to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-linux-*.tar.gz --repo "$GITHUB_REPOSITORY" --clobber
+        run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-linux-*.tar.gz TuxGuitarAdvanced-*-linux-*.deb --repo "$GITHUB_REPOSITORY" --clobber
 
   build-windows:
-    needs: create-release
+    needs: build-macos-arm64   # Windows only if macOS succeeded
     runs-on: ubuntu-latest   # cross-compiled with Mingw-w64
     steps:
       - uses: actions/checkout@v5
@@ -138,13 +143,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget unzip git gcc-mingw-w64-x86-64 g++-mingw-w64-i686-win32
-      - name: Download and install SWT (win32, x86_64)
-        run: |
-          curl -fL -o swt.zip "https://archive.eclipse.org/eclipse/downloads/drops4/${SWT_DROP}/swt-${SWT_VERSION}-win32-win32-x86_64.zip"
-          mkdir swt && cd swt && unzip -q ../swt.zip
-          mvn -B install:install-file -Dfile=swt.jar -DgroupId=org.eclipse.swt -DartifactId=org.eclipse.swt.win32.win32 -Dpackaging=jar -Dversion=${SWT_VERSION}
+      - name: Install SWT
+        uses: ./.github/actions/install-swt
+        with:
+          platform: windows
       - name: Build
-        run: cd desktop/build-scripts/tuxguitar-windows-swt-x86_64 && mvn -B -e clean verify -P native-modules -P -platform-linux -P platform-windows -DskipTests
+        run: cd desktop/build-scripts/tuxguitar-windows-swt-x86_64 && mvn -B --no-transfer-progress -e clean verify -P native-modules -P -platform-linux -P platform-windows -DskipTests
       - name: Package
         run: |
           cd desktop/build-scripts/tuxguitar-windows-swt-x86_64/target
@@ -156,7 +160,7 @@ jobs:
         run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-windows-*.zip --repo "$GITHUB_REPOSITORY" --clobber
 
   release:
-    needs: [build-macos-arm64, build-linux, build-windows]
+    needs: build-linux
     runs-on: ubuntu-latest
     steps:
       - name: Publish the release

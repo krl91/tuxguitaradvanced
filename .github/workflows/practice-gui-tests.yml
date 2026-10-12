@@ -1,11 +1,18 @@
 # Runs the native SWT (graphical) tests of the practice module on a macOS runner. They need a window server, so they are excluded from the
 # default build (group "swt-gui") and run here with the profile swt-gui-tests. Started by hand (Actions > Practice GUI tests > Run workflow)
-# until a first run on the hosted runners has shown that they are stable; then it can run on every push like the other workflows.
+# until a first run on the hosted runners has shown that they are stable.
 
 name: Practice GUI tests
 
 on:
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   gui-tests:
@@ -18,13 +25,9 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
-    - name: Set value of TUX_ARCH
-      run: echo "TUX_ARCH=`uname -m | sed 's/arm64/aarch64/'`" >> "$GITHUB_ENV"
-    - name: Download and install SWT
-      run: |
-        SWT_VERSION=4.37
-        curl -o swt.zip https://archive.eclipse.org/eclipse/downloads/drops4/R-4.37-202509050730/swt-${SWT_VERSION}-cocoa-macosx-${TUX_ARCH}.zip
-        mkdir swt && cd swt && unzip ../swt.zip
-        mvn install:install-file -Dfile=swt.jar -DgroupId=org.eclipse.swt -DartifactId=org.eclipse.swt.cocoa.macosx -Dpackaging=jar -Dversion=${SWT_VERSION}
+    - name: Install SWT
+      uses: ./.github/actions/install-swt
+      with:
+        platform: macos
     - name: SWT tests of the practice module
-      run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -e test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest='*SwtTest' -Dsurefire.failIfNoSpecifiedTests=false
+      run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest='*SwtTest' -Dsurefire.failIfNoSpecifiedTests=false
