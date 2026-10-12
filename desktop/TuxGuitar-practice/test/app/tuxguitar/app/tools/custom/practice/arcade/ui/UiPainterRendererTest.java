@@ -97,9 +97,12 @@ public class UiPainterRendererTest {
 		return fixture.scene(false).build(fixture.onset(0) - 300 * SceneFixture.MS, SCREEN, null, 100);
 	}
 
-	/** The bend marks are dashed (spec 003 FR-077): the dash style is set for them and put back to solid for everything else, in the two ways of painting. */
+	/**
+	 * The bend marks are dashed (spec 003 FR-077), in the two ways of painting, and the dashes are made of the path itself: the dash style of the native painter
+	 * is not honoured when a path is drawn on macOS (seen on the real canvas), so the style is not used and a dashed item is one path of short segments.
+	 */
 	@Test
-	public void theBendMarksAreDashedAndTheStyleIsPutBackToSolid() {
+	public void theBendMarksAreDashedAsShortSegmentsOfOnePath() {
 		SongFixture song = new SongFixture(1);
 		song.bend(0, 0, 3, 5, 2);
 		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
@@ -112,15 +115,44 @@ public class UiPainterRendererTest {
 					: new UiPainterRenderer((UIFactory) proxy(UIFactory.class, factoryCalls), "Sans");
 			renderer.target((UIPainter) proxy(UIPainter.class, painterCalls));
 			renderer.render(scene, QualityTier.FULL);
-			assertTrue(painterCalls.calls.contains("setLineStyleDash"), (fallback ? "fallback" : "selected") + ": the bend marks are dashed");
-			assertTrue(painterCalls.calls.lastIndexOf("setLineStyleSolid") > painterCalls.calls.lastIndexOf("setLineStyleDash"), "and the style is solid again after them");
-			assertTrue(painterCalls.calls.stream().anyMatch(c -> c.startsWith("cubicTo")), "a curve is a cubic path");
+			assertFalse(painterCalls.calls.contains("setLineStyleDash"), "the native dash style is not relied upon");
+			long dashedItems = scene.items().stream().filter(i -> UiPainterRenderer.isDashed(i.role())).count();
+			assertTrue(painterCalls.count("moveTo") > dashedItems * 4, (fallback ? "fallback" : "selected") + ": many short segments, not one stroke per item: " + painterCalls.count("moveTo"));
+			if (!fallback) {
+				assertEquals(scene.items().size() - scene.items().stream().filter(i -> i.shape() == SceneItem.Shape.TEXT).count(), painterCalls.count("initPath"), "still one path per item");
+			}
 		}
 	}
 
-	/** The arc, the rail and the ghost of the technique marks are dashed too (FR-078). */
+	/** The dashes of a straight line: segments of the length of the pattern, alternating with gaps, along the whole line. */
 	@Test
-	public void theTechniqueMarksThatArePathsAreDashed() {
+	public void theDashesFollowTheLineWithTheLengthOfTheirPattern() {
+		Recording calls = new Recording();
+		UiPainterRenderer.dashes((UIPainter) proxy(UIPainter.class, calls), new double[] { 0.0, 0.0, 100.0, 0.0 }, false, 2.5);
+		List<float[]> segments = new ArrayList<float[]>();
+		float[] from = null;
+		for (String call : calls.calls) {
+			if (call.startsWith("moveTo[")) {
+				String[] v = call.substring(7, call.length() - 1).split(", ");
+				from = new float[] { Float.parseFloat(v[0]), Float.parseFloat(v[1]) };
+			} else if (call.startsWith("lineTo[") && from != null) {
+				String[] v = call.substring(7, call.length() - 1).split(", ");
+				segments.add(new float[] { from[0], Float.parseFloat(v[0]) });
+			}
+		}
+		double on = Math.max(4.0, 2.5 * 2.4);
+		double off = Math.max(3.0, 2.5 * 1.8);
+		assertTrue(segments.size() >= 100.0 / (on + off) - 1, "as many dashes as the pattern gives: " + segments.size());
+		for (int i = 0; i < segments.size() - 1; i++) {
+			assertEquals(on, segments.get(i)[1] - segments.get(i)[0], 1e-3, "a dash");
+			assertEquals(off, segments.get(i + 1)[0] - segments.get(i)[1], 1e-3, "a gap");
+		}
+		assertTrue(segments.get(segments.size() - 1)[1] <= 100.0 + 1e-3, "inside the line");
+	}
+
+	/** The arc, the rail and the ghost of the technique marks are dashed too (FR-078), as segments of their path. */
+	@Test
+	public void theTechniqueMarksThatArePathsAreDashedToo() {
 		SongFixture song = new SongFixture(1);
 		song.quarter(0, 0, 3, 5).getEffect().setSlide(true);
 		song.quarter(0, 1, 3, 9);
@@ -128,12 +160,11 @@ public class UiPainterRendererTest {
 		Scene scene = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100);
 		assertFalse(scene.withRole(SceneItem.Role.TECH_RAIL).isEmpty());
 		assertFalse(scene.withRole(SceneItem.Role.TECH_GHOST).isEmpty());
-		Recording painterCalls = new Recording();
-		UiPainterRenderer renderer = new UiPainterRenderer((UIFactory) proxy(UIFactory.class, new Recording()), "Sans");
-		renderer.target((UIPainter) proxy(UIPainter.class, painterCalls));
-		renderer.render(scene, QualityTier.FULL);
-		long dashes = painterCalls.calls.stream().filter(c -> c.equals("setLineStyleDash")).count();
-		assertEquals(scene.withRole(SceneItem.Role.TECH_RAIL).size() + scene.withRole(SceneItem.Role.TECH_GHOST).size() + scene.withRole(SceneItem.Role.TECH_ARROW).size(), dashes);
+		for (SceneItem.Role role : new SceneItem.Role[] { SceneItem.Role.TECH_RAIL, SceneItem.Role.TECH_GHOST, SceneItem.Role.TECH_ARROW, SceneItem.Role.BEND_GHOST, SceneItem.Role.BEND_ARROW }) {
+			assertTrue(UiPainterRenderer.isDashed(role), role.name());
+		}
+		assertFalse(UiPainterRenderer.isDashed(SceneItem.Role.TECH_HEAD), "the head of an arrow is solid");
+		assertFalse(UiPainterRenderer.isDashed(SceneItem.Role.TECH_WAVE), "the wave is solid");
 	}
 
 	@Test
