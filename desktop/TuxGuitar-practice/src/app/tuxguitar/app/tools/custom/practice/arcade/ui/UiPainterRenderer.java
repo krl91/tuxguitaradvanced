@@ -93,6 +93,11 @@ public final class UiPainterRenderer extends PainterRenderer {
 				p.setAlpha((int) Math.round(Math.max(0.0, Math.min(1.0, item.alpha())) * 255.0));
 			}
 			p.setAntialias(item.shape() == SceneItem.Shape.TEXT || (!this.minimal && tier.antialias()));
+			// the arrow of a bend and the ghost of its cell are dashed (FR-077)
+			boolean dashed = item.role() == SceneItem.Role.BEND_ARROW || item.role() == SceneItem.Role.BEND_GHOST;
+			if (dashed) {
+				p.setLineStyleDash();
+			}
 			switch (item.shape()) {
 				case LINE:
 					p.setForeground(colour(item.colour()));
@@ -100,6 +105,14 @@ public final class UiPainterRenderer extends PainterRenderer {
 					p.initPath(UIPainter.PATH_DRAW);
 					p.moveTo((float) item.value(0), (float) item.value(1));
 					p.lineTo((float) item.value(2), (float) item.value(3));
+					p.closePath();
+					break;
+				case CURVE:
+					p.setForeground(colour(item.colour()));
+					p.setLineWidth((float) item.lineWidth());
+					p.initPath(UIPainter.PATH_DRAW);
+					p.moveTo((float) item.value(0), (float) item.value(1));
+					p.cubicTo((float) item.value(2), (float) item.value(3), (float) item.value(4), (float) item.value(5), (float) item.value(6), (float) item.value(7));
 					p.closePath();
 					break;
 				case QUAD:
@@ -149,6 +162,9 @@ public final class UiPainterRenderer extends PainterRenderer {
 					break;
 				default:
 					break;
+			}
+			if (dashed) {
+				p.setLineStyleSolid();
 			}
 		}
 		p.setAlpha(255);

@@ -15,6 +15,12 @@ public interface SceneLabels {
 	/** The word shown on the bar of an open string (FR-069). */
 	String openString();
 
+	/** The word for a bend of a whole step (FR-077): "full". */
+	String bendFull();
+
+	/** The word before the amount of a pre-bend (FR-077): "pre". */
+	String bendPre();
+
 	String automatic();
 
 	/** An event the mode cannot present as a recognised chord. */

@@ -123,6 +123,10 @@ public final class ArcadeScene {
 	static final double STRING_DIM_ALPHA = 0.35;
 	/** At the setting of 100 % a marker lands on the size of its target rectangle (owner, 2026-10-11, FR-073); at 0 % it is one pixel across. */
 	static final double MARKER_MIN_RADIUS = 0.5;
+	/** The colour of the bend marks (FR-077): not one of the string colours, nor the colour of the fret numbers. */
+	private static final int BEND_COLOUR = 0xFFD166;
+	/** From this share of its approach the marker is on its target: the arrow of the neck says the bend, the one of the marker is left out. */
+	private static final double BEND_FLIGHT_UNTIL = 0.85;
 	/** The gap kept between two labels, in pixels. */
 	static final double GAP = 4.0;
 
@@ -320,6 +324,68 @@ public final class ArcadeScene {
 			}
 			f.out.rounded(Role.TARGET_RECT, at.x(), at.y(), halfWidth, radius, colour, 1.0, event.index(), position.tgString());
 			f.out.roundedRing(Role.TARGET_OUTLINE, at.x(), at.y(), halfWidth + OUTLINE_PX / 2.0, radius + OUTLINE_PX / 2.0, OUTLINE_COLOUR, 1.0, OUTLINE_PX, event.index(), position.tgString());
+			if (event.bend() != null) {
+				drawBendOnNeck(f, event, position, at, halfWidth, radius);
+			}
+		}
+	}
+
+	/**
+	 * The bend of a note that is still coming (FR-077): a small dashed arrow rising from the right end of its rectangle, with the amount beside its head.
+	 * The picture is the owner's variant A of 2026-10-12.
+	 */
+	private void drawBendInFlight(Frame f, ArcadeRenderEvent event, NoteGeo g, double my, double alpha) {
+		double cx = g.at.x();
+		double rx = g.rx();
+		double ry = g.ry();
+		int string = event.positions().get(0).tgString();
+		double width = Math.max(1.5, ry * 0.3);
+		double x0 = cx + rx * 0.55;
+		double y0 = my - ry * 1.2;
+		double x1 = cx + rx * 1.15;
+		double y1 = my - ry * 4.2;
+		f.out.curve(Role.BEND_ARROW, x0, y0, cx + rx * 1.2, my - ry * 1.6, cx + rx * 1.3, my - ry * 3.0, x1, y1, BEND_COLOUR, alpha, width, event.index(), string);
+		bendHead(f, event, x1, y1, Math.atan2(y1 - (my - ry * 3.0), x1 - (cx + rx * 1.3)), Math.max(9.0, ry * 0.9), width, alpha, string);
+		f.out.text(Role.BEND_LABEL, BendLabel.of(event.bend(), this.labels), x1 + Math.max(9.0, ry * 0.9) * 0.8, my - ry * 3.6, Math.max(11.0, ry * 1.9), BEND_COLOUR, alpha, event.index(), string,
+				SceneItem.Align.LEFT);
+	}
+
+	/**
+	 * The bend of the active note, on the neck (FR-077): a ghost rectangle in dashed outline on the same string at the cell the bend reaches (one fret per
+	 * semitone, the cell of the peak of the written path), joined to the target by a dashed arrow with the amount above it. Nothing is drawn when the cell is
+	 * past the last fret.
+	 */
+	private void drawBendOnNeck(Frame f, ArcadeRenderEvent event, ArcadeRenderEvent.Position position, ScreenPoint at, double halfWidth, double radius) {
+		double reached = position.fret() + event.bend().peakSemitones();
+		int low = (int) Math.floor(reached);
+		if (low + 1 > this.neck.fretCount()) {
+			return;
+		}
+		int count = this.neck.layout().count();
+		int row = this.neck.layout().rowOf(position.tgString());
+		double fraction = reached - low;
+		ScreenPoint a = f.projection.neck(this.neck.fretCentreX(low), row, count, f.cam);
+		ScreenPoint b = f.projection.neck(this.neck.fretCentreX(low + 1), row, count, f.cam);
+		double gx = a.x() + (b.x() - a.x()) * fraction;
+		double ghostHalfWidth = Math.max(radius * 0.7, halfWidthOfCell(f, low, 1.0));
+		f.out.roundedRing(Role.BEND_GHOST, gx, at.y(), ghostHalfWidth, radius, BEND_COLOUR, 0.9, 2.5, event.index(), position.tgString());
+		double x0 = at.x() + halfWidth * 0.6;
+		double y0 = at.y() - radius * 1.1;
+		double x1 = Math.max(gx - ghostHalfWidth * 0.3, x0 + radius * 2.0);
+		double y1 = at.y() - radius * 1.5;
+		double top = at.y() - radius * 4.2;
+		double c2x = x1 - (x1 - x0) * 0.25;
+		f.out.curve(Role.BEND_ARROW, x0, y0, x0 + (x1 - x0) * 0.25, top, c2x, top, x1, y1, BEND_COLOUR, 0.95, 2.5, event.index(), position.tgString());
+		bendHead(f, event, x1, y1, Math.atan2(y1 - top, x1 - c2x), 16.0, 2.5, 0.95, position.tgString());
+		double size = Math.max(12.0, radius * 1.3);
+		f.out.text(Role.BEND_LABEL, BendLabel.of(event.bend(), this.labels), (x0 + x1) / 2.0, top - size * 0.2, size, BEND_COLOUR, 0.95, event.index(), position.tgString());
+	}
+
+	/** The head of the arrow of a bend: two short sides back from its tip, which points along the end of the curve. */
+	private void bendHead(Frame f, ArcadeRenderEvent event, double x, double y, double angle, double size, double width, double alpha, int string) {
+		for (double side : new double[] { -0.5, 0.5 }) {
+			double a = angle + Math.PI + side;
+			f.out.line(Role.BEND_HEAD, x, y, x + size * Math.cos(a), y + size * Math.sin(a), BEND_COLOUR, alpha, Math.max(1.5, width), event.index(), string);
 		}
 	}
 
@@ -917,6 +983,9 @@ public final class ArcadeScene {
 		out.line(Role.MARKER_THREAD, g.at.x(), g.at.y(), g.at.x(), Math.min(g.at.y(), my + g.ry()), colour, alpha * 0.7, 1.0, event.index(), position.tgString());
 		out.rounded(Role.MARKER_FOOTPRINT, g.at.x(), g.at.y(), g.rx(), Math.max(0.8, g.ry() * 0.16), colour, alpha * 0.5, event.index(), position.tgString());
 		out.rounded(Role.MARKER, g.at.x(), my, g.rx(), g.ry(), colour, alpha, event.index(), position.tgString());
+		if (event.bend() != null && f.progressOf(event) < BEND_FLIGHT_UNTIL) {
+			drawBendInFlight(f, event, g, my, alpha);
+		}
 		// the number of the fret is written under the footprint, never in the marker; it is left out where it would overlap a label, or once the footprint is in the
 		// neck: the ruler of the frets under the neck then says the fret of the active note itself
 		if (g.at.y() < f.projection.hitLineY() && (f.noLabel == null || !f.noLabel.contains(event.index()))) {
@@ -1152,6 +1221,10 @@ public final class ArcadeScene {
 
 		void line(Role role, double x1, double y1, double x2, double y2, int colour, double alpha, double width, int event, int string) {
 			this.items.add(new SceneItem(Shape.LINE, role, new double[] { x1, y1, x2, y2 }, colour(colour), alpha, width, null, event, string, null));
+		}
+
+		void curve(Role role, double x0, double y0, double c1x, double c1y, double c2x, double c2y, double x1, double y1, int colour, double alpha, double width, int event, int string) {
+			this.items.add(new SceneItem(Shape.CURVE, role, new double[] { x0, y0, c1x, c1y, c2x, c2y, x1, y1 }, colour(colour), alpha, width, null, event, string, null));
 		}
 
 		void quad(Role role, double[] corners, int colour, double alpha, int event, int string) {

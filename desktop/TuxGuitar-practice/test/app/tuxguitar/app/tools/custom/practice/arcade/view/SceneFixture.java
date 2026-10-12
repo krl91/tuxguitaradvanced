@@ -50,6 +50,16 @@ public final class SceneFixture {
 		}
 
 		@Override
+		public String bendFull() {
+			return "full";
+		}
+
+		@Override
+		public String bendPre() {
+			return "pre";
+		}
+
+		@Override
 		public String automatic() {
 			return "Automatic";
 		}

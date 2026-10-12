@@ -97,6 +97,27 @@ public class UiPainterRendererTest {
 		return fixture.scene(false).build(fixture.onset(0) - 300 * SceneFixture.MS, SCREEN, null, 100);
 	}
 
+	/** The bend marks are dashed (spec 003 FR-077): the dash style is set for them and put back to solid for everything else, in the two ways of painting. */
+	@Test
+	public void theBendMarksAreDashedAndTheStyleIsPutBackToSolid() {
+		SongFixture song = new SongFixture(1);
+		song.bend(0, 0, 3, 5, 2);
+		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+		Scene scene = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100);
+		assertFalse(scene.withRole(SceneItem.Role.BEND_ARROW).isEmpty());
+		for (boolean fallback : new boolean[] { false, true }) {
+			Recording painterCalls = new Recording();
+			Recording factoryCalls = new Recording();
+			UiPainterRenderer renderer = fallback ? UiPainterRenderer.fallback((UIFactory) proxy(UIFactory.class, factoryCalls), "Sans")
+					: new UiPainterRenderer((UIFactory) proxy(UIFactory.class, factoryCalls), "Sans");
+			renderer.target((UIPainter) proxy(UIPainter.class, painterCalls));
+			renderer.render(scene, QualityTier.FULL);
+			assertTrue(painterCalls.calls.contains("setLineStyleDash"), (fallback ? "fallback" : "selected") + ": the bend marks are dashed");
+			assertTrue(painterCalls.calls.lastIndexOf("setLineStyleSolid") > painterCalls.calls.lastIndexOf("setLineStyleDash"), "and the style is solid again after them");
+			assertTrue(painterCalls.calls.stream().anyMatch(c -> c.startsWith("cubicTo")), "a curve is a cubic path");
+		}
+	}
+
 	@Test
 	public void everyVisibleItemIsDrawnOnceWithItsKindOfPath() {
 		Scene scene = scene();

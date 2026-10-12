@@ -67,10 +67,11 @@ public final class ArcadeRenderEvent {
 	private final int metadataFirstFret;
 	private final int metadataStrings;
 	private final ChordNameResolver.Display display;
+	private final BendMark bend;
 
 	private ArcadeRenderEvent(int index, Kind kind, long onsetNanos, List<Position> positions, List<Integer> deadStrings, String chordName, Stroke stroke,
 			boolean duplicatePitches, int[] requiredPitches, int metadataFirstFret, int metadataStrings,
-			ChordNameResolver.Display display) {
+			ChordNameResolver.Display display, BendMark bend) {
 		this.index = index;
 		this.kind = kind;
 		this.onsetNanos = onsetNanos;
@@ -83,6 +84,7 @@ public final class ArcadeRenderEvent {
 		this.metadataFirstFret = metadataFirstFret;
 		this.metadataStrings = metadataStrings;
 		this.display = display;
+		this.bend = bend;
 	}
 
 	/**
@@ -136,7 +138,8 @@ public final class ArcadeRenderEvent {
 			display = ChordNameResolver.resolve(chordNameOf(event.getBeat()), pitches, key);
 		}
 		return new ArcadeRenderEvent(index, kind, onset, positions, dead, chordNameOf(event.getBeat()), strokeOf(event.getBeat()), event.hasDuplicatePitches(),
-				event.getRequiredPitches(), metadata != null ? metadata.getFirstFret() : 0, metadata != null ? metadata.countStrings() : 0, display);
+				event.getRequiredPitches(), metadata != null ? metadata.getFirstFret() : 0, metadata != null ? metadata.countStrings() : 0, display,
+				kind == Kind.NOTE ? BendMark.of(event.getBendPath()) : null);
 	}
 
 	/** The name written with the chord, when it is not blank: never made up from the pitches. */
@@ -165,6 +168,11 @@ public final class ArcadeRenderEvent {
 
 	public int index() {
 		return this.index;
+	}
+
+	/** The bend written for a single note (FR-077), or null: a note without a rising path, a chord and an automatic event have none. */
+	public BendMark bend() {
+		return this.bend;
 	}
 
 	public Kind kind() {

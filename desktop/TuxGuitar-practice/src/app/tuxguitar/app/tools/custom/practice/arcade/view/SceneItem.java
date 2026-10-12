@@ -19,6 +19,8 @@ public final class SceneItem {
 		ROUNDED,
 		/** Centre x, centre y, half width, half height; only the outline of a rounded rectangle. */
 		ROUNDED_RING,
+		/** x0, y0, the two control points, x1, y1: a cubic curve, only the stroke (the arrow of a bend, FR-077). */
+		CURVE,
 		/** x (see {@link #align()}), middle y, font height in pixels. */
 		TEXT
 	}
@@ -38,6 +40,8 @@ public final class SceneItem {
 		MARKER_THREAD, MARKER_FOOTPRINT, FRET_RULER_ACTIVE, APPROACH_BAND, NECK_LANE,
 		/** The chord panel (FR-074): the translucent body, its luminous edge, a rounded rectangle per fretted position, a line per open string, the fret on a rectangle of the active chord, the name above the left corner, the arrow of the stroke and the remark. */
 		CHORD_PANEL, CHORD_PANEL_EDGE, PANEL_NOTE, PANEL_OPEN_LINE, PANEL_FRET, PANEL_NAME, PANEL_STROKE, PANEL_REMARK,
+		/** The bend of a note (FR-077): the dashed arrow, its head, the dashed ghost of the cell the bend reaches on the neck, the amount. */
+		BEND_ARROW, BEND_HEAD, BEND_GHOST, BEND_LABEL,
 		BADGE, BADGE_SYMBOL, BADGE_TEXT,
 		HUD_STREAK, HUD_SPEED, HUD_NEXT,
 		/** Decoration, dropped first when the frames cost too much: never information. */

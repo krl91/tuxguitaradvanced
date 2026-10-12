@@ -28,6 +28,16 @@ public final class ArcadeSceneLabels implements SceneLabels {
 	}
 
 	@Override
+	public String bendFull() {
+		return this.texts.get("arcade.label.bend.full");
+	}
+
+	@Override
+	public String bendPre() {
+		return this.texts.get("arcade.label.bend.pre");
+	}
+
+	@Override
 	public String automatic() {
 		return this.texts.get("arcade.label.automatic");
 	}
