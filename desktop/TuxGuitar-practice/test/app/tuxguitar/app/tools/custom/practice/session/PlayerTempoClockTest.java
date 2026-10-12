@@ -80,7 +80,6 @@ public class PlayerTempoClockTest {
 		}, 1920.0);
 		sequencer.start();
 		double worstMs = 0.0;
-		int measured = 0;
 		try {
 			long end = System.nanoTime() + 2_500_000_000L;
 			long started = System.nanoTime();
@@ -90,13 +89,8 @@ public class PlayerTempoClockTest {
 					long now = System.nanoTime();
 					double interpolated = clock.tickAt(now);
 					long raw = sequencer.getTickPosition();
-					// a measure whose two readings are far apart in time was cut by the scheduler of a loaded machine (a shared CI runner gave 57 ms
-					// once): it says nothing about the clock, so it is left out; what is kept is judged as strictly as before
-					if( System.nanoTime() - now <= 3_000_000L ) {
-						measured++;
-						// the interpolated position must stay within one step of the sequencer's own (steps of 10 to 18 ms)
-						worstMs = Math.max(worstMs, Math.abs(interpolated - raw) / clock.ticksPerSecond() * 1000.0);
-					}
+					// the interpolated position must stay within one step of the sequencer's own (steps of 10 to 18 ms)
+					worstMs = Math.max(worstMs, Math.abs(interpolated - raw) / clock.ticksPerSecond() * 1000.0);
 				}
 				Thread.sleep(1);
 			}
@@ -104,7 +98,6 @@ public class PlayerTempoClockTest {
 			sequencer.stop();
 		}
 		assertEquals(1920.0, clock.ticksPerSecond(), 1920.0 * 0.02, "the rate of the real sequencer was not learned");
-		assertTrue(measured >= 30, "too few undisturbed measures to judge the clock: " + measured);
 		assertTrue(worstMs < 40.0, "the interpolated position left the sequencer's by " + worstMs + " ms");
 	}
 }
