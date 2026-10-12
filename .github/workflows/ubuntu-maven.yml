@@ -35,7 +35,7 @@ jobs:
         platform: linux
     - name: Build with Maven
       run: cd desktop/build-scripts/tuxguitar-linux-swt-deb && mvn -B --no-transfer-progress -e clean verify -P native-modules
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: Package-Ubuntu
         path: desktop/build-scripts/tuxguitar-linux-swt-deb/target/tuxguitar-9.99-SNAPSHOT-linux-swt.deb
