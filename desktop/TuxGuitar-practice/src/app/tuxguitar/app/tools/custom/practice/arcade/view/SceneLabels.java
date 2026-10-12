@@ -15,6 +15,9 @@ public interface SceneLabels {
 	/** The word shown on the bar of an open string (FR-069). */
 	String openString();
 
+	/** The word of an event that is a harmonic (FR-078), with its diamond: "Harmonic ◇". */
+	String harmonic();
+
 	/** The word for a bend of a whole step (FR-077): "full". */
 	String bendFull();
 

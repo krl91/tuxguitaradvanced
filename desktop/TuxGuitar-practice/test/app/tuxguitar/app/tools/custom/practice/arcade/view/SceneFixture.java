@@ -50,6 +50,11 @@ public final class SceneFixture {
 		}
 
 		@Override
+		public String harmonic() {
+			return "Harmonic \u25C7";
+		}
+
+		@Override
 		public String bendFull() {
 			return "full";
 		}
@@ -118,7 +123,7 @@ public final class SceneFixture {
 		List<PracticeEvent> practice = song.sequence().getEvents();
 		this.events = new ArrayList<ArcadeRenderEvent>();
 		for (int i = 0; i < practice.size(); i++) {
-			this.events.add(ArcadeRenderEvent.of(i, practice.get(i), timeline));
+			this.events.add(ArcadeRenderEvent.of(i, practice.get(i), i + 1 < practice.size() ? practice.get(i + 1) : null, timeline));
 		}
 		this.neck = NeckModel.of(tuning, 24);
 		this.colours = StringColours.forStrings(tuning.getStringCount());

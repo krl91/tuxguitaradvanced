@@ -34,6 +34,7 @@ public final class Java2dPainter implements UIPainter {
 	private Color foreground = Color.BLACK;
 	private Color background = Color.BLACK;
 	private double lineWidth = 1.0;
+	private boolean dashed;
 	private UIFont font;
 
 	public Java2dPainter(Graphics2D g) {
@@ -115,7 +116,9 @@ public final class Java2dPainter implements UIPainter {
 			this.g.fill(this.path);
 		} else {
 			this.g.setColor(this.foreground);
-			this.g.setStroke(new BasicStroke((float) Math.max(1.0, this.lineWidth), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			float w = (float) Math.max(1.0, this.lineWidth);
+			this.g.setStroke(this.dashed ? new BasicStroke(w, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1f, new float[] { w * 2.2f, w * 1.8f }, 0f)
+					: new BasicStroke(w, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 			this.g.draw(this.path);
 		}
 		this.path.reset();
@@ -188,6 +191,7 @@ public final class Java2dPainter implements UIPainter {
 
 	@Override
 	public void setLineStyleSolid() {
+		this.dashed = false;
 	}
 
 	@Override
@@ -196,6 +200,7 @@ public final class Java2dPainter implements UIPainter {
 
 	@Override
 	public void setLineStyleDash() {
+		this.dashed = true;
 	}
 
 	@Override

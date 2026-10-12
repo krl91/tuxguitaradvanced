@@ -93,8 +93,9 @@ public final class UiPainterRenderer extends PainterRenderer {
 				p.setAlpha((int) Math.round(Math.max(0.0, Math.min(1.0, item.alpha())) * 255.0));
 			}
 			p.setAntialias(item.shape() == SceneItem.Shape.TEXT || (!this.minimal && tier.antialias()));
-			// the arrow of a bend and the ghost of its cell are dashed (FR-077)
-			boolean dashed = item.role() == SceneItem.Role.BEND_ARROW || item.role() == SceneItem.Role.BEND_GHOST;
+			// the arrow of a bend, the ghost of its cell, the arc, the ghost and the rail of a technique are dashed (FR-077, FR-078)
+			boolean dashed = item.role() == SceneItem.Role.BEND_ARROW || item.role() == SceneItem.Role.BEND_GHOST || item.role() == SceneItem.Role.TECH_ARROW
+					|| item.role() == SceneItem.Role.TECH_GHOST || item.role() == SceneItem.Role.TECH_RAIL;
 			if (dashed) {
 				p.setLineStyleDash();
 			}

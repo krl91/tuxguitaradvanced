@@ -111,7 +111,7 @@ public final class CorpusScenes {
 		List<ArcadeRenderEvent> events = new ArrayList<ArcadeRenderEvent>();
 		int maxFret = 0;
 		for (int i = 0; i < practice.size(); i++) {
-			ArcadeRenderEvent event = ArcadeRenderEvent.of(i, practice.get(i), timeline);
+			ArcadeRenderEvent event = ArcadeRenderEvent.of(i, practice.get(i), i + 1 < practice.size() ? practice.get(i + 1) : null, timeline);
 			events.add(event);
 			maxFret = Math.max(maxFret, event.maxFret());
 		}

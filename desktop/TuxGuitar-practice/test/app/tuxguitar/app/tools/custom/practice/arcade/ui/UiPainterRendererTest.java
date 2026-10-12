@@ -118,6 +118,24 @@ public class UiPainterRendererTest {
 		}
 	}
 
+	/** The arc, the rail and the ghost of the technique marks are dashed too (FR-078). */
+	@Test
+	public void theTechniqueMarksThatArePathsAreDashed() {
+		SongFixture song = new SongFixture(1);
+		song.quarter(0, 0, 3, 5).getEffect().setSlide(true);
+		song.quarter(0, 1, 3, 9);
+		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+		Scene scene = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100);
+		assertFalse(scene.withRole(SceneItem.Role.TECH_RAIL).isEmpty());
+		assertFalse(scene.withRole(SceneItem.Role.TECH_GHOST).isEmpty());
+		Recording painterCalls = new Recording();
+		UiPainterRenderer renderer = new UiPainterRenderer((UIFactory) proxy(UIFactory.class, new Recording()), "Sans");
+		renderer.target((UIPainter) proxy(UIPainter.class, painterCalls));
+		renderer.render(scene, QualityTier.FULL);
+		long dashes = painterCalls.calls.stream().filter(c -> c.equals("setLineStyleDash")).count();
+		assertEquals(scene.withRole(SceneItem.Role.TECH_RAIL).size() + scene.withRole(SceneItem.Role.TECH_GHOST).size() + scene.withRole(SceneItem.Role.TECH_ARROW).size(), dashes);
+	}
+
 	@Test
 	public void everyVisibleItemIsDrawnOnceWithItsKindOfPath() {
 		Scene scene = scene();

@@ -554,6 +554,27 @@ C'est le mode « Suivre le tempo » (mêmes tempo, tolérance et calibrage) pré
 * **Taille des rectangles qui arrivent** : de 0 à 150 % de la taille de la cible sur le manche (100 % par défaut : le rectangle qui arrive a la taille de sa cible ; 0 % le réduit à un pixel).
 * **Inclinaison du plan** : l'**échelle à l'horizon** (20 à 100 %, 35 % par défaut : plus c'est bas, plus le plan est incliné) et la **hauteur de l'horizon** (0 à 40 % de la hauteur de la fenêtre, 18 % par défaut).
 
+### Les techniques : ce qu'Arcade dessine, et ce qu'il vérifie
+
+Chaque technique écrite sur une **note seule** est dessinée **sur la note pendant qu'elle arrive, puis de nouveau sur le manche quand c'est la note à jouer**, dans le même jaune que les bends. Les accords n'en montrent aucune. Les images ci-dessous sont produites avec la même scène et le même peintre que le jeu, sur des partitions d'exemple des tests.
+
+<img src="images/manual/arcade-techniques-1.png" width="760" alt="Un hammer-on avec son fantôme sur le manche, un pull-off et un slide qui arrivent">
+
+<img src="images/manual/arcade-techniques-2.png" width="760" alt="Une onde de vibrato sur le manche, une pastille T, trois traits de trémolo, un bend et une barre d'harmonique qui arrivent">
+
+| Technique | Ce que vous voyez (en vol → sur le manche) | Ce qu'Arcade **vérifie** |
+|---|---|---|
+| **Bend**, pre-bend, relâché | flèche et valeur → rectangle fantôme à la case atteinte et flèche (voir plus haut) | **La hauteur** : la courbe écrite est suivie. Le bend lui-même **n'est pas annoncé entendu ou non** (« ne peut pas être vérifié encore ») : le détecteur trouve 82 % des bends annotés, le seuil est 85 %. |
+| **Hammer-on** (H), **pull-off** (P) | petit arc et la lettre → rectangle fantôme sur la note suivante de la corde et arc en pointillés. *H/P* quand la note n'a pas de note suivante sur sa corde (le sens est inconnu) | **La hauteur** de la note d'arrivée, acceptée sans nouvelle attaque. Le legato lui-même **n'est pas annoncé** : aucun enregistrement étiqueté ne valide son détecteur. |
+| **Slide** (S) | petit rail en pointillés → rectangle fantôme sur la note suivante et rail en pointillés avec sa pointe | **La hauteur** de la note d'arrivée. Le slide lui-même **n'est pas annoncé** : détecteur à 48 % des slides annotés. |
+| **Vibrato** | petite onde → onde le long de la corde après la cible | **La hauteur** comme pour une note simple. Le vibrato lui-même **n'est pas annoncé** : détecteur à 59 %. |
+| **Palm mute** (P.M.), **tapping** (T) | une pastille au-dessus du rectangle, en vol et sur le manche | **Rien** de plus que la note simple : pas de détecteur. |
+| **Trémolo** (picking) | trois petits traits au-dessus du rectangle | **Rien** de plus que la note simple : pas de détecteur. |
+| **Harmonique** | ce n'est pas une note à jouer : la barre de timing dit *Harmonique ◇* | **Pas jugée** : elle passe toute seule. |
+| Slap, pop, accents, let ring, staccato, trille, levier | non dessinés (les deux derniers montrent la barre *Automatique*) | Pas jugés. |
+
+**En résumé : Arcade juge le timing et la hauteur. Aucune technique n'est annoncée « détectée » ou « non détectée » aujourd'hui** : la fenêtre de résultat les liste à part comme « ne peut pas être vérifié encore », ce qui n'est pas une erreur de votre part. Les dessins disent seulement ce que la partition demande.
+
 **À la fin**, la fenêtre **Résultat** donne le score, la part du maximum, la meilleure série et le décompte de chaque verdict. Vous pouvez **rejouer depuis le début** ou **depuis une mesure** choisie (*Depuis la mesure*, puis *Jouer*). Les techniques (hammer-on, slide, bend...) sont signalées à part et ne changent pas le score.
 
 <img src="images/manual/arcade-result.png" width="330" alt="La fenêtre de résultat">

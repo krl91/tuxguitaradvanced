@@ -554,6 +554,27 @@ It is the "Follow the tempo" mode (same tempo, tolerance and calibration) shown 
 * **Size of the incoming rectangles**: 0 to 150 % of the size of the target on the neck (100 % by default: the rectangle that arrives has the size of its target; 0 % makes them a single pixel).
 * **Tilt of the plane**: the **scale at the horizon** (20 to 100 %, 35 % by default: the lower, the more tilted) and the **height of the horizon** (0 to 40 % of the height of the window, 18 % by default).
 
+### The techniques: what Arcade draws, and what it checks
+
+Every technique written on a **single note** is drawn **on the note while it is coming and again on the neck when it is the note to play**, in the same yellow as the bends. Chords show none of it. The pictures below are rendered from the same scene and painter as the game, on the tutorial-style example scores of the tests.
+
+<img src="images/manual-en/arcade-techniques-1.png" width="760" alt="Hammer-on with its ghost on the neck, a pull-off and a slide coming">
+
+<img src="images/manual-en/arcade-techniques-2.png" width="760" alt="A vibrato wave on the neck, a pill T, three strokes of a tremolo picking, a bend and a harmonic bar coming">
+
+| Technique | What you see (in flight → on the neck) | What Arcade **checks** |
+|---|---|---|
+| **Bend**, pre-bend, release | arrow and amount → ghost rectangle at the cell reached and arrow (see above) | **The pitch**: the written path is followed. The bend itself is **not reported as heard or not heard** ("cannot be checked yet"): the detector found 82 % of the annotated bends, the bar is 85 %. |
+| **Hammer-on** (H), **pull-off** (P) | small arc and the letter → ghost rectangle on the next note of the string and a dashed arc to it. *H/P* when the note has no next note on its string (the direction is not known) | **The pitch** of the destination, accepted without a new pick. The legato itself is **not reported**: no labelled recording exists to validate its detector. |
+| **Slide** (S) | small dashed rail → ghost rectangle on the next note and a dashed rail with its head | **The pitch** of the destination. The slide itself is **not reported**: detector at 48 % of the annotated slides. |
+| **Vibrato** | small wave → wave along the string after the target | **The pitch** as for a plain note. The vibrato itself is **not reported**: detector at 59 %. |
+| **Palm mute** (P.M.), **tapping** (T) | a pill above the rectangle, in flight and on the neck | **Nothing** beyond the plain note: there is no detector. |
+| **Tremolo picking** | three short strokes above the rectangle | **Nothing** beyond the plain note: no detector. |
+| **Harmonic** | not a note to play: the timing bar says *Harmonic ◇* | **Not judged**: it passes by itself. |
+| Slapping, popping, accents, let ring, staccato, trill, tremolo bar | not drawn (the last two show the bar *Automatic*) | Not judged. |
+
+**In short: Arcade judges the timing and the pitch. No technique is reported as "detected" or "not detected" today**: the result window lists them apart as "cannot be checked yet", which is not a mistake on your part. The drawings only tell you what the score asks for.
+
 **At the end**, the **Result** window gives the score, the share of the maximum, the best streak and the count of each verdict. You can **play again from the start** or **from a measure** you choose (*From measure*, then *Play*). The techniques (hammer-on, slide, bend...) are reported apart and do not change the score.
 
 <img src="images/manual-en/arcade-result.png" width="330" alt="The result window">

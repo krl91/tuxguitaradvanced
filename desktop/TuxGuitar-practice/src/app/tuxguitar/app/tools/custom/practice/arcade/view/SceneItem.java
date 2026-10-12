@@ -42,6 +42,8 @@ public final class SceneItem {
 		CHORD_PANEL, CHORD_PANEL_EDGE, PANEL_NOTE, PANEL_OPEN_LINE, PANEL_FRET, PANEL_NAME, PANEL_STROKE, PANEL_REMARK,
 		/** The bend of a note (FR-077): the dashed arrow, its head, the dashed ghost of the cell the bend reaches on the neck, the amount. */
 		BEND_ARROW, BEND_HEAD, BEND_GHOST, BEND_LABEL,
+		/** The technique marks of a note (FR-078): the dashed arc, its head, the dashed ghost of the destination cell, the dashed rail of a slide, the letters, the pill behind P.M. and T, the wave of a vibrato, the strokes of a tremolo picking. */
+		TECH_ARROW, TECH_HEAD, TECH_GHOST, TECH_RAIL, TECH_LABEL, TECH_PILL, TECH_WAVE, TECH_TICK,
 		BADGE, BADGE_SYMBOL, BADGE_TEXT,
 		HUD_STREAK, HUD_SPEED, HUD_NEXT,
 		/** Decoration, dropped first when the frames cost too much: never information. */

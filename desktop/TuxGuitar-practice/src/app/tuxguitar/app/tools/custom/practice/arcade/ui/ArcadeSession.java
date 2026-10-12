@@ -78,7 +78,7 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 		List<ArcadeRenderEvent> events = new ArrayList<ArcadeRenderEvent>();
 		List<PracticeEvent> practice = plan.sequence().getEvents();
 		for (int i = 0; i < practice.size(); i++) {
-			events.add(ArcadeRenderEvent.of(i, practice.get(i), plan.timeline()));
+			events.add(ArcadeRenderEvent.of(i, practice.get(i), i + 1 < practice.size() ? practice.get(i + 1) : null, plan.timeline()));
 		}
 		NeckModel neck = NeckModel.of(tuning, 24);
 		ArcadeScene scene = new ArcadeScene(events, neck, StringColours.forStrings(tuning.getStringCount()), CameraTrack.build(events, neck, CameraTrack.Settings.standard().withLookAhead(lookAheadNanos)),

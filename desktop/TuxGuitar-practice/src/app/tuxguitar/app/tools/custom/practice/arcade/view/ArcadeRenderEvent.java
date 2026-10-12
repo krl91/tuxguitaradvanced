@@ -68,10 +68,12 @@ public final class ArcadeRenderEvent {
 	private final int metadataStrings;
 	private final ChordNameResolver.Display display;
 	private final BendMark bend;
+	private final List<TechniqueMark> techniques;
+	private final boolean harmonic;
 
 	private ArcadeRenderEvent(int index, Kind kind, long onsetNanos, List<Position> positions, List<Integer> deadStrings, String chordName, Stroke stroke,
 			boolean duplicatePitches, int[] requiredPitches, int metadataFirstFret, int metadataStrings,
-			ChordNameResolver.Display display, BendMark bend) {
+			ChordNameResolver.Display display, BendMark bend, List<TechniqueMark> techniques, boolean harmonic) {
 		this.index = index;
 		this.kind = kind;
 		this.onsetNanos = onsetNanos;
@@ -85,6 +87,8 @@ public final class ArcadeRenderEvent {
 		this.metadataStrings = metadataStrings;
 		this.display = display;
 		this.bend = bend;
+		this.techniques = Collections.unmodifiableList(techniques);
+		this.harmonic = harmonic;
 	}
 
 	/**
@@ -93,6 +97,11 @@ public final class ArcadeRenderEvent {
 	 * @param timeline the timeline of the following mode for the chosen speed
 	 */
 	public static ArcadeRenderEvent of(int index, PracticeEvent event, FollowTimeline timeline) {
+		return of(index, event, null, timeline);
+	}
+
+	/** @param next the next event of the sequence, or null: where a hammer-on, a pull-off or a slide goes (FR-078) */
+	public static ArcadeRenderEvent of(int index, PracticeEvent event, PracticeEvent next, FollowTimeline timeline) {
 		long onset = timeline.targetNanos(index);
 		List<Position> positions = new ArrayList<Position>();
 		List<Integer> dead = new ArrayList<Integer>();
@@ -139,7 +148,8 @@ public final class ArcadeRenderEvent {
 		}
 		return new ArcadeRenderEvent(index, kind, onset, positions, dead, chordNameOf(event.getBeat()), strokeOf(event.getBeat()), event.hasDuplicatePitches(),
 				event.getRequiredPitches(), metadata != null ? metadata.getFirstFret() : 0, metadata != null ? metadata.countStrings() : 0, display,
-				kind == Kind.NOTE ? BendMark.of(event.getBendPath()) : null);
+				kind == Kind.NOTE ? BendMark.of(event.getBendPath()) : null, kind == Kind.NOTE ? TechniqueMark.of(event, next) : Collections.<TechniqueMark>emptyList(),
+				kind == Kind.AUTOMATIC && event.getAutoPassReason() == PracticeEvent.AutoPassReason.HARMONIC);
 	}
 
 	/** The name written with the chord, when it is not blank: never made up from the pitches. */
@@ -168,6 +178,16 @@ public final class ArcadeRenderEvent {
 
 	public int index() {
 		return this.index;
+	}
+
+	/** The techniques written on a single note (FR-078), none for anything else. */
+	public List<TechniqueMark> techniques() {
+		return this.techniques;
+	}
+
+	/** An automatic event that is a harmonic (FR-078). */
+	public boolean isHarmonic() {
+		return this.harmonic;
 	}
 
 	/** The bend written for a single note (FR-077), or null: a note without a rising path, a chord and an automatic event have none. */

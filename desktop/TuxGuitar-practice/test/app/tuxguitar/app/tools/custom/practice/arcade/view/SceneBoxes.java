@@ -103,6 +103,7 @@ public final class SceneBoxes {
 				case PANEL_NAME:
 				case PANEL_STROKE:
 				case BEND_LABEL:
+				case TECH_LABEL:
 					boxes.add(ofText(item));
 					break;
 				case EVENT_TEXT:

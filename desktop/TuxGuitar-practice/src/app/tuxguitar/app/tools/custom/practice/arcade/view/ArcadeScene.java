@@ -127,6 +127,8 @@ public final class ArcadeScene {
 	private static final int BEND_COLOUR = 0xFFD166;
 	/** From this share of its approach the marker is on its target: the arrow of the neck says the bend, the one of the marker is left out. */
 	private static final double BEND_FLIGHT_UNTIL = 0.85;
+	/** The dark body behind the letters P.M. and T (FR-078). */
+	private static final int PILL_COLOUR = 0x10151C;
 	/** The gap kept between two labels, in pixels. */
 	static final double GAP = 4.0;
 
@@ -327,6 +329,171 @@ public final class ArcadeScene {
 			if (event.bend() != null) {
 				drawBendOnNeck(f, event, position, at, halfWidth, radius);
 			}
+			if (!event.techniques().isEmpty()) {
+				drawTechniquesOnNeck(f, event, position, at, halfWidth, radius);
+			}
+		}
+	}
+
+
+	/** Pills, strokes, waves, arcs and rails of the techniques of a note that is still coming (FR-078), in the accent colour, small and near the rectangle. */
+	private void drawTechniquesInFlight(Frame f, ArcadeRenderEvent event, NoteGeo g, double my, double alpha) {
+		double cx = g.at.x();
+		double rx = g.rx();
+		double ry = g.ry();
+		int string = event.positions().get(0).tgString();
+		double width = Math.max(1.5, ry * 0.3);
+		double size = Math.max(11.0, ry * 1.9);
+		java.util.List<TechniqueMark> pills = new java.util.ArrayList<TechniqueMark>();
+		for (TechniqueMark mark : event.techniques()) {
+			switch (mark.kind()) {
+				case PALM_MUTE:
+				case TAPPING:
+					pills.add(mark);
+					break;
+				case TREMOLO_PICKING:
+					strokes(f, event, cx, my - ry * 1.5, rx, ry, alpha, string);
+					break;
+				case VIBRATO:
+					wave(f, event, cx + rx * 1.15, cx + rx * 1.15 + Math.max(rx * 0.9, 10.0), my, ry * 0.7, width, alpha, string);
+					break;
+				case SLIDE: {
+					double dir = mark.fretDelta() < 0 ? -1.0 : 1.0;
+					double x0 = cx + dir * rx * 1.1;
+					double x1 = cx + dir * (rx * 1.1 + Math.max(rx * 0.9, 12.0));
+					f.out.line(Role.TECH_RAIL, x0, my, x1, my, BEND_COLOUR, alpha, width, event.index(), string);
+					techniqueHead(f, event, x1, my, dir > 0 ? 0.0 : Math.PI, Math.max(8.0, ry * 0.9), width, alpha, string);
+					f.out.text(Role.TECH_LABEL, TechniqueMark.letterOf(mark.kind()), (x0 + x1) / 2.0, my - ry * 1.6, size, BEND_COLOUR, alpha, event.index(), string);
+					break;
+				}
+				default: {
+					// hammer-on (to the right) and pull-off (to the left): a small arc over the shoulder of the rectangle, its letter beside it
+					double dir = mark.kind() == TechniqueMark.Kind.PULL_OFF ? -1.0 : 1.0;
+					double x0 = cx + dir * rx * 0.35;
+					double y0 = my - ry * 1.3;
+					double x1 = cx + dir * rx * 1.5;
+					double y1 = my - ry * 0.4;
+					f.out.curve(Role.TECH_ARROW, x0, y0, cx + dir * rx * 0.7, my - ry * 3.0, cx + dir * rx * 1.5, my - ry * 3.0, x1, y1, BEND_COLOUR, alpha, width, event.index(), string);
+					techniqueHead(f, event, x1, y1, Math.atan2(y1 - (my - ry * 3.0), 0.0001), Math.max(8.0, ry * 0.9), width, alpha, string);
+					f.out.text(Role.TECH_LABEL, TechniqueMark.letterOf(mark.kind()), cx + dir * rx * 1.9, my - ry * 2.4, size, BEND_COLOUR, alpha, event.index(), string);
+					break;
+				}
+			}
+		}
+		pills(f, event, pills, cx, my - ry * 2.6, size, alpha, string);
+	}
+
+	/**
+	 * The techniques of the active note on the neck (FR-078): the same marks in full, and for a hammer-on, a pull-off or a slide the dashed ghost of the cell of
+	 * the next note of the string with the arc or the rail that leads to it.
+	 */
+	private void drawTechniquesOnNeck(Frame f, ArcadeRenderEvent event, ArcadeRenderEvent.Position position, ScreenPoint at, double halfWidth, double radius) {
+		int string = position.tgString();
+		double size = Math.max(12.0, radius * 1.3);
+		double cell = 2.0 * halfWidth;
+		java.util.List<TechniqueMark> pills = new java.util.ArrayList<TechniqueMark>();
+		for (TechniqueMark mark : event.techniques()) {
+			switch (mark.kind()) {
+				case PALM_MUTE:
+				case TAPPING:
+					pills.add(mark);
+					break;
+				case TREMOLO_PICKING:
+					strokes(f, event, at.x(), at.y() - radius * 1.8, halfWidth, radius, 0.95, string);
+					break;
+				case VIBRATO:
+					wave(f, event, at.x() + halfWidth * 1.15, at.x() + halfWidth * 1.15 + cell, at.y(), radius * 0.8, 2.5, 0.95, string);
+					break;
+				default: {
+					double ghostX = at.x() + (mark.fretDelta() < 0 ? -1.0 : 1.0) * cell * 1.1;
+					double ghostHalfWidth = halfWidth;
+					boolean ghost = false;
+					int destination = position.fret() + mark.fretDelta();
+					if (mark.fretDelta() != 0 && destination >= 1 && destination <= this.neck.fretCount()) {
+						int row = this.neck.layout().rowOf(position.tgString());
+						ghostX = f.projection.neck(this.neck.fretCentreX(destination), row, this.neck.layout().count(), f.cam).x();
+						ghostHalfWidth = Math.max(radius * 0.7, halfWidthOfCell(f, destination, 1.0));
+						ghost = true;
+						f.out.roundedRing(Role.TECH_GHOST, ghostX, at.y(), ghostHalfWidth, radius, BEND_COLOUR, 0.9, 2.5, event.index(), string);
+					}
+					double dir = ghostX >= at.x() ? 1.0 : -1.0;
+					if (mark.kind() == TechniqueMark.Kind.SLIDE) {
+						double x0 = at.x() + dir * (halfWidth + 6.0);
+						double x1 = ghost ? ghostX - dir * (ghostHalfWidth + 6.0) : at.x() + dir * (halfWidth + 6.0 + cell * 0.8);
+						if ((x1 - x0) * dir < radius) {
+							x1 = x0 + dir * radius * 2.0;
+						}
+						f.out.line(Role.TECH_RAIL, x0, at.y(), x1, at.y(), BEND_COLOUR, 0.95, 2.5, event.index(), string);
+						techniqueHead(f, event, x1, at.y(), dir > 0 ? 0.0 : Math.PI, 14.0, 2.5, 0.95, string);
+						f.out.text(Role.TECH_LABEL, TechniqueMark.letterOf(mark.kind()), (x0 + x1) / 2.0, at.y() - radius * 1.8, size, BEND_COLOUR, 0.95, event.index(), string);
+					} else {
+						double x0 = at.x() + dir * halfWidth * 0.6;
+						double y0 = at.y() - radius * 1.1;
+						double x1 = ghost ? ghostX - dir * ghostHalfWidth * 0.3 : at.x() + dir * (halfWidth + cell * 0.6);
+						if ((x1 - x0) * dir < radius * 2.0) {
+							x1 = x0 + dir * radius * 2.0;
+						}
+						double top = at.y() - radius * 3.6;
+						double c1x = x0 + (x1 - x0) * 0.25;
+						double c2x = x1 - (x1 - x0) * 0.25;
+						double y1 = at.y() - radius * 1.5;
+						f.out.curve(Role.TECH_ARROW, x0, y0, c1x, top, c2x, top, x1, y1, BEND_COLOUR, 0.95, 2.5, event.index(), string);
+						techniqueHead(f, event, x1, y1, Math.atan2(y1 - top, 0.0001), 16.0, 2.5, 0.95, string);
+						f.out.text(Role.TECH_LABEL, TechniqueMark.letterOf(mark.kind()), (x0 + x1) / 2.0, top - size * 0.2, size, BEND_COLOUR, 0.95, event.index(), string);
+					}
+					break;
+				}
+			}
+		}
+		pills(f, event, pills, at.x(), at.y() - radius * 2.8, size, 0.95, string);
+	}
+
+	/** The head of an arc or of a rail: two short sides back from the tip, which points at the given angle. */
+	private void techniqueHead(Frame f, ArcadeRenderEvent event, double x, double y, double angle, double size, double width, double alpha, int string) {
+		for (double side : new double[] { -0.5, 0.5 }) {
+			double a = angle + Math.PI + side;
+			f.out.line(Role.TECH_HEAD, x, y, x + size * Math.cos(a), y + size * Math.sin(a), BEND_COLOUR, alpha, Math.max(1.5, width), event.index(), string);
+		}
+	}
+
+	/** A row of pills (P.M., T) centred on x: a dark rounded rectangle behind each letter. */
+	private void pills(Frame f, ArcadeRenderEvent event, java.util.List<TechniqueMark> marks, double cx, double y, double size, double alpha, int string) {
+		double[] widths = new double[marks.size()];
+		double total = 0.0;
+		for (int i = 0; i < widths.length; i++) {
+			widths[i] = TechniqueMark.letterOf(marks.get(i).kind()).length() * size * 0.66 + size * 0.9;
+			total += widths[i] + (i > 0 ? size * 0.3 : 0.0);
+		}
+		double x = cx - total / 2.0;
+		for (int i = 0; i < widths.length; i++) {
+			f.out.rounded(Role.TECH_PILL, x + widths[i] / 2.0, y, widths[i] / 2.0, size * 0.62, PILL_COLOUR, 0.88 * alpha, event.index(), string);
+			f.out.text(Role.TECH_LABEL, TechniqueMark.letterOf(marks.get(i).kind()), x + widths[i] / 2.0, y, size, BEND_COLOUR, alpha, event.index(), string);
+			x += widths[i] + size * 0.3;
+		}
+	}
+
+	/** Three short slanted strokes centred on cx, from y to y - 1.1 * ry: the repeated picking of a tremolo. */
+	private void strokes(Frame f, ArcadeRenderEvent event, double cx, double y, double halfWidth, double ry, double alpha, int string) {
+		for (int i = -1; i <= 1; i++) {
+			double x = cx + i * halfWidth * 0.35;
+			f.out.line(Role.TECH_TICK, x - ry * 0.25, y, x + ry * 0.25, y - ry * 1.1, BEND_COLOUR, alpha, Math.max(1.5, ry * 0.25), event.index(), string);
+		}
+	}
+
+	/** A wave of six short segments from x0 to x1 around the height y: the vibrato. */
+	private void wave(Frame f, ArcadeRenderEvent event, double x0, double x1, double y, double amplitude, double width, double alpha, int string) {
+		int parts = 6;
+		double px = x0;
+		double py = y;
+		for (int i = 1; i <= parts; i++) {
+			double x = x0 + (x1 - x0) * i / parts;
+			double yy = y + (i % 2 == 1 ? -amplitude : amplitude);
+			if (i == parts) {
+				yy = y;
+			}
+			f.out.line(Role.TECH_WAVE, px, py, x, yy, BEND_COLOUR, alpha, width, event.index(), string);
+			px = x;
+			py = yy;
 		}
 	}
 
@@ -817,7 +984,7 @@ public final class ArcadeScene {
 				}
 			} else {
 				ChordGeo g = chordGeo(f, event);
-				String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
+				String word = automaticWord(event);
 				mine.add(textBox(word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026));
 			}
 			if (this.densityBudget && !isActive && event.kind() != ArcadeRenderEvent.Kind.NOTE && event.kind() != ArcadeRenderEvent.Kind.CHORD) {
@@ -986,6 +1153,9 @@ public final class ArcadeScene {
 		if (event.bend() != null && f.progressOf(event) < BEND_FLIGHT_UNTIL) {
 			drawBendInFlight(f, event, g, my, alpha);
 		}
+		if (!event.techniques().isEmpty() && f.progressOf(event) < BEND_FLIGHT_UNTIL) {
+			drawTechniquesInFlight(f, event, g, my, alpha);
+		}
 		// the number of the fret is written under the footprint, never in the marker; it is left out where it would overlap a label, or once the footprint is in the
 		// neck: the ruler of the frets under the neck then says the fret of the active note itself
 		if (g.at.y() < f.projection.hitLineY() && (f.noLabel == null || !f.noLabel.contains(event.index()))) {
@@ -994,12 +1164,20 @@ public final class ArcadeScene {
 	}
 
 	/** An event the learner does not play (passed automatically, or not supported): a timing bar with its word. */
+	/** The word under a timing bar of an event that is not played as a note: Harmonic for a harmonic, Automatic for the others that pass by themselves. */
+	private String automaticWord(ArcadeRenderEvent event) {
+		if (event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC) {
+			return event.isHarmonic() ? this.labels.harmonic() : this.labels.automatic();
+		}
+		return this.labels.unsupported();
+	}
+
 	private void drawBarEvent(Frame f, ArcadeRenderEvent event, RenderState state, double alpha) {
 		Out out = f.out;
 		ChordGeo g = chordGeo(f, event);
 		out.quad(Role.TIMING_BAR, new double[] { g.pl.x(), g.pl.y(), g.pr.x(), g.pr.y(), g.pr.x(), g.pr.y() - g.thickness, g.pl.x(), g.pl.y() - g.thickness },
 				BAR_COLOUR, alpha, event.index(), 0);
-		String word = event.kind() == ArcadeRenderEvent.Kind.AUTOMATIC ? this.labels.automatic() : this.labels.unsupported();
+		String word = automaticWord(event);
 		out.text(Role.EVENT_TEXT, word, g.centreX, g.barTop - f.h * 0.025, f.h * 0.026, TEXT_COLOUR, alpha, event.index(), 0);
 	}
 
