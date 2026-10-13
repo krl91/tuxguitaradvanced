@@ -34,6 +34,10 @@ public final class ArcadeFrameSource {
 	private final long startNanos;
 	private long startWall = Long.MIN_VALUE;
 	private boolean countInOver;
+	private long referenceReal = Long.MIN_VALUE;
+
+	/** How much the clock must have moved for the music to be taken as begun. */
+	private static final long MOVED_NANOS = 30_000_000L;
 
 	/** How far the clock of the player may be from the picture's own time for the music to be taken as begun. */
 	private static final long AGREE_NANOS = 400_000_000L;
@@ -96,8 +100,16 @@ public final class ArcadeFrameSource {
 		}
 		long elapsed = wallNanos - this.startWall;
 		long own = this.startNanos - this.countInNanos + elapsed;
-		boolean agrees = real != NOT_READY_NANOS && Math.abs(real - own) <= AGREE_NANOS && elapsed >= this.countInNanos - AGREE_NANOS;
-		if (agrees || elapsed > this.countInNanos + GRACE_NANOS) {
+		boolean near = real != NOT_READY_NANOS && Math.abs(real - own) <= AGREE_NANOS && elapsed >= this.countInNanos - AGREE_NANOS;
+		if (!near) {
+			this.referenceReal = Long.MIN_VALUE;
+		} else if (this.referenceReal == Long.MIN_VALUE) {
+			this.referenceReal = real;
+		}
+		// the clock holds the start still during the count-in, which is near the picture's own time for the last moments of it: it is followed only once it
+		// moves, so that the picture does not jump from its own time to the start of the music (owner, 2026-10-13: the first chord jumped onto the neck)
+		boolean moving = near && real - this.referenceReal > MOVED_NANOS;
+		if (moving || elapsed > this.countInNanos + GRACE_NANOS) {
 			this.countInOver = true;
 			return real;
 		}

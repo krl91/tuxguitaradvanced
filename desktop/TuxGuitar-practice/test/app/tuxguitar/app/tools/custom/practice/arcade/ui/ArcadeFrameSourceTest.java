@@ -166,4 +166,30 @@ public class ArcadeFrameSourceTest {
 		Scene playing = counting.frame(clock.nowNanos(), SCREEN);
 		assertEquals(describe(scene.build(counting.timelineNanosAt(clock.nowNanos()), SCREEN, null, 100, quality.tier())), describe(playing), "the clock of the player once it is at the start");
 	}
+
+	@Test
+	public void theFirstEventComesInOneMoveThroughTheHandoverFromTheCountInToTheClockOfThePlayer() {
+		clock.start(FIRST_TICK);
+		clock.pause();
+		ArcadeFrameSource counting = new ArcadeFrameSource(scene, timeline, FIRST_TICK, clock, () -> null, () -> 100, quality, 2000 * MS, 0L);
+		double previous = Double.NaN;
+		double worst = 0.0;
+		for (int step = 0; step <= 560; step++) {
+			// the music begins when the count-in is over: the clock of the player holds the start until then
+			if (step == 400) {
+				clock.resume();
+			}
+			Scene scene = counting.frame(clock.nowNanos(), SCREEN);
+			List<SceneItem> markers = scene.forEvent(0, Role.MARKER);
+			if (!markers.isEmpty()) {
+				double y = markers.get(0).value(1);
+				if (!Double.isNaN(previous)) {
+					worst = Math.max(worst, Math.abs(y - previous));
+				}
+				previous = y;
+			}
+			clock.advance(5 * MS);
+		}
+		assertTrue(worst < 12.0, "the first marker moved " + worst + " px between two frames of 5 ms");
+	}
 }
