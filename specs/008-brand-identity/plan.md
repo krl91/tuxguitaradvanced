@@ -12,7 +12,7 @@ Replace the upstream TuxGuitar identity images of the packaged application by th
 
 **Language/Version**: none for the assets; the tests are JUnit 5 in the fork module `desktop/TuxGuitar-practice` (Java release 11, tests outside `src/`); the verifier is a POSIX shell script; the derivatives are made with the tools of the macOS machine (`sips`, `iconutil`, ImageMagick `magick`, all present on 2026-10-13).
 
-**Primary Dependencies**: none new. The packaging already copies `desktop/build-scripts/common-resources/*` (macOS `tuxguitar-macosx-swt-cocoa/pom.xml`, Windows installer `project.xml`, Linux `share/pixmaps`) and the skins `desktop/TuxGuitar/share/skins/*` (loaded by `TGIconManager.loadIcon("icon.png" | "splash.png" | ...)`).
+**Primary Dependencies**: none new in the application. **Tools for the derivatives (macOS, used only to rebuild the images, not by the builds or the release):** `sips`, `iconutil` and ImageMagick (`magick`); each script stops at the first missing tool (`set -e`) and the images already in the repository stay the source of truth for every build, so a missing tool blocks only a new derivative (CHK021). The packaging already copies `desktop/build-scripts/common-resources/*` (macOS `tuxguitar-macosx-swt-cocoa/pom.xml`, Windows installer `project.xml`, Linux `share/pixmaps`) and the skins `desktop/TuxGuitar/share/skins/*` (loaded by `TGIconManager.loadIcon("icon.png" | "splash.png" | ...)`).
 
 **Storage**: files in the repository (binary assets: 28 files replaced plus the master, counted on 2026-10-14: 1 icns, 3 ico, 3 installer PNGs, 1 Linux PNG, 10 skin icons, 10 skin splashes).
 

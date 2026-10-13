@@ -10,40 +10,40 @@
 
 ## Requirement Completeness
 
-- [ ] CHK001 - Are the surfaces that carry the identity enumerated completely, platform by platform, with the reason for each exclusion (About pictograms, `tgdoc.icns`, Android)? [Completeness, Spec §FR-012, Clarifications 2026-10-13]
-- [ ] CHK002 - Is every size and format that a package consumes (icns entries, ico entries, PNG sizes, splash, panel) stated, or its exclusion justified? [Completeness, Spec §FR-008, §FR-009]
+- [x] CHK001 - Are the surfaces that carry the identity enumerated completely, platform by platform, with the reason for each exclusion (About pictograms, `tgdoc.icns`, Android)? [Completeness, Spec §FR-012, Clarifications 2026-10-13]
+- [x] CHK002 - Is every size and format that a package consumes (icns entries, ico entries, PNG sizes, splash, panel) stated, or its exclusion justified? [Completeness, Spec §FR-008, §FR-009]
 - [ ] CHK003 - Are requirements defined for what a release does when a derivative is rejected by the owner (the upstream file stays, the release says so)? [Gap, Spec §FR-010, §FR-017]
-- [ ] CHK004 - Are the documentation surfaces (README in three languages, release notes, manuals) enumerated with what each must show? [Completeness, Spec §FR-012]
+- [x] CHK004 - Are the documentation surfaces (README in three languages, release notes, manuals) enumerated with what each must show? [Completeness, Spec §FR-012]
 
 ## Requirement Clarity
 
-- [ ] CHK005 - Is "content-aware cropping" distinguished from a rectangular crop with fixed coordinates, so that the icon-only derivative is permitted or forbidden without doubt? [Ambiguity, Spec §FR-002, §FR-011]
-- [ ] CHK006 - Is "safe margins" quantified (pixels or share of the canvas) for the splash, the panel and the icons? [Clarity, Spec §FR-006]
-- [ ] CHK007 - Is "a surface with enough space" defined by a size threshold, so that the choice between the full logo and the icon-only derivative is objective? [Ambiguity, Spec §FR-007]
-- [ ] CHK008 - Is "visual review" defined (who, on which sheets, which backgrounds, which decision to record)? [Clarity, Spec §FR-009, §SC-004]
+- [x] CHK005 - Is "content-aware cropping" distinguished from a rectangular crop with fixed coordinates, so that the icon-only derivative is permitted or forbidden without doubt? [Ambiguity, Spec §FR-002, §FR-011]
+- [x] CHK006 - Is "safe margins" quantified (pixels or share of the canvas) for the splash, the panel and the icons? [Clarity, Spec §FR-006]
+- [x] CHK007 - Is "a surface with enough space" defined by a size threshold, so that the choice between the full logo and the icon-only derivative is objective? [Ambiguity, Spec §FR-007]
+- [x] CHK008 - Is "visual review" defined (who, on which sheets, which backgrounds, which decision to record)? [Clarity, Spec §FR-009, §SC-004]
 
 ## Requirement Consistency
 
-- [ ] CHK009 - Do the Out of Scope list, the Status line and the Clarifications agree on what is integrated by the beta and what is not? [Consistency, Spec §Out of Scope, §Clarifications]
-- [ ] CHK010 - Do the number of files and locations in the plan, the manifest and the tasks agree (skins: 6 shared plus 4 source folders)? [Consistency, Plan §Scale/Scope]
-- [ ] CHK011 - Are the approval rules of FR-004, FR-010 and SC-005 consistent about where an approval is recorded (spec, plan or manifest)? [Consistency, Spec §FR-004, §FR-005, §FR-010]
+- [x] CHK009 - Do the Out of Scope list, the Status line and the Clarifications agree on what is integrated by the beta and what is not? [Consistency, Spec §Out of Scope, §Clarifications]
+- [x] CHK010 - Do the number of files and locations in the plan, the manifest and the tasks agree (skins: 6 shared plus 4 source folders)? [Consistency, Plan §Scale/Scope]
+- [x] CHK011 - Are the approval rules of FR-004, FR-010 and SC-005 consistent about where an approval is recorded (spec, plan or manifest)? [Consistency, Spec §FR-004, §FR-005, §FR-010]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK012 - Can SC-004 ("no lost silhouette, unintended opaque square or illegible wordmark") be judged objectively, or does it need a stated reviewer and background? [Measurability, Spec §SC-004]
-- [ ] CHK013 - Can SC-003 ("without distortion, clipping or unreadable full wordmarks") be verified automatically for the parts that are not visual (presence, dimensions, entries)? [Measurability, Spec §SC-003, §FR-014]
+- [x] CHK012 - Can SC-004 ("no lost silhouette, unintended opaque square or illegible wordmark") be judged objectively, or does it need a stated reviewer and background? [Measurability, Spec §SC-004]
+- [x] CHK013 - Can SC-003 ("without distortion, clipping or unreadable full wordmarks") be verified automatically for the parts that are not visual (presence, dimensions, entries)? [Measurability, Spec §SC-003, §FR-014]
 - [ ] CHK014 - Is SC-006 ("unchanged in outcome") defined by what is compared (test counts, failures, skipped) and by which build? [Clarity, Spec §SC-006]
 
 ## Scenario Coverage
 
-- [ ] CHK015 - Are the light-background and dark-background requirements both covered by an approval rule, not only the dark one? [Coverage, Gap, Spec §FR-009, §SC-004]
-- [ ] CHK016 - Are the platforms that nobody can look at (Windows, Linux) given an explicit reporting rule (done or not done, never "validated")? [Coverage, Spec §FR-015, §FR-017]
+- [x] CHK015 - Are the light-background and dark-background requirements both covered by an approval rule, not only the dark one? [Coverage, Gap, Spec §FR-009, §SC-004]
+- [x] CHK016 - Are the platforms that nobody can look at (Windows, Linux) given an explicit reporting rule (done or not done, never "validated")? [Coverage, Spec §FR-015, §FR-017]
 - [ ] CHK017 - Are requirements defined for macOS icon caching (the old icon seen in the Finder after the update)? [Gap, Edge Case]
 
 ## Non-Functional and Governance
 
-- [ ] CHK018 - Is the provenance of the logo (AI-assisted redesign selected by the owner) required on every surface that shows the full logo, or only in some documents? [Clarity, Spec §FR-016]
-- [ ] CHK019 - Is a legal review before a stable release recorded as an assumption or a task, and by whom? [Assumption, Gap, Spec §FR-016]
+- [x] CHK018 - Is the provenance of the logo (AI-assisted redesign selected by the owner) required on every surface that shows the full logo, or only in some documents? [Clarity, Spec §FR-016]
+- [x] CHK019 - Is a legal review before a stable release recorded as an assumption or a task, and by whom? [Assumption, Gap, Spec §FR-016]
 - [ ] CHK020 - Is the rule "a published tag is never moved" stated for branding releases, with the way to correct a release text? [Gap, Spec §FR-017]
 
 ## Dependencies and Assumptions
@@ -55,3 +55,4 @@
 
 - Check items off when the requirements-quality criterion is satisfied.
 - `/speckit-implement` reads checklist state but does not modify markers.
+- Review of 2026-10-14 (the owner, by questions in the session): CHK001, CHK002, CHK004 to CHK013, CHK015, CHK016, CHK018 and CHK019 were judged satisfied. CHK003, CHK014, CHK017, CHK020, CHK021 and CHK022 were judged to need a text in the spec or the plan: it was written on 2026-10-14 (FR-010/FR-017, SC-006, FR-018, FR-017, `plan.md` Technical Context, FR-012) and they stay unchecked until the owner confirms the wording.

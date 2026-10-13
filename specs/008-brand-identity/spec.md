@@ -34,6 +34,15 @@ generation.
 - Q: Which release carries the new logo? → A: A **beta**, **0.5.0-beta.1** (tag `v0.5.0-beta.1`, notes `docs/release-notes/v0.5.0-beta.1.md`), built by the existing `Release` workflow for macOS (Apple Silicon), Windows and Linux. The tag is chosen by the owner and is never moved once published.
 - Q: How are the small icons and the other formats produced? → A: From the master only, by **downscaling and geometric margins/crops** with the tools of the machine; never regenerated, redrawn or retouched (FR-002). Every derivative is listed in `contracts/branding-manifest.md` with its source, surfaces, dimensions and approval status (FR-005) and is **proposed, not approved**, until the owner approves it on a contact sheet (FR-010, SC-005).
 - Q: Which surfaces does the beta cover? → A: The macOS application icon, the Windows executable, shortcut, installer and uninstaller icons and the installer images, the Linux package icon, the window and splash images of the application (all six skins), and the documentation and release surfaces. The About dialog pictograms (information, authors, copyright), the document-type icon `tgdoc.icns` of `.tg` files and the Android application are **not** changed by the beta (see `research.md` R2, R3).
+### Session 2026-10-14 (the owner's answers to the questions of `checklists/branding.md`)
+
+- Q: What does a release do when the owner rejects a derivative? (CHK003) → A: The upstream file stays in place, the release does not replace it, and the release notes say so (FR-010, FR-017).
+- Q: What does "unchanged in outcome" (SC-006) compare? (CHK014) → A: The full macOS build with the SWT GUI tests (`mvn -e clean verify -P native-modules,swt-gui-tests`): the number of tests run, of failures and of skipped tests, before and after (`benchmark/before-after.txt`).
+- Q: Is the old icon cached by macOS a requirement? (CHK017) → A: Yes, as a requirement of the release notes (FR-018).
+- Q: Is the rule "a published tag is never moved" stated for branding releases? (CHK020) → A: Yes, in FR-017.
+- Q: Are the tools that make the derivatives dependencies with a fallback? (CHK021) → A: Yes, in `plan.md` (Technical Context).
+- Q: Do all the skins carry the same images? (CHK022) → A: Yes, as a requirement in FR-012.
+
 - Q: Does branding change behaviour? → A: No (FR-013). The beta replaces image files and adds tests and a package verifier; no Java class of the application changes.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -141,7 +150,7 @@ rendering rules for Arcade gameplay; those remain governed by spec 003.
 
 ### Integration and regression safety
 
-- **FR-012**: Replacing packaged branding MUST cover the application icon, bundle/installer icon,
+- **FR-012**: Replacing packaged branding MUST cover the application icon, bundle/installer icon, Every skin (the six of `share/skins` and the four source folders of `src-skins`) MUST carry the same `icon.png` and the same `splash.png`, byte-identical (CHK022).
   about/startup branding and documentation/release surfaces that currently expose a product logo,
   as applicable to each platform and as enumerated during planning.
 - **FR-013**: Branding work MUST NOT change application behaviour, score compatibility, playback,
@@ -150,7 +159,8 @@ rendering rules for Arcade gameplay; those remain governed by spec 003.
   readable, has the expected dimensions/format and is included in its package.
 - **FR-015**: Manual packaged-build checks MUST verify Finder/Dock on macOS and equivalent launcher,
   window and installer surfaces on Windows and Linux before cross-platform integration is complete.
-- **FR-017** (added 2026-10-13): The first release that carries the new logo is the beta **0.5.0-beta.1**. A release MUST NOT carry a derivative that is not approved (FR-010); the packaged icons of the three platforms MUST be checked by the automated package verifier of `contracts/branding-verification.md` before the release is published, and the manual checks of FR-015 MUST be reported as done or not done, per platform, in the release notes.
+- **FR-018** (added 2026-10-14, the owner's answer to CHK017): The release notes of a release that changes the application icon MUST tell macOS users that the Finder or the Dock may keep showing the old icon of an application they already saw until the application is moved or copied again.
+- **FR-017** (added 2026-10-13): The first release that carries the new logo is the beta **0.5.0-beta.1**. A release MUST NOT carry a derivative that is not approved (FR-010); the packaged icons of the three platforms MUST be checked by the automated package verifier of `contracts/branding-verification.md` before the release is published, and the manual checks of FR-015 MUST be reported as done or not done, per platform, in the release notes. If the owner rejects a derivative, the upstream file stays in place, the release does not replace it and the release notes say so (CHK003). A published tag is never moved: a mistake in the text of a release is corrected on GitHub (`gh release edit`), and changed code or assets need a new version (CHK020).
 - **FR-016**: Existing upstream notices, licences and attributions MUST remain intact. The selected
   logo's provenance MUST be recorded as an AI-assisted redesign selected by the product owner; this
   specification does not assert ownership of third-party marks or waive a later release review.
@@ -167,7 +177,7 @@ rendering rules for Arcade gameplay; those remain governed by spec 003.
   or illegible wordmark at the sizes where the full logo is specified.
 - **SC-005**: The product owner explicitly approves every production derivative before it replaces
   an existing application or release asset.
-- **SC-006**: Branding-only integration leaves the full platform builds and existing automated tests
+- **SC-006**: Branding-only integration leaves the full platform builds and existing automated tests "Unchanged in outcome" means: the full macOS build with the SWT GUI tests (`mvn -e clean verify -P native-modules,swt-gui-tests`) reports the same number of tests run, of failures and of skipped tests before and after the change (CHK014).
   unchanged in outcome.
 
 ## Out of Scope
