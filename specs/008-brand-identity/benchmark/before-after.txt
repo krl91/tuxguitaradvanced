@@ -9,3 +9,15 @@ Before the branding change (2026-10-13, commit 2f93597c7): mvn -e clean verify -
 [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
 [INFO] Tests run: 24, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
+
+After the branding change (2026-10-13, same command): BUILD SUCCESS, same counts per module
+[INFO] Tests run: 73, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 1
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 273, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 24, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 24, Failures: 0, Errors: 0, Skipped: 0
+Note: the aggregator 'verify' does not run the unit tests of TuxGuitar-practice (BrandingAssetsTest is run explicitly: mvn test -pl ../../TuxGuitar-practice -am -Dtest=BrandingAssetsTest -Dbranding.release=true: 5 tests, 0 failures, 0 skipped); misc/verify-branding.sh on the built .app: 13 files identical; no .java file of the application changed (git diff --stat -- 'desktop/TuxGuitar/**/*.java' is empty).

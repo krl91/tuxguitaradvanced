@@ -19,10 +19,10 @@
         512,
         1024
       ],
-      "status": "proposed",
-      "approvedBy": null,
-      "approvedOn": null,
-      "note": ""
+      "status": "approved",
+      "approvedBy": "product owner",
+      "approvedOn": "2026-10-13",
+      "note": "approved by the product owner on 2026-10-13 after the contact sheets (dark background review)"
     },
     {
       "id": "D2",
@@ -39,10 +39,10 @@
         128,
         256
       ],
-      "status": "proposed",
-      "approvedBy": null,
-      "approvedOn": null,
-      "note": ""
+      "status": "approved",
+      "approvedBy": "product owner",
+      "approvedOn": "2026-10-13",
+      "note": "approved on 2026-10-13: crop 1254 x 935 from the top-left corner (misc/branding/crop.conf), as proposed"
     },
     {
       "id": "D3",
@@ -52,10 +52,10 @@
       "sizes": [
         "500x300"
       ],
-      "status": "proposed",
-      "approvedBy": null,
-      "approvedOn": null,
-      "note": ""
+      "status": "approved",
+      "approvedBy": "product owner",
+      "approvedOn": "2026-10-13",
+      "note": "approved on 2026-10-13: dark background #1E1E1E"
     },
     {
       "id": "D4",
@@ -65,10 +65,10 @@
       "sizes": [
         "163x314"
       ],
-      "status": "proposed",
-      "approvedBy": null,
-      "approvedOn": null,
-      "note": ""
+      "status": "approved",
+      "approvedBy": "product owner",
+      "approvedOn": "2026-10-13",
+      "note": "approved on 2026-10-13: dark background #1E1E1E"
     }
   ],
   "surfaces": [

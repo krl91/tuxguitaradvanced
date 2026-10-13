@@ -1,5 +1,9 @@
 # TuxGuitarAdvanced
 
+<p align="center"><img src="../specs/008-brand-identity/assets/tuxguitaradvanced-logo-primary.png" width="260" alt="TuxGuitarAdvanced"></p>
+
+<p align="center"><sub>Le logo est une refonte assistée par IA, choisie par le propriétaire du produit. Les mentions et la licence de TuxGuitar d'origine sont inchangées, et aucune propriété sur des marques tierces n'est revendiquée.</sub></p>
+
 *[English](../README.md) · Français · [Español](README-ES.md)*
 
 ### 🎸 Votre guitare est la manette. Votre partition est le jeu.

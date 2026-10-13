@@ -1,6 +1,6 @@
 # Contract: the branding manifest (spec 008)
 
-Every file that carries the product identity is declared here, with its source, its dimensions and the approval of its derivative (FR-005). The machine-readable copy `specs/008-brand-identity/branding-manifest.json` (created in increment B3, same content) is what `BrandingAssetsTest` and `misc/verify-branding.sh` read. **State on 2026-10-13: no derivative is approved yet; no file below is replaced yet.**
+Every file that carries the product identity is declared here, with its source, its dimensions and the approval of its derivative (FR-005). The machine-readable copy `specs/008-brand-identity/branding-manifest.json` (created in increment B3, same content) is what `BrandingAssetsTest` and `misc/verify-branding.sh` read. **State on 2026-10-13: D1 to D4 are approved by the owner (table "Approvals"); the files below are replaced by the integration tasks T011 to T021.**
 
 ## Master
 
@@ -12,10 +12,10 @@ Every file that carries the product identity is declared here, with its source, 
 
 | Id | Kind | Operation (from the master only) | Proposed use | Status |
 |---|---|---|---|---|
-| D1 | full | uniform downscale (Lanczos, alpha kept) to 128, 256, 512, 1024 | icon entries of 128 px and more, README, release notes | proposed |
-| D2 | icon-only | rectangular crop of the master above the wordmark (fixed coordinates chosen on the contact sheet, nothing retouched), then uniform downscale to 16, 24, 32, 48, 64, 96 | every icon of less than 128 px | proposed |
-| D3 | splash | D1 scaled uniformly and centred, safe margins, on a plain background, 500 x 300 | application splash, installer splash | proposed |
-| D4 | panel | D1 scaled uniformly and centred, safe margins, on a plain background, 163 x 314 | Windows installer left image | proposed |
+| D1 | full | uniform downscale (Lanczos, alpha kept) to 128, 256, 512, 1024 | icon entries of 128 px and more, README, release notes | approved 2026-10-13 |
+| D2 | icon-only | rectangular crop of the master above the wordmark (fixed coordinates chosen on the contact sheet, nothing retouched), then uniform downscale to 16, 24, 32, 48, 64, 96 | every icon of less than 128 px | approved 2026-10-13 |
+| D3 | splash | D1 scaled uniformly and centred, safe margins, on a plain background, 500 x 300 | application splash, installer splash | approved 2026-10-13 |
+| D4 | panel | D1 scaled uniformly and centred, safe margins, on a plain background, 163 x 314 | Windows installer left image | approved 2026-10-13 |
 
 ## Surfaces
 
@@ -40,7 +40,7 @@ Not declared on purpose: `about_*.png`, `tgdoc.icns`, Android, upstream `website
 
 | Derivative | Decision | Date | Note |
 |---|---|---|---|
-| D1 | pending | | |
-| D2 | pending | | the crop coordinates are chosen on the contact sheet |
-| D3 | pending | | the background is chosen on the contact sheet |
-| D4 | pending | | |
+| D1 | approved | 2026-10-13 | approved: the full logo from 128 px (dark background review) |
+| D2 | approved | 2026-10-13 | approved: crop 1254 x 935 from the top-left corner, as proposed |
+| D3 | approved | 2026-10-13 | approved: dark background #1E1E1E |
+| D4 | approved | 2026-10-13 | approved: dark background #1E1E1E |

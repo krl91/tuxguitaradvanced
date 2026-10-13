@@ -97,7 +97,7 @@ public class BrandingAssetsTest {
 		ByteBuffer b = ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN);
 		assertEquals("icns", new String(data, 0, 4, "US-ASCII"), file + ": an icns file");
 		Map<String, Integer> pixels = new LinkedHashMap<String, Integer>();
-		pixels.put("is32", 16); pixels.put("icp4", 16); pixels.put("il32", 32); pixels.put("icp5", 32); pixels.put("ic11", 32);
+		pixels.put("ic04", 16); pixels.put("ic05", 32); pixels.put("is32", 16); pixels.put("icp4", 16); pixels.put("il32", 32); pixels.put("icp5", 32); pixels.put("ic11", 32);
 		pixels.put("ih32", 48); pixels.put("icp6", 64); pixels.put("ic12", 64); pixels.put("ic07", 128); pixels.put("it32", 128);
 		pixels.put("ic08", 256); pixels.put("ic13", 256); pixels.put("ic09", 512); pixels.put("ic14", 512); pixels.put("ic10", 1024);
 		Set<Integer> sizes = new HashSet<Integer>();

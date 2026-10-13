@@ -1,5 +1,9 @@
 # TuxGuitarAdvanced
 
+<p align="center"><img src="specs/008-brand-identity/assets/tuxguitaradvanced-logo-primary.png" width="260" alt="TuxGuitarAdvanced"></p>
+
+<p align="center"><sub>The logo is an AI-assisted redesign selected by the product owner. The upstream TuxGuitar notices and licence are unchanged, and no ownership of third-party marks is claimed.</sub></p>
+
 *English · [Français](docs/README-FR.md) · [Español](docs/README-ES.md)*
 
 ### 🎸 Your guitar is the controller. Your score is the game.
