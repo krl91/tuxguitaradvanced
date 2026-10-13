@@ -22,7 +22,7 @@
       "status": "approved",
       "approvedBy": "product owner",
       "approvedOn": "2026-10-13",
-      "note": "approved by the product owner on 2026-10-13 after the contact sheets (dark background review)"
+      "note": "approved by the product owner on 2026-10-13 after the contact sheets (dark background review); light-background review: owner OK on 2026-10-14"
     },
     {
       "id": "D2",
@@ -42,7 +42,7 @@
       "status": "approved",
       "approvedBy": "product owner",
       "approvedOn": "2026-10-13",
-      "note": "approved on 2026-10-13: crop 1254 x 935 from the top-left corner (misc/branding/crop.conf), as proposed"
+      "note": "approved on 2026-10-13: crop 1254 x 935 from the top-left corner (misc/branding/crop.conf), as proposed; light-background review: owner OK on 2026-10-14"
     },
     {
       "id": "D3",
@@ -55,7 +55,7 @@
       "status": "approved",
       "approvedBy": "product owner",
       "approvedOn": "2026-10-13",
-      "note": "approved on 2026-10-13: dark background #1E1E1E"
+      "note": "approved on 2026-10-13: dark background #1E1E1E; light-background review: owner OK on 2026-10-14"
     },
     {
       "id": "D4",
@@ -68,7 +68,7 @@
       "status": "approved",
       "approvedBy": "product owner",
       "approvedOn": "2026-10-13",
-      "note": "approved on 2026-10-13: dark background #1E1E1E"
+      "note": "approved on 2026-10-13: dark background #1E1E1E; light-background review: owner OK on 2026-10-14"
     }
   ],
   "surfaces": [

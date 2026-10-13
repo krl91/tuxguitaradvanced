@@ -38,6 +38,8 @@ Not declared on purpose: `about_*.png`, `tgdoc.icns`, Android, upstream `website
 
 ## Approvals (written by the owner's decision, FR-004, FR-010)
 
+**Light-background review (FR-009, SC-004, task T037): on 2026-10-14 the owner reviewed the contact sheets on the light background (`D1-light.png` to `D4-light.png`) and said it is OK: the silhouette, the wordmark and the transparency hold.**
+
 | Derivative | Decision | Date | Note |
 |---|---|---|---|
 | D1 | approved | 2026-10-13 | approved: the full logo from 128 px (dark background review) |
