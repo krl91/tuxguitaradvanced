@@ -1,0 +1,475 @@
+{
+  "master": {
+    "path": "specs/008-brand-identity/assets/tuxguitaradvanced-logo-primary.png",
+    "format": "png",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "sha256": "a9d369a2574396cd3208b0665648c57f398690499efb137d6781478991baf9e0"
+  },
+  "derivatives": [
+    {
+      "id": "D1",
+      "kind": "full",
+      "source": "master",
+      "operation": "uniform Lanczos downscale of the master, alpha kept",
+      "sizes": [
+        128,
+        256,
+        512,
+        1024
+      ],
+      "status": "proposed",
+      "approvedBy": null,
+      "approvedOn": null,
+      "note": ""
+    },
+    {
+      "id": "D2",
+      "kind": "icon-only",
+      "source": "master",
+      "operation": "rectangular crop with the fixed coordinates of misc/branding/crop.conf, centred on a transparent square, then a uniform Lanczos downscale",
+      "sizes": [
+        16,
+        24,
+        32,
+        48,
+        64,
+        96,
+        128,
+        256
+      ],
+      "status": "proposed",
+      "approvedBy": null,
+      "approvedOn": null,
+      "note": ""
+    },
+    {
+      "id": "D3",
+      "kind": "splash",
+      "source": "master",
+      "operation": "the unmodified master scaled uniformly inside the margins and centred on a plain background (misc/branding/background.conf)",
+      "sizes": [
+        "500x300"
+      ],
+      "status": "proposed",
+      "approvedBy": null,
+      "approvedOn": null,
+      "note": ""
+    },
+    {
+      "id": "D4",
+      "kind": "panel",
+      "source": "master",
+      "operation": "the unmodified master scaled uniformly inside the margins and centred on a plain background (misc/branding/background.conf)",
+      "sizes": [
+        "163x314"
+      ],
+      "status": "proposed",
+      "approvedBy": null,
+      "approvedOn": null,
+      "note": ""
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "S1",
+      "platform": "macos",
+      "path": "desktop/build-scripts/common-resources/common-macosx/Contents/Resources/icon.icns",
+      "format": "icns",
+      "derivative": "D2 below 128, D1 from 128",
+      "entries": [
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "packageSuffix": "Contents/Resources/icon.icns",
+      "packages": [
+        "macos"
+      ]
+    },
+    {
+      "id": "S2",
+      "platform": "windows",
+      "path": "desktop/build-scripts/common-resources/common-windows/dist/tuxguitar.ico",
+      "format": "ico",
+      "derivative": "D2 below 128, D1 from 128",
+      "entries": [
+        16,
+        24,
+        32,
+        48,
+        64,
+        96,
+        128,
+        256
+      ],
+      "packageSuffix": "dist/tuxguitar.ico",
+      "packages": [
+        "windows"
+      ]
+    },
+    {
+      "id": "S3",
+      "platform": "windows",
+      "path": "desktop/build-scripts/common-resources/common-windows-installer-icons/TG_icon_install.ico",
+      "format": "ico",
+      "derivative": "D2 below 128, D1 from 128",
+      "entries": [
+        16,
+        24,
+        32,
+        48,
+        64,
+        96,
+        128,
+        256
+      ]
+    },
+    {
+      "id": "S4",
+      "platform": "windows",
+      "path": "desktop/build-scripts/common-resources/common-windows-installer-icons/TG_icon_uninstall.ico",
+      "format": "ico",
+      "derivative": "D2 below 128, D1 from 128",
+      "entries": [
+        16,
+        24,
+        32,
+        48,
+        64,
+        96,
+        128,
+        256
+      ]
+    },
+    {
+      "id": "S5",
+      "platform": "windows",
+      "path": "desktop/build-scripts/common-resources/common-windows-installer-icons/TG_logo_48x48.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "id": "S6",
+      "platform": "windows",
+      "path": "desktop/build-scripts/common-resources/common-windows-installer-icons/TG_logo_163x314.png",
+      "format": "png",
+      "derivative": "D4",
+      "width": 163,
+      "height": 314
+    },
+    {
+      "id": "S7",
+      "platform": "windows",
+      "path": "desktop/build-scripts/common-resources/common-windows-installer-icons/TG_splash_500x300.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300
+    },
+    {
+      "id": "S8",
+      "platform": "linux",
+      "path": "desktop/build-scripts/common-resources/common-linux/share/pixmaps/tuxguitar.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96,
+      "packageSuffix": "share/pixmaps/tuxguitar.png",
+      "packages": [
+        "linux"
+      ]
+    },
+    {
+      "id": "S9-Breeze",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Breeze/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96,
+      "packageSuffix": "share/skins/Breeze/icon.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S9-Breeze-dark",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Breeze-dark/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96,
+      "packageSuffix": "share/skins/Breeze-dark/icon.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S9-Oxygen",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Oxygen/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96,
+      "packageSuffix": "share/skins/Oxygen/icon.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S9-Oxygen-dark",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Oxygen-dark/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96,
+      "packageSuffix": "share/skins/Oxygen-dark/icon.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S9-Symbolic",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Symbolic/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96,
+      "packageSuffix": "share/skins/Symbolic/icon.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S9-Symbolic-dark",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Symbolic-dark/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96,
+      "packageSuffix": "share/skins/Symbolic-dark/icon.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S9-src-breeze",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/src-skins/Breeze/TuxGuitar/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96
+    },
+    {
+      "id": "S9-src-oxygen-dark",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/src-skins/Oxygen/Oxygen-dark/copy/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96
+    },
+    {
+      "id": "S9-src-oxygen",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/src-skins/Oxygen/Oxygen/copy/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96
+    },
+    {
+      "id": "S9-src-symbolic",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/src-skins/Symbolic/TuxGuitar/icon.png",
+      "format": "png",
+      "derivative": "D2",
+      "width": 96,
+      "height": 96
+    },
+    {
+      "id": "S10-Breeze",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Breeze/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300,
+      "packageSuffix": "share/skins/Breeze/splash.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S10-Breeze-dark",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Breeze-dark/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300,
+      "packageSuffix": "share/skins/Breeze-dark/splash.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S10-Oxygen",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Oxygen/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300,
+      "packageSuffix": "share/skins/Oxygen/splash.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S10-Oxygen-dark",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Oxygen-dark/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300,
+      "packageSuffix": "share/skins/Oxygen-dark/splash.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S10-Symbolic",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Symbolic/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300,
+      "packageSuffix": "share/skins/Symbolic/splash.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S10-Symbolic-dark",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/share/skins/Symbolic-dark/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300,
+      "packageSuffix": "share/skins/Symbolic-dark/splash.png",
+      "packages": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "id": "S10-src-breeze",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/src-skins/Breeze/TuxGuitar/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300
+    },
+    {
+      "id": "S10-src-oxygen-dark",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/src-skins/Oxygen/Oxygen-dark/copy/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300
+    },
+    {
+      "id": "S10-src-oxygen",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/src-skins/Oxygen/Oxygen/copy/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300
+    },
+    {
+      "id": "S10-src-symbolic",
+      "platform": "application",
+      "path": "desktop/TuxGuitar/src-skins/Symbolic/TuxGuitar/splash.png",
+      "format": "png",
+      "derivative": "D3",
+      "width": 500,
+      "height": 300
+    },
+    {
+      "id": "S11",
+      "platform": "docs",
+      "path": "README.md",
+      "format": "markdown",
+      "derivative": "master",
+      "note": "shows the master by its path; no copy"
+    },
+    {
+      "id": "S11-fr",
+      "platform": "docs",
+      "path": "docs/README-FR.md",
+      "format": "markdown",
+      "derivative": "master",
+      "note": "shows the master by its path; no copy"
+    },
+    {
+      "id": "S11-es",
+      "platform": "docs",
+      "path": "docs/README-ES.md",
+      "format": "markdown",
+      "derivative": "master",
+      "note": "shows the master by its path; no copy"
+    },
+    {
+      "id": "S12",
+      "platform": "docs",
+      "path": "docs/release-notes/v0.5.0-beta.1.md",
+      "format": "markdown",
+      "derivative": "master",
+      "note": "shows the master by its path; no copy"
+    }
+  ]
+}
