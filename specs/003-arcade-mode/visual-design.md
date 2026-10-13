@@ -21,7 +21,7 @@ These are composition references, not pixel templates. Generated fret widths, ma
 
 1. The real instrument neck occupies the foreground; its strings run horizontally.
 2. Musical events come from the depth field toward the player, perpendicular to the strings.
-3. The fixed hit line is the written onset. Animation never moves the musical instant.
+3. The fixed hit line is the written onset. Animation never moves the musical instant. Since Q37 (2026-10-13) everything that comes lands at the **foot of the neck** (its bottom edge) at the onset, a chord panel and an open bar on the same ground path as the footprint of a single note, and the approach band follows the lanes to that foot (Q42).
 4. A single note of the visual set is a string-coloured marker travelling on the one predefined lane of its written fret. That lane ends at the midpoint of the fret cell's upper edge, at the top edge of the neck; the separate opaque neck target of the active event identifies the exact string/fret intersection.
 5. A chord is **not** a collection of independent flying notes. It is one neutral timing bar with one attached chord cartouche (the bar alone while another chord of the set has the cartouche).
 6. The timing bar answers **when**. The cartouche answers **what**. The verdict badge answers **what was heard**.

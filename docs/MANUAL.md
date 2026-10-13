@@ -545,7 +545,7 @@ It is the "Follow the tempo" mode (same tempo, tolerance and calibration) shown 
 * **A bend** is shown on the note: while it is coming, a small dashed arrow rises from the right end of its rectangle with the amount of the bend beside it; when it is the note to play, a **ghost rectangle in dashed outline** appears on the same string at the fret the bend reaches (one fret per semitone), joined to the target by a dashed arrow with the amount above it. The amount is in steps: ¼, ½, ¾, *full* (a whole tone), 1½, 2... *pre* before it means a pre-bend (the note starts already bent) and ↓ after it a release (it comes back down). Only single notes show it, not chords; the judgement is unchanged (the written path is followed).
 * **At the top**: your **streak** (left), the **tempo** as a percentage and **what comes next** (right).
 * **Verdicts** (on time, early, late, wrong, incomplete, missed) appear as a **badge** under the neck once the note is judged (the text always goes with the colour).
-* **Restart, Pause / Resume and Stop** are at the bottom right. **Restart** begins again from the start of the piece (or of the passage you started) **without leaving the game**. Playing the score from the main window stops the game.
+* **Restart, Pause / Resume and Stop** are at the bottom right. **Restart** begins again from the start of the piece (or of the passage you started) **without leaving the game**. During the count-in the notes come from the far end while you hear the clicks; after a **Pause**, **Resume** counts in again from where you were. Playing the score from the main window stops the game.
 
 <img src="images/manual-en/arcade-chord.png" width="760" alt="A chord: a translucent panel with its name, a rectangle for each note, and the target on the neck">
 
@@ -575,7 +575,7 @@ Every technique written on a **single note** is drawn **on the note while it is 
 
 **In short: Arcade judges the timing and the pitch. No technique is reported as "detected" or "not detected" today**: the result window lists them apart as "cannot be checked yet", which is not a mistake on your part. The drawings only tell you what the score asks for.
 
-**At the end**, the **Result** window gives the score, the share of the maximum, the best streak and the count of each verdict. You can **play again from the start** or **from a measure** you choose (*From measure*, then *Play*). The techniques (hammer-on, slide, bend...) are reported apart and do not change the score.
+**At the end** (and also when you stop the game before the end), the **Result** window gives the score, the share of the maximum, the best streak and the count of each verdict. You can **play again from the start** or **from a measure** you choose (*From measure*, then *Play*). The techniques (hammer-on, slide, bend...) are reported apart and do not change the score.
 
 <img src="images/manual-en/arcade-result.png" width="330" alt="The result window">
 
