@@ -545,7 +545,7 @@ C'est le mode « Suivre le tempo » (mêmes tempo, tolérance et calibrage) pré
 * **Un bend** se voit sur la note : tant qu'elle arrive, une petite flèche en pointillés monte du bout droit de son rectangle avec la valeur du bend à côté ; quand c'est la note à jouer, un **rectangle fantôme en pointillés** apparaît sur la même corde à la case que le bend atteint (une case par demi-ton), relié à la cible par une flèche en pointillés avec la valeur au-dessus. La valeur est en tons : ¼, ½, ¾, *entier* (un ton), 1½, 2... *pré* devant signifie un pre-bend (la note commence déjà tirée) et ↓ derrière un relâché (elle redescend). Seules les notes seules l'affichent, pas les accords ; le jugement ne change pas (la courbe écrite est suivie).
 * **En haut** : votre **série** (à gauche), le **tempo** en pourcentage et la **suite** (à droite).
 * **Les verdicts** (à l'heure, en avance, en retard, faux, incomplet, manqué) apparaissent en **badge** sous le manche une fois la note jugée (le texte accompagne toujours la couleur).
-* **Recommencer, Pause / Reprendre** et **Arrêter** sont en bas à droite. **Recommencer** repart du début du morceau (ou du passage que vous avez lancé) **sans quitter le jeu**. Jouer la partition depuis la fenêtre principale arrête la partie.
+* **Recommencer, Pause / Reprendre** et **Arrêter** sont en bas à droite. **Recommencer** repart du début du morceau (ou du passage que vous avez lancé) **sans quitter le jeu**. Pendant le décompte, les notes arrivent du fond pendant que vous entendez les clics ; après une **Pause**, **Reprendre** refait un décompte à partir de l'endroit où vous étiez. Jouer la partition depuis la fenêtre principale arrête la partie.
 
 <img src="images/manual/arcade-chord.png" width="760" alt="Un accord : un panneau translucide avec son nom, un rectangle par note, et la cible sur le manche">
 
@@ -575,7 +575,7 @@ Chaque technique écrite sur une **note seule** est dessinée **sur la note pend
 
 **En résumé : Arcade juge le timing et la hauteur. Aucune technique n'est annoncée « détectée » ou « non détectée » aujourd'hui** : la fenêtre de résultat les liste à part comme « ne peut pas être vérifié encore », ce qui n'est pas une erreur de votre part. Les dessins disent seulement ce que la partition demande.
 
-**À la fin**, la fenêtre **Résultat** donne le score, la part du maximum, la meilleure série et le décompte de chaque verdict. Vous pouvez **rejouer depuis le début** ou **depuis une mesure** choisie (*Depuis la mesure*, puis *Jouer*). Les techniques (hammer-on, slide, bend...) sont signalées à part et ne changent pas le score.
+**À la fin** (et aussi quand vous arrêtez le jeu avant la fin), la fenêtre **Résultat** donne le score, la part du maximum, la meilleure série et le décompte de chaque verdict. Vous pouvez **rejouer depuis le début** ou **depuis une mesure** choisie (*Depuis la mesure*, puis *Jouer*). Les techniques (hammer-on, slide, bend...) sont signalées à part et ne changent pas le score.
 
 <img src="images/manual/arcade-result.png" width="330" alt="La fenêtre de résultat">
 
