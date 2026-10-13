@@ -71,7 +71,7 @@ public class ArcadeSceneChordLaneTest {
 				Scene scene = fixture.scene(false).build(fixture.onset(index), SCREEN, run, 100, tier);
 				SceneItem panel = scene.forEvent(index, Role.CHORD_PANEL).get(0);
 				double bottom = Math.max(Math.max(panel.value(1), panel.value(3)), Math.max(panel.value(5), panel.value(7)));
-				assertEquals(projection.hitLineY(), bottom, 0.5, "chord " + index + " " + tier);
+				assertEquals(Landing.footY(SCREEN), bottom, 0.5, "chord " + index + " " + tier);
 			}
 		}
 	}

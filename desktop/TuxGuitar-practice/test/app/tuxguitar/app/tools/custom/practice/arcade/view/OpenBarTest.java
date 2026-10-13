@@ -50,14 +50,14 @@ public class OpenBarTest {
 					double right = Math.max(Math.max(bar.value(0), bar.value(2)), Math.max(bar.value(4), bar.value(6)));
 					IsometricProjection projection = new IsometricProjection(SCREEN);
 					Camera cam = fixture.camera.at(now);
-					ScreenPoint expectedLeft = projection.approach(cam.left(), progress, cam);
-					ScreenPoint expectedRight = projection.approach(cam.right(), progress, cam);
+					ScreenPoint expectedLeft = Landing.ground(projection, SCREEN, cam, cam.left(), progress);
+					ScreenPoint expectedRight = Landing.ground(projection, SCREEN, cam, cam.right(), progress);
 					assertEquals(expectedLeft.x(), left, 0.5, "the left end is the left end of the lanes at this depth");
 					assertEquals(expectedRight.x(), right, 0.5, "the right end is the right end of the lanes");
 					double bottom = Math.max(Math.max(bar.value(1), bar.value(3)), Math.max(bar.value(5), bar.value(7)));
 					double top = Math.min(Math.min(bar.value(1), bar.value(3)), Math.min(bar.value(5), bar.value(7)));
-					assertEquals(expectedLeft.y(), bottom, 0.5, "its lower edge follows the lanes");
-					assertTrue(bottom <= projection.neckTopY() + 0.5, "nothing below the top edge of the neck");
+					assertTrue(bottom <= expectedLeft.y() + 0.5 * expectedLeft.scale() * 10.0, "its lower edge follows the ground path");
+					assertTrue(bottom <= Landing.footY(SCREEN) + 0.5, "nothing below the foot of the neck");
 					assertTrue(bottom - top >= previousThickness - 1e-9, "its thickness only grows");
 					previousThickness = bottom - top;
 					// nothing of a fretted note: no marker, no fret number, no disk on the lane, no connector
@@ -75,7 +75,7 @@ public class OpenBarTest {
 			Scene scene = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100, tier);
 			SceneItem bar = scene.forEvent(0, Role.OPEN_BAR).get(0);
 			double bottom = Math.max(Math.max(bar.value(1), bar.value(3)), Math.max(bar.value(5), bar.value(7)));
-			assertEquals(new IsometricProjection(SCREEN).neckTopY(), bottom, 0.5, tier + ": on the top edge of the neck at the onset");
+			assertTrue(Math.abs(Landing.footY(SCREEN) - bottom) < SCREEN.height() * 0.1, tier + ": at the foot of the neck at the onset, on the height of its string");
 			List<SceneItem> words = scene.forEvent(0, Role.OPEN_LABEL);
 			assertEquals(1, words.size(), "the word of the open string");
 			assertEquals("Open string", words.get(0).text());

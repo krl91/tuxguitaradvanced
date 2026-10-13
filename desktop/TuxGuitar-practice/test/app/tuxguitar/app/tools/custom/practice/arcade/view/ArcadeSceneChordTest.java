@@ -68,9 +68,9 @@ public class ArcadeSceneChordTest {
 			SceneItem panel = scene.build(fixture.onset(0) + offset * MS, SCREEN, null, 100).forEvent(0, Role.CHORD_PANEL).get(0);
 			double bottom = Math.max(Math.max(panel.value(1), panel.value(3)), Math.max(panel.value(5), panel.value(7)));
 			if (offset == 0) {
-				assertEquals(projection.hitLineY(), bottom, 0.5, "the lower edge is on the hit line at the onset");
+				assertEquals(Landing.footY(SCREEN), bottom, 0.5, "the lower edge is at the foot of the neck at the onset");
 			} else {
-				assertTrue(bottom < projection.hitLineY(), "above the hit line before the onset at " + offset + " ms");
+				assertTrue(bottom < Landing.footY(SCREEN), "above the foot before the onset at " + offset + " ms");
 			}
 		}
 	}

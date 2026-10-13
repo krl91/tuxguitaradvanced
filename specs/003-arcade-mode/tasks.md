@@ -185,3 +185,5 @@ T002 || T003; T010 || T012 || T015; T023 || T024 || T025 || T026; T030 || T031 |
 ## MVP scope
 
 Increments A + B + C + H + D without E and F: Arcade playable with the clear score and the isometric view, no live return. This is the first deliverable; it requires the real-score corpus checkpoint and the manual validation of 002 before release.
+- [x] T137 Q37: chord panel, open bar and timing bar land at the foot of the neck on the ground path of the footprint (`ArcadeScene.ground`, `riseOfRow`), tests `FootLandingTest`, `Landing`, references regenerated.
+- [ ] T138 [HUMAN] The owner judges the landing of chords and open bars on the built application.

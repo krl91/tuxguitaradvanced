@@ -840,11 +840,30 @@ public final class ArcadeScene {
 		return f.lanes.laneForFret(fret).at(Math.max(0.0, Math.min(1.0, progress)));
 	}
 
+	/**
+	 * A point of the ground of every event at a progress (Q37): the point of the neck-plane position {@code xMm} on the straight way from the horizon to the
+	 * foot of the neck, which it reaches exactly at the onset. A chord panel, an open bar and a timing bar stand on it as the footprint of a note does, so that
+	 * everything lands at the foot of the neck at the same instant, whatever its kind.
+	 */
+	private static ScreenPoint ground(Frame f, double xMm, double progress) {
+		double q = IsometricProjection.depthShare(Math.max(0.0, Math.min(1.0, progress)));
+		double scale = f.projection.farScale() + (1.0 - f.projection.farScale()) * q;
+		double centre = f.viewport.width() / 2.0;
+		double hor = f.projection.horizonY();
+		double bottom = f.h * IsometricProjection.NECK_NEAR_EDGE;
+		return new ScreenPoint(centre + (f.projection.neckX(xMm, f.cam) - centre) * scale, hor + (bottom - hor) * q, scale);
+	}
+
+	/** How far above the foot of the neck the line of a string is, on the neck itself: the height at which what stands on the ground is on that string at the onset. */
+	private double riseOfRow(Frame f, int row) {
+		return f.h * IsometricProjection.NECK_NEAR_EDGE - f.projection.stringY(row, this.neck.layout().count());
+	}
+
 	private ChordGeo chordGeo(Frame f, ArcadeRenderEvent event) {
 		ChordGeo g = new ChordGeo();
 		double progress = f.progressOf(event);
-		// every chord bar is on the same axis, whatever the frets of the chord (FR-063): the point of the lane at this depth gives the height and the scale
-		ScreenPoint lane = f.projection.approach(f.cam.centre(), progress, f.cam);
+		// every timing bar is on the same axis, whatever the frets of the chord (FR-063): the ground at this depth gives the height and the scale (Q37)
+		ScreenPoint lane = ground(f, f.cam.centre(), progress);
 		double axis = f.viewport.width() * CHORD_AXIS;
 		double half = f.viewport.width() * CHORD_HALF_WIDTH * lane.scale();
 		g.pl = new ScreenPoint(axis - half, lane.y(), lane.scale());
@@ -1085,13 +1104,15 @@ public final class ArcadeScene {
 
 	private OpenGeo openGeo(Frame f, ArcadeRenderEvent event) {
 		double progress = Math.min(1.0, f.progressOf(event));
-		ScreenPoint left = f.projection.approach(f.cam.left(), progress, f.cam);
-		ScreenPoint right = f.projection.approach(f.cam.right(), progress, f.cam);
+		ScreenPoint left = ground(f, f.cam.left(), progress);
+		ScreenPoint right = ground(f, f.cam.right(), progress);
 		OpenGeo g = new OpenGeo();
 		g.left = left.x();
 		g.right = right.x();
-		g.bottom = left.y();
 		g.thickness = Math.max(3.0, f.h * 0.014 * left.scale());
+		// the bar stands above the ground as a marker does, as high as its string is above the foot of the neck: it lies on its string at the onset (Q37)
+		double row = riseOfRow(f, this.neck.layout().rowOf(event.positions().get(0).tgString()));
+		g.bottom = left.y() - row * left.scale() + g.thickness * 0.5;
 		return g;
 	}
 
@@ -1230,14 +1251,16 @@ public final class ArcadeScene {
 				last = Math.max(last, position.fret());
 			}
 		}
-		ScreenPoint left = last == 0 ? f.projection.approach(f.cam.left(), progress, f.cam) : f.projection.approach(this.neck.fretX(first - 1), progress, f.cam);
-		ScreenPoint right = last == 0 ? f.projection.approach(f.cam.right(), progress, f.cam) : f.projection.approach(this.neck.fretX(last), progress, f.cam);
+		ScreenPoint left = ground(f, last == 0 ? f.cam.left() : this.neck.fretX(first - 1), progress);
+		ScreenPoint right = ground(f, last == 0 ? f.cam.right() : this.neck.fretX(last), progress);
 		PanelGeo g = new PanelGeo();
 		g.left = left.x();
 		g.right = right.x();
+		// the panel stands on the ground and rises over the strings, so that at the onset it covers the cells of the chord from the lowest string to the highest
+		// and its rectangles are on their targets on the neck, as a single note is (Q37)
 		g.bottom = left.y();
 		g.scale = left.scale();
-		g.top = g.bottom - Math.max(24.0, f.h * 0.30 * left.scale());
+		g.top = g.bottom - (riseOfRow(f, 0) + 2.0 * targetHalfHeight(f)) * left.scale();
 		g.progress = progress;
 		return g;
 	}
@@ -1251,7 +1274,6 @@ public final class ArcadeScene {
 		Out out = f.out;
 		PanelGeo g = panelGeo(f, event);
 		int index = event.index();
-		int count = this.neck.layout().count();
 		out.quad(Role.CHORD_PANEL, new double[] { g.left, g.top, g.right, g.top, g.right, g.bottom, g.left, g.bottom }, PANEL_BODY_COLOUR, alpha * 0.14, index, 0);
 		double[][] edge = { { g.left, g.top, g.right, g.top }, { g.right, g.top, g.right, g.bottom }, { g.right, g.bottom, g.left, g.bottom }, { g.left, g.bottom, g.left, g.top } };
 		for (double[] e : edge) {
@@ -1260,18 +1282,17 @@ public final class ArcadeScene {
 			}
 			out.line(Role.CHORD_PANEL_EDGE, e[0], e[1], e[2], e[3], PANEL_EDGE_COLOUR, alpha * 0.9, 2.0, index, 0);
 		}
-		double rowHeight = g.height() / count;
-		double ry = Math.max(1.5, rowHeight * 0.34);
+		double ry = Math.max(1.5, targetHalfHeight(f) * (0.35 + 0.65 * g.scale));
 		for (ArcadeRenderEvent.Position position : event.positions()) {
 			int row = this.neck.layout().rowOf(position.tgString());
-			double y = g.top + rowHeight * (row + 0.5);
+			double y = g.bottom - riseOfRow(f, row) * g.scale;
 			int colour = this.colours.of(position.tgString());
 			if (position.fret() == 0) {
 				out.line(Role.PANEL_OPEN_LINE, g.left, y, g.right, y, colour, alpha, Math.max(1.5, ry * 0.5), index, position.tgString());
 				continue;
 			}
-			double x = f.projection.approach(this.neck.fretCentreX(position.fret()), g.progress, f.cam).x();
-			double cell = Math.abs(f.projection.approach(this.neck.fretX(position.fret()), g.progress, f.cam).x() - f.projection.approach(this.neck.fretX(position.fret() - 1), g.progress, f.cam).x());
+			double x = ground(f, this.neck.fretCentreX(position.fret()), g.progress).x();
+			double cell = Math.abs(ground(f, this.neck.fretX(position.fret()), g.progress).x() - ground(f, this.neck.fretX(position.fret() - 1), g.progress).x());
 			double rx = Math.max(1.5, cell * 0.44);
 			if (f.tier.glow()) {
 				out.rounded(Role.GLOW, x, y, rx * 1.3, ry * 1.5, colour, alpha * 0.25, index, position.tgString());

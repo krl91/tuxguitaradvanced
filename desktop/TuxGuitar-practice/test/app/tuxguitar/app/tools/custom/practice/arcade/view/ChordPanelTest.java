@@ -63,18 +63,18 @@ public class ChordPanelTest {
 			Camera cam = fixture.camera.at(now);
 			double[] box = bounds(panel);
 			// the chord of the fixture is on frets 1 to 3: the panel spans the cells of the first to the last fret, inclusive (the owner, 2026-10-11)
-			ScreenPoint left = projection.approach(fixture.neck.fretX(0), progress, cam);
-			ScreenPoint right = projection.approach(fixture.neck.fretX(3), progress, cam);
+			ScreenPoint left = Landing.ground(projection, SCREEN, cam, fixture.neck.fretX(0), progress);
+			ScreenPoint right = Landing.ground(projection, SCREEN, cam, fixture.neck.fretX(3), progress);
 			assertEquals(left.x(), box[0], 0.5, "from the first cell played (left)");
 			assertEquals(right.x(), box[2], 0.5, "to the last cell played (right)");
-			assertEquals(left.y(), box[3], 0.5, "its lower edge is on the line of the lanes");
+			assertEquals(left.y(), box[3], 0.5, "its lower edge is on the ground path");
 			assertTrue(box[3] - box[1] >= previousHeight - 1e-9, "it grows as it comes");
 			previousHeight = box[3] - box[1];
 			assertEquals(4, scene.forEvent(0, Role.CHORD_PANEL_EDGE).size(), "a luminous edge on each side");
 			assertTrue(scene.forEvent(0, Role.TIMING_BAR).isEmpty() && scene.forEvent(0, Role.MARKER).isEmpty(), "no bar and no flying marker for a chord");
 		}
 		Scene landed = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100, QualityTier.FULL);
-		assertEquals(projection.neckTopY(), bounds(landed.forEvent(0, Role.CHORD_PANEL).get(0))[3], 0.5, "it lands on the top edge of the neck at the onset");
+		assertEquals(Landing.footY(SCREEN), bounds(landed.forEvent(0, Role.CHORD_PANEL).get(0))[3], 0.5, "it lands at the foot of the neck at the onset");
 	}
 
 	@Test
@@ -113,10 +113,10 @@ public class ChordPanelTest {
 				assertTrue(rect != null, "a rectangle for string " + string);
 				assertEquals(SceneItem.Shape.ROUNDED, rect.shape());
 				assertEquals(StringColours.forStrings(6).of(string), rect.colour(), "the colour of its string");
-				ScreenPoint at = projection.approach(fixture.neck.fretCentreX(fret), progress, cam);
+				ScreenPoint at = Landing.ground(projection, SCREEN, cam, fixture.neck.fretCentreX(fret), progress);
 				assertEquals(at.x(), rect.value(0), 0.5, "at the horizontal position of its fret at this depth");
 				int row = fixture.neck.layout().rowOf(string);
-				double expectedY = box[1] + (box[3] - box[1]) * (row + 0.5) / 6.0;
+				double expectedY = box[3] - Landing.rise(projection, SCREEN, row, 6) * at.scale();
 				assertEquals(expectedY, rect.value(1), 0.5, "at the vertical position of its string: the lowest string at the top");
 				assertTrue(rect.value(1) - rect.value(3) >= box[1] - 1e-9 && rect.value(1) + rect.value(3) <= box[3] + 1e-9, "inside the panel");
 			}
