@@ -149,4 +149,21 @@ public class ArcadeFrameSourceTest {
 		Scene playing = counting.frame(clock.nowNanos(), SCREEN);
 		assertEquals(describe(scene.build(counting.timelineNanosAt(clock.nowNanos()), SCREEN, null, 100, quality.tier())), describe(playing), "then the clock of the player");
 	}
+
+	@Test
+	public void aSecondRunDoesNotBeginWithTheClockStillAtTheEndOfTheFirst() {
+		// the player still holds the end of the song of the run before: the picture must not follow it
+		clock.start(FIRST_TICK + 3000);
+		clock.pause();
+		ArcadeFrameSource counting = new ArcadeFrameSource(scene, timeline, FIRST_TICK, clock, () -> null, () -> 100, quality, 2000 * MS, 0L);
+		assertEquals(describe(scene.build(-2000 * MS, SCREEN, null, 100, quality.tier())), describe(counting.frame(clock.nowNanos(), SCREEN)), "the music is a count-in away");
+		clock.advance(1500 * MS);
+		assertEquals(describe(scene.build(-500 * MS, SCREEN, null, 100, quality.tier())), describe(counting.frame(clock.nowNanos(), SCREEN)), "still on its own time");
+		clock.seek(FIRST_TICK);
+		clock.advance(500 * MS);
+		clock.resume();
+		clock.advance(300 * MS);
+		Scene playing = counting.frame(clock.nowNanos(), SCREEN);
+		assertEquals(describe(scene.build(counting.timelineNanosAt(clock.nowNanos()), SCREEN, null, 100, quality.tier())), describe(playing), "the clock of the player once it is at the start");
+	}
 }

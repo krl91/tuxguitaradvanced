@@ -170,8 +170,8 @@ public class ArcadeControllerTest {
 				run.controller = controller;
 				controller.start();
 				controller.ended(reason);
-				boolean wanted = reason == FollowRun.Ended.PLAYER_STOPPED;
-				assertEquals(wanted, asked[0], reason + " complete=" + complete + ": the result is built for the natural end, complete or not");
+				boolean wanted = reason == FollowRun.Ended.PLAYER_STOPPED || reason == FollowRun.Ended.STOPPED;
+				assertEquals(wanted, asked[0], reason + " complete=" + complete + ": the result is built for the natural end and for a stop of the learner, complete or not");
 				assertEquals(1, recorder.ended);
 			}
 		}

@@ -35,8 +35,8 @@ public final class ArcadeFrameSource {
 	private long startWall = Long.MIN_VALUE;
 	private boolean countInOver;
 
-	/** How much the clock must have moved for the music to be taken as begun: below that it is the position the player holds during the count-in. */
-	private static final long MOVED_NANOS = 30_000_000L;
+	/** How far the clock of the player may be from the picture's own time for the music to be taken as begun. */
+	private static final long AGREE_NANOS = 400_000_000L;
 
 	/** How long after the end of the count-in the picture waits for a clock that does not move before it goes to the clock anyway. */
 	private static final long GRACE_NANOS = 1_500_000_000L;
@@ -80,7 +80,12 @@ public final class ArcadeFrameSource {
 		return this.timeline.nanosAtTick(Math.round(tick - this.firstTick));
 	}
 
-	/** The instant of the picture: the timeline of the clock, or, during the count-in, the time that is left before the music begins, counted from the start. */
+	/**
+	 * The instant of the picture: the timeline of the clock, or, from the start of the run until the clock of the player agrees with it, the picture's own time,
+	 * which begins one count-in before the music. The clock of the player is not to be trusted before the music begins: it holds the position of the start
+	 * during the count-in, and after a first run it still holds the end of the song until the new run moves it (owner, 2026-10-13: the second run began with the
+	 * first chord on the neck). It is followed only when it is where the picture's own time says the music is.
+	 */
 	private long pictureNanosAt(long wallNanos) {
 		long real = timelineNanosAt(wallNanos);
 		if (this.countInNanos <= 0L || this.countInOver) {
@@ -90,11 +95,13 @@ public final class ArcadeFrameSource {
 			this.startWall = wallNanos;
 		}
 		long elapsed = wallNanos - this.startWall;
-		if ((real != NOT_READY_NANOS && real > this.startNanos + MOVED_NANOS) || elapsed > this.countInNanos + GRACE_NANOS) {
+		long own = this.startNanos - this.countInNanos + elapsed;
+		boolean agrees = real != NOT_READY_NANOS && Math.abs(real - own) <= AGREE_NANOS && elapsed >= this.countInNanos - AGREE_NANOS;
+		if (agrees || elapsed > this.countInNanos + GRACE_NANOS) {
 			this.countInOver = true;
 			return real;
 		}
-		return this.startNanos - Math.max(0L, this.countInNanos - elapsed);
+		return own;
 	}
 
 	public Scene frame(long wallNanos, Viewport viewport) {

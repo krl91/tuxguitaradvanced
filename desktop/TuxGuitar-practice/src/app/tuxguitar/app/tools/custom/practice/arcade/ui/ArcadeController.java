@@ -100,7 +100,7 @@ public final class ArcadeController {
 		}
 		this.state = State.ENDED;
 		this.listener.stateChanged(State.ENDED);
-		ArcadeResult result = reason == FollowRun.Ended.PLAYER_STOPPED ? this.session.result() : null;
+		ArcadeResult result = (reason == FollowRun.Ended.PLAYER_STOPPED || reason == FollowRun.Ended.STOPPED) ? this.session.result() : null;
 		this.listener.ended(reason, result);
 	}
 
