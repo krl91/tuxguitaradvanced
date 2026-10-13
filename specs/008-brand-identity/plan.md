@@ -14,7 +14,7 @@ Replace the upstream TuxGuitar identity images of the packaged application by th
 
 **Primary Dependencies**: none new. The packaging already copies `desktop/build-scripts/common-resources/*` (macOS `tuxguitar-macosx-swt-cocoa/pom.xml`, Windows installer `project.xml`, Linux `share/pixmaps`) and the skins `desktop/TuxGuitar/share/skins/*` (loaded by `TGIconManager.loadIcon("icon.png" | "splash.png" | ...)`).
 
-**Storage**: files in the repository (binary assets, about 20 files plus the master).
+**Storage**: files in the repository (binary assets: 28 files replaced plus the master, counted on 2026-10-14: 1 icns, 3 ico, 3 installer PNGs, 1 Linux PNG, 10 skin icons, 10 skin splashes).
 
 **Testing**: `BrandingAssetsTest` (source assets against the manifest) in `desktop/TuxGuitar-practice/test/.../branding/`, `misc/verify-branding.sh` (packages) run in the `Release` workflow, contact sheets for the visual review (human), packaged-build checks (human).
 
@@ -26,7 +26,7 @@ Replace the upstream TuxGuitar identity images of the packaged application by th
 
 **Constraints**: FR-002 (no regeneration, no retouching, no content-aware crop), FR-006 (aspect ratio, alpha, safe margins), FR-007 (no squeezed wordmark: a small icon is a prepared derivative), FR-013 (no behaviour change), FR-016 (provenance, upstream notices intact).
 
-**Scale/Scope**: about 17 image files replaced in the repository (listed in `contracts/branding-manifest.md`), 7 sizes reviewed on 2 backgrounds, 3 platforms.
+**Scale/Scope**: 28 image files replaced in the repository (10 locations for the skin icon and the skin splash, because `share/skins` has 6 skins and `src-skins` 4 source folders) (listed in `contracts/branding-manifest.md`), 7 sizes reviewed on 2 backgrounds (D1 exists only from 128 px, D2 only up to 256 px: the full logo is used from 128 px because the wordmark cannot be read below, and the icon-only version is not needed above 256 px; FR-009 allows this exclusion when its reason is stated), 3 platforms.
 
 ## Constitution Check
 

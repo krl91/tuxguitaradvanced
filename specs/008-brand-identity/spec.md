@@ -173,7 +173,7 @@ rendering rules for Arcade gameplay; those remain governed by spec 003.
 ## Out of Scope
 
 - Implementing Arcade mode or changing its approved gameplay visuals (spec 003).
-- Replacing application/package icons in this specification-only step.
+- Replacing application/package icons **in the first specification step** (2026-10-08 wording kept as history: the integration is now specified by `plan.md` and `tasks.md` and was done for the beta 0.5.0-beta.1 on 2026-10-13/14; the About-dialog pictograms, `tgdoc.icns` and Android stay out of it, see Clarifications).
 - Treating automatic downscales of the full square logo as approved small icons.
 - Creating animation, splash-screen motion or merchandising assets.
 - Renaming the application; the canonical product name is already TuxGuitarAdvanced.

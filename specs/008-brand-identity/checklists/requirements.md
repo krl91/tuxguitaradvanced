@@ -2,6 +2,8 @@
 
 **Created**: 2026-10-08
 
+**Last reviewed**: 2026-10-14 (finding I4 of `/speckit-analyze`; the two last lines were negative statements and are written as positive ones, their state re-evaluated)
+
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -30,6 +32,8 @@
 
 - [x] The brand decision and authoritative asset are complete.
 - [x] Ready for `/speckit-plan` when application-wide integration is prioritised.
-- [ ] Production derivatives are not yet designed or approved.
-- [ ] Integration plan and tasks are not yet created.
+- [x] Production derivatives D1 to D4 are designed and approved by the owner (2026-10-13, dark background).
+- [ ] The light-background review of the derivatives is recorded (T037, finding C1 of the analysis of 2026-10-14).
+- [x] The integration plan and the tasks are created (plan, research, data model, contracts, quickstart, 37 tasks) and the integration is done for the beta 0.5.0-beta.1.
+- [ ] The manual checks on Windows and Linux are done (T030, reported as not checked in the release notes).
 

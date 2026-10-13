@@ -201,6 +201,34 @@ public class BrandingAssetsTest {
 	}
 
 	@Test
+	public void theDocumentationShowsTheMasterByItsPathAndNotACopyOfIt() throws Exception {
+		Path root = root();
+		String path = "specs/008-brand-identity/assets/tuxguitaradvanced-logo-primary.png";
+		for (Map<String, Object> surface : surfaces(manifest(root))) {
+			if (!"markdown".equals(surface.get("format"))) {
+				continue;
+			}
+			Path file = root.resolve((String) surface.get("path"));
+			if (!Files.exists(file)) {
+				// the release notes of a version that is not written yet are not checked
+				continue;
+			}
+			String text = new String(Files.readAllBytes(file), "UTF-8");
+			assertTrue(text.contains(path), surface.get("path") + " shows the master by its path (US1, FR-001)");
+		}
+		// no second copy of the master: the only file with its digest is the master itself (SC-001)
+		int copies = 0;
+		try (java.util.stream.Stream<Path> walk = Files.walk(root.resolve("docs"))) {
+			for (Path p : (Iterable<Path>) walk.filter(q -> q.toString().endsWith(".png"))::iterator) {
+				if (MASTER_SHA256.equals(sha256(p))) {
+					copies++;
+				}
+			}
+		}
+		assertEquals(0, copies, "no copy of the master in docs/");
+	}
+
+	@Test
 	public void aReleaseCarriesOnlyApprovedDerivatives() throws Exception {
 		Assumptions.assumeTrue(Boolean.getBoolean("branding.release"), "only checked for a release (-Dbranding.release=true)");
 		Path root = root();
