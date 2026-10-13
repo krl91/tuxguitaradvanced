@@ -22,6 +22,7 @@
 - Q: Which range of the percentage of the maximum covers the whole height of the flames, from embers to full fire? → A: **Embers at 50 % or less, full fire at 100 %, linear between the two** (an 80 % gives 60 % of the height).
 - Q: How many events must be judged before the flames follow the percentage? → A: **4 events** (about a first measure); until then only embers burn.
 - Q: What fall and rise times for the flames? → A: **Fall about 3 seconds** from full fire to embers, **rise about 0.5 second**.
+- Q: Which state of the setting is active by default? → A: **Discreet** (visible but lower and fainter than *full*).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -108,7 +109,7 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 - **FR-005** (never hindering): The flames MUST be drawn behind every other item of the picture; they MUST NOT cover, dim or reduce the contrast of any note, chord, technique mark, string, fret wire, fret number, verdict badge, HUD text or button, at any window size (FR-080 of spec 003).
 - **FR-006** (decoration only): The flames MUST NOT change the judgement, the score, the streak, the result, the timing of any event or the clock (SC-004).
 - **FR-007** (quality): The flames are decoration: when the picture quality drops (levels FULL, BALANCED, PERFORMANCE of spec 003) they MUST be simplified first, then removed, before anything of the game is touched (FR-053, FR-054 of spec 003); in PERFORMANCE they MUST be absent.
-- **FR-008** (setting): The *Mode* tab MUST offer one setting for the flames with three states, **off**, **discreet** and **full**; the setting is read when a run starts and kept until the application is closed, like the other picture settings; *off* draws nothing and adds no cost; *discreet* draws lower and fainter flames than *full* for the same percentage.
+- **FR-008** (setting): The *Mode* tab MUST offer one setting for the flames with three states, **off**, **discreet** and **full**; the setting is read when a run starts and kept until the application is closed, like the other picture settings; the default state is **discreet** (owner's answer of 2026-10-14); *off* draws nothing and adds no cost; *discreet* draws lower and fainter flames than *full* for the same percentage.
 - **FR-009** (the three languages): The texts of the setting MUST exist in English, French and Spanish.
 - **FR-010** (motion): The flames MUST move (a slow flicker) and the motion MUST hold still while the run is paused; the motion MUST NOT depend on the time of the player's clock in a way that moves any event (FR-055 of spec 003).
 - **FR-011** (monochrome and accessibility): In the monochrome look the flames MUST be drawn in tones of one colour; they MUST NOT carry any information that is not also given by the rest of the picture.
@@ -135,7 +136,7 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 ## Assumptions
 
 - The share of the maximum is the one the result of the run already computes (spec 003); this specification does not change how it is computed.
-- The default state of the setting (**discreet**) and the exact shape and colours of the flames are assumptions to be fixed in planning and shown to the owner on a mockup; the mockups are static images drawn on a real capture of the game, not a promise of rendering.
+- The exact shape and colours of the flames, and what "lower and fainter" means for *discreet* (a share of the height and of the brightness of *full*), are assumptions to be fixed in planning and shown to the owner on a mockup; the mockups are static images drawn on a real capture of the game, not a promise of rendering.
 - The effect is for the Arcade run window only; the other modes, the result window and the preparation window have no flames.
 - The effect is validated on macOS Apple Silicon first; Windows and Linux are not claimed to be validated.
 - No sound is added.
