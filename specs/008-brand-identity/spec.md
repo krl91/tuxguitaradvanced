@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-08
 
-**Status**: Primary logo selected by the product owner; application integration not planned or implemented
+**Status**: Primary logo selected by the product owner; integration planned 2026-10-13 (`plan.md`, `tasks.md`) for the beta 0.5.0-beta.1; no derivative is approved yet and no packaged asset is replaced yet
 
 **Input**: Product-owner decision: "Use this image as the new TuxGuitarAdvanced logo."
 
@@ -26,6 +26,15 @@ isometric fretboard, six colour-coded strings and incoming playable notes. The w
 The selected file MUST remain the source of truth. Future production assets are derivatives of this
 master; they MUST NOT be recreated from a text prompt or silently replaced by a visually similar
 generation.
+
+## Clarifications
+
+### Session 2026-10-13
+
+- Q: Which release carries the new logo? → A: A **beta**, **0.5.0-beta.1** (tag `v0.5.0-beta.1`, notes `docs/release-notes/v0.5.0-beta.1.md`), built by the existing `Release` workflow for macOS (Apple Silicon), Windows and Linux. The tag is chosen by the owner and is never moved once published.
+- Q: How are the small icons and the other formats produced? → A: From the master only, by **downscaling and geometric margins/crops** with the tools of the machine; never regenerated, redrawn or retouched (FR-002). Every derivative is listed in `contracts/branding-manifest.md` with its source, surfaces, dimensions and approval status (FR-005) and is **proposed, not approved**, until the owner approves it on a contact sheet (FR-010, SC-005).
+- Q: Which surfaces does the beta cover? → A: The macOS application icon, the Windows executable, shortcut, installer and uninstaller icons and the installer images, the Linux package icon, the window and splash images of the application (all six skins), and the documentation and release surfaces. The About dialog pictograms (information, authors, copyright), the document-type icon `tgdoc.icns` of `.tg` files and the Android application are **not** changed by the beta (see `research.md` R2, R3).
+- Q: Does branding change behaviour? → A: No (FR-013). The beta replaces image files and adds tests and a package verifier; no Java class of the application changes.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -141,6 +150,7 @@ rendering rules for Arcade gameplay; those remain governed by spec 003.
   readable, has the expected dimensions/format and is included in its package.
 - **FR-015**: Manual packaged-build checks MUST verify Finder/Dock on macOS and equivalent launcher,
   window and installer surfaces on Windows and Linux before cross-platform integration is complete.
+- **FR-017** (added 2026-10-13): The first release that carries the new logo is the beta **0.5.0-beta.1**. A release MUST NOT carry a derivative that is not approved (FR-010); the packaged icons of the three platforms MUST be checked by the automated package verifier of `contracts/branding-verification.md` before the release is published, and the manual checks of FR-015 MUST be reported as done or not done, per platform, in the release notes.
 - **FR-016**: Existing upstream notices, licences and attributions MUST remain intact. The selected
   logo's provenance MUST be recorded as an AI-assisted redesign selected by the product owner; this
   specification does not assert ownership of third-party marks or waive a later release review.
