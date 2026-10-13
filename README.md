@@ -16,7 +16,7 @@ TuxGuitarAdvanced is a free, open source tablature editor that **listens to your
 
 > 🙏 **Built on TuxGuitar, which is already excellent.** TuxGuitarAdvanced is a **fork of [TuxGuitar](https://www.tuxguitar.app/)**, the great free multitrack tablature editor and player. Everything TuxGuitar does is still here, untouched: editing, playback, Guitar Pro / MIDI / MusicXML / PDF import and export, many languages. **We only add new things on top**: the practice modes (Wait, Follow the tempo, Arcade) and a steadier tuner. All the credit for the editor goes to TuxGuitar's authors and contributors ([helge17](https://github.com/helge17/tuxguitar) and many others); if you only want a superb editor, [go and use TuxGuitar](https://www.tuxguitar.app/) too, it deserves it.
 
-> ⚠️ **Alpha.** It works, we play it, and it is honestly rough in places. That is exactly why we need players like you. [See what is not done yet](#where-it-stands-today) and [how to help](#join-the-band-help-us-level-it-up).
+> ⚠️ **Beta.** Its modes are still marked alpha below: it works, we play it, and it is honestly rough in places. That is exactly why we need players like you. [See what is not done yet](#where-it-stands-today) and [how to help](#join-the-band-help-us-level-it-up).
 
 ## Choose your game mode
 
@@ -67,7 +67,7 @@ This is a young project and every kind of help changes it. You do **not** need t
 
 ### Where it stands today
 
-Available now (version 0.5.0-alpha.6): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, a measure ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
+Available now (version 0.5.0-beta.1): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, a measure ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
 
 **User manual** (editing and creating a score, and the whole Practice, with screenshots): [English](docs/MANUAL.md) · [Français](docs/MANUAL-FR.md).
 

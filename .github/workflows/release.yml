@@ -72,6 +72,9 @@ jobs:
           platform: macos
       - name: Build
         run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests
+      # spec 008: the official logo is in the app (test of the assets of the repository, then identity of the packaged icons)
+      - name: Branding assets (test)
+        run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e test -pl ../../TuxGuitar-practice -am -Dtest=BrandingAssetsTest -Dbranding.release=true -Dsurefire.failIfNoSpecifiedTests=false
       - name: Embed the JRE
         run: |
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
@@ -88,6 +91,8 @@ jobs:
           # the app bundle carries the product name (it is also the top-level folder of the zip)
           mv "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app" TuxGuitarAdvanced.app
           ditto -c -k --sequesterRsrc --keepParent TuxGuitarAdvanced.app "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
+      - name: Verify the branding in the package
+        run: misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" macos
       - name: Attach the package to the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -123,6 +128,10 @@ jobs:
           tar -czf "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" TuxGuitarAdvanced
           cp "$GITHUB_WORKSPACE/desktop/build-scripts/tuxguitar-linux-swt-deb/target/tuxguitar-${TG_VERSION}-linux-swt.deb" "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb"
           dpkg-deb --info "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb" | grep -E "Package|Version|Architecture"
+      - name: Verify the branding in the packages
+        run: |
+          misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" linux
+          misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb" linux
       - name: Attach the packages to the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -154,6 +163,8 @@ jobs:
           cd desktop/build-scripts/tuxguitar-windows-swt-x86_64/target
           mv "tuxguitar-${TG_VERSION}-windows-swt-x86_64" TuxGuitarAdvanced
           zip -qr "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" TuxGuitarAdvanced
+      - name: Verify the branding in the package
+        run: misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" windows
       - name: Attach the package to the release
         env:
           GH_TOKEN: ${{ github.token }}
