@@ -132,6 +132,10 @@ public class PracticeWindow {
 	private boolean immediateStart;
 	/** False while a one-click start has not needed the preparation window (it exists but was never shown). */
 	private boolean windowShown;
+	/** The preparation window is hidden because an Arcade run or its result is on screen: the transport-bar button is not framed then (owner, 2026-10-13). */
+	private boolean hiddenByArcade;
+	/** The whole sequence of the track, from its first event: the replays of the result start from it, whatever the passage the run began with. */
+	private PracticeSequence arcadeWhole;
 	private static final long QUICK_START_PATIENCE_MILLIS = 2500L;
 	/** The "starting at measure..." text, to which the quick-start waiting hint is added while it applies. */
 	private String startBase = "";
@@ -201,7 +205,10 @@ public class PracticeWindow {
 				this.arcadeWindow.getWindow().moveToTop();
 				return;
 			}
-			open();
+			if( this.palette.isOpen() ) {
+				open();
+			}
+			// the window is not shown again to be hidden at once: the game starts from where the cursor is, on the preparation that is rebuilt for it
 			modeChanged();
 			this.immediateStart = false;
 			startSession();
@@ -298,6 +305,8 @@ public class PracticeWindow {
 		if( !isOpen() ) {
 			return;
 		}
+		this.hiddenByArcade = false;
+		this.plugin.windowStateChanged(this.context);
 		if( !this.windowShown ) {
 			this.windowShown = true;
 			refit();
@@ -337,6 +346,10 @@ public class PracticeWindow {
 
 	public boolean isOpen() {
 		return (this.window != null && !this.window.isDisposed());
+	}
+
+	public boolean isHiddenByArcade() {
+		return this.hiddenByArcade;
 	}
 
 	// ---------------------------------------------------------------- preparation (FR-002)
@@ -627,6 +640,7 @@ public class PracticeWindow {
 			return;
 		}
 		if( FollowSettings.getInstance(this.context).isArcade() ) {
+			this.arcadeWhole = this.preparedSequence != null ? this.preparedSequence.startingAt(0) : null;
 			startArcade(candidate, this.preparedSequence);
 			return;
 		}
@@ -811,6 +825,8 @@ public class PracticeWindow {
 			this.arcadeRestartTries = 0;
 			this.arcadeWindow.open();
 			setVisible(this.window, false);
+			this.hiddenByArcade = true;
+			this.plugin.windowStateChanged(this.context);
 		}
 	}
 
@@ -847,14 +863,21 @@ public class PracticeWindow {
 		}
 		if( result != null ) {
 			showPreparation();
+			// the replays start from the whole track, not from the passage this run began with (owner, 2026-10-13): the first measure is that of the track
+			final PracticeSequence whole = (this.arcadeWhole != null && !this.arcadeWhole.isEmpty()) ? this.arcadeWhole : full;
 			int first = 1;
 			int last = 1;
+			int started = 1;
+			if( whole != null && !whole.isEmpty() ) {
+				first = whole.getEvents().get(0).getMeasureIndex() + 1;
+				last = whole.getEvents().get(whole.getEvents().size() - 1).getMeasureIndex() + 1;
+				started = first;
+			}
 			if( full != null && !full.isEmpty() ) {
-				first = full.getEvents().get(full.getStartIndex()).getMeasureIndex() + 1;
-				last = full.getEvents().get(full.getEvents().size() - 1).getMeasureIndex() + 1;
+				started = full.getEvents().get(full.getStartIndex()).getMeasureIndex() + 1;
 			}
 			this.arcadeResult = new ArcadeResultWindow(TGApplication.getInstance(this.context).getFactory(), TGWindow.getInstance(this.context).getWindow(),
-					ARCADE_TEXTS, result, first, last, measure -> replayArcade(candidate, full, measure));
+					ARCADE_TEXTS, result, first, last, started, measure -> replayArcade(candidate, whole, measure));
 			this.arcadeResult.open();
 			return;
 		}

@@ -62,8 +62,11 @@ public class PracticePlugin extends TGToolItemPlugin {
 	 * practising the track under the score cursor.
 	 */
 	void toggleWindow(TGContext context) {
-		if( isWindowOpen() ) {
+		if( isWindowChecked() ) {
 			this.window.close();
+		} else if( isWindowOpen() ) {
+			// open but hidden by an Arcade run: it comes back
+			this.window.open();
 		} else {
 			if( this.window == null ) {
 				this.window = new PracticeWindow(context, this);
@@ -79,6 +82,12 @@ public class PracticePlugin extends TGToolItemPlugin {
 			this.window = new PracticeWindow(context, this);
 		}
 		this.window.openAndStartArcade();
+	}
+
+	/** The state of the button: the window is open and on screen (hidden by an Arcade run, the button is not framed). */
+	boolean isWindowChecked() {
+		PracticeWindow current = this.window;
+		return (current != null && current.isOpen() && !current.isHiddenByArcade());
 	}
 
 	boolean isWindowOpen() {
@@ -109,7 +118,7 @@ public class PracticePlugin extends TGToolItemPlugin {
 			adapterManager.getKeyBindingActionIds().addActionId(PracticeToggleAction.NAME);
 			adapterManager.getSyncThreadInterceptor().addActionId(PracticeToggleAction.NAME);
 			TGMainToolBarItemRegistry.getInstance(context).register(new TGMainToolBarPluginItem(TOOLBAR_ITEM, "transport",
-					PracticeToggleAction.NAME, TOOLBAR_ICON, true, new PracticeLauncherItem(TOOLBAR_ITEM, this::isWindowOpen), TOOLBAR_AFTER));
+					PracticeToggleAction.NAME, TOOLBAR_ICON, true, new PracticeLauncherItem(TOOLBAR_ITEM, this::isWindowChecked), TOOLBAR_AFTER));
 			TuxGuitar.getInstance().getActionManager().mapAction(PracticeArcadeAction.NAME, new PracticeArcadeAction(context, this));
 			adapterManager.getKeyBindingActionIds().addActionId(PracticeArcadeAction.NAME);
 			adapterManager.getSyncThreadInterceptor().addActionId(PracticeArcadeAction.NAME);

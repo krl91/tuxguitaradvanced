@@ -151,6 +151,7 @@ public class ArcadeWindowSwtTest {
 					assertEquals(canvas.getY() + canvas.getHeight(), buttons.getY(), 8.0, size[0] + "x" + size[1] + ": the buttons come right under the picture");
 					assertTrue(buttons.getY() + buttons.getHeight() >= windowHeight - 60.0,
 							size[0] + "x" + size[1] + ": the buttons are at the very bottom, they end at " + (buttons.getY() + buttons.getHeight()) + " of " + windowHeight);
+					assertTrue(canvas.getY() + canvas.getHeight() <= windowHeight, size[0] + "x" + size[1] + ": the picture never goes beyond the window, or its top and its texts are out of sight");
 					assertTrue(canvas.getHeight() >= windowHeight - 130.0, size[0] + "x" + size[1] + ": the picture takes the room: " + canvas.getHeight() + " of " + windowHeight);
 				}
 			} finally {
@@ -211,7 +212,7 @@ public class ArcadeWindowSwtTest {
 	public void theResultWindowOpensAndCloses() throws Exception {
 		withDisplay((display, factory) -> {
 			ArcadeResultWindow window = new ArcadeResultWindow(factory, factory.createWindow(), TEXTS,
-					app.tuxguitar.app.tools.custom.practice.session.ArcadeResultFixtures.some(), 1, 4, measure -> {
+					app.tuxguitar.app.tools.custom.practice.session.ArcadeResultFixtures.some(), 1, 4, 2, measure -> {
 					});
 			window.open();
 			flush(display);

@@ -27,7 +27,7 @@ public final class ArcadeResultWindow {
 
 	private final UIWindow window;
 
-	public ArcadeResultWindow(UIFactory factory, UIWindow parent, ArcadeTexts texts, ArcadeResult result, int firstMeasure, int lastMeasure, Replay replay) {
+	public ArcadeResultWindow(UIFactory factory, UIWindow parent, ArcadeTexts texts, ArcadeResult result, int firstMeasure, int lastMeasure, int startedMeasure, Replay replay) {
 		this.window = factory.createWindow(parent, false, true);
 		this.window.setText(texts.get("arcade.result.title"));
 		UITableLayout layout = new UITableLayout();
@@ -59,7 +59,7 @@ public final class ArcadeResultWindow {
 		final UISpinner measure = factory.createSpinner(replayPanel);
 		measure.setMinimum(Math.max(1, firstMeasure));
 		measure.setMaximum(Math.max(Math.max(1, firstMeasure), lastMeasure));
-		measure.setValue(Math.max(1, firstMeasure));
+		measure.setValue(Math.max(Math.max(1, firstMeasure), Math.min(startedMeasure, Math.max(firstMeasure, lastMeasure))));
 		replayLayout.set(measure, 1, 3, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		UIButton play = factory.createButton(replayPanel);
 		play.setText(texts.get("arcade.result.replay.button"));
