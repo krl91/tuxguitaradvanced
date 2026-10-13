@@ -22,6 +22,8 @@
 - Q: Which range of the percentage of the maximum covers the whole height of the flames, from embers to full fire? → A: **Embers at 50 % or less, full fire at 100 %, linear between the two** (an 80 % gives 60 % of the height).
 - Q: How many events must be judged before the flames follow the percentage? → A: **4 events** (about a first measure); until then only embers burn.
 - Q: What fall and rise times for the flames? → A: **Fall about 3 seconds** from full fire to embers, **rise about 0.5 second**.
+- Correction (found in the inspected source while planning, `plan.md` R6; no question to the owner): the share of the maximum is **0**, not 100 %, when nothing has been judged (the "100 %" at the top right of the picture is the tempo); the rule of 4 judged events stays, for the right reason: the share jumps from 0 to 100 % on a first right note. Wording corrected in FR-003 and in scenario 2 of story 1.
+- Correction (found in the inspected source while planning, `plan.md` R7; no question to the owner): the buttons Restart, Pause and Stop are outside the picture (a row of widgets under the canvas), so the flames are drawn inside the picture only and the weakened central zone concerns the fret numbers and the verdict badge. Wording corrected in FR-001 and in scenario 2 of story 2.
 - Q: Which state of the setting is active by default? → A: **Discreet** (visible but lower and fainter than *full*).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -37,7 +39,7 @@ A learner plays an Arcade run. Behind the game, flames burn at the bottom of the
 **Acceptance Scenarios**:
 
 1. **Given** a run in which many events have been judged right, **When** the picture is drawn, **Then** the flames reach a high share of their maximum height, clearly higher than for a run of the same length with many misses.
-2. **Given** the start of a run (nothing judged yet), **When** the picture is drawn, **Then** only embers burn: the flames do not jump to full height because the share of the maximum is 100 % when nothing has been judged.
+2. **Given** the start of a run (nothing judged yet), **When** the picture is drawn, **Then** only embers burn, and they go on burning until 4 events have been judged: the flames do not leap from embers to full height on the first right note, when the share of the maximum jumps from 0 to 100 %.
 3. **Given** two runs of the same score played with the effect on and off, **When** their judgements, scores and results are compared, **Then** they are identical.
 
 ---
@@ -53,7 +55,7 @@ A learner reads the notes, chords, techniques, fret numbers, verdicts and top te
 **Acceptance Scenarios**:
 
 1. **Given** the flames at full level, **When** a scene with notes, a chord, a verdict badge, the fret numbers and the top texts is drawn, **Then** every one of those items is drawn on top of the flames, with a contrast against what is behind it at least as good as the minimum required for reading (SC-002).
-2. **Given** any window shape and size supported by the game, **When** the flames are drawn, **Then** they stay inside the window and the central zone under the fret numbers, the verdict badge and the buttons is weaker than the corners (the shape of `mockups/A-pied-du-manche.png`).
+2. **Given** any window shape and size supported by the game, **When** the flames are drawn, **Then** they stay inside the picture of the game and the central zone under the fret numbers and the verdict badge is weaker than the corners (the shape of `mockups/A-pied-du-manche.png`).
 3. **Given** a machine that cannot keep the frame budget, **When** the picture quality drops, **Then** the flames are the first thing that is simplified or removed, before any information of the game (FR-054 of spec 003).
 
 ---
@@ -102,9 +104,9 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 
 ### Functional Requirements
 
-- **FR-001** (placement): In an Arcade run, flames MUST burn behind the game, rising from the bottom edge of the window, stronger towards the left and right corners, with a weakened central zone under the fret numbers, the verdict badge and the buttons (variant A, `mockups/A-pied-du-manche.png`).
+- **FR-001** (placement): In an Arcade run, flames MUST burn behind the game, rising from the bottom edge of the picture of the game (the flames are drawn **inside the picture**: the buttons Restart, Pause and Stop are a row of widgets under it and are not concerned), stronger towards the left and right corners, with a weakened central zone under the fret numbers and the verdict badge (variant A, `mockups/A-pied-du-manche.png`).
 - **FR-002** (what they show): The height and the brightness of the flames MUST follow the score as a percentage of the maximum reached since the start of the run (the share of the maximum of the result of the run); **embers at 50 % or less, full fire at 100 %, linear between the two**; no number is shown during play (FR-021 of spec 003).
-- **FR-003** (start of a run): Until **4 events** of the run have been judged (owner's answer, `/speckit-clarify` 2026-10-14), only embers MUST burn, so that the flames do not start at full height.
+- **FR-003** (start of a run): Until **4 events** of the run have been judged (owner's answer, `/speckit-clarify` 2026-10-14), only embers MUST burn, so that the flames do not leap from embers to full height on the first right note (the share of the maximum is 0 when nothing has been judged, and jumps to 100 % on a first right note).
 - **FR-004** (fall and rise): When the percentage falls, the flames MUST lose height progressively over a few seconds (**about 3 seconds** from full height to embers, owner's answer of 2026-10-14), down to embers, never in one frame; when it rises, they MUST rise faster than they fall (**about 0.5 second**, owner's answer of 2026-10-14), without jumping.
 - **FR-005** (never hindering): The flames MUST be drawn behind every other item of the picture; they MUST NOT cover, dim or reduce the contrast of any note, chord, technique mark, string, fret wire, fret number, verdict badge, HUD text or button, at any window size (FR-080 of spec 003).
 - **FR-006** (decoration only): The flames MUST NOT change the judgement, the score, the streak, the result, the timing of any event or the clock (SC-004).
