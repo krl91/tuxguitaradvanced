@@ -12,7 +12,7 @@
 
 - [x] CHK001 - Are the surfaces that carry the identity enumerated completely, platform by platform, with the reason for each exclusion (About pictograms, `tgdoc.icns`, Android)? [Completeness, Spec §FR-012, Clarifications 2026-10-13]
 - [x] CHK002 - Is every size and format that a package consumes (icns entries, ico entries, PNG sizes, splash, panel) stated, or its exclusion justified? [Completeness, Spec §FR-008, §FR-009]
-- [ ] CHK003 - Are requirements defined for what a release does when a derivative is rejected by the owner (the upstream file stays, the release says so)? [Gap, Spec §FR-010, §FR-017]
+- [x] CHK003 - Are requirements defined for what a release does when a derivative is rejected by the owner (the upstream file stays, the release says so)? [Gap, Spec §FR-010, §FR-017]
 - [x] CHK004 - Are the documentation surfaces (README in three languages, release notes, manuals) enumerated with what each must show? [Completeness, Spec §FR-012]
 
 ## Requirement Clarity
@@ -32,27 +32,28 @@
 
 - [x] CHK012 - Can SC-004 ("no lost silhouette, unintended opaque square or illegible wordmark") be judged objectively, or does it need a stated reviewer and background? [Measurability, Spec §SC-004]
 - [x] CHK013 - Can SC-003 ("without distortion, clipping or unreadable full wordmarks") be verified automatically for the parts that are not visual (presence, dimensions, entries)? [Measurability, Spec §SC-003, §FR-014]
-- [ ] CHK014 - Is SC-006 ("unchanged in outcome") defined by what is compared (test counts, failures, skipped) and by which build? [Clarity, Spec §SC-006]
+- [x] CHK014 - Is SC-006 ("unchanged in outcome") defined by what is compared (test counts, failures, skipped) and by which build? [Clarity, Spec §SC-006]
 
 ## Scenario Coverage
 
 - [x] CHK015 - Are the light-background and dark-background requirements both covered by an approval rule, not only the dark one? [Coverage, Gap, Spec §FR-009, §SC-004]
 - [x] CHK016 - Are the platforms that nobody can look at (Windows, Linux) given an explicit reporting rule (done or not done, never "validated")? [Coverage, Spec §FR-015, §FR-017]
-- [ ] CHK017 - Are requirements defined for macOS icon caching (the old icon seen in the Finder after the update)? [Gap, Edge Case]
+- [x] CHK017 - Are requirements defined for macOS icon caching (the old icon seen in the Finder after the update)? [Gap, Edge Case]
 
 ## Non-Functional and Governance
 
 - [x] CHK018 - Is the provenance of the logo (AI-assisted redesign selected by the owner) required on every surface that shows the full logo, or only in some documents? [Clarity, Spec §FR-016]
 - [x] CHK019 - Is a legal review before a stable release recorded as an assumption or a task, and by whom? [Assumption, Gap, Spec §FR-016]
-- [ ] CHK020 - Is the rule "a published tag is never moved" stated for branding releases, with the way to correct a release text? [Gap, Spec §FR-017]
+- [x] CHK020 - Is the rule "a published tag is never moved" stated for branding releases, with the way to correct a release text? [Gap, Spec §FR-017]
 
 ## Dependencies and Assumptions
 
-- [ ] CHK021 - Are the tools that make the derivatives (ImageMagick, `iconutil`, `sips`) documented as dependencies with the fallback when one is missing? [Dependency, Gap, Plan §Technical Context]
-- [ ] CHK022 - Is the assumption that every skin shows the same icon and splash (byte-identical) stated as a requirement and checkable? [Assumption, Spec §FR-012]
+- [x] CHK021 - Are the tools that make the derivatives (ImageMagick, `iconutil`, `sips`) documented as dependencies with the fallback when one is missing? [Dependency, Gap, Plan §Technical Context]
+- [x] CHK022 - Is the assumption that every skin shows the same icon and splash (byte-identical) stated as a requirement and checkable? [Assumption, Spec §FR-012]
 
 ## Notes
 
 - Check items off when the requirements-quality criterion is satisfied.
 - `/speckit-implement` reads checklist state but does not modify markers.
 - Review of 2026-10-14 (the owner, by questions in the session): CHK001, CHK002, CHK004 to CHK013, CHK015, CHK016, CHK018 and CHK019 were judged satisfied. CHK003, CHK014, CHK017, CHK020, CHK021 and CHK022 were judged to need a text in the spec or the plan: it was written on 2026-10-14 (FR-010/FR-017, SC-006, FR-018, FR-017, `plan.md` Technical Context, FR-012) and they stay unchecked until the owner confirms the wording.
+- Confirmation of 2026-10-14 (the owner, in the session): the six texts written for CHK003, CHK014, CHK017, CHK020, CHK021 and CHK022 are confirmed; the checklist is complete (22 of 22).
