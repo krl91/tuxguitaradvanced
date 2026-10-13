@@ -17,6 +17,10 @@
 - Q: What happens when you miss or stop playing? → A: The flames **fall back progressively**, in a few seconds, as the percentage goes down, down to simple embers; never an abrupt extinction.
 - Q: Can the effect be set or switched off? → A: **Yes**: one setting with three states, **off / discreet / full**, in the *Mode* tab with the other picture settings of the game (tilt, size of the rectangles).
 
+### Session 2026-10-14 (`/speckit-clarify`)
+
+- Q: Which range of the percentage of the maximum covers the whole height of the flames, from embers to full fire? → A: **Embers at 50 % or less, full fire at 100 %, linear between the two** (an 80 % gives 60 % of the height).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The flames show how well I play (Priority: P1)
@@ -96,7 +100,7 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 ### Functional Requirements
 
 - **FR-001** (placement): In an Arcade run, flames MUST burn behind the game, rising from the bottom edge of the window, stronger towards the left and right corners, with a weakened central zone under the fret numbers, the verdict badge and the buttons (variant A, `mockups/A-pied-du-manche.png`).
-- **FR-002** (what they show): The height and the brightness of the flames MUST follow the score as a percentage of the maximum reached since the start of the run (the share of the maximum of the result of the run); no number is shown during play (FR-021 of spec 003).
+- **FR-002** (what they show): The height and the brightness of the flames MUST follow the score as a percentage of the maximum reached since the start of the run (the share of the maximum of the result of the run); **embers at 50 % or less, full fire at 100 %, linear between the two**; no number is shown during play (FR-021 of spec 003).
 - **FR-003** (start of a run): Until a minimum number of events of the run have been judged (assumed: 4, see Assumptions), only embers MUST burn, so that the flames do not start at full height.
 - **FR-004** (fall and rise): When the percentage falls, the flames MUST lose height progressively over a few seconds (assumed: about 3 seconds from full height to embers), down to embers, never in one frame; when it rises, they MUST rise faster than they fall (assumed: about 0.5 second), without jumping.
 - **FR-005** (never hindering): The flames MUST be drawn behind every other item of the picture; they MUST NOT cover, dim or reduce the contrast of any note, chord, technique mark, string, fret wire, fret number, verdict badge, HUD text or button, at any window size (FR-080 of spec 003).
@@ -118,7 +122,7 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 
 ### Measurable Outcomes
 
-- **SC-001**: On reference runs of low, medium and high success, the height of the flames is clearly ordered (low < medium < high) and the full level is reached only when the share of the maximum is at its highest; at the start of a run only embers are drawn.
+- **SC-001**: On reference runs of low, medium and high success, the height of the flames is clearly ordered (low < medium < high); at 50 % or less only embers burn, at 100 % the fire is full, and in between the height is linear (for example 60 % of the height at 80 %); at the start of a run only embers are drawn.
 - **SC-002**: With the flames at full level, on reference scenes of notes, chords, bends, techniques, verdict badge and HUD at several window sizes, every readable item keeps a contrast ratio of at least 4.5 to 1 against what is behind it, and no item is covered by the flames.
 - **SC-003**: The height of the flames never changes by more than a fixed small share of its range between two consecutive pictures (no jump), and it takes about 3 seconds to fall from full to embers (the figures of FR-004).
 - **SC-004**: The same recorded run played with the flames off and with the flames at full level gives identical judgements, score, streak and result.
