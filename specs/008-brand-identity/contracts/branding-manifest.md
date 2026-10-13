@@ -8,7 +8,7 @@ Every file that carries the product identity is declared here, with its source, 
 |---|---|---|---|
 | `specs/008-brand-identity/assets/tuxguitaradvanced-logo-primary.png` | PNG 1254 x 1254 RGBA | `a9d369a2574396cd3208b0665648c57f398690499efb137d6781478991baf9e0` | official, owner-selected 2026-10-08 |
 
-## Derivatives (proposed)
+## Derivatives (approved by the owner on 2026-10-13, see Approvals)
 
 | Id | Kind | Operation (from the master only) | Proposed use | Status |
 |---|---|---|---|---|

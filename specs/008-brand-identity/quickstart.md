@@ -44,7 +44,7 @@ The `Release` workflow runs the verifier on the three packages before the draft 
 3. **Linux (if a machine is available):** the menu entry and the window show the new icon.
 4. Anything not looked at is written as **not checked** in the release notes.
 
-## 6. Beta release (increment B4, after the owner's gate G4)
+## 6. Beta release (increment B4, done: `v0.5.0-beta.1` published on 2026-10-14; the steps are kept for the next release)
 
-1. Confirm the tag with the owner (proposal `v0.5.0-beta.1`), and the notes `docs/release-notes/v0.5.0-beta.1.md` (with the provenance sentence of FR-016 and the list of what was checked by hand).
-2. `git push` of the branch, then the `Release` workflow with the tag (as for alpha.6). A published tag is never moved.
+1. Confirm the tag with the owner (for the first beta: `v0.5.0-beta.1`, confirmed by the owner on 2026-10-14), and the notes `docs/release-notes/v0.5.0-beta.1.md` (with the provenance sentence of FR-016 and the list of what was checked by hand).
+2. `git push` of the branch, then the `Release` workflow with the tag (as for alpha.6; for the beta, run 38476023499, four jobs green, four packages). A published tag is never moved.

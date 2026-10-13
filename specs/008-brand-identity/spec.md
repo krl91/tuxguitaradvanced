@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-08
 
-**Status**: Primary logo selected by the product owner; integration planned 2026-10-13 (`plan.md`, `tasks.md`) for the beta 0.5.0-beta.1; no derivative is approved yet and no packaged asset is replaced yet
+**Status**: Primary logo selected by the product owner; integration planned 2026-10-13 (`plan.md`, `tasks.md`) and **done for the beta 0.5.0-beta.1 (published 2026-10-14)**: the derivatives D1 to D4 are approved by the owner (2026-10-13, dark background; light background reviewed 2026-10-14) and 28 packaged files are replaced; only T030 stays open (Windows and Linux icons never looked at by a human)
 
 **Input**: Product-owner decision: "Use this image as the new TuxGuitarAdvanced logo."
 
