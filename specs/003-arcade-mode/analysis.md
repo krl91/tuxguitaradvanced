@@ -1,5 +1,7 @@
 # Analysis of specification 003 (Arcade) against the code and the other specifications
 
+> **Status of this file (2026-10-13).** Sections 1 to 5 are the analysis of **2026-10-08**, kept as it was written; a row that the later work has overtaken carries a note "**2026-10-13:**". Sections 6 to 9 log the changes of 2026-10-11 as they came; **sections 10 and 11 bring the coverage and the open points to 2026-10-13**. For the current requirements read `spec.md` (Q1 to Q42, FR-001 to FR-082).
+
 **Date**: 2026-10-08. **Method**: Spec Kit `analyze` read of `spec.md`, `visual-design.md` and the checklist against specifications 001, 002, 004, 007 and 008 and against the source as it is today. Every claim about the code cites a file that was opened. Nothing was decided silently: what is not settled by the specifications is listed as an open question in section 3 and in `research.md`.
 
 ## 1. What the specification relies on, and the state of it today
@@ -10,10 +12,10 @@
 | Its judging up to 8 notes a second (SC-002 here, SC-009 of 002) | **Not met**: 100 / 86 / 44 / 22 % right matches at 2 / 4 / 6 / 8 notes a second on synthetic audio (`specs/002-practice-industrialization/research.md` R15). | SC-002 of this specification repeats a target that the base mode does not reach. It is kept as written (targets are not rewritten) and listed as a known gap at every checkpoint. |
 | A backing made of the other tracks | `MidiPlayer.setPlayerOnlyMute` / `isPlayerOnlyMuted` / `clearPlayerOnlyMutes` (`common/TuxGuitar-lib/.../player/base/MidiPlayer.java`) mute one track in the player only; `FollowPlayback` applies and gives it back exactly once. | FR-010 and FR-011 are covered by existing, tested code. |
 | A count-in and the player's tempo percentage | `FollowPlayback` forces the player's count-down on, sets the tempo percentage and the loop off, and gives them back. | FR-003 and US1.4 covered. |
-| Pause and resume of backing and judging together (US5.2) | `FollowSession.pause/resolve/resume` pauses the judging only; **the player is not paused** (`FollowPlayer` has no pause). | Gap: a player pause/resume must be added (task T020). |
-| A neck for any string count (FR-027, US6.8) | `TrackTuning` requires exactly six strings (`TrackTuning.STRING_COUNT = 6`, `IllegalArgumentException("six strings expected")`), and `PracticeTrackCandidates` excludes any other count (`Exclusion.NOT_SIX_STRINGS`). **A four-string bass cannot be practised today.** | Gap: the shared tuning model must support N strings, additively (task T002). |
+| Pause and resume of backing and judging together (US5.2) | `FollowSession.pause/resolve/resume` pauses the judging only; **the player is not paused** (`FollowPlayer` has no pause). | Gap: a player pause/resume must be added (task T020). **2026-10-13:** done (T020, T021); the picture also holds during a pause and counts in again on a resume (FR-079, T139). |
+| A neck for any string count (FR-027, US6.8) | `TrackTuning` requires exactly six strings (`TrackTuning.STRING_COUNT = 6`, `IllegalArgumentException("six strings expected")`), and `PracticeTrackCandidates` excludes any other count (`Exclusion.NOT_SIX_STRINGS`). **A four-string bass cannot be practised today.** | Gap: the shared tuning model must support N strings, additively (task T002). **2026-10-13:** done (T002, `TrackTuning.ofAnyStrings`, `ArcadeTrackCandidates`). |
 | Pitch recognition of a bass | `TarsosFastYinEstimator` runs on a 2048-sample window at 48 kHz (42.7 ms): an E1 (41.2 Hz, period 24.3 ms) leaves fewer than two periods in the window. | Risk, not a decision: bass recognition quality is unknown and is measured in a spike (task T003) before a bass is promised. |
-| Chord verdicts from `ChordFeedback` (visual-design.md) | `ChordFeedback` belongs to the **wait mode** (`PracticeSession`). `FollowSession` produces `EventResult` (status, pitch, timing, `missingPitches`), not `ChordFeedback`. | Contradiction in the documents, resolved in `research.md` R6: Arcade maps `EventResult` to the chord-level badges; `STRUM_AGAIN` does not exist in the following mode and is not produced. |
+| Chord verdicts from `ChordFeedback` (visual-design.md) | `ChordFeedback` belongs to the **wait mode** (`PracticeSession`). `FollowSession` produces `EventResult` (status, pitch, timing, `missingPitches`), not `ChordFeedback`. | Contradiction in the documents, resolved in `research.md` R6: Arcade maps `EventResult` to the chord-level badges; `STRUM_AGAIN` does not exist in the following mode and is not produced. **2026-10-13:** resolved by `ArcadeVerdict.of(EventResult, …)` (T012). |
 | An "uncertain" verdict (FR-024, US2.5) | `FollowSession` has no UNCERTAIN status; it has NOT_JUDGED (a window not seen whole, a pause, the clocks not ready). | Open question O1 (section 3). |
 | Judging with the tolerance presets, calibration and "reduced rhythmic precision" of 002 | Implemented (`TimingTolerance`, `RouteCalibrations`, `FollowPanel`). | Reused as they are. |
 | A live return of the guitar (FR-030 to FR-047) | **Nothing exists.** The capture is a `TargetDataLine` read in 1024-frame blocks (about 21 ms at 48 kHz) by `CaptureService`; the synthesizer writes to a `SourceDataLine` through `TGAudioLine` (`desktop/TuxGuitar-synth`); the audio engine has an input selector (`CurrentInputSelection`) and **no output selector**. | The 22 ms limit is in doubt on the plain Java Sound path (one capture block alone is about 21 ms). Increment E is a spike and may conclude that monitoring cannot be offered on this stack. |
@@ -58,7 +60,7 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | FR-024 only pitch and timing claimed | T012, T038, T039 | |
 | FR-025 isometric view, colours, hit line, chords grouped | T034 to T041, T043, T044 | |
 | FR-027 geometry from the track, equal temperament | T030, T031 | |
-| FR-028 chord bar + cartouche | T036, T038 | |
+| FR-028 chord bar + cartouche | T036, T038 | **2026-10-13:** superseded by the chord panel (FR-074, Q22). |
 | FR-029 anticipatory camera | T035 | |
 | FR-030 to FR-037 live return, no effects, click-free, shared timeline | E (T070-T075, then T076+ if allowed); F for effects | decided by measurement |
 | FR-038, FR-039 effects research and benchmark | T090 to T092 | |
@@ -77,11 +79,11 @@ No contradiction blocks the plan. Four gaps need work that the specification doe
 | FR-059 high-density lower-resolution field with crisp essentials | T040, T042, T048 | |
 | FR-060 one active target event on the physical neck | T037, T038, T043 | the active event alone owns neck targets; camera look-ahead does not expose the others and does not admit events to the visual set |
 | FR-061 useful approaching chord identity | T038, T043, T056 | exact written name wins; otherwise deterministic resolver from written pitches/bass; pitch-list fallback, never audio |
-| FR-062 visual set | T040, T043, T044, T062 | every event not completed and due within five seconds, whatever their number, each note whole on its lane; every later event absent (no preview, dot, bar or label); completed events keep only their verdict badge; every note of the set on its FR-066 lane |
-| FR-063 chords in the set | T038, T040, T043, T044 | one expanded diagram; the other chords of the set are bars without diagram on one centred axis; chords due later absent; no fret-based lateral scattering |
+| FR-062 visual set | T040, T043, T044, T062 | every event not completed and due within five seconds, whatever their number, each note whole on its lane; every later event absent (no preview, dot, bar or label); completed events keep only their verdict badge; every note of the set on its FR-066 lane **2026-10-13:** the five seconds became one floating measure (FR-076, Q26). |
+| FR-063 chords in the set | T038, T040, T043, T044 | one expanded diagram; the other chords of the set are bars without diagram on one centred axis; chords due later absent; no fret-based lateral scattering **2026-10-13:** superseded by the chord panel (FR-074); everything lands at the foot of the neck (Q37). |
 | FR-064 optional external real-score corpus | T060-T065 | content-aware recursive read, deterministic diversity selection, no score bytes committed |
 | FR-065 opaque active target disks | T037, T038, T040, T043, T062, T063 | filled alpha-1 core, bounded size, string colour, contrasting outline, identical across tiers |
-| FR-066 predefined fret-arrival lanes | T037, T043, T062, T063, T066 | one lane per visible fret, shared across strings; endpoint is the painted cell-top midpoint; no approach primitive or connector crosses the neck |
+| FR-066 predefined fret-arrival lanes | T037, T043, T062, T063, T066 | one lane per visible fret, shared across strings; endpoint is the painted cell-top midpoint; no approach primitive or connector crosses the neck **2026-10-13:** the lane ends at the middle of the cell at the foot of the neck and goes on under the see-through neck (Q28, Q31, Q34). |
 | SC-001 start in under 30 s | manual, T068-adjacent walk-through | not measured by a task; reported only if timed |
 | SC-002 95 % at 8 notes a second | inherited from 002 SC-009 | **not met by the base mode** (R15 of 002) |
 | SC-003 monitoring loopback | T072, T073 | |
@@ -122,3 +124,31 @@ Third reference image of the owner and three answers (Q19 to Q21): rounded recta
 ## 9. Change of 2026-10-11 (chord panel) and size setting
 
 Fourth and fifth reference images: a chord as a translucent panel with its note rectangles at fret and string, name above the left corner (Q22), fret numbers on the active chord (Q23). Recorded as FR-074, SC-028, research R24; FR-028 and FR-063 superseded for the chord's form. Also FR-073 (size setting: 0 % one pixel, 100 % three quarters of the former size, implemented 2026-10-11). Impact: chord drawing, name placement, density rules and chord tests; the corpus contact sheet follows. Open: the visual density of panels in a very dense passage (to be judged by the owner).
+
+## 10. Coverage of the requirements added after 2026-10-08 (state of 2026-10-13)
+
+| Requirement | Covered by | Note |
+|---|---|---|
+| FR-067, FR-068 palette, order, lit string; SC-025 | T100 to T103 | owner confirmation T106 open |
+| FR-069 open string; SC-026 | T104, T105 | amended by Q37 (lands at the foot) |
+| FR-070 to FR-072 rounded rectangles, thread, footprint, band; SC-027 | T107 to T109, T143 | the band follows the lanes to the foot since Q42; owner T111 open |
+| FR-074 chord panel; SC-028 | T112 to T114, T118, T137 | lands at the foot since Q37; owner T117, T138 open |
+| FR-075 transparent neck | T108a, T121 | |
+| FR-076 floating measure | T119 | replaces the five seconds of FR-062 |
+| Q30 Restart, default input, coloured Arcade button | T123 to T125 | |
+| Q31 to Q34 foot of the neck, calm picture, tilt, straight lanes, buttons at the bottom | T126 to T132 | tilt 0.35 / 0.18 by default and settable |
+| FR-077 bends | T133 | owner T134 open |
+| FR-078 techniques | T135 | owner T136 open; no technique is reported as detected (detectors unverified) |
+| Q37 landing at the foot | T137 | `FootLandingTest`; owner T138 open |
+| FR-079 count-in and pause of the picture | T139 | `ArcadeFrameSourceTest`; owner T144 open |
+| FR-080 nothing cut, window maximized | T140 | `HudVisibilityTest`, `ArcadeWindowSwtTest` |
+| FR-081 result at the end and on a stop, replays from the whole track | T141 | `ArcadeControllerTest` |
+| FR-082 buttons (note button, Pause, Resume) | T142 | `ArcadeWindowSwtTest` |
+
+## 11. Open points on 2026-10-13
+
+* **Owner validations open:** T106, T111, T117, T134, T136, T138, T144 (what the owner sees on the built application).
+* **Not reproduced (T145):** a game that seems to hang after three or four launches in a row. Fourteen launches in several sequences, the log and the threads showed nothing; the exact sequence of clicks of the owner is needed.
+* **Still not decided or not done:** O1 ("uncertain" verdict, shown as "not judged"), O2 (scoring table to confirm), O3 (the name "Arcade"); T025 (device loss at run level); increments E (monitoring spike, T070 to T075) and F (effects research, T090 to T092) are not started; T099 (final analysis) waits for them.
+* **Known limits of the picture clock:** a resume restarts the count-in of the picture from the real position, so the notes go back by one measure before coming again; the first frame of a run is built at the first paint, not at the first click, so a skew of a few tens of milliseconds is possible at the handover.
+
