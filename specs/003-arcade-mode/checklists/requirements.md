@@ -35,8 +35,8 @@
 - [x] Frame queues, audio-thread rendering work and render-held audio locks are forbidden and testable.
 - [x] The physical neck exposes targets for exactly one event, the active event (or its complete chord), with an atomic transition; camera look-ahead never exposes or admits another event.
 - [x] Every approaching chord carries its exact written name when available; otherwise a tested deterministic name is derived from written pitches/bass, with an honest pitch-list fallback and no use of detected audio.
-- [x] One visual set — every event due within five seconds, notes and chords alike, whatever their number — is the only thing drawn; every later event is absent, no compact or preview form exists, each note comes from the horizon for five seconds on its fret lane, a fret number is dropped where it would overlap, completed events keep only their verdict badge, and musical data remains unchanged.
-- [x] Chords of the set share one centred temporal lane; only one has a full in-bounds diagram, the others of the set are bars without diagram, chords due later are absent, and promotion follows onset order.
+- [x] One visual set (one floating measure since FR-076; five seconds before) — every event due in it, notes and chords alike, whatever their number — is the only thing drawn; every later event is absent, no compact or preview form exists, each note comes from the horizon for five seconds on its fret lane, a fret number is dropped where it would overlap, completed events keep only their verdict badge, and musical data remains unchanged.
+- [x] (Superseded by the chord panel of FR-074, Q22) Chords of the set share one centred temporal lane; only one had a full diagram, the others bars without diagram; promotion followed onset order.
 - [x] Visual acceptance includes a deterministic, diverse external GP3/GP4 corpus; normal builds skip without it and copyrighted score bytes/private paths are never committed.
 - [x] The actionable neck target is a large opaque filled string-coloured disk with a contrasting outline; quality reduction may remove decoration but never weaken this core cue.
 - [x] Every visible fret has one predefined arrival lane ending at the midpoint of its painted cell top; all strings reuse it, markers remain on it, and neither the lane nor a connector crosses the physical neck.
@@ -63,3 +63,7 @@
 - [ ] The owner confirms the new graphics on the built application (T111).
 - [x] The chord panel (FR-074, SC-028) is specified; the owner answered Q22 and Q23.
 - [ ] The owner confirms the chord panel on the built application (T117).
+- [x] Everything lands at the foot of the neck (Q37), the count-in and the pause of the picture (FR-079), nothing cut at any window size (FR-080), the result on the end and on a stop with replays from the whole track (FR-081) and the buttons (FR-082) are specified and tested (T137 to T143).
+- [ ] The owner confirms the landing, the count-in and the resume, the top texts, the result on a stop and the band on the built application (T138, T144).
+- [ ] The report of a game that seems to hang after several launches in a row is reproduced or closed (T145).
+

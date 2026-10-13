@@ -199,3 +199,39 @@ Profile: event count, note/chord ratio, longest consecutive chord run, peak even
 **Alternatives.** A constant-size marker (rejected by the owner); lanes ending at the neck (hid the see-through neck).
 
 **Consequences.** FR-066 loses its "never continues across the neck" sentence; the size setting is relative to the target size.
+
+## R26 - Bends and technique marks drawn from written effects (2026-10-12)
+
+**Evidence.** `BendMark.of(PitchPath)` and `TechniqueMark.of(event, next)` read only what is written. The destination of a hammer-on, pull-off or slide is the next expected note on the same string; a harmonic is an `AUTOMATIC` event with `AutoPassReason.HARMONIC`. The detectors of `TechniqueCatalog.defaults()` are all unverified (vibrato 59 %, bend 82 %, slide 48 %, legato no recordings).
+
+**Decision.** Marks are drawn in flight and on the neck (Q35, Q36, FR-077, FR-078) in one accent colour; the judgement is unchanged and no technique is reported as detected. The native painter ignores the dash style of a path on macOS (seen on the real canvas), so the dashes are many short segments inside one path (`UiPainterRenderer.dashes`).
+
+**Alternatives.** The two other bend proposals (`mockups/bend/`); dash styles of the painter (rejected, not honoured).
+
+## R27 - Everything lands at the foot of the neck (2026-10-13, Q37)
+
+**Evidence.** A single note's footprint went to the bottom edge of the neck on a straight ground path while a chord panel, an open bar and a timing bar went to the hit line (`approach`), so a chord seemed to arrive before the notes.
+
+**Decision.** `ArcadeScene.ground(xMm, progress)` is the one ground path (same depth share and scale as the footprint, ending at `h * NECK_NEAR_EDGE`); the panel, the bars and the rectangles of a chord (on the height of their string row, `riseOfRow`) use it. Test: `FootLandingTest`, `Landing`.
+
+**Alternatives.** Moving the footprints to the hit line (rejected: the notes land on the neck, which is see-through, by decision Q28).
+
+## R28 - The picture's clock during the count-in (2026-10-13, Q38)
+
+**Evidence.** During the count-in the sequencer holds the start tick still (and, after a first run, still holds the end of the song until the new run moves it), so a frame built from it showed the first events on the neck; a first handover from the picture's own time to the clock jumped by up to 400 ms (75 px measured by `theFirstEventComesInOneMove...`); a pause during the first count-in let the picture go on by itself.
+
+**Decision.** `ArcadeFrameSource` runs its own time from one count-in before the music, follows the clock only once it moves by 30 ms and is within 400 ms of that time (1.5 s past the count-in it follows it anyway), holds still while paused and counts in again on a resume from the real position.
+
+**Alternatives.** A blend from the own time to the clock (rejected: it would stall while the clock is stationary); hooks on the count-down notifications of the player (not available through `FollowPlayer`).
+
+## R29 - The window of the game (2026-10-13, Q39)
+
+**Evidence.** The log of a diagnostic trace showed the canvas at 930 high in a window of 901: the full screen of the toolkit on macOS left the window at its first size while the rows were laid out for the screen.
+
+**Decision.** `ArcadeWindow` is maximized, not full screen, and laid out again at every resize; the texts of the HUD keep a top margin of 44 points. Tests: `HudVisibilityTest` (seven window shapes), `ArcadeWindowSwtTest` (the picture never goes beyond the window).
+
+## R30 - End of the run, buttons, band (2026-10-13, Q40 to Q42)
+
+**Decision.** The result is built when the player stops at the end (complete or not) and when the learner stops (`ArcadeController`); replays use the whole track kept apart from the passage of the run (`PracticeWindow.arcadeWhole`). The transport-bar button reads `PracticePlugin.isWindowChecked` (open and not hidden by the game); the preparation window is not shown again when Arcade starts. The approach band and the lighter lane use `ground` to the foot, like the lanes (Q42).
+
+**Not reproduced.** A game that seems to hang after three or four launches in a row: 14 launches in various sequences, the log and the threads showed nothing (T145).

@@ -10,7 +10,7 @@ All objects are in memory for one run (FR-026). "Source" names the existing clas
 | `ArcadeScoring` | table of points per verdict, streak multiplier steps | R5; data, not code paths. |
 | `ArcadeEventState` | `eventIndex`, `verdict`, `offsetMillis`, `techniques` (as in `EventResult`, apart), `pointsEarned`, `streakAfter` | Computed once an event is resolved; never changed afterwards (SC-004). |
 | `ArcadeRun` | `sequence` (`PracticeSequence`), `timeline` (`FollowTimeline`), `trackNumber`, `speedPercent`, `states[]`, `score`, `streak`, `bestStreak`, `extras` | Fed by the snapshots of the following session; holds no clock of its own. |
-| `ArcadeResult` | `score`, `maxScore`, `percent`, counts per verdict (from `FollowSummary`), `bestStreak`, `techniques` apart | Built from the final snapshot; shown, then dropped. |
+| `ArcadeResult` | `score`, `maxScore`, `percent`, counts per verdict (from `FollowSummary`), `bestStreak`, `techniques` apart | Built from the last snapshot when the song comes to its end (complete or not) or when the learner stops (FR-081); shown, then dropped. |
 
 ## View side (package `arcade.view`)
 
@@ -21,11 +21,17 @@ All objects are in memory for one run (FR-026). "Source" names the existing clas
 | `StringColours` | frozen map string number -> colour | Six-string palette of FR-067 low to high (red, yellow, light blue, orange, green, violet); other counts: distinct colours of the same family keeping red low and violet high, frozen for the run. Each string also has a lit flag per frame (FR-068): true only for the strings of the active event. |
 | `ArcadeRenderEvent` | `eventIndex`, `kind` (NOTE/CHORD/AUTO/UNSUPPORTED), `onsetNanos` (from `FollowTimeline.targetNanos`), `positions[]` (string, fret), `chordName?`, `stroke`, `fretSpan` | Built from `PracticeEvent` + `FollowTimeline` only (no second score parser). `MULTI_NOTE` and `AUTO_PASS` are shown as what they are. |
 | `CameraTrack` | keyframes `(timeNanos, centreFret, zoom)`; `at(t)` | R4; built once per run; continuous; pure. |
-| `IsometricProjection` | `project(modelX, modelY, depth) -> (screenX, screenY, scale)` for a viewport | One affine isometric transform plus depth scaling; the hit line is a fixed depth. |
+| `IsometricProjection` | `project(modelX, modelY, depth) -> (screenX, screenY, scale)` for a viewport | One affine isometric transform plus depth scaling; the hit line is a fixed depth and, since Q37, everything lands at the foot of the neck (`NECK_NEAR_EDGE`), see `contracts/arcade-view.md`. |
 | `FretArrivalLaneMap` | camera/viewport snapshot; painted top-edge fret-wire x positions; one `(horizonStart, cellTopEndpoint)` lane per visible fret plus the pre-nut lane | Built once from the same geometry sent to the painter. For fretted cell `n`, endpoint is `((wireX[n-1] + wireX[n]) / 2, neckTopY)`. Events select by fret only; string changes colour and the separate neck target, never lane geometry. |
 | `ChordCartouche` | `strings` (count, vertical, low to high), `firstFret` window, `dots[]` (string, fret, colour, open/dead flags), `name?`, `stroke`, minimum screen size | visual-design.md; name only from non-blank `TGChord.getName()`; dead strings only when explicit. |
 | `ArcadeScene` | list of drawable shapes (polygons, circles, text) for `(t, viewport, run state)` | Pure function; deterministic; the unit of the structural capture test. It draws the visual set only (below). |
-| `VisualSet` | every event that is not completed and due within the look-ahead of five seconds, whatever their number; the active event always in | Computed inside `ArcadeScene` from the clock, the run and the event identities alone (no state between frames). Every event due later is absent: no primitive carries its identity. A completed event is not a member; only its verdict badge is drawn, for the feedback hold. |
+| `VisualSet` | every event that is not completed and due within the look-ahead of **one floating measure** (FR-076, never less than one second), whatever their number; the active event always in | Computed inside `ArcadeScene` from the clock, the run and the event identities alone (no state between frames). Every event due later is absent: no primitive carries its identity. A completed event is not a member; only its verdict badge is drawn, for the feedback hold. |
+
+## Picture clock (package `arcade.ui`, FR-079)
+
+| Entity | Fields | Source / rule |
+|---|---|---|
+| `ArcadeFrameSource` | the scene, the timeline, the `TempoClock` of the player, `countInNanos` (the look-ahead), `startNanos` (where the music begins on the timeline), `startWall`, `countInOver`, `referenceReal`, `paused`, `frozenNanos` | One instant of the picture per paint: the timeline of the clock, or, from the start (and again after a resume) until the clock moves and agrees with it, its own time that begins one count-in before the music; held still while paused. In memory for one run. |
 
 ## Monitoring side (package `audio.engine.monitor`, increment E, only if the spike allows)
 

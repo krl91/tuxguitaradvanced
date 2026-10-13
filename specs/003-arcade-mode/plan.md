@@ -58,7 +58,7 @@ specs/003-arcade-mode/
 ├── spec.md, visual-design.md, assets/, checklists/
 ├── analysis.md                  # consistency analysis and gaps (this cycle)
 ├── plan.md                      # this file
-├── research.md                  # decisions R1 to R16
+├── research.md                  # decisions R1 to R30
 ├── data-model.md
 ├── quickstart.md                # validation, manual parts marked as such
 ├── contracts/
@@ -82,8 +82,8 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 └── arcade/
     ├── core/   ArcadeVerdict, ArcadeScoring, ArcadeRun, ArcadeResult
     ├── view/   StringLayout, NeckModel, StringColours, IsometricProjection,
-    │           FretArrivalLaneMap, CameraTrack, ChordCartouche, ArcadeRenderEvent, ArcadeScene
-    └── ui/     ArcadeCanvas, ArcadeWindow, ArcadeResultWindow, ArcadePanel
+    │           FretArrivalLaneMap, PaintedFretGrid, CameraTrack, ChordCartouche, ArcadeRenderEvent, ArcadeScene, BendMark, TechniqueMark
+    └── ui/     ArcadeCanvas, ArcadeFrameSource, ArcadeSession, ArcadeController, ArcadeEndRouter, ArcadeWindow, ArcadeResultWindow, UiPainterRenderer
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # arcade.* texts
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/monitor/   # increment E
 desktop/TuxGuitar-practice/test/...                  # tests mirror the packages
@@ -98,6 +98,7 @@ desktop/TuxGuitar-practice/test/...                  # tests mirror the packages
 * **C - Isometric view.** (From 2026-10-11 the string palette is FR-067, the neck draws the lowest string at the top and a string is lit while the active event targets it, FR-068: `StringColours`, the row mapping of `StringLayout` and the neck painting change, see research R21.) The open string is a bar across the lanes (FR-069, research R22): an `OPEN_BAR` item replaces the fret-0 marker.) (Increment C3, after C2: rounded rectangles, thread, footprint, fret ruler and approach band, FR-070 to FR-072, research R23.) (Increment C4, after C3: the chord panel, FR-074, research R24. `NeckModel` (N strings, `x(n) = L (1 - 2^(-n/12))`), `StringColours`, `IsometricProjection`, a `FretArrivalLaneMap` built from the fret boundaries actually painted (one fixed lane per visible fret, shared by every string), `CameraTrack`, `ChordCartouche`, `ArcadeScene` (pure), then a narrow renderer contract and `ArcadeCanvas`. Begin with the existing toolkit path; benchmark it on Apple Silicon under concurrent MIDI, recognition and (when available) monitoring. Adopt an accelerated backend only if the decision record proves a material gain without adding audio risk or disproportionate packaging complexity. Geometry, visibility (SC-010), colour (SC-012), the visual set (SC-019, SC-020), predefined-lane registration (SC-024), adaptive quality, fallback, monochrome, structural-capture and concurrent audio/render stress tests are required.
 * **H - Real-score visual corpus.** Reuse content-aware GP3/GP4 reading, profile a deterministic sample of at least 2,000 external files and select at least 60 diverse playable tracks. Replay their real practice timelines through the Arcade scene in both quality tiers; keep exact paths/screenshots local and commit only aggregate anonymous evidence. H is part of C's visual acceptance and feeds T044; it does not replace pure fixtures.
 * **D - Interface and result.** Arcade in the mode selector, the Arcade window with the HUD (speed, streak, next event; no number), pause/resume/stop, the result window (score, counts, best streak), the three languages, headless and native GUI tests.
+* **C5 - Later changes of the picture and the game (2026-10-11 to 2026-10-13).** Bends and technique marks in flight and on the neck (Q35, Q36, FR-077, FR-078); everything lands at the foot of the neck (Q37); the count-in runs the picture's own time, a pause holds it and a resume counts in again (Q38, FR-079, `ArcadeFrameSource`); nothing is cut at any window size, the window is maximized (Q39, FR-080); the result is shown at the end and on a stop, replays from the whole track (Q40, FR-081); the transport-bar button and the buttons Pause and Resume (Q41, FR-082); the approach band along the lanes (Q42). Research R26 to R30; tasks T130 to T145.
 * **E - Monitoring spike.** Measure, do not build: capture block sizes, a low-buffer output line, accounting, wired and acoustic loopback; gate at 22 ms on the worst credible value; decide whether a monitoring path is built. See `contracts/monitoring-latency-protocol.md`.
 * **F - Effects research task.** Only the protocol and the inventory (`contracts/effects-research-protocol.md`); nothing implemented.
 
