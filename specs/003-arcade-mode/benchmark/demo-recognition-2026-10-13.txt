@@ -1,0 +1,73 @@
+# Demo score played into the Arcade chain by a synthetic guitar (2026-10-13)
+
+Test: `desktop/TuxGuitar-practice/test/.../demo/DemoRecognitionTest.java` (tag `benchmark`, skipped when `tests/demo-arcade-morceau.tg` is absent):
+`mvn test -pl ../../TuxGuitar-practice -am -Dgroups=benchmark -DexcludedGroups= -Dtest=DemoRecognitionTest -Dsurefire.failIfNoSpecifiedTests=false` (about 45 s, real time).
+The real player with its count-in and clock, the real live recognition chain fed in real time, the tempo-following session; only the sound card is absent.
+Two recordings made from the score: PLAIN (plucked string at the written pitch, strum for a chord) and TECHNIQUE (additive voice that follows the written bend path, vibrato, slide, legato hammer-on / pull-off without a new pick, damped palm mute).
+**This measures the wiring of the chain with a synthetic string, not the recognition of a real guitar.**
+
+=== PLAIN recording, ended: PLAYER_STOPPED ===
+ 0 m1 chord [45, 52, 57, 60, 64] MATCHED      ON_TIME     +1 ms missing=[]
+ 1 m1 note 64                    MATCHED      ON_TIME     +7 ms missing=[]
+ 2 m1 note 67                    MATCHED      ON_TIME     -6 ms missing=[] HAMMER_ON=NOT_VERIFIABLE
+ 3 m1 note 69                    MATCHED      ON_TIME    +13 ms missing=[] VIBRATO=NOT_VERIFIABLE
+ 4 m2 note 72                    MATCHED      ON_TIME     +4 ms missing=[] SLIDE=NOT_VERIFIABLE
+ 5 m2 note 74                    MATCHED      ON_TIME    -13 ms missing=[] BEND=NOT_VERIFIABLE
+ 6 m2 note 72                    MATCHED      ON_TIME    -15 ms missing=[]
+ 7 m2 note 69                    MATCHED      ON_TIME    -13 ms missing=[] PULL_OFF=NOT_VERIFIABLE
+ 8 m3 chord [53, 57, 60, 65]     MATCHED      ON_TIME    +41 ms missing=[]
+ 9 m3 note 48                    MATCHED      ON_TIME     -4 ms missing=[] PALM_MUTE=NOT_VERIFIABLE
+10 m3 note 53                    MATCHED      ON_TIME     -6 ms missing=[] PALM_MUTE=NOT_VERIFIABLE
+11 m3 note 57                    MATCHED      ON_TIME     +2 ms missing=[] PALM_MUTE=NOT_VERIFIABLE
+12 m4 note 77                    MATCHED      ON_TIME     +4 ms missing=[]
+13 m4 note 76                    MATCHED      ON_TIME     +2 ms missing=[]
+14 m4 note 77                    MATCHED      ON_TIME    -16 ms missing=[]
+15 m4 auto HARMONIC              AUTO_PASSED  null        +0 ms missing=[]
+16 m5 chord [48, 52, 55, 60, 64] MATCHED      ON_TIME    +30 ms missing=[]
+17 m5 note 74                    MISSED       MISSED      +0 ms missing=[]
+18 m5 note 72                    MATCHED      ON_TIME     -5 ms missing=[] BEND=NOT_VERIFIABLE RELEASE=NOT_VERIFIABLE
+19 m5 note 71                    MATCHED      ON_TIME     -5 ms missing=[] BEND=NOT_VERIFIABLE
+20 m6 note 64                    MATCHED      ON_TIME     +4 ms missing=[] TREMOLO_PICKING=NOT_VERIFIABLE
+21 m6 note 69                    MATCHED      ON_TIME    +23 ms missing=[] VIBRATO=NOT_VERIFIABLE
+22 m6 note 67                    MATCHED      ON_TIME     +5 ms missing=[] SLIDE=NOT_VERIFIABLE
+23 m6 note 69                    MATCHED      ON_TIME    +23 ms missing=[]
+24 m7 chord [43, 47, 50, 55, 59, 67] MATCHED      ON_TIME    +10 ms missing=[]
+25 m7 note 67                    MATCHED      ON_TIME    +16 ms missing=[]
+26 m7 note 62                    MATCHED      ON_TIME     +9 ms missing=[]
+27 m7 note 64                    MATCHED      ON_TIME     -3 ms missing=[] HAMMER_ON=NOT_VERIFIABLE
+28 m8 chord [45, 52, 57, 60, 64] MATCHED      ON_TIME    +11 ms missing=[]
+29 m8 note 69                    MATCHED      ON_TIME    +23 ms missing=[] VIBRATO=NOT_VERIFIABLE
+matched 28 (on time 28), wrong pitch 0, missed 1, other 1, extras 0 of 30 events
+
+=== TECHNIQUE recording, ended: PLAYER_STOPPED ===
+ 0 m1 chord [45, 52, 57, 60, 64] MATCHED      ON_TIME     +5 ms missing=[]
+ 1 m1 note 64                    MATCHED      ON_TIME     -9 ms missing=[]
+ 2 m1 note 67                    MISSED       MISSED      +0 ms missing=[]
+ 3 m1 note 69                    MATCHED      ON_TIME     -3 ms missing=[] VIBRATO=NOT_VERIFIABLE
+ 4 m2 note 72                    MATCHED      ON_TIME    -20 ms missing=[] SLIDE=NOT_VERIFIABLE
+ 5 m2 note 74                    MATCHED      ON_TIME    -23 ms missing=[] BEND=NOT_VERIFIABLE
+ 6 m2 note 72                    MATCHED      ON_TIME    -20 ms missing=[]
+ 7 m2 note 69                    MATCHED      ON_TIME    +13 ms missing=[] PULL_OFF=NOT_VERIFIABLE
+ 8 m3 chord [53, 57, 60, 65]     MATCHED      ON_TIME    +21 ms missing=[]
+ 9 m3 note 48                    MATCHED      ON_TIME     +7 ms missing=[] PALM_MUTE=NOT_VERIFIABLE
+10 m3 note 53                    MATCHED      ON_TIME     -6 ms missing=[] PALM_MUTE=NOT_VERIFIABLE
+11 m3 note 57                    MATCHED      ON_TIME     +7 ms missing=[] PALM_MUTE=NOT_VERIFIABLE
+12 m4 note 77                    MATCHED      ON_TIME     -5 ms missing=[]
+13 m4 note 76                    MATCHED      ON_TIME     -8 ms missing=[]
+14 m4 note 77                    MATCHED      ON_TIME    -26 ms missing=[]
+15 m4 auto HARMONIC              AUTO_PASSED  null        +0 ms missing=[]
+16 m5 chord [48, 52, 55, 60, 64] MATCHED      ON_TIME    +20 ms missing=[]
+17 m5 note 74                    MATCHED      ON_TIME     -8 ms missing=[] PRE_BEND=NOT_VERIFIABLE
+18 m5 note 72                    MATCHED      ON_TIME    -10 ms missing=[] BEND=NOT_VERIFIABLE RELEASE=NOT_VERIFIABLE
+19 m5 note 71                    MATCHED      ON_TIME    -13 ms missing=[] BEND=NOT_VERIFIABLE
+20 m6 note 64                    MATCHED      ON_TIME     -5 ms missing=[] TREMOLO_PICKING=NOT_VERIFIABLE
+21 m6 note 69                    MATCHED      ON_TIME     -8 ms missing=[] VIBRATO=NOT_VERIFIABLE
+22 m6 note 67                    MATCHED      ON_TIME     -5 ms missing=[] SLIDE=NOT_VERIFIABLE
+23 m6 note 69                    MATCHED      ON_TIME    +13 ms missing=[]
+24 m7 chord [43, 47, 50, 55, 59, 67] MATCHED      ON_TIME     +0 ms missing=[]
+25 m7 note 67                    MATCHED      ON_TIME     +6 ms missing=[]
+26 m7 note 62                    MATCHED      ON_TIME     -1 ms missing=[]
+27 m7 note 64                    MATCHED      ON_TIME     +8 ms missing=[] HAMMER_ON=NOT_VERIFIABLE
+28 m8 chord [45, 52, 57, 60, 64] MATCHED      ON_TIME     +0 ms missing=[]
+29 m8 note 69                    MATCHED      ON_TIME     +1 ms missing=[] VIBRATO=NOT_VERIFIABLE
+matched 28 (on time 28), wrong pitch 0, missed 1, other 1, extras 0 of 30 events
