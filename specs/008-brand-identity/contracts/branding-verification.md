@@ -17,3 +17,7 @@ For each package built by the `Release` workflow (macOS `.app` folder or its zip
 - **macOS (done by the owner, G2):** Finder, Dock, the window title bar, the splash, the switcher (Cmd-Tab), the About window.
 - **Windows and Linux:** launcher, window, installer and uninstaller (Windows), menu entry and window (Linux). Reported **done** or **not done** per platform in the release notes; a platform nobody looked at is never described as validated (constitution XII).
 - **Visual review of the derivatives (G1):** contact sheets at 16, 32, 64, 128, 256, 512 and 1024 px on a light and a dark background; the owner looks for a lost silhouette, an unintended opaque square or an unreadable wordmark where the full logo is used (SC-004).
+
+## What the verification does not reach (convergence of 2026-10-14, T038)
+
+The **Windows installer is not built by the `Release` workflow** (it builds the zip, the tar.gz, the deb and the macOS zip). The installer images and icons (S3 to S7) are therefore verified **in the repository only**, not in a package: `BrandingAssetsTest` checks that both installer projects (`tuxguitar-windows-swt-x86_64-installer` and `tuxguitar-windows-jfx-x86_64-installer`, `src/installbuilder/project.xml`) name exactly those files and that the files exist, with the declared formats and dimensions. `misc/test-verify-branding.sh` (T039) shows that the package verifier itself fails on a missing or a different icon.

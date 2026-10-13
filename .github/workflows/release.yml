@@ -75,6 +75,8 @@ jobs:
       # spec 008: the official logo is in the app (test of the assets of the repository, then identity of the packaged icons)
       - name: Branding assets (test)
         run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e test -pl ../../TuxGuitar-practice -am -Dtest=BrandingAssetsTest -Dbranding.release=true -Dsurefire.failIfNoSpecifiedTests=false
+      - name: Self-test of the branding verifier (it must fail on a missing or a different icon)
+        run: misc/test-verify-branding.sh
       - name: Embed the JRE
         run: |
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target

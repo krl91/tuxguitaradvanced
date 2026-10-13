@@ -229,6 +229,34 @@ public class BrandingAssetsTest {
 	}
 
 	@Test
+	public void theWindowsInstallersReadExactlyTheDeclaredImagesAndIcons() throws Exception {
+		Path root = root();
+		Map<String, String> declared = new LinkedHashMap<String, String>();
+		for (Map<String, Object> surface : surfaces(manifest(root))) {
+			declared.put((String) surface.get("id"), (String) surface.get("path"));
+		}
+		// the installer tag -> the surface of the manifest (S3 to S7)
+		Map<String, String> tags = new LinkedHashMap<String, String>();
+		tags.put("windowsExecutableIcon", "S3");
+		tags.put("windowsUninstallerExecutableIcon", "S4");
+		tags.put("logoImage", "S5");
+		tags.put("leftImage", "S6");
+		tags.put("splashImage", "S7");
+		for (String project : new String[] { "desktop/build-scripts/tuxguitar-windows-swt-x86_64-installer/src/installbuilder/project.xml",
+				"desktop/build-scripts/tuxguitar-windows-jfx-x86_64-installer/src/installbuilder/project.xml" }) {
+			Path file = root.resolve(project);
+			String xml = new String(Files.readAllBytes(file), "UTF-8");
+			for (Map.Entry<String, String> tag : tags.entrySet()) {
+				java.util.regex.Matcher m = java.util.regex.Pattern.compile("<" + tag.getKey() + ">([^<]+)</" + tag.getKey() + ">").matcher(xml);
+				assertTrue(m.find(), project + " names a file in <" + tag.getKey() + ">");
+				Path named = file.getParent().resolve(m.group(1).trim()).normalize();
+				assertTrue(Files.exists(named), project + ": " + named + " exists");
+				assertEquals(root.resolve(declared.get(tag.getValue())).normalize(), named, project + ": <" + tag.getKey() + "> is the surface " + tag.getValue() + " of the manifest");
+			}
+		}
+	}
+
+	@Test
 	public void aReleaseCarriesOnlyApprovedDerivatives() throws Exception {
 		Assumptions.assumeTrue(Boolean.getBoolean("branding.release"), "only checked for a release (-Dbranding.release=true)");
 		Path root = root();
