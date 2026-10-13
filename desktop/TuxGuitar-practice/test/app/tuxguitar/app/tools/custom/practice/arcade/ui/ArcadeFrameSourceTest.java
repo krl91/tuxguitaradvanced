@@ -130,4 +130,23 @@ public class ArcadeFrameSourceTest {
 		clock.stopClock();
 		assertEquals(ArcadeFrameSource.NOT_READY_NANOS, source.timelineNanosAt(clock.nowNanos()), "a stopped player says nothing");
 	}
+
+	@Test
+	public void duringTheCountInTheNotesComeFromTheFarEndWhileTheClockHoldsStillAndTheClockTakesOverWhenTheMusicBegins() {
+		clock.start(FIRST_TICK);
+		clock.pause();
+		ArcadeFrameSource counting = new ArcadeFrameSource(scene, timeline, FIRST_TICK, clock, () -> null, () -> 100, quality, 2000 * MS, 0L);
+		long wall = clock.nowNanos();
+		Scene first = counting.frame(wall, SCREEN);
+		assertEquals(describe(scene.build(-2000 * MS, SCREEN, null, 100, quality.tier())), describe(first), "at the first click the music is a whole count-in away");
+		assertTrue(first.forEvent(0, Role.MARKER).size() <= 1);
+		clock.advance(1000 * MS);
+		Scene half = counting.frame(clock.nowNanos(), SCREEN);
+		assertEquals(describe(scene.build(-1000 * MS, SCREEN, null, 100, quality.tier())), describe(half), "half way through the count-in, though the clock did not move");
+		clock.advance(1000 * MS);
+		clock.resume();
+		clock.advance(500 * MS);
+		Scene playing = counting.frame(clock.nowNanos(), SCREEN);
+		assertEquals(describe(scene.build(counting.timelineNanosAt(clock.nowNanos()), SCREEN, null, 100, quality.tier())), describe(playing), "then the clock of the player");
+	}
 }

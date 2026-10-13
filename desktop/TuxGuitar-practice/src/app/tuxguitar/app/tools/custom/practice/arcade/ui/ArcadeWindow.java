@@ -89,6 +89,13 @@ public final class ArcadeWindow {
 				ArcadeWindow.this.actions.stop();
 			}
 		});
+		// the size of the window changes when it goes full screen and when the system gives it back: the rows are laid out again every time, so that the picture
+		// is never taller or wider than the room it has (owner, 2026-10-13: the texts of the top were cut)
+		this.window.addResizeListener(event -> {
+			if (!this.window.isDisposed()) {
+				this.window.layout();
+			}
+		});
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
 				ArcadeWindow.this.canvas.dispose();
@@ -104,8 +111,9 @@ public final class ArcadeWindow {
 	public void open() {
 		this.window.pack();
 		this.window.open();
-		// the game fills the screen (owner, 2026-10-11)
-		this.window.setFullScreen(true);
+		// the game fills the screen (owner, 2026-10-11): maximized, not full screen: on macOS the full screen of the toolkit left the window at its first size while
+		// the rows were laid out for the whole screen, so the picture was taller than the room it had and its top, with the texts, was out of sight (2026-10-13)
+		this.window.maximize();
 		// the size of the window changes once it is shown: the rows are laid out again on the next turn of the UI loop, so that the picture takes all the room
 		// and the buttons are at the very bottom
 		this.ui.post(() -> {

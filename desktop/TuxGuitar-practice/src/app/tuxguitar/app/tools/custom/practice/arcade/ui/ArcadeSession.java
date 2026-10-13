@@ -32,6 +32,7 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 	private final FollowStarter.Plan plan;
 	private final ArcadeRun arcadeRun;
 	private final ArcadeScene scene;
+	private long lookAheadNanos;
 	private final AtomicReference<FollowSession.Snapshot> latest = new AtomicReference<FollowSession.Snapshot>();
 
 	private ArcadeSession(FollowStarter.Plan plan, ArcadeRun arcadeRun, ArcadeScene scene) {
@@ -83,7 +84,9 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 		NeckModel neck = NeckModel.of(tuning, 24);
 		ArcadeScene scene = new ArcadeScene(events, neck, StringColours.forStrings(tuning.getStringCount()), CameraTrack.build(events, neck, CameraTrack.Settings.standard().withLookAhead(lookAheadNanos)),
 				labels, monochrome).withMarkerSize(markerSize).withPerspective(farScale, horizon);
-		return new ArcadeSession(plan, new ArcadeRun(plan.sequence(), ArcadeScoring.standard()), scene);
+		ArcadeSession session = new ArcadeSession(plan, new ArcadeRun(plan.sequence(), ArcadeScoring.standard()), scene);
+		session.lookAheadNanos = lookAheadNanos;
+		return session;
 	}
 
 	public FollowStarter.Plan plan() {
@@ -107,7 +110,9 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 
 	/** The source of the frames of the canvas, on the clock of the player the plan was made with. */
 	public ArcadeFrameSource frameSource(TempoClock clock, QualityController quality, IntSupplier speedPercent) {
-		return new ArcadeFrameSource(this.scene, this.plan.timeline(), FollowStarter.FIRST_TICK, clock, this::view, speedPercent, quality);
+		// the metronome counts one measure in before the music, and the look-ahead is one measure: the first notes are at the far end when it starts
+		long startNanos = this.plan.timeline().nanosAtTick(this.plan.startTick() - FollowStarter.FIRST_TICK);
+		return new ArcadeFrameSource(this.scene, this.plan.timeline(), FollowStarter.FIRST_TICK, clock, this::view, speedPercent, quality, this.lookAheadNanos, startNanos);
 	}
 
 	/** The result of the run so far, or null before the first snapshot. */
