@@ -21,6 +21,7 @@
 
 - Q: Which range of the percentage of the maximum covers the whole height of the flames, from embers to full fire? → A: **Embers at 50 % or less, full fire at 100 %, linear between the two** (an 80 % gives 60 % of the height).
 - Q: How many events must be judged before the flames follow the percentage? → A: **4 events** (about a first measure); until then only embers burn.
+- Q: What fall and rise times for the flames? → A: **Fall about 3 seconds** from full fire to embers, **rise about 0.5 second**.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -103,7 +104,7 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 - **FR-001** (placement): In an Arcade run, flames MUST burn behind the game, rising from the bottom edge of the window, stronger towards the left and right corners, with a weakened central zone under the fret numbers, the verdict badge and the buttons (variant A, `mockups/A-pied-du-manche.png`).
 - **FR-002** (what they show): The height and the brightness of the flames MUST follow the score as a percentage of the maximum reached since the start of the run (the share of the maximum of the result of the run); **embers at 50 % or less, full fire at 100 %, linear between the two**; no number is shown during play (FR-021 of spec 003).
 - **FR-003** (start of a run): Until **4 events** of the run have been judged (owner's answer, `/speckit-clarify` 2026-10-14), only embers MUST burn, so that the flames do not start at full height.
-- **FR-004** (fall and rise): When the percentage falls, the flames MUST lose height progressively over a few seconds (assumed: about 3 seconds from full height to embers), down to embers, never in one frame; when it rises, they MUST rise faster than they fall (assumed: about 0.5 second), without jumping.
+- **FR-004** (fall and rise): When the percentage falls, the flames MUST lose height progressively over a few seconds (**about 3 seconds** from full height to embers, owner's answer of 2026-10-14), down to embers, never in one frame; when it rises, they MUST rise faster than they fall (**about 0.5 second**, owner's answer of 2026-10-14), without jumping.
 - **FR-005** (never hindering): The flames MUST be drawn behind every other item of the picture; they MUST NOT cover, dim or reduce the contrast of any note, chord, technique mark, string, fret wire, fret number, verdict badge, HUD text or button, at any window size (FR-080 of spec 003).
 - **FR-006** (decoration only): The flames MUST NOT change the judgement, the score, the streak, the result, the timing of any event or the clock (SC-004).
 - **FR-007** (quality): The flames are decoration: when the picture quality drops (levels FULL, BALANCED, PERFORMANCE of spec 003) they MUST be simplified first, then removed, before anything of the game is touched (FR-053, FR-054 of spec 003); in PERFORMANCE they MUST be absent.
@@ -134,7 +135,7 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 ## Assumptions
 
 - The share of the maximum is the one the result of the run already computes (spec 003); this specification does not change how it is computed.
-- The fall (about 3 seconds) and rise (about 0.5 second) times, the default state of the setting (**discreet**) and the exact shape and colours of the flames are assumptions to be fixed in planning and shown to the owner on a mockup; the mockups are static images drawn on a real capture of the game, not a promise of rendering.
+- The default state of the setting (**discreet**) and the exact shape and colours of the flames are assumptions to be fixed in planning and shown to the owner on a mockup; the mockups are static images drawn on a real capture of the game, not a promise of rendering.
 - The effect is for the Arcade run window only; the other modes, the result window and the preparation window have no flames.
 - The effect is validated on macOS Apple Silicon first; Windows and Linux are not claimed to be validated.
 - No sound is added.
