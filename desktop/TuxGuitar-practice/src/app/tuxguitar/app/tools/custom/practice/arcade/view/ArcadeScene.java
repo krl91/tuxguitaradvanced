@@ -562,21 +562,19 @@ public final class ArcadeScene {
 	 */
 	private void drawField(Out out, Frame f) {
 		if (f.tier.glow()) {
-			// the approach band (FR-072): a faint blue zone behind the lanes, from the horizon to the neck, the lane of the active fret a little lighter
-			ScreenPoint farLeft = f.projection.approach(f.cam.left(), 0.0, f.cam);
-			ScreenPoint farRight = f.projection.approach(f.cam.right(), 0.0, f.cam);
-			ScreenPoint nearLeft = f.projection.approach(f.cam.left(), 1.0, f.cam);
-			ScreenPoint nearRight = f.projection.approach(f.cam.right(), 1.0, f.cam);
+			// the approach band (FR-072): a faint blue zone behind the lanes, from the horizon to the foot of the neck where everything lands (Q37), the lane of
+			// the active fret a little lighter; the same straight lines as the lanes, so that it goes the way of the next note or chord
+			ScreenPoint farLeft = ground(f, f.cam.left(), 0.0);
+			ScreenPoint farRight = ground(f, f.cam.right(), 0.0);
+			ScreenPoint nearLeft = ground(f, f.cam.left(), 1.0);
+			ScreenPoint nearRight = ground(f, f.cam.right(), 1.0);
 			out.quad(Role.APPROACH_BAND, new double[] { farLeft.x(), farLeft.y(), farRight.x(), farRight.y(), nearRight.x(), nearRight.y(), nearLeft.x(), nearLeft.y() }, BAND_COLOUR, 0.16, -1, 0);
-			// the band goes on under the neck, which is see-through: the strings float over it
-			double neckBottom = f.h * IsometricProjection.NECK_NEAR_EDGE;
-			out.quad(Role.APPROACH_BAND, new double[] { nearLeft.x(), nearLeft.y(), nearRight.x(), nearRight.y(), nearRight.x(), neckBottom, nearLeft.x(), neckBottom }, BAND_COLOUR, 0.16, -1, 0);
 			for (int fret : f.activeFrets) {
 				if (f.cam.shows(this.neck.fretX(fret - 1), 0.0) || f.cam.shows(this.neck.fretX(fret), 0.0)) {
-					ScreenPoint a0 = f.projection.approach(this.neck.fretX(fret - 1), 0.0, f.cam);
-					ScreenPoint b0 = f.projection.approach(this.neck.fretX(fret), 0.0, f.cam);
-					ScreenPoint a1 = f.projection.approach(this.neck.fretX(fret - 1), 1.0, f.cam);
-					ScreenPoint b1 = f.projection.approach(this.neck.fretX(fret), 1.0, f.cam);
+					ScreenPoint a0 = ground(f, this.neck.fretX(fret - 1), 0.0);
+					ScreenPoint b0 = ground(f, this.neck.fretX(fret), 0.0);
+					ScreenPoint a1 = ground(f, this.neck.fretX(fret - 1), 1.0);
+					ScreenPoint b1 = ground(f, this.neck.fretX(fret), 1.0);
 					out.quad(Role.APPROACH_BAND, new double[] { a0.x(), a0.y(), b0.x(), b0.y(), b1.x(), b1.y(), a1.x(), a1.y() }, BAND_LANE_COLOUR, 0.14, -1, 0);
 				}
 			}

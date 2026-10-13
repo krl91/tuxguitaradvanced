@@ -37,6 +37,7 @@ public final class ArcadeWindow {
 	private final ArcadeCanvas.UiThread ui;
 	private final UIWindow window;
 	private final ArcadeCanvas canvas;
+	private final ArcadeFrameSource source;
 	private final UIButton pause;
 	private final UILabel state;
 	private final UIPanel buttonsPanel;
@@ -51,6 +52,7 @@ public final class ArcadeWindow {
 		this.window.setText(texts.get("arcade.window.title", texts.get("arcade.name")));
 		UITableLayout layout = new UITableLayout();
 		this.window.setLayout(layout);
+		this.source = source;
 		this.canvas = new ArcadeCanvas(factory, this.window, source, ui, System::nanoTime, "Sans");
 		layout.set(this.canvas.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 960f, 540f, null);
 
@@ -72,11 +74,7 @@ public final class ArcadeWindow {
 		buttonsLayout.set(stop, 1, 4, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_CENTER, false, false, 1, 1, 90f, 28f, null);
 		this.pause.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
-				if (ArcadeWindow.this.paused) {
-					ArcadeWindow.this.actions.resume();
-				} else {
-					ArcadeWindow.this.actions.pause();
-				}
+				ArcadeWindow.this.pausePressed();
 			}
 		});
 		restart.addSelectionListener(new UISelectionListener() {
@@ -141,12 +139,27 @@ public final class ArcadeWindow {
 		return this.window;
 	}
 
+	/** The button Pause / Resume: pauses a run that goes on and resumes a run that is paused. */
+	void pausePressed() {
+		if (this.paused) {
+			this.actions.resume();
+		} else {
+			this.actions.pause();
+		}
+	}
+
+	/** The text of the button Pause / Resume, for the tests. */
+	String pauseButtonText() {
+		return this.pause.getText();
+	}
+
 	/** The run is paused or running again: the button and the line under the picture say so. */
 	public void setPaused(boolean paused) {
 		if (this.window.isDisposed()) {
 			return;
 		}
 		this.paused = paused;
+		this.source.setPaused(paused, System.nanoTime());
 		this.pause.setText(this.texts.get(paused ? "arcade.button.resume" : "arcade.button.pause"));
 		this.state.setText(paused ? this.texts.get("arcade.state.paused") : "");
 	}

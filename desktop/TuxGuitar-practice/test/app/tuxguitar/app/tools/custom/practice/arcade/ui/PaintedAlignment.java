@@ -162,7 +162,20 @@ final class PaintedAlignment {
 			}
 		}
 		int wireRow = (int) Math.round(bestRow);
-		List<Double> wires = verticalLines(picture, wireRow, 0x505060, 0, picture.width - 1);
+		List<Double> wires = new ArrayList<Double>();
+		// only the lines that are wires of the scene: the edge of the lighter approach lane over the neck is as bright as a wire and is not one
+		for (double line : verticalLines(picture, wireRow, 0x505060, 0, picture.width - 1)) {
+			java.util.List<SceneItem> sceneWires = new ArrayList<SceneItem>(scene.withRole(Role.FRET_WIRE));
+			sceneWires.addAll(scene.withRole(Role.NUT));
+			for (SceneItem wire : sceneWires) {
+				double dy = wire.value(3) - wire.value(1);
+				double x = Math.abs(dy) < 1e-9 ? wire.value(0) : wire.value(0) + (wire.value(2) - wire.value(0)) * (wireRow - wire.value(1)) / dy;
+				if (Math.abs(x - line) <= 3.0) {
+					wires.add(line);
+					break;
+				}
+			}
+		}
 		double left = Double.NaN;
 		double right = Double.NaN;
 		for (double wire : wires) {

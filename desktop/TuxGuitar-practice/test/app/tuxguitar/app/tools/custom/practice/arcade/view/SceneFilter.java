@@ -21,8 +21,8 @@ public final class SceneFilter {
 		return new Scene(items, scene.nowNanos(), scene.viewport(), scene.theme());
 	}
 
-	/** The scene without the figure of the incoming note, and without the faint lanes that go on under the neck, so that the target on the neck is measured alone. */
+	/** The scene without the figure of the incoming note, and without the faint lanes and the approach band that go on under the neck, so that the target on the neck is measured alone. */
 	public static Scene withoutTheMarker(Scene scene) {
-		return without(scene, SceneItem.Role.MARKER, SceneItem.Role.GLOW, SceneItem.Role.MARKER_THREAD, SceneItem.Role.MARKER_FOOTPRINT, SceneItem.Role.MARKER_FRET, SceneItem.Role.TRAIL, SceneItem.Role.NECK_LANE);
+		return without(scene, SceneItem.Role.MARKER, SceneItem.Role.GLOW, SceneItem.Role.MARKER_THREAD, SceneItem.Role.MARKER_FOOTPRINT, SceneItem.Role.MARKER_FRET, SceneItem.Role.TRAIL, SceneItem.Role.NECK_LANE, SceneItem.Role.APPROACH_BAND);
 	}
 }

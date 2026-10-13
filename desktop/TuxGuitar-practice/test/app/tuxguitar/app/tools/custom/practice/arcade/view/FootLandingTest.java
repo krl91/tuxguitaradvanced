@@ -36,4 +36,26 @@ public class FootLandingTest {
 		Scene landed = fixture.scene(false).build(fixture.onset(0), SCREEN, null, 100, QualityTier.FULL);
 		assertEquals(Landing.footY(SCREEN), bottom(landed.forEvent(0, Role.CHORD_PANEL).get(0)), 0.5, "at the foot at the onset");
 	}
+
+	@Test
+	public void theApproachBandGoesTheWayOfTheLanesAndReachesTheFootOfTheNeckWhereEverythingLands() {
+		SongFixture song = new SongFixture(2);
+		song.quarter(0, 0, 1, 12);
+		song.quarter(0, 1, 2, 5);
+		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+		Scene scene = fixture.scene(false).build(fixture.onset(0) - 500 * MS, SCREEN, null, 100, QualityTier.FULL);
+		IsometricProjection projection = new IsometricProjection(SCREEN);
+		double foot = Landing.footY(SCREEN);
+		boolean reaches = false;
+		for (SceneItem band : scene.withRole(Role.APPROACH_BAND)) {
+			assertTrue(bottom(band) <= foot + 0.5, "the band does not go under the foot");
+			reaches |= Math.abs(bottom(band) - foot) < 0.5;
+			// the sides follow the lanes: straight from the horizon to the foot, so the lower corners are not under the upper ones
+			double topLeft = band.value(0);
+			double bottomLeft = band.value(6);
+			double centre = SCREEN.width() / 2.0;
+			assertTrue(Math.abs(bottomLeft - centre) >= Math.abs(topLeft - centre) - 0.5, "the sides open toward the foot, as the lanes do");
+		}
+		assertTrue(reaches, "the band reaches the foot of the neck");
+	}
 }

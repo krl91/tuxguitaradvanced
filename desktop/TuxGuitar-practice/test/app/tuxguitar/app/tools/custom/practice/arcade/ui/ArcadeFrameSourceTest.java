@@ -192,4 +192,39 @@ public class ArcadeFrameSourceTest {
 		}
 		assertTrue(worst < 12.0, "the first marker moved " + worst + " px between two frames of 5 ms");
 	}
+
+	@Test
+	public void aPauseHoldsThePictureStillAndAResumeCountsInAgainFromWhereTheMusicWasWhateverTheMomentOfThePause() {
+		// paused during the first count-in: the picture does not go on by itself, and the run counts in again from the start
+		clock.start(FIRST_TICK);
+		clock.pause();
+		ArcadeFrameSource counting = new ArcadeFrameSource(scene, timeline, FIRST_TICK, clock, () -> null, () -> 100, quality, 2000 * MS, 0L);
+		counting.frame(clock.nowNanos(), SCREEN);
+		clock.advance(1000 * MS);
+		counting.setPaused(true, clock.nowNanos());
+		String frozen = describe(scene.build(-1000 * MS, SCREEN, null, 100, quality.tier()));
+		assertEquals(frozen, describe(counting.frame(clock.nowNanos(), SCREEN)), "paused: the picture holds");
+		clock.advance(3000 * MS);
+		assertEquals(frozen, describe(counting.frame(clock.nowNanos(), SCREEN)), "paused for a long time: still the same picture");
+		counting.setPaused(false, clock.nowNanos());
+		assertEquals(describe(scene.build(-2000 * MS, SCREEN, null, 100, quality.tier())), describe(counting.frame(clock.nowNanos(), SCREEN)), "resumed: a whole count-in before the music");
+		clock.advance(1000 * MS);
+		assertEquals(describe(scene.build(-1000 * MS, SCREEN, null, 100, quality.tier())), describe(counting.frame(clock.nowNanos(), SCREEN)), "and it goes on with the clicks");
+		clock.advance(1000 * MS);
+		clock.resume();
+		clock.advance(300 * MS);
+		Scene playing = counting.frame(clock.nowNanos(), SCREEN);
+		assertEquals(describe(scene.build(counting.timelineNanosAt(clock.nowNanos()), SCREEN, null, 100, quality.tier())), describe(playing), "then the clock of the player");
+
+		// paused in the music: the picture holds, and a resume counts in again from where the music was
+		counting.setPaused(true, clock.nowNanos());
+		long at = counting.timelineNanosAt(clock.nowNanos());
+		clock.pause();
+		String held = describe(scene.build(at, SCREEN, null, 100, quality.tier()));
+		clock.advance(5000 * MS);
+		assertEquals(held, describe(counting.frame(clock.nowNanos(), SCREEN)), "paused in the music: the picture holds");
+		counting.setPaused(false, clock.nowNanos());
+		assertEquals(describe(scene.build(at - 2000 * MS, SCREEN, null, 100, quality.tier())), describe(counting.frame(clock.nowNanos(), SCREEN)),
+				"resumed: a count-in before the place where the music was");
+	}
 }

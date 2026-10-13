@@ -222,4 +222,29 @@ public class ArcadeWindowSwtTest {
 			assertFalse(window.isOpen());
 		});
 	}
+
+	@Test
+	public void theButtonPausePausesAndTheButtonResumeResumesAsOftenAsItIsPressed() throws Exception {
+		withDisplay((display, factory) -> {
+			Counting actions = new Counting();
+			FakeTempoClock[] clock = new FakeTempoClock[1];
+			ArcadeWindow window = open(display, factory, actions, new AtomicInteger(), clock);
+			try {
+				for (int round = 1; round <= 3; round++) {
+					assertEquals(TEXTS.get("arcade.button.pause"), window.pauseButtonText(), "round " + round + ": the button says Pause while the run goes on");
+					window.pausePressed();
+					assertEquals(round, actions.pauses.get(), "round " + round + ": Pause pauses");
+					assertEquals(round - 1, actions.resumes.get(), "round " + round + ": and nothing is resumed");
+					window.setPaused(true);
+					assertEquals(TEXTS.get("arcade.button.resume"), window.pauseButtonText(), "round " + round + ": the button says Resume while it is paused");
+					window.pausePressed();
+					assertEquals(round, actions.resumes.get(), "round " + round + ": Resume resumes");
+					assertEquals(round, actions.pauses.get(), "round " + round + ": and nothing is paused again");
+					window.setPaused(false);
+				}
+			} finally {
+				window.close();
+			}
+		});
+	}
 }

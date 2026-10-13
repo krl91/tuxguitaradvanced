@@ -31,7 +31,9 @@ public final class ArcadeFrameSource {
 	private final IntSupplier speedPercent;
 	private final QualityController quality;
 	private final long countInNanos;
-	private final long startNanos;
+	private long startNanos;
+	private boolean paused;
+	private long frozenNanos;
 	private long startWall = Long.MIN_VALUE;
 	private boolean countInOver;
 	private long referenceReal = Long.MIN_VALUE;
@@ -92,6 +94,9 @@ public final class ArcadeFrameSource {
 	 */
 	private long pictureNanosAt(long wallNanos) {
 		long real = timelineNanosAt(wallNanos);
+		if (this.paused) {
+			return this.frozenNanos;
+		}
 		if (this.countInNanos <= 0L || this.countInOver) {
 			return real;
 		}
@@ -114,6 +119,27 @@ public final class ArcadeFrameSource {
 			return real;
 		}
 		return own;
+	}
+
+	/**
+	 * The run is paused or goes on (UI thread, with the wall time of the change): the picture holds still while it is paused, and a run that goes on counts in
+	 * again, as the player does, from where the music was: the notes come from the far end while the metronome clicks, and the clock of the player is followed
+	 * once it moves (owner, 2026-10-13: after a pause during the count-in the first chord was on the neck).
+	 */
+	public void setPaused(boolean paused, long wallNanos) {
+		if (paused && !this.paused) {
+			this.frozenNanos = pictureNanosAt(wallNanos);
+			this.paused = true;
+		} else if (!paused && this.paused) {
+			this.paused = false;
+			if (this.countInNanos > 0L) {
+				long real = timelineNanosAt(wallNanos);
+				this.startNanos = real != NOT_READY_NANOS ? real : this.frozenNanos;
+				this.startWall = wallNanos;
+				this.countInOver = false;
+				this.referenceReal = Long.MIN_VALUE;
+			}
+		}
 	}
 
 	public Scene frame(long wallNanos, Viewport viewport) {
