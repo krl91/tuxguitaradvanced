@@ -149,7 +149,7 @@ public class ArcadeControllerTest {
 	}
 
 	@Test
-	public void aResultExistsOnlyWhenThePassageWasJudgedToItsEndAndTheSongCameToIt() {
+	public void aResultIsShownWheneverTheSongCameToItsEndEvenIfNothingWasPlayedOrTheJudgingIsNotFinished() {
 		for (FollowRun.Ended reason : FollowRun.Ended.values()) {
 			for (boolean complete : new boolean[] { false, true }) {
 				FakeRun run = new FakeRun();
@@ -170,8 +170,8 @@ public class ArcadeControllerTest {
 				run.controller = controller;
 				controller.start();
 				controller.ended(reason);
-				boolean wanted = reason == FollowRun.Ended.PLAYER_STOPPED && complete;
-				assertEquals(wanted, asked[0], reason + " complete=" + complete + ": the result is built only for the natural end");
+				boolean wanted = reason == FollowRun.Ended.PLAYER_STOPPED;
+				assertEquals(wanted, asked[0], reason + " complete=" + complete + ": the result is built for the natural end, complete or not");
 				assertEquals(1, recorder.ended);
 			}
 		}
