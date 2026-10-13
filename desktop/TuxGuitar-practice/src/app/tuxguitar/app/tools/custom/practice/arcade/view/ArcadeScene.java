@@ -1376,15 +1376,19 @@ public final class ArcadeScene {
 		return sum / event.positions().size();
 	}
 
+	private static final double HUD_TOP_MARGIN = 44.0;
+
 	private void drawHud(Out out, Viewport viewport, ArcadeRun.View run, int speedPercent, String next) {
 		double h = viewport.height();
+		// below the title bar that macOS lays over the top of a full-screen window when the pointer goes there (owner, 2026-10-13: the texts were hidden)
+		double top = Math.max(h * 0.05, HUD_TOP_MARGIN + h * 0.017);
 		if (run != null) {
-			out.text(Role.HUD_STREAK, this.labels.streak(run.streak()), viewport.width() * 0.03, h * 0.05, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, SceneItem.Align.LEFT);
+			out.text(Role.HUD_STREAK, this.labels.streak(run.streak()), viewport.width() * 0.03, top, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, SceneItem.Align.LEFT);
 		}
-		out.text(Role.HUD_SPEED, this.labels.speed(speedPercent), viewport.width() * 0.97, h * 0.05, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, SceneItem.Align.RIGHT);
+		out.text(Role.HUD_SPEED, this.labels.speed(speedPercent), viewport.width() * 0.97, top, h * 0.034, TEXT_COLOUR, 1.0, -1, 0, SceneItem.Align.RIGHT);
 		if (next != null) {
 			// the next expected event, under the speed: what to play next, said in words (the score of the run is never shown while playing)
-			out.text(Role.HUD_NEXT, next, viewport.width() * 0.97, h * 0.098, h * 0.026, TEXT_COLOUR, 0.85, -1, 0, SceneItem.Align.RIGHT);
+			out.text(Role.HUD_NEXT, next, viewport.width() * 0.97, top + h * 0.048, h * 0.026, TEXT_COLOUR, 0.85, -1, 0, SceneItem.Align.RIGHT);
 		}
 	}
 
