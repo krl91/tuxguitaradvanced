@@ -19,7 +19,7 @@
 ## Reading is never hindered: Consistency and Coverage
 
 - [ ] CHK006 - Do FR-005 ("flames MUST NOT dim any item") and the translucent neck of spec 003 (the flames show faintly through its body) agree, or is the neck an explicit exception? [Conflict, Spec §FR-005, Spec 003 §FR-075]
-- [ ] CHK007 - Are the guard rules (fade to 12 % near texts, no yellow core in the centre) requirements of the spec, or only design decisions of the plan that a later change could drop? [Consistency, Plan §R8, Spec §FR-005]
+- [x] CHK007 - Are the guard rules (fade to 12 % near texts, no yellow core in the centre) requirements of the spec, or only design decisions of the plan that a later change could drop? [Consistency, Plan §R8, Spec §FR-005]
 - [ ] CHK008 - Are transient items (verdict badge, labels of bends and techniques, chord names) that appear over the flames covered by the reading requirement? [Coverage, Spec §FR-005]
 - [ ] CHK009 - Are requirements defined for people sensitive to motion (reduced-motion preference of the system), or is their absence an explicit assumption? [Gap, Accessibility, Spec §FR-010]
 - [ ] CHK010 - Is the monochrome look defined precisely ("tones of one colour": which colour, which brightness range)? [Clarity, Spec §FR-011]
@@ -46,15 +46,16 @@
 
 - [ ] CHK023 - Are the meanings of *discreet* and *full* (60 % of the height and of the opacity, half the tongues) stated in the spec as requirements and not only in the plan? [Consistency, Spec §FR-008, Plan §R5]
 - [ ] CHK024 - Is the moment the setting is read (the start of a run; a change during a run applies to the next run) stated as a requirement? [Completeness, Spec §FR-008, Tasks T022]
-- [ ] CHK025 - Is the persistence rule (kept until the application is closed, default back at the next opening) consistent between the owner's decision, FR-008 and the data model? [Consistency, Spec §FR-008, Data model §FlameSetting]
+- [x] CHK025 - Is the persistence rule (kept until the application is closed, default back at the next opening) consistent between the owner's decision, FR-008 and the data model? [Consistency, Spec §FR-008, Data model §FlameSetting]
 
 ## Traceability and Non-Functional
 
-- [ ] CHK026 - Does every success criterion SC-001 to SC-007 have at least one task that proves it (SC-007 is the owner's gate G2)? [Traceability, Tasks T006 to T030]
-- [ ] CHK027 - Is the cost criterion SC-006 defined by a comparison (frames lost with and without the flames, tolerance 1 %) and by a named run (the ten-minute stress run of spec 003) in the spec itself? [Measurability, Spec §SC-006]
-- [ ] CHK028 - Is the requirement "no number of score during play" (FR-021 of spec 003) restated or referenced where the flames show the score, so that no label of the percentage is added to the picture? [Consistency, Spec §FR-002]
+- [x] CHK026 - Does every success criterion SC-001 to SC-007 have at least one task that proves it (SC-007 is the owner's gate G2)? [Traceability, Tasks T006 to T030]
+- [x] CHK027 - Is the cost criterion SC-006 defined by a comparison (frames lost with and without the flames, tolerance 1 %) and by a named run (the ten-minute stress run of spec 003) in the spec itself? [Measurability, Spec §SC-006]
+- [x] CHK028 - Is the requirement "no number of score during play" (FR-021 of spec 003) restated or referenced where the flames show the score, so that no label of the percentage is added to the picture? [Consistency, Spec §FR-002]
 
 ## Notes
 
 - Check items off when the requirements-quality criterion is satisfied.
 - `/speckit-implement` reads checklist state but does not modify markers.
+- Review of 2026-10-14 (the owner, by questions in the session): CHK007 and CHK025 to CHK028 were judged satisfied. The others were judged to need a text or a decision (CHK010: no monochrome look; CHK019: the flames hold their level during a pause and the count-in of a resume; CHK009: a requirement for reduced motion); the texts were written in the spec the same day (FR-001 to FR-005, FR-007, FR-008, FR-010, FR-011, FR-013, SC-001 to SC-003, Edge Cases) and those items stay unchecked until the owner confirms the wording.
