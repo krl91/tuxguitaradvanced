@@ -125,6 +125,12 @@ final class SwtContractToolkit {
 					return null;
 				case "isDisposed":
 					return this.disposed;
+				case "getPackedSize":
+					// a window refits itself when what it shows changes (WindowFit): the headless toolkit has no layout, a packed size of zero is the honest answer
+					return new app.tuxguitar.ui.resource.UISize(0f, 0f);
+				case "getBounds":
+					Object bounds = this.properties.get("Bounds");
+					return bounds != null ? bounds : new app.tuxguitar.ui.resource.UIRectangle(0f, 0f, 0f, 0f);
 				default:
 					break;
 			}
