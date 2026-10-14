@@ -151,4 +151,28 @@ public class FallbackRendererTest {
 		guarded.render(reference.scene(false, QualityTier.FULL), QualityTier.FULL);
 		assertEquals(before, app.tuxguitar.app.tools.custom.practice.arcade.view.SceneCapture.of(reference.scene(false, QualityTier.FULL)));
 	}
+
+	@Test
+	public void theFallbackPaintsNoFlameAndTheSelectedPathPaintsThemAll() {
+		Scene scene = ReferenceScenes.flameReading().scene(ReferenceScenes.SCREEN, QualityTier.FULL);
+		int flames = scene.withRole(SceneItem.Role.FLAME_TONGUE).size() + scene.withRole(SceneItem.Role.FLAME_EMBER).size();
+		assertTrue(flames > 0);
+		Recording selectedCalls = new Recording();
+		UiPainterRenderer selected = new UiPainterRenderer(factory(), "Sans");
+		selected.target(painter(selectedCalls));
+		selected.render(scene, QualityTier.FULL);
+		Recording fallbackCalls = new Recording();
+		UiPainterRenderer fallback = UiPainterRenderer.fallback(factory(), "Sans");
+		fallback.target(painter(fallbackCalls));
+		fallback.render(scene, QualityTier.FULL);
+		int others = 0;
+		for (SceneItem item : scene.items()) {
+			boolean left = item.role().isDecoration() || item.role() == SceneItem.Role.FIELD_GUIDE || item.role() == SceneItem.Role.NECK_LANE || item.role() == SceneItem.Role.INLAY;
+			if (item.shape() != SceneItem.Shape.TEXT && !left) {
+				others++;
+			}
+		}
+		assertEquals(others, fallbackCalls.count("initPath"), "the fallback draws the information and not one flame");
+		assertTrue(selectedCalls.count("initPath") >= fallbackCalls.count("initPath") + flames, "the selected path draws every flame item");
+	}
 }

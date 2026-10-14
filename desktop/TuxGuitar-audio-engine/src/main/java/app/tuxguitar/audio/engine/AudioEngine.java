@@ -163,6 +163,15 @@ public final class AudioEngine {
 		this.analysisService.setAttackCandidates(pitches);
 	}
 
+	/** Every hop of the signal the analysis sees, with its configure (spec 010): see {@link AnalysisService#addHopListener}. */
+	public void addHopListener(app.tuxguitar.audio.engine.analysis.HopListener listener) {
+		this.analysisService.addHopListener(listener);
+	}
+
+	public void removeHopListener(app.tuxguitar.audio.engine.analysis.HopListener listener) {
+		this.analysisService.removeHopListener(listener);
+	}
+
 	public void unsubscribe(AnalysisService.Listener listener) {
 		this.analysisService.unsubscribe(listener);
 	}

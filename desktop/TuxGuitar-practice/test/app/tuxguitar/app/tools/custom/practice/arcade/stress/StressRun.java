@@ -73,6 +73,8 @@ public final class StressRun {
 		public boolean updateAtOnce;
 		/** Events of the scene that can be asked for before the run starts (T045 and T048 vary them). */
 		public double scale = 1.0;
+		/** The stage flames of the picture (spec 009 T027, SC-006): off unless a case asks for them. */
+		public app.tuxguitar.app.tools.custom.practice.session.FlameSetting flames = app.tuxguitar.app.tools.custom.practice.session.FlameSetting.OFF;
 	}
 
 	public static final class Result {
@@ -402,7 +404,7 @@ public final class StressRun {
 			ArcadeFrameSource source = new ArcadeFrameSource(scene, plan.timeline(), FollowStarter.FIRST_TICK, player.clock(), () -> {
 				FollowSession.Snapshot snapshot = latest.get();
 				return snapshot == null ? null : arcadeRun.update(snapshot);
-			}, () -> 100, quality);
+			}, () -> 100, quality, 0L, 0L, this.config.flames, true, ArcadeScoring.standard());
 			window = this.factory.createWindow();
 			window.setLayout(new UITableLayout());
 			final Method asyncExec = this.display.getClass().getMethod("asyncExec", Runnable.class);

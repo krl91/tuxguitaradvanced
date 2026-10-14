@@ -36,12 +36,25 @@ public final class OfflineAnalysis {
 	 * @param attackCandidates the pitches the attack evidence is computed for, or null for none
 	 */
 	public static List<AnalysisFrame> analyze(float[] mono, int sampleRate, RecognitionSettings settings, boolean spectrum, int[] attackCandidates) {
+		return analyze(mono, sampleRate, settings, spectrum, attackCandidates, null);
+	}
+
+	/**
+	 * Like the other overload, also giving every hop to {@code hops} after its {@code configure(sampleRate)} (spec 010: the same call as the live engine,
+	 * so the tests run the production loop; there is no input front end offline, the hops are the samples as given). The frames are the same with or
+	 * without a listener.
+	 */
+	public static List<AnalysisFrame> analyze(float[] mono, int sampleRate, RecognitionSettings settings, boolean spectrum, int[] attackCandidates,
+			app.tuxguitar.audio.engine.analysis.HopListener hops) {
 		LevelAnalyzer levels = AudioEngine.levelAnalyzer(settings);
 		ArticulationDetector articulation = AudioEngine.articulationDetector(settings);
 		PitchEstimator estimator = PitchEngineCatalog.resolve(settings.get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate);
 		PolyphonicAnalyzer polyphonic = (spectrum ? new PolyphonicAnalyzer(PolyphonicAnalyzer.Parameters.defaults(), sampleRate) : null);
 		AttackAnalyzer attacks = (attackCandidates != null && attackCandidates.length > 0
 				? new AttackAnalyzer(AttackAnalyzer.Parameters.defaults(), sampleRate, HOP, attackCandidates) : null);
+		if( hops != null ) {
+			hops.configure(sampleRate);
+		}
 		float[] window = new float[WINDOW];
 		float[] hop = new float[HOP];
 		int filled = 0;
@@ -49,6 +62,9 @@ public final class OfflineAnalysis {
 		List<AnalysisFrame> frames = new ArrayList<AnalysisFrame>();
 		for( int offset = 0 ; offset + HOP <= mono.length ; offset += HOP ) {
 			System.arraycopy(mono, offset, hop, 0, HOP);
+			if( hops != null ) {
+				hops.hop(hop, 0, HOP);
+			}
 			System.arraycopy(window, HOP, window, 0, WINDOW - HOP);
 			System.arraycopy(hop, 0, window, WINDOW - HOP, HOP);
 			filled = Math.min(WINDOW, filled + HOP);

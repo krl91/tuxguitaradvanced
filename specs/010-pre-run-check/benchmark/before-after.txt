@@ -1,0 +1,76 @@
+Spec 010 (pre-run check): figures BEFORE any change, 2026-10-14, branch feature/interactive-practice at 17065738b
+(the precondition 0d4ea9bf1, OwnerChordsBenchmarkTest report-only, is in). Nothing of spec 010 was coded when these were taken.
+JDK 21 (Temurin), macOS Apple Silicon. Directory: desktop/build-scripts/tuxguitar-macosx-swt-cocoa.
+
+== T001 The build
+mvn -e clean verify -P native-modules,swt-gui-tests  -> BUILD SUCCESS, exit 0 (log /tmp/c010-verify.log)
+  tests run per module as printed, all with 0 failures and 0 errors: lib 73, compat 1, gtp 10 (1 skipped: TestGPCorpusSmoke),
+  midi 2, audio-engine 273, ... practice 24 SWT tests (FollowPanelSwtTest 4, PracticeToolbarSwtTest 1, GainControlSwtTest 1,
+  RecognitionSettingsSwtTest 1, ArcadePixelAlignmentSwtTest 2, ArcadeCanvasSwtTest 9, ArcadeWindowSwtTest 6) + ArcadeStressTest 2 = 26.
+mvn test -pl ../../TuxGuitar-practice -am            -> BUILD SUCCESS: practice module 873 run, 0 failures, 0 errors, 4 skipped
+  (skipped, none of them recognition: BrandingAssetsTest 1, ArcadeCorpusProfilerTest 1, ArcadeReferenceImagesTest 1, LaneProofImagesTest 1)
+mvn test -pl ../../TuxGuitar-audio-engine -am        -> BUILD SUCCESS: audio-engine suite green (73 + 273 in the lines printed)
+
+== T002 Default-suite recognition tests (all passed, 0 skipped)
+audio-engine: RealGuitarRegressionTest 1, ArticulationDetectorTest 8, PitchTechniqueDetectorsTest 8, BendDetectorTest 9
+audio-engine tagged benchmark (excluded by default; mvn test -pl ../../TuxGuitar-audio-engine -am -Dgroups=benchmark -DexcludedGroups=
+  -Dtest=BenchmarkRunnerTest -Dsurefire.failIfNoSpecifiedTests=false): BenchmarkRunnerTest 1 run, 0 failures
+practice: MonophonicRegressionReplayTest 1, RecordedPracticeReplayTest 1 (reads ../../tests/1), BendRecordedReplayTest 2 (reads ../../tests/2),
+  LegatoFunctionalTest 2: all ran (the owner's files tests/1 and tests/2 are present on this machine), none skipped.
+
+== T003 Dataset suites (tag dataset: they also run in the default mvn test and skip themselves without data; the data are present here)
+Data: ~/tuxguitar-datasets (guitarset, guitar2/IDMT-SMT-GUITAR_V2 dataset1 and dataset2, effects/IDMT-SMT-AUDIO-EFFECTS).
+Ran, 0 failures: DatasetBenchmarkTest 1, TechniqueDatasetBenchmarkTest 1, FastPassageBenchmarkTest 1, NoteSpacingBenchmarkTest 1,
+  WeakInputBenchmarkTest 2, GuitarSetChordBenchmarkTest 1 (default sample: 24 recordings), GuitarSetChordsTest 8.
+The full reports and the per-case outcomes are kept verbatim in specs/010-pre-run-check/benchmark/before/ (report.txt, outcomes.csv,
+guitarset-chords-report.txt, guitarset-chords-outcomes.csv, fast-passages-report.txt, note-spacing-report.txt, technique-report.txt,
+weak-input-report.txt, weak-input-frontend-report.txt): the comparison of T030 is a diff of these files.
+Headlines: DATASET BENCHMARK 180 recordings, 942 tests: 592 OK, 28 KO, 322 not run (each with its reason in report.txt);
+  GuitarSet (24 recordings): complete chords accepted, six channels summed 33 of 56 (58.9 %), microphone 23 of 56 (41.1 %);
+  technique benchmark (IDMT dataset 2): vibrato detected on 59 % of 116 VI notes, 0.5 % false on plain notes (stays not verifiable).
+
+== T004 The owner's takes (OwnerChordsBenchmarkTest, report only), labels by Basic Pitch (a tool)
+owner-chords   (input volume 0.99): 8 of 21 takes accepted for the chord that was played; 2 of 21 other chords wrongly accepted;
+  refused takes: take01 02 03 05 06 07 08 09 11 12 13 19 21
+owner-chords-2 (input volume 0.40): 18 of 21 accepted; 11 of 21 other chords wrongly accepted; refused takes: take09 11 12
+Both series: 26 of 42 accepted (62 %), 13 of 42 other chords wrongly accepted. (The wrong-accept controls are chords that differ by one
+or two notes from the one played: the known weakness of spec 004 T007.) The D major takes (09 11 12 of series 2) are refused even without
+clipping: recognition, out of scope of spec 010 (research R9).
+
+== T005 Manifest: owner-takes-manifest.txt (sha256 of every WAV and labels.csv, the tool and its versions, the gains).
+
+== T027 Synthetic chord guard (SyntheticChordGuardTest, new in the default suite), BEFORE: taken before any change reached the recognition
+Plucked-string sums (SyntheticSignals.strum, Karplus-Strong, 3 seeds, -20 dBFS RMS) through DatasetJudge.accepts (production ChordMatcher + PolyphonicAcceptance):
+  open A, C, E, D, G played right: 15 of 15 accepted.
+  the same chords with one string missing (every string in turn, 78 cases): 43 of 78 ACCEPTED. The task asked that a chord with a missing verifiable string be
+  refused; the matcher does not do that today (it accepts 55 % of them on these signals), so the guard asserts what is true, "at most 43 of 78", and the
+  fact is reported here, not hidden. Whether that is a weakness of the matcher or of the synthesis is not decided by this feature (recognition is out of scope).
+The test was seen red once by asserting at most 42 (it measured 43), then green with 43.
+
+== T028 Kinds of event and what covers them with recorded audio (SC-007, R8)
+note (single pitch)            : RealGuitarRegressionTest, MonophonicRegressionReplayTest, RecordedPracticeReplayTest (the owner's tests/1), DatasetBenchmarkTest
+                                 (IDMT dataset 1), FastPassageBenchmarkTest, NoteSpacingBenchmarkTest, WeakInputBenchmarkTest: recorded audio
+bend                           : BendRecordedReplayTest (the owner's tests/2), TechniqueDatasetBenchmarkTest (IDMT dataset 2): recorded audio; BendDetectorTest synthetic
+vibrato, slide                 : TechniqueDatasetBenchmarkTest (IDMT dataset 2): recorded audio; PitchTechniqueDetectorsTest synthetic
+hammer-on, pull-off (legato)   : LegatoFunctionalTest and PitchTechniqueDetectorsTest synthetic; DatasetBenchmarkTest "legato" is SIMULATED from recorded plucks
+                                 (the first note damped, the second one given a soft start): NO test on a really played hammer-on or pull-off
+palm mute, tapping, tremolo picking : TechniqueSignalsTest, TechniqueFamiliesFunctionalTest (synthetic signals) only: NO recorded-audio test
+chord                          : GuitarSetChordBenchmarkTest and GuitarSetChordsTest (recorded, 24 recordings), the owner's takes (owner-chords, owner-chords-2), and since
+                                 this feature SyntheticChordGuardTest (synthetic, default suite)
+Kinds with no recorded-audio test, reported and not hidden: really played hammer-on and pull-off, palm mute, tapping, tremolo picking.
+
+== T030 AFTER (phases 2 to 6 done), 2026-10-14, branch feature/interactive-practice at 3bacba972 (+ the benchmark/after files of this commit)
+Commands as T001 to T004: mvn -e clean verify -P native-modules,swt-gui-tests (BUILD SUCCESS, log /tmp/c010-verify-after.log) and
+mvn test -pl ../../TuxGuitar-practice -am (BUILD SUCCESS). The kept reports are in benchmark/after/, to diff against benchmark/before/.
+figure                                        before        after         line
+audio-engine unit tests                       273           291           equal or better (+18 new: StrumClipMeterTest 12, HopListenerTest 6), 0 failures
+practice unit tests (mvn test, with datasets) 873 (4 skipped) 911 (4 skipped) equal or better (+38 new), the same 4 skipped, 0 failures
+practice SWT tests (swt-gui-tests)            26            27            equal or better (+1 PracticeWindowSwtTest), 0 failures
+DATASET BENCHMARK report.txt                  592 OK, 28 KO, 322 not run   identical file                        equal
+technique, weak-input, weak-input-frontend    reports       identical files                                     equal
+fast-passages, note-spacing, guitarset-chords reports       identical but for the "Code revision" line         equal
+outcomes.csv, guitarset-chords-outcomes.csv   -             identical once sorted (the order of the lines differs between runs)  equal
+GuitarSet chords (24 recordings)              six channels 33 of 56, microphone 23 of 56   same file                  equal
+owner's takes (both series)                   26 of 42 accepted, 13 of 42 wrongly accepted  26 of 42, 13 of 42 (owner-chords.txt)  equal
+Every recognition figure is equal; none is worse. The recognition code was not touched: the files of AE/pitch, AE/recognition,
+PracticeSession and arcade/core are checked by PreRunParityTest (no mention of the meter or of the check) and by git diff in T032.

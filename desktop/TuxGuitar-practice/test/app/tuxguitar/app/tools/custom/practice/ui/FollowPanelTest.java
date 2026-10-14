@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationRun;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationTaps;
+import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
 import app.tuxguitar.app.tools.custom.practice.session.ClickPlayer;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
 import app.tuxguitar.app.tools.custom.practice.session.LatencyCompensation;
@@ -147,6 +148,27 @@ public class FollowPanelTest {
 		assertTrue(visible(this.panel.toleranceSelect()));
 		assertTrue(visible(this.panel.calibrateButton()));
 		assertTrue(this.panel.announceLabel().getText().contains("practice.follow.calibration.announce"));
+	}
+
+	@Test
+	public void theStageFlamesControlOffersTheThreeStatesShowsTheSettingAndWritesAChoiceBack() {
+		this.settings.setFlames(FlameSetting.FULL);
+		open();
+
+		assertEquals(3, SwtContractToolkit.state(this.panel.flamesSelect()).items.size(), "off, discreet and full");
+		assertFalse(visible(this.panel.flamesSelect()), "a setting of the Arcade picture: not shown in the wait mode");
+		chooseMode(FollowSettings.Mode.ARCADE);
+		assertTrue(visible(this.panel.flamesSelect()));
+		assertEquals(FlameSetting.FULL, this.panel.flamesSelect().getSelectedValue(), "it shows the setting");
+
+		for (FlameSetting setting : new FlameSetting[] { FlameSetting.OFF, FlameSetting.DISCREET, FlameSetting.FULL }) {
+			this.panel.flamesSelect().setSelectedValue(setting);
+			SwtContractToolkit.userSelects(this.panel.flamesSelect());
+			assertEquals(setting, this.settings.getFlames(), "a choice is the setting");
+		}
+		this.settings.setFlames(FlameSetting.OFF);
+		this.panel.refresh();
+		assertEquals(FlameSetting.OFF, this.panel.flamesSelect().getSelectedValue(), "and the panel follows the setting");
 	}
 
 	@Test

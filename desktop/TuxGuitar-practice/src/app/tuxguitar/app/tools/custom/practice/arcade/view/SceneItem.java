@@ -47,10 +47,13 @@ public final class SceneItem {
 		BADGE, BADGE_SYMBOL, BADGE_TEXT,
 		HUD_STREAK, HUD_SPEED, HUD_NEXT,
 		/** Decoration, dropped first when the frames cost too much: never information. */
-		GLOW, TRAIL, SHADOW, TARGET_HALO;
+		GLOW, TRAIL, SHADOW, TARGET_HALO,
+		/** The stage flames behind the picture (spec 009): decoration, never information. */
+		FLAME_TONGUE, FLAME_EMBER;
 
 		public boolean isDecoration() {
-			return this == GLOW || this == TRAIL || this == SHADOW || this == TARGET_HALO || this == APPROACH_BAND;
+			return this == GLOW || this == TRAIL || this == SHADOW || this == TARGET_HALO || this == APPROACH_BAND
+					|| this == FLAME_TONGUE || this == FLAME_EMBER;
 		}
 	}
 

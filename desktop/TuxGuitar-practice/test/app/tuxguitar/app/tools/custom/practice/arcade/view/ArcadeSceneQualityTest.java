@@ -159,4 +159,32 @@ public class ArcadeSceneQualityTest {
 		}
 		assertEquals(a.changes(), b.changes());
 	}
+
+	@Test
+	public void theFlamesAreDecorationOnlyTheLowestTierDrawsNoneAndTheBalancedTierDrawsHalfTheTonguesInTwoLayers() {
+		ReferenceScenes.Reference reference = ReferenceScenes.flameReading();
+		Scene full = reference.scene(ReferenceScenes.SCREEN, QualityTier.FULL);
+		Scene balanced = reference.scene(ReferenceScenes.SCREEN, QualityTier.BALANCED);
+		Scene performance = reference.scene(ReferenceScenes.SCREEN, QualityTier.PERFORMANCE);
+		assertEquals(information(full).toString(), information(balanced).toString(), "the flames change nothing of the information at the balanced tier");
+		assertEquals(information(full).toString(), information(performance).toString(), "nor at the lowest tier");
+		assertTrue(performance.withRole(Role.FLAME_TONGUE).isEmpty() && performance.withRole(Role.FLAME_EMBER).isEmpty(), "no flame at the lowest tier");
+		assertEquals(28 * 3, layers(full), "the full tier: 28 tongues of 3 layers");
+		assertEquals(14 * 2, layers(balanced), "the balanced tier: 14 tongues of 2 layers");
+		assertTrue(full.withRole(Role.FLAME_EMBER).size() > balanced.withRole(Role.FLAME_EMBER).size(), "and no base glow");
+		for (SceneItem item : full.items()) {
+			if (item.role() == Role.FLAME_TONGUE || item.role() == Role.FLAME_EMBER) {
+				assertTrue(item.role().isDecoration());
+			}
+		}
+	}
+
+	/** The tongue layers of a scene: its strips share one code. */
+	private static int layers(Scene scene) {
+		java.util.Set<Integer> codes = new java.util.TreeSet<Integer>();
+		for (SceneItem item : scene.withRole(Role.FLAME_TONGUE)) {
+			codes.add(item.tgString());
+		}
+		return codes.size();
+	}
 }

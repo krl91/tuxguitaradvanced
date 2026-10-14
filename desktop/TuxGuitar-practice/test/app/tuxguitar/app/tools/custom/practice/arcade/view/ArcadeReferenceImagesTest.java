@@ -14,6 +14,9 @@ public class ArcadeReferenceImagesTest {
 		String directory = System.getProperty("tuxguitar.arcade.images");
 		Assumptions.assumeTrue(directory != null && !directory.isEmpty(), "no directory asked for");
 		System.setProperty("java.awt.headless", "true");
+		// the stage flames at full level (spec 009): not in all(), whose scenes are made without them
+		ReferenceScenes.Reference flames = ReferenceScenes.flameReading();
+		SceneImageWriter.write(flames.scene(false, QualityTier.FULL), new File(directory, "arcade-" + flames.name + "-full.png"));
 		for (ReferenceScenes.Reference reference : ReferenceScenes.all()) {
 			String base = "arcade-" + reference.name;
 			SceneImageWriter.write(reference.scene(false, QualityTier.FULL), new File(directory, base + "-full.png"));

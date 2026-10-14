@@ -42,4 +42,17 @@ final class QuickStart {
 	static boolean startNow(boolean requested, boolean canStart) {
 		return requested && canStart;
 	}
+
+	/**
+	 * After the patience of a one-click start, the preparation window is shown for the learner to act, but never over a start window that waits for an answer
+	 * (spec 010: the question, the tuner, the strum), never over a run, and only if it is still open and was not shown yet.
+	 */
+	static boolean showAfterPatience(boolean open, boolean windowShown, boolean runOngoing, boolean startPending) {
+		return open && !windowShown && !runOngoing && !startPending;
+	}
+
+	/** The learner cancelled the start window of a one-click start: the preparation window that was opened for it, and never shown, goes away. */
+	static boolean closeAfterCancelledStart(boolean open, boolean windowShown, boolean runOngoing, boolean disposing) {
+		return !disposing && open && !windowShown && !runOngoing;
+	}
 }

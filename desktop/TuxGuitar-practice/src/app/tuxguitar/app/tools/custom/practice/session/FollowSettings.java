@@ -47,6 +47,7 @@ public final class FollowSettings {
 	private int farScalePercent = DEFAULT_FAR_SCALE_PERCENT;
 	private int horizonPercent = DEFAULT_HORIZON_PERCENT;
 	private int markerPercent = DEFAULT_MARKER_PERCENT;
+	private FlameSetting flames = FlameSetting.DISCREET;
 	private Mode mode = Mode.WAIT;
 	private int percent = DEFAULT_PERCENT;
 	private TimingTolerance.Preset tolerance;
@@ -123,6 +124,18 @@ public final class FollowSettings {
 	public synchronized int setFarScalePercent(int percent) {
 		this.farScalePercent = Math.max(MIN_FAR_SCALE_PERCENT, Math.min(MAX_FAR_SCALE_PERCENT, percent));
 		return this.farScalePercent;
+	}
+
+	public synchronized FlameSetting getFlames() {
+		return this.flames;
+	}
+
+	/** The stage flames of the Arcade picture (spec 009 FR-008); read when a run starts. A missing value is refused. */
+	public synchronized void setFlames(FlameSetting flames) {
+		if (flames == null) {
+			throw new IllegalArgumentException("flames");
+		}
+		this.flames = flames;
 	}
 
 	public synchronized int getHorizonPercent() {

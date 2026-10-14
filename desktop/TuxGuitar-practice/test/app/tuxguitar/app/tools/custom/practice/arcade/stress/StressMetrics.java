@@ -223,6 +223,12 @@ public final class StressMetrics implements ArcadeCanvas.FrameObserver {
 		return this.lateFrames;
 	}
 
+	/** The deadline slots of 16.7 ms the run lasted. */
+	public synchronized long slots() {
+		computeSlots();
+		return this.slots;
+	}
+
 	public synchronized long missedDeadlines() {
 		computeSlots();
 		return this.missed;
