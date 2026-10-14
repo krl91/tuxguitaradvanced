@@ -22,6 +22,8 @@ Interactive Practice listens to your guitar and checks, note by note and chord b
 
 The first time (or after changing the input) the window checks your **input level**: play a string and read the meter. If it says *too low* or *clipping*, move closer or adjust the gain (below).
 
+**The start window (before every start).** Each time a mode starts — the Start button, the Practice button of the transport bar, the coloured Arcade button — a small window first asks *Is your guitar in tune?* *No, open the tuner* opens the tuner and the mode does not begin; when you close the tuner the question comes back. *Yes, in tune* asks for a test strum: strum a chord and let it ring. The window judges the level of the 0.3 seconds after the strum: if more than 0.5 % of the samples reach the maximum it says the signal clips (lower the volume of the adapter or of the guitar); a signal that is too loud or too weak is named too, with what to do; a good level starts the mode at once. A bad level blocks the start: *Check again* judges a new strum, and *Continue anyway* goes on **for this start only** (it is also offered after 10 seconds without a strum). Restarting a run or *play again* does not ask again. The window never changes the gain of the interface or of the system. The 0.5 % threshold was calibrated on the owner's recordings through a Rocksmith adapter and on the 180 microphone recordings of GuitarSet (none is flagged); the advice for Windows and Linux uses the macOS wording and was not tried there.
+
 ## While you practise
 
 <img src="images/features/practice-window.png" width="380" alt="The practice window while a chord is expected">
@@ -95,6 +97,8 @@ Under the level meter of the practice window, and in the tuner, an **Input gain*
 While you play, if the notes you play are too weak for reliable fast recognition (below about -30 dBFS, measured), the practice window says so and tells you to raise the gain or play closer; slow playing may still be recognised.
 
 Settings (*Recognition settings* in the practice window): an optional **noise gate / background-noise subtraction** and a **suggested gain** after the level check; both can be switched off.
+
+**The start window (before every start).** Each time a mode starts — the Start button, the Practice button of the transport bar, the coloured Arcade button — a small window first asks *Is your guitar in tune?* *No, open the tuner* opens the tuner and the mode does not begin; when you close the tuner the question comes back. *Yes, in tune* asks for a test strum: strum a chord and let it ring. The window judges the level of the 0.3 seconds after the strum: if more than 0.5 % of the samples reach the maximum it says the signal clips (lower the volume of the adapter or of the guitar); a signal that is too loud or too weak is named too, with what to do; a good level starts the mode at once. A bad level blocks the start: *Check again* judges a new strum, and *Continue anyway* goes on **for this start only** (it is also offered after 10 seconds without a strum). Restarting a run or *play again* does not ask again. The window never changes the gain of the interface or of the system. The 0.5 % threshold was calibrated on the owner's recordings through a Rocksmith adapter and on the 180 microphone recordings of GuitarSet (none is flagged); the advice for Windows and Linux uses the macOS wording and was not tried there.
 
 ## Recognition settings
 

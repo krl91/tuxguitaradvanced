@@ -477,6 +477,8 @@ For the "Wait" mode: **repeat passages** (off, or every 1, 2, 4 measures) and **
 * While you play, if your notes are too weak for reliable fast recognition (below about −30 dBFS measured), the window says so: raise the gain or move closer; slow playing may still be recognised.
 * **Reduce background noise** (setting, off by default): noise gate and background-noise subtraction. **Suggest a gain** (on by default): proposes a gain after the level check. See [B7](#b7-audio-recognition-settings).
 
+**The start window (before every start).** Each time a mode starts — the Start button, the Practice button of the transport bar, the coloured Arcade button — a small window first asks *Is your guitar in tune?* *No, open the tuner* opens the tuner and the mode does not begin; when you close the tuner the question comes back. *Yes, in tune* asks for a test strum: strum a chord and let it ring. The window judges the level of the 0.3 seconds after the strum: if more than 0.5 % of the samples reach the maximum it says the signal clips (lower the volume of the adapter or of the guitar); a signal that is too loud or too weak is named too, with what to do; a good level starts the mode at once. A bad level blocks the start: *Check again* judges a new strum, and *Continue anyway* goes on **for this start only** (it is also offered after 10 seconds without a strum). Restarting a run or *play again* does not ask again. The window never changes the gain of the interface or of the system. The 0.5 % threshold was calibrated on the owner's recordings through a Rocksmith adapter and on the 180 microphone recordings of GuitarSet (none is flagged); the advice for Windows and Linux uses the macOS wording and was not tried there.
+
 ## B4. "Wait for the right note" mode
 
 This is the original mode. **Choosing it:** *Mode* tab, "Wait for the right note". Then *Practise this track*.
@@ -495,6 +497,8 @@ The palette (the "Interactive Practice" window during practice) says:
 * the buttons **Skip** (ignore the current note), **Resume**, **Restart** and **Stop**.
 
 A green tick means "heard", a red cross "another note was heard"; **nothing advances on silence or noise**. **Stop** ends practice at once. When the errors of a passage exceed the threshold set in the *Passages* tab, that passage is repeated.
+
+Starting this mode first opens the start window (tuning question, test strum): see [B3](#b3-input-level-gain-and-noise).
 
 ## B5. "Follow the tempo" mode
 
@@ -521,6 +525,8 @@ During the run, the palette shows the verdict of the last note, the counter (on 
 <img src="images/manual-en/practice-follow-palette.png" width="400" alt="The Follow the tempo palette during a run"> <img src="images/manual-en/practice-follow-summary.png" width="400" alt="The summary at the end of a run">
 
 **Pause, resume:** if you play the score from the main window, following stops (normal playback goes on); **Resume** restarts after a pause, the notes that went by meanwhile are not judged. The mode is not possible while the score is already playing: stop it first.
+
+Starting this mode first opens the start window (tuning question, test strum): see [B3](#b3-input-level-gain-and-noise).
 
 ## B6. Arcade mode (alpha)
 
@@ -581,6 +587,8 @@ Every technique written on a **single note** is drawn **on the note while it is 
 <img src="images/manual-en/arcade-result.png" width="330" alt="The result window">
 
 **Alpha, what is not verified:** see [B10](#b10-measured-quality-limits-and-diagnostic-trace). Notes **below G1 (49 Hz)** (the lowest of a standard bass) are shown but not judged. **Hearing your own guitar through the application is not offered**: play through your amplifier or through headphones plugged into the audio interface. The game window fills the width of the screen but is not the native macOS full screen.
+
+Starting this mode first opens the start window (tuning question, test strum): see [B3](#b3-input-level-gain-and-noise).
 
 ## B7. Audio recognition settings
 
@@ -791,7 +799,7 @@ Make sure the audio input works first: open **Tools > Interactive Practice**. In
 
 ### Mode 3: Arcade (alpha)
 
-**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the tolerance and the calibration are the same as before; new lines set the **size of the incoming rectangles**, the **tilt of the plane** and the **stage flames**. Press **Start Arcade** (or, next time, click the coloured Arcade button of the transport bar, which starts at once on the track under the cursor).
+**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the tolerance and the calibration are the same as before; new lines set the **size of the incoming rectangles**, the **tilt of the plane** and the **stage flames**. Press **Start Arcade** (or, next time, click the coloured Arcade button of the transport bar, which starts at once on the track under the cursor). The start window then asks whether the guitar is in tune and for a test strum before the run begins (see B3).
 
 <img src="images/manual-en/practice-mode-arcade.png" width="480" alt="The Mode tab with Arcade">
 

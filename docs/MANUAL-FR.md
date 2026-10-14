@@ -477,6 +477,8 @@ Pour le mode « Attendre » : **répéter les passages** (désactivé, ou toutes
 * Pendant que vous jouez, si vos notes sont trop faibles pour une reconnaissance rapide fiable (en dessous d'environ −30 dBFS mesurés), la fenêtre le dit : augmentez le gain ou rapprochez-vous ; un jeu lent peut encore être reconnu.
 * **Réduire le bruit de fond** (réglage, désactivé par défaut) : réduction du bruit par seuil et soustraction du bruit de fond. **Suggérer un gain** (activé par défaut) : propose un gain après la vérification du niveau. Voir [B7](#b7-les-réglages-de-reconnaissance-audio).
 
+**La fenêtre de démarrage (avant chaque départ).** À chaque démarrage d'un mode — bouton Démarrer, bouton Pratique de la barre de transport, bouton Arcade coloré — une petite fenêtre demande d'abord *Votre guitare est-elle accordée ?* *Non, ouvrir l'accordeur* ouvre l'accordeur et le mode ne commence pas ; quand vous fermez l'accordeur, la question revient. *Oui, accordée* demande un accord de test : grattez un accord et laissez-le sonner. La fenêtre juge le niveau des 0,3 seconde qui suivent : si plus de 0,5 % des échantillons atteignent le maximum, elle dit que le signal sature (baissez le volume de l'adaptateur ou de la guitare) ; un signal trop fort ou trop faible est aussi nommé, avec la marche à suivre ; un bon niveau lance le mode aussitôt. Un mauvais niveau bloque le départ : *Vérifier à nouveau* juge un nouvel accord, et *Continuer quand même* continue **pour ce départ seulement** (proposé aussi après 10 secondes sans accord). Relancer une partie ou *rejouer* ne redemande pas. La fenêtre ne change jamais le gain de l'interface ni du système. Le seuil de 0,5 % a été calibré sur les enregistrements du propriétaire avec un adaptateur Rocksmith et sur les 180 enregistrements microphone de GuitarSet (aucun n'est signalé) ; les conseils pour Windows et Linux reprennent le texte de macOS et n'y ont pas été essayés.
+
 ## B4. Mode « Attendre la bonne note »
 
 C'est le mode d'origine. **Choix du mode :** onglet *Mode*, « Attendre la bonne note ». Puis *Travailler cette piste*.
@@ -495,6 +497,8 @@ La palette (fenêtre « Pratique interactive » pendant la pratique) dit :
 * des boutons **Passer** (ignorer la note courante), **Reprendre**, **Recommencer** et **Stop**.
 
 Une coche verte signifie « entendu », une croix rouge « une autre note a été entendue » ; **rien n'avance sur un silence ou un bruit**. **Stop** arrête la pratique immédiatement. Quand les erreurs d'un passage dépassent le seuil réglé dans l'onglet *Passages*, ce passage est répété.
+
+Démarrer ce mode ouvre d'abord la fenêtre de démarrage (question d'accord, accord de test) : voir [B3](#b3-niveau-dentrée-gain-et-bruit).
 
 ## B5. Mode « Suivre le tempo »
 
@@ -521,6 +525,8 @@ Pendant la partie, la palette montre le verdict de la dernière note, le compteu
 <img src="images/manual/practice-follow-palette.png" width="400" alt="Palette du mode Suivre le tempo en cours de partie"> <img src="images/manual/practice-follow-summary.png" width="400" alt="Bilan de fin de partie">
 
 **Pause, reprise :** si vous jouez la partition depuis la fenêtre principale, le suivi s'arrête (la lecture normale continue) ; **Reprendre** repart après une pause, les notes passées entre-temps ne sont pas jugées. Le mode est impossible si la lecture est déjà en cours : arrêtez-la d'abord.
+
+Démarrer ce mode ouvre d'abord la fenêtre de démarrage (question d'accord, accord de test) : voir [B3](#b3-niveau-dentrée-gain-et-bruit).
 
 ## B6. Mode Arcade (alpha)
 
@@ -581,6 +587,8 @@ Chaque technique écrite sur une **note seule** est dessinée **sur la note pend
 <img src="images/manual/arcade-result.png" width="330" alt="La fenêtre de résultat">
 
 **Alpha, ce qui n'est pas vérifié :** voir [B10](#b10-qualité-mesurée-limites-et-trace-de-diagnostic). Les notes **sous sol 1 (49 Hz)** (les plus graves d'une basse standard) sont affichées mais pas jugées. L'**écoute de votre propre guitare à travers l'application n'est pas proposée** : jouez par votre ampli ou par un casque branché sur l'interface audio. La fenêtre du jeu occupe la largeur de l'écran mais n'est pas le plein écran natif de macOS.
+
+Démarrer ce mode ouvre d'abord la fenêtre de démarrage (question d'accord, accord de test) : voir [B3](#b3-niveau-dentrée-gain-et-bruit).
 
 ## B7. Les réglages de reconnaissance audio
 
@@ -793,7 +801,7 @@ Assurez-vous d'abord que l'entrée audio fonctionne : ouvrez **Outils > Pratique
 
 ### Mode 3 : Arcade (alpha)
 
-**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la tolérance et le calibrage sont les mêmes ; de nouvelles lignes règlent la **taille des rectangles qui arrivent**, l'**inclinaison du plan** et les **flammes de scène**. Appuyez sur **Démarrer Arcade** (ou, la prochaine fois, cliquez sur le bouton Arcade coloré de la barre de transport, qui démarre tout de suite sur la piste sous le curseur). Appuyez sur **Démarrer Arcade**.
+**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la tolérance et le calibrage sont les mêmes ; de nouvelles lignes règlent la **taille des rectangles qui arrivent**, l'**inclinaison du plan** et les **flammes de scène**. Appuyez sur **Démarrer Arcade** (ou, la prochaine fois, cliquez sur le bouton Arcade coloré de la barre de transport, qui démarre tout de suite sur la piste sous le curseur). Appuyez sur **Démarrer Arcade**. La fenêtre de démarrage demande alors si la guitare est accordée et un accord de test avant le début de la partie (voir B3).
 
 <img src="images/manual-en/practice-mode-arcade.png" width="480" alt="L'onglet Mode avec Arcade">
 
