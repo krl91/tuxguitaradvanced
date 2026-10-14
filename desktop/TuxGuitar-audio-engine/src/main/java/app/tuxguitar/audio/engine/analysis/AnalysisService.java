@@ -44,6 +44,16 @@ public final class AnalysisService {
 		}
 	}
 
+	/** A hop listener and the flag that tells the analysis thread to call its configure before its next hop. */
+	private static final class HopEntry {
+		final HopListener listener;
+		volatile boolean needsConfigure = true;
+
+		HopEntry(HopListener listener) {
+			this.listener = listener;
+		}
+	}
+
 	private final TGContext context;
 	private final SampleRingBuffer ringBuffer;
 	/** The analysers of the latest requested configuration (used when only the rate or estimator changes). */
@@ -53,6 +63,12 @@ public final class AnalysisService {
 	private final int windowSize;
 	private final int hopSize;
 	private final List<Listener> listeners;
+	/**
+	 * The hop listeners, as a snapshot array replaced on every add and remove and walked by index by the analysis thread: no iterator, no lock and no
+	 * allocation per hop (spec 010, constitution VI). Each entry remembers whether it still has to be told the sample rate.
+	 */
+	private volatile HopEntry[] hopListeners = new HopEntry[0];
+	private final Object hopListenersLock = new Object();
 	private final AtomicReference<Configuration> pendingConfiguration;
 	private Configuration configuration;
 	private volatile boolean spectrumEnabled;
@@ -102,6 +118,33 @@ public final class AnalysisService {
 		if (!this.workerAlive) {
 			this.workerAlive = true;
 			TGThreadManager.getInstance(this.context).start(TGThreadPriority.HIGH, this::run);
+		}
+	}
+
+	/**
+	 * Gives every hop of the signal the analysis sees (after the front end) to the listener, on the analysis thread, after a {@code configure(sampleRate)}
+	 * that comes before its first hop, at every reconfiguration and when it is added while the engine runs (spec 010). A frame listener must be subscribed
+	 * for the analysis to run. Adding is safe from any thread.
+	 */
+	public void addHopListener(HopListener listener) {
+		synchronized (this.hopListenersLock) {
+			HopEntry[] current = this.hopListeners;
+			HopEntry[] next = java.util.Arrays.copyOf(current, current.length + 1);
+			next[current.length] = new HopEntry(listener);
+			this.hopListeners = next;
+		}
+	}
+
+	public void removeHopListener(HopListener listener) {
+		synchronized (this.hopListenersLock) {
+			HopEntry[] current = this.hopListeners;
+			List<HopEntry> kept = new java.util.ArrayList<HopEntry>(current.length);
+			for (HopEntry entry : current) {
+				if (entry.listener != listener) {
+					kept.add(entry);
+				}
+			}
+			this.hopListeners = kept.toArray(new HopEntry[0]);
 		}
 	}
 
@@ -220,6 +263,9 @@ public final class AnalysisService {
 				this.polyphonicAnalyzer = null;
 				this.attackAnalyzer = null;
 				this.frontEnd.configure(this.configuration.sampleRate, this.hopSize);
+				for (HopEntry entry : this.hopListeners) {
+					entry.needsConfigure = true;
+				}
 				windowFill = 0;
 				hopFill = 0;
 			}
@@ -247,6 +293,7 @@ public final class AnalysisService {
 			}
 			// gain and noise reduction come first: the level, the pitch, the attack and the spectrum all see the same signal
 			this.frontEnd.process(hop, this.hopSize);
+			deliverHop(hop);
 
 			if (windowFill < this.windowSize) {
 				int copy = Math.min(this.hopSize, this.windowSize - windowFill);
@@ -263,6 +310,23 @@ public final class AnalysisService {
 			if (windowFill == this.windowSize) {
 				long timestampNanos = baseNanos + processedSamples * 1_000_000_000L / this.configuration.sampleRate;
 				publish(analyze(window, timestampNanos, attack, this.ringBuffer.getReadSampleCount()));
+			}
+		}
+	}
+
+	/** One hop to every hop listener, each told the sample rate first when it has not been yet; a listener that throws is skipped (the analysis goes on). */
+	private void deliverHop(float[] hop) {
+		HopEntry[] entries = this.hopListeners;
+		for (int i = 0; i < entries.length; i++) {
+			HopEntry entry = entries[i];
+			try {
+				if (entry.needsConfigure) {
+					entry.needsConfigure = false;
+					entry.listener.configure(this.configuration.sampleRate);
+				}
+				entry.listener.hop(hop, 0, this.hopSize);
+			} catch (RuntimeException exception) {
+				// a bad listener does not stop the analysis nor the other listeners
 			}
 		}
 	}
