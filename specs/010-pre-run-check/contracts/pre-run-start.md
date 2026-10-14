@@ -25,13 +25,14 @@ final class PreRunCheck {                           // practice ui, no widgets
     void checkAgain();                              // LEVEL_BAD -> STRUM, meter reset
     void cancel();                                  // CANCELLED, the mode does not begin
 }
-interface StartGate { void request(PreRunCheck check, Runnable onReady); void toFront(); }     // practice ui; the real one opens PreRunWindow
+interface StartGate { void request(PreRunCheck check, Runnable onReady); void toFront(); }   // the gate only calls onReady on READY; a cancel changes the check's state and needs no callback: the flow reads check.state()
+     // practice ui; the real one opens PreRunWindow
 final class StartFlow {                                                  // practice ui, one instance per PracticeWindow, pure
     StartFlow(StartGate gate);
-    boolean begin(PreRunCheck check, Runnable startNow);   // false and nothing done when a check is already pending (TUNER_OPEN counts); startNow runs only on READY, once
+    boolean begin(PreRunCheck check, Runnable startNow);   // false and nothing done when a check is already pending (TUNER_OPEN counts); holds `check`; startNow runs only on READY, once, through the onReady the gate calls (the held reference is dropped before startNow runs)
     void toFront();                                         // brings the pending start window to the front (the tuner, while TUNER_OPEN)
     void cancelPending();                                   // the window closes, its mode changes or the learner picks another track: the pending check is cancelled
-    boolean pending();
+    boolean pending();                                      // DERIVED, never a stored flag: true while the held PreRunCheck is in TUNING, TUNER_OPEN, STRUM or LEVEL_BAD
 }
 // PracticeWindow.startSession(): flow.begin(new PreRunCheck(mode), () -> startSessionNow(mode, candidate)) with the mode and the candidate captured at the request; restarts call startArcade/startFollow directly
 ```
@@ -47,19 +48,21 @@ final class StartFlow {                                                  // prac
 | `READY` | ignored | ignored | ignored | ignored | ignored | ignored | ignored | ignored | ignored |
 | `CANCELLED` | ignored | ignored | ignored | ignored | ignored | ignored | ignored | ignored | ignored |
 
+The window, not the machine, handles an unavailable tuner: it asks the tuner opener whether the tuner exists **before** calling `answerTuned(false)`; when it does not exist it shows `practice.prerun.tuner.unavailable` and calls nothing, so the check stays in `TUNING`.
+
 *Ignored* means: no exception, no change of state, nothing started or undone. `READY` and `CANCELLED` are final; a `cancel()` after `READY` never undoes a start. `READY` is therefore reachable only after `answerTuned(true)`: a "continue anyway" before the tuning was answered is ignored (FR-005, FR-008). A strum heard while the learner is still reading the tuning question is ignored, and entering `STRUM` asks the meter for a fresh start, so the strum that counts is the one after the answer.
 
 ## Invariants, each with a test
 
 1. **Every start is checked.** `startSession()` never reaches `startArcade`, `startFollow` or the wait-mode session without a `PreRunCheck` that ended in `READY`, for the three modes and from the Start button, the quick start and the transport-bar Arcade button (`StartFlowTest` for the rule, `PracticeWindowStartPathSourceTest` for the shape of `PracticeWindow`, the native test T025 for the real window).
-2. **Nothing is remembered.** A new `PreRunCheck` starts at `TUNING`; no field outlives it; the same two starts in a row ask twice (SC-002, FR-001, FR-005).
-3. **Not in tune means no start.** `answerTuned(false)` gives `TUNER_OPEN` and never `READY`; `tunerClosed()` gives `TUNING` again, never `READY` by itself (FR-006, FR-007, SC-004).
-4. **Bad level blocks.** `CLIPPING`, `TOO_LOUD` and `TOO_WEAK` give `LEVEL_BAD`; only `continueAnyway()` (this object only) or a later `GOOD` gives `READY`; silence (`NO_STRUM`) is never `GOOD` (FR-002, FR-003, FR-008, Edge Cases).
-5. **The meter.** On the owner's takes through the real analyser at gain 0.99, at least 19 of 21 are `CLIPPING`; at gain 0.40 none; on the 180 GuitarSet microphone recordings none (SC-001); a signal with no sample at the clip level is never `CLIPPING` (FR-004).
-6. **Recognition untouched.** The same recorded run gives identical judgements with and without the hop listener and the start window (SC-005, parity test as in spec 009).
-7. **Regression.** Every recognition figure of `benchmark/before-after.txt` is equal or better after the change (SC-007, FR-012).
-8. **Texts.** Every `practice.prerun.*` key exists, not empty, in English, French and Spanish with the same placeholders (FR-010).
-9. **Time.** From the attack of the strum to `READY` at most 1 second (the 300 ms window and the change of window); the learner's own time to answer and to strum is not counted; no timer of the state machine adds to it (FR-009, SC-003, measured by the owner at gate G).
+2. **Nothing is remembered.** A new `PreRunCheck` starts at `TUNING`; no field outlives it; the same two starts in a row ask twice (SC-002, FR-001, FR-005). Tests that can fail: `PreRunCheckTest` (T011, T018), `StartFlowTest` (T022).
+3. **Not in tune means no start.** `answerTuned(false)` gives `TUNER_OPEN` and never `READY`; `tunerClosed()` gives `TUNING` again, never `READY` by itself (FR-006, FR-007, SC-004). Tests that can fail: `PreRunCheckTest` (T018), `PreRunWindowTest` (T021).
+4. **Bad level blocks.** `CLIPPING`, `TOO_LOUD` and `TOO_WEAK` give `LEVEL_BAD`; only `continueAnyway()` (this object only) or a later `GOOD` gives `READY`; silence (`NO_STRUM`) is never `GOOD` (FR-002, FR-003, FR-008, Edge Cases). Tests that can fail: `PreRunCheckTest` (T011), `PreRunWindowTest` (T015).
+5. **The meter.** On the owner's takes through the real analyser at gain 0.99, at least 19 of 21 are `CLIPPING`; at gain 0.40 none; on the 180 GuitarSet microphone recordings none (SC-001); a signal with no sample at the clip level is never `CLIPPING` (FR-004). Tests that can fail: `StrumClipMeterTest` (T006), `StrumClipDatasetTest` (T010), the whole path T017.
+6. **Recognition untouched.** The same recorded run gives identical judgements with and without the hop listener and the start window (SC-005, parity test as in spec 009). Tests that can fail: `PreRunParityTest` (T026).
+7. **Regression.** Every recognition figure of `benchmark/before-after.txt` is equal or better after the change (SC-007, FR-012). Tests that can fail: the before and after file (T030), `SyntheticChordGuardTest` (T027), `OwnerChordsBenchmarkTest` baseline (T029).
+8. **Texts.** Every `practice.prerun.*` key exists, not empty, in English, French and Spanish with the same placeholders (FR-010). Tests that can fail: `FollowStringsTest` (T013, T020).
+9. **Time.** From the attack of the strum to `READY` at most 1 second (the 300 ms window and the change of window); the learner's own time to answer and to strum is not counted; no timer of the state machine adds to it (FR-009, SC-003, measured by the owner at gate G). Tests that can fail: `PreRunCheckTest` timing on a fake clock (T024), the owner at gate G (T034).
 10. **Verdict order.** `CLIPPING` before `TOO_LOUD` before `TOO_WEAK` when several apply (FR-003, `StrumClipMeterTest`).
 11. **Restarts.** A restart, a replay from the result window (from the start or from a measure) and the automatic retry after a failed start never open the start window (FR-013, `PracticeWindowStartPathSourceTest`, native test T025).
 12. **One start window.** `begin` while a check is pending (any state, `TUNER_OPEN` included) returns false, brings the open window to the front, opens nothing and runs nothing; after `READY`, `CANCELLED` or `cancelPending()` a new `begin` is accepted (`StartFlowTest`, native test T025 with a double press).
