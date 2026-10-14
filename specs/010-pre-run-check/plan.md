@@ -100,7 +100,7 @@ docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md
 
 ## Risks
 
-* A 300 ms window after an attack needs a reliable attack: the hook receives hops, not frames, so the meter arms on the rise of the RMS (12 dB above the quietest recent hop, R2), not on the onset flag of the articulation detector; the strum of the owner's takes is the test.
+* A 300 ms window after an attack needs a reliable attack: the hook receives hops, not frames, so the meter arms on a hop that reaches the minimal level (-40 dBFS) and rises 12 dB above the quietest of the 60 hops before it (R2, R14), not on the onset flag of the articulation detector; the strum of the owner's takes is the test.
 * The ring of an earlier note could count as clipping: the window starts at the attack and the meter is reset by each new check.
 * The start window must not become a wall: one answer and one strum, the run beginning at most 1 second after the attack of the strum with a good level (FR-009, SC-003), checked by the state machine on a fake clock and by the owner.
 * The takes were labelled by a tool: the regression figures of the owner's takes are recorded as such and not used as the only judge.

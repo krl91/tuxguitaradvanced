@@ -20,7 +20,7 @@ Every claim cites a file that was opened or data that was measured on 2026-10-14
 
 **Correction (analysis A1/I1 of 2026-10-14).** `AnalysisService.pushAttack` returns at once when no attack candidates are set, which is the case before a run, so the hook cannot go there; the hop is complete in `run()` right after `frontEnd.process(hop, hopSize)` (the gain and the noise reduction come first), and that is where the listener is called: the meter then sees the same signal as the level, the pitch, the attack and the spectrum. The window reaches it through a facade `AudioEngine.addHopListener / removeHopListener`, as it reaches the frames through `AudioEngine.subscribe`.
 
-**Decision.** The meter is fed once per hop through a small optional hop listener added to `AnalysisService` (in `run()`, after the front end) and to `OfflineAnalysis` (the same call in both, so the tests run the production loop). It arms on a strum: the first hop whose RMS is at least 12 dB above the quietest recent hop (the hook receives hops, not frames, so the `onset` flag of the articulation detector, which lives on frames, is not used); it then accumulates the next 300 ms (clipped samples, sum of squares, peak) and gives a verdict; a new check re-arms it. Nothing is allocated per hop.
+**Decision.** The meter is fed once per hop through a small optional hop listener added to `AnalysisService` (in `run()`, after the front end) and to `OfflineAnalysis` (the same call in both, so the tests run the production loop). It arms on a strum: the first hop whose RMS is **at least `INPUT_LEVEL_MIN` (-40 dBFS by default) and** at least 12 dB above the quietest of the 60 hops before it (the hook receives hops, not frames, so the `onset` flag of the articulation detector, which lives on frames, is not used); it then accumulates the next 300 ms (clipped samples, sum of squares, peak) and gives a verdict; a new check re-arms it. Nothing is allocated per hop.
 
 ## R3 - The verdicts
 
@@ -77,3 +77,16 @@ Every claim cites a file that was opened or data that was measured on 2026-10-14
 ## R9 - Findings outside this feature
 
 While measuring, the D major chord (x x 0 2 3 2: D3 A3 D4 F#4) was refused in 3 of 5 takes even at gain 0.40, because its clear unique partials are few at a low level (`ChordEvidence`: 0 to 1 clear partials for each of the four pitches at -27 to -36 dBFS). That is recognition (spec 004 T007), out of scope here (constitution X); it is recorded in `OwnerChordsBenchmarkTest` figures and proposed as a separate piece of work.
+
+## R14 - What the tenth analysis recomputed (2026-10-14)
+
+**Arming (F1).** With the rule "12 dB above the quietest recent hop" alone the meter arms on noise or a pick click before the strum (hops at -62, -48 and -57 dBFS in the owner's takes) and only **14 of 21** takes at gain 0.99 reach 0.5 %; the 19 of 21 first measured used the maximum of the whole take, which the code cannot know. With the absolute floor (hop RMS at least -40 dBFS, the existing `INPUT_LEVEL_MIN`) **and** the 12 dB rise: **19 of 21** at gain 0.99, **0 of 21** at gain 0.40, and no take of the 42 is "too weak" (mean RMS over the 300 ms: -26 to -34 dBFS at gain 0.40). A floor of -30 dBFS would miss 3 takes at gain 0.40 (never armed): the floor must not be above -40.
+
+**GuitarSet at the real clip level (0.99).** 180 files; 26 touch 0.99; the worst 300 ms window anywhere is **0.18 %** (0.23 % at 0.98); the first strum of each file is at **0 %**; margin of 2.8 on the 0.5 % threshold.
+
+**Sample rate (F2).** The window is counted in **samples**, `round(0.3 x fs)`: 14,400 at 48 kHz and 13,230 at 44.1 kHz, so 0.5 % is 72 and 66 samples; 300 ms is not a whole number of hops of 256 (56.25 hops at 48 kHz), the meter cuts at the sample. `AnalysisService` can reconfigure while a check runs (`pendingConfiguration`, another device or rate): the hop listener is told the rate by `configure(int sampleRate)` at the start and at each reconfiguration, which resets the meter to `NO_STRUM`.
+
+**Software boost (F3).** The meter sits after `frontEnd.process`, so it judges the signal the recognition sees, boost included. When the verdict is `CLIPPING` and the in-application gain is above 1, the start window adds the existing text `practice.gain.warning.BOOST_CAUSES_CLIPPING` to the advice, because the interface gain alone would not cure it.
+
+**"Too loud" (F6).** No take of the 42 has a mean RMS above -6 dBFS (the loudest is -7 dBFS at gain 0.99): `TOO_LOUD` without clipping is covered by synthetic signals only; real saturation is caught by `CLIPPING`, which the verdict order puts first.
+

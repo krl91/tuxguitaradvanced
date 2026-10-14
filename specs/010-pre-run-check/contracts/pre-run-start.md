@@ -8,12 +8,13 @@ Packages `audio engine analysis` (the meter) and `practice ui` (the state machin
 enum StrumVerdict { NO_STRUM, CLIPPING, TOO_LOUD, TOO_WEAK, GOOD }
 final class StrumClipMeter {                       // audio engine, pure, hop by hop
     StrumClipMeter(Parameters p);
+    void configure(int sampleRate);                      // at the start and at every reconfiguration of the engine: resets to NO_STRUM; the window is round(0.3 x sampleRate) samples
     void hop(float[] samples, int offset, int length);   // analysis thread, no allocation
     void reset();
     StrumVerdict verdict();                         // NO_STRUM until 300 ms after an attack were counted
     double clippedShare();  double rmsDbfs();       // of the window, for the screen and the tests
 }
-// AnalysisService (in run(), after the front end) / OfflineAnalysis / AudioEngine facade: addHopListener(HopListener) with void hop(float[] samples, int offset, int length)
+// AnalysisService (in run(), after the front end) / OfflineAnalysis / AudioEngine facade: addHopListener(HopListener) with void configure(int sampleRate) and void hop(float[] samples, int offset, int length)
 final class PreRunCheck {                           // practice ui, no widgets
     PreRunCheck(Mode mode);                         // a new object for each start
     State state();
@@ -51,3 +52,5 @@ final class StartFlow {                                                  // prac
 12. **One start window.** `begin` while a check is pending (any state, `TUNER_OPEN` included) returns false, brings the open window to the front, opens nothing and runs nothing; after `READY`, `CANCELLED` or `cancelPending()` a new `begin` is accepted (`StartFlowTest`, native test T025 with a double press).
 13. **The run is the one asked for.** `startSessionNow` receives the mode and the candidate captured at the request, and starts only if the preparation window is still open and no run or session exists; closing the preparation window, a change of its mode (`modeChanged()`) and a change of the selected track (the tracks drop-down listener) call `cancelPending()` (`StartFlowTest`, `PracticeWindowStartPathSourceTest`).
 14. **Never stuck.** `pending()` is cleared on `READY` **before** `startNow` runs (so also when `startNow` throws or does nothing because the window is no longer open), on `CANCELLED` (the Cancel button, the close button, the Escape key), on `cancelPending()` and when `gate.request` throws; a tuner that cannot be opened leaves the check at `TUNING` with a message and `pending()` stays true only while a start window or the tuner is really open (`StartFlowTest`, `PreRunCheckTest`, native test T025).
+15. **Arming.** The meter arms only on a hop whose RMS is at least `INPUT_LEVEL_MIN` (-40 dBFS) and at least 12 dB above the quietest of the 60 hops before it: a click or noise at -50 dBFS never arms it (`StrumClipMeterTest`); on the owner's takes this gives 19 of 21 at gain 0.99 and 0 of 21 at gain 0.40 (`StrumClipDatasetTest`).
+16. **Sample rate.** The 300 ms window and the 0.5 % share are counted in samples for the rate given by `configure`; the same synthetic signal gives the same verdict at 44.1 kHz and at 48 kHz; a `configure` during a check resets it (`StrumClipMeterTest`, `HopListenerTest`).
