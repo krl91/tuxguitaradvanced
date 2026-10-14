@@ -6,7 +6,7 @@
 
 ## Summary
 
-Draw flames behind the Arcade run, rising from the bottom of the picture, with a height that follows the share of the maximum (embers at 50 % or less, full at 100 %, linear), a smoothed level (fall about 3 s, rise about 0.5 s), a three-state setting (off, discreet, full; discreet by default) and a guard that keeps every text readable. The effect is **pure decoration made of the shapes the scene already has** (filled quadrilaterals and discs with transparency): no new painter primitive, no change to the judging, the score or the clock. The scene stays a pure function: the flame level and the flicker instant are **inputs** of `ArcadeScene.build`, the smoothed level lives in the picture's own clock object (`ArcadeFrameSource`), and the new roles are decoration, so the quality tiers and the fallback renderer remove them first with the existing rule.
+Draw flames behind the Arcade run, rising from the bottom of the picture, with a height that follows the share of the maximum (embers at 50 % or less, full at 100 %, linear), a smoothed level (fall about 3 s, rise about 0.5 s), a three-state setting (off, discreet, full; discreet by default), a guard that keeps every text readable, and a **reduced-motion** rule (the flames do not move when the system asks to reduce motion). The effect is **pure decoration made of the shapes the scene already has** (filled quadrilaterals and discs with transparency): no new painter primitive, no change to the judging, the score or the clock. The scene stays a pure function: the flame level and the flicker instant are **inputs** of `ArcadeScene.build`, the smoothed level lives in the picture's own clock object (`ArcadeFrameSource`), and the new roles are decoration, so the quality tiers and the fallback renderer remove them first with the existing rule.
 
 ## Technical Context
 
@@ -22,6 +22,8 @@ Draw flames behind the Arcade run, rising from the bottom of the picture, with a
 
 **Project Type**: desktop application (the Arcade picture).
 
+**Platform notes**: the reduced-motion preference is read on macOS only in this version (`defaults`, R10); Windows and Linux are not read and not claimed.
+
 **Performance Goals**: with the flames at full level the game loses no more than 1 % more frames than without (SC-006); `BALANCED` draws fewer tongues, `PERFORMANCE` and the fallback renderer draw none.
 
 **Constraints**: FR-053 to FR-055 and FR-080 of spec 003 (decoration first to go, no queue of frames, nothing cut at any window size), FR-021 (no number of score during play), no state between frames in `ArcadeScene` (its rule since spec 003).
@@ -35,13 +37,13 @@ Draw flames behind the Arcade run, rising from the bottom of the picture, with a
 | Principle | Check |
 |---|---|
 | I Preserve compatibility | Additive: a setting and decoration; with the setting off the picture is item-for-item the same (SC-005). No file format or core change. |
-| II Extend before modifying core | Only the fork's module `TuxGuitar-practice` changes; nothing in `desktop/TuxGuitar` or `common/`. |
+| II Extend before modifying core | Only the fork's module `TuxGuitar-practice` changes; nothing in `desktop/TuxGuitar` or `common/`; the reduced-motion preference is read by a command, with no change of the toolkit and no native module (R10). |
 | III Evidence-based | Every touch-point is a file that was opened (see `research.md`); the facts that corrected the spec are recorded (R6, R7). |
 | IV Spec-driven | Spec, clarify, then this plan; tasks, checklist, analysis, implement and converge follow, in that order, with the owner told at each step. |
 | V Incremental | Five increments with gates (below). |
 | VI Real-time | The flames are drawn on the UI thread inside the existing paint; no work on the audio or the analysis threads; the judging is not read or changed. |
 | VII Separable, testable | The geometry is a pure function of (level, instant, viewport, tier, setting); the level is a small class testable without a display. |
-| IX Cross-platform | macOS validated by the owner; other platforms reported as not looked at. |
+| IX Cross-platform | macOS validated by the owner; the reduced-motion preference is read on macOS only and Windows and Linux are not claimed (R10); other platforms reported as not looked at. |
 | X No unrelated refactoring | Nothing outside the flames. |
 | XI Build and test integrity | Full macOS build with the same counts plus the new tests before and after. |
 | XII Truthful reporting | Mockups are static images, said so; results reported as run. |
@@ -56,7 +58,7 @@ Draw flames behind the Arcade run, rising from the bottom of the picture, with a
 specs/009-arcade-flames/
 ├── spec.md
 ├── plan.md                  # this file
-├── research.md              # decisions R1 to R9
+├── research.md              # decisions R1 to R12
 ├── data-model.md            # setting, level, flame state, tongue
 ├── contracts/arcade-flames.md   # the surface added to the scene, the level and the settings
 ├── quickstart.md            # how to see and check the flames
@@ -72,7 +74,8 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── arcade/view/SceneItem.java            # + roles FLAME_TONGUE, FLAME_EMBER (decoration)
 ├── arcade/view/FlameState.java           # new: level, setting, flicker instant (input of the scene)
 ├── arcade/view/ArcadeScene.java          # + drawFlames (first, behind everything), build(..., FlameState)
-├── arcade/ui/FlameLevel.java             # new: picture-only smoothed level (rise, fall, hold, 4-event rule)
+├── arcade/ui/FlameLevel.java             # new: picture-only smoothed level (rise, fall, hold, 4-event rule, step limits)
+├── arcade/ui/ReducedMotion.java          # new: asks the system once per run (macOS `defaults`), fallback no preference (R10)
 ├── arcade/ui/ArcadeFrameSource.java      # owns the FlameLevel, passes the FlameState to the scene, holds it in a pause
 ├── arcade/ui/ArcadeSession.java          # passes the setting and the scoring to the frame source
 ├── session/FollowSettings.java           # + flames setting (OFF, DISCREET, FULL; default DISCREET)
@@ -89,7 +92,7 @@ docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md          # FR-012
 
 * **F0 - Fix the spec** (before any code): two statements of the spec do not match the code (`research.md` R6, R7): the share is 0, not 100 %, when nothing was judged, and the buttons are outside the picture. Run `/speckit-clarify` to correct FR-001 and FR-003 and the scenario 2 of story 1. **Gate G1 (passed on 2026-10-14: the owner approved the mockups `A2-full.png`, `A2-discreet.png` and `A2-mouvement-coin-gauche.png` as they are, with discreet at 60 % of full; the spec was corrected by `/speckit-clarify` the same day).**
 * **F1 - The scene (pure).** Roles, `FlameState`, `drawFlames` (tongues, embers, reading guard, tiers), pure tests and the reference scene.
-* **F2 - The level.** `FlameLevel` (mapping, rise and fall, 4-event rule, hold in a pause) and its wiring in `ArcadeFrameSource`, with tests.
+* **F2 - The level.** `FlameLevel` (real-ratio mapping, rise and fall with the step limits, 4-event rule, hold in a pause **and during the count-in of a resume** with a monotonic flame clock, R11) and its wiring in `ArcadeFrameSource`, with tests; `ReducedMotion` (R10) with a fake command runner and its wiring (`FlameState.motion`).
 * **F3 - The setting.** `FollowSettings`, the combo box, the three languages, read at the start of a run.
 * **F4 - Checks.** Painted contrast test (several window sizes), parity of the judging with flames on and off (also on the stress run), native paint test, stress run for the cost. **Gate G2: the owner looks at the built application.**
 * **F5 - Documentation.** Manuals and guides in three languages, `STATUS.md`, release notes when a release is made.
@@ -98,7 +101,8 @@ docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md          # FR-012
 
 * The reading guard must hold at every window shape: it is a function of the boxes of the texts of the picture, and is tested on seven shapes (the list of `HudVisibilityTest`).
 * About 100 filled items per frame may cost on the macOS painter: measured by the stress run; the tongue counts are parameters, and the tiers already reduce them.
-* The flicker must be the same for the same instant (deterministic): it is a function of the picture instant, never of a random number source.
+* The flicker must be the same for the same flame clock (deterministic): it is a function of the monotonic flame clock, never of the picture instant (which goes back at a resume) nor of a random number source.
+* The answer `1` of the macOS reduce-motion setting could not be tried on this machine (only `0`): it is tried at gate G2 (R10).
 * Static mockups do not show motion: the owner judges the motion on the built application (G2).
 
 ## Complexity Tracking

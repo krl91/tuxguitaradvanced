@@ -19,4 +19,6 @@ mvn test -pl ../../TuxGuitar-audio-engine -am -pl ../../TuxGuitar-practice -Dgro
 2. **G2, on the built application:** play the demo score at a high level of success, then miss on purpose: the flames rise to full at 100 %, stay as embers at 50 % or less, and fall back over about 3 seconds.
 3. Reading: with the flames at full level, the string names, the fret numbers, the verdict badge and the top texts stay easy to read; resize the window to several shapes.
 4. The setting in the *Mode* tab: off draws nothing, discreet is lower and fainter than full, the choice holds until the application is closed.
-5. Pause and resume: the flames hold their level and their motion while paused.
+5. Pause and resume: the flames hold their level and their motion while paused; after a resume the level stays held during the new count-in while the tongues keep moving, then goes on from the same level.
+6. Reduced motion (FR-013): turn on *System Settings > Accessibility > Display > Reduce motion*, start a run: the tongues do not move and only their height follows the play. This is the first time the answer `1` is tried (R10); on Windows and Linux nothing is read in this version.
+7. The three states and the default: a change made during a run applies to the next run; the flames keep their colours in every look of the game.
