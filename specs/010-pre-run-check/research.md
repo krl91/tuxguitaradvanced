@@ -18,9 +18,13 @@ Every claim cites a file that was opened or data that was measured on 2026-10-14
 
 **Evidence.** `AnalysisService` loop pushes each hop (256 samples) to the attack analyser (`attackAnalyzer.push(hop, 0, hopSize)`); frames carry an `onset` flag from `ArticulationDetector` (`OfflineAnalysis` line 69). 300 ms are about 56 hops at 48 kHz.
 
-**Decision.** The meter is fed once per hop through a small optional hop listener added to `AnalysisService` and to `OfflineAnalysis` (the same call in both, so the tests run the production loop). It arms on a strum: the first hop whose RMS is at least 12 dB above the quietest recent hop, or the `onset` flag; it then accumulates the next 300 ms (clipped samples, sum of squares, peak) and gives a verdict; a new check re-arms it. Nothing is allocated per hop.
+**Correction (analysis A1/I1 of 2026-10-14).** `AnalysisService.pushAttack` returns at once when no attack candidates are set, which is the case before a run, so the hook cannot go there; the hop is complete in `run()` right after `frontEnd.process(hop, hopSize)` (the gain and the noise reduction come first), and that is where the listener is called: the meter then sees the same signal as the level, the pitch, the attack and the spectrum. The window reaches it through a facade `AudioEngine.addHopListener / removeHopListener`, as it reaches the frames through `AudioEngine.subscribe`.
+
+**Decision.** The meter is fed once per hop through a small optional hop listener added to `AnalysisService` (in `run()`, after the front end) and to `OfflineAnalysis` (the same call in both, so the tests run the production loop). It arms on a strum: the first hop whose RMS is at least 12 dB above the quietest recent hop, or the `onset` flag; it then accumulates the next 300 ms (clipped samples, sum of squares, peak) and gives a verdict; a new check re-arms it. Nothing is allocated per hop.
 
 ## R3 - The verdicts
+
+**Precedence.** When more than one applies the reported verdict is `CLIPPING`, then `TOO_LOUD`, then `TOO_WEAK` (a clipping signal is never called weak, a loud one never weak).
 
 **Decision.** `NO_STRUM` (nothing armed yet or only silence), `CLIPPING` (share >= 0.5 %), `TOO_WEAK` (the mean RMS of the window under `INPUT_LEVEL_MIN`, -40 dBFS by default, the same number the existing level state uses), `GOOD`. The "too loud without clipping" state of the existing check (`TOO_HIGH`, RMS above `INPUT_LEVEL_MAX`) is reported as `TOO_LOUD` with the same guidance as clipping. The texts of the existing `practice.level.guidance.*` are reused for the advice.
 
@@ -30,7 +34,7 @@ Every claim cites a file that was opened or data that was measured on 2026-10-14
 
 **Evidence.** `PracticeWindow.startSession()` (line 638) is called by the Start button, by the one-click quick start (`startNow`, line 631) and by `openAndStartArcade()` (the transport-bar Arcade button, `immediateStart`); `restartArcade()`, `restartArcadeFromStart()`, `restartFollow()` re-enter `startArcade` / `startFollow` directly, not `startSession`.
 
-**Decision.** The check wraps `startSession()`: it opens `PreRunWindow`; the existing body runs only when the check says READY. Both ways of starting, the three modes and the quick start go through it with no other change. **Restarts and "play again" inside the same run window (Restart button, result window, from a measure) do not ask again**: they are the same sitting a few seconds later, the tuning and the level were just judged, and asking again after every try would make the practice loop unbearable; FR-001 speaks of the start of a mode from the preparation window and the buttons of the transport bar. This is the one reading of the spec to confirm with the owner at gate G.
+**Decision (written in the spec as FR-013).** The check wraps `startSession()`: it opens `PreRunWindow`; the existing body runs only when the check says READY. Both ways of starting, the three modes and the quick start go through it with no other change. **Restarts and "play again" inside the same run window (Restart button, result window, from a measure) do not ask again**: they are the same sitting a few seconds later, the tuning and the level were just judged, and asking again after every try would make the practice loop unbearable; FR-001 speaks of the start of a mode from the preparation window and the buttons of the transport bar. This is the one reading of the spec to confirm with the owner at gate G.
 
 **The Arcade button.** It used to start "without waiting for the level check" (`QuickStart.canStart(..., immediate)`); it now opens the start window first, as the clarification says; the preparation window is still not shown.
 

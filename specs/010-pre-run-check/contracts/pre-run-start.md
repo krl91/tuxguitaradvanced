@@ -13,7 +13,7 @@ final class StrumClipMeter {                       // audio engine, pure, hop by
     StrumVerdict verdict();                         // NO_STRUM until 300 ms after an attack were counted
     double clippedShare();  double rmsDbfs();       // of the window, for the screen and the tests
 }
-// AnalysisService / OfflineAnalysis: addHopListener(HopListener) with void hop(float[] samples, int offset, int length)
+// AnalysisService (in run(), after the front end) / OfflineAnalysis / AudioEngine facade: addHopListener(HopListener) with void hop(float[] samples, int offset, int length)
 final class PreRunCheck {                           // practice ui, no widgets
     PreRunCheck(Mode mode);                         // a new object for each start
     State state();
@@ -37,4 +37,6 @@ final class PreRunCheck {                           // practice ui, no widgets
 6. **Recognition untouched.** The same recorded run gives identical judgements with and without the hop listener and the start window (SC-005, parity test as in spec 009).
 7. **Regression.** Every recognition figure of `benchmark/before-after.txt` is equal or better after the change (SC-007, FR-012).
 8. **Texts.** Every `practice.prerun.*` key exists, not empty, in English, French and Spanish with the same placeholders (FR-010).
-9. **Time.** With a good strum the state machine reaches `READY` after one answer and the 300 ms window; no timer of its own adds more than the strum (SC-003, measured by the owner at gate G).
+9. **Time.** From the attack of the strum to `READY` at most 1 second (the 300 ms window and the change of window); the learner's own time to answer and to strum is not counted; no timer of the state machine adds to it (FR-009, SC-003, measured by the owner at gate G).
+10. **Verdict order.** `CLIPPING` before `TOO_LOUD` before `TOO_WEAK` when several apply (FR-003, `StrumClipMeterTest`).
+11. **Restarts.** A restart, a replay from the result window (from the start or from a measure) and the automatic retry after a failed start never open the start window (FR-013, `PracticeWindowStartPathTest`).

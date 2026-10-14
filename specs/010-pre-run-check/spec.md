@@ -53,7 +53,7 @@ At every start of a mode the learner is asked whether the guitar is in tune. If 
 1. **Given** a start of a mode, **When** the learner answers that the guitar is in tune, **Then** the run goes on (after the level check of story 1) with nothing else asked.
 2. **Given** a start of a mode, **When** the learner answers that the guitar is not in tune, **Then** the tuner opens and the mode does not begin.
 3. **Given** the tuner opened by this question and closed by the learner, **When** it is closed, **Then** the learner is back at the start of the mode, with the same choices, and can start it.
-4. **Given** the same learner starting a mode again later in the session, **When** the start is requested, **Then** the question is asked again (it is not remembered).
+4. **Given** the same learner starting a mode again later in the session **from the preparation window or from a button of the transport bar**, **When** the start is requested, **Then** the question is asked again (it is not remembered); a restart or a replay of the run just played (FR-013) is not such a start.
 
 ---
 
@@ -67,12 +67,13 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 
 **Acceptance Scenarios**:
 
-1. **Given** a tuned guitar and a well-set input, **When** the learner starts a mode, **Then** the added steps take one answer and no more than 5 seconds of checking.
+1. **Given** a tuned guitar and a well-set input, **When** the learner starts a mode, **Then** the added steps are one answer to the tuning question and one strum, and from the attack of the strum to the beginning of the run no more than 1 second passes; the time the learner takes to answer or to strum is not counted.
 2. **Given** a level warning, **When** the learner chooses to go on anyway, **Then** the mode begins and the choice is not stored for the next start.
 
 ### Edge Cases
 
 - The input is lost or no sound arrives at all during the check: the existing messages for these cases are shown (no signal, device lost, microphone access refused) and the mode does not begin.
+- Any attack serves as the test strum, a chord or a single note: the verdict is about the level of the signal, not about what was played.
 - The learner plays nothing during the check: the window says it heard nothing and keeps asking for a strum; it never decides a level from silence, and the mode does not begin on silence unless the learner goes on anyway (FR-008).
 - The check is asked while a mode is already running or while a calibration runs: it is not repeated inside a run.
 - The tuner is already open when a mode is started: the question is still asked, and answering no brings the already open tuner forward.
@@ -85,16 +86,17 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 
 - **FR-001**: At every start of *Wait for the right note*, *Follow* and *Arcade*, from the preparation window as well as from the buttons of the transport bar (including the Arcade button that used to start at once), the application MUST open one small dedicated start window (the same for the three modes and for both ways of starting) that asks the tuning question (FR-005) and asks for a **test strum**, with a live level indicator; the level is judged on that strum before the run begins. Nothing is remembered from one start to the next.
 - **FR-002**: When the input signal clips, the check MUST say so and say what to lower (the gain of the interface, the input volume of the system), using the existing wording of the level guidance; the mode MUST NOT begin until the learner checks again with a good result or chooses to go on anyway.
-- **FR-003**: When the input signal is too weak to be recognised, the check MUST say so and say what to raise, with the same rule as FR-002.
+- **FR-003**: When the input signal is too weak to be recognised, the check MUST say so and say what to raise, with the same rule as FR-002. When more than one verdict applies, the one reported is, in this order, clipping, then too loud, then too weak.
 - **FR-004**: The clipping decision MUST catch the case measured by the owner: the share of samples at full scale in the 300 ms after a strum, at or above **0.5 %**, is clipping (2 % was the first proposal; the data set above shows it misses 4 of the 21 measured takes). A signal with no sample at full scale is never reported as clipping.
 - **FR-005**: At every start of those modes the application MUST ask whether the guitar is in tune and MUST NOT remember the answer from one start to the next.
 - **FR-006**: When the learner answers that the guitar is in tune the run MUST go on (after FR-001 to FR-004); when the answer is no the tuner MUST open and the mode MUST NOT begin.
 - **FR-007**: When the tuner opened by FR-006 is closed, the learner MUST be back at the start of the mode with the same choices; the mode MUST NOT begin by itself.
 - **FR-008**: A learner who has been warned about the level MUST be able to go on anyway; that choice applies to this start only.
-- **FR-009**: With a good level and a tuned guitar the two checks MUST add one answer and at most 5 seconds before the run begins.
+- **FR-009**: With a good level and a tuned guitar the two checks MUST add one answer and one strum, and the run MUST begin at most **1 second after the attack of the strum** (the 300 ms of measure plus the change of window); the time the learner takes to answer or to strum is not counted.
 - **FR-010**: The texts of the question, of the answers and of the level messages MUST exist in English, French and Spanish.
-- **FR-012**: The recognition of single notes, of the techniques (bend, vibrato, slide, hammer-on, pull-off and the others already recognised) and of chords MUST be covered by non-regression tests that run with this feature and fail if their results get worse: the existing recorded-audio and data-set tests (real-guitar regression, monophonic and bend replays, technique data set, GuitarSet chords, the owner's takes) are kept in the gate with their figures recorded before the change, and any recognition test that is missing for a kind of event (note, each technique, chord) is added.
 - **FR-011**: The checks MUST NOT change the operating-system or interface gain by themselves, and MUST NOT change how notes and chords are recognised (spec 004, T007) or judged.
+- **FR-012**: The recognition of single notes, of the techniques (bend, vibrato, slide, hammer-on, pull-off and the others already recognised) and of chords MUST be covered by non-regression tests that run with this feature and fail if their results get worse: the existing recorded-audio and data-set tests (real-guitar regression, monophonic and bend replays, technique data set, GuitarSet chords, the owner's takes) are kept in the gate with their figures recorded before the change, and any recognition test that is missing for a kind of event (note, each technique, chord) is added.
+- **FR-013**: A restart of the run in progress, a replay from the result window (from the start or from a measure) and the automatic new try after a failed start are **not** new starts of a mode: they do not ask again, the tuning and the level having just been judged in the same sitting; only a start from the preparation window or from a button of the transport bar does (FR-001).
 
 ### Key Entities
 
@@ -107,11 +109,11 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 
 - **SC-001**: On the 42 recorded takes of the owner, the check reports clipping for at least 19 of the 21 takes at gain 0.99 and for none of the 21 takes at gain 0.40.
 - **SC-002**: In all three modes and from both ways of starting (preparation window and transport bar), a start always passes through both checks (tested for each).
-- **SC-003**: With a good level and an "in tune" answer, the added time before the run is at most 5 seconds and the added steps are one answer.
+- **SC-003**: With a good level and an "in tune" answer, the added steps are one answer and one strum, and the run begins at most 1 second after the attack of the strum (the learner's own time to answer and to strum is not counted).
 - **SC-004**: Answering "not in tune" opens the tuner 100 % of the time and the mode never begins in that case; closing the tuner brings the learner back to the start.
 - **SC-005**: No setting, judgement, score or recognition result changes for a run started after the checks (the same recorded run gives the same judgements with and without the checks).
-- **SC-007**: After the change, every recognition figure recorded before it (notes, each technique, chords on GuitarSet and on the owner's takes) is equal or better, shown in a before and after file like `specs/009-arcade-flames/benchmark/before-after.txt`.
 - **SC-006**: The owner confirms on the built application, with the Rocksmith adapter at the gain that clipped (0.99), that the warning appears and tells what to do, and that after lowering the gain the chords of `basic_test.tg` are recognised more often.
+- **SC-007**: After the change, every recognition figure recorded before it (notes, each technique, chords on GuitarSet and on the owner's takes) is equal or better, shown in a before and after file like `specs/009-arcade-flames/benchmark/before-after.txt`.
 
 ## Assumptions
 

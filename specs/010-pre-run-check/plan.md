@@ -73,14 +73,15 @@ specs/010-pre-run-check/
 ```text
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
 ├── analysis/StrumClipMeter.java       # new: pure; counts clipped samples and the level in the 300 ms after an attack; verdict
-├── analysis/AnalysisService.java      # + an optional hop listener (one call per hop with the samples)
+├── analysis/AnalysisService.java      # + an optional hop listener, called in run() after the front end (one call per hop with the samples)
+├── AudioEngine.java                   # + addHopListener / removeHopListener (facade used by the start window)
 └── OfflineAnalysis.java               # + the same hook, so the tests run the meter through the real loop
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── ui/PreRunCheck.java                # new: the state machine of the start window (no widgets): TUNING, STRUM, LEVEL_BAD, READY, TUNER_OPEN
 ├── ui/PreRunWindow.java               # new: the small window (toolkit widgets), modelled on ArcadeResultWindow
 └── ui/PracticeWindow.java             # startSession() goes through the check; restarts of the same run do not (R4)
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # practice.prerun.* (see R7)
-desktop/TuxGuitar-practice/test/...    # StrumClipMeterTest, StrumClipDatasetTest, PreRunCheckTest, PreRunWindowTest/SwtTest, regression suites
+desktop/TuxGuitar-practice/test/...    # StrumClipMeterTest, StrumClipDatasetTest, PreRunCheckTest, PreRunWindowTest, PracticeWindowStartPathTest, PracticeWindowSwtTest, regression suites
 docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md
 ```
 
@@ -101,7 +102,7 @@ docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md
 * The ring of an earlier note could count as clipping: the window starts at the attack and the meter is reset by each new check.
 * The start window must not become a wall: one answer and at most 5 seconds with a good level (SC-003), checked by the state machine and by the owner.
 * The takes were labelled by a tool: the regression figures of the owner's takes are recorded as such and not used as the only judge.
-* Restarting inside a run: decided not to re-ask (R4); the owner may want otherwise: it is the one decision to confirm at the gate.
+* Restarting inside a run: decided not to re-ask (R4, written as FR-013); the owner may want otherwise: it is the one decision to confirm at the gate.
 
 ## Complexity Tracking
 
