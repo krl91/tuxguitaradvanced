@@ -62,3 +62,10 @@
 
 - Seven of these items ask about **problems found while writing** (CHK012, CHK019, CHK021, CHK035 are the strongest): they are corrections to make in the spec, plan or tasks before implementation, not just questions.
 - The analysis (`/speckit-analyze`) reads these items as input; it does not tick them.
+
+## Resolution notes (added by the analysis of 2026-10-15; the boxes above stay the reviewer's)
+
+- CHK012 (SC-003 80 % of P2): the conflict was real (6 of 19); the denominator is now the 13 P2 journeys whose test is new and the procedure has 24 entries covering 13 of 13 (spec SC-003, `contracts/break-on-purpose.md`).
+- CHK019 (seven against eight): real but small; the seam is now declared as **twelve** methods because the analysis found four more accesses (two sleeping threads, the clock, the plugin calls): `contracts/practice-host.md`.
+- CHK021 (owner smoke only at the end): real; task T010 is now an owner smoke right after the seam, before Phase 3.
+- CHK035 (where the expected result of a run is recorded): task T023 now names the committed file `TST/ui/flow/expected-runs.properties`.

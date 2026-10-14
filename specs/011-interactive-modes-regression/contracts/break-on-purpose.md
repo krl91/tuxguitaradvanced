@@ -10,8 +10,8 @@ No mutation-testing tool exists in the repository (research R6). For each entry:
 | B4 | SP-01 | `PracticeWindow.startSession`: call `startSessionNow` directly, without `startFlow.begin` | `StartPathJourneyTest` | _to record_ |
 | B5 | SP-08 | `PreRunWindow.windowClosed`: do not cancel | `StartPathJourneyTest` | _to record_ |
 | B6 | SP-09 | `StartFlow.begin`: ignore `pending()` | `StartPathJourneyTest`, `StartFlowTest` | _to record_ |
-| B7 | SP-10 | `restartArcade`: go through `startSession()` | `FollowUpJourneyTest` | _to record_ |
-| B8 | WR-02 | `FollowSession`: judge during the count-in | `RunJourneyTest`, `FollowFunctionalTest` | _to record_ |
+| B7 | SP-10, FU-02 | `restartArcade`: go through `startSession()` | `RunJourneyTest`, `FollowUpJourneyTest` | _to record_ |
+| B8 | WR-02 | `FollowRun` / `FollowPlayback` (where the count-in is handled; confirmed by the analysis of 2026-10-15, not `FollowSession`): judge during the count-in | `RunJourneyTest`, `FollowFunctionalTest` | _to record_ |
 | B9 | WR-03 | `ArcadeScoring`: change the maximum | `RunJourneyTest`, `ArcadeRunFunctionalTest` | _to record_ |
 | B10 | WR-01 | `PassagePolicy`: never repeat a passage | `RunJourneyTest`, `PassagePracticeTest` | _to record_ |
 | B11 | WR-04 | `ArcadeFrameSource`: feed the flame level into the judging | `RunJourneyTest`, `FlameParityTest` | _to record_ |
@@ -22,4 +22,11 @@ No mutation-testing tool exists in the repository (research R6). For each entry:
 
 | B16 | SP-02, SP-03 | `PracticeWindow.watchQuickStart` / `open`: show the preparation window at once for a quick start | `StartPathJourneyTest` | _to record_ |
 | B17 | SP-07 | `PreRunCheck.verdict`: let `CLIPPING` go to `READY` | `StartPathJourneyTest`, `PreRunCheckTest` | _to record_ |
-The exact files and methods of B8 to B11 and B15 are confirmed when the entry is run (the names above are the plan's best reading of the source and are corrected in the result file if a name is different). P1 journeys = SP-01 to SP-10, WR-01 to WR-03: B1 to B12, B16 and B17 cover them (SP-01 B4, SP-02 and SP-03 B16, SP-04 B1, SP-05 B2, SP-06 B3, SP-07 B17, SP-08 B5, SP-09 B6, SP-10 B7, WR-01 B10, WR-02 B8, WR-03 B9: 100 %); P2 journeys covered by B13 to B15 and the others are counted in the result file (SC-003 asks for 80 %).
+| B18 | FU-01 | `PracticeWindow.stopNow`: do not call `showPreparation()` / `showWindow()` | `FollowUpJourneyTest` | _to record_ |
+| B19 | FU-03 | `PracticeWindow.restartFollow`: go through `startSession()` (ask again) | `FollowUpJourneyTest` | _to record_ |
+| B20 | FU-04 | `PracticeWindow.retryArcadeRestart`: never retry (return false at once) | `FollowUpJourneyTest` | _to record_ |
+| B21 | FU-05 | the result window's close path: do not bring the preparation window back | `FollowUpJourneyTest` | _to record_ |
+| B22 | IN-01 | `QuickStart.showForUnusableInput`: ignore `runOngoing` | `InterruptionJourneyTest`, `QuickStartTest` | _to record_ |
+| B23 | IN-02 | `PracticeWindow.inputChanged`: do not call `updateStartButton()` | `InterruptionJourneyTest` | _to record_ |
+| B24 | IN-05 | the window's dispose listener: remove `startFlow.cancelPending()` | `InterruptionJourneyTest` | _to record_ |
+The exact files and methods of B8 to B11 and B15 are confirmed when the entry is run (the names above are the plan's best reading of the source and are corrected in the result file if a name is different). **Coverage of the counts (analysis of 2026-10-15).** P1 journeys = SP-01 to SP-10, WR-01 to WR-03: B1 to B12, B16 and B17 cover them (SP-01 B4, SP-02 and SP-03 B16, SP-04 B1, SP-05 B2, SP-06 B3, SP-07 B17, SP-08 B5, SP-09 B6, SP-10 B7, WR-01 B10, WR-02 B8, WR-03 B9: 100 %). P2 journeys **whose test is new** (WR-04, FU-01 to FU-06, IN-01 to IN-06: 13 rows; the six RR rows are existing baselines that this feature does not change and are **excluded** from the denominator): WR-04 B11, FU-01 B18, FU-02 B7, FU-03 B19, FU-04 B20, FU-05 B21, FU-06 B12, IN-01 B22, IN-02 B23, IN-03 B13, IN-04 B14, IN-05 B24, IN-06 B15: **13 of 13**. The first version of this file covered only 6 of 19 P2 rows (32 %) against the 80 % of SC-003: that was the conflict found by the checklist and confirmed by the analysis.

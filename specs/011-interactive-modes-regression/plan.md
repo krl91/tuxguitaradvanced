@@ -8,7 +8,7 @@
 
 The rules inside the three modes are well tested; what is not tested is the **assembly the learner meets**: the controlling code of the practice window (`PracticeWindow`), which no test can build because it reaches into the whole application. Three real bugs of spec 010 lived exactly there and were found by hand. The plan:
 
-1. a **small declared seam**, `PracticeHost` (seven accesses to the application, default implementation identical to today's code), so that the real window can be built by a test (owner's decision A);
+1. a **small declared seam**, `PracticeHost` (twelve small methods: eight accesses to the application, two for time, two for the plugin; default implementation identical to today's code), so that the real window can be built by a test (owner's decision A);
 2. a **harness** that builds the real window on the existing headless toolkit with a fake engine, a fake player and a queued synchronizer, so that whole journeys run in seconds with no waiting;
 3. **journey tests** for the start path, the whole run of each mode, the follow-up actions and the interruptions; a **layout** check on the real toolkit (tagged);
 4. a **contract and coverage matrix** (`contracts/journeys.md`) checked against the tests, with declared gaps;
@@ -36,7 +36,7 @@ No recognition code, no mode rule and no screen changes. The only production cha
 
 **Constraints**: no behaviour change (the existing suites and the recognition figures of spec 010 stay equal); no real waiting in a test; tests skip cleanly when the owner's files or the datasets are absent; the build stays green after each phase.
 
-**Scale/Scope**: 38 journeys in 7 groups (`contracts/journeys.md`); about 7 seam methods; 4 to 6 new test classes plus a harness; 2 new tags/profiles.
+**Scale/Scope**: 38 journeys in 7 groups (`contracts/journeys.md`); 12 seam methods; 4 to 6 new test classes plus a harness; 2 new tags/profiles.
 
 ## Constitution Check
 
@@ -52,12 +52,12 @@ No recognition code, no mode rule and no screen changes. The only production cha
 | VI Real-Time Audio Correctness | no audio-thread code changes; the fake engine is test-only; the seam is called on the user-interface thread | pass |
 | VII Separable, Testable Audio Logic | this feature **advances** it: the window flow becomes testable without hardware | pass |
 | IX Cross-Platform Conscious, macOS-First | validated on macOS only; stated in the report | pass (declared) |
-| X No Unrelated Refactoring | the seam changes only the seven access points; the 34 text sites and `TGSynchronizer` stay as they are (R1, R2); no reformatting | pass |
+| X No Unrelated Refactoring | the seam changes only the access points of `contracts/practice-host.md`; the 34 text sites and `TGSynchronizer` stay as they are (R1, R2); no reformatting | pass |
 | XI Build and Test Integrity | the build stays green after each phase; counts reported exactly before and after; the default build gains under 2 minutes | pass |
 | XII Observable Acceptance and Truthful Reporting | the matrix declares its gaps; the break-on-purpose results are pasted; coverage that cannot be measured is reported as a gap | pass |
 | XIII/XIV Honest guitar semantics, learner feedback | nothing about recognition semantics changes; the baselines keep the known weaknesses visible | pass |
 
-**Post-design re-check (2026-10-15):** unchanged. The one point to watch: the seam must not grow (R10.1); any growth is declared in the task that needs it.
+**Post-design re-check (2026-10-15):** unchanged. The one point to watch: the seam must not grow beyond its twelve methods; any growth is declared in the task that needs it and approved by the owner. The analysis of 2026-10-15 grew it once, from eight to twelve, for two real reasons (R4: sleeping threads; R10.1: the plugin).
 
 ## Project Structure
 
@@ -86,11 +86,11 @@ desktop/TuxGuitar-practice/
 ├── src/app/tuxguitar/app/tools/custom/practice/ui/
 │   ├── PracticeHost.java                     # NEW: the seam (package-private)
 │   ├── AppPracticeHost.java                  # NEW: the default, identical to today's code
-│   └── PracticeWindow.java                   # CHANGED: reads the seven accesses from the host; the public constructor is unchanged
+│   └── PracticeWindow.java                   # CHANGED: reads the twelve methods of the host; the public constructor is unchanged
 └── test/app/tuxguitar/app/tools/custom/practice/
     ├── ui/flow/                              # NEW: the harness and the journey tests (default build)
     │   ├── WindowHarness.java                # builds the real window: fake host, queued synchronizer, fake engine, fake player
-    │   ├── FakeHost.java, FakeEngine.java    # the seam's test double and the 8-method engine
+    │   ├── FakeHost.java                     # the seam's test double (a real device-less engine from FakeAudioInput, a recording `later`, the fake clock)
     │   ├── StartPathJourneyTest.java         # SP-*
     │   ├── RunJourneyTest.java               # WR-* (three modes, whole runs)
     │   ├── FollowUpJourneyTest.java          # FU-*
@@ -108,8 +108,8 @@ desktop/TuxGuitar-practice/
 | Phase | Content | Spec Kit task kind |
 |---|---|---|
 | P0 | **Baseline before any change:** test counts, build time of the default suite, the recognition reports (diff base), the JaCoCo profile added and the **coverage-before** figures | measure, no behaviour change |
-| P1 | **The seam:** `PracticeHost`, `AppPracticeHost`, the new `PracticeWindow` constructor; proof of no behaviour change (the existing suites equal; `PracticePlugin` constructible: R10.1) | the only production change |
-| P2 | **The harness:** `WindowHarness`, `FakeHost`, `FakeEngine`, the queued synchronizer, the extension of `SwtContractToolkit`; a first smoke journey (open the window, start the preparation) | test support |
+| P1 | **The seam:** `PracticeHost`, `AppPracticeHost`, the new `PracticeWindow` constructor; proof of no behaviour change (the existing suites equal; the plugin calls are in the seam: R10.1) | the only production change |
+| P2 | **The harness:** `WindowHarness`, `FakeHost` (with the real device-less engine from `FakeAudioInput.newEngine`), the queued synchronizer, the extension of `SwtContractToolkit`; a first smoke journey (open the window, start the preparation) | test support |
 | P3 | **Start path journeys SP-01..SP-10** on the real window (the area of the three bugs) | tests first, seen failing |
 | P4 | **Whole runs WR-01..WR-03** (Wait, Follow, Arcade) with the flames off, discreet and full | tests |
 | P5 | **Follow-up and interruptions FU-*, IN-*** | tests |

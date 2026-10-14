@@ -38,7 +38,7 @@ Expected: `target/site/jacoco/index.html` and the per-package CSV; the figures g
 
 ## 6. The tests can fail (break-on-purpose)
 
-Follow `contracts/break-on-purpose.md`: for each entry, apply the change on a scratch state, run the named test, see it fail, restore. Expected: 17 of 17 entries fail the test named, recorded in `benchmark/break-on-purpose-results.md`.
+Follow `contracts/break-on-purpose.md`: for each entry, apply the change on a scratch state, run the named test, see it fail, restore. Expected: 24 of 24 entries fail the test named, recorded in `benchmark/break-on-purpose-results.md`.
 
 ## 7. Nothing changed for the learner (manual, owner)
 

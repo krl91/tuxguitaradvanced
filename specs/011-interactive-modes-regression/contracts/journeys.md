@@ -17,7 +17,7 @@ Modes: **W** = Wait for the right note, **F** = Follow the tempo, **A** = Arcade
 | SP-07 | Verdicts: good, clipping, too loud, too weak, no strum; *Check again*; *Continue anyway* (after a bad verdict, or after 10 s without a strum) | good begins the mode; bad blocks with advice; *Continue anyway* goes on for this start only | W F A | P1 | `StartPathJourneyTest`; `PreRunWindowTest`; `PreRunCheckTest` | new + existing |
 | SP-08 | Cancel by the button, the close button, Escape | the start is cancelled; a new start is accepted at once; nothing is held | W F A | P1 | `StartPathJourneyTest`; `PracticeWindowSwtTest` | new + existing |
 | SP-09 | Double press of Start, or the transport button while a start window is open | one window; the mode starts once | W F A | P1 | `StartPathJourneyTest`; `StartFlowTest` | new + existing |
-| SP-10 | Restart, play again, automatic retry | the start window is **not** opened again (FR-013 of spec 010) | A F | P1 | `FollowUpJourneyTest`; `PracticeWindowStartPathSourceTest` (source only) | new |
+| SP-10 | Restart, play again, automatic retry | the start window is **not** opened again (FR-013 of spec 010) | A F | P1 | `RunJourneyTest` (needs a run to restart); `PracticeWindowStartPathSourceTest` (source only) | new |
 
 ## WR - a whole run, start to result (story 2, P1)
 
@@ -48,7 +48,7 @@ Modes: **W** = Wait for the right note, **F** = Follow the tempo, **A** = Arcade
 | IN-03 | The track is changed with a start window open | the start is cancelled; no mode begins | W F A | P2 | `InterruptionJourneyTest` | new |
 | IN-04 | The mode is changed with a start window open | the start is cancelled; no mode begins | W F A | P2 | `InterruptionJourneyTest` | new |
 | IN-05 | The preparation window is closed with a start window open | the start is cancelled; nothing is left open | W F A | P2 | `InterruptionJourneyTest` | new |
-| IN-06 | A setting (tempo, tolerance, flames, passage) is changed during a run | it applies to the next run, not the current one | F A | P2 | `InterruptionJourneyTest`; `ArcadeFlamesSettingTest`; `FollowSettingsFlamesTest` | new + existing |
+| IN-06 | A setting (tempo, tolerance, flames, passage) is changed during a run | it applies to the next run, not the current one | F A | P2 | `InterruptionJourneyTest`; flames part only: `ArcadeFlamesSettingTest`, `FollowSettingsFlamesTest` (tempo, tolerance and passage are **not** covered by an existing test) | new + existing |
 
 ## LY - layouts (story 6, P3, tag `swt-gui`)
 
