@@ -79,9 +79,11 @@ desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── ui/PreRunCheck.java                # new: the state machine of the start window (no widgets): TUNING, STRUM, LEVEL_BAD, READY, TUNER_OPEN
 ├── ui/PreRunWindow.java               # new: the small window (toolkit widgets), modelled on ArcadeResultWindow
-└── ui/PracticeWindow.java             # startSession() goes through the check; restarts of the same run do not (R4)
+├── ui/StartGate.java, StartFlow.java  # new: the seam (a gate that reports READY) and the pure rule that the start runs only on READY
+├── ui/PreRunStartGate.java            # new: the real gate, opens PreRunWindow
+└── ui/PracticeWindow.java             # startSession() = StartFlow.begin(...); the old body is startSessionNow; restarts of the same run do not ask (R4)
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # practice.prerun.* (see R7)
-desktop/TuxGuitar-practice/test/...    # StrumClipMeterTest, StrumClipDatasetTest, PreRunCheckTest, PreRunWindowTest, PracticeWindowStartPathTest, PracticeWindowSwtTest, regression suites
+desktop/TuxGuitar-practice/test/...    # StrumClipMeterTest, StrumClipDatasetTest, PreRunCheckTest, PreRunWindowTest, StartFlowTest, PracticeWindowStartPathSourceTest, PracticeWindowSwtTest, regression suites
 docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md
 ```
 

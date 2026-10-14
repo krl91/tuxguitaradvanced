@@ -24,12 +24,14 @@ final class PreRunCheck {                           // practice ui, no widgets
     void checkAgain();                              // LEVEL_BAD -> STRUM, meter reset
     void cancel();                                  // CANCELLED, the mode does not begin
 }
-// PracticeWindow.startSession(): opens PreRunWindow; the old body runs only on READY
+interface StartGate { void request(PreRunCheck check, Runnable onReady); }     // practice ui; the real one opens PreRunWindow
+final class StartFlow { static void begin(StartGate gate, PreRunCheck check, Runnable startNow); }   // startNow runs only on READY, once
+// PracticeWindow.startSession(): StartFlow.begin(gate, new PreRunCheck(mode), () -> startSessionNow(candidate)); restarts call startArcade/startFollow directly
 ```
 
 ## Invariants, each with a test
 
-1. **Every start is checked.** `startSession()` never reaches `startArcade`, `startFollow` or the wait-mode session without a `PreRunCheck` that ended in `READY`, for the three modes and from the Start button, the quick start and the transport-bar Arcade button (`PreRunWindowTest`, a call-path test of `PracticeWindow`).
+1. **Every start is checked.** `startSession()` never reaches `startArcade`, `startFollow` or the wait-mode session without a `PreRunCheck` that ended in `READY`, for the three modes and from the Start button, the quick start and the transport-bar Arcade button (`StartFlowTest` for the rule, `PracticeWindowStartPathSourceTest` for the shape of `PracticeWindow`, the native test T025 for the real window).
 2. **Nothing is remembered.** A new `PreRunCheck` starts at `TUNING`; no field outlives it; the same two starts in a row ask twice (SC-002, FR-001, FR-005).
 3. **Not in tune means no start.** `answerTuned(false)` gives `TUNER_OPEN` and never `READY`; `tunerClosed()` gives `TUNING` again, never `READY` by itself (FR-006, FR-007, SC-004).
 4. **Bad level blocks.** `CLIPPING`, `TOO_LOUD` and `TOO_WEAK` give `LEVEL_BAD`; only `continueAnyway()` (this object only) or a later `GOOD` gives `READY`; silence (`NO_STRUM`) is never `GOOD` (FR-002, FR-003, FR-008, Edge Cases).
@@ -39,4 +41,4 @@ final class PreRunCheck {                           // practice ui, no widgets
 8. **Texts.** Every `practice.prerun.*` key exists, not empty, in English, French and Spanish with the same placeholders (FR-010).
 9. **Time.** From the attack of the strum to `READY` at most 1 second (the 300 ms window and the change of window); the learner's own time to answer and to strum is not counted; no timer of the state machine adds to it (FR-009, SC-003, measured by the owner at gate G).
 10. **Verdict order.** `CLIPPING` before `TOO_LOUD` before `TOO_WEAK` when several apply (FR-003, `StrumClipMeterTest`).
-11. **Restarts.** A restart, a replay from the result window (from the start or from a measure) and the automatic retry after a failed start never open the start window (FR-013, `PracticeWindowStartPathTest`).
+11. **Restarts.** A restart, a replay from the result window (from the start or from a measure) and the automatic retry after a failed start never open the start window (FR-013, `PracticeWindowStartPathSourceTest`, native test T025).

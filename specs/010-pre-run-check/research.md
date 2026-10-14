@@ -48,7 +48,7 @@ Every claim cites a file that was opened or data that was measured on 2026-10-14
 
 **Evidence.** `LevelPanel` subscribes to the engine (`engine.subscribe(frameListener)`; the capture is held by the preparation window) and updates a progress bar from the latest frame at about 30 updates a second (`updateMeter`, RMS from -60 dBFS).
 
-**Decision.** `PreRunWindow` reuses the same engine subscription and the same meter scale for the live bar, plus the verdict of `StrumClipMeter` for the sentence under it; the capture must be held when the window opens (the quick start and the transport button already hold it for the run; the window asks the engine to hold it and gives it back on close).
+**Decision.** `PreRunWindow` reuses the same engine subscription and the same meter scale for the live bar, plus the verdict of `StrumClipMeter` for the sentence under it; the capture is already held: `PracticeWindow.open()` does `engine.acquire(CONSUMER_ID)` (line 290) and the preparation window is open, hidden or not, at every start including the transport-bar one, so `PreRunWindow` reuses it and does **not** acquire again (a second `acquire` would need its own consumer id and release); it adds and removes only its own subscription and its hop listener.
 
 ## R7 - Texts
 
