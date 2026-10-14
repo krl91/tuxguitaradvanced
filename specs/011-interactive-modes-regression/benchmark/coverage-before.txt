@@ -1,0 +1,26 @@
+Spec 011 T004: code coverage BEFORE any change of the feature, 2026-10-15, branch feature/interactive-practice at 6abf04647 (+ the profile of T003)
+Tool: JaCoCo 0.8.12 (profile `coverage`, practice module only), command: mvn test -P coverage -pl ../../TuxGuitar-practice -am (916 tests, 0 failures, 4 skipped, 9 min 50 s).
+What runs: the DEFAULT suite (headless tests, datasets, no native SWT test: the profiles are not combined, see the comment of the profile). Lines and branches covered of the total, per package of the practice module.
+
+arcade.core    lines   119 of   122 ( 97.5 %)   branches    68 of    72 ( 94.4 %)
+arcade.ui      lines   438 of   731 ( 59.9 %)   branches   197 of   299 ( 65.9 %)
+arcade.view    lines  1672 of  1711 ( 97.7 %)   branches   857 of   957 ( 89.6 %)
+model          lines   651 of   683 ( 95.3 %)   branches   331 of   370 ( 89.5 %)
+session        lines  2770 of  2936 ( 94.3 %)   branches  1536 of  1768 ( 86.9 %)
+ui             lines  1054 of  2767 ( 38.1 %)   branches   408 of  1232 ( 33.1 %)
+
+ui  PracticeWindow                     missed  678 covered    0
+ui  PracticePalette                    missed  263 covered    2
+ui  InputSelectorPanel                 missed   98 covered    0
+ui  GainControl                        missed   94 covered    0
+ui  PracticePlugin                     missed   74 covered    0
+ui  LevelPanel                         missed   67 covered    0
+ui  EngineFollowAdapter                missed   45 covered    0
+ui  PracticeHighlight                  missed   43 covered    0
+ui  FollowPanel                        missed   41 covered  313
+ui  EnginePreRunSource                 missed   35 covered    0
+Reading (stated, not interpreted further):
+- The rules of the modes are well covered: session (Wait and Follow) 94.3 % of lines, arcade.core 97.5 %, arcade.view 97.7 %, model 95.3 %.
+- The controlling code is not: `ui` is at 38.1 % of lines and 33.1 % of branches, and **PracticeWindow has 678 lines and 0 covered** (it is built by no test): this is the gap spec 011 is about.
+- arcade.ui (59.9 %) is covered by the native SWT tests only in part; those tests are not in this measure.
+- This is a figure to watch, not a target: no minimum is imposed (FR-016). The "after" figure is taken in phase 10 (T043) with the same command.
