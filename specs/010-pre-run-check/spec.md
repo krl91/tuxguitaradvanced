@@ -12,6 +12,13 @@
 
 **Evidence** (owner recordings through the Rocksmith USB adapter, 42 takes, `specs/004-attack-difference-recognition/benchmark/owner-chords*`, test `OwnerChordsBenchmarkTest`): with the input gain of the interface at 0.99, **20 of 21 takes clipped** (2 % to 28 % of the samples in the first 300 ms after the strum, the whole peak at full scale) and only **8 of 21** chords played were accepted; with the gain lowered to 0.40 nothing clipped and **18 of 21** were accepted. The level check of the application did not warn: it flags clipping only when 10 % of the samples of one analysis frame are at full scale.
 
+## Clarifications
+
+### Session 2026-10-14
+
+- Q: How is the input level measured at every start of a mode? → A: **Option A**: one start window asks the tuning question and a **test strum**, with a live level indicator; the mode starts when the level is good (or the learner goes on anyway). No check is left to the first seconds of the run, and the existing "play a few notes" state of the preparation window is not enough by itself.
+- Request (owner, same session): add **non-regression tests for the recognition** of notes, techniques (bend and the others) and chords, so that this feature and the next ones cannot degrade them: FR-012 and SC-007.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - I am told when my signal is too loud or too weak before I play (Priority: P1)
@@ -64,7 +71,7 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 ### Edge Cases
 
 - The input is lost or no sound arrives at all during the check: the existing messages for these cases are shown (no signal, device lost, microphone access refused) and the mode does not begin.
-- The learner plays nothing during the check: the check says it heard nothing and asks the learner to play a few notes; it never decides a level from silence.
+- The learner plays nothing during the check: the window says it heard nothing and keeps asking for a strum; it never decides a level from silence, and the mode does not begin on silence unless the learner goes on anyway (FR-008).
 - The check is asked while a mode is already running or while a calibration runs: it is not repeated inside a run.
 - The tuner is already open when a mode is started: the question is still asked, and answering no brings the already open tuner forward.
 - The Arcade button of the transport bar, which starts at once on the track under the cursor, goes through the same two checks.
@@ -74,7 +81,7 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 
 ### Functional Requirements
 
-- **FR-001**: At every start of *Wait for the right note*, *Follow* and *Arcade*, from the preparation window as well as from the buttons of the transport bar, the application MUST check the level of the input before the run begins and MUST NOT remember the answer from one start to the next.
+- **FR-001**: At every start of *Wait for the right note*, *Follow* and *Arcade*, from the preparation window as well as from the buttons of the transport bar (including the Arcade button that used to start at once), the application MUST open one start window that asks the tuning question (FR-005) and asks for a **test strum**, with a live level indicator; the level is judged on that strum before the run begins. Nothing is remembered from one start to the next.
 - **FR-002**: When the input signal clips, the check MUST say so and say what to lower (the gain of the interface, the input volume of the system), using the existing wording of the level guidance; the mode MUST NOT begin until the learner checks again with a good result or chooses to go on anyway.
 - **FR-003**: When the input signal is too weak to be recognised, the check MUST say so and say what to raise, with the same rule as FR-002.
 - **FR-004**: The clipping decision MUST catch the case measured by the owner: the share of samples at full scale in the 300 ms after a strum, at or above **0.5 %**, is clipping (2 % was the first proposal; the data set above shows it misses 4 of the 21 measured takes). A signal with no sample at full scale is never reported as clipping.
@@ -84,6 +91,7 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 - **FR-008**: A learner who has been warned about the level MUST be able to go on anyway; that choice applies to this start only.
 - **FR-009**: With a good level and a tuned guitar the two checks MUST add one answer and at most 5 seconds before the run begins.
 - **FR-010**: The texts of the question, of the answers and of the level messages MUST exist in English, French and Spanish.
+- **FR-012**: The recognition of single notes, of the techniques (bend, vibrato, slide, hammer-on, pull-off and the others already recognised) and of chords MUST be covered by non-regression tests that run with this feature and fail if their results get worse: the existing recorded-audio and data-set tests (real-guitar regression, monophonic and bend replays, technique data set, GuitarSet chords, the owner's takes) are kept in the gate with their figures recorded before the change, and any recognition test that is missing for a kind of event (note, each technique, chord) is added.
 - **FR-011**: The checks MUST NOT change the operating-system or interface gain by themselves, and MUST NOT change how notes and chords are recognised (spec 004, T007) or judged.
 
 ### Key Entities
@@ -100,11 +108,12 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 - **SC-003**: With a good level and an "in tune" answer, the added time before the run is at most 5 seconds and the added steps are one answer.
 - **SC-004**: Answering "not in tune" opens the tuner 100 % of the time and the mode never begins in that case; closing the tuner brings the learner back to the start.
 - **SC-005**: No setting, judgement, score or recognition result changes for a run started after the checks (the same recorded run gives the same judgements with and without the checks).
+- **SC-007**: After the change, every recognition figure recorded before it (notes, each technique, chords on GuitarSet and on the owner's takes) is equal or better, shown in a before and after file like `specs/009-arcade-flames/benchmark/before-after.txt`.
 - **SC-006**: The owner confirms on the built application, with the Rocksmith adapter at the gain that clipped (0.99), that the warning appears and tells what to do, and that after lowering the gain the chords of `basic_test.tg` are recognised more often.
 
 ## Assumptions
 
 - The level analysis, the guidance texts (`practice.level.guidance.*`) and the tuner already exist in the practice plugin and the audio engine; this specification adds when they are used and one threshold, not a new analysis.
 - The measurements above were made by the model on the owner's recordings, with chord pitches read by a polyphonic transcription tool (Basic Pitch) and not by the owner; they are evidence for the threshold, not a labelled benchmark.
-- Questions left for `/speckit-clarify`: (a) how the level is checked at the start (a short test strum asked before the count-in, or the first seconds of the run itself); (b) whether the level warning blocks the start or only warns, beyond FR-002 and FR-008 as written; (c) whether the question of tuning is a dialog with two buttons or a step in the preparation window.
+- Questions left for `/speckit-clarify`: (b) whether the level warning blocks the start or only warns, beyond FR-002 and FR-008 as written; (c) whether the question of tuning is a dialog with two buttons or a step in the preparation window. ((a) is answered above.)
 - Out of scope: the recognition algorithm for chords (spec 004 T007), automatic change of the system gain, a stored "I already tuned today" answer, and the Windows and Linux interface differences (the guidance names the macOS input volume as the existing text does).
