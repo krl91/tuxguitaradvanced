@@ -10,3 +10,4 @@ Nothing is stored; every object lives for one start.
 | `PreRunCheck.State` | enum `TUNING`, `TUNER_OPEN`, `STRUM`, `LEVEL_BAD`, `READY`, `CANCELLED` | Transitions in `contracts/pre-run-start.md`; keeps nothing between two starts (a new object per start). |
 | `PreRunCheck` | state, last `StrumVerdict`, `continueAnyway` (this start only), the mode and track it was opened for | `READY` only when tuning was answered *yes* and the verdict is `GOOD`, or `continueAnyway` was chosen with a bad verdict; never when the answer was *no*. |
 | `PreRunWindow` | the widgets: question with two buttons, live bar, sentence, *Check again*, *Continue anyway*, *Cancel* | A shell over `PreRunCheck`; holds the engine capture while open. |
+| `StartFlow` | the gate, a pending flag | One per `PracticeWindow`; `begin` is refused while a check is pending (the tuner wait included); cleared by `READY`, `CANCELLED` or `cancelPending()`. |

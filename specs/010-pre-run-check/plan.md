@@ -79,7 +79,7 @@ desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── ui/PreRunCheck.java                # new: the state machine of the start window (no widgets): TUNING, STRUM, LEVEL_BAD, READY, TUNER_OPEN
 ├── ui/PreRunWindow.java               # new: the small window (toolkit widgets), modelled on ArcadeResultWindow
-├── ui/StartGate.java, StartFlow.java  # new: the seam (a gate that reports READY) and the pure rule that the start runs only on READY
+├── ui/StartGate.java, StartFlow.java  # new: the seam (a gate that reports READY) and the pure rule that the start runs only on READY, one check at a time
 ├── ui/PreRunStartGate.java            # new: the real gate, opens PreRunWindow
 └── ui/PracticeWindow.java             # startSession() = StartFlow.begin(...); the old body is startSessionNow; restarts of the same run do not ask (R4)
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # practice.prerun.* (see R7)
@@ -104,6 +104,7 @@ docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md
 * The ring of an earlier note could count as clipping: the window starts at the attack and the meter is reset by each new check.
 * The start window must not become a wall: one answer and one strum, the run beginning at most 1 second after the attack of the strum with a good level (FR-009, SC-003), checked by the state machine on a fake clock and by the owner.
 * The takes were labelled by a tool: the regression figures of the owner's takes are recorded as such and not used as the only judge.
+* A start is now asynchronous: the old code started at once. A second Start press, the transport button, a closed preparation window or a changed mode while the start window is open could double or misdirect the start: `StartFlow` allows one pending check, `startSessionNow` receives the captured mode and candidate and starts only if the window is still open and idle (contract invariants 12 and 13).
 * Restarting inside a run: decided not to re-ask (R4, written as FR-013); the owner may want otherwise: it is the one decision to confirm at the gate.
 
 ## Complexity Tracking

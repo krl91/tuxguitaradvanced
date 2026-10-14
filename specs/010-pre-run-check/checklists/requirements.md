@@ -37,3 +37,5 @@
 - 2026-10-14: FR-004 threshold changed from 2 % to 0.5 % after the check on GuitarSet (180 clean recordings, worst window 0.23 %) and on the owner's takes (19 of 21 caught at 0.5 %, 17 at 2 %); SC-001 (at least 19 of 21) now holds.
 
 - 2026-10-14 (first analysis of spec 010): added FR-013 (restarts and replays do not ask again), the verdict order, the 1-second rule from the attack in FR-009 and SC-003, the one-note strum, and put FR-011/FR-012 and SC-006/SC-007 in order.
+
+- 2026-10-14 (fifth analysis of spec 010): two edge cases added (one start window at a time; the window closed or the mode changed while it is open) for the asynchronous start.
