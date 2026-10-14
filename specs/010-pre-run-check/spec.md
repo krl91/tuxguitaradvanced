@@ -17,6 +17,7 @@
 ### Session 2026-10-14
 
 - Q: How is the input level measured at every start of a mode? → A: **Option A**: one start window asks the tuning question and a **test strum**, with a live level indicator; the mode starts when the level is good (or the learner goes on anyway). No check is left to the first seconds of the run, and the existing "play a few notes" state of the preparation window is not enough by itself.
+- Q: Does a bad level stop the start or only warn? → A: **Option A**: the mode does not start while the level is bad, and a **"Continue anyway"** button lets the learner go on for this start only (FR-002, FR-008 confirmed; the choice is never stored).
 - Request (owner, same session): add **non-regression tests for the recognition** of notes, techniques (bend and the others) and chords, so that this feature and the next ones cannot degrade them: FR-012 and SC-007.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -115,5 +116,5 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 
 - The level analysis, the guidance texts (`practice.level.guidance.*`) and the tuner already exist in the practice plugin and the audio engine; this specification adds when they are used and one threshold, not a new analysis.
 - The measurements above were made by the model on the owner's recordings, with chord pitches read by a polyphonic transcription tool (Basic Pitch) and not by the owner; they are evidence for the threshold, not a labelled benchmark.
-- Questions left for `/speckit-clarify`: (b) whether the level warning blocks the start or only warns, beyond FR-002 and FR-008 as written; (c) whether the question of tuning is a dialog with two buttons or a step in the preparation window. ((a) is answered above.)
+- Questions left for `/speckit-clarify`: (c) whether the question of tuning is a dialog with two buttons or a step in the preparation window. ((a) and (b) are answered above.)
 - Out of scope: the recognition algorithm for chords (spec 004 T007), automatic change of the system gain, a stored "I already tuned today" answer, and the Windows and Linux interface differences (the guidance names the macOS input volume as the existing text does).
