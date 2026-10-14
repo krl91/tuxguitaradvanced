@@ -129,4 +129,54 @@ public class FlameLevelTest {
 		assertEquals(1.0, first.level(), 1e-9);
 		assertEquals(0.0, new FlameLevel().level(), 0.0);
 	}
+
+	@Test
+	public void aSharpDropOfTheShareMakesTheLevelFallOverAboutThreeSecondsAndNeverInOnePicture() {
+		FlameLevel level = started();
+		frames(level, 1.0, 10, 60);
+		assertEquals(1.0, level.level(), 1e-9);
+		double previous = level.level();
+		double seconds = 0.0;
+		while (level.level() > 1e-9 && seconds < 10.0) {
+			frames(level, 0.4, 10, 1); // the share fell from 1.0 to 0.4, under the half: the target is embers
+			seconds += PICTURE / 1e9;
+			assertTrue(previous - level.level() <= 0.01 + 1e-9, "never from full to embers in one picture");
+			previous = level.level();
+		}
+		assertTrue(seconds >= 3.0 * 0.8 && seconds <= 3.0 * 1.2, "fell in " + seconds + " s, within 20 % of 3 s");
+	}
+
+	@Test
+	public void aRiseAfterAFallGoesUpAtTheRiseRateWithoutJumping() {
+		FlameLevel level = started();
+		frames(level, 1.0, 10, 60);
+		frames(level, 0.0, 10, 90); // one and a half seconds of falling: half way down
+		double low = level.level();
+		assertTrue(low > 0.3 && low < 0.7, "half way: " + low);
+		double previous = low;
+		double seconds = 0.0;
+		while (level.level() < 1.0 - 1e-9 && seconds < 5.0) {
+			frames(level, 1.0, 10, 1);
+			seconds += PICTURE / 1e9;
+			assertTrue(level.level() - previous <= 0.04 + 1e-9, "no jump");
+			previous = level.level();
+		}
+		double expected = (1.0 - low) / 2.0;
+		assertEquals(expected, seconds, expected * 0.2 + PICTURE / 1e9, "the rest of the way at the rise rate");
+	}
+
+	@Test
+	public void aPauseOfTenSecondsHoldsTheLevelAndAResumeGoesOnFromIt() {
+		FlameLevel level = started();
+		frames(level, 1.0, 10, 40);
+		double before = level.level();
+		this.now += PICTURE;
+		level.hold(this.now);
+		this.now += 10_000_000_000L;
+		level.update(0.0, 10, this.now);
+		assertEquals(before, level.level(), 0.0, "ten seconds later it is where it was");
+		level.resume(this.now);
+		frames(level, 1.0, 10, 1);
+		assertTrue(Math.abs(level.level() - before) <= 0.04 + 1e-9, "and goes on from there");
+	}
 }

@@ -201,6 +201,11 @@ public final class ArcadeFrameSource {
 		return new FlameState(this.flames, this.flameLevel.level(), this.flameClock, this.flameMotion);
 	}
 
+	/** The monotonic flame clock, for the tests: it never goes back and stands still while the run is paused. */
+	long flameClockNanos() {
+		return this.flameClock;
+	}
+
 	public QualityTier tier() {
 		return this.quality.tier();
 	}
