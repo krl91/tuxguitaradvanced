@@ -288,4 +288,26 @@ public class PreRunWindowTest {
 		assertEquals(State.CANCELLED, this.check.state());
 		assertEquals(1, this.finished.get(), "a late tuner event does nothing");
 	}
+
+	@Test
+	public void fromTheAttackOfTheStrumToReadyTakesLessThanOneSecondOnTheTimerOfTheLevelPanel() {
+		// spec 010 T024, SC-003: the meter judges 300 ms after the attack and the window looks every 33 ms; the learner's own time before the strum is not counted
+		open(State.STRUM);
+		this.now += 40 * SECOND; // the learner took their time
+		long attack = this.now;
+		this.source.level = -20.0;
+		long readyAt = -1;
+		for (long t = 0; t <= 2 * SECOND && readyAt < 0; t += 33_000_000L) {
+			this.now = attack + t;
+			if (t >= 300_000_000L) {
+				this.source.reading = readingOf(StrumVerdict.GOOD, 0.0, -20.0);
+			}
+			this.window.refresh();
+			if (this.finished.get() > 0) {
+				readyAt = t;
+			}
+		}
+		assertTrue(readyAt >= 300_000_000L && readyAt <= SECOND, "ready " + readyAt / 1_000_000 + " ms after the attack");
+		assertEquals(State.READY, this.check.state());
+	}
 }

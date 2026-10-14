@@ -159,6 +159,8 @@ public class PracticeWindow {
 	private PracticeSequence arcadeFull;
 	/** How many times the start of a restart may be tried again while the player is still stopping the run that was just given back. */
 	private int arcadeRestartTries;
+	/** The start of a mode goes through the pre-run check (spec 010); the restarts of a run do not. */
+	private StartFlow startFlow;
 	private static final int ARCADE_RESTART_TRIES = 100;
 	private static final long ARCADE_RESTART_RETRY_MILLIS = 50L;
 	private static final ArcadeTexts ARCADE_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
@@ -167,6 +169,8 @@ public class PracticeWindow {
 		this.context = context;
 		this.plugin = plugin;
 		this.shared = PracticeTunerContext.getInstance(context);
+		this.startFlow = new StartFlow(new PreRunStartGate(context, () -> this.engine, () -> TGApplication.getInstance(this.context).getFactory(),
+				() -> TGWindow.getInstance(this.context).getWindow()));
 		this.highlight = new PracticeHighlight(context);
 		this.palette = new PracticePalette(context, new PracticePalette.Controller() {
 			public void post(PracticeCommand command) {
@@ -199,6 +203,11 @@ public class PracticeWindow {
 	 * one used, or the remembered default), without going through the choices of the preparation window.
 	 */
 	public void openAndStartArcade() {
+		if( this.startFlow.pending() ) {
+			// a start window is open: this press changes nothing (it would cancel the pending start through modeChanged())
+			this.startFlow.toFront();
+			return;
+		}
 		FollowSettings.getInstance(this.context).setMode(FollowSettings.Mode.ARCADE);
 		this.immediateStart = true;
 		if( isOpen() ) {
@@ -259,6 +268,7 @@ public class PracticeWindow {
 
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
+				PracticeWindow.this.startFlow.cancelPending();
 				teardownSession();
 				PracticeWindow.this.followPanel.dispose();
 				PracticeWindow.this.inputSelector.dispose();
@@ -370,6 +380,7 @@ public class PracticeWindow {
 			public void onSelect(UISelectionEvent event) {
 				// the learner chose a track: no automatic start any more
 				PracticeWindow.this.autoStart = false;
+				PracticeWindow.this.startFlow.cancelPending();
 				updateTuning();
 			}
 		});
@@ -591,7 +602,7 @@ public class PracticeWindow {
 		}
 		this.palette.setInput(this.assessment);
 		this.levelPanel.setAssessment(this.assessment);
-		if( QuickStart.showForUnusableInput(this.windowShown, this.session != null || this.followPlan != null || this.arcadeRestartTries > 0, this.immediateStart, this.assessment.getStatus()) ) {
+		if( QuickStart.showForUnusableInput(this.windowShown, this.session != null || this.followPlan != null || this.arcadeRestartTries > 0 || this.startFlow.pending(), this.immediateStart, this.assessment.getStatus()) ) {
 			showWindow();
 		}
 		this.followPanel.refresh();
@@ -635,17 +646,33 @@ public class PracticeWindow {
 
 	// ---------------------------------------------------------------- running practice (FR-073–FR-076)
 
+	/** Asks for a start: the pre-run check runs first (spec 010), and the mode begins in {@link #startSessionNow} only when the learner is ready. */
 	private void startSession() {
 		PracticeTrackCandidate candidate = this.tracks.getSelectedValue();
 		if( candidate == null ) {
 			return;
 		}
-		if( FollowSettings.getInstance(this.context).isArcade() ) {
+		// the mode and the track are those of the request, whatever happens in the window while the check runs
+		final FollowSettings.Mode mode = FollowSettings.getInstance(this.context).getMode();
+		this.startFlow.begin(new PreRunCheck(mode), () -> startSessionNow(mode, candidate));
+	}
+
+	/** Package-private: the native test gives another gate. */
+	void setStartGate(StartGate gate) {
+		this.startFlow = new StartFlow(gate);
+	}
+
+	/** The start itself, after the check: only if the window is still open and nothing is running (the guards of the quick start). */
+	private void startSessionNow(FollowSettings.Mode mode, PracticeTrackCandidate candidate) {
+		if( !isOpen() || this.session != null || (this.arcadeWindow != null && this.arcadeWindow.isOpen()) || this.followPlan != null || this.arcadeRestartTries != 0 ) {
+			return;
+		}
+		if( mode == FollowSettings.Mode.ARCADE ) {
 			this.arcadeWhole = this.preparedSequence != null ? this.preparedSequence.startingAt(0) : null;
 			startArcade(candidate, this.preparedSequence);
 			return;
 		}
-		if( FollowSettings.getInstance(this.context).isFollow() ) {
+		if( mode == FollowSettings.Mode.FOLLOW ) {
 			startFollow(candidate);
 			return;
 		}
@@ -741,6 +768,8 @@ public class PracticeWindow {
 		if( !isOpen() ) {
 			return;
 		}
+		// a start asked for another mode must not go on
+		this.startFlow.cancelPending();
 		showPreparation();
 		refit();
 	}

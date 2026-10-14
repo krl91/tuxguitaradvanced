@@ -79,7 +79,8 @@ final class PreRunWindow {
 		this.clock = clock;
 		this.tuner = tuner;
 		this.onFinished = onFinished;
-		this.window = factory.createWindow(parent, false, true);
+		// without a parent (the preparation window was never shown) the native toolkit has no window to hang it on
+		this.window = parent == null ? factory.createWindow() : factory.createWindow(parent, false, true);
 		this.window.setText(texts.get("practice.prerun.title"));
 		UITableLayout layout = new UITableLayout();
 		// what is hidden takes no room

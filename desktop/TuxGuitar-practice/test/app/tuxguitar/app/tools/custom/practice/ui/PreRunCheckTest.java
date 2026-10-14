@@ -247,4 +247,30 @@ public class PreRunCheckTest {
 			assertEquals(from == State.READY ? State.READY : State.CANCELLED, check.state(), "cancel from " + from);
 		}
 	}
+
+	@Test
+	public void aGoodVerdictReachesReadyWithNoTimerOfItsOwnWhateverTimeTheLearnerTookAndABadOneThenCheckAgainThenGoodNeedsNoContinueAnyway() {
+		// spec 010 T024, invariant 9: the check has no clock; the one answer after the tuning is the verdict
+		PreRunCheck slow = new PreRunCheck(FollowSettings.Mode.ARCADE);
+		slow.answerTuned(true); // however long ago the question was shown
+		slow.verdict(StrumVerdict.NO_STRUM);
+		assertEquals(State.STRUM, slow.state(), "no strum: it keeps waiting, no timer ends it");
+		slow.verdict(StrumVerdict.GOOD);
+		assertEquals(State.READY, slow.state(), "one verdict is enough");
+		assertFalse(slow.continuedAnyway());
+
+		PreRunCheck again = new PreRunCheck(FollowSettings.Mode.FOLLOW);
+		again.answerTuned(true);
+		again.verdict(StrumVerdict.CLIPPING);
+		assertEquals(State.LEVEL_BAD, again.state());
+		again.checkAgain();
+		assertEquals(State.STRUM, again.state());
+		again.verdict(StrumVerdict.GOOD);
+		assertEquals(State.READY, again.state());
+		assertFalse(again.continuedAnyway(), "ready by a good strum, not by continuing anyway");
+
+		PreRunCheck silent = new PreRunCheck(FollowSettings.Mode.WAIT);
+		silent.continueAnyway();
+		assertEquals(State.TUNING, silent.state(), "continue anyway is never possible before the tuning was answered yes");
+	}
 }
