@@ -18,9 +18,9 @@ final class StrumClipMeter {                       // audio engine, pure, hop by
 final class PreRunCheck {                           // practice ui, no widgets
     PreRunCheck(Mode mode);                         // a new object for each start
     State state();
-    void answerTuned(boolean tuned);                // yes: STRUM; no: TUNER_OPEN
+    void answerTuned(boolean tuned);                // yes: STRUM; no: TUNER_OPEN (the full table is below)
     void tunerClosed();                             // back to TUNING
-    void verdict(StrumVerdict v);                   // from the meter: GOOD -> READY, else LEVEL_BAD (NO_STRUM keeps STRUM)
+    void verdict(StrumVerdict v);                   // from the meter, read by the window on the UI thread: only in STRUM does it act (GOOD -> READY, a bad one -> LEVEL_BAD, NO_STRUM keeps STRUM)
     void continueAnyway();                          // LEVEL_BAD or STRUM -> READY, for this start only
     void checkAgain();                              // LEVEL_BAD -> STRUM, meter reset
     void cancel();                                  // CANCELLED, the mode does not begin
@@ -35,6 +35,19 @@ final class StartFlow {                                                  // prac
 }
 // PracticeWindow.startSession(): flow.begin(new PreRunCheck(mode), () -> startSessionNow(mode, candidate)) with the mode and the candidate captured at the request; restarts call startArcade/startFollow directly
 ```
+
+## The transitions of `PreRunCheck` (total: every pair of state and event is defined)
+
+| State \ event | `answerTuned(true)` | `answerTuned(false)` | `tunerClosed()` | `verdict(GOOD)` | `verdict(CLIPPING / TOO_LOUD / TOO_WEAK)` | `verdict(NO_STRUM)` | `continueAnyway()` | `checkAgain()` | `cancel()` |
+|---|---|---|---|---|---|---|---|---|---|
+| `TUNING` | `STRUM` (meter reset) | `TUNER_OPEN` | ignored | ignored | ignored | ignored | ignored | ignored | `CANCELLED` |
+| `TUNER_OPEN` | ignored | ignored | `TUNING` | ignored | ignored | ignored | ignored | ignored | `CANCELLED` |
+| `STRUM` | ignored | ignored | ignored | `READY` | `LEVEL_BAD` | `STRUM` | `READY` | `STRUM` (meter reset) | `CANCELLED` |
+| `LEVEL_BAD` | ignored | ignored | ignored | ignored | ignored | ignored | `READY` | `STRUM` (meter reset) | `CANCELLED` |
+| `READY` | ignored | ignored | ignored | ignored | ignored | ignored | ignored | ignored | ignored |
+| `CANCELLED` | ignored | ignored | ignored | ignored | ignored | ignored | ignored | ignored | ignored |
+
+*Ignored* means: no exception, no change of state, nothing started or undone. `READY` and `CANCELLED` are final; a `cancel()` after `READY` never undoes a start. `READY` is therefore reachable only after `answerTuned(true)`: a "continue anyway" before the tuning was answered is ignored (FR-005, FR-008). A strum heard while the learner is still reading the tuning question is ignored, and entering `STRUM` asks the meter for a fresh start, so the strum that counts is the one after the answer.
 
 ## Invariants, each with a test
 
@@ -54,3 +67,5 @@ final class StartFlow {                                                  // prac
 14. **Never stuck.** `pending()` is cleared on `READY` **before** `startNow` runs (so also when `startNow` throws or does nothing because the window is no longer open), on `CANCELLED` (the Cancel button, the close button, the Escape key), on `cancelPending()` and when `gate.request` throws; a tuner that cannot be opened leaves the check at `TUNING` with a message and `pending()` stays true only while a start window or the tuner is really open (`StartFlowTest`, `PreRunCheckTest`, native test T025).
 15. **Arming.** The meter arms only on a hop whose RMS is at least `INPUT_LEVEL_MIN` (-40 dBFS) and at least 12 dB above the quietest of the 60 hops before it: with fewer than 60 hops before a hop the reference is the quietest of the hops that exist, and the first hop never arms (110 of the 180 GuitarSet files arm with fewer than 60 hops before); a click or noise at -50 dBFS never arms it (`StrumClipMeterTest`); on the owner's takes this gives 19 of 21 at gain 0.99 and 0 of 21 at gain 0.40 (`StrumClipDatasetTest`).
 16. **Sample rate.** The 300 ms window and the 0.5 % share are counted in samples for the rate given by `configure`; the same synthetic signal gives the same verdict at 44.1 kHz and at 48 kHz; a `configure` during a check resets it, and a listener added while the engine runs gets its `configure` before its first hop (`StrumClipMeterTest`, `HopListenerTest`).
+17. **Total state machine.** Every pair of state and event of the table above behaves as the table says; every *ignored* pair leaves the state and the outputs unchanged and throws nothing; `READY` is never reached without `answerTuned(true)`; `cancel()` after `READY` does not undo it (`PreRunCheckTest`, exhaustively over the 6 states and 9 events).
+18. **Threads.** The meter is written by the analysis thread and read by the window on the UI thread: `verdict()`, `clippedShare()` and `rmsDbfs()` give a consistent snapshot of the last finished window (volatile or atomic), and `reset()` called from the UI thread only **sets a flag** that the analysis thread honours before its next hop, like `configure`; the window reads the meter on the 33 ms timer of `LevelPanel` and calls `PreRunCheck.verdict` on the UI thread (`StrumClipMeterTest` with a feeding thread and a reading and resetting thread, `HopListenerTest`).
