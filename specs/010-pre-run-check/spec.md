@@ -8,6 +8,8 @@
 
 **Input**: Owner's request (2026-10-14), after chords of the owner's guitar were not recognised in *Wait for the right note*: "at every start of a mode, ask whether the guitar is in tune; if yes go on, if not start the tuner; and check the gain at every start".
 
+**Second evidence, the online data set** (GuitarSet 1.0.1, Zenodo 10.5281/zenodo.1422265, 180 clean microphone recordings, kept outside the repository, `~/tuxguitar-datasets`): the worst 300 ms window of any of them has **0.23 %** of its samples at full scale (26 of the 180 touch the peak at least once), so a threshold under 0.23 % would give false warnings on good recordings, and a threshold of 2 % would let 4 of the owner's 21 clipped takes through (0.0 %, 0.2 %, 0.6 % and 0.8 % in their first 300 ms). **0.5 %** separates the two: no false warning on the 180 recordings (margin of more than 2), 19 of the 21 clipped takes caught.
+
 **Evidence** (owner recordings through the Rocksmith USB adapter, 42 takes, `specs/004-attack-difference-recognition/benchmark/owner-chords*`, test `OwnerChordsBenchmarkTest`): with the input gain of the interface at 0.99, **20 of 21 takes clipped** (2 % to 28 % of the samples in the first 300 ms after the strum, the whole peak at full scale) and only **8 of 21** chords played were accepted; with the gain lowered to 0.40 nothing clipped and **18 of 21** were accepted. The level check of the application did not warn: it flags clipping only when 10 % of the samples of one analysis frame are at full scale.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -75,7 +77,7 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 - **FR-001**: At every start of *Wait for the right note*, *Follow* and *Arcade*, from the preparation window as well as from the buttons of the transport bar, the application MUST check the level of the input before the run begins and MUST NOT remember the answer from one start to the next.
 - **FR-002**: When the input signal clips, the check MUST say so and say what to lower (the gain of the interface, the input volume of the system), using the existing wording of the level guidance; the mode MUST NOT begin until the learner checks again with a good result or chooses to go on anyway.
 - **FR-003**: When the input signal is too weak to be recognised, the check MUST say so and say what to raise, with the same rule as FR-002.
-- **FR-004**: The clipping decision MUST catch the case measured by the owner: the share of samples at full scale in the 300 ms after a strum, at or above **2 %**, is clipping. A signal with no sample at full scale is never reported as clipping.
+- **FR-004**: The clipping decision MUST catch the case measured by the owner: the share of samples at full scale in the 300 ms after a strum, at or above **0.5 %**, is clipping (2 % was the first proposal; the data set above shows it misses 4 of the 21 measured takes). A signal with no sample at full scale is never reported as clipping.
 - **FR-005**: At every start of those modes the application MUST ask whether the guitar is in tune and MUST NOT remember the answer from one start to the next.
 - **FR-006**: When the learner answers that the guitar is in tune the run MUST go on (after FR-001 to FR-004); when the answer is no the tuner MUST open and the mode MUST NOT begin.
 - **FR-007**: When the tuner opened by FR-006 is closed, the learner MUST be back at the start of the mode with the same choices; the mode MUST NOT begin by itself.
