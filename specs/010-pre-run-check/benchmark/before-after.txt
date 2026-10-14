@@ -58,3 +58,19 @@ palm mute, tapping, tremolo picking : TechniqueSignalsTest, TechniqueFamiliesFun
 chord                          : GuitarSetChordBenchmarkTest and GuitarSetChordsTest (recorded, 24 recordings), the owner's takes (owner-chords, owner-chords-2), and since
                                  this feature SyntheticChordGuardTest (synthetic, default suite)
 Kinds with no recorded-audio test, reported and not hidden: really played hammer-on and pull-off, palm mute, tapping, tremolo picking.
+
+== T030 AFTER (phases 2 to 6 done), 2026-10-14, branch feature/interactive-practice at 3bacba972 (+ the benchmark/after files of this commit)
+Commands as T001 to T004: mvn -e clean verify -P native-modules,swt-gui-tests (BUILD SUCCESS, log /tmp/c010-verify-after.log) and
+mvn test -pl ../../TuxGuitar-practice -am (BUILD SUCCESS). The kept reports are in benchmark/after/, to diff against benchmark/before/.
+figure                                        before        after         line
+audio-engine unit tests                       273           291           equal or better (+18 new: StrumClipMeterTest 12, HopListenerTest 6), 0 failures
+practice unit tests (mvn test, with datasets) 873 (4 skipped) 911 (4 skipped) equal or better (+38 new), the same 4 skipped, 0 failures
+practice SWT tests (swt-gui-tests)            26            27            equal or better (+1 PracticeWindowSwtTest), 0 failures
+DATASET BENCHMARK report.txt                  592 OK, 28 KO, 322 not run   identical file                        equal
+technique, weak-input, weak-input-frontend    reports       identical files                                     equal
+fast-passages, note-spacing, guitarset-chords reports       identical but for the "Code revision" line         equal
+outcomes.csv, guitarset-chords-outcomes.csv   -             identical once sorted (the order of the lines differs between runs)  equal
+GuitarSet chords (24 recordings)              six channels 33 of 56, microphone 23 of 56   same file                  equal
+owner's takes (both series)                   26 of 42 accepted, 13 of 42 wrongly accepted  26 of 42, 13 of 42 (owner-chords.txt)  equal
+Every recognition figure is equal; none is worse. The recognition code was not touched: the files of AE/pitch, AE/recognition,
+PracticeSession and arcade/core are checked by PreRunParityTest (no mention of the meter or of the check) and by git diff in T032.
