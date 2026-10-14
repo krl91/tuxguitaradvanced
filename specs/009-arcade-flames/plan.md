@@ -87,7 +87,7 @@ docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md          # FR-012
 
 ## Increments
 
-* **F0 - Fix the spec** (before any code): two statements of the spec do not match the code (`research.md` R6, R7): the share is 0, not 100 %, when nothing was judged, and the buttons are outside the picture. Run `/speckit-clarify` to correct FR-001 and FR-003 and the scenario 2 of story 1. **Gate G1: the owner looks at the mockups of this plan (`A2-full.png`, `A2-discreet.png`, `A2-mouvement-coin-gauche.png`) and approves the shape, the colours and what "discreet" is.**
+* **F0 - Fix the spec** (before any code): two statements of the spec do not match the code (`research.md` R6, R7): the share is 0, not 100 %, when nothing was judged, and the buttons are outside the picture. Run `/speckit-clarify` to correct FR-001 and FR-003 and the scenario 2 of story 1. **Gate G1 (passed on 2026-10-14: the owner approved the mockups `A2-full.png`, `A2-discreet.png` and `A2-mouvement-coin-gauche.png` as they are, with discreet at 60 % of full; the spec was corrected by `/speckit-clarify` the same day).**
 * **F1 - The scene (pure).** Roles, `FlameState`, `drawFlames` (tongues, embers, reading guard, tiers), pure tests and the reference scene.
 * **F2 - The level.** `FlameLevel` (mapping, rise and fall, 4-event rule, hold in a pause) and its wiring in `ArcadeFrameSource`, with tests.
 * **F3 - The setting.** `FollowSettings`, the combo box, the three languages, read at the start of a run.

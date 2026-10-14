@@ -139,7 +139,7 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 ## Assumptions
 
 - The share of the maximum is the one the result of the run already computes (spec 003); this specification does not change how it is computed.
-- The exact shape and colours of the flames, are assumptions that the owner approved on the mockups of the plan (2026-10-14); *discreet* is 60 % of the height and of the opacity of *full*, with half the tongues; the mockups are static images drawn on a real capture of the game, not a promise of rendering.
+- The exact shape and colours of the flames were approved by the owner on the mockups of the plan (2026-10-14), as assumptions of rendering; *discreet* is 60 % of the height and of the opacity of *full*, with half the tongues; the mockups are static images drawn on a real capture of the game, not a promise of rendering.
 - The effect is for the Arcade run window only; the other modes, the result window and the preparation window have no flames.
 - The effect is validated on macOS Apple Silicon first; Windows and Linux are not claimed to be validated.
 - No sound is added.
