@@ -24,6 +24,7 @@
 - Q: What fall and rise times for the flames? → A: **Fall about 3 seconds** from full fire to embers, **rise about 0.5 second**.
 - Correction (found in the inspected source while planning, `plan.md` R6; no question to the owner): the share of the maximum is **0**, not 100 %, when nothing has been judged (the "100 %" at the top right of the picture is the tempo); the rule of 4 judged events stays, for the right reason: the share jumps from 0 to 100 % on a first right note. Wording corrected in FR-003 and in scenario 2 of story 1.
 - Correction (found in the inspected source while planning, `plan.md` R7; no question to the owner): the buttons Restart, Pause and Stop are outside the picture (a row of widgets under the canvas), so the flames are drawn inside the picture only and the weakened central zone concerns the fret numbers and the verdict badge. Wording corrected in FR-001 and in scenario 2 of story 2.
+- Q: Do the mockups of the plan (`mockups/A2-full.png`, `A2-discreet.png`, `A2-mouvement-coin-gauche.png`) suit for the shape, the colours and the difference between discreet and full? (gate G1) → A: **Yes, as they are**: shape and colours approved; *discreet* = the same shapes at **60 % of the height and of the opacity** of *full*, with **half the tongues** (`plan.md`, `research.md` R5). The numbers stay adjustable on the built application without redoing the specification; the motion is judged there (gate G2).
 - Q: Which state of the setting is active by default? → A: **Discreet** (visible but lower and fainter than *full*).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -138,7 +139,7 @@ A learner who finds the effect too strong, or whose machine is slow, sets it to 
 ## Assumptions
 
 - The share of the maximum is the one the result of the run already computes (spec 003); this specification does not change how it is computed.
-- The exact shape and colours of the flames, and what "lower and fainter" means for *discreet* (a share of the height and of the brightness of *full*), are assumptions to be fixed in planning and shown to the owner on a mockup; the mockups are static images drawn on a real capture of the game, not a promise of rendering.
+- The exact shape and colours of the flames, are assumptions that the owner approved on the mockups of the plan (2026-10-14); *discreet* is 60 % of the height and of the opacity of *full*, with half the tongues; the mockups are static images drawn on a real capture of the game, not a promise of rendering.
 - The effect is for the Arcade run window only; the other modes, the result window and the preparation window have no flames.
 - The effect is validated on macOS Apple Silicon first; Windows and Linux are not claimed to be validated.
 - No sound is added.
