@@ -20,3 +20,4 @@ Manual steps (gate G, the owner, built application, Rocksmith adapter):
 5. Strum nothing for 10 seconds: the window keeps asking for a strum and never says the level is good.
 6. Play again from the result window and use Restart: no new question (R4); the owner says if they want one.
 7. Press *Start* twice quickly, then, with the start window open, press the Arcade button of the transport bar: one start window only and one start of the mode; change the mode or close the preparation window while the start window is open: the start window closes and nothing begins.
+8. Close the start window with its close button, then with the Escape key: nothing begins and *Start* works again at once. (The case of a tuner that cannot be opened is covered by the unit and native tests, not by a manual step.)
