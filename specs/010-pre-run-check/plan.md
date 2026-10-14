@@ -22,7 +22,7 @@ Before every start of *Wait*, *Follow* or *Arcade* a small start window opens. I
 
 **Project Type**: desktop application (practice plugin and audio engine).
 
-**Performance Goals**: with a good level and a tuned guitar, one answer and at most 5 seconds added before the run (SC-003); the meter adds no allocation per hop on the analysis thread (counters only).
+**Performance Goals**: with a good level and a tuned guitar, one answer and one strum, and the run begins at most 1 second after the attack of the strum, the learner's own time to answer and to strum not counted (FR-009, SC-003); the meter adds no allocation per hop on the analysis thread (counters only).
 
 **Constraints**: constitution VI (nothing blocking on the audio or analysis threads), VII (pure testable logic), XIII (the level verdict is what was measured, not a claim about the guitar); the operating-system gain is never changed (spec 002 FR-041, kept).
 
@@ -98,9 +98,9 @@ docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md
 
 ## Risks
 
-* A 300 ms window after an attack needs a reliable attack: it uses the existing onset of the articulation detector, with the rise of the RMS as a fallback (R2); the strum of the owner's takes is the test.
+* A 300 ms window after an attack needs a reliable attack: the hook receives hops, not frames, so the meter arms on the rise of the RMS (12 dB above the quietest recent hop, R2), not on the onset flag of the articulation detector; the strum of the owner's takes is the test.
 * The ring of an earlier note could count as clipping: the window starts at the attack and the meter is reset by each new check.
-* The start window must not become a wall: one answer and at most 5 seconds with a good level (SC-003), checked by the state machine and by the owner.
+* The start window must not become a wall: one answer and one strum, the run beginning at most 1 second after the attack of the strum with a good level (FR-009, SC-003), checked by the state machine on a fake clock and by the owner.
 * The takes were labelled by a tool: the regression figures of the owner's takes are recorded as such and not used as the only judge.
 * Restarting inside a run: decided not to re-ask (R4, written as FR-013); the owner may want otherwise: it is the one decision to confirm at the gate.
 
