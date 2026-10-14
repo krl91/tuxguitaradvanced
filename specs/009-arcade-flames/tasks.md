@@ -15,8 +15,8 @@ description: "Tasks of spec 009: the stage flames behind the Arcade run"
 
 ## Phase 1: Setup
 
-- [ ] T001 Record the state before the change: run `cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -e clean verify -P native-modules,swt-gui-tests` and `mvn test -pl ../../TuxGuitar-practice -am`, keep the counts of tests run, failures and skipped in `specs/009-arcade-flames/benchmark/before-after.txt` (reference for SC-005 and the build integrity of Constitution XI).
-- [ ] T002 [P] Say in `specs/009-arcade-flames/benchmark/before-after.txt` that the reference scenes `TST/arcade/reference/*.scene.txt` must stay unchanged by this feature (they are made with the setting off, SC-005); the mockups `A2-full.png`, `A2-discreet.png`, `A2-mouvement-coin-gauche.png` are already in `specs/009-arcade-flames/mockups/`.
+- [x] T001 Record the state before the change: run `cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -e clean verify -P native-modules,swt-gui-tests` and `mvn test -pl ../../TuxGuitar-practice -am`, keep the counts of tests run, failures and skipped in `specs/009-arcade-flames/benchmark/before-after.txt` (reference for SC-005 and the build integrity of Constitution XI).
+- [x] T002 [P] Say in `specs/009-arcade-flames/benchmark/before-after.txt` that the reference scenes `TST/arcade/reference/*.scene.txt` must stay unchanged by this feature (they are made with the setting off, SC-005); the mockups `A2-full.png`, `A2-discreet.png`, `A2-mouvement-coin-gauche.png` are already in `specs/009-arcade-flames/mockups/`.
 
 ## Phase 2: Foundational (blocks every story)
 

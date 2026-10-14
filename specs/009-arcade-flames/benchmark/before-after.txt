@@ -1,0 +1,15 @@
+Spec 009 (arcade flames): state BEFORE the change, 2026-10-14, branch feature/interactive-practice at 03115eb4c.
+
+Build: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa; JDK 21
+  mvn -e clean verify -P native-modules,swt-gui-tests  -> BUILD SUCCESS
+    (a first attempt failed in maven-clean-plugin, "Failed to delete target": the application was still running
+     from an earlier launch; run again with it closed)
+    SWT tests of TuxGuitar-practice: 24 run, 0 failures, 0 errors, 0 skipped
+      (FollowPanelSwtTest 4, PracticeToolbarSwtTest 1, GainControlSwtTest 1, RecognitionSettingsSwtTest 1,
+       ArcadePixelAlignmentSwtTest 2, ArcadeCanvasSwtTest 8, ArcadeWindowSwtTest 6)
+  mvn test -pl ../../TuxGuitar-practice -am
+    -> BUILD SUCCESS, practice-module unit tests: 822 run, 0 failures, 0 errors, 4 skipped
+
+Reference scenes: TST/arcade/reference/*.scene.txt must stay UNCHANGED by this feature (SC-005): they are
+made with the flames setting off, so the feature must not alter a single item of them.
+Mockups already in specs/009-arcade-flames/mockups/: A2-full.png, A2-discreet.png, A2-mouvement-coin-gauche.png.
