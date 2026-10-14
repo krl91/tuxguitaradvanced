@@ -1,0 +1,19 @@
+Spec 011: the baseline BEFORE any change of the feature, 2026-10-15, branch feature/interactive-practice at 6abf04647 (+ nothing uncommitted of the feature)
+JDK 21.0.12.1 (Temurin), macOS 26.7 Apple Silicon, 3 cores busy (user time 1807 s for 575 s wall), directory desktop/build-scripts/tuxguitar-macosx-swt-cocoa.
+
+== T001 The default suites (command: mvn test -pl ../../TuxGuitar-practice -am)
+BUILD SUCCESS, total time 09:34 min (wall 9:35.22).
+  lib 73, compat 1, gtp 10 (1 skipped: TestGPCorpusSmoke), audio-engine 291, tuner-next 24, practice 916 (4 skipped), 0 failures, 0 errors everywhere.
+  practice skipped (none of them recognition): BrandingAssetsTest 1, ArcadeCorpusProfilerTest 1, ArcadeReferenceImagesTest 1 (needs -Dtuxguitar.arcade.images), LaneProofImagesTest 1.
+This is the base of SC-007 (the new tests add under 2 minutes to it) and of every "equal before and after".
+
+A FIRST RUN OF THIS BASELINE WAS RED (916 run, 11 errors, same day, same commit before the fix 6abf04647): PreRunWindowTest, NullPointerException on getPackedSize() of the headless test toolkit,
+since the layout fix of the start window (WindowFit.refit). It had not been seen because that test had been run only with -P swt-gui-tests, which runs no headless test. Fixed in test support only
+(SwtContractToolkit answers getPackedSize and getBounds), commit 6abf04647; the figures above are the second run, green. The released v0.5.0 contains the red test suite (not the application).
+
+== T002 Recognition base
+The reports of desktop/TuxGuitar-practice/target/dataset-benchmark/ of this run, compared with specs/010-pre-run-check/benchmark/after/ (the base):
+  identical files: fast-passages-report, guitarset-chords-report, note-spacing-report, report, technique-report, weak-input-frontend-report, weak-input-report (but for the "Code revision" line);
+  identical once sorted: guitarset-chords-outcomes.csv, outcomes.csv (the order of lines differs between runs).
+  The owner's takes: 26 of 42 accepted, 13 of 42 other chords wrongly accepted, as before.
+This base is what the phases of spec 011 compare with (T009, T046): "recognition equal to the base" means these nine files.
