@@ -20,9 +20,9 @@ description: "Tasks of spec 009: the stage flames behind the Arcade run"
 
 ## Phase 2: Foundational (blocks every story)
 
-- [ ] T003 [P] Add the roles `FLAME_TONGUE` and `FLAME_EMBER` to `SRC/arcade/view/SceneItem.java` (`Role`) and to `isDecoration()` (both decoration, so the fallback renderer and `UiPainterRenderer` leave them out with the existing rule); check every `switch` on `Role` in `SRC` and `TST` (for example `SceneBoxes.labels`) still compiles and means the same.
-- [ ] T004 [P] Add `FlameSetting` (enum `OFF`, `DISCREET`, `FULL`) in `SRC/session/FlameSetting.java` and `getFlames()` / `setFlames(FlameSetting)` with default `DISCREET` in `SRC/session/FollowSettings.java` (kept in memory for the session of the application, like `getFarScalePercent()`); test `TST/session/FollowSettingsFlamesTest.java` written first: default is `DISCREET`, set and get, a null value is refused.
-- [ ] T005 [P] Add the immutable `FlameState` in `SRC/arcade/view/FlameState.java` with `FlameState(FlameSetting setting, double level, long flameClockNanos, boolean motion)`: "A level outside 0..1 is clamped; a viewport of zero size draws nothing" (data-model.md); getters only; `motion` false freezes the sway (FR-013).
+- [x] T003 [P] Add the roles `FLAME_TONGUE` and `FLAME_EMBER` to `SRC/arcade/view/SceneItem.java` (`Role`) and to `isDecoration()` (both decoration, so the fallback renderer and `UiPainterRenderer` leave them out with the existing rule); check every `switch` on `Role` in `SRC` and `TST` (for example `SceneBoxes.labels`) still compiles and means the same.
+- [x] T004 [P] Add `FlameSetting` (enum `OFF`, `DISCREET`, `FULL`) in `SRC/session/FlameSetting.java` and `getFlames()` / `setFlames(FlameSetting)` with default `DISCREET` in `SRC/session/FollowSettings.java` (kept in memory for the session of the application, like `getFarScalePercent()`); test `TST/session/FollowSettingsFlamesTest.java` written first: default is `DISCREET`, set and get, a null value is refused.
+- [x] T005 [P] Add the immutable `FlameState` in `SRC/arcade/view/FlameState.java` with `FlameState(FlameSetting setting, double level, long flameClockNanos, boolean motion)`: "A level outside 0..1 is clamped; a viewport of zero size draws nothing" (data-model.md); getters only; `motion` false freezes the sway (FR-013).
 
 **Checkpoint**: the module builds; no behaviour yet.
 
