@@ -48,7 +48,7 @@ public class FollowStringsTest {
 	private static Set<String> followKeys(Properties properties) {
 		Set<String> keys = new TreeSet<String>();
 		for (String key : properties.stringPropertyNames()) {
-			if (key.startsWith("practice.follow.") || key.startsWith("practice.mode") || key.equals("practice.start.follow") || key.startsWith("arcade.") || key.equals("practice.start.arcade")) {
+			if (key.startsWith("practice.follow.") || key.startsWith("practice.mode") || key.equals("practice.start.follow") || key.startsWith("arcade.") || key.equals("practice.start.arcade") || key.startsWith("practice.prerun.")) {
 				keys.add(key);
 			}
 		}
@@ -136,5 +136,32 @@ public class FollowStringsTest {
 			}
 		}
 		assertEquals(9, seen.size(), "the three states are told apart in every language");
+	}
+
+	@Test
+	public void theStartWindowHasTheTextsOfItsLevelPartInTheThreeLanguages() throws IOException {
+		// spec 010 T013, FR-010: the strum, the verdicts and the buttons; the advice reuses practice.level.guidance.* and practice.gain.warning.*
+		String[] keys = { "practice.prerun.title", "practice.prerun.strum.ask", "practice.prerun.strum.heard", "practice.prerun.verdict.CLIPPING", "practice.prerun.verdict.TOO_LOUD",
+				"practice.prerun.verdict.TOO_WEAK", "practice.prerun.verdict.GOOD", "practice.prerun.verdict.NO_STRUM", "practice.prerun.continue", "practice.prerun.check-again",
+				"practice.prerun.cancel" };
+		Set<String> english = new TreeSet<String>();
+		for (String file : FILES) {
+			Properties properties = load(file);
+			for (String key : keys) {
+				String text = properties.getProperty(key);
+				assertTrue(text != null && !text.trim().isEmpty(), file + ": " + key + " exists and is not empty");
+			}
+			// the verdict lines say what was measured and never that the chord is wrong (constitution XIII)
+			for (String key : new String[] { "practice.prerun.verdict.CLIPPING", "practice.prerun.verdict.TOO_LOUD", "practice.prerun.verdict.TOO_WEAK" }) {
+				assertFalse(properties.getProperty(key).toLowerCase().contains("wrong"), file + ": " + key + " must not judge the playing");
+			}
+			english.add(file);
+		}
+		assertEquals(3, english.size());
+		for (String key : new String[] { "practice.level.guidance.CLIPPING", "practice.level.guidance.TOO_HIGH", "practice.level.guidance.TOO_LOW", "practice.gain.warning.BOOST_CAUSES_CLIPPING" }) {
+			for (String file : FILES) {
+				assertTrue(load(file).getProperty(key) != null, file + ": the existing text " + key + " the window reuses");
+			}
+		}
 	}
 }

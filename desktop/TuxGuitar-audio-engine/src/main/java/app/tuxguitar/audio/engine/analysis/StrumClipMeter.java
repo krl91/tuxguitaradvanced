@@ -59,7 +59,7 @@ public final class StrumClipMeter implements HopListener {
 		private final double clippedShare;
 		private final double rmsDbfs;
 
-		Reading(StrumVerdict verdict, double clippedShare, double rmsDbfs) {
+		public Reading(StrumVerdict verdict, double clippedShare, double rmsDbfs) {
 			this.verdict = verdict;
 			this.clippedShare = clippedShare;
 			this.rmsDbfs = rmsDbfs;
