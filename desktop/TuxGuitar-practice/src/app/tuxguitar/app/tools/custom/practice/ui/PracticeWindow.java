@@ -341,7 +341,7 @@ public class PracticeWindow {
 				return;
 			}
 			TGSynchronizer.getInstance(this.context).executeLater(() -> {
-				if( isOpen() && !this.windowShown && this.session == null && this.followPlan == null && !this.startFlow.pending() ) {
+				if( QuickStart.showAfterPatience(isOpen(), this.windowShown, this.session != null || this.followPlan != null, this.startFlow.pending()) ) {
 					// not while a run (Arcade) is going on: the preparation window would come over the game
 					showWindow();
 				}
@@ -664,7 +664,7 @@ public class PracticeWindow {
 	 * nothing is left open that the learner never asked to see (and the tuner is no longer held off by it).
 	 */
 	private void startCancelled() {
-		if( !this.disposing && isOpen() && !this.windowShown && this.session == null && this.followPlan == null ) {
+		if( QuickStart.closeAfterCancelledStart(isOpen(), this.windowShown, this.session != null || this.followPlan != null, this.disposing) ) {
 			close();
 		}
 	}

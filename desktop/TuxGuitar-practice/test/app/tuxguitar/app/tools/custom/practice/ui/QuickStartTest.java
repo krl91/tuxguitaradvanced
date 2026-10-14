@@ -70,4 +70,30 @@ public class QuickStartTest {
 			}
 		}
 	}
+
+	/** Found by the owner on the built application (spec 010): the preparation window came over the start window before the question was answered. */
+	@Test
+	public void thePatienceWatchdogNeverShowsThePreparationWindowOverAStartWindowThatWaitsForTheLearner() {
+		assertFalse(QuickStart.showAfterPatience(true, false, false, true), "the question is shown and not answered: the preparation window stays hidden");
+		assertTrue(QuickStart.showAfterPatience(true, false, false, false), "a one-click start that cannot go on by itself still shows the window");
+		for( boolean open : new boolean[] { false, true } ) {
+			for( boolean windowShown : new boolean[] { false, true } ) {
+				for( boolean runOngoing : new boolean[] { false, true } ) {
+					for( boolean pending : new boolean[] { false, true } ) {
+						boolean expected = open && !windowShown && !runOngoing && !pending;
+						assertEquals(expected, QuickStart.showAfterPatience(open, windowShown, runOngoing, pending), open + " " + windowShown + " " + runOngoing + " " + pending);
+					}
+				}
+			}
+		}
+	}
+
+	@Test
+	public void aCancelledOneClickStartClosesTheWindowItOpenedOnlyWhenNobodyHasSeenItAndNothingRunsAndItIsNotBeingClosed() {
+		assertTrue(QuickStart.closeAfterCancelledStart(true, false, false, false));
+		assertFalse(QuickStart.closeAfterCancelledStart(true, true, false, false), "a window the learner has seen stays");
+		assertFalse(QuickStart.closeAfterCancelledStart(true, false, true, false), "never while a run is going on");
+		assertFalse(QuickStart.closeAfterCancelledStart(true, false, false, true), "not while it is already being closed");
+		assertFalse(QuickStart.closeAfterCancelledStart(false, false, false, false), "nothing to close");
+	}
 }

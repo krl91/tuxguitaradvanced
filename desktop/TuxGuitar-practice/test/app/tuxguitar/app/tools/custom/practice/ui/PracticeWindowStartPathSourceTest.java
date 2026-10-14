@@ -105,11 +105,11 @@ public class PracticeWindowStartPathSourceTest {
 	}
 
 	@Test
-	public void theQuickStartWatchdogNeverShowsThePreparationWindowOverAPendingStartAndACancelledOneClickStartClosesTheWindowItOpened() throws IOException {
+	public void theQuickStartWatchdogAndTheCancelUseTheRulesTestedInQuickStartTest() throws IOException {
 		String text = source();
 		String watch = body(text, "private void watchQuickStart()");
-		assertTrue(watch.contains("!this.startFlow.pending()"), "the preparation window must not come over a start window the learner has not answered yet");
+		assertTrue(watch.contains("QuickStart.showAfterPatience(") && watch.contains("this.startFlow.pending()"), "the watchdog asks the tested rule, with the pending start");
 		String cancelled = body(text, "private void startCancelled()");
-		assertTrue(cancelled.contains("!this.windowShown") && cancelled.contains("close()") && cancelled.contains("!this.disposing"), "a cancelled one-click start closes the window that was never shown");
+		assertTrue(cancelled.contains("QuickStart.closeAfterCancelledStart(") && cancelled.contains("this.disposing"), "a cancelled one-click start asks the tested rule");
 	}
 }
