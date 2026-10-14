@@ -221,4 +221,30 @@ public class PreRunCheckTest {
 		check.checkAgain();
 		assertEquals(2, resets.get());
 	}
+
+	@Test
+	public void notInTuneNeverReachesReadyAndTheTunerWayBackGoesToTheQuestionAgainKeepingTheMode() {
+		for (FollowSettings.Mode mode : FollowSettings.Mode.values()) {
+			PreRunCheck check = new PreRunCheck(mode);
+			check.answerTuned(false);
+			assertEquals(State.TUNER_OPEN, check.state(), mode.name());
+			check.continueAnyway();
+			check.verdict(StrumVerdict.GOOD);
+			assertEquals(State.TUNER_OPEN, check.state(), "no way to ready while the tuner is open");
+			check.tunerClosed();
+			assertEquals(State.TUNING, check.state(), "the tuner closed: the question again, never ready by itself");
+			assertEquals(mode, check.mode(), "the mode is the one asked for");
+			check.tunerClosed();
+			assertEquals(State.TUNING, check.state(), "a tuner closed event outside TUNER_OPEN is ignored");
+			check.answerTuned(true);
+			assertEquals(State.STRUM, check.state());
+			check.cancel();
+			assertEquals(State.CANCELLED, check.state(), "cancel from the strum");
+		}
+		for (State from : State.values()) {
+			PreRunCheck check = inState(from, new AtomicInteger());
+			check.cancel();
+			assertEquals(from == State.READY ? State.READY : State.CANCELLED, check.state(), "cancel from " + from);
+		}
+	}
 }

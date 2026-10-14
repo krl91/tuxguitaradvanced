@@ -56,6 +56,40 @@ public class PreRunWindowTest {
 		}
 	}
 
+	/** A tuner whose existence the test sets; counts what the window asked of it and lets the test close it. */
+	private static final class FakeTuner implements PreRunWindow.TunerOpener {
+		boolean exists = true;
+		int opened;
+		int forward;
+		Runnable closed;
+
+		@Override
+		public boolean available() {
+			return this.exists;
+		}
+
+		@Override
+		public void open() {
+			this.opened++;
+		}
+
+		@Override
+		public void toFront() {
+			this.forward++;
+		}
+
+		@Override
+		public void setClosedListener(Runnable listener) {
+			this.closed = listener;
+		}
+
+		void close() {
+			if (this.closed != null) {
+				this.closed.run();
+			}
+		}
+	}
+
 	private static StrumClipMeter.Reading readingOf(StrumVerdict verdict, double share, double rms) {
 		return new StrumClipMeter.Reading(verdict, share, rms);
 	}
@@ -64,17 +98,19 @@ public class PreRunWindowTest {
 	private FakeSource source = new FakeSource();
 	private final AtomicInteger finished = new AtomicInteger();
 	private long now = 5 * SECOND;
+	private FakeTuner tuner = new FakeTuner();
 	private PreRunCheck check;
 	private PreRunWindow window;
 
 	private PreRunWindow open(State state) {
+		this.tuner = new FakeTuner();
 		this.source = new FakeSource(); // each window listens to a fresh source: a verdict of an earlier window does not carry over
 		this.check = new PreRunCheck(FollowSettings.Mode.WAIT);
 		if (state == State.STRUM) {
 			this.check.answerTuned(true);
 		}
 		this.window = new PreRunWindow(this.toolkit.factory(), null, this.check, this.source, (key, arguments) -> key + (arguments.length == 0 ? "" : java.util.Arrays.toString(arguments)),
-				() -> this.now, this.finished::incrementAndGet);
+				() -> this.now, this.tuner, this.finished::incrementAndGet);
 		this.window.refresh();
 		return this.window;
 	}
@@ -188,5 +224,68 @@ public class PreRunWindowTest {
 		this.window.windowClosed(); // the window closes itself after READY
 		assertEquals(State.READY, this.check.state(), "closing a window that was ready does not cancel");
 		assertEquals(1, this.finished.get());
+	}
+
+	@Test
+	public void theWindowOpensAtTheTuningQuestionWithItsTwoButtonsAndNoLevelPartBeforeYes() {
+		open(State.TUNING);
+		assertEquals(State.TUNING, this.check.state());
+		assertTrue(text(this.window.questionLabel()).contains("practice.prerun.tuned.question"));
+		assertTrue(visible(this.window.questionLabel()) && visible(this.window.yesButton()) && visible(this.window.noButton()));
+		assertEquals("practice.prerun.tuned.yes", text(this.window.yesButton()));
+		assertEquals("practice.prerun.tuned.no", text(this.window.noButton()));
+		assertFalse(visible(this.window.meterBar()) || visible(this.window.sentenceLabel()) || visible(this.window.continueButton()) || visible(this.window.checkAgainButton()),
+				"no level part before the answer");
+		assertEquals(0, this.finished.get());
+		SwtContractToolkit.userSelects(this.window.yesButton());
+		assertEquals(State.STRUM, this.check.state());
+		assertTrue(visible(this.window.meterBar()) && visible(this.window.sentenceLabel()), "yes shows the strum part");
+		assertFalse(visible(this.window.questionLabel()) || visible(this.window.yesButton()) || visible(this.window.noButton()), "and takes the question away");
+		assertEquals(0, this.tuner.opened);
+	}
+
+	@Test
+	public void noOpensTheTunerHidesTheWindowAndNeverBeginsTheModeAndTheTunerClosedBringsTheQuestionBack() {
+		open(State.TUNING);
+		SwtContractToolkit.userSelects(this.window.noButton());
+		assertEquals(State.TUNER_OPEN, this.check.state());
+		assertEquals(1, this.tuner.opened, "the tuner action ran once");
+		assertFalse(visible(this.window.windowWidget()), "the start window gives way to the tuner");
+		assertEquals(0, this.finished.get(), "the start is still pending: the mode does not begin and the flow is not told");
+		this.window.toFront();
+		assertEquals(1, this.tuner.forward, "while the tuner is open, bringing the start forward brings the tuner");
+		this.tuner.close();
+		assertEquals(State.TUNING, this.check.state(), "the tuner closed: the question again, never ready by itself");
+		assertTrue(visible(this.window.windowWidget()) && visible(this.window.yesButton()), "the window is back at the question");
+		assertEquals(0, this.finished.get());
+		SwtContractToolkit.userSelects(this.window.noButton());
+		assertEquals(2, this.tuner.opened, "no again opens the tuner again");
+	}
+
+	@Test
+	public void aTunerThatDoesNotExistShowsTheMessageCallsNothingAndStaysAtTheQuestion() {
+		open(State.TUNING);
+		this.tuner.exists = false;
+		SwtContractToolkit.userSelects(this.window.noButton());
+		assertEquals(State.TUNING, this.check.state(), "the check stays at the question");
+		assertEquals(0, this.tuner.opened);
+		assertTrue(visible(this.window.windowWidget()));
+		assertTrue(text(this.window.questionLabel()).contains("practice.prerun.tuner.unavailable") || text(this.window.sentenceLabel()).contains("practice.prerun.tuner.unavailable")
+				|| text(this.window.adviceLabel()).contains("practice.prerun.tuner.unavailable"), "the message is shown");
+		SwtContractToolkit.userSelects(this.window.yesButton());
+		assertEquals(State.STRUM, this.check.state(), "yes still goes on");
+		assertFalse(text(this.window.adviceLabel()).contains("practice.prerun.tuner.unavailable"), "the message goes away with the question");
+	}
+
+	@Test
+	public void cancelWhileTheTunerIsOpenCancelsTheStartAndTheTunerClosingAfterwardsChangesNothing() {
+		open(State.TUNING);
+		SwtContractToolkit.userSelects(this.window.noButton());
+		this.window.escapePressed();
+		assertEquals(State.CANCELLED, this.check.state());
+		assertEquals(1, this.finished.get());
+		this.tuner.close();
+		assertEquals(State.CANCELLED, this.check.state());
+		assertEquals(1, this.finished.get(), "a late tuner event does nothing");
 	}
 }

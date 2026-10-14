@@ -164,4 +164,17 @@ public class FollowStringsTest {
 			}
 		}
 	}
+
+	@Test
+	public void theTuningQuestionHasItsTextsInTheThreeLanguages() throws IOException {
+		// spec 010 T020, FR-005, FR-006: the question, its two answers and the message when the tuner does not exist
+		String[] keys = { "practice.prerun.tuned.question", "practice.prerun.tuned.yes", "practice.prerun.tuned.no", "practice.prerun.tuner.unavailable" };
+		for (String file : FILES) {
+			Properties properties = load(file);
+			for (String key : keys) {
+				String text = properties.getProperty(key);
+				assertTrue(text != null && !text.trim().isEmpty(), file + ": " + key + " exists and is not empty");
+			}
+		}
+	}
 }
