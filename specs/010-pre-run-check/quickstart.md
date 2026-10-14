@@ -7,7 +7,7 @@ cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa
 export JAVA_HOME=$(/usr/libexec/java_home -v 21); export PATH="$JAVA_HOME/bin:$PATH"
 mvn -e clean verify -P native-modules,swt-gui-tests          # the build and the SWT tests (the app must be closed)
 mvn test -pl ../../TuxGuitar-practice -am                    # unit tests
-# the meter on the data, and the recognition figures (kept outside the default suite)
+# the meter on the data, and the recognition figures (the dataset tests also run in the default build and skip themselves without data; these flags run them alone)
 mvn test -pl ../../TuxGuitar-practice -am -Dgroups=dataset -DexcludedGroups= -Dtest='StrumClipDatasetTest,OwnerChordsBenchmarkTest,GuitarSetChordBenchmarkTest' -Dsurefire.failIfNoSpecifiedTests=false
 ```
 
