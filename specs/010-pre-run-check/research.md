@@ -1,0 +1,73 @@
+# Research: Pre-run check (spec 010)
+
+Every claim cites a file that was opened or data that was measured on 2026-10-14.
+
+## R1 - Where the clipping decision lives, and why it missed the owner's case
+
+**Evidence.** `audio engine analysis/LevelAnalyzer.java` marks a 2048-sample window (`OfflineAnalysis.WINDOW`, hop 256) as `CLIPPING` when `clippedRatio >= clippingRatioThreshold`; the default `RecognitionParameters.LEVEL_CLIP_SHARE` is 0.10 (range 0.01 to 0.50) and `LEVEL_CLIP_SAMPLE` is 0.99. `analysis/InputAssessor.java` then looks only at **playing frames** (a confident pitch, `playingConfidence` 0.80): `SUBOPTIMAL/CLIPPING` when 10 % of them clip, `UNUSABLE` at 50 %; `QuickStart.canStart` lets `SUBOPTIMAL` start, and the transport-bar Arcade button starts without waiting for it at all. A polyphonic strum has little confident pitch, so most of its clipped frames are not "playing frames", and a strum clips for 2 % to 28 % of its first 300 ms (below).
+
+**Measured.** Owner takes through the Rocksmith adapter, first 300 ms after the attack: gain 0.99, 21 takes, shares 0.0, 0.2, 0.6, 0.8 and 2.1 to 28.4 %; gain 0.40, 21 takes, 0.0 % each. GuitarSet, 180 clean microphone recordings, worst 300 ms window: **0.23 %** (26 of them touch 0.98 at least once). Accepted chords: 8 of 21 at 0.99, 18 of 21 at 0.40 (`OwnerChordsBenchmarkTest`).
+
+**Decision.** A new pure meter, `StrumClipMeter`, in the audio engine: after an attack it counts the samples with `|x| >= LEVEL_CLIP_SAMPLE` over the next 300 ms and reports clipping when the share is **0.5 %** or more. 0.5 % is between the worst clean window (0.23 %, margin more than 2) and the owner's clipped takes (19 of 21 above). It is a constant of the meter's `Parameters` (provisional, like `InputAssessor.Parameters`), **not a new learner setting** (spec: no setting without need). The frame-level `LevelState` and `InputAssessor` stay as they are: the recognition does not depend on this meter (SC-005).
+
+**Proof to do, through the real code.** The python figures used 0.98; P1 re-measures GuitarSet and the owner's takes through `OfflineAnalysis` with the real `LEVEL_CLIP_SAMPLE` 0.99 and writes them in `benchmark/`; if a figure moves the threshold is re-argued before it is used.
+
+**Alternatives.** Lower `LEVEL_CLIP_SHARE` to 0.005 (rejected: it would flag the frame-level state used by the recognition and the tuner, and a 2048 window is too short to carry 0.5 %); count in `InputAssessor` playing frames only (rejected: it is the case that missed). Sum `clippedRatio` of the overlapping frames (rejected: each sample is counted in eight windows, edges are approximate).
+
+## R2 - The attack and the 300 ms window
+
+**Evidence.** `AnalysisService` loop pushes each hop (256 samples) to the attack analyser (`attackAnalyzer.push(hop, 0, hopSize)`); frames carry an `onset` flag from `ArticulationDetector` (`OfflineAnalysis` line 69). 300 ms are about 56 hops at 48 kHz.
+
+**Decision.** The meter is fed once per hop through a small optional hop listener added to `AnalysisService` and to `OfflineAnalysis` (the same call in both, so the tests run the production loop). It arms on a strum: the first hop whose RMS is at least 12 dB above the quietest recent hop, or the `onset` flag; it then accumulates the next 300 ms (clipped samples, sum of squares, peak) and gives a verdict; a new check re-arms it. Nothing is allocated per hop.
+
+## R3 - The verdicts
+
+**Decision.** `NO_STRUM` (nothing armed yet or only silence), `CLIPPING` (share >= 0.5 %), `TOO_WEAK` (the mean RMS of the window under `INPUT_LEVEL_MIN`, -40 dBFS by default, the same number the existing level state uses), `GOOD`. The "too loud without clipping" state of the existing check (`TOO_HIGH`, RMS above `INPUT_LEVEL_MAX`) is reported as `TOO_LOUD` with the same guidance as clipping. The texts of the existing `practice.level.guidance.*` are reused for the advice.
+
+**Evidence of the weak side.** At gain 0.40 the owner's takes have an RMS of 0.008 to 0.021 (about -42 to -34 dBFS): the lower gain is near the weak limit; a "too weak" verdict at that level is expected for the quietest ones and is the right advice (raise to about 0.6).
+
+## R4 - Where the start window opens, and restarts
+
+**Evidence.** `PracticeWindow.startSession()` (line 638) is called by the Start button, by the one-click quick start (`startNow`, line 631) and by `openAndStartArcade()` (the transport-bar Arcade button, `immediateStart`); `restartArcade()`, `restartArcadeFromStart()`, `restartFollow()` re-enter `startArcade` / `startFollow` directly, not `startSession`.
+
+**Decision.** The check wraps `startSession()`: it opens `PreRunWindow`; the existing body runs only when the check says READY. Both ways of starting, the three modes and the quick start go through it with no other change. **Restarts and "play again" inside the same run window (Restart button, result window, from a measure) do not ask again**: they are the same sitting a few seconds later, the tuning and the level were just judged, and asking again after every try would make the practice loop unbearable; FR-001 speaks of the start of a mode from the preparation window and the buttons of the transport bar. This is the one reading of the spec to confirm with the owner at gate G.
+
+**The Arcade button.** It used to start "without waiting for the level check" (`QuickStart.canStart(..., immediate)`); it now opens the start window first, as the clarification says; the preparation window is still not shown.
+
+## R5 - The tuner and the way back
+
+**Evidence.** The tuner opens through the action `tuner.tuner` (`TunerNextPlugin.ACTION_ID`, `TGActionManager.execute`); `TunerWindow` sets `PracticeTunerContext.setTunerOpen(true)` on open and `false` when its window is disposed; `InputEvents.tunerStateChanged` already turns that into a `TUNER_OPEN` pause of a running session.
+
+**Decision.** "No, open the tuner": the start window closes, the action `tuner.tuner` is executed, and the start window listens to `PracticeTunerContext` (the listener `InputEvents` uses); when the tuner closes it opens the start window again, at the tuning question, with the mode and the track as they were (`startSession` is simply called again by the caller of the check). The mode never starts by itself (FR-007). If the tuner was already open the action brings it forward.
+
+## R6 - The live level indicator
+
+**Evidence.** `LevelPanel` subscribes to the engine (`engine.subscribe(frameListener)`; the capture is held by the preparation window) and updates a progress bar from the latest frame at about 30 updates a second (`updateMeter`, RMS from -60 dBFS).
+
+**Decision.** `PreRunWindow` reuses the same engine subscription and the same meter scale for the live bar, plus the verdict of `StrumClipMeter` for the sentence under it; the capture must be held when the window opens (the quick start and the transport button already hold it for the run; the window asks the engine to hold it and gives it back on close).
+
+## R7 - Texts
+
+**Decision.** New keys `practice.prerun.title`, `.tuned.question`, `.tuned.yes`, `.tuned.no`, `.strum.ask`, `.strum.heard`, `.continue`, `.check-again` and the verdict lines, in `messages.properties`, `messages_fr.properties`, `messages_es.properties`, checked by `FollowStringsTest`'s pattern (same keys, same placeholders). The advice for clipping and weak signals reuses `practice.level.guidance.CLIPPING` / `TOO_LOW` / `TOO_HIGH` unchanged.
+
+## R8 - The recognition regression tests that exist, and what is missing
+
+| Test (module) | Kind of event | Data | Tag / condition |
+|---|---|---|---|
+| `RealGuitarRegressionTest` (audio engine) | single note, pitch baseline | 22 committed clips of `benchmark/builtin-mic` | default suite |
+| `MonophonicRegressionReplayTest` (practice) | single notes, attack rule (spec 004 SC-004) | real single-pluck clips | skipped when absent |
+| `RecordedPracticeReplayTest` (practice) | notes and chords, fingerstyle with a ringing bass | `tests/1` (owner's, not redistributed) | skipped when absent |
+| `BendRecordedReplayTest` (practice) | bend, pre-bend, release (synthetic render) | `tests/2` (owner's) | skipped when absent |
+| `LegatoFunctionalTest`, `PitchTechniqueDetectorsTest`, `BendDetectorTest` | hammer-on, pull-off, techniques on synthetic signals | generated | default suite |
+| `TechniqueDatasetBenchmarkTest` (practice) | vibrato, bend, slide, plain, against IDMT-SMT-Guitar 2 | `~/tuxguitar-datasets` | `dataset` |
+| `DatasetBenchmarkTest`, `FastPassageBenchmarkTest`, `NoteSpacingBenchmarkTest`, `WeakInputBenchmarkTest` | notes, intervals, chords, fast passages, weak input | IDMT-SMT-Guitar | `dataset` |
+| `GuitarSetChordBenchmarkTest` (practice) | chords, complete and with a note missing | GuitarSet | `dataset` |
+| `OwnerChordsBenchmarkTest` (practice) | chords on the owner's guitar | `owner-chords*` (not committed) | `dataset`, skipped when absent |
+
+**Missing.** (1) A **default-suite** guard for chords: every chord test above needs data kept outside the repository; a few committed chord clips (synthetic, generated by the tests' own signal code, no copyright) would catch a regression in the default build. (2) The **owner's takes have no committed figures**: the test reports them but asserts only 100 % / 0 %, which fails today; it needs a recorded baseline ("not worse than N of 42") in `before-after.txt`. (3) **Techniques other than bend, vibrato and slide** (hammer-on, pull-off, palm mute, tapping, tremolo picking) are covered only on synthetic signals (`LegatoFunctionalTest` and the technique signals): no recorded-audio test; the plan does not invent one without data, and says so (SC-007 covers "each technique" as far as data exists; the gap is reported, not hidden).
+
+**Decision.** P0 runs every suite that can run here and writes its figures to `benchmark/before-after.txt` before any code; P4 adds (1) and (2) and compares.
+
+## R9 - Findings outside this feature
+
+While measuring, the D major chord (x x 0 2 3 2: D3 A3 D4 F#4) was refused in 3 of 5 takes even at gain 0.40, because its clear unique partials are few at a low level (`ChordEvidence`: 0 to 1 clear partials for each of the four pitches at -27 to -36 dBFS). That is recognition (spec 004 T007), out of scope here (constitution X); it is recorded in `OwnerChordsBenchmarkTest` figures and proposed as a separate piece of work.
