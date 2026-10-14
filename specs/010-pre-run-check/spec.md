@@ -18,6 +18,7 @@
 
 - Q: How is the input level measured at every start of a mode? → A: **Option A**: one start window asks the tuning question and a **test strum**, with a live level indicator; the mode starts when the level is good (or the learner goes on anyway). No check is left to the first seconds of the run, and the existing "play a few notes" state of the preparation window is not enough by itself.
 - Q: Does a bad level stop the start or only warn? → A: **Option A**: the mode does not start while the level is bad, and a **"Continue anyway"** button lets the learner go on for this start only (FR-002, FR-008 confirmed; the choice is never stored).
+- Q: Where do the tuning question and the test strum appear? → A: **Option A**: one **small dedicated start window**, the same for the three modes and for both ways of starting (preparation window and transport bar), opened at every start; it holds the tuning question with two answers (*Yes, in tune* / *No, open the tuner*), the live level indicator with "strum a chord", and *Continue anyway* when the level is bad.
 - Request (owner, same session): add **non-regression tests for the recognition** of notes, techniques (bend and the others) and chords, so that this feature and the next ones cannot degrade them: FR-012 and SC-007.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -82,7 +83,7 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 
 ### Functional Requirements
 
-- **FR-001**: At every start of *Wait for the right note*, *Follow* and *Arcade*, from the preparation window as well as from the buttons of the transport bar (including the Arcade button that used to start at once), the application MUST open one start window that asks the tuning question (FR-005) and asks for a **test strum**, with a live level indicator; the level is judged on that strum before the run begins. Nothing is remembered from one start to the next.
+- **FR-001**: At every start of *Wait for the right note*, *Follow* and *Arcade*, from the preparation window as well as from the buttons of the transport bar (including the Arcade button that used to start at once), the application MUST open one small dedicated start window (the same for the three modes and for both ways of starting) that asks the tuning question (FR-005) and asks for a **test strum**, with a live level indicator; the level is judged on that strum before the run begins. Nothing is remembered from one start to the next.
 - **FR-002**: When the input signal clips, the check MUST say so and say what to lower (the gain of the interface, the input volume of the system), using the existing wording of the level guidance; the mode MUST NOT begin until the learner checks again with a good result or chooses to go on anyway.
 - **FR-003**: When the input signal is too weak to be recognised, the check MUST say so and say what to raise, with the same rule as FR-002.
 - **FR-004**: The clipping decision MUST catch the case measured by the owner: the share of samples at full scale in the 300 ms after a strum, at or above **0.5 %**, is clipping (2 % was the first proposal; the data set above shows it misses 4 of the 21 measured takes). A signal with no sample at full scale is never reported as clipping.
@@ -116,5 +117,5 @@ The two checks must be quick and must not become a wall: answering yes to the tu
 
 - The level analysis, the guidance texts (`practice.level.guidance.*`) and the tuner already exist in the practice plugin and the audio engine; this specification adds when they are used and one threshold, not a new analysis.
 - The measurements above were made by the model on the owner's recordings, with chord pitches read by a polyphonic transcription tool (Basic Pitch) and not by the owner; they are evidence for the threshold, not a labelled benchmark.
-- Questions left for `/speckit-clarify`: (c) whether the question of tuning is a dialog with two buttons or a step in the preparation window. ((a) and (b) are answered above.)
+- The three design questions of the first draft are answered in Clarifications; nothing is left open.
 - Out of scope: the recognition algorithm for chords (spec 004 T007), automatic change of the system gain, a stored "I already tuned today" answer, and the Windows and Linux interface differences (the guidance names the macOS input volume as the existing text does).

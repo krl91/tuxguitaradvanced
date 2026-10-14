@@ -31,7 +31,7 @@
 
 ## Notes
 
-- Three design questions are recorded in Assumptions for `/speckit-clarify` (how the level is checked, blocking or warning, form of the tuning question); they do not block the specification.
+- The three design questions (how the level is checked, blocking or warning, form of the tuning question) were answered in `/speckit-clarify` on 2026-10-14.
 - SC-006 is the owner's gate on the built application.
 
 - 2026-10-14: FR-004 threshold changed from 2 % to 0.5 % after the check on GuitarSet (180 clean recordings, worst window 0.23 %) and on the owner's takes (19 of 21 caught at 0.5 %, 17 at 2 %); SC-001 (at least 19 of 21) now holds.
