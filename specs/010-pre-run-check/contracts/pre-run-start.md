@@ -28,7 +28,7 @@ interface StartGate { void request(PreRunCheck check, Runnable onReady); void to
 final class StartFlow {                                                  // practice ui, one instance per PracticeWindow, pure
     StartFlow(StartGate gate);
     boolean begin(PreRunCheck check, Runnable startNow);   // false and nothing done when a check is already pending (TUNER_OPEN counts); startNow runs only on READY, once
-    void toFront();                                         // brings the pending start window to the front
+    void toFront();                                         // brings the pending start window to the front (the tuner, while TUNER_OPEN)
     void cancelPending();                                   // the window closes, its mode changes or the learner picks another track: the pending check is cancelled
     boolean pending();
 }
@@ -50,3 +50,4 @@ final class StartFlow {                                                  // prac
 11. **Restarts.** A restart, a replay from the result window (from the start or from a measure) and the automatic retry after a failed start never open the start window (FR-013, `PracticeWindowStartPathSourceTest`, native test T025).
 12. **One start window.** `begin` while a check is pending (any state, `TUNER_OPEN` included) returns false, brings the open window to the front, opens nothing and runs nothing; after `READY`, `CANCELLED` or `cancelPending()` a new `begin` is accepted (`StartFlowTest`, native test T025 with a double press).
 13. **The run is the one asked for.** `startSessionNow` receives the mode and the candidate captured at the request, and starts only if the preparation window is still open and no run or session exists; closing the preparation window, a change of its mode (`modeChanged()`) and a change of the selected track (the tracks drop-down listener) call `cancelPending()` (`StartFlowTest`, `PracticeWindowStartPathSourceTest`).
+14. **Never stuck.** `pending()` is cleared on `READY` **before** `startNow` runs (so also when `startNow` throws or does nothing because the window is no longer open), on `CANCELLED` (the Cancel button, the close button, the Escape key), on `cancelPending()` and when `gate.request` throws; a tuner that cannot be opened leaves the check at `TUNING` with a message and `pending()` stays true only while a start window or the tuner is really open (`StartFlowTest`, `PreRunCheckTest`, native test T025).
