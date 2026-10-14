@@ -41,9 +41,6 @@ import app.tuxguitar.app.tools.custom.practice.session.PracticeSession;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeSnapshot;
 import app.tuxguitar.app.tools.custom.practice.session.SessionEvents;
 import app.tuxguitar.app.tools.custom.practice.session.SessionLoop;
-import app.tuxguitar.app.ui.TGApplication;
-import app.tuxguitar.app.view.component.tab.Caret;
-import app.tuxguitar.app.view.main.TGWindow;
 import app.tuxguitar.app.view.util.TGDialogUtil;
 import app.tuxguitar.audio.engine.AudioEngine;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
@@ -94,7 +91,7 @@ public class PracticeWindow {
 	private static final String[] NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
 	private final TGContext context;
-	private final PracticePlugin plugin;
+	private final PracticeHost host;
 	private final PracticeTunerContext shared;
 	private final PracticeHighlight highlight;
 	private AudioEngine engine;
@@ -143,7 +140,7 @@ public class PracticeWindow {
 	private AnalysisService.Listener frameListener;
 	// ---- the tempo-following mode (spec 002 T096-T099): a run beside the wait-mode session, never together with it
 	private FollowPanel followPanel;
-	private EngineFollowAdapter followAdapter;
+	private PracticeHost.RunEnvironment followAdapter;
 	private FollowStarter.Plan followPlan;
 	private AnalysisService.Listener followFrameListener;
 	private FollowSession.Snapshot followLast;
@@ -167,11 +164,15 @@ public class PracticeWindow {
 	private static final ArcadeTexts ARCADE_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
+		this(context, new AppPracticeHost(context, plugin));
+	}
+
+	/** Spec 011: the window built on a given host; the plugin builds it through the public constructor above, a test through this one. */
+	PracticeWindow(TGContext context, PracticeHost host) {
 		this.context = context;
-		this.plugin = plugin;
+		this.host = host;
 		this.shared = PracticeTunerContext.getInstance(context);
-		this.startFlow = new StartFlow(new PreRunStartGate(context, () -> this.engine, () -> TGApplication.getInstance(this.context).getFactory(),
-				() -> TGWindow.getInstance(this.context).getWindow(), this::startCancelled));
+		this.startFlow = new StartFlow(new PreRunStartGate(context, host, () -> this.engine, this::startCancelled));
 		this.highlight = new PracticeHighlight(context);
 		this.palette = new PracticePalette(context, new PracticePalette.Controller() {
 			public void post(PracticeCommand command) {
@@ -242,15 +243,15 @@ public class PracticeWindow {
 			}
 			return;
 		}
-		this.engine = AudioEngine.getInstance(this.context);
-		this.followAdapter = new EngineFollowAdapter(this.context, this.engine);
-		UIFactory uiFactory = TGApplication.getInstance(this.context).getFactory();
-		UIWindow uiParent = TGWindow.getInstance(this.context).getWindow();
+		this.engine = this.host.engine();
+		this.followAdapter = this.host.environment(this.engine);
+		UIFactory uiFactory = this.host.factory();
+		UIWindow uiParent = this.host.mainWindow();
 		UITableLayout windowLayout = new UITableLayout();
 
 		this.window = uiFactory.createWindow(uiParent, false, true);
 		this.window.setLayout(windowLayout);
-		this.window.setImage(TuxGuitar.getInstance().getIconManager().getAppIcon());
+		this.window.setImage(this.host.appIcon());
 		this.window.setText(TuxGuitar.getProperty(PracticePlugin.OPEN_ACTION_ID));
 
 		// the preparation is in tabs, so that the window is not taller than a screen: the track, the input, the mode, the repeated passages
@@ -283,7 +284,7 @@ public class PracticeWindow {
 				PracticeWindow.this.autoStart = false;
 				PracticeWindow.this.immediateStart = false;
 				PracticeWindow.this.window = null;
-				PracticeWindow.this.plugin.windowStateChanged(PracticeWindow.this.context);
+				PracticeWindow.this.host.windowStateChanged();
 			}
 		});
 
@@ -310,7 +311,7 @@ public class PracticeWindow {
 		} else {
 			showWindow();
 		}
-		this.plugin.windowStateChanged(this.context);
+		this.host.windowStateChanged();
 	}
 
 	/** Shows the preparation window (once opened it is only hidden and shown again). */
@@ -319,11 +320,11 @@ public class PracticeWindow {
 			return;
 		}
 		this.hiddenByArcade = false;
-		this.plugin.windowStateChanged(this.context);
+		this.host.windowStateChanged();
 		if( !this.windowShown ) {
 			this.windowShown = true;
 			refit();
-			TGDialogUtil.openDialog(this.window, TGDialogUtil.OPEN_STYLE_CENTER | TGDialogUtil.OPEN_STYLE_PACK);
+			this.host.openDialog(this.window, TGDialogUtil.OPEN_STYLE_CENTER | TGDialogUtil.OPEN_STYLE_PACK);
 			refit();
 		} else {
 			// back from a hidden state (the Arcade run): shown, recomposed and painted again
@@ -333,22 +334,12 @@ public class PracticeWindow {
 
 	/** A one-click start that cannot go on by itself (no usable input after a short wait) shows the window so the learner can choose the input. */
 	private void watchQuickStart() {
-		Thread watchdog = new Thread(() -> {
-			try {
-				Thread.sleep(QUICK_START_PATIENCE_MILLIS);
-			} catch (InterruptedException exception) {
-				Thread.currentThread().interrupt();
-				return;
+		this.host.later("practice-quick-start", QUICK_START_PATIENCE_MILLIS, () -> {
+			if( QuickStart.showAfterPatience(isOpen(), this.windowShown, this.session != null || this.followPlan != null, this.startFlow.pending()) ) {
+				// not while a run (Arcade) is going on: the preparation window would come over the game
+				showWindow();
 			}
-			TGSynchronizer.getInstance(this.context).executeLater(() -> {
-				if( QuickStart.showAfterPatience(isOpen(), this.windowShown, this.session != null || this.followPlan != null, this.startFlow.pending()) ) {
-					// not while a run (Arcade) is going on: the preparation window would come over the game
-					showWindow();
-				}
-			});
-		}, "practice-quick-start");
-		watchdog.setDaemon(true);
-		watchdog.start();
+		});
 	}
 
 	public void close() {
@@ -508,8 +499,8 @@ public class PracticeWindow {
 	}
 
 	private void showPreparation() {
-		this.song = TuxGuitar.getInstance().getDocumentManager().getSong();
-		TGTrack caretTrack = TuxGuitar.getInstance().getTablatureEditor().getTablature().getCaret().getTrack();
+		this.song = this.host.song();
+		TGTrack caretTrack = this.host.caret().track();
 		boolean arcade = FollowSettings.getInstance(this.context).isArcade();
 		java.util.List<PracticeTrackCandidate> candidateList;
 		PracticeTrackCandidate preselected;
@@ -568,8 +559,8 @@ public class PracticeWindow {
 			return;
 		}
 		TrackTuning tuning = tuning(candidate.getTrack());
-		Caret caret = TuxGuitar.getInstance().getTablatureEditor().getTablature().getCaret();
-		this.preparedSequence = PracticeSequenceBuilder.build(this.song, candidate.getTrack(), tuning, caret.getMeasure(), caret.getPosition());
+		CaretView caret = this.host.caret();
+		this.preparedSequence = PracticeSequenceBuilder.build(this.song, candidate.getTrack(), tuning, caret.measure(), caret.position());
 		this.startBase = startText(this.preparedSequence);
 		this.startLabel.setText(this.startBase);
 		String strings = noteNames(tuning.getOpenStringMidi());
@@ -718,7 +709,7 @@ public class PracticeWindow {
 		// chords are judged on the polyphonic spectrum, computed only while it is needed
 		this.engine.setSpectrumEnabled(hasChords(sequence));
 		this.engine.subscribe(this.frameListener);
-		this.plugin.setCommandSink(sessionLoop::postCommand);
+		this.host.commandSink(sessionLoop::postCommand);
 		this.loop.postCommand(PracticeCommand.START);
 
 		// the score is the practice interface: only the compact palette stays on screen (FR-076)
@@ -825,7 +816,7 @@ public class PracticeWindow {
 		final FollowRun run = plan.run();
 		this.followFrameListener = run::postFrame;
 		this.engine.subscribe(this.followFrameListener);
-		this.plugin.setCommandSink(run::postCommand);
+		this.host.commandSink(run::postCommand);
 		final ArcadeSession session = this.arcadeSession;
 		this.arcadeController = new ArcadeController(ArcadeRunPort.of(run), session, new ArcadeController.Listener() {
 			public void stateChanged(ArcadeController.State state) {
@@ -844,7 +835,7 @@ public class PracticeWindow {
 		});
 		final ArcadeController controller = this.arcadeController;
 		endRun.attach(controller);
-		this.arcadeWindow = new ArcadeWindow(TGApplication.getInstance(this.context).getFactory(), TGWindow.getInstance(this.context).getWindow(),
+		this.arcadeWindow = new ArcadeWindow(this.host.factory(), this.host.mainWindow(),
 				session.frameSource(this.followAdapter.player().clock(), ArcadeWindow.newQuality(), () -> plan.percent()),
 				task -> TGSynchronizer.getInstance(this.context).executeLater(task), ARCADE_TEXTS, new ArcadeWindow.Actions() {
 					public void pause() {
@@ -869,7 +860,7 @@ public class PracticeWindow {
 			this.arcadeWindow.open();
 			setVisible(this.window, false);
 			this.hiddenByArcade = true;
-			this.plugin.windowStateChanged(this.context);
+			this.host.windowStateChanged();
 		}
 	}
 
@@ -919,7 +910,7 @@ public class PracticeWindow {
 			if( full != null && !full.isEmpty() ) {
 				started = full.getEvents().get(full.getStartIndex()).getMeasureIndex() + 1;
 			}
-			this.arcadeResult = new ArcadeResultWindow(TGApplication.getInstance(this.context).getFactory(), TGWindow.getInstance(this.context).getWindow(),
+			this.arcadeResult = new ArcadeResultWindow(this.host.factory(), this.host.mainWindow(),
 					ARCADE_TEXTS, result, first, last, started, measure -> replayArcade(candidate, whole, measure));
 			this.arcadeResult.open();
 			return;
@@ -978,17 +969,7 @@ public class PracticeWindow {
 			return false;
 		}
 		this.arcadeRestartTries--;
-		Thread retry = new Thread(() -> {
-			try {
-				Thread.sleep(ARCADE_RESTART_RETRY_MILLIS);
-			} catch (InterruptedException exception) {
-				Thread.currentThread().interrupt();
-				return;
-			}
-			TGSynchronizer.getInstance(this.context).executeLater(this::restartArcade);
-		}, "arcade-restart");
-		retry.setDaemon(true);
-		retry.start();
+		this.host.later("arcade-restart", ARCADE_RESTART_RETRY_MILLIS, this::restartArcade);
 		return true;
 	}
 
@@ -1035,7 +1016,7 @@ public class PracticeWindow {
 		final FollowRun run = plan.run();
 		this.followFrameListener = run::postFrame;
 		this.engine.subscribe(this.followFrameListener);
-		this.plugin.setCommandSink(run::postCommand);
+		this.host.commandSink(run::postCommand);
 		this.palette.setFollowMode(true);
 		FollowPlayback.Result result = run.start();
 		if( result != FollowPlayback.Result.STARTED ) {
@@ -1122,7 +1103,7 @@ public class PracticeWindow {
 			this.engine.setSpectrumEnabled(false);
 			this.engine.setAttackCandidates(null);
 		}
-		this.plugin.setCommandSink(null);
+		this.host.commandSink(null);
 	}
 
 	/** Ends the run if there is one, gives everything back, and forgets it: calling it again does nothing. */
@@ -1143,7 +1124,7 @@ public class PracticeWindow {
 		teardownFollow();
 		this.highlight.hide();
 		if( this.loop != null ) {
-			this.plugin.setCommandSink(null);
+			this.host.commandSink(null);
 			this.engine.unsubscribe(this.frameListener);
 			this.engine.setSpectrumEnabled(false);
 			this.engine.setExpectedPitches(null);
@@ -1246,7 +1227,7 @@ public class PracticeWindow {
 			}
 			((UITableLayout) this.window.getLayout()).set(this.preparation, UITableLayout.PACKED_HEIGHT, tallest + 48f);
 			((UITableLayout) this.window.getLayout()).set(this.preparation, UITableLayout.PACKED_WIDTH, widest + 24f);
-			WindowFit.refit(this.window, TGWindow.getInstance(this.context).getWindow().getBounds());
+			WindowFit.refit(this.window, this.host.mainWindow().getBounds());
 		}
 	}
 

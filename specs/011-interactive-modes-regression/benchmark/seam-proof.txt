@@ -1,0 +1,14 @@
+Spec 011 T009: proof that the seam (PracticeHost) changes no behaviour, 2026-10-15, branch feature/interactive-practice on 9a97945a1 + the seam (commit of phase 2)
+
+Default suite (mvn test -pl ../../TuxGuitar-practice -am): BUILD SUCCESS in 09:32 min (baseline 09:34).
+  practice 922 run (916 + 6 new: AppPracticeHostTest 3, PracticeHostSourceTest 3), 0 failures, 0 errors, 4 skipped (the same four), audio-engine 291, lib 73, compat 1, gtp 10 (1 skipped), tuner-next 24: all equal to the baseline.
+Native suite (mvn test -P swt-gui-tests -pl ../../TuxGuitar-practice -am): BUILD SUCCESS, 28 tests, 0 failures (baseline 28).
+Recognition reports of that run against specs/010-pre-run-check/benchmark/after/: 9 of 9 identical (7 files but for the "Code revision" line, 2 CSV once sorted); the owner's takes 26 of 42 and 13 of 42 wrong, as before.
+
+Red first: AppPracticeHostTest and PracticeHostSourceTest did not compile (the seam was absent).
+
+Production change of this phase (git diff --stat of desktop/): PracticeWindow.java 93 lines changed, PreRunStartGate.java 12, EngineFollowAdapter.java 2 (it now implements PracticeHost.RunEnvironment, which is FollowStarter.Environment + FollowPanel.Backend, the two interfaces it already implemented), and three NEW files: PracticeHost.java, AppPracticeHost.java, CaretView.java.
+Declared sizes: PracticeHost has twelve methods (eight of the application, two for time, two for the plugin), as in contracts/practice-host.md after the analysis of 2026-10-15.
+Declared deviations from the plan: (1) the package-private constructor is PracticeWindow(TGContext, PracticeHost) (the plugin is only used by the default host); (2) the journey tests live in TST/ui itself, the same package as the seam, because a sub-package cannot see package-private classes; (3) T006 became AppPracticeHostTest.
+
+What this proves, and what it does not (stated): the source test proves the calls moved one for one and that none is left in the window; the host test proves the default time and plugin parts. The existing suites do not build PracticeWindow, so they cannot prove its behaviour is equal. The only check of the default host on the real application is the owner's smoke (task T010).

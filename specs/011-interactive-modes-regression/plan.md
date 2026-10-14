@@ -88,7 +88,7 @@ desktop/TuxGuitar-practice/
 │   ├── AppPracticeHost.java                  # NEW: the default, identical to today's code
 │   └── PracticeWindow.java                   # CHANGED: reads the twelve methods of the host; the public constructor is unchanged
 └── test/app/tuxguitar/app/tools/custom/practice/
-    ├── ui/flow/                              # NEW: the harness and the journey tests (default build)
+    ├── ui/                              # NEW: the harness and the journey tests (default build)
     │   ├── WindowHarness.java                # builds the real window: fake host, queued synchronizer, fake engine, fake player
     │   ├── FakeHost.java                     # the seam's test double (a real device-less engine from FakeAudioInput, a recording `later`, the fake clock)
     │   ├── StartPathJourneyTest.java         # SP-*
@@ -96,12 +96,12 @@ desktop/TuxGuitar-practice/
     │   ├── FollowUpJourneyTest.java          # FU-*
     │   ├── InterruptionJourneyTest.java      # IN-*
     │   └── JourneyMatrixTest.java            # CV-*: the matrix against the tests
-    ├── ui/flow/LayoutSwtJourneyTest.java     # LY-* (tag swt-gui)
-    ├── ui/flow/StabilityTest.java            # runs the journey set 20 times (tag stability)
+    ├── ui/LayoutSwtJourneyTest.java     # LY-* (tag swt-gui)
+    ├── ui/StabilityTest.java            # runs the journey set 20 times (tag stability)
     └── ui/SwtContractToolkit.java            # EXTENDED where a journey needs it (test code)
 ```
 
-**Structure Decision.** One production change (two new files, one changed), all in `SRC/ui`, no change outside the practice module. All new tests are in a new `TST/ui/flow` package so that the owner can see the safety net at once. The existing tests are not moved or rewritten.
+**Structure Decision.** One production change (two new files, one changed), all in `SRC/ui`, no change outside the practice module. All new tests are in a new `TST/ui` package so that the owner can see the safety net at once. The existing tests are not moved or rewritten.
 
 ## Phases (each leaves the build green; each is committed alone)
 

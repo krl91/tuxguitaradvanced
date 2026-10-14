@@ -30,7 +30,7 @@ import javax.sound.sampled.AudioFormat;
  * The route is the input and the format that were negotiated, and the output port of the player: parts of the route are never read from the name or
  * the transport of a device beyond being kept as its identity (FR-057).
  */
-public final class EngineFollowAdapter implements FollowStarter.Environment, FollowPanel.Backend {
+public final class EngineFollowAdapter implements PracticeHost.RunEnvironment {
 
 	private final TGContext context;
 	private final AudioEngine engine;
