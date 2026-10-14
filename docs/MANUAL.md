@@ -553,6 +553,7 @@ It is the "Follow the tempo" mode (same tempo, tolerance and calibration) shown 
 
 * **Size of the incoming rectangles**: 0 to 150 % of the size of the target on the neck (100 % by default: the rectangle that arrives has the size of its target; 0 % makes them a single pixel).
 * **Tilt of the plane**: the **scale at the horizon** (20 to 100 %, 35 % by default: the lower, the more tilted) and the **height of the horizon** (0 to 40 % of the height of the window, 18 % by default).
+* **Stage flames**: flames burn behind the picture, along the bottom and at both sides, and **grow as you play better**: their height follows the share of the maximum score you have reached in the run (embers at 50 % or less, full flames at 100 %). They stay at embers until four events of the run have been judged, they rise in about half a second and fall back slowly over about three seconds, and they are never drawn over a text or a note (they fade near the numbers, the string names and the verdict badges). **Off**, **Discreet** (the default: smaller and fainter, half the tongues) or **Full**, in the *Mode* tab; the choice is read when a run starts, so a change made during a run applies to the next one, and it is forgotten when the application is closed. They are only decoration: **they never change the judging or the score**. They are not drawn at the lowest quality level, and they keep their colours in every look of the game. **On macOS, when the system setting *Reduce motion* is on, the tongues do not move** (only their height follows your play); this preference is not read on Windows or Linux in this version.
 
 ### The techniques: what Arcade draws, and what it checks
 
@@ -790,7 +791,7 @@ Make sure the audio input works first: open **Tools > Interactive Practice**. In
 
 ### Mode 3: Arcade (alpha)
 
-**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the tolerance and the calibration are the same as before; new lines set the **size of the incoming rectangles** and the **tilt of the plane**. Press **Start Arcade** (or, next time, click the coloured Arcade button of the transport bar, which starts at once on the track under the cursor).
+**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the tolerance and the calibration are the same as before; new lines set the **size of the incoming rectangles**, the **tilt of the plane** and the **stage flames**. Press **Start Arcade** (or, next time, click the coloured Arcade button of the transport bar, which starts at once on the track under the cursor).
 
 <img src="images/manual-en/practice-mode-arcade.png" width="480" alt="The Mode tab with Arcade">
 

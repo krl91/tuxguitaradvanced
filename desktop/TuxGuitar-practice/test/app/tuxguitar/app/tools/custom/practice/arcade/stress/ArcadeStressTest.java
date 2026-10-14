@@ -81,6 +81,7 @@ public class ArcadeStressTest {
 				config.render = plan[r].startsWith("render");
 				config.fallback = plan[r].equals("render-fallback");
 				config.updateAtOnce = plan[r].equals("render-update");
+				config.flames = plan[r].equals("render-flames") ? app.tuxguitar.app.tools.custom.practice.session.FlameSetting.FULL : app.tuxguitar.app.tools.custom.practice.session.FlameSetting.OFF;
 				results[r] = new StressRun(config, display, factory).run();
 			}
 		});
@@ -137,6 +138,60 @@ public class ArcadeStressTest {
 		// and a short check must not fail on that; the figures of every pair are in the report
 		if (seconds >= 600) {
 			assertEquals(0, differing, "the digest of the judgements differs between the run without and the run with the renderer");
+		}
+	}
+
+	/**
+	 * The cost of the stage flames (spec 009 T027, T029, SC-006): the same run with the renderer, once without flames and once with them at full, compared
+	 * on the judgements and on the frames lost. The acceptance run is 600 seconds ({@code TUXGUITAR_ARCADE_STRESS_SECONDS=600}); a shorter one only checks
+	 * the harness and writes to {@code target/}.
+	 */
+	@Test
+	public void theFlamesAtFullChangeNoJudgementAndLoseAtMostOnePercentMoreFrames() throws Exception {
+		final int seconds = Integer.parseInt(setting("tuxguitar.arcade.stress.seconds", "30"));
+		final String[] plan = { "render", "render-flames" };
+		final StressRun.Result[] results = new StressRun.Result[2];
+		withDisplay((display, factory) -> {
+			for (int r = 0; r < 2; r++) {
+				StressRun.Config config = new StressRun.Config();
+				config.seconds = seconds;
+				config.noteRate = Double.parseDouble(setting("tuxguitar.arcade.stress.noteRate", "3"));
+				config.render = true;
+				config.flames = r == 0 ? app.tuxguitar.app.tools.custom.practice.session.FlameSetting.OFF : app.tuxguitar.app.tools.custom.practice.session.FlameSetting.FULL;
+				results[r] = new StressRun(config, display, factory).run();
+			}
+		});
+		String[] a = results[0].digest.split("\n");
+		String[] b = results[1].digest.split("\n");
+		int differing = 0;
+		for (int i = 0; i < Math.max(a.length, b.length); i++) {
+			if (!(i < a.length ? a[i] : "(none)").equals(i < b.length ? b[i] : "(none)")) {
+				differing++;
+			}
+		}
+		StressMetrics off = results[0].metrics;
+		StressMetrics full = results[1].metrics;
+		double lostOff = 100.0 * off.missedDeadlines() / Math.max(1L, off.slots());
+		double lostFull = 100.0 * full.missedDeadlines() / Math.max(1L, full.slots());
+		StringBuilder report = new StringBuilder();
+		report.append("# Cost of the stage flames, ").append(seconds).append(" s per run (spec 009 T029, SC-006)\n\n");
+		report.append("Machine: ").append(System.getProperty("os.name")).append(' ').append(System.getProperty("os.arch")).append(", Java ").append(System.getProperty("java.version"))
+				.append(", ").append(Runtime.getRuntime().availableProcessors()).append(" processors. Window 1280x720, SWT painter, quality controller on, notes/s ")
+				.append(setting("tuxguitar.arcade.stress.noteRate", "3")).append(".\n\n");
+		report.append(describe("run 1: flames off", results[0])).append('\n').append(describe("run 2: flames at full", results[1])).append('\n');
+		report.append(String.format(Locale.ROOT, "### frames lost\n- flames off: %d missed deadline slots of %d (%.3f %%)\n- flames full: %d missed deadline slots of %d (%.3f %%)\n- difference: %.3f points (limit 1 point)\n",
+				off.missedDeadlines(), off.slots(), lostOff, full.missedDeadlines(), full.slots(), lostFull, lostFull - lostOff));
+		report.append("### digest of the judgements\n- run 1 (off) against run 2 (full): ").append(differing).append(" differing lines of ").append(Math.max(a.length, b.length)).append('\n');
+		Path out = seconds >= 600 ? Paths.get("../../specs/009-arcade-flames/benchmark/cost-2026-10-14.txt") : Paths.get("target/arcade-flames-cost-" + seconds + "s.txt");
+		Files.createDirectories(out.toAbsolutePath().getParent());
+		Files.write(out, report.toString().getBytes(StandardCharsets.UTF_8));
+		System.out.println(report);
+
+		assertTrue(results[0].judged > 0 && results[1].judged > 0, "events were judged");
+		assertTrue(results[1].metrics.frames() > 0, "the flames run painted");
+		if (seconds >= 600) {
+			assertEquals(0, differing, "the digest of the judgements differs between the run without flames and the run with them");
+			assertTrue(lostFull - lostOff <= 1.0, "the flames lose more than 1 point more frames: " + lostOff + " % against " + lostFull + " %");
 		}
 	}
 }

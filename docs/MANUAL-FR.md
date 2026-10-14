@@ -553,6 +553,7 @@ C'est le mode « Suivre le tempo » (mêmes tempo, tolérance et calibrage) pré
 
 * **Taille des rectangles qui arrivent** : de 0 à 150 % de la taille de la cible sur le manche (100 % par défaut : le rectangle qui arrive a la taille de sa cible ; 0 % le réduit à un pixel).
 * **Inclinaison du plan** : l'**échelle à l'horizon** (20 à 100 %, 35 % par défaut : plus c'est bas, plus le plan est incliné) et la **hauteur de l'horizon** (0 à 40 % de la hauteur de la fenêtre, 18 % par défaut).
+* **Flammes de scène** : des flammes brûlent derrière l'image, en bas et sur les deux côtés, et **grandissent quand vous jouez mieux** : leur hauteur suit la part du score maximum atteinte dans la partie (braises à 50 % ou moins, flammes pleines à 100 %). Elles restent des braises tant que quatre événements de la partie n'ont pas été jugés, montent en une demi-seconde environ et retombent lentement en trois secondes environ, et ne sont jamais dessinées sur un texte ou une note (elles s'effacent près des numéros, des noms de corde et des pastilles de verdict). **Désactivées**, **Discrètes** (par défaut : plus petites et plus pâles, la moitié des langues de feu) ou **Pleines**, dans l'onglet *Mode* ; le choix est lu au début d'une partie, donc un changement fait pendant une partie vaut pour la suivante, et il est oublié à la fermeture de l'application. Ce n'est que de la décoration : **elles ne changent jamais le jugement ni le score**. Elles ne sont pas dessinées au niveau de qualité le plus bas et gardent leurs couleurs dans tous les aspects du jeu. **Sur macOS, quand le réglage système *Réduire les animations* est activé, les langues de feu ne bougent pas** (seule leur hauteur suit votre jeu) ; cette préférence n'est pas lue sous Windows ni Linux dans cette version.
 
 ### Les techniques : ce qu'Arcade dessine, et ce qu'il vérifie
 
@@ -792,7 +793,7 @@ Assurez-vous d'abord que l'entrée audio fonctionne : ouvrez **Outils > Pratique
 
 ### Mode 3 : Arcade (alpha)
 
-**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la tolérance et le calibrage sont les mêmes ; de nouvelles lignes règlent la **taille des rectangles qui arrivent** et l'**inclinaison du plan**. Appuyez sur **Démarrer Arcade** (ou, la prochaine fois, cliquez sur le bouton Arcade coloré de la barre de transport, qui démarre tout de suite sur la piste sous le curseur). Appuyez sur **Démarrer Arcade**.
+**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la tolérance et le calibrage sont les mêmes ; de nouvelles lignes règlent la **taille des rectangles qui arrivent**, l'**inclinaison du plan** et les **flammes de scène**. Appuyez sur **Démarrer Arcade** (ou, la prochaine fois, cliquez sur le bouton Arcade coloré de la barre de transport, qui démarre tout de suite sur la piste sous le curseur). Appuyez sur **Démarrer Arcade**.
 
 <img src="images/manual-en/practice-mode-arcade.png" width="480" alt="L'onglet Mode avec Arcade">
 

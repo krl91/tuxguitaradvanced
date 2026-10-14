@@ -65,6 +65,11 @@ public class ArcadeCanvasSwtTest {
 
 		Harness(Object display, UIFactory factory, SceneFixture fixture, int width, int height, app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun.View run,
 				boolean forceFallback) throws Exception {
+			this(display, factory, fixture, width, height, run, forceFallback, app.tuxguitar.app.tools.custom.practice.session.FlameSetting.OFF);
+		}
+
+		Harness(Object display, UIFactory factory, SceneFixture fixture, int width, int height, app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun.View run,
+				boolean forceFallback, app.tuxguitar.app.tools.custom.practice.session.FlameSetting flames) throws Exception {
 			this.display = display;
 			this.factory = factory;
 			this.window = factory.createWindow();
@@ -73,7 +78,8 @@ public class ArcadeCanvasSwtTest {
 			this.source = new ArcadeFrameSource(fixture.scene(false), fixture.timeline, FIRST_TICK, this.clock, () -> {
 				this.paintThread.set(Thread.currentThread());
 				return run;
-			}, () -> 100, new QualityController(ArcadeCanvas.FRAME_NANOS));
+			}, () -> 100, new QualityController(ArcadeCanvas.FRAME_NANOS), 0L, 0L, flames, true,
+					app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeScoring.standard());
 			Method asyncExec = display.getClass().getMethod("asyncExec", Runnable.class);
 			this.canvas = new ArcadeCanvas(factory, this.window, this.source, task -> {
 				this.posted.incrementAndGet();
@@ -216,6 +222,49 @@ public class ArcadeCanvasSwtTest {
 					assertTrue(harness.canvas.rendererName().contains("fallback"), harness.canvas.rendererName());
 					assertEquals(ArcadeReferenceSceneTest.expected(reference.name),
 							SceneCapture.of(harness.source.frame(harness.clock.nowNanos(), ReferenceScenes.SCREEN)), reference.name + ": the fallback changed the scene");
+				} finally {
+					harness.close();
+				}
+			}
+		});
+	}
+
+	/** The stage flames (spec 009 T028): painted by the real painter in every tier without an exception, and nothing of them at the lowest tier. */
+	@Test
+	public void theStageFlamesArePaintedOnTheRealPainterInEveryTierAndNotAtAllAtTheLowestOne() throws Exception {
+		withDisplay((display, factory) -> {
+			ReferenceScenes.Reference reference = ReferenceScenes.flameReading();
+			app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun.View perfect = new app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun.View(
+					new java.util.ArrayList<app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun.EventState>(),
+					app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeScoring.standard().maximum(10), 0, 0, 0, 10);
+			for (boolean fallback : new boolean[] { false, true }) {
+				Harness harness = new Harness(display, factory, reference.fixture, 1280, 720, perfect, fallback, app.tuxguitar.app.tools.custom.practice.session.FlameSetting.FULL);
+				try {
+					harness.clock.start(FIRST_TICK);
+					harness.clock.seek(FIRST_TICK + reference.tick);
+					QualityTier[] seen = new QualityTier[3];
+					int tongueLayers[] = new int[3];
+					for (int step = 0; step < 3; step++) {
+						QualityTier wanted = QualityTier.values()[step];
+						for (int guard = 0; guard < 2000 && harness.source.tier() != wanted; guard++) {
+							harness.source.painted(40_000_000L); // a slow frame: the controller goes down one tier at a time
+						}
+						assertEquals(wanted, harness.source.tier(), "the controller reached " + wanted);
+						for (int frame = 0; frame < 24; frame++) {
+							assertTrue(harness.paintOneFrame(), "painted at " + wanted + (fallback ? " by the fallback" : ""));
+							harness.clock.advance(50_000_000L);
+						}
+						app.tuxguitar.app.tools.custom.practice.arcade.view.Scene scene = harness.source.frame(harness.clock.nowNanos(), ReferenceScenes.SCREEN);
+						java.util.Set<Integer> codes = new java.util.HashSet<Integer>();
+						for (app.tuxguitar.app.tools.custom.practice.arcade.view.SceneItem item : scene.withRole(app.tuxguitar.app.tools.custom.practice.arcade.view.SceneItem.Role.FLAME_TONGUE)) {
+							codes.add(item.tgString());
+						}
+						seen[step] = harness.source.tier();
+						tongueLayers[step] = codes.size();
+					}
+					assertEquals(28 * 3, tongueLayers[0], "the full tier at full level");
+					assertEquals(14 * 2, tongueLayers[1], "the balanced tier");
+					assertEquals(0, tongueLayers[2], "nothing at the lowest tier");
 				} finally {
 					harness.close();
 				}
