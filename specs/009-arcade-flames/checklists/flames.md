@@ -10,42 +10,42 @@
 
 ## Reading is never hindered: Clarity and Measurability
 
-- [ ] CHK001 - Is "reading is never hindered" quantified for every class of text of the picture (string names, fret numbers, verdict badge, HUD, chord names, bend and technique labels), with a contrast threshold for each? [Clarity, Spec §FR-005, §SC-002]
-- [ ] CHK002 - Is the "weakened central zone" quantified in the spec itself (its share of the width, its brightness ceiling), and not only in the plan (12 % of opacity, formula of R8)? [Clarity, Spec §FR-001, Plan §R8]
-- [ ] CHK003 - Can "a flame meets a text box" be judged objectively (what counts as an overlap: any pixel, a margin, a share of the box)? [Measurability, Spec §SC-002]
-- [ ] CHK004 - Are the window shapes for which reading is required enumerated in the spec (the seven shapes appear only in the tasks)? [Gap, Spec §FR-005, Tasks T012]
-- [ ] CHK005 - Is "simplified, then removed" defined for the quality tiers (how many tongues, which layers) in a requirement and not only in the plan? [Ambiguity, Spec §FR-007, Plan §R2]
+- [x] CHK001 - Is "reading is never hindered" quantified for every class of text of the picture (string names, fret numbers, verdict badge, HUD, chord names, bend and technique labels), with a contrast threshold for each? [Clarity, Spec §FR-005, §SC-002]
+- [x] CHK002 - Is the "weakened central zone" quantified in the spec itself (its share of the width, its brightness ceiling), and not only in the plan (12 % of opacity, formula of R8)? [Clarity, Spec §FR-001, Plan §R8]
+- [x] CHK003 - Can "a flame meets a text box" be judged objectively (what counts as an overlap: any pixel, a margin, a share of the box)? [Measurability, Spec §SC-002]
+- [x] CHK004 - Are the window shapes for which reading is required enumerated in the spec (the seven shapes appear only in the tasks)? [Gap, Spec §FR-005, Tasks T012]
+- [x] CHK005 - Is "simplified, then removed" defined for the quality tiers (how many tongues, which layers) in a requirement and not only in the plan? [Ambiguity, Spec §FR-007, Plan §R2]
 
 ## Reading is never hindered: Consistency and Coverage
 
-- [ ] CHK006 - Do FR-005 ("flames MUST NOT dim any item") and the translucent neck of spec 003 (the flames show faintly through its body) agree, or is the neck an explicit exception? [Conflict, Spec §FR-005, Spec 003 §FR-075]
+- [x] CHK006 - Do FR-005 ("flames MUST NOT dim any item") and the translucent neck of spec 003 (the flames show faintly through its body) agree, or is the neck an explicit exception? [Conflict, Spec §FR-005, Spec 003 §FR-075]
 - [x] CHK007 - Are the guard rules (fade to 12 % near texts, no yellow core in the centre) requirements of the spec, or only design decisions of the plan that a later change could drop? [Consistency, Plan §R8, Spec §FR-005]
-- [ ] CHK008 - Are transient items (verdict badge, labels of bends and techniques, chord names) that appear over the flames covered by the reading requirement? [Coverage, Spec §FR-005]
-- [ ] CHK009 - Are requirements defined for people sensitive to motion (reduced-motion preference of the system), or is their absence an explicit assumption? [Gap, Accessibility, Spec §FR-010]
-- [ ] CHK010 - Is the monochrome look defined precisely ("tones of one colour": which colour, which brightness range)? [Clarity, Spec §FR-011]
-- [ ] CHK011 - Do the requirements say what is drawn when the window is not maximized, is very small or very wide, consistently with FR-080 of spec 003? [Consistency, Spec §Edge Cases, Spec 003 §FR-080]
-- [ ] CHK012 - Is it stated that the flames are absent from the result window and the preparation window, and that no flame outlives a run? [Coverage, Spec §Out of Scope, §Edge Cases]
+- [x] CHK008 - Are transient items (verdict badge, labels of bends and techniques, chord names) that appear over the flames covered by the reading requirement? [Coverage, Spec §FR-005]
+- [x] CHK009 - Are requirements defined for people sensitive to motion (reduced-motion preference of the system), or is their absence an explicit assumption? [Gap, Accessibility, Spec §FR-010]
+- [x] CHK010 - Is the monochrome look defined precisely ("tones of one colour": which colour, which brightness range)? [Clarity, Spec §FR-011]
+- [x] CHK011 - Do the requirements say what is drawn when the window is not maximized, is very small or very wide, consistently with FR-080 of spec 003? [Consistency, Spec §Edge Cases, Spec 003 §FR-080]
+- [x] CHK012 - Is it stated that the flames are absent from the result window and the preparation window, and that no flame outlives a run? [Coverage, Spec §Out of Scope, §Edge Cases]
 
 ## The level of the flames: Clarity and Measurability
 
-- [ ] CHK013 - Is the share used for the mapping defined as a real number (not the rounded percent of the result), so that the mapping at 50 % and 100 % is unambiguous? [Clarity, Spec §FR-002, Plan §R4]
-- [ ] CHK014 - Is "judged event" defined (right, wrong, missed counted; not judged and automatically passed events not counted) for the 4-event rule? [Ambiguity, Spec §FR-003]
-- [ ] CHK015 - Are the rise and fall times ("about 0.5 s", "about 3 s") given with a tolerance so that SC-003 can be measured? [Measurability, Spec §FR-004, §SC-003]
-- [ ] CHK016 - Is "never a jump" quantified (a maximum change of the level between two pictures), not only "a fixed small share"? [Clarity, Spec §SC-003]
-- [ ] CHK017 - Can "clearly ordered heights" (SC-001) be objectively verified (minimum differences between the low, medium and high reference runs)? [Measurability, Spec §SC-001]
+- [x] CHK013 - Is the share used for the mapping defined as a real number (not the rounded percent of the result), so that the mapping at 50 % and 100 % is unambiguous? [Clarity, Spec §FR-002, Plan §R4]
+- [x] CHK014 - Is "judged event" defined (right, wrong, missed counted; not judged and automatically passed events not counted) for the 4-event rule? [Ambiguity, Spec §FR-003]
+- [x] CHK015 - Are the rise and fall times ("about 0.5 s", "about 3 s") given with a tolerance so that SC-003 can be measured? [Measurability, Spec §FR-004, §SC-003]
+- [x] CHK016 - Is "never a jump" quantified (a maximum change of the level between two pictures), not only "a fixed small share"? [Clarity, Spec §SC-003]
+- [x] CHK017 - Can "clearly ordered heights" (SC-001) be objectively verified (minimum differences between the low, medium and high reference runs)? [Measurability, Spec §SC-001]
 
 ## The level of the flames: Scenarios and Edge Cases
 
-- [ ] CHK018 - Is the 4-event rule defined for a run that starts in the middle of the piece, for a replay from the result window and for a restart (counted per run, starting again each time)? [Coverage, Spec §FR-003, §Edge Cases]
-- [ ] CHK019 - Is the behaviour defined for a pause and for the new count-in after a resume (the picture goes back by one measure in spec 003: do the flames hold, and what do they show during the count-in)? [Coverage, Spec §FR-010, Spec 003 §FR-079]
-- [ ] CHK020 - Is the behaviour defined when the share changes while the run is paused or when the run ends (what the flames do at the stop, before the result window)? [Gap, Recovery]
-- [ ] CHK021 - Does "never in one frame" also hold at the start of a run and when the setting is read at the start of a new run? [Coverage, Spec §FR-004, §FR-008]
-- [ ] CHK022 - Is the case of a run in which fewer than 4 events exist (a very short passage) addressed, so that the flames are not embers for the whole run without being told? [Edge Case, Gap, Spec §FR-003]
+- [x] CHK018 - Is the 4-event rule defined for a run that starts in the middle of the piece, for a replay from the result window and for a restart (counted per run, starting again each time)? [Coverage, Spec §FR-003, §Edge Cases]
+- [x] CHK019 - Is the behaviour defined for a pause and for the new count-in after a resume (the picture goes back by one measure in spec 003: do the flames hold, and what do they show during the count-in)? [Coverage, Spec §FR-010, Spec 003 §FR-079]
+- [x] CHK020 - Is the behaviour defined when the share changes while the run is paused or when the run ends (what the flames do at the stop, before the result window)? [Gap, Recovery]
+- [x] CHK021 - Does "never in one frame" also hold at the start of a run and when the setting is read at the start of a new run? [Coverage, Spec §FR-004, §FR-008]
+- [x] CHK022 - Is the case of a run in which fewer than 4 events exist (a very short passage) addressed, so that the flames are not embers for the whole run without being told? [Edge Case, Gap, Spec §FR-003]
 
 ## The setting
 
-- [ ] CHK023 - Are the meanings of *discreet* and *full* (60 % of the height and of the opacity, half the tongues) stated in the spec as requirements and not only in the plan? [Consistency, Spec §FR-008, Plan §R5]
-- [ ] CHK024 - Is the moment the setting is read (the start of a run; a change during a run applies to the next run) stated as a requirement? [Completeness, Spec §FR-008, Tasks T022]
+- [x] CHK023 - Are the meanings of *discreet* and *full* (60 % of the height and of the opacity, half the tongues) stated in the spec as requirements and not only in the plan? [Consistency, Spec §FR-008, Plan §R5]
+- [x] CHK024 - Is the moment the setting is read (the start of a run; a change during a run applies to the next run) stated as a requirement? [Completeness, Spec §FR-008, Tasks T022]
 - [x] CHK025 - Is the persistence rule (kept until the application is closed, default back at the next opening) consistent between the owner's decision, FR-008 and the data model? [Consistency, Spec §FR-008, Data model §FlameSetting]
 
 ## Traceability and Non-Functional
@@ -59,3 +59,4 @@
 - Check items off when the requirements-quality criterion is satisfied.
 - `/speckit-implement` reads checklist state but does not modify markers.
 - Review of 2026-10-14 (the owner, by questions in the session): CHK007 and CHK025 to CHK028 were judged satisfied. The others were judged to need a text or a decision (CHK010: no monochrome look; CHK019: the flames hold their level during a pause and the count-in of a resume; CHK009: a requirement for reduced motion); the texts were written in the spec the same day (FR-001 to FR-005, FR-007, FR-008, FR-010, FR-011, FR-013, SC-001 to SC-003, Edge Cases) and those items stay unchecked until the owner confirms the wording.
+- Confirmation of 2026-10-14 (the owner, in the session): the texts written for CHK001 to CHK006, CHK008 to CHK024 are confirmed; the checklist is complete (28 of 28).
