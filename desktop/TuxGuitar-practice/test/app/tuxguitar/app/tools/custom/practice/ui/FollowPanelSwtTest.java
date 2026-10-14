@@ -11,6 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
 import app.tuxguitar.app.tools.custom.practice.session.LatencyCompensation;
 import app.tuxguitar.app.tools.custom.practice.session.TimingTolerance;
@@ -175,6 +176,16 @@ public class FollowPanelSwtTest {
 			});
 			folder.setSelectedIndex(1);
 			notifySelection(display, nativeOf(folder));
+			assertInside(display, window, panel);
+			// the stage flames (spec 009 FR-008): the control is there in Arcade, shows the default and keeps the learner's choice
+			Object flames = nativeOf(panel.flamesSelect());
+			assertTrue(nativeBoolean(flames, "isVisible"), "the flames control is shown in Arcade");
+			assertEquals(FlameSetting.DISCREET, settings.getFlames());
+			selectIndex(display, flames, 0);
+			assertEquals(FlameSetting.OFF, settings.getFlames());
+			selectIndex(display, flames, 2);
+			assertEquals(FlameSetting.FULL, settings.getFlames());
+			assertEquals(FlameSetting.FULL, panel.flamesSelect().getSelectedValue(), "and the control keeps its choice");
 			assertInside(display, window, panel);
 			window.dispose();
 			panel.dispose();

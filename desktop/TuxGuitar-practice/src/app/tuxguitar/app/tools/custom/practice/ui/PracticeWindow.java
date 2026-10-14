@@ -15,6 +15,7 @@ import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSceneLabels;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSession;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeTexts;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeWindow;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ReducedMotion;
 import app.tuxguitar.app.tools.custom.practice.model.ArcadeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
@@ -777,7 +778,7 @@ public class PracticeWindow {
 		this.arcadeSession = ArcadeSession.of(plan, arcadeTuning, new ArcadeSceneLabels(ARCADE_TEXTS), false,
 				FollowSettings.getInstance(this.context).getMarkerPercent() / 100.0, measureNanos,
 				FollowSettings.getInstance(this.context).getFarScalePercent() / 100.0, FollowSettings.getInstance(this.context).getHorizonPercent() / 100.0,
-				FollowSettings.getInstance(this.context).getFlames(), true);
+				FollowSettings.getInstance(this.context).getFlames(), !ReducedMotion.requested());
 		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
 		final FollowRun run = plan.run();

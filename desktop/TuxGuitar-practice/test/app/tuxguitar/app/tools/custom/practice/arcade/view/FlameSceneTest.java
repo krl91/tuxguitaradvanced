@@ -265,6 +265,12 @@ public class FlameSceneTest {
 			warm |= ((item.colour() >> 16) & 0xFF) > ((item.colour() & 0xFF) + 40);
 		}
 		assertTrue(warm, "red and orange, not grey");
+		for (SceneItem item : build(f, QualityTier.FULL, flames, true).items()) {
+			if (item.role() == Role.FLAME_TONGUE || item.role() == Role.FLAME_EMBER) {
+				assertEquals(-1, item.eventIndex(), "a flame belongs to no event");
+				assertEquals(null, item.text(), "and carries no text: it is not information (FR-005)");
+			}
+		}
 	}
 
 	@Test

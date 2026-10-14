@@ -120,4 +120,21 @@ public class FollowStringsTest {
 			assertTrue(same < 6, file + ": " + same + " texts are still the English ones");
 		}
 	}
+
+	@Test
+	public void theStageFlamesSettingHasItsFourTextsInTheThreeLanguages() throws IOException {
+		String[] keys = { "arcade.flames.label", "arcade.flames.off", "arcade.flames.discreet", "arcade.flames.full" };
+		Set<String> seen = new TreeSet<String>();
+		for (String file : FILES) {
+			Properties properties = load(file);
+			for (String key : keys) {
+				String text = properties.getProperty(key);
+				assertTrue(text != null && !text.trim().isEmpty(), file + ": " + key + " exists and is not empty (spec 009 FR-008, FR-009)");
+				if (!key.equals("arcade.flames.label")) {
+					seen.add(file + "/" + text);
+				}
+			}
+		}
+		assertEquals(9, seen.size(), "the three states are told apart in every language");
+	}
 }

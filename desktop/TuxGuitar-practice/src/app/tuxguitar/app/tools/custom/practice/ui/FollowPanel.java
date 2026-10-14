@@ -5,6 +5,7 @@ import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationRun;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationTaps;
 import app.tuxguitar.app.tools.custom.practice.session.ClockUncertainty;
+import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
 import app.tuxguitar.app.tools.custom.practice.session.LatencyCompensation;
 import app.tuxguitar.app.tools.custom.practice.session.RouteCalibrations;
@@ -69,6 +70,8 @@ public final class FollowPanel {
 	private final UISpinner farScale;
 	private final UILabel horizonLabel;
 	private final UISpinner horizon;
+	private final UILabel flamesLabel;
+	private final UIDropDownSelect<FlameSetting> flames;
 	private final UILabel percentHint;
 	private final UILabel toleranceLabel;
 	private final UIDropDownSelect<TimingTolerance.Preset> tolerance;
@@ -151,6 +154,16 @@ public final class FollowPanel {
 		this.horizon.setMaximum(FollowSettings.MAX_HORIZON_PERCENT);
 		this.horizon.setIncrement(2);
 		layout.set(this.horizon, 17, 2, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+
+		// the stage flames behind the picture (spec 009 FR-008): off, discreet or full, read when a run starts
+		this.flamesLabel = uiFactory.createLabel(this.panel);
+		this.flamesLabel.setText(TuxGuitar.getProperty("arcade.flames.label"));
+		layout.set(this.flamesLabel, 18, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.flames = uiFactory.createDropDownSelect(this.panel);
+		this.flames.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("arcade.flames.off"), FlameSetting.OFF));
+		this.flames.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("arcade.flames.discreet"), FlameSetting.DISCREET));
+		this.flames.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("arcade.flames.full"), FlameSetting.FULL));
+		layout.set(this.flames, 18, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 
 		this.toleranceLabel = uiFactory.createLabel(this.panel);
 		this.toleranceLabel.setText(TuxGuitar.getProperty("practice.follow.tolerance"));
@@ -253,6 +266,12 @@ public final class FollowPanel {
 				this.updating = false;
 			}
 		}));
+		this.flames.addSelectionListener(selected(() -> {
+			FlameSetting chosen = this.flames.getSelectedValue();
+			if (chosen != null) {
+				this.settings.setFlames(chosen);
+			}
+		}));
 		this.tolerance.addSelectionListener(selected(() -> {
 			TimingTolerance.Preset chosen = this.tolerance.getSelectedValue();
 			if (chosen != null) {
@@ -317,6 +336,9 @@ public final class FollowPanel {
 			this.farScale.setVisible(this.settings.isArcade());
 			this.horizonLabel.setVisible(this.settings.isArcade());
 			this.horizon.setVisible(this.settings.isArcade());
+			this.flames.setSelectedValue(this.settings.getFlames());
+			this.flamesLabel.setVisible(this.settings.isArcade());
+			this.flames.setVisible(this.settings.isArcade());
 			this.tolerance.setSelectedValue(this.settings.getTolerance());
 			this.modeHint.setText(this.settings.isArcade() ? TuxGuitar.getProperty("practice.mode.arcade.hint") + "\n" + TuxGuitar.getProperty("arcade.monitoring.unavailable")
 					: TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
@@ -347,6 +369,7 @@ public final class FollowPanel {
 			this.marker.setEnabled(idle);
 			this.farScale.setEnabled(idle);
 			this.horizon.setEnabled(idle);
+			this.flames.setEnabled(idle);
 			this.tolerance.setEnabled(idle);
 			this.manual.setEnabled(idle);
 			AudioRoute route = this.backend.route();
@@ -535,6 +558,10 @@ public final class FollowPanel {
 
 	UIDropDownSelect<FollowSettings.Mode> modeSelect() {
 		return this.mode;
+	}
+
+	UIDropDownSelect<FlameSetting> flamesSelect() {
+		return this.flames;
 	}
 
 	UISpinner percentSpinner() {
