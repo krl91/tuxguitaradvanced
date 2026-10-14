@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain (3 remain, all for the owner: SC-007 time budget, the production seam, the code-coverage figure)
+- [x] No [NEEDS CLARIFICATION] markers remain (the three were answered by the owner on 2026-10-15)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -32,4 +32,4 @@
 ## Notes
 
 - The three markers are the maximum allowed and each changes the scope or the cost of the work; they go to `/speckit-clarify` (or are answered now).
-- Validated against the spec on 2026-10-14: 15 of 16 items pass; the only open item is the clarification markers.
+- Validated against the spec on 2026-10-14: 16 of 16 items pass after the three clarifications of 2026-10-15.
