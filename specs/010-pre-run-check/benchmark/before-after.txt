@@ -38,3 +38,23 @@ or two notes from the one played: the known weakness of spec 004 T007.) The D ma
 clipping: recognition, out of scope of spec 010 (research R9).
 
 == T005 Manifest: owner-takes-manifest.txt (sha256 of every WAV and labels.csv, the tool and its versions, the gains).
+
+== T027 Synthetic chord guard (SyntheticChordGuardTest, new in the default suite), BEFORE: taken before any change reached the recognition
+Plucked-string sums (SyntheticSignals.strum, Karplus-Strong, 3 seeds, -20 dBFS RMS) through DatasetJudge.accepts (production ChordMatcher + PolyphonicAcceptance):
+  open A, C, E, D, G played right: 15 of 15 accepted.
+  the same chords with one string missing (every string in turn, 78 cases): 43 of 78 ACCEPTED. The task asked that a chord with a missing verifiable string be
+  refused; the matcher does not do that today (it accepts 55 % of them on these signals), so the guard asserts what is true, "at most 43 of 78", and the
+  fact is reported here, not hidden. Whether that is a weakness of the matcher or of the synthesis is not decided by this feature (recognition is out of scope).
+The test was seen red once by asserting at most 42 (it measured 43), then green with 43.
+
+== T028 Kinds of event and what covers them with recorded audio (SC-007, R8)
+note (single pitch)            : RealGuitarRegressionTest, MonophonicRegressionReplayTest, RecordedPracticeReplayTest (the owner's tests/1), DatasetBenchmarkTest
+                                 (IDMT dataset 1), FastPassageBenchmarkTest, NoteSpacingBenchmarkTest, WeakInputBenchmarkTest: recorded audio
+bend                           : BendRecordedReplayTest (the owner's tests/2), TechniqueDatasetBenchmarkTest (IDMT dataset 2): recorded audio; BendDetectorTest synthetic
+vibrato, slide                 : TechniqueDatasetBenchmarkTest (IDMT dataset 2): recorded audio; PitchTechniqueDetectorsTest synthetic
+hammer-on, pull-off (legato)   : LegatoFunctionalTest and PitchTechniqueDetectorsTest synthetic; DatasetBenchmarkTest "legato" is SIMULATED from recorded plucks
+                                 (the first note damped, the second one given a soft start): NO test on a really played hammer-on or pull-off
+palm mute, tapping, tremolo picking : TechniqueSignalsTest, TechniqueFamiliesFunctionalTest (synthetic signals) only: NO recorded-audio test
+chord                          : GuitarSetChordBenchmarkTest and GuitarSetChordsTest (recorded, 24 recordings), the owner's takes (owner-chords, owner-chords-2), and since
+                                 this feature SyntheticChordGuardTest (synthetic, default suite)
+Kinds with no recorded-audio test, reported and not hidden: really played hammer-on and pull-off, palm mute, tapping, tremolo picking.
