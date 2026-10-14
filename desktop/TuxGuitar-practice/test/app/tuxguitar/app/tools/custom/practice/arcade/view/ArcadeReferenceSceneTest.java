@@ -71,6 +71,20 @@ public class ArcadeReferenceSceneTest {
 	}
 
 	@Test
+	public void theStageFlamesSceneIsTheReference() throws IOException {
+		check(ReferenceScenes.flameReading());
+	}
+
+	@Test
+	public void theOtherReferencesHaveNoFlameAtAll() {
+		for (ReferenceScenes.Reference reference : ReferenceScenes.all()) {
+			Scene scene = reference.scene(false, QualityTier.FULL);
+			assertTrue(scene.withRole(Role.FLAME_TONGUE).isEmpty() && scene.withRole(Role.FLAME_EMBER).isEmpty(), reference.name + ": made with the flames off (SC-005)");
+		}
+		assertTrue(!ReferenceScenes.flameReading().scene(false, QualityTier.FULL).withRole(Role.FLAME_TONGUE).isEmpty());
+	}
+
+	@Test
 	public void theChordProgressionReferenceHasAPanelForEveryChordOfTheSet() {
 		for (QualityTier tier : QualityTier.values()) {
 			Scene scene = ReferenceScenes.multiChord().scene(false, tier);

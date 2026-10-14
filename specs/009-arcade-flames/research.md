@@ -74,3 +74,11 @@ Every claim cites a file that was opened on 2026-10-14.
 
 **Decision.** Nowhere: `ArcadeRun.View.judged()` is the count of the run, rebuilt from the snapshots of the session of **this** run, so it is 0 at every new run (replay from the result window, Restart, a run from the middle of the piece); `FlameLevel` only compares it with 4 and holds no counter. A new `FlameLevel` is made with each `ArcadeFrameSource`, that is, for each run.
 
+## R13 - What the reading guard turned out to be (found while implementing T012-T015, 2026-10-14)
+
+**Evidence.** Measured on the reference scene `flame-reading` with the painted-pixel test (`FlameContrastTest`): **without any flame** twelve texts of the picture are already under 4.5 to 1 against what is painted in their box (the label of a string on its own coloured string line, 1.00 for G3; a fret number on the lit cell, 2.5; the badge text, 2.9), so the absolute reading of SC-002 cannot be met by any flame guard; and the fret numbers under the neck (4.97 to 1 without flames) fall under 4.5 with a flame of only 3 % opacity.
+
+**Decision.** (a) The test checks that **the flames take nothing away**: every text keeps `min(4.5, its contrast without the flames)` within 2 %. (b) The guard is a **fade by distance**: a piece of flame whose box is within 28 px of a text (widened by 4 px) goes from its own opacity to 0.2 % at the margin (far under the 12 % of SC-002); a tongue that has a text near it is cut into strips of about 22 px so that only the part near the text fades, not the whole column; the strips of a tongue layer share one code in `tgString` (`tongue * 4 + layer + 1`). (c) The glow is a low band under the numbers of the neck. (d) The tongues are inset so that they stay inside the picture; the weight across the width uses the place of the tongue, not its pixel.
+
+**To settle with the owner.** SC-002 as written ("4.5 to 1 for every text") is stricter than the picture was before the flames; the implementation proves the weaker and true statement of (a). A `/speckit-clarify` on the wording of SC-002 is proposed; the code does not depend on the answer.
+

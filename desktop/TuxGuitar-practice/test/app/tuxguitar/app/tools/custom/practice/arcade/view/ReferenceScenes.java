@@ -26,17 +26,29 @@ public final class ReferenceScenes {
 		public final long tick;
 		public final long nowNanos;
 		public final ArcadeRun.View run;
+		/** The stage flames of the reference, or null for none (every reference but the one of the flames is made without them). */
+		public final FlameState flames;
 
 		Reference(String name, SceneFixture fixture, long tick, ArcadeRun.View run) {
+			this(name, fixture, tick, run, null);
+		}
+
+		Reference(String name, SceneFixture fixture, long tick, ArcadeRun.View run, FlameState flames) {
 			this.name = name;
 			this.fixture = fixture;
 			this.tick = tick;
 			this.nowNanos = fixture.timeline.nanosAtTick(tick);
 			this.run = run;
+			this.flames = flames;
 		}
 
 		public Scene scene(boolean monochrome, QualityTier tier) {
-			return this.fixture.scene(monochrome).build(this.nowNanos, SCREEN, this.run, 100, tier);
+			return this.fixture.scene(monochrome).build(this.nowNanos, SCREEN, this.run, 100, tier, this.flames);
+		}
+
+		/** The same instant in a window of another shape. */
+		public Scene scene(Viewport viewport, QualityTier tier) {
+			return this.fixture.scene(false).build(this.nowNanos, viewport, this.run, 100, tier, this.flames);
 		}
 	}
 
@@ -180,6 +192,29 @@ public final class ReferenceScenes {
 		long tick = fixture.timeline.targetTicks(2) - 500;
 		ArcadeVerdict[] judged = { ArcadeVerdict.ON_TIME, ArcadeVerdict.EARLY };
 		return new Reference("chords-progression", fixture, tick, verdicts(fixture.events.size(), judged));
+	}
+
+	/**
+	 * The scene of the stage flames (spec 009 SC-002): the flames at full level, the full tier, a fixed flame clock, and everything the learner has to read at
+	 * once: the verdict badges of two judged notes, a bend, a technique mark (a hammer-on), a named chord and the fret numbers. It is not one of {@link #all()}:
+	 * the other references are made without flames and must not change.
+	 */
+	public static Reference flameReading() {
+		SongFixture song = new SongFixture(4);
+		song.quarter(1, 0, 3, 5);
+		song.quarter(1, 1, 4, 7);
+		song.bend(1, 2, 3, 7, 2);
+		song.quarter(1, 3, 2, 5).getEffect().setHammer(true);
+		song.quarter(2, 0, 2, 7).getEffect().setHammer(true);
+		song.chord(2, 2, new int[] { 6, 5, 4 }, new int[] { 5, 7, 7 });
+		TGChord named = song.factory().newChord(6);
+		named.setName("A5");
+		song.track().getMeasure(2).getBeat(1).setChord(named);
+		song.track().getMeasure(2).getBeat(1).getStroke().setDirection(TGStroke.STROKE_DOWN);
+		SceneFixture fixture = new SceneFixture(song, SceneFixture.sixStrings(), 100);
+		long tick = fixture.timeline.targetTicks(2) + 60;
+		FlameState flames = new FlameState(app.tuxguitar.app.tools.custom.practice.session.FlameSetting.FULL, 1.0, 4_000_000_000L, true);
+		return new Reference("flame-reading", fixture, tick, verdicts(fixture.events.size(), ArcadeVerdict.ON_TIME, ArcadeVerdict.EARLY), flames);
 	}
 
 	/** Every reference scene, in the order of the review. */

@@ -62,27 +62,45 @@ public class FlameSceneTest {
 		return new double[] { minX, minY, maxX, maxY };
 	}
 
+	/** A tongue layer as a reader of the scene sees it: the strips that share a code in {@code tgString} are one piece, {minX, minY, maxX, maxY, most opaque strip}. */
+	private static java.util.Map<Integer, double[]> pieces(Scene scene) {
+		java.util.Map<Integer, double[]> pieces = new java.util.TreeMap<Integer, double[]>();
+		for (SceneItem strip : scene.withRole(Role.FLAME_TONGUE)) {
+			double[] b = box(strip);
+			double[] p = pieces.get(strip.tgString());
+			if (p == null) {
+				pieces.put(strip.tgString(), new double[] { b[0], b[1], b[2], b[3], strip.alpha() });
+			} else {
+				p[0] = Math.min(p[0], b[0]);
+				p[1] = Math.min(p[1], b[1]);
+				p[2] = Math.max(p[2], b[2]);
+				p[3] = Math.max(p[3], b[3]);
+				p[4] = Math.max(p[4], strip.alpha());
+			}
+		}
+		return pieces;
+	}
+
 	private static double tallest(Scene scene) {
 		double tallest = 0.0;
-		for (SceneItem tongue : scene.withRole(Role.FLAME_TONGUE)) {
-			double[] b = box(tongue);
-			tallest = Math.max(tallest, b[3] - b[1]);
+		for (double[] p : pieces(scene).values()) {
+			tallest = Math.max(tallest, p[3] - p[1]);
 		}
 		return tallest;
 	}
 
-	/** The outer layer of the tongues, the widest of each column: the first of every layer group in the list. */
-	private static int tongueCount(Scene scene, int layers) {
-		return scene.withRole(Role.FLAME_TONGUE).size() / layers;
+	/** The number of tongue layers: one per code. */
+	private static int layerCount(Scene scene) {
+		return pieces(scene).size();
 	}
 
 	@Test
 	public void theTonguesAndTheirLayersFollowTheTierAndTheSetting() {
 		SceneFixture f = fixture();
-		assertEquals(28 * 3, build(f, QualityTier.FULL, state(FlameSetting.FULL, 1.0)).withRole(Role.FLAME_TONGUE).size(), "full: 28 tongues of 3 layers");
-		assertEquals(14 * 2, build(f, QualityTier.BALANCED, state(FlameSetting.FULL, 1.0)).withRole(Role.FLAME_TONGUE).size(), "balanced: 14 tongues of 2 layers");
-		assertEquals(14 * 3, build(f, QualityTier.FULL, state(FlameSetting.DISCREET, 1.0)).withRole(Role.FLAME_TONGUE).size(), "discreet: half the tongues");
-		assertEquals(7 * 2, build(f, QualityTier.BALANCED, state(FlameSetting.DISCREET, 1.0)).withRole(Role.FLAME_TONGUE).size());
+		assertEquals(28 * 3, layerCount(build(f, QualityTier.FULL, state(FlameSetting.FULL, 1.0))), "full: 28 tongues of 3 layers");
+		assertEquals(14 * 2, layerCount(build(f, QualityTier.BALANCED, state(FlameSetting.FULL, 1.0))), "balanced: 14 tongues of 2 layers");
+		assertEquals(14 * 3, layerCount(build(f, QualityTier.FULL, state(FlameSetting.DISCREET, 1.0))), "discreet: half the tongues");
+		assertEquals(7 * 2, layerCount(build(f, QualityTier.BALANCED, state(FlameSetting.DISCREET, 1.0))));
 		Scene lowest = build(f, QualityTier.PERFORMANCE, state(FlameSetting.FULL, 1.0));
 		assertTrue(lowest.withRole(Role.FLAME_TONGUE).isEmpty() && lowest.withRole(Role.FLAME_EMBER).isEmpty(), "the lowest tier draws no flame at all");
 	}
@@ -127,17 +145,16 @@ public class FlameSceneTest {
 					double middle = Double.MAX_VALUE;
 					double middleAlpha = 0.0;
 					double cornerAlpha = 0.0;
-					for (SceneItem tongue : scene.withRole(Role.FLAME_TONGUE)) {
-						double[] b = box(tongue);
+					for (double[] b : pieces(scene).values()) {
 						double centre = (b[0] + b[2]) / 2.0;
 						double d = Math.abs(centre - SCREEN.width() / 2.0) / (SCREEN.width() / 2.0);
-						if (d >= 0.85) {
+						if (d >= 0.7) {
 							corner = Math.max(corner, b[3] - b[1]);
-							cornerAlpha = Math.max(cornerAlpha, tongue.alpha());
+							cornerAlpha = Math.max(cornerAlpha, b[4]);
 						}
 						if (d <= 0.1) {
 							middle = Math.min(middle, b[3] - b[1]);
-							middleAlpha = Math.max(middleAlpha, tongue.alpha());
+							middleAlpha = Math.max(middleAlpha, b[4]);
 						}
 					}
 					assertTrue(corner <= 0.55 * SCREEN.height() + 1e-9, tier + " " + setting + ": corner " + corner + " is at most 55 % of the picture height");
@@ -157,11 +174,11 @@ public class FlameSceneTest {
 		assertEquals(0.6 * tallest(full), tallest(discreet), 1e-6);
 		double fullAlpha = 0.0;
 		double discreetAlpha = 0.0;
-		for (SceneItem t : full.withRole(Role.FLAME_TONGUE)) {
-			fullAlpha = Math.max(fullAlpha, t.alpha());
+		for (double[] p : pieces(full).values()) {
+			fullAlpha = Math.max(fullAlpha, p[4]);
 		}
-		for (SceneItem t : discreet.withRole(Role.FLAME_TONGUE)) {
-			discreetAlpha = Math.max(discreetAlpha, t.alpha());
+		for (double[] p : pieces(discreet).values()) {
+			discreetAlpha = Math.max(discreetAlpha, p[4]);
 		}
 		assertEquals(0.6 * fullAlpha, discreetAlpha, 1e-6);
 	}
@@ -255,6 +272,6 @@ public class FlameSceneTest {
 		SceneFixture f = fixture();
 		assertEquals(lines(build(f, QualityTier.FULL, state(FlameSetting.FULL, 1.0))), lines(build(f, QualityTier.FULL, state(FlameSetting.FULL, 7.5))));
 		assertEquals(lines(build(f, QualityTier.FULL, state(FlameSetting.FULL, 0.0))), lines(build(f, QualityTier.FULL, state(FlameSetting.FULL, -3.0))));
-		assertEquals(14, tongueCount(build(f, QualityTier.BALANCED, state(FlameSetting.FULL, 1.0)), 2));
+		assertEquals(14 * 2, layerCount(build(f, QualityTier.BALANCED, state(FlameSetting.FULL, 1.0))));
 	}
 }
