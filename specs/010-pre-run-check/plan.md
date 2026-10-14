@@ -81,7 +81,7 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── ui/PreRunWindow.java               # new: the small window (toolkit widgets), modelled on ArcadeResultWindow
 ├── ui/StartGate.java, StartFlow.java  # new: the seam (a gate that reports READY) and the pure rule that the start runs only on READY, one check at a time
 ├── ui/PreRunStartGate.java            # new: the real gate, opens PreRunWindow
-└── ui/PracticeWindow.java             # startSession() = StartFlow.begin(...); the old body is startSessionNow; restarts of the same run do not ask (R4)
+└── ui/PracticeWindow.java             # startSession() = startFlow.begin(...); the old body is startSessionNow; restarts of the same run do not ask (R4)
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # practice.prerun.* (see R7)
 desktop/TuxGuitar-practice/test/...    # StrumClipMeterTest, StrumClipDatasetTest, PreRunCheckTest, PreRunWindowTest, StartFlowTest, PracticeWindowStartPathSourceTest, PracticeWindowSwtTest, regression suites
 docs/MANUAL.md, docs/MANUAL-FR.md, docs/PRACTICE{,-FR,-ES}.md
