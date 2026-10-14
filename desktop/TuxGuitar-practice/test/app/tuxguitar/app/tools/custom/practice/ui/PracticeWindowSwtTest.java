@@ -157,6 +157,19 @@ public class PracticeWindowSwtTest {
 			assertTrue(flow.begin(new PreRunCheck(FollowSettings.Mode.WAIT), () -> started.add("again")));
 			assertEquals(2, gate.windows);
 
+			// the way to the tuner and back: the window is hidden while the tuner is open and comes back at the question, laid out
+			PreRunWindow third = gate.current;
+			// (the second window is still at the question: the strum part is not shown yet)
+			click(display, nativeOf(third.noButton()));
+			assertEquals(1, gate.tuner.opened, "the tuner was asked for");
+			assertFalse(nativeBoolean(nativeOf(third.windowWidget()), "isVisible"), "the start window gives way to the tuner");
+			assertEquals(0, started.size());
+			gate.tuner.closedListener.run();
+			flush(display);
+			assertTrue(nativeBoolean(nativeOf(third.windowWidget()), "isVisible"));
+			assertTrue(nativeBoolean(nativeOf(third.yesButton()), "isVisible"), "back at the question");
+			assertInside(display, third);
+
 			// a good strum after the question starts the mode once
 			PreRunWindow second = gate.current;
 			click(display, nativeOf(second.yesButton()));
@@ -165,6 +178,38 @@ public class PracticeWindowSwtTest {
 			flush(display);
 			assertEquals(List.of("again"), started);
 			assertFalse(flow.pending());
+		} finally {
+			displayClass.getMethod("dispose").invoke(display);
+		}
+	}
+
+	/** The owner's finding on the built application: after "Yes, in tune" the window showed only its buttons, the rest had no size. */
+	@Test
+	public void afterYesTheWindowIsNotEmptyTheLevelPartHasASizeAndTheWindowIsTallEnoughForIt() throws Exception {
+		Class<?> displayClass = Class.forName("org.eclipse.swt.widgets.Display");
+		Object display = displayClass.getConstructor().newInstance();
+		try {
+			UIFactory factory = (UIFactory) Class.forName("app.tuxguitar.ui.swt.SWTFactory").getConstructor(displayClass).newInstance(display);
+			Gate gate = new Gate(factory);
+			StartFlow flow = new StartFlow(gate);
+			assertTrue(flow.begin(new PreRunCheck(FollowSettings.Mode.WAIT), () -> {
+			}));
+			PreRunWindow window = gate.current;
+			float heightAtTheQuestion = window.windowWidget().getBounds().getHeight();
+			click(display, nativeOf(window.yesButton()));
+			for (Object part : new Object[] { window.meterBar(), window.sentenceLabel(), window.cancelButton() }) {
+				Object control = nativeOf(part);
+				assertTrue(nativeBoolean(control, "isVisible"), "shown after yes");
+				Object bounds = Class.forName("org.eclipse.swt.widgets.Control").getMethod("getBounds").invoke(control);
+				int width = Class.forName("org.eclipse.swt.graphics.Rectangle").getField("width").getInt(bounds);
+				int height = Class.forName("org.eclipse.swt.graphics.Rectangle").getField("height").getInt(bounds);
+				assertTrue(width > 0 && height > 0, control.getClass().getSimpleName() + " has no size after yes: " + width + "x" + height);
+			}
+			assertTrue(window.windowWidget().getBounds().getHeight() >= window.windowWidget().getPackedSize().getHeight() - 1, "the window is as tall as its content");
+			assertTrue(window.windowWidget().getBounds().getHeight() > 0 && heightAtTheQuestion > 0);
+			assertInside(display, window);
+			window.escapePressed();
+			flush(display);
 		} finally {
 			displayClass.getMethod("dispose").invoke(display);
 		}
@@ -215,8 +260,18 @@ public class PracticeWindowSwtTest {
 			int y = rectangleClass.getField("y").getInt(inShell);
 			int width = rectangleClass.getField("width").getInt(inShell);
 			int height = rectangleClass.getField("height").getInt(inShell);
+			// found by the owner on the built application: a control made visible after the first layout kept the size 0 (the window showed only its buttons)
+			assertTrue(width > 0 && height > 0, control.getClass().getSimpleName() + " \"" + textOf(control) + "\" is visible but has no size: " + width + "x" + height + " (the layout was not redone)");
 			assertTrue(x >= 0 && y >= 0 && x + width <= clientWidth && y + height <= clientHeight,
 					control.getClass().getSimpleName() + " at " + x + "," + y + " " + width + "x" + height + " is outside the window " + clientWidth + "x" + clientHeight);
+		}
+	}
+
+	private static String textOf(Object control) {
+		try {
+			return String.valueOf(control.getClass().getMethod("getText").invoke(control));
+		} catch (Exception exception) {
+			return "";
 		}
 	}
 

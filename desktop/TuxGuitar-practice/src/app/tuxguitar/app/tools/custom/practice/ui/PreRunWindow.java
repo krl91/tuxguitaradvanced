@@ -71,6 +71,8 @@ final class PreRunWindow {
 	private long strumSince;
 	private boolean finished;
 	private boolean tunerMissing;
+	/** What the last layout was made for: the parts shown and their texts. The layout is redone only when it changes. */
+	private String laidOutFor = "";
 
 	PreRunWindow(UIFactory factory, UIWindow parent, PreRunCheck check, PreRunSource source, Texts texts, LongSupplier clock, TunerOpener tuner, Runnable onFinished) {
 		this.check = check;
@@ -260,6 +262,12 @@ final class PreRunWindow {
 		this.checkAgainButton.setVisible(bad);
 		this.continueButton.setVisible(bad || (strum && this.clock.getAsLong() - this.strumSince >= GO_ON_AFTER_NANOS));
 		this.cancelButton.setVisible(true);
+		// a control made visible after the window was laid out has no size until the layout is redone (found by the owner: an empty window with only its buttons)
+		String layoutKey = state + "|" + this.tunerMissing + "|" + this.sentence.getText() + "|" + this.advice.getText() + "|" + this.continueButton.isVisible() + "|" + this.checkAgainButton.isVisible();
+		if (!layoutKey.equals(this.laidOutFor) && state != State.TUNER_OPEN) {
+			this.laidOutFor = layoutKey;
+			WindowFit.refit(this.window, null);
+		}
 	}
 
 	/** What to do about a bad strum: the advice of the level panel, and the boost warning when the application's own gain is raised. */
