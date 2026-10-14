@@ -21,13 +21,15 @@ final class PreRunStartGate implements StartGate {
 	private final Supplier<AudioEngine> engine;
 	private final Supplier<UIFactory> factory;
 	private final Supplier<UIWindow> parent;
+	private final Runnable onCancelled;
 	private PreRunWindow current;
 
-	PreRunStartGate(TGContext context, Supplier<AudioEngine> engine, Supplier<UIFactory> factory, Supplier<UIWindow> parent) {
+	PreRunStartGate(TGContext context, Supplier<AudioEngine> engine, Supplier<UIFactory> factory, Supplier<UIWindow> parent, Runnable onCancelled) {
 		this.context = context;
 		this.engine = engine;
 		this.factory = factory;
 		this.parent = parent;
+		this.onCancelled = onCancelled;
 	}
 
 	@Override
@@ -37,6 +39,8 @@ final class PreRunStartGate implements StartGate {
 					this.current = null;
 					if (check.state() == State.READY) {
 						onReady.run();
+					} else if (check.state() == State.CANCELLED) {
+						this.onCancelled.run();
 					}
 				});
 		this.current = window;

@@ -103,4 +103,13 @@ public class PracticeWindowStartPathSourceTest {
 		assertTrue(pending < arcade.indexOf("modeChanged()"), "and before modeChanged()");
 		assertTrue(text.contains("this.startFlow.pending()"), "a lost input does not show the preparation over a pending start");
 	}
+
+	@Test
+	public void theQuickStartWatchdogNeverShowsThePreparationWindowOverAPendingStartAndACancelledOneClickStartClosesTheWindowItOpened() throws IOException {
+		String text = source();
+		String watch = body(text, "private void watchQuickStart()");
+		assertTrue(watch.contains("!this.startFlow.pending()"), "the preparation window must not come over a start window the learner has not answered yet");
+		String cancelled = body(text, "private void startCancelled()");
+		assertTrue(cancelled.contains("!this.windowShown") && cancelled.contains("close()") && cancelled.contains("!this.disposing"), "a cancelled one-click start closes the window that was never shown");
+	}
 }

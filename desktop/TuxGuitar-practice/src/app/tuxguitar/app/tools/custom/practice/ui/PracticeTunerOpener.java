@@ -3,6 +3,7 @@ package app.tuxguitar.app.tools.custom.practice.ui;
 import app.tuxguitar.action.TGActionException;
 import app.tuxguitar.action.TGActionManager;
 import app.tuxguitar.audio.engine.session.PracticeTunerContext;
+import app.tuxguitar.song.models.TGTrack;
 import app.tuxguitar.util.TGContext;
 
 /**
@@ -19,6 +20,8 @@ final class PracticeTunerOpener implements PreRunWindow.TunerOpener {
 	private final PracticeTunerContext.Listener sharedListener = changed -> changed();
 	private Runnable closedListener;
 	private boolean sawOpen;
+	/** The practice track the preparation window holds, lifted while the tuner is open (the tuner refuses to open with one set). */
+	private TGTrack lifted;
 
 	PracticeTunerOpener(TGContext context) {
 		this.context = context;
@@ -32,8 +35,34 @@ final class PracticeTunerOpener implements PreRunWindow.TunerOpener {
 
 	@Override
 	public void open() {
+		// the preparation window sets a practice track as soon as it exists, and the tuner stays closed while one is set (both listen to the same input): no run is going
+		// on during the check, so the track is lifted while the tuner is open and given back when it closes
+		TGTrack track = this.shared.getPracticeTrack();
+		if (track != null) {
+			synchronized (this) {
+				this.lifted = track;
+			}
+			this.shared.setPracticeTrack(null);
+		}
 		run();
-		this.sawOpen = this.shared.isTunerOpen();
+		boolean open = this.shared.isTunerOpen();
+		synchronized (this) {
+			this.sawOpen = open;
+		}
+		if (!open) {
+			giveTrackBack(); // the tuner did not open: nothing to wait for
+		}
+	}
+
+	private void giveTrackBack() {
+		TGTrack track;
+		synchronized (this) {
+			track = this.lifted;
+			this.lifted = null;
+		}
+		if (track != null && this.shared.getPracticeTrack() == null) {
+			this.shared.setPracticeTrack(track);
+		}
 	}
 
 	@Override
@@ -50,14 +79,19 @@ final class PracticeTunerOpener implements PreRunWindow.TunerOpener {
 	}
 
 	@Override
-	public synchronized void setClosedListener(Runnable listener) {
-		if (listener != null && this.closedListener == null) {
-			this.shared.addListener(this.sharedListener);
-		} else if (listener == null && this.closedListener != null) {
-			this.shared.removeListener(this.sharedListener);
+	public void setClosedListener(Runnable listener) {
+		synchronized (this) {
+			if (listener != null && this.closedListener == null) {
+				this.shared.addListener(this.sharedListener);
+			} else if (listener == null && this.closedListener != null) {
+				this.shared.removeListener(this.sharedListener);
+			}
+			this.closedListener = listener;
+			this.sawOpen = false;
 		}
-		this.closedListener = listener;
-		this.sawOpen = false;
+		if (listener == null) {
+			giveTrackBack(); // the start ended (cancelled) while the tuner was open
+		}
 	}
 
 	private void changed() {
@@ -71,6 +105,7 @@ final class PracticeTunerOpener implements PreRunWindow.TunerOpener {
 			}
 		}
 		if (toRun != null) {
+			giveTrackBack();
 			toRun.run();
 		}
 	}

@@ -161,6 +161,7 @@ public class PracticeWindow {
 	private int arcadeRestartTries;
 	/** The start of a mode goes through the pre-run check (spec 010); the restarts of a run do not. */
 	private StartFlow startFlow;
+	private boolean disposing;
 	private static final int ARCADE_RESTART_TRIES = 100;
 	private static final long ARCADE_RESTART_RETRY_MILLIS = 50L;
 	private static final ArcadeTexts ARCADE_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
@@ -170,7 +171,7 @@ public class PracticeWindow {
 		this.plugin = plugin;
 		this.shared = PracticeTunerContext.getInstance(context);
 		this.startFlow = new StartFlow(new PreRunStartGate(context, () -> this.engine, () -> TGApplication.getInstance(this.context).getFactory(),
-				() -> TGWindow.getInstance(this.context).getWindow()));
+				() -> TGWindow.getInstance(this.context).getWindow(), this::startCancelled));
 		this.highlight = new PracticeHighlight(context);
 		this.palette = new PracticePalette(context, new PracticePalette.Controller() {
 			public void post(PracticeCommand command) {
@@ -268,6 +269,7 @@ public class PracticeWindow {
 
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
+				PracticeWindow.this.disposing = true;
 				PracticeWindow.this.startFlow.cancelPending();
 				teardownSession();
 				PracticeWindow.this.followPanel.dispose();
@@ -339,7 +341,7 @@ public class PracticeWindow {
 				return;
 			}
 			TGSynchronizer.getInstance(this.context).executeLater(() -> {
-				if( isOpen() && !this.windowShown && this.session == null && this.followPlan == null ) {
+				if( isOpen() && !this.windowShown && this.session == null && this.followPlan == null && !this.startFlow.pending() ) {
 					// not while a run (Arcade) is going on: the preparation window would come over the game
 					showWindow();
 				}
@@ -655,6 +657,16 @@ public class PracticeWindow {
 		// the mode and the track are those of the request, whatever happens in the window while the check runs
 		final FollowSettings.Mode mode = FollowSettings.getInstance(this.context).getMode();
 		this.startFlow.begin(new PreRunCheck(mode), () -> startSessionNow(mode, candidate));
+	}
+
+	/**
+	 * The learner cancelled the start window of a one-click start whose preparation window was never shown: the window that was opened for it goes away, so that
+	 * nothing is left open that the learner never asked to see (and the tuner is no longer held off by it).
+	 */
+	private void startCancelled() {
+		if( !this.disposing && isOpen() && !this.windowShown && this.session == null && this.followPlan == null ) {
+			close();
+		}
 	}
 
 	/** Package-private: the native test gives another gate. */
