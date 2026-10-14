@@ -1,0 +1,23 @@
+WEAK INPUT BENCHMARK (spec 002 T050, FR-015): recognition of real single notes by signal level and added room noise
+Data: IDMT-SMT-Guitar V2 dataset 1, plain single notes (CC BY-NC-ND 4.0, kept outside the repository), 48 notes of 4 guitars. Level = RMS of the strongest 2048-sample window of the clip (dBFS); noise = white Gaussian, RMS (dBFS).
+Recognised = a session expecting the note accepts it (default settings). Rows: signal level; columns: noise level; each cell the share of notes recognised.
+
+level \ noise       none    -65 dB    -55 dB    -50 dB    -45 dB    -40 dB
+-15 dBFS            100%      100%      100%      100%      100%      100%
+-25 dBFS            100%      100%      100%      100%      100%      100%
+-30 dBFS            100%      100%      100%      100%      100%       96%
+-35 dBFS            100%      100%      100%      100%       98%      100%
+-40 dBFS             96%       98%       98%       96%       96%      100%
+-45 dBFS              0%        0%        0%        0%        0%        0%
+-50 dBFS              0%        0%        0%        0%        0%        0%
+
+Three different notes in a row, 0.35 s apart (share of the triples followed in full, in order), same levels and noises:
+
+level \ noise       none    -65 dB    -55 dB    -50 dB    -45 dB    -40 dB
+-15 dBFS            100%      100%      100%      100%      100%      100%
+-25 dBFS            100%      100%      100%      100%      100%      100%
+-30 dBFS             95%       95%       95%       95%       95%       95%
+-35 dBFS             80%       90%       85%       80%       85%       85%
+-40 dBFS             10%       10%        5%       10%       25%       40%
+-45 dBFS              0%        0%        0%        0%        0%        0%
+-50 dBFS              0%        0%        0%        0%        0%        0%
