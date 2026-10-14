@@ -776,7 +776,8 @@ public class PracticeWindow {
 				this.song.getMeasureHeader(plan.sequence().getEvents().get(0).getMeasureIndex()).getLength());
 		this.arcadeSession = ArcadeSession.of(plan, arcadeTuning, new ArcadeSceneLabels(ARCADE_TEXTS), false,
 				FollowSettings.getInstance(this.context).getMarkerPercent() / 100.0, measureNanos,
-				FollowSettings.getInstance(this.context).getFarScalePercent() / 100.0, FollowSettings.getInstance(this.context).getHorizonPercent() / 100.0);
+				FollowSettings.getInstance(this.context).getFarScalePercent() / 100.0, FollowSettings.getInstance(this.context).getHorizonPercent() / 100.0,
+				FollowSettings.getInstance(this.context).getFlames(), true);
 		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
 		final FollowRun run = plan.run();

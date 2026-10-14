@@ -207,7 +207,16 @@ public final class ArcadeScene {
 	 * reorders an event of the timeline, the judging or the MIDI playback: a hidden note is the same event, not painted.
 	 */
 	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier) {
+		return build(nowNanos, viewport, run, speedPercent, tier, null);
+	}
+
+	/**
+	 * The same picture with the stage flames behind it (spec 009): they are decoration, drawn first so every other item is painted over them, and
+	 * {@code null} or the setting off is exactly the picture without them. The flames come from the state they are given and nothing else.
+	 */
+	public Scene build(long nowNanos, Viewport viewport, ArcadeRun.View run, int speedPercent, QualityTier tier, FlameState flames) {
 		Out out = new Out(this.monochrome, this.theme);
+		FlameDrawing.draw(out.items, viewport, tier, flames);
 		Frame f = new Frame(out, new IsometricProjection(viewport, this.farScale, this.horizon), this.camera.at(nowNanos), viewport, tier, nowNanos, this.camera.settings(), run);
 		// the grid of the neck as it is painted, and the lanes built from it, once for this camera snapshot: the neck, the lanes and every marker below use these
 		f.grid = PaintedFretGrid.of(this.neck, f.projection, f.cam);
