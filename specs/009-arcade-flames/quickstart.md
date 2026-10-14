@@ -10,7 +10,7 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21); export PATH="$JAVA_HOME/bin:$P
 mvn test -pl ../../TuxGuitar-practice -am -Dtest='Flame*Test' -Dsurefire.failIfNoSpecifiedTests=false        # the flames' tests
 mvn test -pl ../../TuxGuitar-practice -am                                                                     # the whole module (reference scenes included)
 mvn -e clean verify -P native-modules,swt-gui-tests                                                           # full build and native paint tests
-mvn test -pl ../../TuxGuitar-audio-engine -am -pl ../../TuxGuitar-practice -Dgroups=benchmark -DexcludedGroups= -Dtest=ArcadeStressTest -Dsurefire.failIfNoSpecifiedTests=false   # cost (SC-006), as in spec 003
+cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn test -pl ../../TuxGuitar-practice -am -Dgroups=benchmark -DexcludedGroups= -Dtest=ArcadeStressTest -Dsurefire.failIfNoSpecifiedTests=false   # cost (SC-006), as in spec 003
 ```
 
 ## Manual (the owner)
