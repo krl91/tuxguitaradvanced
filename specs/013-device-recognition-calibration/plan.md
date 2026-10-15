@@ -93,6 +93,8 @@ desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # the text
 | P5 | **The dot, the buttons and the activation:** `ProfileDot` (grey, orange, green, red, the warning sentence), *Calibrate* and *Forget the calibration* in the Input tab, `ProfileActivator` created with the engine (applies the profile for the selected device at each input change and at start, to the tuner and the practice modes alike), persistence across a restart |
 | P6 | Validation (independent measure, reported honestly), texts in three languages, documentation, `STATUS.md`, the build and **the owner's trial** [HUMAN] |
 
+**Existing tests stay unchanged**: new tests only, new engine code only in `calibration`, `PracticeWindow`, `AppPracticeHost`, `PracticeSession` and `DatasetJudge` not edited (research R11.10).
+
 Tests are written first and seen failing; the whole default suite runs after every phase (after a clean compile).
 
 ## Complexity Tracking

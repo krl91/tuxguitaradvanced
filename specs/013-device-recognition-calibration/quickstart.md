@@ -12,4 +12,4 @@ From `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`, `export JAVA_HOME=$(/us
 8. **Activation and scope:** `-Dtest='ProfileActivatorTest,ProfileReuseTest'`: selecting a device with a profile changes the effective settings seen by the tuner and the practice readers (and not the tuner's own parameters), at start too, with no preparation window open; selecting another device restores the default.
 9. **Forget:** `-Dtest='ProfileLibraryTest,InputSelectorPanelCalibrationSwtTest'`: the *Forget the calibration* button is enabled only with a profile, asks for a confirmation, and deletes only that device's profile.
 10. **Dot states:** `-Dtest=ProfileDotTest`: grey with no input (buttons disabled), orange, green, red, the warning sentence for a changed noise reduction or gain, orange with the reason for a changed sample rate.
-
+11. **Existing tests unchanged:** after each phase `git diff --name-status <phase start> | grep -v '^A'` lists no file under a `test` directory; the default suite is the baseline (937) plus the new tests, with the same failures as before (none).

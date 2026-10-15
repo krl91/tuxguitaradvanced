@@ -32,6 +32,8 @@ What exists today (inspected 2026-10-15): the settings are one global immutable 
 - Q: Does the profile apply everywhere the input is used, or only in the practice modes? → A: **Everywhere**: the profile of the selected device applies to the tuner window and to Follow, Arcade and Wait alike (they read the same settings). The tuner's own settings (tolerance, hold, confidence) are not part of a profile and do not change.
 - Q: When does a new profile apply if the input changes during an exercise? → A: **No special handling**: a change of input takes effect as it does today (the exercise stops if the input disappears) and the profile of the new input applies from that input on.
 - Q: Is a noisy recording refused automatically? → A: **No**: the background noise is **measured and shown** at the quality question and the player decides; the automatic refusals are only a **silent** recording (below the input level minimum), a **clipped** one (the existing clipping thresholds), a **wrong number of sounds** (which covers "too short") and a **timeout**. (Decided on the owner's "correct everything" after analysis finding A2; say if a noise threshold is wanted.)
+- Q: What is said when the result is below 60 % although it is better than the default, and what when the player chooses *Use the default configuration* on a device that already has a profile? → A: **Two messages, same three choices**: when the settings found are **not better than the default**, "the default settings are the most optimal" (the owner's wording); when they are **better than the default but under 60 %**, "better than the default, but only N % (under the 60 % mark)". Wherever *Use the default configuration* is offered for a device that **already has a profile**, its button reads "Use the default configuration (replaces the current calibration)".
+- Q: What if the device is unplugged during the calibration? → A: **Before the recording is finished** (advice, piece, listening, quality question) the calibration stops and nothing is saved; **during the offline analysis** it **goes on** (the analysis uses the recording only, not the device) and the result is offered as usual, the profile being saved under that device's key. (Decided on the owner's "correct everything" after analysis finding C4; say if you prefer to stop.)
 - Q: One window or several for the steps of the calibration? → A: **One window** whose content changes from step to step (the tuning question, the advice, the piece, the listening, the quality question, the analysis, the result) instead of a new window at each step. The owner accepts it **on condition that it is tried**: the one-window design is judged in the owner's trial and, if it does not feel right, the steps go back to separate windows.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -49,7 +51,7 @@ In the *Input* tab, next to the device chooser, the player presses **Calibrate t
 1. **Given** the Input tab with a device selected, **When** the player presses *Calibrate the recognition* and answers *No* to the tuning question, **Then** the tuner opens and the calibration does not go on.
 2. **Given** the tuning answered *Yes*, **When** the windows of advice and of the piece are shown, **Then** the advice mentions a quiet place if the input is a microphone, and the piece is shown with no tempo.
 3. **Given** the listening mode, **When** the number of sounds of the piece has been detected, **Then** it stops by itself and asks whether the recording is good enough.
-4. **Given** the player says the recording is not good enough, **When** they answer, **Then** nothing is analysed or saved and they may record again.
+4. **Given** the player says the recording is not good enough, **When** they answer, **Then** nothing is analysed or saved and they are offered to **record again, use the default configuration, or stop the calibration**.
 5. **Given** the player says it is good enough, **When** the analysis ends, **Then** the best settings found are stored as the profile of the device and the recognition rate obtained on the recording is shown.
 
 ---
@@ -69,20 +71,24 @@ Each calibrated device keeps its **own** profile, in a library with one entry pe
 3. **Given** a device whose calibration measured under 60 %, **When** it is selected, **Then** the dot is red.
 4. **Given** the application is closed and opened again, **When** a calibrated device is selected, **Then** its profile is loaded again, identical to what was saved.
 5. **Given** the input changes during practice preparation, **When** another device is selected, **Then** the dot and the settings in use change with it, at once.
+6. **Given** no input is selected, **When** the Input tab is shown, **Then** the dot is grey with "No input selected" and the *Calibrate* and *Forget the calibration* buttons are disabled.
+7. **Given** a calibrated device whose noise reduction or gain now differs from the recording, **When** it is selected, **Then** the dot keeps its colour, a warning sentence is shown and the profile is still used.
+8. **Given** a profile made at another sample rate than the one in use, **When** the device is selected, **Then** the dot is orange with the reason and the default is used.
+9. **Given** a device with a profile, **When** the player presses *Forget the calibration* and confirms, **Then** the profile is deleted, the dot is orange and no other device changes; if the player refuses, nothing changes.
 
 ---
 
 ### User Story 3 - Calibrate again, or keep the default (Priority: P2)
 
-When a device is to be calibrated, the player is offered either to **calibrate again** or to **use the default configuration**. Choosing the default makes **no recording**, and the default configuration becomes the profile of that device (the dot shows it).
+When a device is to be calibrated (**whether or not it already has a profile**), the player is offered either to **calibrate** (**again**, if it has one) or to **use the default configuration**. Choosing the default makes **no recording**, and the default configuration becomes the profile of that device (the dot shows it).
 
 **Why this priority**: a calibration that does not help must not trap the player; they need a clean way out.
 
-**Independent Test**: for a device with a red dot, choose "use the default configuration" and check that nothing was recorded and that the device now uses the default.
+**Independent Test**: for a device with a red dot and for a device never calibrated, choose "use the default configuration" and check that nothing was recorded and that the device now uses the default.
 
 **Acceptance Scenarios**:
 
-1. **Given** a device with a profile (or a red dot), **When** the player presses *Calibrate*, **Then** they are offered *Calibrate again* or *Use the default configuration*.
+1. **Given** any device (never calibrated, calibrated or red), **When** the player presses *Calibrate*, **Then** they are offered *Calibrate* (*Calibrate again* if it has a profile) or *Use the default configuration*, the second one stating that it replaces the current calibration when there is one.
 2. **Given** *Use the default configuration*, **When** it is chosen, **Then** no recording is made and the device's profile is the default.
 3. **Given** *Calibrate again*, **When** it is chosen, **Then** the calibration of Story 1 runs and replaces the profile only if it finishes.
 
@@ -116,13 +122,13 @@ The player can cancel at every step; a recording that is silent or clipped is re
 
 1. **Given** any step, **When** the player cancels, **Then** the previous profile of the device is unchanged.
 2. **Given** a silent or clipped recording, or a wrong number of sounds, **When** the listening ends or times out, **Then** the reason is shown and the player may **record again, use the default configuration, or stop the calibration**.
-3. **Given** an analysis whose best result is not better than the default, **When** it ends, **Then** the player is told and the default configuration is kept for the device.
+3. **Given** an analysis whose best result is not better than the default, or is under 60 %, **When** it ends, **Then** the player is told with the matching message and offered *use the settings found anyway*, *record again* or *use the default configuration*; nothing is saved until they choose.
 
 ---
 
 ### Edge Cases
 
-- A device unplugged or replaced during the calibration, or during the analysis: the calibration stops, nothing is saved, the previous profile stays.
+- A device unplugged or replaced **before the recording is finished**: the calibration stops, nothing is saved, the previous profile stays. **During the offline analysis** the analysis goes on (it uses the recording only) and the result is offered as usual.
 - The same device offered with several channels or sample rates: the profile must not be applied to a different configuration of the device by mistake.
 - Two devices with the same name (two identical adapters): they must not share a profile by mistake.
 - A profile saved by a later version, a corrupted profile, a missing file: the device falls back to the default (orange) without an error.
@@ -145,12 +151,12 @@ The player can cancel at every step; a recording that is silent or clipped is re
 - **FR-006**: On *Yes*, the recording MUST be **analysed offline**: the system looks for the settings that recognise the notes and the chords of the piece best, using recognisers that may be slower and heavier than in real time, shows progress, can be cancelled, and reports the **recognition rate** obtained: with the default and with the profile, in total and separately for the notes and the chords. While it runs, the calibration window MUST stay open and **block the rest of the application** (modal); closing it cancels the search and saves nothing.
 - **FR-007**: The settings found MUST be stored as the **profile of that device**, in a library with **one profile per device**; the profile MUST be saved so that it is **loaded again after a restart** when the device is selected.
 - **FR-008**: A **dot** next to the device chooser MUST show the state of the selected device and MUST update **every time the input changes**: **green** (calibrated and its profile loaded), **orange** (not calibrated: the default configuration is used), **red** (calibrated, with a recognition below **60 %** during the analysis). When **no input is selected** the dot is **grey** with the text "No input selected" and the *Calibrate* button is disabled. When the noise reduction or the input gain differs from what they were at the recording, the colour stays and a **warning sentence** is shown next to the dot; the profile stays in use.
-- **FR-009**: When a device is to be calibrated (**whether or not it already has a profile**), the player MUST be offered **Calibrate again** or **Use the default configuration**; the second makes **no recording** and sets the default configuration as the device's profile.
+- **FR-009**: When a device is to be calibrated (**whether or not it already has a profile**), the player MUST be offered **Calibrate again** or **Use the default configuration**; the second makes **no recording** and sets the default configuration as the device's profile; for a device that already has a profile its button states that it **replaces the current calibration**.
 - **FR-010**: A profile MUST apply **only to its device**, and **everywhere the input is used** (tuner window, Follow, Arcade, Wait); an uncalibrated device MUST use the default configuration, **exactly as today**; the Configuration window MUST keep editing the default configuration.
 - **FR-011**: With **no profile**, every recognition figure recorded before this feature (the reports of spec 010) MUST be unchanged.
 - **FR-012**: A calibration that is cancelled, fails or does not finish MUST NOT change or delete the device's existing profile.
 - **FR-013**: A missing, unreadable or incompatible profile MUST fall back to the default configuration (orange) without an error.
-- **FR-014**: The search MUST include the **default configuration** among its candidates. When the best settings found are **not better than the default** on the calibration recording, or the recognition is **below 60 %**, the application MUST **never decide for the player**: it shows a message saying that **the default settings are the most optimal** and offers **three choices**: **use the settings found anyway** (they are saved as the profile, and the dot is red if the rate is under 60 %), **record again**, or **use the default configuration** (saved as the profile of the device, and nothing else kept).
+- **FR-014**: The search MUST include the **default configuration** among its candidates. When the best settings found are **not better than the default** on the calibration recording, or the recognition is **below 60 %**, the application MUST **never decide for the player**: it shows a message and offers **three choices**: the message says that **the default settings are the most optimal** when the settings found are not better than the default, and that they are **better than the default but only N %, under the 60 % mark** when they are better but under 60 %. The choices are: **use the settings found anyway** (they are saved as the profile, and the dot is red if the rate is under 60 %), **record again**, or **use the default configuration** (saved as the profile of the device, and nothing else kept).
 - **FR-015**: The texts MUST exist in English, French and Spanish and the feature MUST be described in the documentation.
 - **FR-016**: The calibration piece for the guitar is the owner's score **`basic_test.tg`**, committed with the application; the way the recognition rate is computed, the list of settings the search may change and their bounds, the time the analysis may take and the key of a profile are written in the plan.
 - **FR-017**: The **calibration recording MUST be deleted once the analysis is done**, and also when the calibration is cancelled, refused or fails; it is **kept in memory only, never written to a file**, never leaves the computer, and no audio of it remains on the disk.
@@ -164,7 +170,8 @@ The player can cancel at every step; a recording that is silent or clipped is re
 - **Profile library**: the saved collection of profiles, one per device.
 - **Calibration piece**: the short score the player plays to calibrate.
 - **Calibration recording**: the sound recorded during the calibration, used for the analysis.
-- **Profile state**: orange (none, default used), green (calibrated, at least 60 %), red (calibrated, below 60 %).
+- **Profile state**: orange (none, default used, or the profile does not apply at the current sample rate), green (calibrated, at least 60 %), red (calibrated, below 60 %), grey (no input selected). A warning sentence may be shown next to the dot when the noise reduction or the gain differs from the recording.
+- **Profile contents**: besides the settings, the sample rate, the date, the rates (default and found), the noise reduction and gain at recording time, and the origin (searched, or the default chosen).
 
 ## Success Criteria *(mandatory)*
 
