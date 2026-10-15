@@ -386,7 +386,7 @@ public class PracticeWindow {
 		// ---- tab 2: the input and its level
 		UITableLayout inputLayout = new UITableLayout();
 		UIPanel inputPanel = tab(uiFactory, folder, "practice.tab.input", inputLayout);
-		this.inputSelector = new InputSelectorPanel(this.context, this.engine, uiFactory, inputPanel);
+		this.inputSelector = new InputSelectorPanel(this.context, this.engine, uiFactory, inputPanel, () -> this.host.mainWindow());
 		inputLayout.set(this.inputSelector.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.inputSelector.setContentListener(this::refit);
 		this.levelPanel = new LevelPanel(this.context, this.engine, uiFactory, inputPanel);

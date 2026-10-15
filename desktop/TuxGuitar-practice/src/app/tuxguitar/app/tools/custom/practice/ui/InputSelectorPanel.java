@@ -2,14 +2,20 @@ package app.tuxguitar.app.tools.custom.practice.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.tools.custom.practice.session.InputDefaultPolicy;
 import app.tuxguitar.app.tools.custom.practice.session.InputDefaultStore;
 import app.tuxguitar.audio.engine.AudioEngine;
+import app.tuxguitar.audio.engine.calibration.DeviceKey;
+import app.tuxguitar.audio.engine.calibration.FrontEndState;
+import app.tuxguitar.audio.engine.calibration.ProfileActivator;
+import app.tuxguitar.audio.engine.calibration.ProfileLibrary;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
+import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
@@ -20,6 +26,7 @@ import app.tuxguitar.ui.widget.UIDropDownSelect;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
 import app.tuxguitar.ui.widget.UISelectItem;
+import app.tuxguitar.ui.widget.UIWindow;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.TGSynchronizer;
 
@@ -44,8 +51,18 @@ public final class InputSelectorPanel {
 	/** The remembered default input was in the previous reading of the list (it is selected again when it appears after an absence). */
 	private boolean rememberedWasThere;
 	private Runnable contentListener;
+	/** The dot and the calibration buttons (spec 013); null where the panel is built without them (the Configuration page). */
+	private ProfileDot profileDot;
+	private ProfileLibrary library;
+	private Runnable libraryListener;
+	private RecognitionSettingsStore.Listener storeListener;
 
 	public InputSelectorPanel(TGContext context, AudioEngine engine, UIFactory uiFactory, UIContainer parent) {
+		this(context, engine, uiFactory, parent, null);
+	}
+
+	/** @param mainWindow where the modal calibration window hangs; null builds the panel without the dot and the calibration buttons */
+	public InputSelectorPanel(TGContext context, AudioEngine engine, UIFactory uiFactory, UIContainer parent, Supplier<UIWindow> mainWindow) {
 		this.context = context;
 		this.engine = engine;
 		this.panel = uiFactory.createPanel(parent, false);
@@ -90,9 +107,14 @@ public final class InputSelectorPanel {
 		layout.set(this.hint, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 4);
 		layout.set(this.hint, UITableLayout.PACKED_WIDTH, WRAP_WIDTH);
 
+		if( mainWindow != null ) {
+			createProfileDot(uiFactory, mainWindow, layout);
+		}
+
 		this.selectionListener = snapshot -> TGSynchronizer.getInstance(this.context).executeLater(() -> {
 			if( !this.panel.isDisposed() ) {
 				updateHint(snapshot);
+				refreshDot();
 			}
 		});
 		this.engine.getSelection().addListener(this.selectionListener);
@@ -177,6 +199,63 @@ public final class InputSelectorPanel {
 
 	public void dispose() {
 		this.engine.getSelection().removeListener(this.selectionListener);
+		if( this.library != null ) {
+			this.library.removeListener(this.libraryListener);
+			RecognitionSettingsStore.getInstance(this.context).removeListener(this.storeListener);
+		}
+	}
+
+	/** The dot and the two buttons on their own row under the hint; recomputed when the input, the library or the settings (noise reduction) change. */
+	private void createProfileDot(UIFactory uiFactory, Supplier<UIWindow> mainWindow, UITableLayout layout) {
+		this.library = ProfileLibrary.getInstance(this.context);
+		this.profileDot = new ProfileDot(uiFactory, this.panel, CalibrationLauncher.TEXTS, this.library, new ProfileDot.Host() {
+			public DeviceKey selectedKey() {
+				AudioInputDescriptor input = InputSelectorPanel.this.engine.getSelection().snapshot().getInput();
+				return input == null ? null : DeviceKey.of(input, InputSelectorPanel.this.engine.getCatalog().listInputs());
+			}
+
+			public int sampleRate() {
+				ProfileActivator activator = ProfileActivator.of(InputSelectorPanel.this.context);
+				return activator == null ? 0 : activator.getSampleRate();
+			}
+
+			public FrontEndState frontEnd() {
+				return new FrontEndState(InputSelectorPanel.this.engine.getInputGain(), InputSelectorPanel.this.engine.isNoiseReductionEnabled());
+			}
+
+			public void confirmForget(Runnable yes) {
+				ConfirmWindow.ask(uiFactory, mainWindow.get(), CalibrationLauncher.TEXTS.get("practice.profile.dot.forget"),
+						CalibrationLauncher.TEXTS.get("practice.profile.forget.question"), CalibrationLauncher.TEXTS.get("practice.profile.stop.yes"),
+						CalibrationLauncher.TEXTS.get("practice.profile.stop.no"), yes);
+			}
+
+			public void calibrate() {
+				AudioInputDescriptor input = InputSelectorPanel.this.engine.getSelection().snapshot().getInput();
+				DeviceKey key = selectedKey();
+				if( input != null && key != null ) {
+					CalibrationLauncher.open(InputSelectorPanel.this.context, InputSelectorPanel.this.engine, uiFactory, mainWindow, key,
+							CalibrationLauncher.isMicrophone(input), state -> refreshDot());
+				}
+			}
+		});
+		this.profileDot.setContentListener(this::contentChangedByDot);
+		layout.set(this.profileDot.control(), 3, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 4);
+		this.libraryListener = () -> TGSynchronizer.getInstance(this.context).executeLater(this::refreshDot);
+		this.library.addListener(this.libraryListener);
+		this.storeListener = (previous, current) -> TGSynchronizer.getInstance(this.context).executeLater(this::refreshDot);
+		RecognitionSettingsStore.getInstance(this.context).addListener(this.storeListener);
+	}
+
+	private void refreshDot() {
+		if( this.profileDot != null && !this.panel.isDisposed() ) {
+			this.profileDot.refresh();
+		}
+	}
+
+	private void contentChangedByDot() {
+		if( this.contentListener != null ) {
+			this.contentListener.run();
+		}
 	}
 
 	private void select(AudioInputDescriptor input) {

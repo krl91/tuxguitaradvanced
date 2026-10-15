@@ -55,3 +55,9 @@ Branch feature/interactive-practice, commit 1f385c40d (the work tree adds only t
       a clipped take reported as a silence timeout (fixed: measured, told as too loud); the search unable to walk far from the default (fixed: the step is kept while it improves; a test of a far target failed at 22 instead of 10);
       CalibrationStringsTest by mutation (an untranslated French text, a missing number in Spanish).
 
+
+Phase 6 (activation, dot, buttons), 2026-10-16. Whole default suite after a clean compile (mvn -e clean verify -P native-modules): practice 1044 tests (6 skipped: the native and gated ones), engine 373, 0 failures, BUILD SUCCESS.
+   Native (-P swt-gui-tests): ProfileDotSwtTest 1, PracticeWindowSwtTest 2, RecognitionSettingsSwtTest 1, all green on this Mac (a graphical session was available).
+   New tests: EngineListeningPortTest 3, ProfileDotTest 13, InputSelectorPanelOptInTest 3, ProfileDotSwtTest 1; ProfileActivatorTest 9, ProfileReuseTest 3 in the engine. No existing test modified.
+   Seen failing first: ProfileDotTest by compile error (class missing). InputSelectorPanelOptInTest passed at the first run (it checks code already written; not seen failing). Defects found in my own new tests and fixed there: EngineListeningPortTest waited for a ring buffer nobody read after the stop; the colour test compared strings of proxy objects.
+   Not covered: the InputSelectorPanel itself is not built by any test (it needs the real input catalog); no "tab shown" refresh of the dot (only one line of PracticeWindow may change); a change of gain is not announced by the engine, so the gain warning can stay stale until the next refresh.
