@@ -45,15 +45,77 @@ public final class TimingTolerance {
 
 	private static final long MS = 1_000_000L;
 
+	/** The least and the most the learner can choose, in milliseconds each side of the target at 120 beats a minute (spec 012). */
+	public static final int MIN_WIDTH_MILLIS = 40;
+	public static final int MAX_WIDTH_MILLIS = 200;
+	/** The beat of the reference tempo of the width, 120 beats a minute. */
+	private static final double REFERENCE_BEAT_MILLIS = 500.0;
+
+	/** The shape of the windows: fractions of the local beat and the floors and ceilings in milliseconds. What a preset and a width both reduce to. */
+	private static final class Shape {
+		final double onTimeFraction;
+		final long onTimeFloorMillis;
+		final long onTimeCeilingMillis;
+		final double earlyFraction;
+		final double lateFraction;
+		final long outerFloorMillis;
+		final long outerCeilingMillis;
+
+		Shape(double onTimeFraction, long onTimeFloorMillis, long onTimeCeilingMillis, double earlyFraction, double lateFraction, long outerFloorMillis, long outerCeilingMillis) {
+			this.onTimeFraction = onTimeFraction;
+			this.onTimeFloorMillis = onTimeFloorMillis;
+			this.onTimeCeilingMillis = onTimeCeilingMillis;
+			this.earlyFraction = earlyFraction;
+			this.lateFraction = lateFraction;
+			this.outerFloorMillis = outerFloorMillis;
+			this.outerCeilingMillis = outerCeilingMillis;
+		}
+
+		static Shape of(Preset preset) {
+			return new Shape(preset.onTimeFraction, preset.onTimeFloorMillis, preset.onTimeCeilingMillis, preset.earlyFraction, preset.lateFraction, preset.outerFloorMillis,
+					preset.outerCeilingMillis);
+		}
+
+		/**
+		 * The shape of a width W: the ratios of the old Normal (75 ms: fraction 0.15, floor 60, ceiling 150; outer fraction 0.40, floor 150, ceiling 450), so that W = 75 gives
+		 * exactly the old Normal. The fractions are written as divisions of exact numbers so that W = 75 gives the very same doubles as the literals 0.15 and 0.40.
+		 */
+		static Shape of(int widthMillis) {
+			double on = widthMillis / REFERENCE_BEAT_MILLIS;
+			double outer = widthMillis * 8.0 / 1500.0;
+			long onFloor = Math.round(0.8 * widthMillis);
+			return new Shape(on, onFloor, 2L * widthMillis, outer, outer, 2L * widthMillis, 6L * widthMillis);
+		}
+	}
+
 	private final Preset preset;
+	private final Shape shape;
 
 	public TimingTolerance(Preset preset) {
 		if (preset == null) {
 			throw new IllegalArgumentException("a preset is required");
 		}
 		this.preset = preset;
+		this.shape = Shape.of(preset);
 	}
 
+	private TimingTolerance(int widthMillis) {
+		this.preset = null;
+		this.shape = Shape.of(widthMillis);
+	}
+
+	/**
+	 * The windows for the width the learner chose (spec 012): the half-width of the on-time window in milliseconds at 120 beats a minute, from {@value #MIN_WIDTH_MILLIS} to
+	 * {@value #MAX_WIDTH_MILLIS}; it grows and shrinks with the tempo between a floor and a ceiling like the presets do.
+	 */
+	public static TimingTolerance ofMillis(int widthMillis) {
+		if (widthMillis < MIN_WIDTH_MILLIS || widthMillis > MAX_WIDTH_MILLIS) {
+			throw new IllegalArgumentException("a width is from " + MIN_WIDTH_MILLIS + " to " + MAX_WIDTH_MILLIS + " ms: " + widthMillis);
+		}
+		return new TimingTolerance(widthMillis);
+	}
+
+	/** The preset this was made from, or null when it was made from a width. */
 	public Preset preset() {
 		return this.preset;
 	}
@@ -73,9 +135,9 @@ public final class TimingTolerance {
 		if (beatNanos < 0) {
 			throw new IllegalArgumentException("a beat cannot be negative: " + beatNanos);
 		}
-		long on = clamp(Math.round(this.preset.onTimeFraction * beatNanos), this.preset.onTimeFloorMillis * MS, this.preset.onTimeCeilingMillis * MS);
-		long early = clamp(Math.round(this.preset.earlyFraction * beatNanos), this.preset.outerFloorMillis * MS, this.preset.outerCeilingMillis * MS);
-		long late = clamp(Math.round(this.preset.lateFraction * beatNanos), this.preset.outerFloorMillis * MS, this.preset.outerCeilingMillis * MS);
+		long on = clamp(Math.round(this.shape.onTimeFraction * beatNanos), this.shape.onTimeFloorMillis * MS, this.shape.onTimeCeilingMillis * MS);
+		long early = clamp(Math.round(this.shape.earlyFraction * beatNanos), this.shape.outerFloorMillis * MS, this.shape.outerCeilingMillis * MS);
+		long late = clamp(Math.round(this.shape.lateFraction * beatNanos), this.shape.outerFloorMillis * MS, this.shape.outerCeilingMillis * MS);
 		early = Math.max(early, on);
 		late = Math.max(late, on);
 		// cut in the middle of the gap to the neighbours: the earlier window ends one nanosecond before the later one begins

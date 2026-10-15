@@ -151,4 +151,76 @@ public class TimingToleranceTest {
 			}
 		}
 	}
+
+	// ---------------------------------------------------------------- the adjustable window (spec 012): one width W in milliseconds at 120 beats a minute
+
+	private static Window wide(int widthMillis, double beatMillis) {
+		return TimingTolerance.ofMillis(widthMillis).windowFor(10_000 * MS, Math.round(beatMillis * MS), NONE, NONE);
+	}
+
+	@Test
+	public void aWidthOfSeventyFiveMillisecondsIsExactlyTheOldNormalAtEveryTempoAndGap() {
+		TimingTolerance old = new TimingTolerance(Preset.NORMAL);
+		TimingTolerance now = TimingTolerance.ofMillis(75);
+		long[] gaps = { NONE, 100 * MS, 150 * MS, 400 * MS };
+		for (long beat = 0; beat <= 2000; beat += (beat < 30 ? 30 : 10)) {
+			for (long before : gaps) {
+				for (long after : gaps) {
+					Window a = old.windowFor(10_000 * MS, beat * MS, before, after);
+					Window b = now.windowFor(10_000 * MS, beat * MS, before, after);
+					String at = "beat " + beat + " ms, gaps " + before + " and " + after;
+					assertEquals(a.onTimeFrom(), b.onTimeFrom(), at);
+					assertEquals(a.onTimeTo(), b.onTimeTo(), at);
+					assertEquals(a.outerFrom(), b.outerFrom(), at);
+					assertEquals(a.outerTo(), b.outerTo(), at);
+				}
+			}
+		}
+	}
+
+	@Test
+	public void theTightHalfWindowAtOneHundredAndTwentyBeatsAMinuteIsTheWidthChosen() {
+		assertEquals(40.0, onHalf(wide(40, 500)), 1e-6);
+		assertEquals(75.0, onHalf(wide(75, 500)), 1e-6);
+		assertEquals(100.0, onHalf(wide(100, 500)), 1e-6);
+		assertEquals(200.0, onHalf(wide(200, 500)), 1e-6);
+	}
+
+	@Test
+	public void aNoteNinetyMillisecondsLateIsOnTimeWithTheNewDefaultAndLateWithTheOldNormal() {
+		long late = 90 * MS;
+		Window newDefault = wide(100, 500);
+		Window oldNormal = wide(75, 500);
+		assertEquals(TimingVerdict.ON_TIME, newDefault.classify(newDefault.target() + late));
+		assertEquals(TimingVerdict.LATE, oldNormal.classify(oldNormal.target() + late));
+	}
+
+	@Test
+	public void aWiderSettingNeverNarrowsTheWindowAtAnyTempo() {
+		for (double beat : new double[] { 200, 333, 500, 700, 1000, 1500 }) {
+			double previousOn = 0;
+			double previousOuter = 0;
+			for (int width = 40; width <= 200; width += 10) {
+				Window w = wide(width, beat);
+				assertTrue(onHalf(w) >= previousOn, "tight window shrank at " + width + " ms, beat " + beat);
+				assertTrue(outerHalf(w) >= previousOuter, "outer window shrank at " + width + " ms, beat " + beat);
+				previousOn = onHalf(w);
+				previousOuter = outerHalf(w);
+			}
+		}
+	}
+
+	@Test
+	public void theWindowsOfTwoCloseEventsNeverOverlapEvenAtTheWidestSetting() {
+		long gap = 150 * MS;
+		Window first = TimingTolerance.ofMillis(200).windowFor(10_000 * MS, 500 * MS, NONE, gap);
+		Window second = TimingTolerance.ofMillis(200).windowFor(10_000 * MS + gap, 500 * MS, gap, NONE);
+		assertTrue(first.outerTo() <= second.outerFrom(), "the outer windows overlap: " + first.outerTo() + " against " + second.outerFrom());
+	}
+
+	@Test
+	public void aWidthOutsideTheRangeIsRefused() {
+		assertThrows(IllegalArgumentException.class, () -> TimingTolerance.ofMillis(39));
+		assertThrows(IllegalArgumentException.class, () -> TimingTolerance.ofMillis(201));
+	}
 }
