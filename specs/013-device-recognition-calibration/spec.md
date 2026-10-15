@@ -140,7 +140,7 @@ The player can cancel at every step; a recording that is silent or clipped is re
 
 ### Edge Cases
 
-- A device unplugged or replaced **before the recording is finished**: the calibration stops, nothing is saved, the previous profile stays. **During the offline analysis** the analysis goes on (it uses the recording only) and the result is offered as usual.
+- A device unplugged or replaced **before the analysis starts** (offer, tuning, advice, piece, listening, quality question, refusal): the calibration stops, nothing is saved, the previous profile stays. **During the offline analysis** the analysis goes on (it uses the recording only) and the result is offered as usual.
 - The same device offered with several channels or sample rates: the profile must not be applied to a different configuration of the device by mistake.
 - Two devices with the same name (two identical adapters): they must not share a profile by mistake.
 - A profile saved by a later version, a corrupted profile, a missing file: the device falls back to the default (orange) without an error.
