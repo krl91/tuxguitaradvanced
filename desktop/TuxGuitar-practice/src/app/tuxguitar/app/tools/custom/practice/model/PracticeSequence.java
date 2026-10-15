@@ -61,6 +61,19 @@ public final class PracticeSequence {
 		return new PracticeSequence(new ArrayList<PracticeEvent>(this.events.subList(from, this.events.size())), 0, this.trackTuning);
 	}
 
+	/**
+	 * A sequence of this one event only, to judge one recorded sound alone against it (spec 013): the other events are not in the session, so what is
+	 * heard cannot be taken for them nor wait behind an earlier miss.
+	 */
+	public PracticeSequence onlyEvent(int index) {
+		if (index < 0 || index >= this.events.size()) {
+			throw new IllegalArgumentException("no event " + index);
+		}
+		List<PracticeEvent> only = new ArrayList<PracticeEvent>();
+		only.add(this.events.get(index));
+		return new PracticeSequence(only, 0, this.trackTuning);
+	}
+
 	public boolean isEmpty() {
 		return this.events.isEmpty();
 	}

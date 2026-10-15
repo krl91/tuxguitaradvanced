@@ -1,0 +1,25 @@
+Spec 013, phase 3: what the scoring and the search were measured to do, 2026-10-15 (T024). Figures printed by BuiltinMicProfileTest, EventJudgeParityTest, EventJudgeTest.
+NOTHING HERE IS A CLAIM OF GAIN: the owner's recording of basic_test.tg (T004) is not here yet, so the search has not been run on real data.
+
+== The copy of the judge agrees with the original (EventJudgeParityTest)
+   EventJudge (production) and DatasetJudge (test module, untouched) give the same verdict on the 21 notes of the built-in microphone corpus: 21 of 21 accepted against their own event.
+   Negative control: 1 of 21 notes is accepted against the NEXT event (a wrong acceptance), so the control has teeth even with the default settings.
+
+== A finding about the recognition itself (probe on synthetic strums, default settings, A major expected: 45 52 57 61 64)
+   A chord with a note missing is often ACCEPTED: for example 4 of the 5 notes were accepted in several subsets and seeds, sometimes 2 or 3 notes; the bass alone, or C major, are refused.
+   It is the leniency of the existing chord acceptance (it matches the owner's earlier measure: 13 of 42 chord takes wrongly accepted). It is out of scope of this feature
+   (no recognition algorithm changes), and it limits what a profile can show on chords: the score can count a partly played chord as recognised.
+
+== The machinery on a SYNTHETIC performance of the piece (Karplus-Strong strings, 13 sounds, 2.5 s each, 1.5 s of silence between)
+   cut: 13 sounds found (the 5 strings of each chord are merged by the 250 ms rule), accepted;
+   default settings: 13 of 13 (notes 10/10, chords 3/3), wrong acceptances 2 (the control), score 9.0 (13 - 2 x 2);
+   first candidate: about 4.8 s for the 26 analyses (13 sounds, each against its own event and the next one), sequential.
+   search, sequential: 60.9 s, 44 candidates, 338 analyses, ONE pass (nothing improved on the default, so it stopped), the default kept.
+   search, analyses on all cores (the result is the same: 44 candidates, 338 analyses, same settings): 11.9 s on this machine (6 times faster).
+   The analyses are what costs: a candidate that changes only a practice setting is scored in milliseconds from the kept frames; one that changes a level or attack setting
+   (INPUT_LEVEL_MIN, NOTE_ATTACK, ATTACK_MIN_LEVEL) needs the 26 analyses again.
+   With improvements to follow, up to three passes: about 36 s on this machine, well inside the 120 s budget (and sequentially about 3 minutes, which the budget would cut).
+
+== Not measured yet
+   the owner's recording of basic_test.tg (T004): the search on real data, the rate with the default and with the profile, and the 21 notes judged with the profile found.
+   Run it with:  mvn ... -Dtest='BuiltinMicProfileTest#theSearchOnTheOwnersRecordingThenTheCorpusJudgedWithTheProfileFound' -Dcalibration.search=true

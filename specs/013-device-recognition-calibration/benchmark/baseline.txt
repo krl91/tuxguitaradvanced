@@ -30,3 +30,11 @@ Branch feature/interactive-practice, commit 1f385c40d (the work tree adds only t
    Seen failing first: the model tests and ProfileLibraryTest by compile error (classes missing); RecognitionSettingsStoreProfileTest by compile error; StoreWritersTest (3 of 5) and FollowSettingsProfileTest (1 of 1) at run time with the exact defect: the profile value 10.0 written into the default instead of 35.0.
    Not covered here: the real configuration file of ProfileLibrary (ConfigPersistence) is only read, never written, by a test.
 
+== After phase 3 (T025), `mvn -o clean test -pl ../../TuxGuitar-practice -am`, 9 min
+   tuxguitar-audio-engine: 333 tests, 0 failures (327 + 6: SoundSegmenterTest)
+   tuxguitar-practice: 973 tests, 0 failures, 6 skipped (the 4 of before + the 2 tests of BuiltinMicProfileTest that need -Dcalibration.search=true)
+      = 946 + 27 new: CalibrationPieceLoadTest 2, CalibrationScorerTest 5, EventJudgeTest 4, ProfileSearchTest 12, BuiltinMicProfileTest 3, EventJudgeParityTest 1
+   Existing tests: none modified (git diff --name-status shows no M, D or R on a test file). One existing production class got an additive method: PracticeSequence.onlyEvent(int).
+   Seen failing first: SoundSegmenterTest (compile error, then 1 of 6 at run time: the detector flags an attack about 72 ms late, the segment lead became 150 ms),
+      EventJudgeTest and CalibrationScorerTest and ProfileSearchTest (compile errors: classes missing), EventJudgeTest chord case (assumed a chord missing a note is refused: it is not, measured).
+
