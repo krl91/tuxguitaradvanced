@@ -36,14 +36,14 @@
 
 ## The scoring and the search
 
-- [ ] CHK021 Is the recognition rate defined as a formula (events accepted over events of the piece, total, notes and chords) in the spec and not only in the contract? [Clarity, Spec §FR-016, contracts/scoring-search.md]
-- [ ] CHK022 Is "better than the default" defined in the spec (the objective, the one-event gain) so the owner can judge it, rather than left in the plan? [Ambiguity, Spec §FR-014, contracts/scoring-search.md]
-- [ ] CHK023 Is the interaction of the two rules (better than the default, and total rate at least 60 %) written for all four combinations, including the colour of the resulting dot? [Completeness, Spec §FR-008, §FR-014]
-- [ ] CHK024 Is the purpose of the negative control stated in terms the owner can accept, and is the weight (2 x wrong) justified or marked as a choice? [Assumption, research R5]
-- [ ] CHK025 Is determinism a stated requirement with its test (same recording, same piece, same profile), including the order of parameters and the tie rule? [Measurability, contracts/scoring-search.md]
-- [ ] CHK026 Are the budget (120 s, 2000 candidates), the progress figure and the cancel written as requirements with what the player sees when the budget ends before the search converges? [Gap, Spec §FR-006]
-- [ ] CHK027 Is the risk of over-fitting one short recording stated in the spec, with the independent measure that answers it, and is the "no gain promised" rule visible to the player and not only in the reports? [Coverage, research R6, Spec §SC-006]
-- [ ] CHK028 Is the number of events of the piece (25 notes, an unconfirmed number of events) fixed before the 60 % and the one-event gain are interpreted, given that one event is a large share of a short piece? [Ambiguity, research R10, Tasks T002]
+- [x] CHK021 Is the recognition rate defined as a formula (events accepted over events of the piece, total, notes and chords) in the spec and not only in the contract? [Clarity, Spec §FR-016, contracts/scoring-search.md]
+- [x] CHK022 Is "better than the default" defined in the spec (the objective, the one-event gain) so the owner can judge it, rather than left in the plan? [Ambiguity, Spec §FR-014, contracts/scoring-search.md]
+- [x] CHK023 Is the interaction of the two rules (better than the default, and total rate at least 60 %) written for all four combinations, including the colour of the resulting dot? [Completeness, Spec §FR-008, §FR-014]
+- [x] CHK024 Is the purpose of the negative control stated in terms the owner can accept, and is the weight (2 x wrong) justified or marked as a choice? [Assumption, research R5]
+- [x] CHK025 Is determinism a stated requirement with its test (same recording, same piece, same profile), including the order of parameters and the tie rule? [Measurability, contracts/scoring-search.md]
+- [x] CHK026 Are the budget (120 s, 2000 candidates), the progress figure and the cancel written as requirements with what the player sees when the budget ends before the search converges? [Gap, Spec §FR-006]
+- [x] CHK027 Is the risk of over-fitting one short recording stated in the spec, with the independent measure that answers it, and is the "no gain promised" rule visible to the player and not only in the reports? [Coverage, research R6, Spec §SC-006]
+- [x] CHK028 Is the number of events of the piece (25 notes, an unconfirmed number of events) fixed before the 60 % and the one-event gain are interpreted, given that one event is a large share of a short piece? [Ambiguity, research R10, Tasks T002]
 
 ## Data safety and non-regression
 
