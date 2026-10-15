@@ -10,7 +10,7 @@ For one event: the **tight half-window** and the **outer half-window** (early an
 Rule: the windows of two events never overlap; the same W, beat and gaps always give the same window (deterministic).
 
 ## Legacy preset (read only)
-The old saved value `strict`, `normal` or `lenient` under `tempo.tolerance`. Used only when `tempo.window` is absent: it gives W = 50, 75 or 125. Never written by this version as a choice of the learner.
+The old saved value `strict`, `normal` or `lenient` under `tempo.tolerance`. Used only when `tempo.window` is absent: `strict` gives W = 50, `lenient` 125, `normal` the default 100. Never written by this version as a choice of the learner.
 
 ## Setting in memory (FollowSettings)
 No longer holds its own copy: it reads W from the store and writes it back through the store, so there is **one** value for the preparation window, the Configuration window and the saved file.

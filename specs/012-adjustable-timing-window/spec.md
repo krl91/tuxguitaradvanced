@@ -18,7 +18,7 @@ What the code does today (inspected 2026-10-15, `TimingTolerance.Preset`): each 
 
 ### Session 2026-10-15
 
-- Q: How does the learner adjust the window, and over what range? → A: A **continuous slider in milliseconds each side, at a reference of 120 beats a minute, from 40 ms to 200 ms** (today's widest, Lenient, is 125 ms). It **replaces** the Strict / Normal / Lenient list; an older saved preset is converted to its width at that reference (Strict 50 ms, Normal 75 ms, Lenient 125 ms).
+- Q: How does the learner adjust the window, and over what range? → A: A **continuous slider in milliseconds each side, at a reference of 120 beats a minute, from 40 ms to 200 ms** (today's widest, Lenient, is 125 ms). It **replaces** the Strict / Normal / Lenient list; an older saved preset is converted at that reference (Strict 50 ms, Lenient 125 ms; Normal, the old default, becomes the new default 100 ms: corrected by the analysis of 2026-10-15, because a saved "normal" cannot be told from a default never chosen).
 - Q: What is the default? → A: **100 ms each side at 120 bpm** (today's Normal is 75 ms: a third more lenient).
 - Q: Where is the remembered value set? → A: **One setting**: what the learner chooses in the preparation window is remembered at once and is also the value shown in the Configuration window (one place of truth, no separate saved default).
 
@@ -105,7 +105,7 @@ Everything outside the width of the window stays as it is: the recognition, the 
 - **FR-003**: The **default** window is **100 ms each side at 120 beats a minute**, a third more lenient than today's Normal (75 ms).
 - **FR-004**: The window MUST keep growing and shrinking with the tempo, within a floor and a ceiling, as today's presets do, so that the same setting is usable at 60 and at 180 beats a minute.
 - **FR-005**: The setting MUST apply to **both Follow and Arcade**, which share the same judging, and MUST scale the **outer window** (early and late) with the tight one so that *early* and *late* keep their meaning; the outer window MUST still be cut at the middle of the gap to the neighbouring events.
-- **FR-006**: The choice MUST be remembered between runs and between launches as **one setting**: the value chosen in the preparation window is remembered at once and is the value the Configuration window shows. A configuration saved by an earlier version with a preset name MUST still load and map to a window of the same width as that preset (Strict 50 ms, Normal 75 ms, Lenient 125 ms at 120 bpm).
+- **FR-006**: The choice MUST be remembered between runs and between launches as **one setting**: the value chosen in the preparation window is remembered at once and is the value the Configuration window shows. A configuration saved by an earlier version with a preset name MUST still load: **Strict maps to 50 ms and Lenient to 125 ms** (the width of those presets at 120 bpm), and **Normal, the old default, maps to the new default of 100 ms**, because the store writes every setting as soon as one is saved, so that a saved "normal" cannot be told from a default that was never chosen (analysis of 2026-10-15).
 - **FR-007**: A missing, invalid or out-of-range saved value MUST fall back to the default or to the nearest allowed value without an error.
 - **FR-008**: A change MUST apply to the **next run**, not to a run in progress.
 - **FR-009**: The judging MUST remain **deterministic**: the same performance and the same window give the same result.
@@ -127,7 +127,7 @@ Everything outside the width of the window stays as it is: the recognition, the 
 - **SC-002**: The widest setting (200 ms each side at 120 bpm) is **wider than today's Lenient** (125 ms), and the narrowest (40 ms) is **no wider than today's Strict** (50 ms).
 - **SC-003**: With the **new default (100 ms)**, a note played **90 ms late at 120 bpm is judged on time**, where today's Normal (75 ms) judges it late; and with the window set to 75 ms the same note is judged late as before.
 - **SC-004**: With the window set to the width of today's Normal, **all recorded performances give identical judgements, scores and results** to those before this feature (0 differences).
-- **SC-005**: A setting saved by the previous version in each of its three preset names **loads in 3 of 3 cases** and gives a window of the width of that preset.
+- **SC-005**: A setting saved by the previous version in each of its three preset names **loads in 3 of 3 cases**: Strict gives 50 ms, Lenient 125 ms, and Normal the new default 100 ms.
 - **SC-006**: The chosen value **survives a restart** in 100 % of the checks, and an invalid saved value never prevents the application from starting.
 - **SC-007**: The control and its texts are present in **3 of 3 languages**, and a window with the longest text shows nothing cut or outside.
 - **SC-008**: The owner, trying the built application, finds the default **less hard** and the adjustment **usable**; the answer is recorded.

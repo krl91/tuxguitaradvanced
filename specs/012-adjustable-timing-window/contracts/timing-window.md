@@ -14,7 +14,7 @@ For W in 40..200 and a local beat B (ns), `windowFor(target, B, gapBefore, gapAf
 ## 2. The setting
 `RecognitionParameters.TEMPO_WINDOW`: `Number`, key `...tempo.window`, section NOTES, unit "ms", default 100, minimum 40, maximum 200, integer. `RecognitionParameters.TEMPO_TOLERANCE` (the old Choice) stays, legacy, with no control.
 
-**Migration (in `RecognitionSettings.fromStrings`).** If the stored map has no `tempo.window` and has `tempo.tolerance` equal to `strict`, `normal` or `lenient`, the window is 50, 75 or 125; otherwise the default 100 (or the stored value, repaired into 40..200).
+**Migration (in `RecognitionSettings.fromStrings`).** If the stored map has no `tempo.window` and has `tempo.tolerance` equal to `strict` or `lenient`, the window is 50 or 125; `normal` (the old default, which the store writes whether or not it was chosen), an absent or an unreadable value gives the default 100; a stored `tempo.window` is repaired into 40..200.
 
 ## 3. The one setting
 `FollowSettings.getWindowMillis()` returns the store's current W; `setWindowMillis(ms)` stores `clamp(ms, 40, 200)` through `RecognitionSettingsStore.update`, which persists it and notifies the listeners (the Configuration window). A change applies to the **next run** (the run reads W once, in `FollowStarter.prepare`).

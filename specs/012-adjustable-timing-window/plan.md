@@ -6,7 +6,7 @@
 
 ## Summary
 
-The three fixed presets (Strict, Normal, Lenient) are replaced by **one number W**: the half-width, in milliseconds at 120 beats a minute, of the window in which a note counts as on time. The windows keep today's shape (a fraction of the local beat between a floor and a ceiling, the outer early/late window cut at the middle of the gap to the neighbours) and are **derived from W with the ratios of today's Normal**, so that **W = 75 reproduces Normal exactly** and the new default is **W = 100**. W is a new saved parameter `TEMPO_WINDOW` (40 to 200 ms), shown by a slider in the preparation window and by the control the Configuration window builds by itself: **one setting**. A configuration saved with an old preset name loads and maps to 50, 75 or 125. The recognition, the latency compensation and the Wait mode do not change.
+The three fixed presets (Strict, Normal, Lenient) are replaced by **one number W**: the half-width, in milliseconds at 120 beats a minute, of the window in which a note counts as on time. The windows keep today's shape (a fraction of the local beat between a floor and a ceiling, the outer early/late window cut at the middle of the gap to the neighbours) and are **derived from W with the ratios of today's Normal**, so that **W = 75 reproduces Normal exactly** and the new default is **W = 100**. W is a new saved parameter `TEMPO_WINDOW` (40 to 200 ms), shown by a slider in the preparation window and by the control the Configuration window builds by itself: **one setting**. A configuration saved with an old preset name loads: strict 50, lenient 125, normal (the old default) the new default 100. The recognition, the latency compensation and the Wait mode do not change.
 
 ## Technical Context
 
