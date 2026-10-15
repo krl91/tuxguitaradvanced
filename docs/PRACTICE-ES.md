@@ -34,7 +34,7 @@ En la pestaña **Modo** de la ventana de práctica eliges cómo se trabaja la pa
 | **Seguir el tempo** | La partitura suena a su tempo, tras una cuenta atrás. La pista que practicas queda muda y las demás suenan de acompañamiento. Cada nota o acorde se juzga en el tiempo: a tiempo, pronto, tarde, errónea, fallada. |
 | **Arcade** | La misma partida, presentada como un juego: las notas vienen hacia ti sobre un mástil y se juzgan al pasar. El resultado se muestra al final. |
 
-Los dos modos cronometrados comparten el **tempo** (20 % a 150 % del tempo escrito), la **tolerancia de tiempo** (estricta, normal, flexible) y la **calibración del ritmo** de tu cadena de audio (calibra con clics, o escribe el retraso a mano: sin ella las notas pueden juzgarse algo pronto o tarde, y la ventana indica *Precisión rítmica reducida*).
+Los dos modos cronometrados comparten el **tempo** (20 % a 150 % del tempo escrito), la **ventana de tiempo** (un control deslizante de 40 a 200 ms a cada lado a 120 pulsos por minuto, **100 ms** por defecto; crece y se reduce con el tempo, es un único ajuste guardado que también aparece en la ventana de Configuración, y una elección antigua se convierte: estricta 50 ms, flexible 125 ms, normal el nuevo valor por defecto; una ventana ancha puede hacer confundir una nota con la que aún suena en un pasaje denso) y la **calibración del ritmo** de tu cadena de audio (calibra con clics, o escribe el retraso a mano: sin ella las notas pueden juzgarse algo pronto o tarde, y la ventana indica *Precisión rítmica reducida*).
 
 ### Arcade
 

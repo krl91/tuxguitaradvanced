@@ -1,7 +1,6 @@
 package app.tuxguitar.app.tools.custom.practice.session;
 
 import app.tuxguitar.audio.engine.settings.RecognitionParameters;
-import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.singleton.TGSingletonFactory;
@@ -9,9 +8,9 @@ import app.tuxguitar.util.singleton.TGSingletonUtil;
 
 /**
  * What the learner chooses in the preparation window for the tempo-following mode (spec 002 T098, FR-051, FR-052): the mode, the percentage of the
- * written tempo and the timing tolerance. Kept in memory for the application run (one instance per {@link TGContext}), like the passage choice;
- * the tolerance starts from the one saved in the Configuration window ({@link RecognitionParameters#TEMPO_TOLERANCE}) and returns to it whenever
- * that one changes. The mode starts as the wait mode: nothing changes for a learner who never opens this choice.
+ * written tempo and the timing window. Kept in memory for the application run (one instance per {@link TGContext}), like the passage choice, except the
+ * <b>window</b>, which is one saved setting (spec 012): it lives in the recognition store ({@link RecognitionParameters#TEMPO_WINDOW}), what the learner sets here is
+ * saved at once and is what the Configuration window shows. The mode starts as the wait mode: nothing changes for a learner who never opens this choice.
  * <p>
  * Each value is its own: changing one never changes another.
  */
@@ -26,6 +25,8 @@ public final class FollowSettings {
 		ARCADE
 	}
 
+	/** The default window, in milliseconds each side at 120 beats a minute: a third more lenient than the old Normal (75 ms). */
+	public static final int DEFAULT_WINDOW_MILLIS = 100;
 	public static final int MIN_PERCENT = 20;
 	public static final int MAX_PERCENT = 150;
 	public static final int DEFAULT_PERCENT = 100;
@@ -50,18 +51,16 @@ public final class FollowSettings {
 	private FlameSetting flames = FlameSetting.DISCREET;
 	private Mode mode = Mode.WAIT;
 	private int percent = DEFAULT_PERCENT;
-	private TimingTolerance.Preset tolerance;
+	/** The window of a settings object that has no store (tests, a window without one). */
+	private int ownWindowMillis = DEFAULT_WINDOW_MILLIS;
 
 	FollowSettings(RecognitionSettingsStore store) {
 		this.store = store;
-		resetToleranceTo(store.get());
-		store.addListener((previous, current) -> resetToleranceTo(current));
 	}
 
-	/** For the tests and for a window that has no store: the tolerance is the normal one until it is set. */
+	/** For the tests and for a window that has no store: the window is the default one until it is set. */
 	FollowSettings() {
 		this.store = null;
-		this.tolerance = TimingTolerance.Preset.NORMAL;
 	}
 
 	public static FollowSettings getInstance(TGContext context) {
@@ -71,21 +70,6 @@ public final class FollowSettings {
 				return new FollowSettings(RecognitionSettingsStore.getInstance(singletonContext));
 			}
 		});
-	}
-
-	private synchronized void resetToleranceTo(RecognitionSettings settings) {
-		this.tolerance = presetOf(settings.get(RecognitionParameters.TEMPO_TOLERANCE));
-	}
-
-	/** The preset named by the saved setting ({@code strict}, {@code normal}, {@code lenient}); the normal one for anything else. */
-	public static TimingTolerance.Preset presetOf(String name) {
-		if (RecognitionParameters.TOLERANCE_STRICT.equals(name)) {
-			return TimingTolerance.Preset.STRICT;
-		}
-		if (RecognitionParameters.TOLERANCE_LENIENT.equals(name)) {
-			return TimingTolerance.Preset.LENIENT;
-		}
-		return TimingTolerance.Preset.NORMAL;
 	}
 
 	public synchronized Mode getMode() {
@@ -148,12 +132,26 @@ public final class FollowSettings {
 		return this.horizonPercent;
 	}
 
-	public synchronized TimingTolerance.Preset getTolerance() {
-		return this.tolerance;
+	/** The half-width of the on-time window in milliseconds at 120 beats a minute (spec 012), the saved one; it is read once when a run is prepared. */
+	public int getWindowMillis() {
+		if (this.store == null) {
+			synchronized (this) {
+				return this.ownWindowMillis;
+			}
+		}
+		return (int) Math.round(this.store.get().get(RecognitionParameters.TEMPO_WINDOW));
 	}
 
-	public synchronized void setTolerance(TimingTolerance.Preset preset) {
-		this.tolerance = (preset != null ? preset : TimingTolerance.Preset.NORMAL);
+	/** Sets the window, brought into its range, and saves it at once as the one setting that the Configuration window shows too. */
+	public void setWindowMillis(int millis) {
+		int bounded = Math.max(TimingTolerance.MIN_WIDTH_MILLIS, Math.min(TimingTolerance.MAX_WIDTH_MILLIS, millis));
+		if (this.store == null) {
+			synchronized (this) {
+				this.ownWindowMillis = bounded;
+			}
+			return;
+		}
+		this.store.update(this.store.get().with(RecognitionParameters.TEMPO_WINDOW, (double) bounded));
 	}
 
 	public synchronized boolean isFollow() {

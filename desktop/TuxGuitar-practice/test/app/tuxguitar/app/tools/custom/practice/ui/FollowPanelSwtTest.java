@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
 import app.tuxguitar.app.tools.custom.practice.session.LatencyCompensation;
-import app.tuxguitar.app.tools.custom.practice.session.TimingTolerance;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.resource.UIRectangle;
@@ -72,13 +71,13 @@ public class FollowPanelSwtTest {
 			// the percentage and the tolerance, as native events; each reaches the settings and none moves the other
 			setSpinner(display, percent, 70);
 			assertEquals(70, settings.getPercent());
-			selectIndex(display, nativeOf(panel.toleranceSelect()), 2);
-			assertEquals(TimingTolerance.Preset.LENIENT, settings.getTolerance());
-			assertEquals(70, nativeInt(percent, "getSelection"), "the percentage stays when the tolerance changes");
+			setSpinner(display, nativeOf(panel.windowSlider()), 125);
+			assertEquals(125, settings.getWindowMillis());
+			assertEquals(70, nativeInt(percent, "getSelection"), "the percentage stays when the window changes");
 			setSpinner(display, percent, 5);
 			assertEquals(FollowSettings.MIN_PERCENT, settings.getPercent(), "outside its bounds, brought back");
 			assertEquals(FollowSettings.MIN_PERCENT, nativeInt(percent, "getSelection"), "and shown as brought back");
-			assertEquals(TimingTolerance.Preset.LENIENT, settings.getTolerance());
+			assertEquals(125, settings.getWindowMillis());
 
 			// not calibrated: the reduced precision is said, in the window
 			assertTrue(panel.precisionLabel().getText().contains("practice.follow.precision.reduced"));

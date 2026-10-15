@@ -86,7 +86,7 @@
     <tr><td>Sensibilité à l'attaque</td><td>dB</td><td>2</td><td>10</td><td>4.5</td><td>détecte les attaques douces, mais les chocs et le bruit peuvent compter</td><td>ignore mieux le bruit, peut manquer les attaques douces</td></tr>
     <tr><td>Liés, tirés-poussés, glissés</td><td>choix</td><td>—</td><td>—</td><td>Nouvelle attaque pour chaque note</td><td>—</td><td>—</td></tr>
     <tr><td>Vérifier les techniques de jeu</td><td>on/off</td><td>—</td><td>—</td><td>Activé</td><td>Désactivé : toute technique est indiquée comme non vérifiable</td><td>—</td></tr>
-    <tr><td>Tolérance de timing (jeu au tempo)</td><td>choice</td><td>—</td><td>—</td><td>Normal</td><td>—</td><td>—</td></tr>
+    <tr><td>Fenêtre de temps (jeu au tempo)</td><td>ms</td><td>40</td><td>200</td><td>100</td><td>plus strict : une note doit être plus proche de son heure écrite pour compter à l'heure</td><td>plus souple : les notes un peu en avance ou en retard comptent encore, mais dans un passage dense une note peut être prise pour celle qui résonne encore. Millisecondes de chaque côté à 120 battements par minute ; la fenêtre réelle s'élargit et se resserre avec le tempo</td></tr>
     </table>
     <h2 id="chords">Pratique — accords</h2>
     <p>Un accord est vérifié par rapport à l'accord écrit : chaque corde qui a des harmoniques propres doit être entendue dans la fenêtre de grattage. Les cordes impossibles à distinguer à l'oreille (même note deux fois, ou octave d'une corde plus grave) sont indiquées « non vérifiées » et jamais déclarées entendues. Les cordes en trop ne sont pas vérifiées dans cette version.</p>

@@ -141,18 +141,19 @@ public class FollowStarterTest {
 		}
 	}
 
-	private static FollowSettings settings(int percent, TimingTolerance.Preset preset) {
+	/** The window is given in milliseconds; 75 is the old Normal, which these tests were written with, so that their figures do not move (spec 012). */
+	private static FollowSettings settings(int percent, int windowMillis) {
 		FollowSettings settings = new FollowSettings();
 		settings.setMode(FollowSettings.Mode.FOLLOW);
 		settings.setPercent(percent);
-		settings.setTolerance(preset);
+		settings.setWindowMillis(windowMillis);
 		return settings;
 	}
 
 	@Test
 	public void thePercentageIsTheTimelineAndTheTempoOfThePlayer() {
-		Prepared slow = new Prepared(fiveNotes(), settings(70, TimingTolerance.Preset.NORMAL), -1);
-		Prepared full = new Prepared(fiveNotes(), settings(100, TimingTolerance.Preset.NORMAL), -1);
+		Prepared slow = new Prepared(fiveNotes(), settings(70, 75), -1);
+		Prepared full = new Prepared(fiveNotes(), settings(100, 75), -1);
 
 		assertEquals(70, slow.plan.percent());
 		assertEquals(70, slow.plan.timeline().percent());
@@ -178,13 +179,13 @@ public class FollowStarterTest {
 	}
 
 	@Test
-	public void theToleranceTheLearnerChoseIsTheOneOfTheWindows() {
-		// a note 100 ms late on a quarter note of 500 ms: late for the normal window (75 ms), on time for the lenient one (125 ms)
-		TimingTolerance.Preset[] presets = { TimingTolerance.Preset.NORMAL, TimingTolerance.Preset.LENIENT };
+	public void theWindowTheLearnerChoseIsTheOneOfTheJudgement() {
+		// a note 100 ms late on a quarter note of 500 ms: late for a window of 75 ms each side, on time for one of 125 ms
+		int[] widths = { 75, 125 };
 		TimingVerdict[] verdicts = new TimingVerdict[2];
 		for (int i = 0; i < 2; i++) {
-			Prepared run = new Prepared(fiveNotes(), settings(100, presets[i]), -1);
-			assertEquals(presets[i], run.plan.tolerance());
+			Prepared run = new Prepared(fiveNotes(), settings(100, widths[i]), -1);
+			assertEquals(widths[i], run.plan.windowMillis());
 			run.environment.calibrations.set(ROUTE, LatencyCompensation.calibrated(0.0));
 			run.start();
 			for (int e = 0; e < 5; e++) {
@@ -203,7 +204,7 @@ public class FollowStarterTest {
 		FollowSession.Snapshot calibrated = null;
 		FollowSession.Snapshot uncalibrated = null;
 		for (int pass = 0; pass < 2; pass++) {
-			Prepared run = new Prepared(fiveNotes(), settings(100, TimingTolerance.Preset.NORMAL), -1);
+			Prepared run = new Prepared(fiveNotes(), settings(100, 75), -1);
 			if (pass == 0) {
 				run.environment.calibrations.set(ROUTE, LatencyCompensation.calibrated(120.0));
 			}
@@ -228,7 +229,7 @@ public class FollowStarterTest {
 
 	@Test
 	public void aCalibrationOfAnotherRouteIsNotUsedAndAnUnstableRouteIsSaid() {
-		Prepared run = new Prepared(fiveNotes(), settings(100, TimingTolerance.Preset.NORMAL), -1);
+		Prepared run = new Prepared(fiveNotes(), settings(100, 75), -1);
 		run.environment.calibrations.set(new AudioRoute("USB interface", "speakers", 48000, "1ch 16bit"), LatencyCompensation.calibrated(30.0));
 		run.environment.lagSpread = 150.0;
 		run.start();
@@ -243,7 +244,7 @@ public class FollowStarterTest {
 	@Test
 	public void theRunJudgesTheEventsFromTheStartTheLearnerChoseAndStartsThePlayerThere() {
 		SongFixture fixture = fiveNotes();
-		Prepared run = new Prepared(fixture, settings(100, TimingTolerance.Preset.NORMAL), 1);
+		Prepared run = new Prepared(fixture, settings(100, 75), 1);
 
 		assertEquals(1, run.plan.sequence().getEvents().size(), "only the last note is left");
 		assertEquals(FollowStarter.FIRST_TICK + 3840L, run.plan.startTick(), "the player starts at the beginning of the measure of that note");
@@ -253,7 +254,7 @@ public class FollowStarterTest {
 
 	@Test
 	public void noVerdictBeforeTheCaptureClockIsReady() {
-		Prepared run = new Prepared(fiveNotes(), settings(100, TimingTolerance.Preset.NORMAL), -1);
+		Prepared run = new Prepared(fiveNotes(), settings(100, 75), -1);
 		run.environment.captureReady = false;
 		run.start();
 		for (int e = 0; e < 5; e++) {

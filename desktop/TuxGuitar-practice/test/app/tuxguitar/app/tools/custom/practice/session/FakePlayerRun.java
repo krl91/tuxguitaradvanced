@@ -63,15 +63,20 @@ final class FakePlayerRun {
 
 	/** @param leadNanos the count-down: the first measure of the score begins this long after the first frame */
 	FakePlayerRun(SongFixture fixture, int percent, long articulationLatency, long leadNanos) {
-		this(fixture, fixture.song, fixture.sequence(), percent, articulationLatency, leadNanos);
+		this(fixture, fixture.song, fixture.sequence(), percent, articulationLatency, leadNanos, new TimingTolerance(Preset.NORMAL));
+	}
+
+	/** A run judged with the given windows (spec 012: the width the learner chose instead of the old Normal preset). */
+	FakePlayerRun(SongFixture fixture, int percent, TimingTolerance tolerance) {
+		this(fixture, fixture.song, fixture.sequence(), percent, 0L, LEAD, tolerance);
 	}
 
 	/** A run on a song that is not a fixture (a score read from a file): the sequence is the one of its track. */
 	FakePlayerRun(TGSong song, PracticeSequence sequence, int percent, long articulationLatency, long leadNanos) {
-		this(null, song, sequence, percent, articulationLatency, leadNanos);
+		this(null, song, sequence, percent, articulationLatency, leadNanos, new TimingTolerance(Preset.NORMAL));
 	}
 
-	private FakePlayerRun(SongFixture fixture, TGSong song, PracticeSequence sequence, int percent, long articulationLatency, long leadNanos) {
+	private FakePlayerRun(SongFixture fixture, TGSong song, PracticeSequence sequence, int percent, long articulationLatency, long leadNanos, TimingTolerance tolerance) {
 		this.lead = leadNanos;
 		this.fixture = fixture;
 		this.sequence = sequence;
@@ -88,7 +93,6 @@ final class FakePlayerRun {
 		this.clock.setNow(T0);
 		this.player = new FakeMidiPlayer(this.clock).withInitialState(100, false, true).countDownNanos(leadNanos);
 		this.playback = new FollowPlayback(this.player, TRACK, percent, BASE_TICK + this.timeline.playStartTicks(0), this.ends::add);
-		TimingTolerance tolerance = new TimingTolerance(Preset.NORMAL);
 		this.session = new FollowSession(this.sequence, this.timeline, BASE_TICK, this.clock, frame -> {
 					if (this.failDating) {
 						throw new IllegalStateException("the session fails");

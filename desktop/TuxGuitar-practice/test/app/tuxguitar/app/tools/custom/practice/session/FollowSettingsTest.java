@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
 import app.tuxguitar.app.tools.custom.practice.model.SongFixture;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSettings.Mode;
-import app.tuxguitar.app.tools.custom.practice.session.TimingTolerance.Preset;
 import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 
@@ -29,13 +28,13 @@ public class FollowSettingsTest {
 	}
 
 	@Test
-	public void theWaitModeIsTheDefaultAtTheTempoOfTheScoreWithTheNormalTolerance() {
+	public void theWaitModeIsTheDefaultAtTheTempoOfTheScoreWithTheDefaultWindowOfOneHundredMilliseconds() {
 		FollowSettings settings = new FollowSettings(new RecognitionSettingsStore(new Memory()));
 
 		assertEquals(Mode.WAIT, settings.getMode());
 		assertFalse(settings.isFollow());
 		assertEquals(100, settings.getPercent());
-		assertEquals(Preset.NORMAL, settings.getTolerance());
+		assertEquals(100, settings.getWindowMillis(), "a third more lenient than the old Normal (75 ms)");
 	}
 
 	@Test
@@ -43,53 +42,54 @@ public class FollowSettingsTest {
 		FollowSettings settings = new FollowSettings(new RecognitionSettingsStore(new Memory()));
 		settings.setMode(Mode.FOLLOW);
 		settings.setPercent(70);
-		settings.setTolerance(Preset.STRICT);
+		settings.setWindowMillis(60);
 
 		settings.setPercent(85);
 		assertEquals(Mode.FOLLOW, settings.getMode());
-		assertEquals(Preset.STRICT, settings.getTolerance());
+		assertEquals(60, settings.getWindowMillis());
 
-		settings.setTolerance(Preset.LENIENT);
+		settings.setWindowMillis(180);
 		assertEquals(85, settings.getPercent());
 		assertEquals(Mode.FOLLOW, settings.getMode());
 
 		settings.setMode(Mode.WAIT);
 		assertEquals(85, settings.getPercent(), "going back to the wait mode keeps what was chosen for the next time");
-		assertEquals(Preset.LENIENT, settings.getTolerance());
+		assertEquals(180, settings.getWindowMillis());
 		settings.setMode(null);
 		assertEquals(Mode.WAIT, settings.getMode());
-		settings.setTolerance(null);
-		assertEquals(Preset.NORMAL, settings.getTolerance());
 	}
 
 	@Test
-	public void theToleranceStartsFromTheSavedConfigurationAndReturnsToItWhenItChanges() {
+	public void theWindowIsOneSettingSharedWithTheStoreSavedAtOnceAndFollowedWhenTheConfigurationChangesIt() {
 		Memory file = new Memory();
 		RecognitionSettingsStore saved = new RecognitionSettingsStore(file);
-		saved.update(saved.get().with(RecognitionParameters.TEMPO_TOLERANCE, RecognitionParameters.TOLERANCE_STRICT));
+		saved.update(saved.get().with(RecognitionParameters.TEMPO_WINDOW, 150.0));
 
 		FollowSettings settings = new FollowSettings(new RecognitionSettingsStore(file));
-		assertEquals(Preset.STRICT, settings.getTolerance(), "the saved value");
+		assertEquals(150, settings.getWindowMillis(), "the saved value");
 
-		settings.setTolerance(Preset.LENIENT);
-		assertEquals(Preset.LENIENT, settings.getTolerance(), "this run's choice");
-		assertEquals(RecognitionParameters.TOLERANCE_STRICT, new RecognitionSettingsStore(file).get().get(RecognitionParameters.TEMPO_TOLERANCE), "not saved");
+		settings.setWindowMillis(70);
+		assertEquals(70, settings.getWindowMillis());
+		assertEquals(70.0, new RecognitionSettingsStore(file).get().get(RecognitionParameters.TEMPO_WINDOW), "saved at once: one setting, not a choice of this run only");
 
 		RecognitionSettingsStore store = new RecognitionSettingsStore(new Memory());
 		FollowSettings live = new FollowSettings(store);
-		live.setTolerance(Preset.LENIENT);
-		store.update(store.get().with(RecognitionParameters.TEMPO_TOLERANCE, RecognitionParameters.TOLERANCE_LENIENT));
-		store.update(store.get().with(RecognitionParameters.TEMPO_TOLERANCE, RecognitionParameters.TOLERANCE_STRICT));
-		assertEquals(Preset.STRICT, live.getTolerance(), "confirming the Configuration window resets the run choice");
+		java.util.concurrent.atomic.AtomicInteger changes = new java.util.concurrent.atomic.AtomicInteger();
+		store.addListener((previous, current) -> changes.incrementAndGet());
+		live.setWindowMillis(130);
+		assertEquals(1, changes.get(), "the Configuration window is told once");
+		store.update(store.get().with(RecognitionParameters.TEMPO_WINDOW, 45.0));
+		assertEquals(45, live.getWindowMillis(), "a change made in the Configuration window is the same setting");
 	}
 
 	@Test
-	public void everySavedNameHasItsPresetAndAnythingElseIsNormal() {
-		assertEquals(Preset.STRICT, FollowSettings.presetOf("strict"));
-		assertEquals(Preset.NORMAL, FollowSettings.presetOf("normal"));
-		assertEquals(Preset.LENIENT, FollowSettings.presetOf("lenient"));
-		assertEquals(Preset.NORMAL, FollowSettings.presetOf("unknown"));
-		assertEquals(Preset.NORMAL, FollowSettings.presetOf(null));
+	public void theWindowIsBroughtIntoItsRangeAndAnEmptyFollowSettingsHasTheDefault() {
+		FollowSettings settings = new FollowSettings(new RecognitionSettingsStore(new Memory()));
+		settings.setWindowMillis(10);
+		assertEquals(TimingTolerance.MIN_WIDTH_MILLIS, settings.getWindowMillis());
+		settings.setWindowMillis(900);
+		assertEquals(TimingTolerance.MAX_WIDTH_MILLIS, settings.getWindowMillis());
+		assertEquals(100, new FollowSettings().getWindowMillis(), "a window that has no store");
 		assertTrue(FollowSettings.MIN_PERCENT < FollowSettings.DEFAULT_PERCENT && FollowSettings.DEFAULT_PERCENT < FollowSettings.MAX_PERCENT);
 	}
 
@@ -114,17 +114,17 @@ public class FollowSettingsTest {
 	}
 
 	@Test
-	public void arcadeIsAThirdModeThatSharesThePercentageAndTheToleranceWithFollowingAndChangesNothingOfThem() {
+	public void arcadeIsAThirdModeThatSharesThePercentageAndTheWindowWithFollowingAndChangesNothingOfThem() {
 		FollowSettings settings = new FollowSettings(new RecognitionSettingsStore(new Memory()));
 		settings.setPercent(80);
-		settings.setTolerance(Preset.STRICT);
+		settings.setWindowMillis(60);
 
 		settings.setMode(Mode.ARCADE);
 		assertTrue(settings.isArcade());
 		assertFalse(settings.isFollow(), "following and Arcade are two modes");
 		assertTrue(settings.isTimed(), "both are played at the tempo of the score and judged on time");
 		assertEquals(80, settings.getPercent());
-		assertEquals(Preset.STRICT, settings.getTolerance());
+		assertEquals(60, settings.getWindowMillis());
 
 		settings.setMode(Mode.FOLLOW);
 		assertFalse(settings.isArcade());

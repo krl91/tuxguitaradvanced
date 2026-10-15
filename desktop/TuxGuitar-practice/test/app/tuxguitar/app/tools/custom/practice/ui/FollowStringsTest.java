@@ -177,4 +177,20 @@ public class FollowStringsTest {
 			}
 		}
 	}
+
+	@Test
+	public void theTimingWindowHasItsTextsInTheThreeLanguagesWithTheValuePlaceholderAndTheOldPresetNamesAreGone() throws IOException {
+		// spec 012 T010, FR-011: the label, the value with its placeholder and the hint; the three preset names no longer exist
+		for (String file : FILES) {
+			Properties properties = load(file);
+			for (String key : new String[] { "practice.follow.tolerance", "practice.follow.tolerance.value", "practice.follow.tolerance.hint" }) {
+				String text = properties.getProperty(key);
+				assertTrue(text != null && !text.trim().isEmpty(), file + ": " + key + " exists and is not empty");
+			}
+			assertTrue(properties.getProperty("practice.follow.tolerance.value").contains("{0}"), file + ": the value text carries the width");
+			for (String gone : new String[] { "practice.follow.tolerance.strict", "practice.follow.tolerance.normal", "practice.follow.tolerance.lenient" }) {
+				assertTrue(properties.getProperty(gone) == null, file + ": " + gone + " is no longer a text of the interface");
+			}
+		}
+	}
 }

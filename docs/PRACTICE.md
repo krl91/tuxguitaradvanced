@@ -52,7 +52,7 @@ In the **Mode** tab of the practice window you choose how the score is practised
 | **Follow the tempo** | The score plays at its tempo, after a count-in. The track you practise is silent, the other tracks sound as a backing. Each note or chord is judged on time: on time, early, late, wrong, missed. |
 | **Arcade** | The same run, shown as a game: the notes come towards you on a neck and are judged as they pass. The result of the run is shown at the end. |
 
-Both timed modes share the **tempo** (20 % to 150 % of the written tempo), the **timing tolerance** (strict, normal, lenient) and the **rhythm calibration** of your audio route (calibrate with clicks, or type the delay by hand: without it the notes may be judged a little early or late, and the window says *Reduced rhythmic precision*).
+Both timed modes share the **tempo** (20 % to 150 % of the written tempo), the **timing window** (a slider from 40 to 200 ms each side at 120 beats a minute, **100 ms** by default; it grows and shrinks with the tempo, is one saved setting also shown in the Configuration window, and an older choice is converted: strict 50 ms, lenient 125 ms, normal the new default; a wide window can take a note for the one still ringing in a dense passage) and the **rhythm calibration** of your audio route (calibrate with clicks, or type the delay by hand: without it the notes may be judged a little early or late, and the window says *Reduced rhythmic precision*).
 
 ### Arcade
 

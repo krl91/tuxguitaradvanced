@@ -86,7 +86,7 @@
     <tr><td>Pick attack sensitivity</td><td>dB</td><td>2</td><td>10</td><td>4.5</td><td>soft attacks are detected, but knocks and noise may count as attacks</td><td>noise is ignored better, soft plucks may be missed</td></tr>
     <tr><td>Hammer-ons, pull-offs, slides</td><td>choice</td><td>—</td><td>—</td><td>New attack for every note</td><td>—</td><td>—</td></tr>
     <tr><td>Check playing techniques</td><td>on/off</td><td>—</td><td>—</td><td>On</td><td>Off: every technique is shown as not verifiable</td><td>—</td></tr>
-    <tr><td>Timing tolerance (playing at the tempo)</td><td>choice</td><td>—</td><td>—</td><td>Normal</td><td>—</td><td>—</td></tr>
+    <tr><td>Timing window (playing at the tempo)</td><td>ms</td><td>40</td><td>200</td><td>100</td><td>stricter: a note must be closer to its written time to count as on time</td><td>more lenient: notes played a little early or late still count, but in a dense passage a note may be taken for the one still ringing. Milliseconds each side at 120 beats a minute; the real window grows and shrinks with the tempo</td></tr>
     </table>
     <h2 id="chords">Practice — chords</h2>
     <p>A chord is checked against the written chord: each string that has overtones of its own must be heard within the strum window. Strings that cannot be told apart by sound (the same note twice, or an octave of a lower string) are shown as "not checked" and never claimed as heard. Extra wrong strings are not checked in this version.</p>

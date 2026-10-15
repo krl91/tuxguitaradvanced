@@ -124,9 +124,9 @@ public class FollowPanelTest {
 		SwtContractToolkit.userSelects(this.panel.percentSpinner());
 	}
 
-	private void chooseTolerance(TimingTolerance.Preset preset) {
-		this.panel.toleranceSelect().setSelectedValue(preset);
-		SwtContractToolkit.userSelects(this.panel.toleranceSelect());
+	private void chooseWindow(int millis) {
+		this.panel.windowSlider().setValue(millis);
+		SwtContractToolkit.userSelects(this.panel.windowSlider());
 	}
 
 	// ------------------------------------------------------------------ mode, percentage, tolerance
@@ -137,7 +137,7 @@ public class FollowPanelTest {
 
 		assertEquals(FollowSettings.Mode.WAIT, this.panel.modeSelect().getSelectedValue());
 		assertFalse(visible(this.panel.percentSpinner()));
-		assertFalse(visible(this.panel.toleranceSelect()));
+		assertFalse(visible(this.panel.windowSlider()));
 		assertFalse(visible(this.panel.calibrateButton()));
 		assertFalse(visible(this.panel.precisionLabel()), "the wait mode says nothing about the rhythm");
 
@@ -145,7 +145,7 @@ public class FollowPanelTest {
 
 		assertEquals(FollowSettings.Mode.FOLLOW, this.settings.getMode());
 		assertTrue(visible(this.panel.percentSpinner()));
-		assertTrue(visible(this.panel.toleranceSelect()));
+		assertTrue(visible(this.panel.windowSlider()));
 		assertTrue(visible(this.panel.calibrateButton()));
 		assertTrue(this.panel.announceLabel().getText().contains("practice.follow.calibration.announce"));
 	}
@@ -172,15 +172,17 @@ public class FollowPanelTest {
 	}
 
 	@Test
-	public void thePercentageAndTheToleranceTheLearnerPicksAreTheSettings() {
+	public void thePercentageAndTheWindowTheLearnerPicksAreTheSettingsAndTheSliderGoesFromFortyToTwoHundred() {
 		open();
 		chooseMode(FollowSettings.Mode.FOLLOW);
 
 		choosePercent(70);
-		chooseTolerance(TimingTolerance.Preset.STRICT);
+		chooseWindow(60);
 
 		assertEquals(70, this.settings.getPercent());
-		assertEquals(TimingTolerance.Preset.STRICT, this.settings.getTolerance());
+		assertEquals(60, this.settings.getWindowMillis());
+		assertEquals(TimingTolerance.MIN_WIDTH_MILLIS, this.panel.windowSlider().getMinimum());
+		assertEquals(TimingTolerance.MAX_WIDTH_MILLIS, this.panel.windowSlider().getMaximum());
 		assertEquals(FollowSettings.MIN_PERCENT, this.panel.percentSpinner().getMinimum());
 		assertEquals(FollowSettings.MAX_PERCENT, this.panel.percentSpinner().getMaximum());
 	}
@@ -205,21 +207,21 @@ public class FollowPanelTest {
 		this.backend.calibrations.set(ROUTE, LatencyCompensation.calibrated(66.0));
 		chooseMode(FollowSettings.Mode.FOLLOW);
 		choosePercent(85);
-		chooseTolerance(TimingTolerance.Preset.LENIENT);
+		chooseWindow(180);
 		this.panel.refresh();
 
-		chooseTolerance(TimingTolerance.Preset.STRICT);
+		chooseWindow(60);
 		assertEquals(85, this.panel.percentSpinner().getValue());
 		assertEquals(85, this.settings.getPercent());
 
 		choosePercent(60);
-		assertEquals(TimingTolerance.Preset.STRICT, this.panel.toleranceSelect().getSelectedValue());
-		assertEquals(TimingTolerance.Preset.STRICT, this.settings.getTolerance());
+		assertEquals(60, this.panel.windowSlider().getValue());
+		assertEquals(60, this.settings.getWindowMillis());
 
 		chooseMode(FollowSettings.Mode.WAIT);
 		chooseMode(FollowSettings.Mode.FOLLOW);
 		assertEquals(60, this.panel.percentSpinner().getValue(), "the choices are still there after a visit to the wait mode");
-		assertEquals(TimingTolerance.Preset.STRICT, this.panel.toleranceSelect().getSelectedValue());
+		assertEquals(60, this.panel.windowSlider().getValue());
 		assertEquals(66_000_000L, this.backend.calibrations.forRoute(ROUTE).offsetNanos(), "none of them touches the calibration");
 	}
 
@@ -446,7 +448,7 @@ public class FollowPanelTest {
 
 		assertEquals(FollowSettings.Mode.ARCADE, this.settings.getMode());
 		assertTrue(visible(this.panel.percentSpinner()), "the speed is shared with the following mode");
-		assertTrue(visible(this.panel.toleranceSelect()));
+		assertTrue(visible(this.panel.windowSlider()));
 		assertTrue(visible(this.panel.calibrateButton()));
 		assertTrue(this.panel.modeHintLabel().getText().contains("practice.mode.arcade.hint"));
 		assertTrue(this.panel.modeHintLabel().getText().contains("arcade.monitoring.unavailable"), "the learner is told that hearing the guitar through the application is not offered");
@@ -455,5 +457,26 @@ public class FollowPanelTest {
 		assertFalse(this.panel.modeHintLabel().getText().contains("arcade."), "the following mode says nothing of Arcade");
 		chooseMode(FollowSettings.Mode.WAIT);
 		assertFalse(visible(this.panel.percentSpinner()));
+	}
+
+	@Test
+	public void theSliderShowsTheSavedWindowWhenThePanelOpensAndFollowsAChangeMadeElsewhere() {
+		this.settings.setWindowMillis(130);
+		open();
+		chooseMode(FollowSettings.Mode.FOLLOW);
+		assertEquals(130, this.panel.windowSlider().getValue(), "the saved window, not a default");
+
+		this.settings.setWindowMillis(45); // the Configuration window changed the same setting
+		this.panel.refresh();
+		assertEquals(45, this.panel.windowSlider().getValue());
+	}
+
+	@Test
+	public void theWindowIsOnlyForTheTimedModesAndOnlyWhenIdle() {
+		open();
+		chooseMode(FollowSettings.Mode.WAIT);
+		assertFalse(visible(this.panel.windowSlider()), "the Wait mode has no tempo");
+		chooseMode(FollowSettings.Mode.ARCADE);
+		assertTrue(visible(this.panel.windowSlider()), "Arcade shares the window with Follow");
 	}
 }

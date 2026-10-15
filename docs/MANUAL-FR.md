@@ -463,7 +463,7 @@ Choisissez la **piste à travailler** (seules les pistes utilisables sont propos
 
 <img src="images/manual/practice-mode-follow.png" width="480" alt="L'onglet Mode avec Suivre le tempo">
 
-Le **mode d'entraînement** (liste déroulante) et, pour les modes chronométrés, le **tempo** (20 à 150 % du tempo écrit), la **tolérance de timing** (stricte, souple, normale), le **calibrage du rythme** et un **retard** manuel ; en Arcade, la **taille des rectangles qui arrivent** (0 à 150 %, 100 % étant la taille de la cible sur le manche) et l'**inclinaison du plan** (l'échelle à l'horizon et la hauteur de l'horizon), voir [B6](#b6-mode-arcade-alpha). En bas, la fenêtre rappelle le délai de reconnaissance mesuré (environ 0,1 s, et que des notes plus rapprochées que 0,3 s peuvent ne pas être suivies : la pratique vous attend alors).
+Le **mode d'entraînement** (liste déroulante) et, pour les modes chronométrés, le **tempo** (20 à 150 % du tempo écrit), la **fenêtre de temps** (un curseur de 40 à 200 ms), le **calibrage du rythme** et un **retard** manuel ; en Arcade, la **taille des rectangles qui arrivent** (0 à 150 %, 100 % étant la taille de la cible sur le manche) et l'**inclinaison du plan** (l'échelle à l'horizon et la hauteur de l'horizon), voir [B6](#b6-mode-arcade-alpha). En bas, la fenêtre rappelle le délai de reconnaissance mesuré (environ 0,1 s, et que des notes plus rapprochées que 0,3 s peuvent ne pas être suivies : la pratique vous attend alors).
 
 ### Onglet « Passages »
 
@@ -516,7 +516,7 @@ Démarrer ce mode ouvre d'abord la fenêtre de démarrage (question d'accord, ac
 **Réglages :**
 
 * **Tempo (% du tempo écrit)** : de 20 % à 150 %. Commencez plus lentement et montez par étapes.
-* **Tolérance de timing** : de combien une note peut s'écarter de son temps et compter comme à l'heure ; la fenêtre s'adapte au tempo. Trois niveaux : stricte, normale, souple (la valeur initiale est celle de *Configuration > Reconnaissance audio > Pratique, notes*).
+* **Fenêtre de temps** : de combien une note peut s'écarter de son heure écrite et compter comme à l'heure, en **curseur de 40 à 200 ms de chaque côté, mesurés à 120 battements par minute** (défaut **100 ms**) ; la fenêtre réelle s'élargit et se resserre avec le tempo, entre un plancher et un plafond. C'est **un seul réglage enregistré** : ce que vous réglez ici est conservé et se retrouve dans *Configuration > Reconnaissance audio > Pratique, notes*. Un choix enregistré par une ancienne version est converti (stricte 50 ms, souple 125 ms ; normale, l'ancien défaut, devient le nouveau défaut de 100 ms). Les valeurs sont provisoires tant qu'elles ne sont pas validées en jeu réel, et une fenêtre large a un coût : dans un passage dense, une note peut être prise pour celle qui résonne encore (mesuré sur la partition de démonstration avec une guitare synthétique : une mauvaise note sur 30 événements à partir de 85 ms, aucune à 75 ms).
 * **Calibrage du rythme** : le son met du temps à traverser votre entrée, votre sortie et le format audio ; sans calibrage, vos notes peuvent être jugées un peu en avance ou en retard et la fenêtre dit **« Précision rythmique réduite »**. Le bouton **Calibrer…** joue **8 clics** (environ 10 secondes) : jouez une note sur chaque clic, avec la guitare ; **Annuler** arrête les clics immédiatement. Le calibrage vaut pour **cette entrée, cette sortie et ce format audio** : changer l'un demande un nouveau calibrage. À défaut, saisissez un **retard (ms)** à la main (positif quand vos notes s'entendent en retard, entre −1000 et 1000 ms) avec *Appliquer*, ou *Oublier*.
 * Si le délai de l'entrée est élevé ou instable (typiquement sans fil), la fenêtre l'avertit : une entrée filaire est plus stable.
 
@@ -783,7 +783,7 @@ Assurez-vous d'abord que l'entrée audio fonctionne : ouvrez **Outils > Pratique
 
 ### Mode 2 : Suivre le tempo
 
-**Étape 18. Choisir le mode.** De retour dans la fenêtre de pratique, onglet *Mode* : **Suivre le tempo**. Le tempo (100 % = comme écrit), la tolérance de timing et le calibrage du rythme apparaissent. Pour un premier essai, laissez 100 %, ou baissez-le si le morceau est difficile pour vous. Appuyez ensuite sur **Suivre le tempo de cette piste**.
+**Étape 18. Choisir le mode.** De retour dans la fenêtre de pratique, onglet *Mode* : **Suivre le tempo**. Le tempo (100 % = comme écrit), la fenêtre de temps et le calibrage du rythme apparaissent. Pour un premier essai, laissez 100 %, ou baissez-le si le morceau est difficile pour vous. Appuyez ensuite sur **Suivre le tempo de cette piste**.
 
 <img src="images/manual-en/practice-mode-follow.png" width="480" alt="L'onglet Mode avec Suivre le tempo">
 
@@ -801,7 +801,7 @@ Assurez-vous d'abord que l'entrée audio fonctionne : ouvrez **Outils > Pratique
 
 ### Mode 3 : Arcade (alpha)
 
-**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la tolérance et le calibrage sont les mêmes ; de nouvelles lignes règlent la **taille des rectangles qui arrivent**, l'**inclinaison du plan** et les **flammes de scène**. Appuyez sur **Démarrer Arcade** (ou, la prochaine fois, cliquez sur le bouton Arcade coloré de la barre de transport, qui démarre tout de suite sur la piste sous le curseur). Appuyez sur **Démarrer Arcade**. La fenêtre de démarrage demande alors si la guitare est accordée et un accord de test avant le début de la partie (voir B3).
+**Étape 22. Choisir Arcade.** Onglet *Mode* : **Arcade**. Le tempo, la fenêtre de temps et le calibrage sont les mêmes ; de nouvelles lignes règlent la **taille des rectangles qui arrivent**, l'**inclinaison du plan** et les **flammes de scène**. Appuyez sur **Démarrer Arcade** (ou, la prochaine fois, cliquez sur le bouton Arcade coloré de la barre de transport, qui démarre tout de suite sur la piste sous le curseur). Appuyez sur **Démarrer Arcade**. La fenêtre de démarrage demande alors si la guitare est accordée et un accord de test avant le début de la partie (voir B3).
 
 <img src="images/manual-en/practice-mode-arcade.png" width="480" alt="L'onglet Mode avec Arcade">
 

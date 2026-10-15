@@ -51,9 +51,17 @@ public final class RecognitionParameters {
 	public static final String TOLERANCE_STRICT = "strict";
 	public static final String TOLERANCE_NORMAL = "normal";
 	public static final String TOLERANCE_LENIENT = "lenient";
-	/** Timing tolerance of the tempo-following mode (spec 002, FR-052); the values behind the presets come from the tempo spike. */
-	public static final Choice TEMPO_TOLERANCE = new Choice(PREFIX + "tempo.tolerance", Section.NOTES, TOLERANCE_NORMAL,
-			TOLERANCE_STRICT, TOLERANCE_NORMAL, TOLERANCE_LENIENT);
+	/**
+	 * How far from its written time a note may be and still count as on time in the tempo-following modes (spec 012): the half-width of the on-time window in milliseconds
+	 * <b>at 120 beats a minute</b>; the real window grows and shrinks with the tempo. It replaced the three presets of spec 002 FR-052 (the values behind them come from the
+	 * tempo spike); the default is a third more lenient than the old Normal (75 ms).
+	 */
+	public static final Number TEMPO_WINDOW = new Number(PREFIX + "tempo.window", Section.NOTES, "ms", 100, 40, 200, true);
+	/**
+	 * The key under which versions before spec 012 saved the choice of the preset ({@link #TOLERANCE_STRICT}, {@link #TOLERANCE_NORMAL}, {@link #TOLERANCE_LENIENT}). It is no
+	 * longer a parameter (it has no control), only read once to carry an older choice over to {@link #TEMPO_WINDOW}, and never written again.
+	 */
+	public static final String LEGACY_TEMPO_TOLERANCE_KEY = PREFIX + "tempo.tolerance";
 
 	// ---------------------------------------------------------------- practice: chords
 	public static final Number CHORD_EVIDENCE = new Number(PREFIX + "chord.evidence", Section.CHORDS, "%", 1.0 / 3.0, 0.20, 0.80, false, 100.0);
@@ -88,7 +96,7 @@ public final class RecognitionParameters {
 		List<RecognitionParameter> all = new ArrayList<RecognitionParameter>();
 		Collections.addAll(all, INPUT_LEVEL_MIN, INPUT_LEVEL_MAX, INPUT_NOISE_REDUCTION, INPUT_GAIN_SUGGESTION,
 				TUNER_IN_TUNE, TUNER_HOLD,
-				NOTE_ACCEPT, NOTE_FRET_SHARP, NOTE_CONFIDENCE, NOTE_STABILITY, NOTE_ATTACK, NOTE_LEGATO, NOTE_TECHNIQUE, TEMPO_TOLERANCE,
+				NOTE_ACCEPT, NOTE_FRET_SHARP, NOTE_CONFIDENCE, NOTE_STABILITY, NOTE_ATTACK, NOTE_LEGATO, NOTE_TECHNIQUE, TEMPO_WINDOW,
 				CHORD_EVIDENCE, CHORD_WINDOW, CHORD_COMPLETENESS, CHORD_FOREIGN,
 				PASSAGE_MEASURES, PASSAGE_THRESHOLD, PASSAGE_RETRIES,
 				ENGINE_PITCH,

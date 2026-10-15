@@ -17,6 +17,7 @@ import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.widget.UIButton;
 import app.tuxguitar.ui.widget.UIContainer;
 import app.tuxguitar.ui.widget.UIDropDownSelect;
+import app.tuxguitar.ui.widget.UIScale;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
 import app.tuxguitar.ui.widget.UISelectItem;
@@ -74,7 +75,7 @@ public final class FollowPanel {
 	private final UIDropDownSelect<FlameSetting> flames;
 	private final UILabel percentHint;
 	private final UILabel toleranceLabel;
-	private final UIDropDownSelect<TimingTolerance.Preset> tolerance;
+	private final UIScale tolerance;
 	private final UILabel toleranceHint;
 	private final UILabel calibrationTitle;
 	private final UILabel calibrationState;
@@ -168,13 +169,15 @@ public final class FollowPanel {
 		this.toleranceLabel = uiFactory.createLabel(this.panel);
 		this.toleranceLabel.setText(TuxGuitar.getProperty("practice.follow.tolerance"));
 		layout.set(this.toleranceLabel, 5, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
-		this.tolerance = uiFactory.createDropDownSelect(this.panel);
-		for (TimingTolerance.Preset preset : TimingTolerance.Preset.values()) {
-			this.tolerance.addItem(new UISelectItem<TimingTolerance.Preset>(TuxGuitar.getProperty("practice.follow.tolerance." + preset.name().toLowerCase()), preset));
-		}
+		// the timing window (spec 012): a slider in milliseconds each side at 120 beats a minute, one saved setting
+		this.tolerance = uiFactory.createHorizontalScale(this.panel);
+		this.tolerance.setMinimum(TimingTolerance.MIN_WIDTH_MILLIS);
+		this.tolerance.setMaximum(TimingTolerance.MAX_WIDTH_MILLIS);
+		this.tolerance.setIncrement(5);
+		this.tolerance.setValue(settings.getWindowMillis());
 		layout.set(this.tolerance, 5, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.toleranceHint = wrap(uiFactory, layout, 6);
-		this.toleranceHint.setText(TuxGuitar.getProperty("practice.follow.tolerance.hint"));
+		showWindowText();
 
 		this.calibrationTitle = uiFactory.createLabel(this.panel);
 		this.calibrationTitle.setText(TuxGuitar.getProperty("practice.follow.calibration"));
@@ -273,10 +276,8 @@ public final class FollowPanel {
 			}
 		}));
 		this.tolerance.addSelectionListener(selected(() -> {
-			TimingTolerance.Preset chosen = this.tolerance.getSelectedValue();
-			if (chosen != null) {
-				this.settings.setTolerance(chosen);
-			}
+			this.settings.setWindowMillis(this.tolerance.getValue());
+			showWindowText();
 		}));
 		this.manualApply.addSelectionListener(selected(this::applyManual));
 		this.manualForget.addSelectionListener(selected(this::forget));
@@ -339,7 +340,8 @@ public final class FollowPanel {
 			this.flames.setSelectedValue(this.settings.getFlames());
 			this.flamesLabel.setVisible(this.settings.isArcade());
 			this.flames.setVisible(this.settings.isArcade());
-			this.tolerance.setSelectedValue(this.settings.getTolerance());
+			this.tolerance.setValue(this.settings.getWindowMillis());
+			showWindowText();
 			this.modeHint.setText(this.settings.isArcade() ? TuxGuitar.getProperty("practice.mode.arcade.hint") + "\n" + TuxGuitar.getProperty("arcade.monitoring.unavailable")
 					: TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
 			boolean idle = (this.running == null);
@@ -568,7 +570,13 @@ public final class FollowPanel {
 		return this.percent;
 	}
 
-	UIDropDownSelect<TimingTolerance.Preset> toleranceSelect() {
+	/** The value of the window slider and what it means, with the hint (spec 012). */
+	private void showWindowText() {
+		this.toleranceHint.setText(TuxGuitar.getProperty("practice.follow.tolerance.value", new String[] { Integer.toString(this.tolerance.getValue()) }) + "\n"
+				+ TuxGuitar.getProperty("practice.follow.tolerance.hint"));
+	}
+
+	UIScale windowSlider() {
 		return this.tolerance;
 	}
 

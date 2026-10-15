@@ -303,4 +303,62 @@ public class RecognitionSettingsTest {
 		assertEquals(56, RecognitionParameters.toHops(300));
 		assertEquals(1, RecognitionParameters.toHops(0));
 	}
+
+	// ---------------------------------------------------------------- the timing window of the tempo modes (spec 012)
+
+	private static Map<String, String> stored(String... pairs) {
+		Map<String, String> map = new HashMap<String, String>();
+		for( int i = 0 ; i < pairs.length ; i += 2 ) {
+			map.put(pairs[i], pairs[i + 1]);
+		}
+		return map;
+	}
+
+	private static double windowOf(Map<String, String> map) {
+		return RecognitionSettings.fromStrings(map).getSettings().get(RecognitionParameters.TEMPO_WINDOW);
+	}
+
+	@Test
+	public void theTimingWindowIsAWholeNumberOfMillisecondsFromFortyToTwoHundredAndHundredByDefault() {
+		Number window = RecognitionParameters.TEMPO_WINDOW;
+		assertEquals("ms", window.getUnit());
+		assertEquals(100.0, window.getDefault());
+		assertEquals(40.0, window.getMinimum());
+		assertEquals(200.0, window.getMaximum());
+		assertEquals(Section.NOTES, window.getSection());
+		assertEquals(100.0, RecognitionSettings.defaults().get(window));
+	}
+
+	@Test
+	public void anOldSavedPresetIsReadAsAWidthStrictFiftyLenientOneHundredAndTwentyFiveAndNormalTheNewDefault() {
+		String old = RecognitionParameters.LEGACY_TEMPO_TOLERANCE_KEY;
+		assertEquals(50.0, windowOf(stored(old, "strict")));
+		assertEquals(125.0, windowOf(stored(old, "lenient")));
+		// the store writes every key as soon as one setting is saved, so a saved "normal" is the old default, not a choice
+		assertEquals(100.0, windowOf(stored(old, "normal")));
+		assertEquals(100.0, windowOf(stored(old, "something else")));
+		assertEquals(100.0, windowOf(stored()));
+	}
+
+	@Test
+	public void aSavedWindowWinsOverAnOldPresetAndIsBroughtIntoTheRange() {
+		String old = RecognitionParameters.LEGACY_TEMPO_TOLERANCE_KEY;
+		String key = RecognitionParameters.TEMPO_WINDOW.getKey();
+		assertEquals(150.0, windowOf(stored(old, "strict", key, "150")));
+		assertEquals(40.0, windowOf(stored(key, "10")));
+		assertEquals(200.0, windowOf(stored(key, "900")));
+		assertEquals(100.0, windowOf(stored(key, "not a number")));
+	}
+
+	@Test
+	public void theOldPresetKeyIsNotAParameterNorAnUnknownKeyAndIsNotWrittenAgain() {
+		String old = RecognitionParameters.LEGACY_TEMPO_TOLERANCE_KEY;
+		assertEquals(null, RecognitionParameters.byKey(old), "the old choice has no control any more");
+		RecognitionSettings.Loaded loaded = RecognitionSettings.fromStrings(stored(old, "lenient"));
+		assertFalse(loaded.getUnknownKeys().contains(old), "it is read for the migration, not reported as a key of another version");
+		Map<String, String> written = loaded.getSettings().toStrings();
+		assertTrue(written.containsKey(RecognitionParameters.TEMPO_WINDOW.getKey()));
+		assertFalse(written.containsKey(old));
+		assertEquals("125", written.get(RecognitionParameters.TEMPO_WINDOW.getKey()));
+	}
 }

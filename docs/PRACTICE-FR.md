@@ -52,7 +52,7 @@ Dans l'onglet **Mode** de la fenêtre de pratique, vous choisissez comment la pa
 | **Suivre le tempo** | La partition joue à son tempo, après un décompte. La piste travaillée est muette, les autres pistes jouent l'accompagnement. Chaque note ou accord est jugé dans le temps : à l'heure, en avance, en retard, faux, manqué. |
 | **Arcade** | La même partie, présentée comme un jeu : les notes viennent vers vous sur un manche et sont jugées à leur passage. Le résultat s'affiche à la fin. |
 
-Les deux modes chronométrés partagent le **tempo** (20 % à 150 % du tempo écrit), la **tolérance de timing** (stricte, normale, souple) et le **calibrage du rythme** de votre chaîne audio (calibrage par clics, ou délai saisi à la main : sans lui, les notes peuvent être jugées un peu en avance ou en retard, et la fenêtre indique *Précision rythmique réduite*).
+Les deux modes chronométrés partagent le **tempo** (20 % à 150 % du tempo écrit), la **fenêtre de temps** (un curseur de 40 à 200 ms de chaque côté à 120 battements par minute, **100 ms** par défaut ; elle s'élargit et se resserre avec le tempo, c'est un seul réglage enregistré qui se retrouve dans la fenêtre Configuration, et un ancien choix est converti : stricte 50 ms, souple 125 ms, normale le nouveau défaut ; une fenêtre large peut faire prendre une note pour celle qui résonne encore dans un passage dense) et le **calibrage du rythme** de votre chaîne audio (calibrage par clics, ou délai saisi à la main : sans lui, les notes peuvent être jugées un peu en avance ou en retard, et la fenêtre indique *Précision rythmique réduite*).
 
 ### Arcade
 

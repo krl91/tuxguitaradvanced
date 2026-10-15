@@ -90,9 +90,19 @@ public final class RecognitionSettings {
 				repairs.put(parameter.getKey(), parsed.getRepair());
 			}
 		}
+		// a configuration saved before spec 012 holds the choice of a preset and no window: strict and lenient are carried over as their width; "normal" is not, because
+		// the store writes every key as soon as one setting is saved, so a saved "normal" is the old default that nobody chose and gets the new default
+		if( source.get(RecognitionParameters.TEMPO_WINDOW.getKey()) == null ) {
+			String legacy = source.get(RecognitionParameters.LEGACY_TEMPO_TOLERANCE_KEY);
+			if( RecognitionParameters.TOLERANCE_STRICT.equals(legacy) ) {
+				values[RecognitionParameters.TEMPO_WINDOW.getIndex()] = 50.0;
+			} else if( RecognitionParameters.TOLERANCE_LENIENT.equals(legacy) ) {
+				values[RecognitionParameters.TEMPO_WINDOW.getIndex()] = 125.0;
+			}
+		}
 		List<String> unknown = new java.util.ArrayList<String>();
 		for( String key : source.keySet() ) {
-			if( key != null && key.startsWith("recognition.") && !key.equals(RecognitionParameters.VERSION_KEY)
+			if( key != null && key.startsWith("recognition.") && !key.equals(RecognitionParameters.VERSION_KEY) && !key.equals(RecognitionParameters.LEGACY_TEMPO_TOLERANCE_KEY)
 					&& RecognitionParameters.byKey(key) == null ) {
 				unknown.add(key);
 			}

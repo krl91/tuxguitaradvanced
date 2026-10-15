@@ -45,17 +45,17 @@ public final class FollowStarter {
 		private final FollowSession session;
 		private final FollowTimeline timeline;
 		private final PracticeSequence sequence;
-		private final TimingTolerance.Preset tolerance;
+		private final int windowMillis;
 		private final int percent;
 		private final long startTick;
 
-		Plan(FollowRun run, FollowSession session, FollowTimeline timeline, PracticeSequence sequence, TimingTolerance.Preset tolerance, int percent,
+		Plan(FollowRun run, FollowSession session, FollowTimeline timeline, PracticeSequence sequence, int windowMillis, int percent,
 				long startTick) {
 			this.run = run;
 			this.session = session;
 			this.timeline = timeline;
 			this.sequence = sequence;
-			this.tolerance = tolerance;
+			this.windowMillis = windowMillis;
 			this.percent = percent;
 			this.startTick = startTick;
 		}
@@ -77,8 +77,9 @@ public final class FollowStarter {
 			return this.sequence;
 		}
 
-		public TimingTolerance.Preset tolerance() {
-			return this.tolerance;
+		/** The window of the on-time judgement, in milliseconds each side at 120 beats a minute: the one chosen when the run was prepared. */
+		public int windowMillis() {
+			return this.windowMillis;
 		}
 
 		public int percent() {
@@ -104,11 +105,11 @@ public final class FollowStarter {
 			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
 			Runnable restart) {
 		final int percent = settings.getPercent();
-		final TimingTolerance.Preset preset = settings.getTolerance();
+		final int windowMillis = settings.getWindowMillis();
 		final PracticeSequence sequence = full.startingAt(full.getStartIndex());
 		final FollowTimeline timeline = FollowTimeline.build(song, sequence, percent);
 		final FollowPlayer player = environment.player();
-		final TimingTolerance tolerance = new TimingTolerance(preset);
+		final TimingTolerance tolerance = TimingTolerance.ofMillis(windowMillis);
 		final TempoClock clock = player.clock();
 		FollowSession session = new FollowSession(sequence, timeline, FIRST_TICK, clock, environment::wallNanosOf,
 				() -> new TimingContext(tolerance, environment.calibrations().forRoute(environment.route()), ClockUncertainty.ofMeasurement(environment.lagSpreadMillis()),
@@ -125,6 +126,6 @@ public final class FollowStarter {
 		}
 		long startTick = FIRST_TICK + (sequence.isEmpty() ? 0L : timeline.playStartTicks(0));
 		FollowRun run = new FollowRun(context, session, player, trackNumber, percent, startTick, uiSink, uiExecutor, endListener, eventsFactory, restart);
-		return new Plan(run, session, timeline, sequence, preset, percent, startTick);
+		return new Plan(run, session, timeline, sequence, windowMillis, percent, startTick);
 	}
 }

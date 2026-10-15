@@ -463,7 +463,7 @@ Choose the **track to practise** (only usable tracks are offered, with the reaso
 
 <img src="images/manual-en/practice-mode-follow.png" width="480" alt="The Mode tab with Follow the tempo">
 
-The **practice mode** (drop-down) and, for the timed modes, the **tempo** (20 to 150 % of the written tempo), the **timing tolerance** (strict, normal, lenient), the **rhythm calibration** and a manual **delay**; in Arcade, the **size of the incoming rectangles** (0 to 150 %, 100 % being the size of the target on the neck) and the **tilt of the plane** (the scale at the horizon and the height of the horizon), see [B6](#b6-arcade-mode-alpha). At the bottom, the window recalls the measured recognition delay (about 0.1 s, and that notes closer than 0.3 s may not be followed: practice then waits for you).
+The **practice mode** (drop-down) and, for the timed modes, the **tempo** (20 to 150 % of the written tempo), the **timing window** (a slider from 40 to 200 ms), the **rhythm calibration** and a manual **delay**; in Arcade, the **size of the incoming rectangles** (0 to 150 %, 100 % being the size of the target on the neck) and the **tilt of the plane** (the scale at the horizon and the height of the horizon), see [B6](#b6-arcade-mode-alpha). At the bottom, the window recalls the measured recognition delay (about 0.1 s, and that notes closer than 0.3 s may not be followed: practice then waits for you).
 
 ### "Passages" tab
 
@@ -516,7 +516,7 @@ Starting this mode first opens the start window (tuning question, test strum): s
 **Settings:**
 
 * **Tempo (% of the written tempo)**: 20 % to 150 %. Start slower and raise it step by step.
-* **Timing tolerance**: how far from its time a note may be and still count as on time; the window adapts to the tempo. Three levels: strict, normal, lenient (the initial value is the one in *Settings > Audio recognition > Practice, notes*).
+* **Timing window**: how far from its written time a note may be and still count as on time, as a **slider from 40 to 200 ms each side, measured at 120 beats a minute** (default **100 ms**); the real window grows and shrinks with the tempo, between a floor and a ceiling. It is **one saved setting**: what you set here is kept and is also the value shown in *Settings > Audio recognition > Practice, notes*. A choice saved by an older version is converted (strict 50 ms, lenient 125 ms; normal, the old default, becomes the new default 100 ms). The numbers are provisional until they are validated on real play, and a wide window has a cost: in a dense passage a note can be taken for the one that is still ringing (measured on the demo score with a synthetic guitar: one wrong pitch in 30 events at 85 ms and above, none at 75 ms).
 * **Rhythm calibration**: sound takes time to cross your input, your output and the audio format; without calibration, your notes may be judged a little early or late and the window says **"Reduced rhythmic precision"**. The **Calibrate…** button plays **8 clicks** (about 10 seconds): play one note on each click, with the guitar; **Cancel** stops the clicks at once. The calibration is valid for **this input, this output and this audio format**: changing one asks for a new calibration. Otherwise, type a **delay (ms)** by hand (positive when your notes are heard late, between −1000 and 1000 ms) with *Apply*, or *Forget*.
 * If the input delay is high or unstable (typically wireless), the window warns you: a wired input is steadier.
 
@@ -781,7 +781,7 @@ Make sure the audio input works first: open **Tools > Interactive Practice**. In
 
 ### Mode 2: Follow the tempo
 
-**Step 18. Choose the mode.** Back in the practice window, *Mode* tab: choose **Follow the tempo**. The tempo (100 % = as written), the timing tolerance and the rhythm calibration appear. For a first try, leave 100 %, or lower it if the song is hard for you. Then press **Follow the tempo of this track**.
+**Step 18. Choose the mode.** Back in the practice window, *Mode* tab: choose **Follow the tempo**. The tempo (100 % = as written), the timing window and the rhythm calibration appear. For a first try, leave 100 %, or lower it if the song is hard for you. Then press **Follow the tempo of this track**.
 
 <img src="images/manual-en/practice-mode-follow.png" width="480" alt="The Mode tab with Follow the tempo">
 
@@ -799,7 +799,7 @@ Make sure the audio input works first: open **Tools > Interactive Practice**. In
 
 ### Mode 3: Arcade (alpha)
 
-**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the tolerance and the calibration are the same as before; new lines set the **size of the incoming rectangles**, the **tilt of the plane** and the **stage flames**. Press **Start Arcade** (or, next time, click the coloured Arcade button of the transport bar, which starts at once on the track under the cursor). The start window then asks whether the guitar is in tune and for a test strum before the run begins (see B3).
+**Step 22. Choose Arcade.** *Mode* tab: **Arcade**. The tempo, the timing window and the calibration are the same as before; new lines set the **size of the incoming rectangles**, the **tilt of the plane** and the **stage flames**. Press **Start Arcade** (or, next time, click the coloured Arcade button of the transport bar, which starts at once on the track under the cursor). The start window then asks whether the guitar is in tune and for a test strum before the run begins (see B3).
 
 <img src="images/manual-en/practice-mode-arcade.png" width="480" alt="The Mode tab with Arcade">
 
