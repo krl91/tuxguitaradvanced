@@ -1,0 +1,7 @@
+# Contract: scoring and search (spec 013)
+
+**Scoring.** For a candidate `RecognitionSettings` S, the recording cut at its N onsets into N segments, and the N events of the piece: for each segment i, `EventJudge.accepts(segment_i, event_i, S)` (offline analysis and the practice parameters both from S, half a second of silence before the segment, a Wait-mode `PracticeSession` with `PolyphonicAcceptance`) and `EventJudge.accepts(segment_i, event_(i+1 mod N), S)` as the **negative control**. `correct` = the number of right acceptances, `wrong` = the number of control acceptances. **Objective = correct - 2 x wrong.** **Rate** = `correct / N` (notes and chords also separately).
+
+**Search.** Start: the default. For each profile parameter in the fixed order of `ProfileParameters`, five values over a window of its bounds around the current value, keep the best objective (ties: nearest the default); repeat while a pass improves; stop at 120 s or 2000 candidates, on cancel or when nothing improves. **Leaving the default needs `objective(best) >= objective(default) + 1`.**
+
+**Invariants.** (1) Deterministic: the same recording and the same piece give the same profile. (2) The default is a candidate: the result is never worse than the default on the recording. (3) A silent, a too short or a clipped segment set is refused before the search. (4) The report has one line per parameter. (5) A cancel ends within one candidate and saves nothing.

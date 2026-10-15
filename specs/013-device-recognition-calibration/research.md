@@ -1,0 +1,80 @@
+# Research: per-device calibration of the recognition (spec 013)
+
+Every claim cites a file opened on 2026-10-15. `AE` = `desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine`, `AET` = `desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine`, `PR` = `desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice`, `PT` = `desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice`.
+
+## R1 - Where "profile of the device, else the default" is chosen (FR-007, FR-010)
+
+**Evidence.** The settings are read through `RecognitionSettingsStore.get()` at about twelve production sites: `PracticeWindow` (l.686, 785, 1000 when a session is built), `EngineFollowAdapter`, `FollowSettings`, `PassageSettings`, `AudioEngine` (`settingsChanged` applies the front end and rebuilds the analysis when an engine value changed), `TunerWindow`, `AudioRecognitionOption`, `EngineGainBackend`. `RecognitionSettings` is immutable with `with(parameter, value)`, `fromStrings` and `toStrings`. The Configuration window (`PR/ui/RecognitionSettingsPanel`) edits a pending copy and writes it with `store.update`. **Writers** exist too: `FollowSettings.setWindowMillis` (spec 012) does `store.update(store.get().with(...))`.
+
+**Decision.** The store gets a second layer: `getDefault()` (what the Configuration window edits and what is saved today) and `get()` = the **effective settings**: the default **merged with the active profile**, the profile holding values only for the *profile parameters* (R2). `setActiveProfile(profile-or-null)` is the single place the choice is made; the readers keep calling `get()` and **receive the effective settings without any change**; `AudioEngine.settingsChanged` already rebuilds the analysis when the engine values differ, so a profile applies to the running engine. **Every writer must use `getDefault()`** (the Configuration window and `FollowSettings`, `PassageSettings`, the gain backend if it writes): otherwise a write would copy the profile's values into the default. An invariant test: with a profile active, writing any non-profile setting leaves the default's profile parameters untouched.
+
+**Alternatives.** Making every reader ask a profile manager (rejected: twelve sites, easy to miss one). A separate settings object for the engine (rejected: two sources of truth).
+
+## R2 - What a profile may hold (FR-016, spec Assumptions)
+
+**Evidence.** `AE/settings/RecognitionParameters.java` `ALL` lists: INPUT (level min/max, noise reduction, gain suggestion), TUNER (in tune, hold, confidence), NOTES (accept, fret sharp, confidence, stability, attack, legato, technique, **timing window**), CHORDS (evidence, window, completeness, foreign, min partials, confirm), PASSAGES, ENGINE (pitch engine), ADVANCED (level clip, attack min level). `PracticeParameters.of(settings)` turns the note and chord ones into the `NoteInterpreter`, `TolerancePolicy` and `ChordMatcher` parameters. `PolyphonicAcceptance.Parameters.defaults()` is **not** a recognition setting (code constants).
+
+**Decision.** The **profile parameters** are: `NOTE_ACCEPT`, `NOTE_FRET_SHARP`, `NOTE_CONFIDENCE`, `NOTE_STABILITY`, `NOTE_ATTACK`, `CHORD_EVIDENCE`, `CHORD_WINDOW`, `CHORD_MIN_PARTIALS`, `CHORD_CONFIRM`, `ATTACK_MIN_LEVEL`, `INPUT_LEVEL_MIN`. **Never in a profile:** `ENGINE_PITCH` (the owner's constraint: no algorithm change), the tuner settings, `NOTE_LEGATO` and `NOTE_TECHNIQUE` and `CHORD_COMPLETENESS`/`CHORD_FOREIGN` (choices with one value or a policy of the learner), the passages, the **timing window**, the flames, the gain and the noise-reduction flag (the front end must stay neutral during the calibration, R4). `PolyphonicAcceptance.Parameters` stay code constants: **out of this feature** (declared; a later spec may expose them). Bounds are the existing `Number` minimum and maximum of each parameter.
+
+## R3 - The library and its persistence (FR-007, FR-012, FR-013)
+
+**Evidence.** `RecognitionSettingsStore.ConfigPersistence` (l.117-150) reads and **rewrites its whole file** (`config.clear()` then `save()`), with `MODULE = "tuxguitar-audio-recognition"`, and "keys of other versions are dropped".
+
+**Decision.** The library is **its own file**: a second `TGConfigManager` module, `tuxguitar-recognition-profiles`, behind a small `ProfilePersistence` interface (read and write a map of strings, like `RecognitionSettingsStore.Persistence`) so that tests use an in-memory one. One profile = the keys `profile.<deviceKey>.<parameter key>` plus `profile.<deviceKey>.meta.*` (the date, the sample rate, the rates measured, the rate of the default on the same recording, the layout version); a corrupt or unreadable entry is skipped (that device is orange), never an error (FR-013); saving writes **the whole library** (it is its own file, so nothing else is lost). A cancelled or failed calibration never writes (FR-012): the library is written only by `ProfileLibrary.save(profile)` at the end of a finished choice.
+
+**The key of a profile.** `AudioInputDescriptor` has `getId()`, `getDeviceName()`, `getChannelIndex()`, `getChannelCount()`, `getKind()` (`AE/input/AudioInputDescriptor.java`). **Decision:** `deviceKey = id + "#" + channelIndex`; the sample rate is stored **in** the profile and the profile applies only when the capture rate equals it or is not yet known (a profile made at 48 kHz is not applied at 44.1 kHz: that device then shows orange with the reason). **To verify in the first task:** that `getId()` is unique for two identical adapters on the machine (list the ids of the devices present); if it is not, the key gets the position of the device in the catalog and this is declared (SC-008).
+
+## R4 - Recording the sound and detecting that "a sound was played" (FR-004, FR-017)
+
+**Evidence.** `AE/input/SampleRingBuffer` is read destructively by the analysis and `AudioEngine.getRingBuffer()` is package-private, so it is not a place to tap. The **hop listener of spec 010** (`AnalysisService.addHopListener`, `AudioEngine.addHopListener`) gives every contiguous hop of 256 samples, **after the front end**, on the analysis thread, with `configure(sampleRate)` first: exactly the signal the analysis sees. `OfflineAnalysis` has **no front end** (its javadoc: "the hops are the samples as given"). `AnalysisFrame` has `isOnset()`, `getRmsDbfs()`, `getPeakDbfs()`, `getClippedRatio()`, `getLevelState()`.
+
+**Decision.** A `HopRecorder` (a `HopListener`) copies each hop into a **preallocated** array (no allocation per hop on the analysis thread, constitution VI; capacity 120 s at the rate given by `configure`, then it stops recording and says so). The front end is **neutral during the calibration**: gain at 0 dB and noise reduction off (the engine already returns the gain to 0 dB at each session; if the noise-reduction flag is on, the calibration refuses with a message asking to switch it off: **to verify in the first task** against `AudioEngine.applyFrontEndSettings`). A `SoundCounter` (pure, tested on synthetic signals) counts a **sound** at each onset frame whose level is above the input minimum, with a refractory time of 250 ms, **without saying which note or chord**; the mode stops by itself one second after the count reaches the number of events of the piece, ends on a timeout (no sound for 20 s, or 3 minutes in all) and on cancel, each with a reason. **The recording stays in memory**: no file is ever written, so FR-017 (deleted after the analysis, on cancel and on failure) holds by construction and is stricter than the owner's answer; the array is dropped when the calibration ends.
+
+## R5 - Scoring a candidate (FR-006, the recognition rate)
+
+**Evidence.** The test module has the judge: `PT/dataset/DatasetJudge.accepts(audio, expected)` builds a one-step practice, feeds the audio after half a second of silence through `OfflineAnalysis.analyze` with `RecognitionSettings.defaults()` and a Wait-mode `PracticeSession` built from `PracticeParameters.of(defaults)` and `PolyphonicAcceptance`, and says whether the step is accepted; `acceptedSteps` and `acceptanceTimes` do the same for a sequence in order.
+
+**Decision.** The scoring moves to production as `EventJudge` (practice module): the same procedure with the **candidate settings** used for **both** `OfflineAnalysis` and `PracticeParameters`. The recording is **cut into one segment per sound** at the onsets found while listening (fixed thresholds, independent of the candidate), and each segment is judged **alone against its own event** (a note or a chord of the piece): the result is a boolean per event, independent of earlier misses (the Wait-mode "stuck on the first miss" of a whole-stream judge would hide everything after it). The **rate** is `accepted events / events`, with the notes and the chords also counted separately; the 60 % of the spec is on the total. If the segments do not number the events of the piece the recording is refused (the listening mode already ends on that count).
+
+**A negative control** guards against a candidate that accepts everything: each segment is also judged against the **next event of the piece** (a wrong expectation); the objective is `correct acceptances - 2 x wrong acceptances`, so a loose setting that accepts a wrong note loses more than it gains.
+
+**Cost.** One candidate is about 2 x N one-event offline analyses of about 3 s each (N about 13): measured in the first task; the plan's budget is **120 seconds and 2000 candidates at most**, with a progress figure and a cancel.
+
+## R6 - The search (FR-006, FR-014)
+
+**Decision.** A **deterministic coordinate descent**: start from the default (always the first candidate, so the result is never worse than the default on the recording: FR-014); for each profile parameter in a fixed order, try five values spread over a window of its bounds around the current value, keep the best by the objective (ties: the value nearest the default, a regularisation against overfitting a 13-event recording); repeat passes until a pass improves nothing or the budget ends. Same recording gives the same profile (determinism, constitution VIII, explainable: the report lists each parameter, its default, its new value and what it changed). **Leaving the default requires a gain of at least one event** on the total; otherwise the default is the answer.
+
+**Risk, stated.** 13 events can be over-fitted. The check that matters is **independent**: the built-in-microphone corpus of single notes (R9) and, for chords, the owner's takes, judged with the profile and with the default in the validation phase; **no improvement is promised** (constitution XII), the result is reported.
+
+**Alternatives.** A grid over all parameters (rejected: combinatorial). Random search (rejected: not explainable, seed-dependent). A learned model (rejected by constitution VIII and by the spec).
+
+## R7 - The flow and the windows (FR-001 to FR-005, FR-009, FR-014)
+
+**Evidence.** `PR/ui/PreRunCheck.java` is a pure state machine and `PreRunWindow.java` a window with the tuning question (yes, no-open-the-tuner through `PracticeTunerOpener`) and the strum part; `InputSelectorPanel.java` builds the drop-down, Refresh and "Remember as default" in a `UITableLayout`.
+
+**Decision.** A pure `CalibrationFlow` state machine (like `PreRunCheck`: a total table of states and events, ignored pairs change nothing): `TUNING`, `TUNER_OPEN`, `ADVICE`, `PIECE`, `LISTENING`, `QUALITY`, `ANALYSING`, `RESULT`, `CHOICE`, `DONE`, `CANCELLED`. One **`CalibrationWindow`** whose content changes per step (instead of five windows: the same information with fewer popups; **a deviation from the owner's description, flagged for his approval**). The tuning question reuses the **texts** `practice.prerun.tuned.*` and `PracticeTunerOpener`. The piece is shown as a **list of its events** (note names with string and fret, chords by their notes), with "3 of 13" while listening. The button "Calibrate the recognition" is in the Input tab; when the device already has a profile (or a red dot) the first screen offers **Calibrate again** or **Use the default configuration** (FR-009). The "not better than the default" message (FR-014) is the `RESULT` step with its three choices.
+
+## R8 - The dot (FR-008, SC-003)
+
+**Decision.** A `ProfileDot` next to the drop-down: a coloured "●" label (`UILabel` foreground colour) **and a short text** ("Calibrated", "Not calibrated: default settings", "Calibrated, recognition 52 %") so that the state is not given by colour alone. It is recomputed from `ProfileLibrary` and the active profile **at every selection change** (`CurrentInputSelection.Listener`, already used by the panel) and after a calibration. The rule is a pure function `ProfileState.of(profile)` (no profile: orange; profile with total rate >= 60 %: green; profile kept with total rate < 60 %: red; a profile chosen as "default": orange), tested on its own.
+
+## R9 - Data for the validation (SC-005, SC-006)
+
+**Evidence.** `AET/../resources/benchmark/builtin-mic/standard/*.wav` is a **committed corpus of 22 single-note recordings** of the owner's folk guitar through the **MacBook's built-in microphone** (48 kHz, 16 bit, mono, CC0), with `manifest.csv` (note, midi, string, fret, device "Micro MacBook Pro"), `pairings.csv` and `BenchmarkFixtures`/`BenchmarkRunnerTest` (tag `benchmark`). The owner's chord takes (`specs/004-.../owner-chords*`, never committed, ignored) are Rocksmith, not the microphone.
+
+**Decision.** (1) **The independent measure for notes:** the 22 recordings judged with the default and with a profile found on a *different* recording: reported, not promised. (2) **The owner's own calibration recording:** the first task asks the owner to **play `basic_test.tg` once on the built-in microphone with a small recording tool** (outside git, ignored, with a numbers-only file committed): this is the owner's idea at the start of the request, it gives the data to develop and validate the search before the UI exists, and it is the first honest answer to "can a profile improve this microphone". (3) Synthetic signals for the pure parts. (4) The recorded figures of spec 010 stay the base for "no profile, nothing changes".
+
+## R10 - The piece (FR-016)
+
+**Evidence.** `tests/basic_test.tg` (committed 2026-10-15, 1064 bytes, a TuxGuitar file: `content.xml` with 14 measures and **25 notes**; the chords at the end are the three that the owner said were not recognised).
+
+**Decision.** A copy is shipped with the plugin as a resource (`desktop/TuxGuitar-practice/share/calibration/guitar.tg`, copied to the application's share by the existing packaging of the plugin's `share/`; **to verify**: how a plugin reads its own share path at run time, as the language files are read) and loaded through the same song reader as the application. The number of **events** (single notes and chords) is counted from the score by the first task (the plan expects about 13: ten notes and three chords, to be confirmed); the owner's `tests/basic_test.tg` stays for manual tests. The bass piece is out of scope (FR-018).
+
+## R11 - Risks found by reading
+
+1. **Writers of the store** must use `getDefault()` (R1): a missed one would silently copy a profile into the default. Mitigation: one invariant test and a grep task listing every `update(` caller.
+2. **The profile is applied from a selection event on another thread**: `setActiveProfile` must be thread-safe and must trigger the engine rebuild once (the engine's `settingsChanged` already compares engine values).
+3. **Front-end neutrality** (R4) may not be settable from the practice module; if not, the calibration refuses with a message rather than record a processed signal.
+4. **Overfitting** on one short recording (R6): guarded by the one-event rule, the regularisation, the negative control and the independent validation; reported honestly.
+5. **A device id that is not unique** (R3): verified first.
+6. **Time:** a long analysis blocks nothing (a worker thread, progress, cancel) and ends by itself at its budget.
