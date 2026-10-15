@@ -1,7 +1,7 @@
 # Data model: per-device recognition calibration (spec 013)
 
 ## DeviceKey
-`id + "#" + channelIndex` from the `AudioInputDescriptor`. Rule: two devices never share a key; a device with two channels has two keys. To verify: that `getId()` is unique for two identical adapters (else the catalog position is added).
+`deviceName + "#" + ("mono" | channelIndex) + "#" + ordinal`, where `ordinal` is the rank of the input among the catalog's inputs with the same name and channel (0 for a single device). Rule: two devices never share a key at a given time; a device with two channels has two keys. **Not the descriptor's `getId()`**: it starts with the position of the mixer in the system's list, which may change between sessions (T003, research R3).
 
 ## RecognitionProfile
 The values of the **profile parameters** only (`NOTE_ACCEPT`, `NOTE_FRET_SHARP`, `NOTE_CONFIDENCE`, `NOTE_STABILITY`, `NOTE_ATTACK`, `CHORD_EVIDENCE`, `CHORD_WINDOW`, `CHORD_MIN_PARTIALS`, `CHORD_CONFIRM`, `ATTACK_MIN_LEVEL`, `INPUT_LEVEL_MIN`), each within its bounds, plus: the **device key**, the **sample rate** of the recording, the **date**, the **recognition rate found** (events recognised, notes, chords, total) and the **rate of the default on the same recording**, the **front-end state** at recording time (gain, noise reduction: stored and shown, not enforced), the **origin** (`SEARCHED` or `DEFAULT_CHOSEN`) and the layout version. Rule: a profile applies only when the capture rate equals its rate or is unknown.

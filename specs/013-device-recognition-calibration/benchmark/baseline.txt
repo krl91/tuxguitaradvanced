@@ -1,0 +1,24 @@
+Spec 013: BASELINE before any change of the recognition, 2026-10-15 (T001 and T005)
+Branch feature/interactive-practice, commit 1f385c40d (the work tree adds only the two new tests and the shipped piece of phase 1)
+
+== T001: default suite, `mvn -o clean test -pl ../../TuxGuitar-practice -am` from desktop/build-scripts/tuxguitar-macosx-swt-cocoa, JDK 21
+   tuxguitar-practice: 939 tests, 0 failures, 0 errors, 4 skipped, 9 min 23 s (whole reactor about 9 min 40 s)
+      = the 937 of specs/012-adjustable-timing-window/benchmark/after.txt + the 2 new tests of this phase (CalibrationPieceTest)
+      skipped (assumptions, unchanged): BrandingAssetsTest 1, ArcadeCorpusProfilerTest 1, ArcadeReferenceImagesTest 1, LaneProofImagesTest 1
+   tuxguitar-audio-engine: 295 tests, 0 failures, 0 skipped (291 at spec 011, +4 of spec 012)
+   tuxguitar-tuner-next: 24 tests, 0 failures
+   tuxguitar-lib module run in the same reactor: TestGPCorpusSmoke 1 skipped
+   Recognition reports kept as the diff base: specs/010-pre-run-check/benchmark/after/ (not regenerated here: this phase changes no recognition code).
+
+== T002: the calibration piece (tests/basic_test.tg, tracked since a850b3f4b), read with PracticeSequenceBuilder
+   13 events: 10 single notes (EXPECTED_NOTE) and 3 chords of 5 notes (EXPECTED_CHORD); the last measure is empty.
+   One event = 7.7 points of the total rate; 60 % is reached at 8 of 13 events (61.5 %); 7 of 13 is 53.8 %.
+   The shipped copy desktop/TuxGuitar-practice/share/calibration/guitar.tg is byte-identical (test CalibrationPieceTest, seen failing before the copy: resource missing).
+   It is in the practice jar of the macOS build (calibration/guitar.tg, 1064 bytes). Linux and Windows: their pom.xml take the same module (not built here).
+
+== T005: the DEFAULT settings on the 22 recordings of the built-in microphone (desktop/TuxGuitar-audio-engine/src/test/resources/benchmark/builtin-mic/standard,
+   reached through the engine test-jar), test BuiltinMicDefaultRateTest (tag dataset; a measurement, it asserts no rate)
+   21 notes: accepted 21 of 21 (100.0 %); the recording of silence is not accepted.
+   HONEST READING: single notes of this guitar on this microphone are already all recognised with the default settings. This corpus has NO HEADROOM:
+   in SC-006 it can show a harm of a profile (a note lost), never a gain. The weak points the owner felt (chords, notes in a flow) are in the piece itself:
+   the owner's recording of basic_test.tg (T004) is the measure that can show a gain.
