@@ -9,8 +9,8 @@ Modes: **W** = Wait for the right note, **F** = Follow the tempo, **A** = Arcade
 | id | Journey | Behaviour that must hold | Mode | Prio | Protected by | State |
 |---|---|---|---|---|---|---|
 | SP-01 | Start button of the preparation window | the start window opens first, alone; the mode does not begin | W F A | P1 | `StartPathJourneyTest` | new |
-| SP-02 | Practice button of the transport bar (quick start) | the start window opens; the preparation window stays hidden | W F | P1 | `StartPathJourneyTest` | new |
-| SP-03 | Coloured Arcade button of the transport bar | same as SP-02, with the Arcade mode chosen | A | P1 | `StartPathJourneyTest` | new |
+| SP-02 | Practice (note) button of the transport bar (quick start) | **starts Wait for the right note directly, whatever mode was chosen last** (owner, 2026-10-15); the start window opens; the preparation window stays hidden | W | P1 | `StartPathJourneyTest`; `TransportButtonTest` (the mapping, the source) | new |
+| SP-03 | Coloured (pyramid) Arcade button of the transport bar | **starts Arcade directly**; same start window and hidden preparation as SP-02 | A | P1 | `StartPathJourneyTest`; `TransportButtonTest` | new |
 | SP-04 | The learner takes longer than the quick-start patience | no practice window comes over the unanswered start window (bug 1 of spec 010) | W F A | P1 | `StartPathJourneyTest`; rule: `QuickStartTest` | new |
 | SP-05 | "No, open the tuner" then the tuner closes | the tuner opens although the preparation window exists (bug 2); the question comes back; the mode never began; the preparation window did not appear | W F A | P1 | `StartPathJourneyTest`; `PracticeTunerOpenerTest` | new |
 | SP-06 | "Yes, in tune" | the strum part is shown with real sizes (bug 3); the question is gone | W F A | P1 | `StartPathJourneyTest` (headless); `LayoutSwtJourneyTest` (native); `PracticeWindowSwtTest` | new |

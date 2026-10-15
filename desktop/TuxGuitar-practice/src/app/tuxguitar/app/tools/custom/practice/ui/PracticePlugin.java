@@ -71,7 +71,8 @@ public class PracticePlugin extends TGToolItemPlugin {
 			if( this.window == null ) {
 				this.window = new PracticeWindow(context, this);
 			}
-			// one click: practise the track under the cursor as soon as the input is usable
+			// one click: practise the track under the cursor as soon as the input is usable, in Wait for the right note whatever mode was chosen last
+			app.tuxguitar.app.tools.custom.practice.session.FollowSettings.getInstance(context).setMode(TransportButton.PRACTICE.mode());
 			this.window.openAndStart();
 		}
 	}

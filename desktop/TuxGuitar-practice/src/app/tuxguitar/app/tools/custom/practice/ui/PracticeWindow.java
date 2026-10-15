@@ -210,7 +210,7 @@ public class PracticeWindow {
 			this.startFlow.toFront();
 			return;
 		}
-		FollowSettings.getInstance(this.context).setMode(FollowSettings.Mode.ARCADE);
+		FollowSettings.getInstance(this.context).setMode(TransportButton.ARCADE.mode());
 		this.immediateStart = true;
 		if( isOpen() ) {
 			if( this.arcadeWindow != null && this.arcadeWindow.isOpen() ) {
