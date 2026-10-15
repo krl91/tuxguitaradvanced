@@ -29,4 +29,6 @@ The state machine is pure (like `PreRunCheck`): a total table, ignored pairs cha
 | `OFFER`, `TUNING`, `TUNER_OPEN`, `ADVICE`, `PIECE`, `LISTENING`, `QUALITY`, `REFUSED` | device lost | `CANCELLED` as above |
 | `ANALYSING`, `RESULT`, `CHOICE` | device lost | no change: the analysis uses the recording only; the result is offered as usual and a profile chosen is saved under that device's key |
 
+**A failed save** (disk full, read-only file) ends the flow in `DONE` with the message "the profile could not be saved; the previous one is kept" and no active profile change.
+
 **Invariants.** (1) Nothing is saved before `DONE` and only by a finished choice. (2) `TUNER_OPEN` never reaches `PIECE`. (3) The recording is dropped in `DONE` and `CANCELLED`. (4) A result **not better than the default** never becomes a profile without the player choosing it. (5) The texts of every step exist in English, French and Spanish. (6) A wrong number of sounds never reaches `ANALYSING`. (7) The window is modal during `ANALYSING` and closing it cancels. (8) Every `REFUSED` offers the three choices. (9) *Forget the calibration* is outside this flow: it asks for a confirmation and calls `ProfileLibrary.remove`.
