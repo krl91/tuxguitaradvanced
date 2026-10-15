@@ -27,9 +27,13 @@ public final class SoundCounter implements HopListener {
 		CANCELLED
 	}
 
-	/** Told each time a sound is counted. */
+	/** Told each time a sound is counted, and once when the listening ends (on the thread of the hops, or of the cancel). */
 	public interface Listener {
 		void soundHeard(int count);
+
+		/** The listening left {@link State#LISTENING}: complete, timed out or cancelled. */
+		default void ended(State finalState) {
+		}
 	}
 
 	private final int expected;
@@ -80,7 +84,15 @@ public final class SoundCounter implements HopListener {
 
 	public void cancel() {
 		if (this.state == State.LISTENING) {
-			this.state = State.CANCELLED;
+			finish(State.CANCELLED);
+		}
+	}
+
+	private void finish(State finalState) {
+		this.state = finalState;
+		Listener told = this.listener;
+		if (told != null) {
+			told.ended(finalState);
 		}
 	}
 
@@ -106,11 +118,11 @@ public final class SoundCounter implements HopListener {
 		}
 		long elapsed = getElapsedMillis();
 		if (this.reachedAtSamples >= 0 && (this.samplesSeen - this.reachedAtSamples) * 1000L / this.sampleRate >= SoundDetection.STOP_AFTER_LAST_MILLIS) {
-			this.state = State.COMPLETE;
+			finish(State.COMPLETE);
 		} else if (elapsed >= SoundDetection.TOTAL_TIMEOUT_MILLIS) {
-			this.state = State.TOTAL_TIMEOUT;
+			finish(State.TOTAL_TIMEOUT);
 		} else if (this.reachedAtSamples < 0 && (this.samplesSeen - this.lastSoundSamples) * 1000L / this.sampleRate >= SoundDetection.SILENCE_TIMEOUT_MILLIS) {
-			this.state = State.SILENCE_TIMEOUT;
+			finish(State.SILENCE_TIMEOUT);
 		}
 	}
 

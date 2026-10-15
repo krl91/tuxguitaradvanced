@@ -46,3 +46,12 @@ Branch feature/interactive-practice, commit 1f385c40d (the work tree adds only t
       LiveListeningTest at run time (a recording asked for before the engine announced its rate was reset: the HopRecorder recorded nothing). Both defects fixed in the code, not in the tests.
    Measured: the counter and the recorder allocate nothing per hop (HopRecorder under 2 KB for 5000 hops; SoundCounter under 64 bytes per hop, including the inherited attack detector).
 
+== After phase 5 (T037), `mvn -o clean test -pl ../../TuxGuitar-practice -am`, 10 min
+   tuxguitar-audio-engine: 360 tests, 0 failures (unchanged)
+   tuxguitar-practice: 1025 tests, 0 failures, 6 skipped (973 + 52: CalibrationFlowTest 8, CalibrationControllerTest 20, CalibrationWindowTest 19, CalibrationStringsTest 4, ProfileSearchTest +1)
+   Existing tests: none of the repository's tests modified. The gate's `M` on ProfileSearchTest.java is a file of this spec (added in phase 3) that got one more test.
+   The existing language tests (FollowStringsTest, RecognitionSettingsPanelTest, RecognitionControlsTest, TechniqueLineTest, PracticeToolbarAssetsTest) ran unchanged and green with the 55 new keys.
+   Seen failing first: CalibrationFlowTest by a mutation of one row (the test and the class were written together); the controller and window tests by compile errors, then at run time:
+      a clipped take reported as a silence timeout (fixed: measured, told as too loud); the search unable to walk far from the default (fixed: the step is kept while it improves; a test of a far target failed at 22 instead of 10);
+      CalibrationStringsTest by mutation (an untranslated French text, a missing number in Spanish).
+

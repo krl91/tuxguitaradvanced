@@ -3,7 +3,10 @@ package app.tuxguitar.app.tools.custom.practice.calibration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
+import app.tuxguitar.app.tools.custom.practice.arcade.view.PitchNames;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequenceBuilder;
@@ -75,6 +78,45 @@ public final class CalibrationPiece {
 			flags[i] = isChord(i);
 		}
 		return flags;
+	}
+
+	/** A note of an event as it is shown: its name ("E2"), its string (1 is the high E) and its fret (0 is open). */
+	public static final class PieceNote {
+		private final String name;
+		private final int string;
+		private final int fret;
+
+		PieceNote(String name, int string, int fret) {
+			this.name = name;
+			this.string = string;
+			this.fret = fret;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public int getString() {
+			return this.string;
+		}
+
+		public int getFret() {
+			return this.fret;
+		}
+	}
+
+	/** The notes of one event, lowest string last as written in the score: one for a single note, several for a chord. */
+	public List<PieceNote> eventNotes(int eventIndex) {
+		PracticeEvent event = this.sequence.getEvents().get(eventIndex);
+		List<PieceNote> notes = new ArrayList<PieceNote>();
+		if (event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE) {
+			notes.add(new PieceNote(PitchNames.of(event.getExpectedMidi()), event.getStringNumber(), event.getFret()));
+		} else {
+			for (PracticeEvent.ChordNote note : event.getChordNotes()) {
+				notes.add(new PieceNote(PitchNames.of(note.getMidi()), note.getStringNumber(), note.getFret()));
+			}
+		}
+		return notes;
 	}
 
 	public PracticeSequence getSequence() {

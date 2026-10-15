@@ -83,6 +83,15 @@ public class ProfileSearchTest {
 	}
 
 	@Test
+	public void aTargetFarFromTheDefaultIsReachedBecauseTheStepIsKeptWhileItImproves() {
+		double target = farFromDefault();
+		ProfileSearch.Result result = new ProfileSearch(towardsAccept(target)).run(DEFAULTS, null);
+		// the synthetic score rounds, so the last step is a plateau (11 and 10 score alike) and a tie goes to the value nearer the default: within one step of the score
+		assertEquals(target, result.getBest().get(RecognitionParameters.NOTE_ACCEPT), 2.5, "the search walks all the way, it does not stop after a few steps");
+		assertFalse(result.isStoppedAtLimit());
+	}
+
+	@Test
 	public void leavingTheDefaultNeedsAGainOfAtLeastOnePoint() {
 		AtomicInteger calls = new AtomicInteger();
 		// the default scores 5; the second candidate scores 5.5 (no whole point more): the default stays

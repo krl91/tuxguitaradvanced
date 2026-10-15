@@ -9,7 +9,7 @@ public class CalibrationScore {
 	private final int wrong;
 	private final RecognitionRate rate;
 
-	CalibrationScore(int correct, int wrong, RecognitionRate rate) {
+	public CalibrationScore(int correct, int wrong, RecognitionRate rate) {
 		this.correct = correct;
 		this.wrong = wrong;
 		this.rate = rate;

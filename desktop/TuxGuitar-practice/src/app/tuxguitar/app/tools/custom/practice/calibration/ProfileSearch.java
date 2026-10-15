@@ -12,7 +12,7 @@ import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 /**
  * Looks for the settings that recognise the recorded piece best (spec 013, FR-006, contract scoring-search): a deterministic coordinate descent. It starts
  * from the default settings, which are always the first candidate; for each profile parameter, in a fixed order, it tries up to four values around the
- * current one (two steps each side) and keeps the best (on a tie, the nearest the default); it repeats with a narrower step while a pass improves, and
+ * current one (two steps each side) and keeps the best (on a tie, the nearest the default); it repeats at the same step while a pass improves, and with a finer step (twice) when it does not, and
  * stops at its budget or on a cancel. It leaves the default only for settings scoring at least one point above it.
  */
 public final class ProfileSearch {
@@ -20,9 +20,11 @@ public final class ProfileSearch {
 	public static final int BUDGET_CANDIDATES = 2000;
 	/** about two minutes */
 	public static final long BUDGET_MILLIS = 120_000L;
-	/** the first step is an eighth of the range of the parameter; each pass halves it */
+	/** the first step is an eighth of the range of the parameter; the step is halved when a pass improves nothing, at most twice */
 	private static final double FIRST_STEP_DIVISOR = 8.0;
-	private static final int MAX_PASSES = 3;
+	private static final int MAX_STEP_HALVINGS = 2;
+	/** a bound on the passes, for a search that keeps improving by crumbs (the budget stops it first in practice) */
+	private static final int MAX_PASSES = 40;
 	/** the gain, in points of score, below which the default is kept */
 	public static final double MINIMUM_GAIN = 1.0;
 
@@ -156,6 +158,7 @@ public final class ProfileSearch {
 		CalibrationScore bestScore = defaultScore;
 		boolean stopped = false;
 		boolean wasCancelled = false;
+		int halvings = 0;
 		search:
 		for (int pass = 0; pass < MAX_PASSES; pass++) {
 			boolean improved = false;
@@ -164,7 +167,7 @@ public final class ProfileSearch {
 				CalibrationScore chosenScore = null;
 				double chosenValue = 0;
 				double base = start.get(parameter);
-				for (double value : values(parameter, best.get(parameter), pass)) {
+				for (double value : values(parameter, best.get(parameter), halvings)) {
 					if (this.cancelled) {
 						wasCancelled = true;
 						break search;
@@ -192,7 +195,11 @@ public final class ProfileSearch {
 				}
 			}
 			if (!improved) {
-				break;
+				// nothing better at this step: look closer, and stop when the finest step finds nothing either
+				if (halvings >= MAX_STEP_HALVINGS) {
+					break;
+				}
+				halvings++;
 			}
 		}
 		boolean leaves = best != start && bestScore.getObjective() >= defaultScore.getObjective() + MINIMUM_GAIN;
@@ -214,9 +221,9 @@ public final class ProfileSearch {
 	}
 
 	/** Up to four values around {@code current}, two steps each side, the step narrowing with the pass; inside the bounds, whole where the parameter is. */
-	private static List<Double> values(RecognitionParameter.Number parameter, double current, int pass) {
+	private static List<Double> values(RecognitionParameter.Number parameter, double current, int halvings) {
 		double range = parameter.getMaximum() - parameter.getMinimum();
-		double step = range / (FIRST_STEP_DIVISOR * (1 << pass));
+		double step = range / (FIRST_STEP_DIVISOR * (1 << halvings));
 		if (parameter.isInteger()) {
 			step = Math.max(1.0, Math.rint(step));
 		}
