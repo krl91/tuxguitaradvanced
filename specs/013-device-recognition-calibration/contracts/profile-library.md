@@ -7,5 +7,7 @@
 5. `ProfileLibrary.save(profile)` writes the library file only; a cancelled, refused or failed calibration never calls it (invariant 4); an unreadable entry gives an orange device and no error (invariant 5).
 6. The profile of a device applies to every reader of the store (tuner window, Follow, Arcade, Wait) and nowhere else. The profile of a device is the one of its `DeviceKey`; selecting another device changes the active profile at once; the dot follows (invariant 6).
 7. A profile whose sample rate differs from the capture rate does not apply (invariant 7).
-9. `ProfileLibrary.remove(deviceKey)` deletes only that device's profile, saved at once; after a restart the device is orange (invariant 9).
 8. After a restart `ProfileLibrary.load()` returns the profiles saved, equal to what was saved (invariant 8, SC-002).
+9. `ProfileLibrary.remove(deviceKey)` deletes only that device's profile, saved at once; after a restart the device is orange (invariant 9).
+10. **Activation does not depend on a window**: `ProfileActivator` sets the active profile when the selection changes and at start, whether or not the preparation window is open (invariant 10). The tuner's own parameters never come from a profile.
+11. The writers are `AudioRecognitionOption` (page built from `getDefault()`, `commit`, `restoreDefaults`), `FollowSettings.setWindowMillis` and the store's two `restoreDefaults`; none of them reads the effective settings to write them back (invariant 11, a source test).

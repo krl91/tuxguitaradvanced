@@ -2,7 +2,7 @@
 
 **Branch**: `feature/interactive-practice` | **Date**: 2026-10-15 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/013-device-recognition-calibration/spec.md` (clarified 2026-10-15: the piece is `basic_test.tg`, guitar only; the recording is deleted after the analysis; a result not better than the default shows a message with three choices)
+**Input**: Feature specification from `specs/013-device-recognition-calibration/spec.md` (clarified 2026-10-15 in three passes: the piece is `basic_test.tg`, guitar only; the recording stays in memory and is dropped; a result not better than the default, and every refusal, offer three choices; one modal window; the profile applies everywhere the input is used; a *Forget the calibration* button; a grey dot with no input)
 
 ## Summary
 
@@ -35,11 +35,11 @@ A **profile library** keeps, for each input device, the recognition settings fou
 | Principle | Check | Result |
 |---|---|---|
 | I Preserve TuxGuitar Compatibility | no file format and no core file touched | pass |
-| II Extend Before Modifying Core | only the fork's engine and practice modules; the store gets a layer, the engine gets nothing new (the hop listener of spec 010 is reused) | pass |
+| II Extend Before Modifying Core | only the fork's engine and practice modules; the store gets a layer; the engine gets one line (the activator) and otherwise nothing new (the hop listener of spec 010 is reused; `engineValuesDiffer` already rebuilds on a profile change) | pass |
 | III Evidence-Based Architecture | each decision cites a file (research R1 to R11); the unverified points are first tasks (device id uniqueness, front-end state read at recording time; the share path is settled: a classpath resource) | pass |
 | IV Spec-Driven Development | specify, clarify, plan done in order | pass |
 | V Incremental Delivery | seven phases, each green and reviewable | pass |
-| VI Real-Time Audio Correctness | the **live** part (recording hops) copies into a preallocated array and counts onsets from frames, no allocation per hop, no lock on the analysis thread beyond a volatile counter; the **search** is offline on its own thread | pass |
+| VI Real-Time Audio Correctness | the **live** part (recording hops) copies into a preallocated array and counts onsets with its **own** detectors on the hop samples (`HopListener` gives samples only), no allocation per hop, no lock on the analysis thread beyond a volatile counter; the **search** is offline on its own thread; the activation runs on the selection thread and causes one analysis rebuild, as an input change does | pass |
 | VII Separable, Testable Audio Logic | the sound counter, the segmenter, the judge, the search, the state of the dot and the flow are pure classes tested without UI or hardware | pass |
 | VIII Deterministic, Explainable | a deterministic coordinate descent with a printed report; no machine learning | pass |
 | IX Cross-Platform Conscious | no platform code; validated on macOS only, stated | pass |
@@ -48,7 +48,7 @@ A **profile library** keeps, for each input device, the recognition settings fou
 | XII Truthful Reporting | **no gain is promised**; the validation is independent and reported; deviations (one window instead of five) flagged for the owner | pass |
 | XIII/XIV | the learner is told what is measured and why a profile is refused; the dot has a text | pass |
 
-**Post-design re-check:** unchanged. Points to watch: every store writer uses `getDefault()` (R11.1); one window for the steps is **decided by the owner** (spec Clarifications 2026-10-15) and judged in his trial.
+**Post-design re-check (after the three clarify passes):** unchanged; the engine change is one declared line. Points to watch: every store writer uses `getDefault()` (R11.1); one window for the steps is **decided by the owner** (spec Clarifications 2026-10-15) and judged in his trial.
 
 ## Project Structure
 
@@ -60,10 +60,11 @@ specs/013-device-recognition-calibration/
 └── tasks.md                          # /speckit-tasks
 
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
-├── settings/RecognitionSettingsStore.java   # + getDefault(), active profile layer, get() = effective
+├── AudioEngine.java                         # + one line in getInstance: creates the ProfileActivator (declared change)
+├── settings/RecognitionSettingsStore.java   # + getDefault(), active profile layer, get() = effective, restoreDefaults on the default
 ├── settings/ProfileParameters.java          # NEW: which parameters a profile may hold, and the merge
 └── calibration/                             # NEW package (pure, no UI)
-    ├── DeviceKey.java, RecognitionProfile.java, ProfileState.java, ProfileLibrary.java, ProfilePersistence.java
+    ├── DeviceKey.java, RecognitionProfile.java, ProfileState.java, ProfileLibrary.java (save, load, remove), ProfilePersistence.java, ProfileActivator.java
     ├── HopRecorder.java, SoundCounter.java, SoundSegmenter.java
     └── (all tested without hardware)
 
@@ -72,9 +73,9 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 │   ├── CalibrationPiece.java (loads the shipped score, its events), EventJudge.java, CalibrationScorer.java, ProfileSearch.java
 │   ├── CalibrationFlow.java (pure state machine), CalibrationController.java (live listening + worker thread)
 ├── ui/CalibrationWindow.java, ui/ProfileDot.java      # NEW
-├── ui/InputSelectorPanel.java               # + the button and the dot
-└── ui/PracticeWindow.java, FollowSettings, PassageSettings, RecognitionSettingsPanel   # writers read getDefault()
-desktop/TuxGuitar-practice/share/calibration/guitar.tg   # the shipped copy of basic_test.tg
+├── ui/InputSelectorPanel.java               # + the Calibrate and Forget buttons and the dot
+└── ui/AudioRecognitionOption.java, session/FollowSettings.java   # the two writers: they read and write getDefault()
+desktop/TuxGuitar-practice/share/calibration/guitar.tg   # the shipped copy of basic_test.tg (a classpath resource in the plugin jar)
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # the texts
 ```
 
@@ -88,8 +89,8 @@ desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # the text
 | P1 | **Profile model and the store's layer:** `ProfileParameters`, `DeviceKey`, `RecognitionProfile`, `ProfileState`, `ProfileLibrary` with its own persistence; `getDefault()` and the effective `get()`; every writer moved to `getDefault()`; tests first; with no profile all figures equal |
 | P2 | **Scoring and search (pure, offline):** `EventJudge` moved to production from the test judge, `SoundSegmenter`, `CalibrationScorer`, `ProfileSearch`; tests on synthetic signals, the 22-note corpus, and the owner's recording (skip when absent) |
 | P3 | **Listening mode:** `HopRecorder`, `SoundCounter`, the quality check, timeout and cancel; tests with the device-less engine |
-| P4 | **The flow and the window:** `CalibrationFlow` (total table), `CalibrationWindow`, the three-choice result, the "calibrate again / default" offer |
-| P5 | **The dot and the button** in the Input tab, the engine applying the active profile at each input change, persistence across a restart |
+| P4 | **The flow and the window:** `CalibrationFlow` (total table with `OFFER`, `REFUSED`, `CHOICE`), `CalibrationWindow` (one window, modal during the search, measures at the quality question, the result with rates), the offer for every device |
+| P5 | **The dot, the buttons and the activation:** `ProfileDot` (grey, orange, green, red, the warning sentence), *Calibrate* and *Forget the calibration* in the Input tab, `ProfileActivator` created with the engine (applies the profile for the selected device at each input change and at start, to the tuner and the practice modes alike), persistence across a restart |
 | P6 | Validation (independent measure, reported honestly), texts in three languages, documentation, `STATUS.md`, the build and **the owner's trial** [HUMAN] |
 
 Tests are written first and seen failing; the whole default suite runs after every phase (after a clean compile).
