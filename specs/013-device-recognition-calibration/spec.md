@@ -194,7 +194,7 @@ The player can cancel at every step; a recording that is silent or clipped is re
 - **SC-003**: The dot is **correct in 100 % of the checks** for the three states and the no-input case, and **changes at once** when the input changes (green for a calibrated device with at least 60 %, orange for none, red below 60 %).
 - **SC-004**: With **no profile**, **all recorded recognition figures are equal** to those of spec 010 (0 differences) and an uncalibrated device uses the default configuration.
 - **SC-005**: On the calibration recording itself, the recognition rate with the profile is **never lower than with the default** (FR-014), and the rate obtained is **shown** to the player.
-- **SC-006**: On **the owner's own recordings made with the built-in microphone** (not used for the calibration), the recognition rate with a calibrated profile is **measured and reported next to the default's**; **no improvement figure is promised in advance** (constitution XII): the owner's trial decides whether it helped.
+- **SC-006**: Three measures, each reported as **the rate with the default next to the rate with the profile**: (a) the calibration recording itself (SC-005); (b) the **22 single-note recordings** of the built-in microphone committed with the tests; (c) the owner's own **chord takes**, when present. **No improvement figure is promised in advance** (constitution XII). **Reading rule:** if the profile is not at least as good as the default on (b) and (c), the feature is reported as **"no measured effect"** and the owner's trial decides what follows. These recordings are **never used to choose the search settings**.
 - **SC-007**: A cancelled, failed or interrupted calibration leaves the existing profile **unchanged in 100 % of the cases** tried (cancel at each step, silent and clipped recordings, a device unplugged).
 - **SC-008**: Two devices never share a profile by mistake in the cases tried (two devices of the same name, one device with two channels or two rates).
 - **SC-009**: The texts exist in **3 of 3 languages**.
@@ -211,5 +211,7 @@ The player can cancel at every step; a recording that is silent or clipped is re
 - The calibration piece is played **without tempo**: only the order of the sounds matters, not their time.
 - The latency calibration of the route (rhythm) is a different thing and is not touched.
 - A first validation uses **a recording the owner plays with the built-in microphone** at the start of the work, and the result is reported honestly; the owner's own trial is the final check.
+- **What the tests cannot see**, and only the owner's trial can judge: how the one window feels, the real microphone and room, the time the player takes (SC-001), and how the dot looks on screen.
+- **Scope of the validation**: it holds for **this built-in microphone and this guitar** only; no claim is made for other microphones, audio interfaces, basses or computers.
 - Out of scope: a shared (cloud) library of profiles, calibration without the player, changing the recognition algorithms, the tuner window itself.
 - The work follows Spec Kit in order and is delivered in small phases; tests are written first; the build stays green after each.
