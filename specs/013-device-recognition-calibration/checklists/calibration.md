@@ -47,13 +47,13 @@
 
 ## Data safety and non-regression
 
-- [ ] CHK029 Is "no audio on disk" written as a testable requirement (what is checked, where), including the temporary directory and crash cases? [Measurability, Spec §FR-017, Tasks T025]
-- [ ] CHK030 Is the wording of the spec ("deleted after the analysis") consistent with the plan ("never written, only dropped from memory"), and does the owner accept the stricter reading? [Consistency, Spec §FR-017, research R4]
-- [ ] CHK031 Are the moments a profile is written listed exhaustively (only a finished choice, never before) and the failure of the write itself (disk full, read-only file) specified? [Gap, Spec §FR-007, §FR-012]
-- [ ] CHK032 Is the restart behaviour of the library specified for a corrupt, missing, older-version and newer-version file, with the dot each case gives? [Coverage, Spec §FR-013]
-- [ ] CHK033 Is "with no profile every figure is unchanged" tied to a named set of reports and a comparison rule (equal to what precision)? [Measurability, Spec §FR-011, §SC-004]
-- [ ] CHK034 Are the real writers of the recognition store named in the plan and the tasks, and is there a rule for any future writer (a test that fails when one reads the effective settings to write them)? [Traceability, research R1, Tasks T011]
-- [ ] CHK035 Is the behaviour defined when two copies of the application, or two windows of the calibration, touch the same library at once? [Gap, Edge Cases]
+- [x] CHK029 Is "no audio on disk" written as a testable requirement (what is checked, where), including the temporary directory and crash cases? [Measurability, Spec §FR-017, Tasks T025]
+- [x] CHK030 Is the wording of the spec ("deleted after the analysis") consistent with the plan ("never written, only dropped from memory"), and does the owner accept the stricter reading? [Consistency, Spec §FR-017, research R4]
+- [x] CHK031 Are the moments a profile is written listed exhaustively (only a finished choice, never before) and the failure of the write itself (disk full, read-only file) specified? [Gap, Spec §FR-007, §FR-012]
+- [x] CHK032 Is the restart behaviour of the library specified for a corrupt, missing, older-version and newer-version file, with the dot each case gives? [Coverage, Spec §FR-013]
+- [x] CHK033 Is "with no profile every figure is unchanged" tied to a named set of reports and a comparison rule (equal to what precision)? [Measurability, Spec §FR-011, §SC-004]
+- [x] CHK034 Are the real writers of the recognition store named in the plan and the tasks, and is there a rule for any future writer (a test that fails when one reads the effective settings to write them)? [Traceability, research R1, Tasks T011]
+- [x] CHK035 Is the behaviour defined when two copies of the application, or two windows of the calibration, touch the same library at once? [Gap, Edge Cases]
 
 ## Validation honesty
 
