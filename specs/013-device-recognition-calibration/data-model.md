@@ -25,6 +25,9 @@ A candidate is a set of values of the profile parameters; the result lists the b
 ## CalibrationFlow (state machine)
 `OFFER`, `TUNING`, `TUNER_OPEN`, `ADVICE`, `PIECE`, `LISTENING`, `QUALITY`, `REFUSED`, `ANALYSING`, `RESULT`, `CHOICE`, `DONE`, `CANCELLED`, with a total table of events (see `contracts/calibration-flow.md`).
 
+## Result messages
+Two, with the same three choices: *not better than the default* ("the default settings are the most optimal") and *better than the default but under 60 %* ("better than the default, but only N %"). The button *Use the default configuration* reads "(replaces the current calibration)" when the device already has a profile.
+
 ## SearchReport (what the result screen shows)
 The rates with the default and with the profile: **total, notes, chords**, each as events accepted over events of the piece, and the sentence "saved for this device". The per-parameter list (default, found) is **not** on the screen; it goes to the technical report.
 
