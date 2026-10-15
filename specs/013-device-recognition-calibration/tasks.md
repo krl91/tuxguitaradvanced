@@ -87,7 +87,7 @@ description: "Tasks of spec 013: per-device calibration of the note and chord re
 - [ ] T041 Document: `desktop/TuxGuitar/share/help/tools_audio_recognition{,_fr,_es}.html` (the button, the dot, the three choices, what is measured, that no audio is kept), `docs/` page, `STATUS.md`, `README` mention. `RecognitionControlsTest` still green.
 - [ ] T042 Independent measure: run quickstart items 3 and 4, write `SPEC/benchmark/validation.txt`: rate with the default and with the profile on the 22 built-in notes and on the owner's recording; **say plainly if there is no gain** (SC-006 may fail: report it, do not tune the search to the validation data).
 - [ ] T043 Full gate: `mvn -e clean verify -P native-modules` from BUILD; `git diff` on the recognition code (analysers, `PolyphonicAcceptance`) is empty; the recognition reports equal to the base (SC-004). Build the app and relaunch it.
-- [ ] T044 [HUMAN] The owner's trial on the built-in microphone: calibrate with `basic_test.tg`, look at the dot, restart, check the dot, try another device, try the three-choice message; report what does not feel right.
+- [ ] T044 [HUMAN] The owner's trial on the built-in microphone: judge **the one window** (is each step clear, does it feel right, else go back to separate windows); calibrate with `basic_test.tg`, look at the dot, restart, check the dot, try another device, try the three-choice message; report what does not feel right.
 - [ ] T045 Write `SPEC/final-report.md` (what ran, what was skipped, the measured gain or its absence, the deviation of one window, the open points) and commit phase 7 locally.
 
 ## Dependencies

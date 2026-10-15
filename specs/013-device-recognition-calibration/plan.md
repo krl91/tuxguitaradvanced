@@ -102,4 +102,4 @@ Tests are written first and seen failing; the whole default suite runs after eve
 | A separate profile file | the store rewrites its own file and drops other keys | storing profiles in the store's file |
 | Judging each sound alone against its event | independent of earlier misses; a boolean per event | the Wait-mode whole-stream judge (stuck on the first miss) |
 | A negative control in the objective | a loose setting that accepts everything must not win | counting accepted events only |
-| One window for the five steps | fewer popups, same information | five separate windows as described (proposed to the owner) |
+| One window for the steps | decided by the owner (spec Clarifications), to be tried | separate windows as first described (the fallback if the trial says so) |
