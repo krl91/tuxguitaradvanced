@@ -24,7 +24,8 @@ The state machine is pure (like `PreRunCheck`): a total table, ignored pairs cha
 | `CHOICE` | use the settings found anyway | saved (red if < 60 %); `DONE` |
 | `CHOICE` | record again | `PIECE` |
 | `CHOICE` | use the default ("replaces the current calibration" if there is one) | the default saved as the profile (orange); `DONE` |
-| any | cancel | `CANCELLED`: nothing saved, the recording dropped, the previous profile intact |
+| any | cancel, or close the window and answer *Yes* to "Stop the calibration?" | `CANCELLED`: nothing saved, the recording dropped, the previous profile intact |
+| any | close the window and answer *No* | no change: the same step stays |
 | `OFFER`, `TUNING`, `TUNER_OPEN`, `ADVICE`, `PIECE`, `LISTENING`, `QUALITY`, `REFUSED` | device lost | `CANCELLED` as above |
 | `ANALYSING`, `RESULT`, `CHOICE` | device lost | no change: the analysis uses the recording only; the result is offered as usual and a profile chosen is saved under that device's key |
 
