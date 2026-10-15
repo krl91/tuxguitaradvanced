@@ -24,15 +24,15 @@
 
 ## The profile, the dot and where it applies
 
-- [ ] CHK012 Is the list of settings a profile may hold stated in the spec with the settings that never change (pitch engine, tuner's own, passages, timing window, flames, gain), or only in the plan? [Traceability, Spec Assumptions, research R2]
-- [ ] CHK013 Is the key of a profile (device, channel) and its extra checks (sample rate, front-end state) written once and consistently in the spec, the plan and the data model? [Consistency, Spec Assumptions, data-model.md]
-- [ ] CHK014 Is it defined what happens when a profile's sample rate differs from the capture rate, and is that case distinct in wording from the changed noise-reduction or gain case? [Clarity, Clarifications]
-- [ ] CHK015 Are all dot states (grey, orange, green, red) defined with their text, their colour-independent label, and the rule for the 60 % boundary (is exactly 60 % green)? [Measurability, Spec §FR-008, data-model.md]
-- [ ] CHK016 Is the warning sentence for a changed noise reduction or gain defined (when it appears, its text, whether it is removed when the setting returns)? [Gap, Clarifications]
-- [ ] CHK017 Is it stated that the profile applies to the tuner window and to Follow, Arcade and Wait, and which of the tuner's parameters are explicitly outside the profile? [Completeness, Spec §FR-010]
-- [ ] CHK018 Is the moment a profile becomes active defined for application start (remembered input), for an input change, and for a device that appears later? [Coverage, research R1, contracts/profile-library.md]
-- [ ] CHK019 Is the statement "no special handling of an input change during an exercise" consistent with the rule that the dot "changes at once" and with the engine rebuilding its analysis? [Consistency, Spec §FR-008, Clarifications]
-- [ ] CHK020 Is the Configuration window's relation to profiles written for all three actions (edit, restore defaults, save while a profile is active)? [Coverage, Spec §FR-010, research R1]
+- [x] CHK012 Is the list of settings a profile may hold stated in the spec with the settings that never change (pitch engine, tuner's own, passages, timing window, flames, gain), or only in the plan? [Traceability, Spec Assumptions, research R2]
+- [x] CHK013 Is the key of a profile (device, channel) and its extra checks (sample rate, front-end state) written once and consistently in the spec, the plan and the data model? [Consistency, Spec Assumptions, data-model.md]
+- [x] CHK014 Is it defined what happens when a profile's sample rate differs from the capture rate, and is that case distinct in wording from the changed noise-reduction or gain case? [Clarity, Clarifications]
+- [x] CHK015 Are all dot states (grey, orange, green, red) defined with their text, their colour-independent label, and the rule for the 60 % boundary (is exactly 60 % green)? [Measurability, Spec §FR-008, data-model.md]
+- [x] CHK016 Is the warning sentence for a changed noise reduction or gain defined (when it appears, its text, whether it is removed when the setting returns)? [Gap, Clarifications]
+- [x] CHK017 Is it stated that the profile applies to the tuner window and to Follow, Arcade and Wait, and which of the tuner's parameters are explicitly outside the profile? [Completeness, Spec §FR-010]
+- [x] CHK018 Is the moment a profile becomes active defined for application start (remembered input), for an input change, and for a device that appears later? [Coverage, research R1, contracts/profile-library.md]
+- [x] CHK019 Is the statement "no special handling of an input change during an exercise" consistent with the rule that the dot "changes at once" and with the engine rebuilding its analysis? [Consistency, Spec §FR-008, Clarifications]
+- [x] CHK020 Is the Configuration window's relation to profiles written for all three actions (edit, restore defaults, save while a profile is active)? [Coverage, Spec §FR-010, research R1]
 
 ## The scoring and the search
 
