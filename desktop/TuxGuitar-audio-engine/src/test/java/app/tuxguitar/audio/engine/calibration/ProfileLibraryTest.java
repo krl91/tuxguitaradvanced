@@ -172,4 +172,22 @@ public class ProfileLibraryTest {
 		TGContext context = new TGContext();
 		assertSame(ProfileLibrary.getInstance(context), ProfileLibrary.getInstance(context));
 	}
+
+	@Test
+	public void listenersAreToldAfterASuccessfulSaveOrRemoveOnly() {
+		Memory file = new Memory();
+		ProfileLibrary library = new ProfileLibrary(file);
+		int[] told = { 0 };
+		library.addListener(() -> told[0]++);
+		assertTrue(library.save(searched(MAC, accept())));
+		assertEquals(1, told[0]);
+		file.failWrite = true;
+		assertFalse(library.save(searched(USB, accept())));
+		assertEquals(1, told[0], "a failed write changes nothing: nobody is told");
+		file.failWrite = false;
+		assertTrue(library.remove(DeviceKey.of("Never calibrated", null, 0)));
+		assertEquals(1, told[0], "nothing to remove: nobody is told");
+		assertTrue(library.remove(MAC));
+		assertEquals(2, told[0]);
+	}
 }

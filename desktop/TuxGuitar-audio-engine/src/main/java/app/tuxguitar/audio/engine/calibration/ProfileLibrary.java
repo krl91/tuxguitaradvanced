@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import app.tuxguitar.audio.engine.settings.ProfileParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionParameter;
@@ -34,6 +35,7 @@ public final class ProfileLibrary {
 	/** Entries this version cannot read (corrupt, later layout, other keys), written back unchanged. */
 	private final Map<String, String> kept = new TreeMap<String, String>();
 	private final Set<String> skipped = new LinkedHashSet<String>();
+	private final List<Runnable> listeners = new CopyOnWriteArrayList<Runnable>();
 
 	public ProfileLibrary(ProfilePersistence persistence) {
 		this.persistence = persistence;
@@ -101,8 +103,31 @@ public final class ProfileLibrary {
 		return Collections.unmodifiableSet(new LinkedHashSet<String>(this.skipped));
 	}
 
+	/** Told, outside any lock, after the library changed: a profile saved or removed (not after a failed write). */
+	public void addListener(Runnable listener) {
+		this.listeners.add(listener);
+	}
+
+	public void removeListener(Runnable listener) {
+		this.listeners.remove(listener);
+	}
+
+	private void changed() {
+		for (Runnable listener : this.listeners) {
+			listener.run();
+		}
+	}
+
 	/** Saves {@code profile} as the one of its device and writes the file; false (and nothing changed) when the write fails. */
-	public synchronized boolean save(RecognitionProfile profile) {
+	public boolean save(RecognitionProfile profile) {
+		boolean saved = saveLocked(profile);
+		if (saved) {
+			changed();
+		}
+		return saved;
+	}
+
+	private synchronized boolean saveLocked(RecognitionProfile profile) {
 		String id = profile.getKey().storageId();
 		Map<String, RecognitionProfile> next = new LinkedHashMap<String, RecognitionProfile>(this.profiles);
 		next.put(id, profile);
@@ -119,7 +144,16 @@ public final class ProfileLibrary {
 	}
 
 	/** Deletes the profile of one device (and its unreadable entries) and writes the file; false when the write fails. Nothing to delete is not an error. */
-	public synchronized boolean remove(DeviceKey key) {
+	public boolean remove(DeviceKey key) {
+		boolean[] removed = { false };
+		boolean done = removeLocked(key, removed);
+		if (done && removed[0]) {
+			changed();
+		}
+		return done;
+	}
+
+	private synchronized boolean removeLocked(DeviceKey key, boolean[] removed) {
 		String id = key.storageId();
 		Map<String, String> nextKept = withoutDevice(this.kept, id);
 		if (!this.profiles.containsKey(id) && nextKept.size() == this.kept.size()) {
@@ -135,6 +169,7 @@ public final class ProfileLibrary {
 		this.kept.clear();
 		this.kept.putAll(nextKept);
 		this.skipped.remove(id);
+		removed[0] = true;
 		return true;
 	}
 

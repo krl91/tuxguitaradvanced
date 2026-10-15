@@ -105,11 +105,14 @@ public final class AudioEngine {
 			public AudioEngine createInstance(TGContext singletonContext) {
 				final RecognitionSettingsStore store = RecognitionSettingsStore.getInstance(singletonContext);
 				RecognitionSettings settings = store.get();
-				return new AudioEngine(singletonContext, new InputDeviceCatalog(),
+				AudioEngine engine = new AudioEngine(singletonContext, new InputDeviceCatalog(),
 						CurrentInputSelection.getInstance(singletonContext), DEFAULT_RING_BUFFER_CAPACITY,
 						levelAnalyzer(settings), articulationDetector(settings),
 						sampleRate -> PitchEngineCatalog.resolve(store.get().get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate),
 						store);
+				// the profile of the selected device is laid over the settings, for every reader, whether or not a window is open (spec 013)
+				app.tuxguitar.audio.engine.calibration.ProfileActivator.attach(singletonContext, engine);
+				return engine;
 			}
 		});
 	}
