@@ -11,9 +11,12 @@ The state machine is pure (like `PreRunCheck`): a total table, ignored pairs cha
 | `ADVICE` | OK | `PIECE` |
 | `PIECE` | OK | `LISTENING` |
 | `LISTENING` | the expected number of sounds heard | `QUALITY` |
-| `LISTENING` | timeout (nothing for 20 s, 3 min in all) or too noisy / clipped / silent | `QUALITY` refused with the reason, then back to `PIECE` |
+| `LISTENING` | timeout (nothing for 20 s, 3 min in all), a wrong number of sounds, or too noisy / clipped / silent / too short | `REFUSED` (the reason, with the numbers when the count is wrong; no analysis tried) |
+| `REFUSED` | record again | `PIECE` |
+| `REFUSED` | use the default configuration | the default saved as the profile (orange); `DONE` |
+| `REFUSED` | stop | `CANCELLED` |
 | `QUALITY` | yes, good enough | `ANALYSING` |
-| `QUALITY` | no | `PIECE` (nothing kept) |
+| `QUALITY` | no | `REFUSED` (reason: the player judged it not good enough; same three choices) |
 | `ANALYSING` | search finished | `RESULT` |
 | `RESULT` | result better than the default **and** total rate >= 60 % | saved as the profile; `DONE` |
 | `RESULT` | **not better than the default, or total rate < 60 %** | `CHOICE` with the message "the default settings are the most optimal" and three choices |
