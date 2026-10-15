@@ -17,7 +17,7 @@ description: "Tasks of spec 012: an adjustable timing window for Follow and Arca
 
 ## Phase 1: Baseline (P0)
 
-- [ ] T001 Take as the baseline the figures of `specs/011-interactive-modes-regression/benchmark/build-times.txt` (default practice suite 923 tests, audio-engine 291, the recognition reports of `specs/010-pre-run-check/benchmark/after/`, native 28) and write in `SPEC/benchmark/baseline.txt` that they are reused, with the commit (`642cb90cc` or later) and the list of tests that name `TEMPO_TOLERANCE`, `Preset` or `getTolerance` (grep of `AET` and `TST`), because they are the ones the change touches.
+- [x] T001 Take as the baseline the figures of `specs/011-interactive-modes-regression/benchmark/build-times.txt` (default practice suite 923 tests, audio-engine 291, the recognition reports of `specs/010-pre-run-check/benchmark/after/`, native 28) and write in `SPEC/benchmark/baseline.txt` that they are reused, with the commit (`642cb90cc` or later) and the list of tests that name `TEMPO_TOLERANCE`, `Preset` or `getTolerance` (grep of `AET` and `TST`), because they are the ones the change touches.
 
 ## Phase 2: User Stories 1 and 2 - the formula and the new default (P1)
 

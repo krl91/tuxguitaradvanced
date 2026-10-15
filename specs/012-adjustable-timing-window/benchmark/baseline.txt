@@ -1,0 +1,11 @@
+Spec 012 T001: the baseline reused, 2026-10-15
+The figures of specs/011-interactive-modes-regression/benchmark/build-times.txt (taken at 6abf04647 and re-checked green after the Arcade restart fix at 642cb90cc: default practice suite 923 tests, 4 skipped, 9 min 49; audio-engine 291; native 28; the recognition reports identical to specs/010-pre-run-check/benchmark/after/; the owner's takes 26 of 42 and 13 of 42 wrong) are the base of this spec.
+
+Tests that name the tolerance (grep of 2026-10-15, the ones this change touches):
+  those that set or read the preset / TEMPO_TOLERANCE / getTolerance / presetOf:
+    TST/session/FollowSettingsTest, TST/session/FollowStarterTest, TST/session/FollowHarness (helper), TST/session/FakePlayerRun (helper),
+    TST/session/FollowBenchmarkTest, TST/session/TimingContextTest, TST/session/TimingToleranceTest,
+    TST/ui/FollowPanelTest, TST/ui/FollowPanelSwtTest
+  production: SRC/session/TimingTolerance, FollowSettings, FollowStarter, SRC/ui/FollowPanel, AE/settings/RecognitionParameters
+  language files: the keys practice.follow.tolerance[.strict|.normal|.lenient|.hint] in the three messages*.properties
+No test of the audio-engine module (AET) names TEMPO_TOLERANCE.
