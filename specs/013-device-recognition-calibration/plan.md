@@ -36,7 +36,7 @@ A **profile library** keeps, for each input device, the recognition settings fou
 |---|---|---|
 | I Preserve TuxGuitar Compatibility | no file format and no core file touched | pass |
 | II Extend Before Modifying Core | only the fork's engine and practice modules; the store gets a layer, the engine gets nothing new (the hop listener of spec 010 is reused) | pass |
-| III Evidence-Based Architecture | each decision cites a file (research R1 to R11); the unverified points are first tasks (device id uniqueness, front-end neutrality, the plugin's share path) | pass |
+| III Evidence-Based Architecture | each decision cites a file (research R1 to R11); the unverified points are first tasks (device id uniqueness, front-end state read at recording time; the share path is settled: a classpath resource) | pass |
 | IV Spec-Driven Development | specify, clarify, plan done in order | pass |
 | V Incremental Delivery | seven phases, each green and reviewable | pass |
 | VI Real-Time Audio Correctness | the **live** part (recording hops) copies into a preallocated array and counts onsets from frames, no allocation per hop, no lock on the analysis thread beyond a volatile counter; the **search** is offline on its own thread | pass |

@@ -4,8 +4,8 @@ The state machine is pure (like `PreRunCheck`): a total table, ignored pairs cha
 
 | State | Event | Next |
 |---|---|---|
-| (start) | press *Calibrate* on a device **with a profile or a red dot** | `OFFER` (*Calibrate again* / *Use the default configuration*: the second saves the default as the profile, orange, and ends with nothing recorded) |
-| (start) | press *Calibrate* on an uncalibrated device | `TUNING` |
+| (start) | press *Calibrate* on **any** device (calibrated, red or never calibrated) | `OFFER` (*Calibrate again* or, for a never calibrated device, *Calibrate* / *Use the default configuration*: the second saves the default as the profile, orange, and ends with nothing recorded) |
+| `OFFER` | *Calibrate* / *Calibrate again* | `TUNING` |
 | `TUNING` | answer yes | `ADVICE` |
 | `TUNING` | answer no | `TUNER_OPEN` (the tuner opens; closing it returns to `TUNING`; never goes on by itself) |
 | `ADVICE` | OK | `PIECE` |
