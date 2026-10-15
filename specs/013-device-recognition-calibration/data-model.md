@@ -29,4 +29,4 @@ A candidate is a set of values of the profile parameters; the result lists the b
 The rates with the default and with the profile: **total, notes, chords**, each as events accepted over events of the piece, and the sentence "saved for this device". The per-parameter list (default, found) is **not** on the screen; it goes to the technical report.
 
 ## ProfileActivator
-Listens to the current input selection, looks up the profile of the selected device in the library and calls `RecognitionSettingsStore.setActiveProfile` (or `null`); also reads the current selection when created. Lives with the engine, not with the Input tab.
+Listens to the current input selection (each notification arrives on its own thread, possibly out of order), so it ignores the event's content: under one lock it reads the **latest** `selection.snapshot()`, looks up the profile of that device in the library and calls `RecognitionSettingsStore.setActiveProfile` (or `null`); also reads the current selection when created. Lives with the engine, not with the Input tab.

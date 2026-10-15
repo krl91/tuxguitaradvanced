@@ -65,7 +65,7 @@ desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
 ├── settings/ProfileParameters.java          # NEW: which parameters a profile may hold, and the merge
 └── calibration/                             # NEW package (pure, no UI)
     ├── DeviceKey.java, RecognitionProfile.java, ProfileState.java, ProfileLibrary.java (save, load, remove), ProfilePersistence.java, ProfileActivator.java
-    ├── HopRecorder.java, SoundCounter.java, SoundSegmenter.java
+    ├── HopRecorder.java, SoundCounter.java, SoundSegmenter.java, RecordingQuality.java (the measures and the silent / clipped checks)
     └── (all tested without hardware)
 
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/

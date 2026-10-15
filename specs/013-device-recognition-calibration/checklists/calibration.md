@@ -63,7 +63,12 @@
 - [ ] CHK039 Is the success criterion SC-006 written so that it can fail (a threshold or a rule), or only so that something is "measured and reported"? [Measurability, Spec §SC-006]
 - [ ] CHK040 Is the scope of the validation limited honestly to the built-in microphone and one guitar (no claim for other microphones, interfaces, bass or other computers)? [Assumption, Spec §FR-018, Assumptions]
 
+## Added after the decision on noise (2026-10-15)
+
+- [ ] CHK041 CHK006 and CHK007 above were written before it was decided that the background noise is only **measured and shown**: do they still describe the refusal causes (now wrong number of sounds, silent, clipped, timeout, "not good enough") and is the absence of a noise threshold acceptable to the owner? [Consistency, Spec §FR-004, §FR-005, Clarifications]
+- [ ] CHK042 Is it written how the player is helped to judge the background noise at the quality question (what is shown, in what unit, compared to what), given that no threshold decides for them? [Clarity, Spec §FR-005]
+
 ## Notes
 
-- Check items off as you review: `[x]`. Add comments or findings inline; number new items continuing from CHK041.
+- Check items off as you review: `[x]`. Add comments or findings inline; number new items continuing from CHK043.
 - Items that fail point to a requirement to write or sharpen in the spec, the plan or the tasks before `/speckit-implement`.
