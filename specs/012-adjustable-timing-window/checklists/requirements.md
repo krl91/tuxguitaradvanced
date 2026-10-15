@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain (3 remain, all for the owner: the control and the numbers, the default, where the remembered value is set)
+- [x] No [NEEDS CLARIFICATION] markers remain (the three were answered by the owner on 2026-10-15)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,5 +31,5 @@
 
 ## Notes
 
-- 15 of 16 items pass; the open item is the three clarification markers (FR-002, FR-003, FR-006), which go to `/speckit-clarify`.
+- 16 of 16 items pass after the three clarifications of 2026-10-15.
 - The file names and the numbers of today's presets are in the "Why this exists" section as facts about the current behaviour, not as a design.

@@ -38,6 +38,7 @@ Modes: **W** = Wait for the right note, **F** = Follow the tempo, **A** = Arcade
 | FU-04 | The player is still stopping when a restart is asked | the start is retried up to the limit, then gives up with the message | A | P2 | `FollowUpJourneyTest` | new |
 | FU-05 | The result window is closed | the learner is brought back to a usable window | A | P2 | `FollowUpJourneyTest` | new |
 | FU-06 | Everything ends | the engine consumer is released, listeners removed, the tuner can open, no window left | W F A | P2 | `FollowUpJourneyTest` | new |
+| FU-07 | **Restart pressed several times in a row while an Arcade run is going on** (found by the owner on 2026-10-15: "it does not start from the beginning", the place it restarts from changes from one press to the next) | every restart begins the run at the same place, the start of the passage that was asked; the player and the judging clock are aligned each time | A | P1 | `FollowUpJourneyTest` (reproduces it first on the fake player, then the fix) | new, **open bug** |
 
 ## IN - interruptions and changes (story 4, P2)
 

@@ -14,6 +14,14 @@ In the tempo-following mode and in Arcade the learner plays against the clock: e
 
 What the code does today (inspected 2026-10-15, `TimingTolerance.Preset`): each preset gives two windows around the target time of an event, as a fraction of the local beat with a floor and a ceiling in milliseconds. The **tight window** decides *on time*; the **outer window** decides *early* or *late*; beyond it nothing matches. For the default **Normal** the tight window is **15 % of the beat, never under 60 ms nor over 150 ms**, which is **75 ms each side at 120 beats a minute** (150 ms at 60 bpm, 60 ms at 180 bpm); the outer window is 40 % of the beat between 150 and 450 ms. **Lenient** is 25 % between 90 and 250 ms (125 ms each side at 120 bpm). The numbers are marked *provisional* in the source until validated on real play.
 
+## Clarifications
+
+### Session 2026-10-15
+
+- Q: How does the learner adjust the window, and over what range? → A: A **continuous slider in milliseconds each side, at a reference of 120 beats a minute, from 40 ms to 200 ms** (today's widest, Lenient, is 125 ms). It **replaces** the Strict / Normal / Lenient list; an older saved preset is converted to its width at that reference (Strict 50 ms, Normal 75 ms, Lenient 125 ms).
+- Q: What is the default? → A: **100 ms each side at 120 bpm** (today's Normal is 75 ms: a third more lenient).
+- Q: Where is the remembered value set? → A: **One setting**: what the learner chooses in the preparation window is remembered at once and is also the value shown in the Configuration window (one place of truth, no separate saved default).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The learner widens or narrows the timing window (Priority: P1)
@@ -93,11 +101,11 @@ Everything outside the width of the window stays as it is: the recognition, the 
 ### Functional Requirements
 
 - **FR-001**: The learner MUST be able to adjust the timing window **continuously** in the Follow and Arcade modes, and MUST see the chosen value.
-- **FR-002**: The adjustable range MUST reach **wider** than today's Lenient and narrower than or equal to today's Strict, so that no window available today is lost. [NEEDS CLARIFICATION: how the learner adjusts it and what the numbers are: a slider in milliseconds each side at a reference tempo, a percentage of the beat, or a slider added next to the three presets? The range (narrowest, widest) is also to be decided.]
-- **FR-003**: The **default** window MUST be a bit more lenient than today's Normal (75 ms each side at 120 beats a minute). [NEEDS CLARIFICATION: how much more lenient: for example 100 ms or 125 ms each side at 120 bpm?]
+- **FR-002**: The learner adjusts the window with a **continuous slider in milliseconds each side, measured at a reference of 120 beats a minute, from 40 ms to 200 ms**; this reaches wider than today's Lenient (125 ms) and narrower than today's Strict (50 ms), so that no window available today is lost. The slider replaces the Strict / Normal / Lenient list.
+- **FR-003**: The **default** window is **100 ms each side at 120 beats a minute**, a third more lenient than today's Normal (75 ms).
 - **FR-004**: The window MUST keep growing and shrinking with the tempo, within a floor and a ceiling, as today's presets do, so that the same setting is usable at 60 and at 180 beats a minute.
 - **FR-005**: The setting MUST apply to **both Follow and Arcade**, which share the same judging, and MUST scale the **outer window** (early and late) with the tight one so that *early* and *late* keep their meaning; the outer window MUST still be cut at the middle of the gap to the neighbouring events.
-- **FR-006**: The choice MUST be remembered between runs and between launches, and a configuration saved by an earlier version with a preset name MUST still load and map to a window of the same width as that preset. [NEEDS CLARIFICATION: where the learner sets the value that is remembered: only in the preparation window, or also in the Configuration window that holds the saved default today?]
+- **FR-006**: The choice MUST be remembered between runs and between launches as **one setting**: the value chosen in the preparation window is remembered at once and is the value the Configuration window shows. A configuration saved by an earlier version with a preset name MUST still load and map to a window of the same width as that preset (Strict 50 ms, Normal 75 ms, Lenient 125 ms at 120 bpm).
 - **FR-007**: A missing, invalid or out-of-range saved value MUST fall back to the default or to the nearest allowed value without an error.
 - **FR-008**: A change MUST apply to the **next run**, not to a run in progress.
 - **FR-009**: The judging MUST remain **deterministic**: the same performance and the same window give the same result.
@@ -116,8 +124,8 @@ Everything outside the width of the window stays as it is: the recognition, the 
 ### Measurable Outcomes
 
 - **SC-001**: The learner can set the window to **at least 5 distinct widths** between the narrowest and the widest, in the preparation window, in **under 10 seconds**, and the chosen value is shown.
-- **SC-002**: The widest setting is **wider than today's Lenient** (125 ms each side at 120 bpm), and the narrowest is **no wider than today's Strict** (50 ms each side at 120 bpm), by the numbers decided at clarification.
-- **SC-003**: With the **new default**, a note played **90 ms late at 120 bpm is judged on time**, where today's Normal judges it late; and with the window set to today's Normal the same note is judged late as before.
+- **SC-002**: The widest setting (200 ms each side at 120 bpm) is **wider than today's Lenient** (125 ms), and the narrowest (40 ms) is **no wider than today's Strict** (50 ms).
+- **SC-003**: With the **new default (100 ms)**, a note played **90 ms late at 120 bpm is judged on time**, where today's Normal (75 ms) judges it late; and with the window set to 75 ms the same note is judged late as before.
 - **SC-004**: With the window set to the width of today's Normal, **all recorded performances give identical judgements, scores and results** to those before this feature (0 differences).
 - **SC-005**: A setting saved by the previous version in each of its three preset names **loads in 3 of 3 cases** and gives a window of the width of that preset.
 - **SC-006**: The chosen value **survives a restart** in 100 % of the checks, and an invalid saved value never prevents the application from starting.
@@ -128,7 +136,7 @@ Everything outside the width of the window stays as it is: the recognition, the 
 
 - The feature applies to Follow and Arcade (they share one judging); the Wait mode has none and is out of scope.
 - The width of the window is the **tight** one (the *on time* window); the outer (early/late) window follows it proportionally and stays cut at the middle of the gap, so that no new judging category appears.
-- The old three presets are kept as shortcuts or as a mapping so that nothing saved is lost; whether they remain visible to the learner is part of the control's design decided at clarification.
+- The old three presets are **no longer shown**: they survive only as the mapping of an older saved setting to a width (decided at clarification).
 - The numbers of today's presets are provisional in the source; this feature changes the default and the range at the owner's request and does not claim they are validated on real play (constitution XII): the owner's trial (SC-008) is the check.
 - The existing recorded performances and the replay tests (the Follow and Arcade functional tests) are the base for SC-004.
 - The work follows Spec Kit in order and is delivered in small phases; the build stays green after each; tests are written first and seen failing.
