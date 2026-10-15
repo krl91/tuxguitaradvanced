@@ -14,6 +14,14 @@ The owner wants better **note-by-note recognition with the computer's built-in m
 
 What exists today (inspected 2026-10-15): the settings are one global immutable set saved by the recognition store; the latency calibration of the audio route is already stored **per route**; the input is chosen in the *Input* tab of the preparation window; the start window of spec 010 asks "is your guitar in tune?"; the engine can analyse a recording offline with the real analyser, and a judge can say whether a session accepts a recording. The weaknesses with the built-in microphone and with chords are measured (specs 004 and 010).
 
+## Clarifications
+
+### Session 2026-10-15
+
+- Q: Which piece is played to calibrate? → A: **`basic_test.tg`**, the owner's own short score ("perfect, to be reused and put on GitHub"): it becomes the committed **calibration piece for the guitar**. A **bass** piece is a separate later piece of work and is **set aside**; this feature is about the **normal guitar** only.
+- Q: What happens to the recording? → A: It is **kept only until the analysis is done, then deleted**; it never leaves the computer. (A cancelled or failed calibration also deletes it.)
+- Q: What happens when the settings found are not better than the default (the "red" case)? → A: The player is **shown a message**: the **default settings are the most optimal**; they are asked **whether they still want to use the settings found, which look worse, or record again, or use the default ones** (three choices).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The player calibrates the recognition for a device (Priority: P1)
@@ -129,9 +137,11 @@ The player can cancel at every step; a recording that is too short, too noisy, s
 - **FR-011**: With **no profile**, every recognition figure recorded before this feature (the reports of spec 010) MUST be unchanged.
 - **FR-012**: A calibration that is cancelled, fails or does not finish MUST NOT change or delete the device's existing profile.
 - **FR-013**: A missing, unreadable or incompatible profile MUST fall back to the default configuration (orange) without an error.
-- **FR-014**: The search MUST include the **default configuration** among its candidates, so that the profile found is **never worse than the default on the calibration recording**; when nothing is better, the player is told and the default is kept.
+- **FR-014**: The search MUST include the **default configuration** among its candidates. When the best settings found are **not better than the default** on the calibration recording, or the recognition is **below 60 %**, the application MUST **never decide for the player**: it shows a message saying that **the default settings are the most optimal** and offers **three choices**: **use the settings found anyway** (they are saved as the profile, and the dot is red if the rate is under 60 %), **record again**, or **use the default configuration** (saved as the profile of the device, and nothing else kept).
 - **FR-015**: The texts MUST exist in English, French and Spanish and the feature MUST be described in the documentation.
-- **FR-016**: The piece, the way the recognition rate is computed, the list of settings the search may change and their bounds, the time the analysis may take, the key of a profile, what happens to the recording, and what the red state means for later use are decided at clarification and written in the plan. [NEEDS CLARIFICATION: see the three questions in the Assumptions]
+- **FR-016**: The calibration piece for the guitar is the owner's score **`basic_test.tg`**, committed with the application; the way the recognition rate is computed, the list of settings the search may change and their bounds, the time the analysis may take and the key of a profile are written in the plan.
+- **FR-017**: The **calibration recording MUST be deleted once the analysis is done**, and also when the calibration is cancelled, refused or fails; it never leaves the computer and no audio of it remains on the disk afterwards.
+- **FR-018**: The calibration is for the **guitar**; a bass calibration (with its own piece) is **not part of this feature**.
 
 ### Key Entities
 
@@ -158,7 +168,9 @@ The player can cancel at every step; a recording that is too short, too noisy, s
 
 ## Assumptions
 
-- **Open questions for the owner** (the three allowed markers; each has a proposed default): (1) **the calibration piece**: a short fixed piece of about **10 sounds (6 single notes and 4 chords)** on the open and first-fret strings, the same for a guitar and a bass? (2) **the recording**: **kept only for the analysis and deleted afterwards, never leaving the computer**? (3) **the red state**: when a calibration measured below 60 %, is the poor profile **still used** (the dot warns) or does the device **fall back to the default** until it is calibrated again?
+- The three questions of the first draft are answered (see Clarifications): the piece is `basic_test.tg` for the guitar (a bass piece later), the recording is deleted after the analysis, and a result that is not better than the default is shown to the player with three choices.
+- The number of sounds of the calibration piece is the number of events of `basic_test.tg` (counted in the plan from the score itself); the listening mode ends when about that many sounds were heard.
+- When the player chooses **Use the default configuration**, the profile of the device is the default and its dot is **orange** (the default configuration is in use); a red dot only exists for a profile the player kept although the recognition was under 60 %.
 - A profile is keyed by the **device identity and its channel and sample rate** as the engine knows them (decided in the plan from the inspected source); two devices with the same name must be told apart if the engine can.
 - The **recognition rate** is the share of the events of the piece recognised, for notes and chords together, with the two figures also shown separately.
 - The settings the search may change are the **note and chord recognition settings** (acceptance, certainty, confirmation time, attack sensitivity, legato mode, the chord settings, the level thresholds of the input); the **pitch engine**, the tuner settings and the learner's own settings (passages, flames, timing window) **never change**; the list with bounds is in the plan.

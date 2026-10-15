@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain (FR-016 points to the three questions of the Assumptions: the piece, the recording, the red state)
+- [x] No [NEEDS CLARIFICATION] markers remain (the three questions were answered by the owner on 2026-10-15)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,4 +31,4 @@
 
 ## Notes
 
-- 15 of 16 items pass; the open item is the three questions (piece, recording, red state), each with a proposed default, which go to `/speckit-clarify`.
+- 16 of 16 items pass after the three answers of 2026-10-15 (piece `basic_test.tg` for the guitar, recording deleted after the analysis, three choices when the result is not better than the default). Bass set aside.
