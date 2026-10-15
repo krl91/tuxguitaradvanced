@@ -38,3 +38,11 @@ Branch feature/interactive-practice, commit 1f385c40d (the work tree adds only t
    Seen failing first: SoundSegmenterTest (compile error, then 1 of 6 at run time: the detector flags an attack about 72 ms late, the segment lead became 150 ms),
       EventJudgeTest and CalibrationScorerTest and ProfileSearchTest (compile errors: classes missing), EventJudgeTest chord case (assumed a chord missing a note is refused: it is not, measured).
 
+== After phase 4 (T030), `mvn -o clean test -pl ../../TuxGuitar-practice -am`, 10 min
+   tuxguitar-audio-engine: 360 tests, 0 failures (333 + 27: HopRecorderTest 7, SoundCounterTest 10, RecordingQualityTest 7, NoAudioOnDiskSourceTest 2, LiveListeningTest 1)
+   tuxguitar-practice: 973 tests, 0 failures, 6 skipped (unchanged: this phase adds no practice test)
+   Existing tests: none modified (git diff --name-status shows no M, D or R on a test file).
+   Seen failing first: the four unit test classes by compile error (classes missing); RecordingQualityTest at run time (my code started the highest level at 0 dBFS, so it could never be lower);
+      LiveListeningTest at run time (a recording asked for before the engine announced its rate was reset: the HopRecorder recorded nothing). Both defects fixed in the code, not in the tests.
+   Measured: the counter and the recorder allocate nothing per hop (HopRecorder under 2 KB for 5000 hops; SoundCounter under 64 bytes per hop, including the inherited attack detector).
+
