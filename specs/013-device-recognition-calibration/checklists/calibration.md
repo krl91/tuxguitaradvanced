@@ -10,17 +10,17 @@
 
 ## The flow and the window
 
-- [ ] CHK001 Is every step of the calibration (offer, tuning, advice, piece, listening, quality, analysis, result, choice) written with what the player sees and what each button does, in one place? [Completeness, Spec §FR-002..FR-006, contracts/calibration-flow.md]
-- [ ] CHK002 Is "one window whose content changes" specific enough to test: what stays the same between steps, how the current step is shown, and what closing the window does at each step? [Clarity, Spec §FR-003, Clarifications]
-- [ ] CHK003 Is the condition under which the owner's trial sends the steps back to separate windows written as a decision rule, or only as "to be tried"? [Ambiguity, Spec §FR-003, Tasks T044]
-- [ ] CHK004 Is the offer *Calibrate / Use the default configuration* described the same way for a never-calibrated, a calibrated and a red device in the spec, the contract and the tasks? [Consistency, Spec §FR-009, contracts/calibration-flow.md, Tasks T032]
-- [ ] CHK005 Is "about the number of sounds of the piece" turned into an exact rule (what counts as one sound, the 250 ms refractory time, the 1 s after the last expected sound, the 20 s and 3 min timeouts)? [Clarity, Spec §FR-004, research R4]
-- [ ] CHK006 Are all refusal causes (wrong number of sounds, silent, too short, too noisy, clipped, timeout, "not good enough") listed with a reason text each and the same three choices? [Completeness, Spec §FR-004, contracts/calibration-flow.md]
-- [ ] CHK007 Are the thresholds that make a recording "too noisy", "too short" or "clipped" quantified, or left to the implementation? [Gap, Spec §FR-005]
-- [ ] CHK008 Is what the quality question shows (the measures) and what the player is supposed to conclude from them defined, given that there is no replay? [Clarity, Spec §FR-005, Clarifications]
-- [ ] CHK009 Is the behaviour of "stop" defined at every step, including during the analysis (cancel latency, what is shown while stopping)? [Coverage, Spec §FR-006, contracts/calibration-flow.md]
-- [ ] CHK010 Is *Forget the calibration* specified fully: when it is enabled, the confirmation text, what is deleted, and what the dot becomes? [Completeness, Spec §FR-019]
-- [ ] CHK011 Are the tuning question's "No" path (the tuner opens and the calibration does not go on) and the way back from the tuner written as a requirement, not only in the contract? [Consistency, Spec §FR-002]
+- [x] CHK001 Is every step of the calibration (offer, tuning, advice, piece, listening, quality, analysis, result, choice) written with what the player sees and what each button does, in one place? [Completeness, Spec §FR-002..FR-006, contracts/calibration-flow.md]
+- [x] CHK002 Is "one window whose content changes" specific enough to test: what stays the same between steps, how the current step is shown, and what closing the window does at each step? [Clarity, Spec §FR-003, Clarifications]
+- [x] CHK003 Is the condition under which the owner's trial sends the steps back to separate windows written as a decision rule, or only as "to be tried"? [Ambiguity, Spec §FR-003, Tasks T044]
+- [x] CHK004 Is the offer *Calibrate / Use the default configuration* described the same way for a never-calibrated, a calibrated and a red device in the spec, the contract and the tasks? [Consistency, Spec §FR-009, contracts/calibration-flow.md, Tasks T032]
+- [x] CHK005 Is "about the number of sounds of the piece" turned into an exact rule (what counts as one sound, the 250 ms refractory time, the 1 s after the last expected sound, the 20 s and 3 min timeouts)? [Clarity, Spec §FR-004, research R4]
+- [x] CHK006 Are all refusal causes (wrong number of sounds, silent, too short, too noisy, clipped, timeout, "not good enough") listed with a reason text each and the same three choices? [Completeness, Spec §FR-004, contracts/calibration-flow.md]
+- [x] CHK007 Are the thresholds that make a recording "too noisy", "too short" or "clipped" quantified, or left to the implementation? [Gap, Spec §FR-005]
+- [x] CHK008 Is what the quality question shows (the measures) and what the player is supposed to conclude from them defined, given that there is no replay? [Clarity, Spec §FR-005, Clarifications]
+- [x] CHK009 Is the behaviour of "stop" defined at every step, including during the analysis (cancel latency, what is shown while stopping)? [Coverage, Spec §FR-006, contracts/calibration-flow.md]
+- [x] CHK010 Is *Forget the calibration* specified fully: when it is enabled, the confirmation text, what is deleted, and what the dot becomes? [Completeness, Spec §FR-019]
+- [x] CHK011 Are the tuning question's "No" path (the tuner opens and the calibration does not go on) and the way back from the tuner written as a requirement, not only in the contract? [Consistency, Spec §FR-002]
 
 ## The profile, the dot and where it applies
 
