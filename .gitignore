@@ -45,3 +45,7 @@ local.properties
 
 # local copies of third-party datasets (CC BY-NC-ND / BY-NC licences: never redistributed)
 /datasets/
+
+# the owner's own recordings (spec 010): never committed; the baseline figures are in a numbers-only file next to the test
+/specs/004-attack-difference-recognition/benchmark/owner-chords/
+/specs/004-attack-difference-recognition/benchmark/owner-chords-2/
