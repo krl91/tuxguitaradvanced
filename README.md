@@ -86,6 +86,7 @@ Available now (version 0.5.0-beta.1): practice note by note and chord by chord w
 | | **Input gain and noise reduction** | A gain slider (-6 to +18 dB) in the practice window and in the tuner, an optional noise gate / background-noise subtraction and a suggested gain. |
 | <img src="docs/images/features/analyse-score.png" width="44" alt="Analyse the score"> | **Score analysis** | A score that opens is no longer interrupted by a dialog. *Edit > Display invalid measures* (or the toolbar icon) lists every problem of the song, with a one-click fix. |
 | | **Diagnostic trace** | An optional text trace (numbers only, no audio) to understand why a note was or was not recognised. |
+| | **Per-input calibration** | Play a short piece once and the recognition settings that suit this input (your microphone or interface) are searched and kept; a coloured dot shows whether the input is calibrated. No audio is kept. |
 
 ## Interactive Practice in 30 seconds
 

@@ -1,0 +1,22 @@
+Spec 013, phase 7: the independent measure (T046), 2026-10-16.
+
+== What could be measured
+   The machinery on a synthetic performance of the piece (13 sounds): default settings 13 of 13, the search found nothing better than the default and kept it (see search-results.txt).
+   This says the search does no harm when there is nothing to gain. It says nothing about a real guitar and a real microphone.
+
+== What could NOT be measured, and why
+   SC-005 / SC-006 (the rate with the default and with the profile on the owner's recording of basic_test.tg, then the 22 built-in-microphone notes judged with the profile found):
+   NOT RUN. The owner's recording (T004) does not exist: ~/tuxguitar-owner-takes-backup/calibration/ holds only the recording tool (record-basic-test.sh), no take.
+   The gated test BuiltinMicProfileTest#theSearchOnTheOwnersRecordingThenTheCorpusJudgedWithTheProfileFound skips itself without the take.
+   The 22 notes alone cannot be a calibration recording (they are not the piece) and the default settings already accept 21 of 21 of them (T005: no headroom, they can only show harm).
+   So there is NO claim of gain for the built-in microphone. If, on the owner's take, the profile is not at least as good as the default on the 22 notes and on the chords, the reading rule of SC-006 is "no measured effect", and it will be reported as such.
+   The search was not tuned on any validation data.
+
+== How to produce it once the take exists
+   1. Record: ~/tuxguitar-owner-takes-backup/calibration/record-basic-test.sh (records the owner's performance of basic_test.tg from the microphone into a .wav next to it, outside git).
+   2. From desktop/build-scripts/tuxguitar-macosx-swt-cocoa:
+      mvn test -pl ../../TuxGuitar-practice -am -Dtest='BuiltinMicProfileTest#theSearchOnTheOwnersRecordingThenTheCorpusJudgedWithTheProfileFound' -Dcalibration.search=true -Dsurefire.failIfNoSpecifiedTests=false
+   3. Append the figures here (default vs profile: calibration recording, the 22 notes, the chord takes), with the scope: this built-in microphone and this guitar only.
+
+== Scope of every figure in this feature
+   one guitar, one built-in microphone (MacBook Pro), one room. Not the bass (FR-018), not other devices.

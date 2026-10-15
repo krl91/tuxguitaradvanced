@@ -61,3 +61,7 @@ Phase 6 (activation, dot, buttons), 2026-10-16. Whole default suite after a clea
    New tests: EngineListeningPortTest 3, ProfileDotTest 13, InputSelectorPanelOptInTest 3, ProfileDotSwtTest 1; ProfileActivatorTest 9, ProfileReuseTest 3 in the engine. No existing test modified.
    Seen failing first: ProfileDotTest by compile error (class missing). InputSelectorPanelOptInTest passed at the first run (it checks code already written; not seen failing). Defects found in my own new tests and fixed there: EngineListeningPortTest waited for a ring buffer nobody read after the stop; the colour test compared strings of proxy objects.
    Not covered: the InputSelectorPanel itself is not built by any test (it needs the real input catalog); no "tab shown" refresh of the dot (only one line of PracticeWindow may change); a change of gain is not announced by the engine, so the gain warning can stay stale until the next refresh.
+
+Phase 7 (documentation, gate), 2026-10-16. mvn -e clean verify -P native-modules: practice 1044 (6 skipped), engine 373, 0 failures, BUILD SUCCESS; the .app was built and launched with the local JRE symlink. The recognition packages (analysis, recognition, pitch) are identical to the base 1f385c40d; the suite left no recognition report modified (only the scene baseline rewritten by ArcadeRenderBenchmarkTest, restored and not committed).
+   RecognitionControlsTest, RecognitionSettingsPanelTest and BrandingAssetsTest green with the new help section.
+   Not done: T046 (needs the owner's recording T004), T049 and T050 (owner's trials).

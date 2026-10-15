@@ -191,3 +191,7 @@ Limits, measured and not hidden:
 * four-note seventh chords and some open chords (A major, E major) are recognised less often;
 * an octave, or a note that is a harmonic of a lower chord note, cannot be verified separately from it;
 * the settings were tuned on the recordings above; another guitar or microphone may call for another gain or sensitivity.
+
+## Calibrating the recognition for one input
+
+The **Input** tab has a dot next to the input chooser (grey: no input, orange: not calibrated, green: calibrated at 60 % or more, red: calibrated under 60 %) and two buttons, **Calibrate the recognition** and **Forget the calibration**. Calibrating opens one window: you play a short piece once, the window counts the sounds, asks whether the recording is good enough, searches the best recognition settings for this input on that recording (at most about two minutes) and shows the recognition rate with the default settings and with the settings found. When the recording cannot be used, or the settings found are not better than the default, you choose: record again, use the default, or stop. The profile is kept per input, applies in the tuner window, Follow, Arcade and Wait, and no audio is ever written to disk. The result is measured on one recording: play to confirm it. Details: `specs/013-device-recognition-calibration/`.
