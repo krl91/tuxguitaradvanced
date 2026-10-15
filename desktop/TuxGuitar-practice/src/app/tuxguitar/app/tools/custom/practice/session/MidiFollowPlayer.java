@@ -15,6 +15,13 @@ public final class MidiFollowPlayer implements FollowPlayer, TGEventListener {
 	private final PlayerTempoClock clock;
 	private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<Listener>();
 	private boolean attached;
+	/**
+	 * How long a stop of a running player waits before it returns. The count-in of the player (its clicks) and its play loop poll the player every 10 ms and only end when they
+	 * see it stopped; a run restarted at once, in the same instant, is never seen stopped, so that the thread of the earlier run goes on: it starts the sequencer before the new
+	 * run's own count-in has ended and writes its stale position over the one the new run has just set, and the music then starts early and from a place that changes with each
+	 * press of Restart (the owner's bug of 2026-10-15). Waiting here, before anything of the new run is done, gives those threads the polls they need (eight are far more than one).
+	 */
+	static final long STOP_SETTLE_MILLIS = 80L;
 
 	public MidiFollowPlayer(MidiPlayer player) {
 		this.player = player;
@@ -127,7 +134,15 @@ public final class MidiFollowPlayer implements FollowPlayer, TGEventListener {
 
 	@Override
 	public void stop() {
+		boolean interrupted = this.player.isRunning();
 		this.player.stop();
+		if (interrupted) {
+			try {
+				Thread.sleep(STOP_SETTLE_MILLIS);
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
+			}
+		}
 	}
 
 	@Override
