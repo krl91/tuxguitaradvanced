@@ -151,7 +151,8 @@ public final class FollowSettings {
 			}
 			return;
 		}
-		this.store.update(this.store.get().with(RecognitionParameters.TEMPO_WINDOW, (double) bounded));
+		// the default layer: with a device profile in force, get() holds the profile's values, which must not be written into the default (spec 013)
+		this.store.update(this.store.getDefault().with(RecognitionParameters.TEMPO_WINDOW, (double) bounded));
 	}
 
 	public synchronized boolean isFollow() {

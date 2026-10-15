@@ -22,3 +22,11 @@ Branch feature/interactive-practice, commit 1f385c40d (the work tree adds only t
    HONEST READING: single notes of this guitar on this microphone are already all recognised with the default settings. This corpus has NO HEADROOM:
    in SC-006 it can show a harm of a profile (a note lost), never a gain. The weak points the owner felt (chords, notes in a flow) are in the piece itself:
    the owner's recording of basic_test.tg (T004) is the measure that can show a gain.
+
+== After phase 2 (T015), `mvn -o clean test -pl ../../TuxGuitar-practice -am`, 10 min
+   tuxguitar-audio-engine: 327 tests, 0 failures (295 + 32 new: DeviceKeyTest 5, RecognitionProfileTest 7, ProfileStateTest 6, RecognitionSettingsStoreProfileTest 6, ProfileLibraryTest 8)
+   tuxguitar-practice: 946 tests, 0 failures, 4 skipped as before (939 + 7 new: StoreWritersTest 5, FollowSettingsProfileTest 1, BuiltinMicDefaultRateTest 1)
+   Existing tests: none modified (git diff --name-status shows no M, D or R on a test file); the existing store, engine-settings, panel, passage, follow and controls tests ran unchanged and green.
+   Seen failing first: the model tests and ProfileLibraryTest by compile error (classes missing); RecognitionSettingsStoreProfileTest by compile error; StoreWritersTest (3 of 5) and FollowSettingsProfileTest (1 of 1) at run time with the exact defect: the profile value 10.0 written into the default instead of 35.0.
+   Not covered here: the real configuration file of ProfileLibrary (ConfigPersistence) is only read, never written, by a test.
+

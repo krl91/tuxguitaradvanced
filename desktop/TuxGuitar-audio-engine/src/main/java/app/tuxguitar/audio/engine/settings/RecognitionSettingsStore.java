@@ -37,6 +37,11 @@ public final class RecognitionSettingsStore {
 	private final Persistence persistence;
 	private final List<Listener> listeners = new CopyOnWriteArrayList<Listener>();
 	private final RecognitionSettings.Loaded loaded;
+	/** The default layer: what the Configuration window edits and the file holds. */
+	private volatile RecognitionSettings defaults;
+	/** Values laid over the default layer for the input in use (a device profile, spec 013), or null. */
+	private volatile SettingsOverlay overlay;
+	/** The effective settings readers get: the default layer with the overlay, kept ready so that a reader does not allocate. */
 	private volatile RecognitionSettings settings;
 
 	public RecognitionSettingsStore(Persistence persistence) {
@@ -49,7 +54,8 @@ public final class RecognitionSettingsStore {
 			stored = null;
 		}
 		this.loaded = RecognitionSettings.fromStrings(stored);
-		this.settings = this.loaded.getSettings();
+		this.defaults = this.loaded.getSettings();
+		this.settings = this.defaults;
 	}
 
 	public static RecognitionSettingsStore getInstance(TGContext context) {
@@ -61,9 +67,20 @@ public final class RecognitionSettingsStore {
 		});
 	}
 
-	/** The current validated settings. */
+	/**
+	 * The effective settings: the default layer, with the active profile's values laid over it when there is one (spec 013). With no profile this is the
+	 * default layer itself. Every reader calls this.
+	 */
 	public RecognitionSettings get() {
 		return this.settings;
+	}
+
+	/**
+	 * The default layer, what the Configuration window edits and what is saved. A writer starts from this, never from {@link #get()}: otherwise the values
+	 * of the active profile would be copied into the default.
+	 */
+	public RecognitionSettings getDefault() {
+		return this.defaults;
 	}
 
 	/** What validation repaired when the configuration was read (for diagnostics and tests). */
@@ -71,36 +88,66 @@ public final class RecognitionSettingsStore {
 		return this.loaded;
 	}
 
-	/** Replaces the settings, saves them and notifies the listeners when they changed. */
+	/**
+	 * Replaces the default layer, saves it and notifies the listeners when the effective settings changed (with no profile, when the settings changed).
+	 * The listeners are told the effective settings before and after.
+	 */
 	public void update(RecognitionSettings settings) {
 		if( settings == null ) {
 			throw new IllegalArgumentException("settings are required");
 		}
 		RecognitionSettings previous;
+		RecognitionSettings current;
 		synchronized (this) {
 			previous = this.settings;
-			this.settings = settings;
+			this.defaults = settings;
+			current = effective(settings, this.overlay);
+			this.settings = current;
 			try {
 				this.persistence.write(settings.toStrings());
 			} catch (RuntimeException exception) {
 				// the values still apply for this run; the file is rewritten on the next change
 			}
 		}
-		if( !previous.equals(settings) ) {
+		if( !previous.equals(current) ) {
 			for( Listener listener : this.listeners ) {
-				listener.settingsChanged(previous, settings);
+				listener.settingsChanged(previous, current);
 			}
 		}
 	}
 
-	/** Restores every recommended value. */
+	/**
+	 * Lays a device profile over the default layer (null for none): the readers then get the profile's values for the profile parameters and the
+	 * default's for everything else. Nothing is written to the recognition file; the listeners are told when the effective settings change.
+	 */
+	public void setActiveProfile(SettingsOverlay profile) {
+		RecognitionSettings previous;
+		RecognitionSettings current;
+		synchronized (this) {
+			previous = this.settings;
+			this.overlay = profile;
+			current = effective(this.defaults, profile);
+			this.settings = current;
+		}
+		if( !previous.equals(current) ) {
+			for( Listener listener : this.listeners ) {
+				listener.settingsChanged(previous, current);
+			}
+		}
+	}
+
+	private static RecognitionSettings effective(RecognitionSettings defaults, SettingsOverlay overlay) {
+		return overlay == null ? defaults : overlay.applyTo(defaults);
+	}
+
+	/** Restores every recommended value of the default layer. */
 	public void restoreDefaults() {
 		update(RecognitionSettings.defaults());
 	}
 
-	/** Restores the recommended values of one section. */
+	/** Restores the recommended values of one section of the default layer. */
 	public void restoreDefaults(Section section) {
-		update(this.settings.withDefaults(section));
+		update(this.defaults.withDefaults(section));
 	}
 
 	public void addListener(Listener listener) {

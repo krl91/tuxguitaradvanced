@@ -70,7 +70,7 @@ public final class AudioRecognitionOption extends TGSettingsOption {
 		getToolItem().setImage(TuxGuitar.getInstance().getIconManager().getOptionSound());
 		getToolItem().addSelectionListener(this);
 
-		this.panel = new RecognitionSettingsPanel(getUIFactory(), getPanel(), MESSAGES, this.store.get(),
+		this.panel = new RecognitionSettingsPanel(getUIFactory(), getPanel(), MESSAGES, initialSettings(this.store),
 				new RecognitionSettingsPanel.InputSection() {
 					private InputSelectorPanel selector;
 
@@ -114,6 +114,14 @@ public final class AudioRecognitionOption extends TGSettingsOption {
 	@Override
 	public void updateDefaults() {
 		applyTuxGuitarDefaults(this.store);
+	}
+
+	/**
+	 * The settings the page starts from and saves back: the default layer. With a device profile in force the effective settings hold the profile's
+	 * values, which must not be copied into the default configuration (spec 013, FR-010).
+	 */
+	static RecognitionSettings initialSettings(RecognitionSettingsStore store) {
+		return store.getDefault();
 	}
 
 	static void commit(RecognitionSettingsStore store, RecognitionSettings pending) {
