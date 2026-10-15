@@ -15,4 +15,5 @@ From `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`, `export JAVA_HOME=$(/us
 11. **Existing tests unchanged:** after each phase `git diff --name-status <phase start> | grep -v '^A'` lists no file under a `test` directory; the default suite is the baseline (937) plus the new tests, with the same failures as before (none).
 12. **Result messages:** `-Dtest='CalibrationControllerTest,CalibrationWindowTest'`: the two messages (not better than the default; better but under 60 %) each offer *use the settings found anyway*, *record again* and *use the default configuration*, the last stating "replaces the current calibration" for a device that has a profile.
 13. **Native tests of the existing windows:** with `-P swt-gui-tests`, `PracticeWindowSwtTest` and `RecognitionSettingsSwtTest` pass unchanged with the new controls.
+14. **Closing the window:** `-Dtest='CalibrationFlowTest,CalibrationWindowTest'`: at every step, including the analysis, closing the window asks "Stop the calibration?"; *Yes* stops with nothing saved and the previous profile intact, *No* stays on the same step.
 
