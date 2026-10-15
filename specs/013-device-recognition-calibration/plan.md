@@ -48,7 +48,7 @@ A **profile library** keeps, for each input device, the recognition settings fou
 | XII Truthful Reporting | **no gain is promised**; the validation is independent and reported; deviations (one window instead of five) flagged for the owner | pass |
 | XIII/XIV | the learner is told what is measured and why a profile is refused; the dot has a text | pass |
 
-**Post-design re-check:** unchanged. Points to watch: every store writer uses `getDefault()` (R11.1); one dialog instead of five popups is **proposed to the owner**, not decided silently.
+**Post-design re-check:** unchanged. Points to watch: every store writer uses `getDefault()` (R11.1); one window for the steps is **decided by the owner** (spec Clarifications 2026-10-15) and judged in his trial.
 
 ## Project Structure
 
