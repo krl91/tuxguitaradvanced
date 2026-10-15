@@ -57,16 +57,16 @@
 
 ## Validation honesty
 
-- [ ] CHK036 Are the three measures (the calibration recording, the 22-note corpus, the owner's chord takes) each tied to a success criterion with what is compared and what counts as a failure to report? [Traceability, Spec §SC-005, §SC-006, Tasks T023, T042]
-- [ ] CHK037 Is it stated that the 22-note corpus and the owner's recording may not be used to choose search settings, to protect the independent measure? [Assumption, research R9, Tasks T042]
-- [ ] CHK038 Is what the headless tests cannot see (the real window, the real microphone, the feel of the one window, the 5-minute duration) listed with the owner's trial as the only check? [Coverage, Spec §SC-001, Tasks T044]
-- [ ] CHK039 Is the success criterion SC-006 written so that it can fail (a threshold or a rule), or only so that something is "measured and reported"? [Measurability, Spec §SC-006]
-- [ ] CHK040 Is the scope of the validation limited honestly to the built-in microphone and one guitar (no claim for other microphones, interfaces, bass or other computers)? [Assumption, Spec §FR-018, Assumptions]
+- [x] CHK036 Are the three measures (the calibration recording, the 22-note corpus, the owner's chord takes) each tied to a success criterion with what is compared and what counts as a failure to report? [Traceability, Spec §SC-005, §SC-006, Tasks T023, T042]
+- [x] CHK037 Is it stated that the 22-note corpus and the owner's recording may not be used to choose search settings, to protect the independent measure? [Assumption, research R9, Tasks T042]
+- [x] CHK038 Is what the headless tests cannot see (the real window, the real microphone, the feel of the one window, the 5-minute duration) listed with the owner's trial as the only check? [Coverage, Spec §SC-001, Tasks T044]
+- [x] CHK039 Is the success criterion SC-006 written so that it can fail (a threshold or a rule), or only so that something is "measured and reported"? [Measurability, Spec §SC-006]
+- [x] CHK040 Is the scope of the validation limited honestly to the built-in microphone and one guitar (no claim for other microphones, interfaces, bass or other computers)? [Assumption, Spec §FR-018, Assumptions]
 
 ## Added after the decision on noise (2026-10-15)
 
-- [ ] CHK041 CHK006 and CHK007 above were written before it was decided that the background noise is only **measured and shown**: do they still describe the refusal causes (now wrong number of sounds, silent, clipped, timeout, "not good enough") and is the absence of a noise threshold acceptable to the owner? [Consistency, Spec §FR-004, §FR-005, Clarifications]
-- [ ] CHK042 Is it written how the player is helped to judge the background noise at the quality question (what is shown, in what unit, compared to what), given that no threshold decides for them? [Clarity, Spec §FR-005]
+- [x] CHK041 CHK006 and CHK007 above were written before it was decided that the background noise is only **measured and shown**: do they still describe the refusal causes (now wrong number of sounds, silent, clipped, timeout, "not good enough") and is the absence of a noise threshold acceptable to the owner? [Consistency, Spec §FR-004, §FR-005, Clarifications]
+- [x] CHK042 Is it written how the player is helped to judge the background noise at the quality question (what is shown, in what unit, compared to what), given that no threshold decides for them? [Clarity, Spec §FR-005]
 
 ## Notes
 
