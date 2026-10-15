@@ -26,7 +26,7 @@ A **profile library** keeps, for each input device, the recognition settings fou
 
 **Constraints**: nothing changes without a profile; the default is always a candidate; deterministic search; no audio on disk; no recognition algorithm change; no improvement figure promised.
 
-**Scale/Scope**: about 8 new production classes in two modules, one change of the store, a window and a dot in the UI, 3 languages; about 40 tasks.
+**Scale/Scope**: about 18 new production classes in two modules, one change of the store, one line in the engine, a window, a dot and two buttons in the UI, 3 languages; 51 tasks.
 
 ## Constitution Check
 

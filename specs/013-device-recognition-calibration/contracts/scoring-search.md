@@ -4,4 +4,4 @@
 
 **Search.** Start: the default. For each profile parameter in the fixed order of `ProfileParameters`, five values over a window of its bounds around the current value, keep the best objective (ties: nearest the default); repeat while a pass improves; stop at 120 s or 2000 candidates, on cancel or when nothing improves. **Leaving the default needs `objective(best) >= objective(default) + 1`.**
 
-**Invariants.** (1) Deterministic: the same recording and the same piece give the same profile. (2) The default is a candidate: the result is never worse than the default on the recording. (3) A silent, a too short or a clipped segment set is refused before the search. (4) The report has one line per parameter. (5) A cancel ends within one candidate and saves nothing.
+**Invariants.** (1) Deterministic: the same recording and the same piece give the same profile. (2) The default is a candidate: the result is never worse than the default on the recording. (3) A silent or a clipped segment set is refused before the search. (4) The report has one line per parameter. (5) A cancel ends within one candidate and saves nothing.

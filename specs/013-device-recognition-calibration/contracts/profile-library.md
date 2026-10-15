@@ -9,5 +9,5 @@
 7. A profile whose sample rate differs from the capture rate does not apply (invariant 7).
 8. After a restart `ProfileLibrary.load()` returns the profiles saved, equal to what was saved (invariant 8, SC-002).
 9. `ProfileLibrary.remove(deviceKey)` deletes only that device's profile, saved at once; after a restart the device is orange (invariant 9).
-10. **Activation does not depend on a window**: `ProfileActivator` sets the active profile when the selection changes and at start, whether or not the preparation window is open (invariant 10). The tuner's own parameters never come from a profile.
+10. **Activation reads the latest selection**: the activator takes `selection.snapshot()` under a lock and does not trust the order of the notifications (each is delivered on its own thread); a rapid A, B, A ends with A's profile. **Activation does not depend on a window**: `ProfileActivator` sets the active profile when the selection changes and at start, whether or not the preparation window is open (invariant 10). The tuner's own parameters never come from a profile.
 11. The writers are `AudioRecognitionOption` (page built from `getDefault()`, `commit`, `restoreDefaults`), `FollowSettings.setWindowMillis` and the store's two `restoreDefaults`; none of them reads the effective settings to write them back (invariant 11, a source test).
