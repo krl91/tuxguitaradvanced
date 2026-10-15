@@ -73,7 +73,8 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 │   ├── CalibrationPiece.java (loads the shipped score, its events), EventJudge.java, CalibrationScorer.java, ProfileSearch.java
 │   ├── CalibrationFlow.java (pure state machine), CalibrationController.java (live listening + worker thread)
 ├── ui/CalibrationWindow.java, ui/ProfileDot.java      # NEW
-├── ui/InputSelectorPanel.java               # + the Calibrate and Forget buttons and the dot
+├── ui/InputSelectorPanel.java               # + opt-in Calibrate and Forget buttons and dot (second constructor; the existing one unchanged: the Configuration page uses it)
+├── ui/PracticeWindow.java                   # one line (line 389): builds the selector with the calibration controls
 └── ui/AudioRecognitionOption.java, session/FollowSettings.java   # the two writers: they read and write getDefault()
 desktop/TuxGuitar-practice/share/calibration/guitar.tg   # the shipped copy of basic_test.tg (a classpath resource in the plugin jar)
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties   # the texts
