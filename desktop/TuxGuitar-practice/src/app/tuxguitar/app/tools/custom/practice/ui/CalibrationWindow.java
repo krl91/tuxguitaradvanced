@@ -10,6 +10,7 @@ import app.tuxguitar.app.tools.custom.practice.calibration.CalibrationController
 import app.tuxguitar.app.tools.custom.practice.calibration.CalibrationController.RefusalCause;
 import app.tuxguitar.app.tools.custom.practice.calibration.CalibrationController.ResultKind;
 import app.tuxguitar.app.tools.custom.practice.calibration.CalibrationController.Snapshot;
+import app.tuxguitar.app.tools.custom.practice.ui.TabDiagram.Mark;
 import app.tuxguitar.app.tools.custom.practice.calibration.CalibrationFlow.State;
 import app.tuxguitar.audio.engine.calibration.RecognitionRate;
 import app.tuxguitar.audio.engine.calibration.RecordingQuality;
@@ -23,6 +24,7 @@ import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.resource.UIKey;
 import app.tuxguitar.ui.widget.UIButton;
+import app.tuxguitar.ui.widget.UICanvas;
 import app.tuxguitar.ui.widget.UICheckBox;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
@@ -62,6 +64,8 @@ final class CalibrationWindow {
 		int barValue;
 		/** the box "Keep a copy of this recording for diagnosis" is shown (the quality step only) */
 		boolean keepBox;
+		/** the tablature of the sound to play (FR-021), null: no picture */
+		List<Mark> sound;
 		final String[] labels = new String[3];
 		final Runnable[] actions = new Runnable[3];
 
@@ -83,6 +87,8 @@ final class CalibrationWindow {
 	private final UILabel detailLabel;
 	private final UIProgressBar bar;
 	private final UICheckBox keepCopy;
+	private final List<List<Mark>> sounds;
+	private final TabDiagram tab;
 	private final UIButton[] buttons = new UIButton[3];
 	private final CalibrationController controller;
 	private View current;
@@ -93,6 +99,13 @@ final class CalibrationWindow {
 
 	CalibrationWindow(UIFactory factory, UIWindow parent, Texts texts, boolean microphone, List<String> pieceLines, ControllerFactory controllers, Executor uiThread,
 			Consumer<State> onFinished) {
+		this(factory, parent, texts, microphone, pieceLines, null, controllers, uiThread, onFinished);
+	}
+
+	/** @param sounds the tablature of each sound of the piece, shown one at a time (FR-021); null: the written list of the piece only */
+	CalibrationWindow(UIFactory factory, UIWindow parent, Texts texts, boolean microphone, List<String> pieceLines, List<List<Mark>> sounds, ControllerFactory controllers,
+			Executor uiThread, Consumer<State> onFinished) {
+		this.sounds = sounds;
 		this.texts = texts;
 		this.microphone = microphone;
 		this.pieceLines = pieceLines;
@@ -110,22 +123,27 @@ final class CalibrationWindow {
 		this.bodyLabel = factory.createWrapLabel(this.window);
 		layout.set(this.bodyLabel, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		layout.set(this.bodyLabel, UITableLayout.PACKED_WIDTH, WRAP_WIDTH);
+		// FR-021: the picture of the tablature of the next sound, in the same place for every step that shows one
+		this.tab = new TabDiagram(factory, this.window);
+		layout.set(this.tab.canvas(), 3, 1, UITableLayout.ALIGN_CENTER, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.tab.canvas(), UITableLayout.PACKED_WIDTH, TabDiagram.WIDTH);
+		layout.set(this.tab.canvas(), UITableLayout.PACKED_HEIGHT, TabDiagram.HEIGHT);
 		this.detailLabel = factory.createWrapLabel(this.window);
-		layout.set(this.detailLabel, 3, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.detailLabel, 4, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		layout.set(this.detailLabel, UITableLayout.PACKED_WIDTH, WRAP_WIDTH);
 		this.bar = factory.createProgressBar(this.window);
 		this.bar.setMinimum(0);
-		layout.set(this.bar, 4, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.bar, 5, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		// FR-020: unticked at every entry of the quality step, shown in that step only
 		this.keepCopy = factory.createCheckBox(this.window);
 		this.keepCopy.setText(texts.get(P + "quality.keep-copy"));
 		this.keepCopy.setVisible(false);
-		layout.set(this.keepCopy, 5, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.keepCopy, 6, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
 
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel row = factory.createPanel(this.window, false);
 		row.setLayout(buttonsLayout);
-		layout.set(row, 6, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(row, 7, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		for (int i = 0; i < this.buttons.length; i++) {
 			final int index = i;
 			this.buttons[i] = factory.createButton(row);
@@ -177,6 +195,19 @@ final class CalibrationWindow {
 
 	UIProgressBar progressBar() {
 		return this.bar;
+	}
+
+	UICanvas tabCanvas() {
+		return this.tab.canvas();
+	}
+
+	/** The sound whose tablature is shown, or null. */
+	List<Mark> shownSound() {
+		return this.tab.shown();
+	}
+
+	int controllerHeard() {
+		return this.controller.getSnapshot().getHeard();
 	}
 
 	UICheckBox keepCopyBox() {
@@ -272,6 +303,7 @@ final class CalibrationWindow {
 		this.detailLabel.setText(view.detail);
 		this.detailLabel.setVisible(!view.detail.isEmpty());
 		this.keepCopy.setVisible(view.keepBox);
+		this.tab.show(view.sound);
 		this.bar.setVisible(view.barMaximum > 0);
 		if (view.barMaximum > 0) {
 			this.bar.setMaximum(view.barMaximum);
@@ -285,7 +317,7 @@ final class CalibrationWindow {
 			}
 		}
 		// the layout is redone only when what is shown changes in size
-		String layoutKey = view.step + "|" + view.body + "|" + view.detail + "|" + (view.barMaximum > 0) + "|" + String.valueOf(view.labels[0]) + String.valueOf(view.labels[1])
+		String layoutKey = (view.sound != null) + "|" + view.step + "|" + view.body + "|" + view.detail + "|" + (view.barMaximum > 0) + "|" + String.valueOf(view.labels[0]) + String.valueOf(view.labels[1])
 				+ String.valueOf(view.labels[2]);
 		if (!layoutKey.equals(this.laidOutFor)) {
 			this.laidOutFor = layoutKey;
@@ -330,7 +362,12 @@ final class CalibrationWindow {
 		case PIECE:
 			v.step = step(3);
 			v.body = t("piece.intro");
-			v.detail = numbered(0);
+			if (this.sounds != null && !this.sounds.isEmpty()) {
+				v.sound = this.sounds.get(0);
+				v.detail = t("piece.count", Integer.toString(this.sounds.size()));
+			} else {
+				v.detail = numbered(0);
+			}
 			v.button(0, t("ok"), c::ok);
 			v.button(1, cancel, c::cancel);
 			return v;
@@ -340,6 +377,9 @@ final class CalibrationWindow {
 			v.detail = s.getHeard() < this.pieceLines.size() ? t("listening.next", (s.getHeard() + 1) + ". " + this.pieceLines.get(s.getHeard())) : "";
 			v.barMaximum = s.getExpected();
 			v.barValue = s.getHeard();
+			if (this.sounds != null && s.getHeard() < this.sounds.size()) {
+				v.sound = this.sounds.get(s.getHeard());
+			}
 			v.button(0, cancel, c::cancel);
 			return v;
 		case QUALITY:

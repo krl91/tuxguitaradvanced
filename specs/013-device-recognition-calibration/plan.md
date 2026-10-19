@@ -116,3 +116,11 @@ Decided by the owner (clarify, session 2026-10-19): instead of an outside script
 - `CalibrationWindow`: a check box visible in the QUALITY view only, unticked at each entry, read when a button is pressed; the path or the failure is added to the text of the next view. `CalibrationLauncher` gives the real sink; the tests give none or a fake.
 - Texts `practice.profile.quality.keep-copy`, `quality.copy.written`, `quality.copy.failed` in English, French and Spanish.
 - No existing test changes; the new tests are `DiagnosticCopyTest`, `CalibrationControllerDiagnosticTest`, `CalibrationWindowDiagnosticTest`. `~/tuxguitar-owner-takes-backup/calibration/record-basic-test.sh` is no longer needed for T004: the take is made with the button.
+
+## Addendum 2026-10-19 (2): the tablature picture (FR-021)
+
+Decided by the owner (clarify, session 2026-10-19): one tablature picture per sound, the next one to play.
+- `ui/TabDiagram.java`: a pure model (`marks(notes)`: for each note, its string 1..6 and its fret, a chord being several marks in one column; the geometry of the six lines, the positions of the numbers for a given width and height) and the drawing on a `UICanvas` through the toolkit painter (`createCanvas`, `addPaintListener`, `UIPainter` as `arcade/ui/UiPainterRenderer` already does). It draws lines and numbers only.
+- `CalibrationWindow` gets a second constructor with the sounds as `List<List<TabDiagram.Mark>>`; the existing constructor delegates with none and behaves as before, so the existing tests are untouched. With the sounds: the canvas is shown at the piece step (the first sound) and while listening (sound *heard + 1*), hidden elsewhere; the written list of the piece step is replaced by "N sounds to play, shown one at a time" (key `practice.profile.piece.count`); the line under the picture is the existing `listening.next`.
+- `CalibrationLauncher` builds the marks from `CalibrationPiece.eventNotes`; texts in the three languages.
+- Tests (new): `TabDiagramTest` (model and drawing calls with a recording painter), `CalibrationWindowTabTest` (shown when it must be, the right sound at each count, hidden at the end), a native check in `CalibrationWindowSwtTest`'s family that the canvas has a size inside the window.

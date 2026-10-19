@@ -120,3 +120,11 @@ FR-001 T042, T043; FR-002 T031, T035; FR-003 T035, T036, T050; FR-004 T016, T026
 - [x] T055 Implement `SRC/calibration/CalibrationController.java` (sink, overload, snapshot fields; no file API), `SRC/ui/DiagnosticCopy.java`, the check box in `SRC/ui/CalibrationWindow.java`, the sink in `SRC/ui/CalibrationLauncher.java`, and the texts in the three `messages*.properties`. Green T052 to T054; `NoAudioOnDiskSourceTest` and `CalibrationStringsTest` unchanged and green. (FR-020, FR-017)
 - [x] T056 Whole default suite after a clean compile, native tests, commit phase 8 locally, build and relaunch the app. (FR-020)
 - [ ] T057 [HUMAN] The owner makes the take with the new check box (the file is in `tuxguitar-calibration-takes` of the home folder), then T046 is run on it.
+
+## Phase 9: the tablature picture (FR-021, owner's request of 2026-10-19)
+
+- [x] T058 Write first (red) `TST/ui/TabDiagramTest.java`: the marks of a single note (string, fret, 0 for open) and of a chord (one column, one mark per string, strings 1 on top); the six lines and a number per mark at the right place for a given size (via a recording painter); every note of the shipped piece gives marks on strings 1 to 6. (FR-021)
+- [x] T059 Write first (red) `TST/ui/CalibrationWindowTabTest.java`: with the sounds, the canvas is shown at the piece step with the first sound and the count text, shows sound *heard + 1* while listening and changes when one is heard, is hidden at the quality step; without the sounds (the existing constructor) nothing changes. (FR-021)
+- [x] T060 Implement `SRC/ui/TabDiagram.java`, the second constructor and the canvas in `SRC/ui/CalibrationWindow.java`, the marks in `SRC/ui/CalibrationLauncher.java`, the texts. Green T058, T059; the existing `CalibrationWindowTest` unchanged and green. (FR-021)
+- [x] T061 Native check that the canvas has a size inside the window; whole suite after a clean compile; commit phase 9; build and relaunch. (FR-021)
+- [ ] T062 [HUMAN] The owner judges whether the picture is clear enough.

@@ -77,7 +77,11 @@ final class CalibrationLauncher {
 			}
 		};
 		final RecognitionSettingsStore store = RecognitionSettingsStore.getInstance(context);
-		CalibrationWindow window = new CalibrationWindow(factory, mainWindow.get(), TEXTS, microphone, pieceLines(piece, TEXTS), listener -> {
+		List<List<TabDiagram.Mark>> sounds = new ArrayList<List<TabDiagram.Mark>>();
+		for (int event = 0; event < piece.eventCount(); event++) {
+			sounds.add(TabDiagram.marks(piece.eventNotes(event)));
+		}
+		CalibrationWindow window = new CalibrationWindow(factory, mainWindow.get(), TEXTS, microphone, pieceLines(piece, TEXTS), sounds, listener -> {
 			CalibrationController controller = new CalibrationController(piece.eventCount(), key, library, store::getDefault, port, tuner,
 					(segments, rate) -> CalibrationScorer.forRecording(piece.judge(context), segments, rate)::score,
 					task -> TGThreadManager.getInstance(context).start(task), System::currentTimeMillis, listener);
