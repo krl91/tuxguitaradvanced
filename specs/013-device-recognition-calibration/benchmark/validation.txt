@@ -4,7 +4,7 @@ Spec 013, phase 7: the independent measure (T046), 2026-10-16.
    The machinery on a synthetic performance of the piece (13 sounds): default settings 13 of 13, the search found nothing better than the default and kept it (see search-results.txt).
    This says the search does no harm when there is nothing to gain. It says nothing about a real guitar and a real microphone.
 
-== What could NOT be measured, and why
+== What could NOT be measured, and why (history, 2026-10-16: superseded by the UPDATE of 2026-10-20 at the end of this file)
    SC-005 / SC-006 (the rate with the default and with the profile on the owner's recording of basic_test.tg, then the 22 built-in-microphone notes judged with the profile found):
    NOT RUN. The owner's recording (T004) does not exist: ~/tuxguitar-owner-takes-backup/calibration/ holds only the recording tool (record-basic-test.sh), no take.
    The gated test BuiltinMicProfileTest#theSearchOnTheOwnersRecordingThenTheCorpusJudgedWithTheProfileFound skips itself without the take.
@@ -20,3 +20,16 @@ Spec 013, phase 7: the independent measure (T046), 2026-10-16.
 
 == Scope of every figure in this feature
    one guitar, one built-in microphone (MacBook Pro), one room. Not the bass (FR-018), not other devices.
+
+== UPDATE 2026-10-20: measured on the owner's two takes (T046, T057)
+   The owner made two takes of basic_test.tg with the box "Keep a copy of this recording for diagnosis" on 2026-10-19, on the built-in microphone of this MacBook:
+   calibration-2026-10-19-233043.wav (58.2 s) and calibration-2026-10-19-235439.wav (34.4 s). Command (new test, which reads ~/tuxguitar-calibration-takes/):
+   mvn test -pl ../../TuxGuitar-practice -am -Dtest='CalibrationTakeValidationTest#theSearchOnTheTakeThenTheCorpusJudgedWithTheProfileFound' -Dgroups=dataset -DexcludedGroups= -Dcalibration.search=true [-Dcalibration.take=<file>]
+   Both takes: 13 sounds heard of 13, accepted for the analysis.
+   (a) the calibration take itself: default settings 13 of 13 (notes 10/10, chords 3/3), score 9.0, wrong acceptances 2 (the negative control); the search found 13 of 13, score 9.0, wrong 2: NOT better than the default (one point of gain is needed); the default is kept.
+   (b) the 22 built-in-microphone notes (21 with an expected note): default 21 of 21 accepted; with the profile found (= the default) 21 of 21.
+   (c) chord takes: not run.
+   Reading rule of SC-006: the profile is not better than the default on any of the measures, so the result is "NO MEASURED EFFECT", reported as such.
+   Why: the default settings already reach 100 % on this guitar and this microphone, so there is nothing for a search to gain; this is what T005 had already shown on the 21 notes (no headroom). It does not show the feature useful or useless on another microphone or interface, where the default may not reach 100 %: that is not measured here and no claim is made.
+   The 2 wrong acceptances are the existing leniency of the chord acceptance (a chord with a note missing is often accepted), out of the scope of this feature.
+   Scope: this built-in microphone, this guitar, this room, two takes by the same player.

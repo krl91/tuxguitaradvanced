@@ -189,7 +189,8 @@ The player can cancel at every step; a recording that is silent or clipped is re
 - **Recognition profile**: the set of recognition settings chosen for one device, with the date of the calibration and the recognition rate measured when it was made.
 - **Profile library**: the saved collection of profiles, one per device.
 - **Calibration piece**: the short score the player plays to calibrate.
-- **Calibration recording**: the sound recorded during the calibration, used for the analysis.
+- **Calibration recording**: the sound recorded during the calibration, used for the analysis; in memory only, except for the **diagnostic copy** (a WAV file) that the player asks for with a check box (FR-020).
+- **Tablature picture**: the picture of one sound of the piece, the six strings with the fret number of each note (FR-021).
 - **Profile state**: orange (none, default used, or the profile does not apply at the current sample rate), green (calibrated, at least 60 %), red (calibrated, below 60 %), grey (no input selected). A warning sentence may be shown next to the dot when the noise reduction or the gain differs from the recording.
 - **Profile contents**: besides the settings, the sample rate, the date, the rates (default and found), the noise reduction and gain at recording time, and the origin (searched, or the default chosen).
 
@@ -206,6 +207,8 @@ The player can cancel at every step; a recording that is silent or clipped is re
 - **SC-007**: A cancelled, failed or interrupted calibration leaves the existing profile **unchanged in 100 % of the cases** tried (cancel at each step, silent and clipped recordings, a device unplugged).
 - **SC-008**: Two devices never share a profile by mistake in the cases tried (two devices of the same name, one device with two channels or two rates).
 - **SC-009**: The texts exist in **3 of 3 languages**.
+- **SC-010**: **No sound file is written without the player's tick** (FR-020): 0 files in the cases tried (box unticked, refusal, stop, cancel, no sink), and a file in the single case of a ticked box; a failed write never stops the calibration.
+- **SC-011**: The tablature picture shows, for each of the 13 sounds of the shipped piece, **one number per note on the right string** (checked by tests on all 13 sounds) and is judged **clear enough by the owner** on the built application (T062).
 
 ## Assumptions
 

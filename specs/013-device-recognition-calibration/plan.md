@@ -14,7 +14,7 @@ A **profile library** keeps, for each input device, the recognition settings fou
 
 **Primary Dependencies**: none new (the toolkit, JUnit 5, the engine's `OfflineAnalysis`, `PracticeSession`, `PolyphonicAcceptance`, `HopListener` of spec 010, `TGConfigManager`).
 
-**Storage**: a new configuration module `tuxguitar-recognition-profiles` (the profile library); the default settings stay where they are. **No audio is ever written to disk.**
+**Storage**: a new configuration module `tuxguitar-recognition-profiles` (the profile library); the default settings stay where they are. **No audio is ever written to disk, except the diagnostic copy the player explicitly asks for (FR-020).**
 
 **Testing**: the default suite (baseline 937 tests, `specs/012-adjustable-timing-window/benchmark/after.txt`), native tests for the window, the committed built-in-microphone corpus (22 notes), the owner's chord takes and his calibration recording (skip when absent).
 
@@ -24,7 +24,7 @@ A **profile library** keeps, for each input device, the recognition settings fou
 
 **Performance Goals**: a search of at most **120 s and 2000 candidates**, with progress and cancel; the live listening mode allocates nothing per hop.
 
-**Constraints**: nothing changes without a profile; the default is always a candidate; deterministic search; no audio on disk; no recognition algorithm change; no improvement figure promised.
+**Constraints**: nothing changes without a profile; the default is always a candidate; deterministic search; no audio on disk (except the diagnostic copy asked for, FR-020); no recognition algorithm change; no improvement figure promised.
 
 **Scale/Scope**: about 18 new production classes in two modules, one change of the store, one line in the engine, a window, a dot and two buttons in the UI, 3 languages; 51 tasks.
 
@@ -124,3 +124,11 @@ Decided by the owner (clarify, session 2026-10-19): one tablature picture per so
 - `CalibrationWindow` gets a second constructor with the sounds as `List<List<TabDiagram.Mark>>`; the existing constructor delegates with none and behaves as before, so the existing tests are untouched. With the sounds: the canvas is shown at the piece step (the first sound) and while listening (sound *heard + 1*), hidden elsewhere; the written list of the piece step is replaced by "N sounds to play, shown one at a time" (key `practice.profile.piece.count`); the line under the picture is the existing `listening.next`.
 - `CalibrationLauncher` builds the marks from `CalibrationPiece.eventNotes`; texts in the three languages.
 - Tests (new): `TabDiagramTest` (model and drawing calls with a recording painter), `CalibrationWindowTabTest` (shown when it must be, the right sound at each count, hidden at the end), a native check in `CalibrationWindowSwtTest`'s family that the canvas has a size inside the window.
+
+## Addendum 2026-10-20: the checks redone after phases 8 to 10 (analysis of 2026-10-19)
+
+**Phases.** P1 to P6 as above; P7 validation and documentation; **P8** the diagnostic copy (FR-020, tasks T052 to T057); **P9** the tablature picture (FR-021, T058 to T062); **P10** the defect of the close found on the built application (T063) and this alignment (T064).
+
+**Constitution Check, redone.** IV (spec before plan before tasks): FR-020 and FR-021 were each clarified with the owner, written in the spec, planned and tasked, then built with tests first; the plan and the tasks were written by hand and not by the skills, which is stated in `final-report.md`. V: two more phases, each green and reviewable on its own. VI (no blocking I/O on the real-time audio path): the diagnostic file is written at the quality answer, on the interface thread, **not** on the audio path (capture and analysis threads are not involved); measured on this Mac, a worst-case recording of 3 minutes (17 MB) is written in about 60 ms (33 to 64 ms in three runs), so the write stays synchronous and is not moved to another thread; the measure is a one-off reading, not a test. VII: the marks and the layout of the picture are pure and tested without a toolkit (`TabDiagramTest`); only the painting is native. IX: the picture uses only the toolkit's canvas and painter, so it is not tied to SWT. Other rows unchanged.
+
+**Validation tooling.** The independent measure reads the owner's takes from `~/tuxguitar-calibration-takes/` (the newest `calibration-*.wav`, or `-Dcalibration.take=<file>`) with the new `CalibrationTakeValidationTest`; the older `BuiltinMicProfileTest`, which reads the outside recording of `~/tuxguitar-owner-takes-backup/`, stays as it was.
