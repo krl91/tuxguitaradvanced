@@ -196,10 +196,17 @@ final class CalibrationWindow {
 		}
 	}
 
+	/** Closes the window without going through its close listener (which would ask again, and close again: found on the built application). */
+	private void dispose() {
+		if (!this.window.isDisposed()) {
+			this.window.dispose();
+		}
+	}
+
 	/** The cross or Escape: asks "Stop the calibration?" at every step; the window does not close by itself. */
 	void closeRequested() {
 		if (this.finished) {
-			this.window.close();
+			dispose();
 			return;
 		}
 		this.asking = true;
@@ -232,7 +239,7 @@ final class CalibrationWindow {
 		State state = snapshot.getState();
 		if (state == State.DONE || state == State.CANCELLED) {
 			this.finished = true;
-			this.window.close();
+			dispose();
 			this.onFinished.accept(state);
 			return;
 		}
