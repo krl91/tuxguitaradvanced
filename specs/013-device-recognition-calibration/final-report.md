@@ -37,4 +37,4 @@ A clipped take reported as a silence timeout; the search unable to walk far from
 Not given: it is the owner's (T050). If the single window does not feel right, the steps are separate views of `CalibrationWindow` and can be split.
 
 ## Open points
-T049, T050, T062 (the owner's trials and judgements: the one window, the picture, the time taken), and the optional items of the checklist `calibration.md` still unchecked by the reviewer.
+T049 (the owner's full trial: calibrate, restart, another device, a refusal, the three choices, Forget). The one window and the picture were judged by the owner on 2026-10-20: kept, and the optional items of the checklist `calibration.md` still unchecked by the reviewer.

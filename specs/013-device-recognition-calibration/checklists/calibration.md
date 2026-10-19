@@ -68,7 +68,13 @@
 - [x] CHK041 CHK006 and CHK007 above were written before it was decided that the background noise is only **measured and shown**: do they still describe the refusal causes (now wrong number of sounds, silent, clipped, timeout, "not good enough") and is the absence of a noise threshold acceptable to the owner? [Consistency, Spec §FR-004, §FR-005, Clarifications]
 - [x] CHK042 Is it written how the player is helped to judge the background noise at the quality question (what is shown, in what unit, compared to what), given that no threshold decides for them? [Clarity, Spec §FR-005]
 
+- [x] CHK043 Is the diagnostic copy (FR-020) written so that the rule "no audio on disk" of FR-017 stays true by default, with the exception named in both places and the box never remembered? [Consistency, Spec §FR-017, §FR-020]
+- [x] CHK044 Are the details of the copy (folder, name, format, what the file holds, what happens when it cannot be written) written, and are the defaults taken by the author flagged for the owner? [Completeness, Spec §FR-020, Clarifications 2026-10-19]
+- [x] CHK045 Is the tablature picture (FR-021) specified measurably (six strings, which string on top, the number on the string, the chord in one column, the minimum size, what is shown at each step and when it goes)? [Clarity, Spec §FR-021]
+- [x] CHK046 Is it written that the picture never marks a sound as right or wrong, so that FR-004 (the window counts without saying which sound it heard) is not broken? [Consistency, Spec §FR-004, §FR-021]
+- [x] CHK047 Is the judgement of the picture (is it clear enough) left to the owner as a human task, with the two alternatives not taken (the whole piece, both) recorded? [Traceability, Tasks §T062, Clarifications 2026-10-19]
+
 ## Notes
 
-- Check items off as you review: `[x]`. Add comments or findings inline; number new items continuing from CHK043.
+- Check items off as you review: `[x]`. Add comments or findings inline; number new items continuing from CHK047.
 - Items that fail point to a requirement to write or sharpen in the spec, the plan or the tasks before `/speckit-implement`.

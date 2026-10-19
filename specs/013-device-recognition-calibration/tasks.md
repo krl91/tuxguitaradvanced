@@ -97,7 +97,7 @@ description: "Tasks of spec 013: per-device calibration of the note and chord re
 - [x] T047 Full gate: `mvn -e clean verify -P native-modules` from BUILD; `git diff` on the recognition code (analysers, `PolyphonicAcceptance`) is empty; the recognition reports equal to the base. (FR-011, SC-004) The recognition reports are compared **bit for bit** with the base (an empty `diff`, file by file).
 - [x] T048 Build the app and relaunch it for the owner's trial; say what was built and what was not run. (SC-001)
 - [ ] T049 [HUMAN] The owner's trial on the built-in microphone: calibrate with `basic_test.tg`, look at the dot, restart, check the dot, try another device, a refusal, the three-choice message and *Forget the calibration*. (SC-001, SC-002, SC-003)
-- [ ] T050 [HUMAN] The owner judges **the one window** (is each step clear, does it feel right, else back to separate windows) and the time taken. (FR-003, SC-001)
+- [x] T050 [HUMAN] (owner, 2026-10-20: the one window is kept, "tout me semble bien, on garde") The owner judges **the one window** (is each step clear, does it feel right, else back to separate windows) and the time taken. (FR-003, SC-001)
 - [x] T051 Write `SPEC/final-report.md` (what ran, what was skipped, the measured gain or its absence, the one-window verdict, the open points) and commit phase 7 locally.
 
 ## Dependencies
@@ -127,7 +127,7 @@ FR-001 T042, T043; FR-002 T031, T035; FR-003 T035, T036, T050; FR-004 T016, T026
 - [x] T059 [US1] Write first (red) `TST/ui/CalibrationWindowTabTest.java`: with the sounds, the canvas is shown at the piece step with the first sound and the count text, shows sound *heard + 1* while listening and changes when one is heard, is hidden at the quality step; without the sounds (the existing constructor) nothing changes. (FR-021)
 - [x] T060 [US1] Implement `SRC/ui/TabDiagram.java`, the second constructor and the canvas in `SRC/ui/CalibrationWindow.java`, the marks in `SRC/ui/CalibrationLauncher.java`, the texts. Green T058, T059; the existing `CalibrationWindowTest` unchanged and green. (FR-021)
 - [x] T061 [US1] Native check that the canvas has a size inside the window; whole suite after a clean compile; commit phase 9; build and relaunch. (FR-021)
-- [ ] T062 [HUMAN] [US1] The owner judges whether the picture is clear enough.
+- [x] T062 [HUMAN] [US1] The owner judges whether the picture is clear enough. (Owner, 2026-10-20: kept, and "ok pour tout".)
 
 ## Phase 10: a defect found by the owner on the built application (2026-10-19)
 
