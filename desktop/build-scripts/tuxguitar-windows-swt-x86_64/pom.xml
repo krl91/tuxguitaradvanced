@@ -138,6 +138,14 @@
 									<destFileName>tuxguitar-audio-engine.jar</destFileName>
 									<outputDirectory>${project.build.directory}/${project.finalName}/lib</outputDirectory>
 								</artifactItem>
+								<!-- TarsosDSP, loaded by the audio engine to estimate the pitch: without it the recognition cannot start (missing from the first Linux and Windows packages of 0.6.0-alpha.1) -->
+								<artifactItem>
+									<groupId>be.tarsos.dsp</groupId>
+									<artifactId>core</artifactId>
+									<version>2.5</version>
+									<destFileName>tarsos-dsp-core.jar</destFileName>
+									<outputDirectory>${project.build.directory}/${project.finalName}/lib</outputDirectory>
+								</artifactItem>
 								<!-- /LIBRARIES -->
 
 								<!-- 3RD PARTY LIBRARIES -->
