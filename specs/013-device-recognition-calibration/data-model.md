@@ -33,3 +33,9 @@ The rates with the default and with the profile: **total, notes, chords**, each 
 
 ## ProfileActivator
 Listens to the current input selection (each notification arrives on its own thread, possibly out of order), so it ignores the event's content: under one lock it reads the **latest** `selection.snapshot()`, looks up the profile of that device in the library and calls `RecognitionSettingsStore.setActiveProfile` (or `null`); also reads the current selection when created. Lives with the engine, not with the Input tab.
+
+## DiagnosticSink and DiagnosticCopy (FR-020)
+`DiagnosticSink.write(float[] samples, int sampleRate)` returns the path written or null. `DiagnosticCopy` (window package) is the only implementation: 16-bit mono WAV, folder `tuxguitar-calibration-takes` of the user's home, name `calibration-<yyyy-MM-dd-HHmmss>.wav`. The `Snapshot` has `diagnosticPath` (null when none was asked for or it failed) and `diagnosticFailed`. Nothing of it is ever read back.
+
+## TabDiagram.Mark (FR-021)
+One note of the sound shown: a string 1 (thinnest) to 6 and a fret 0 or more (0 is open). A sound is the list of the marks of one event of the shipped piece (several for a chord). The layout of a picture is a function of its size and its marks: six horizontal lines, each cut in two around its number.
