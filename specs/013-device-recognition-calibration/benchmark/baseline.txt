@@ -65,3 +65,7 @@ Phase 6 (activation, dot, buttons), 2026-10-16. Whole default suite after a clea
 Phase 7 (documentation, gate), 2026-10-16. mvn -e clean verify -P native-modules: practice 1044 (6 skipped), engine 373, 0 failures, BUILD SUCCESS; the .app was built and launched with the local JRE symlink. The recognition packages (analysis, recognition, pitch) are identical to the base 1f385c40d; the suite left no recognition report modified (only the scene baseline rewritten by ArcadeRenderBenchmarkTest, restored and not committed).
    RecognitionControlsTest, RecognitionSettingsPanelTest and BrandingAssetsTest green with the new help section.
    Not done: T046 (needs the owner's recording T004), T049 and T050 (owner's trials).
+
+Phase 8 (diagnostic copy, FR-020), 2026-10-19. Whole suite after a clean compile (mvn -e clean verify -P native-modules): practice 1057 tests (6 skipped), engine 373, 0 failures. New: CalibrationControllerDiagnosticTest 5, DiagnosticCopyTest 3, CalibrationWindowDiagnosticTest 5. NoAudioOnDiskSourceTest, CalibrationStringsTest, CalibrationWindowTest, CalibrationControllerTest unchanged and green.
+   Seen failing first: the three new test files by compile error (the sink, the overload, the file class and the check box did not exist). One defect in my own new test (it expected RESULT where the fake 40 % score gives the three-choice message), fixed in the test.
+   Not run: the box on the real window by hand (no native test of CalibrationWindow exists); the file written on this Mac by the real app. That is T057, the owner's.

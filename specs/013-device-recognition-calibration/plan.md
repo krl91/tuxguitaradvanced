@@ -107,3 +107,12 @@ Tests are written first and seen failing; the whole default suite runs after eve
 | Judging each sound alone against its event | independent of earlier misses; a boolean per event | the Wait-mode whole-stream judge (stuck on the first miss) |
 | A negative control in the objective | a loose setting that accepts everything must not win | counting accepted events only |
 | One window for the steps | decided by the owner (spec Clarifications), to be tried | separate windows as first described (the fallback if the trial says so) |
+
+## Addendum 2026-10-19: the diagnostic copy (FR-020)
+
+Decided by the owner (clarify, session 2026-10-19): instead of an outside script, the quality question has a check box "Keep a copy of this recording for diagnosis", unticked every time.
+- `CalibrationController` (practice `calibration` package, which must stay free of any file API, `NoAudioOnDiskSourceTest`): an optional `DiagnosticSink` (an interface, `String write(float[] samples, int sampleRate)` returning the path or null on failure) and `answerQuality(boolean goodEnough, boolean keepCopy)`; the existing `answerQuality(boolean)` stays and means no copy. The samples are kept in memory only while a sink is set, and dropped at the quality answer, on a refusal, on a stop and on a cancel. The snapshot carries the path or the failure.
+- `ui/DiagnosticCopy.java` (practice `ui` package, outside the scanned directories): the only code that writes a file; 16-bit mono WAV through `javax.sound.sampled`, folder `tuxguitar-calibration-takes` of the user's home (created when needed), name `calibration-<date>-<time>.wav`.
+- `CalibrationWindow`: a check box visible in the QUALITY view only, unticked at each entry, read when a button is pressed; the path or the failure is added to the text of the next view. `CalibrationLauncher` gives the real sink; the tests give none or a fake.
+- Texts `practice.profile.quality.keep-copy`, `quality.copy.written`, `quality.copy.failed` in English, French and Spanish.
+- No existing test changes; the new tests are `DiagnosticCopyTest`, `CalibrationControllerDiagnosticTest`, `CalibrationWindowDiagnosticTest`. `~/tuxguitar-owner-takes-backup/calibration/record-basic-test.sh` is no longer needed for T004: the take is made with the button.

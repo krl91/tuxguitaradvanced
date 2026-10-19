@@ -81,6 +81,7 @@ final class CalibrationLauncher {
 			CalibrationController controller = new CalibrationController(piece.eventCount(), key, library, store::getDefault, port, tuner,
 					(segments, rate) -> CalibrationScorer.forRecording(piece.judge(context), segments, rate)::score,
 					task -> TGThreadManager.getInstance(context).start(task), System::currentTimeMillis, listener);
+			controller.setDiagnosticSink(new DiagnosticCopy());
 			port.setDeviceLostListener(controller::deviceLost);
 			return controller;
 		}, task -> TGSynchronizer.getInstance(context).executeLater(task), onFinished);

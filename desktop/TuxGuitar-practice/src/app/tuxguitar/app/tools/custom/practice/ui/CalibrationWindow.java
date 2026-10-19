@@ -23,6 +23,7 @@ import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.resource.UIKey;
 import app.tuxguitar.ui.widget.UIButton;
+import app.tuxguitar.ui.widget.UICheckBox;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
 import app.tuxguitar.ui.widget.UIProgressBar;
@@ -59,6 +60,8 @@ final class CalibrationWindow {
 		/** the bar: the maximum (0 or less hides it) and the value */
 		int barMaximum;
 		int barValue;
+		/** the box "Keep a copy of this recording for diagnosis" is shown (the quality step only) */
+		boolean keepBox;
 		final String[] labels = new String[3];
 		final Runnable[] actions = new Runnable[3];
 
@@ -79,9 +82,11 @@ final class CalibrationWindow {
 	private final UILabel bodyLabel;
 	private final UILabel detailLabel;
 	private final UIProgressBar bar;
+	private final UICheckBox keepCopy;
 	private final UIButton[] buttons = new UIButton[3];
 	private final CalibrationController controller;
 	private View current;
+	private State lastState;
 	private boolean asking;
 	private boolean finished;
 	private String laidOutFor = "";
@@ -111,11 +116,16 @@ final class CalibrationWindow {
 		this.bar = factory.createProgressBar(this.window);
 		this.bar.setMinimum(0);
 		layout.set(this.bar, 4, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		// FR-020: unticked at every entry of the quality step, shown in that step only
+		this.keepCopy = factory.createCheckBox(this.window);
+		this.keepCopy.setText(texts.get(P + "quality.keep-copy"));
+		this.keepCopy.setVisible(false);
+		layout.set(this.keepCopy, 5, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
 
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel row = factory.createPanel(this.window, false);
 		row.setLayout(buttonsLayout);
-		layout.set(row, 5, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(row, 6, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		for (int i = 0; i < this.buttons.length; i++) {
 			final int index = i;
 			this.buttons[i] = factory.createButton(row);
@@ -167,6 +177,10 @@ final class CalibrationWindow {
 
 	UIProgressBar progressBar() {
 		return this.bar;
+	}
+
+	UICheckBox keepCopyBox() {
+		return this.keepCopy;
 	}
 
 	UIButton button(int index) {
@@ -224,8 +238,23 @@ final class CalibrationWindow {
 		}
 		// the tuner is open: the modal window gives way until it is closed
 		this.window.setVisible(state != State.TUNER_OPEN);
+		if (state == State.QUALITY && this.lastState != State.QUALITY) {
+			this.keepCopy.setSelected(false);
+		}
+		this.lastState = state;
 		View view = this.asking ? stopQuestion() : view(snapshot);
+		if (!this.asking) {
+			addCopyLine(view, snapshot);
+		}
 		apply(view);
+	}
+
+	/** FR-020: where the diagnostic copy was written, or that it could not be, added to the text of the steps that follow the quality question. */
+	private void addCopyLine(View view, Snapshot s) {
+		String line = s.getDiagnosticPath() != null ? t("quality.copy.written", s.getDiagnosticPath()) : s.isDiagnosticFailed() ? t("quality.copy.failed") : "";
+		if (!line.isEmpty()) {
+			view.detail = view.detail.isEmpty() ? line : view.detail + "\n" + line;
+		}
 	}
 
 	private void apply(View view) {
@@ -235,6 +264,7 @@ final class CalibrationWindow {
 		this.bodyLabel.setText(view.body);
 		this.detailLabel.setText(view.detail);
 		this.detailLabel.setVisible(!view.detail.isEmpty());
+		this.keepCopy.setVisible(view.keepBox);
 		this.bar.setVisible(view.barMaximum > 0);
 		if (view.barMaximum > 0) {
 			this.bar.setMaximum(view.barMaximum);
@@ -309,8 +339,9 @@ final class CalibrationWindow {
 			v.step = step(5);
 			v.body = t("quality.question");
 			v.detail = measures(s.getQuality());
-			v.button(0, t("quality.yes"), () -> c.answerQuality(true));
-			v.button(1, t("quality.no"), () -> c.answerQuality(false));
+			v.keepBox = true;
+			v.button(0, t("quality.yes"), () -> c.answerQuality(true, this.keepCopy.isSelected()));
+			v.button(1, t("quality.no"), () -> c.answerQuality(false, this.keepCopy.isSelected()));
 			v.button(2, cancel, c::cancel);
 			return v;
 		case REFUSED:

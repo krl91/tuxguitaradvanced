@@ -77,6 +77,14 @@ public final class CalibrationController {
 		ProfileSearch.Scoring create(List<float[]> segments, int sampleRate);
 	}
 
+	/**
+	 * Writes the diagnostic copy the player asked for (FR-020) and returns where, or null when it could not be written. The controller itself uses no file
+	 * API: the sink is given by the application and is the only code that writes sound.
+	 */
+	public interface DiagnosticSink {
+		String write(float[] samples, int sampleRate);
+	}
+
 	public interface Listener {
 		void changed(Snapshot snapshot);
 	}
@@ -97,9 +105,12 @@ public final class CalibrationController {
 		private final boolean stoppedAtLimit;
 		private final boolean saveFailed;
 		private final boolean tunerUnavailable;
+		private final String diagnosticPath;
+		private final boolean diagnosticFailed;
 
 		Snapshot(State state, boolean hasProfile, int heard, int expected, RefusalCause refusalCause, RecordingQuality quality, int progressDone, int progressBudget,
-				ResultKind resultKind, RecognitionRate foundRate, RecognitionRate defaultRate, boolean stoppedAtLimit, boolean saveFailed, boolean tunerUnavailable) {
+				ResultKind resultKind, RecognitionRate foundRate, RecognitionRate defaultRate, boolean stoppedAtLimit, boolean saveFailed, boolean tunerUnavailable,
+				String diagnosticPath, boolean diagnosticFailed) {
 			this.state = state;
 			this.hasProfile = hasProfile;
 			this.heard = heard;
@@ -114,6 +125,8 @@ public final class CalibrationController {
 			this.stoppedAtLimit = stoppedAtLimit;
 			this.saveFailed = saveFailed;
 			this.tunerUnavailable = tunerUnavailable;
+			this.diagnosticPath = diagnosticPath;
+			this.diagnosticFailed = diagnosticFailed;
 		}
 
 		public State getState() {
@@ -178,6 +191,16 @@ public final class CalibrationController {
 		public boolean isTunerUnavailable() {
 			return this.tunerUnavailable;
 		}
+
+		/** Where the diagnostic copy of the recording was written (FR-020), or null when none was asked for or it failed. */
+		public String getDiagnosticPath() {
+			return this.diagnosticPath;
+		}
+
+		/** A diagnostic copy was asked for and could not be written; the calibration went on. */
+		public boolean isDiagnosticFailed() {
+			return this.diagnosticFailed;
+		}
 	}
 
 	private final int expected;
@@ -208,6 +231,11 @@ public final class CalibrationController {
 	private ProfileSearch.Result pending;
 	private boolean saveFailed;
 	private boolean tunerUnavailable;
+	private DiagnosticSink diagnosticSink;
+	/** The whole recording, kept in memory only while a sink is set and until the quality answer. */
+	private float[] keptSamples;
+	private String diagnosticPath;
+	private boolean diagnosticFailed;
 	private volatile ProfileSearch search;
 
 	public CalibrationController(int expected, DeviceKey key, ProfileLibrary library, Supplier<RecognitionSettings> defaults, ListeningPort port, TunerPort tuner,
@@ -241,12 +269,12 @@ public final class CalibrationController {
 			stopped = this.pending.isStoppedAtLimit();
 		}
 		return new Snapshot(this.flow.getState(), this.hasProfile, this.heard, this.expected, this.refusalCause, this.quality, this.progressDone, this.progressBudget,
-				this.resultKind, found, defaultRate, stopped, this.saveFailed, this.tunerUnavailable);
+				this.resultKind, found, defaultRate, stopped, this.saveFailed, this.tunerUnavailable, this.diagnosticPath, this.diagnosticFailed);
 	}
 
 	/** True while a recording is in memory (being made, or waiting for the quality answer or the analysis). */
 	public synchronized boolean isRecordingHeld() {
-		return this.segments != null || (this.recorder != null && (this.recorder.isRecording() || this.recorder.getLength() > 0));
+		return this.segments != null || this.keptSamples != null || (this.recorder != null && (this.recorder.isRecording() || this.recorder.getLength() > 0));
 	}
 
 	// ---------------------------------------------------------------- the player's commands
@@ -291,10 +319,27 @@ public final class CalibrationController {
 		}
 	}
 
+	/** Where the diagnostic copy of a recording is written when the player ticks the box (FR-020); none by default, and then nothing is ever kept. */
+	public synchronized void setDiagnosticSink(DiagnosticSink sink) {
+		this.diagnosticSink = sink;
+	}
+
 	public synchronized void answerQuality(boolean goodEnough) {
+		answerQuality(goodEnough, false);
+	}
+
+	/** @param keepCopy the box "Keep a copy of this recording for diagnosis" was ticked: the sink writes the whole recording before it is dropped */
+	public synchronized void answerQuality(boolean goodEnough, boolean keepCopy) {
 		if (this.flow.getState() != State.QUALITY) {
 			return;
 		}
+		this.diagnosticPath = null;
+		this.diagnosticFailed = false;
+		if (keepCopy && this.diagnosticSink != null && this.keptSamples != null) {
+			this.diagnosticPath = this.diagnosticSink.write(this.keptSamples, this.recordedRate);
+			this.diagnosticFailed = this.diagnosticPath == null;
+		}
+		this.keptSamples = null;
 		if (!goodEnough) {
 			refuse(RefusalCause.NOT_GOOD_ENOUGH, this.heard, Event.NO);
 			return;
@@ -308,6 +353,8 @@ public final class CalibrationController {
 			return;
 		}
 		discardRecording();
+		this.diagnosticPath = null;
+		this.diagnosticFailed = false;
 		this.pending = null;
 		this.quality = null;
 		this.heard = 0;
@@ -435,6 +482,7 @@ public final class CalibrationController {
 			return;
 		}
 		this.segments = cut.getSegments();
+		this.keptSamples = this.diagnosticSink != null ? samples : null;
 		this.recordedRate = rate;
 		this.quality = measured;
 		recording.discard();
@@ -529,6 +577,7 @@ public final class CalibrationController {
 
 	private void discardRecording() {
 		this.segments = null;
+		this.keptSamples = null;
 		if (this.recorder != null) {
 			this.recorder.discard();
 		}
