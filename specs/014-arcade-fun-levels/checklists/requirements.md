@@ -32,5 +32,5 @@
 ## Notes
 
 - Validated on the first pass (2026-10-20). The three questions that were open (how the kept sounds are chosen, the second share of level 2, what a near wrong note does) were answered by the owner and are in the Clarifications.
-- Points left to the plan, written as assumptions and not as open questions: the number of leniency positions (three proposed), how the widening of the timing relates to the window of spec 012, the exact rule of the even spread, and the figures of SC-001 and SC-002, which are targets to be measured (the "5 %" of SC-002 is a proposal of the author, to be confirmed by the owner).
+- Points left to the plan, written as assumptions and not as open questions: the number of leniency positions (three proposed), how the widening of the timing relates to the window of spec 012, the exact rule of the even spread, and the figures of SC-001, which is a target to be measured (the 5 % of SC-002 was confirmed by the owner on 2026-10-20).
 - Overlaps with earlier specs to be checked at the plan: 012 (adjustable timing window, shared by Follow and Arcade), 013 (device profile, applied under the Arcade permissiveness), 003 and 009 (Arcade and its scene).

@@ -22,6 +22,9 @@ Arcade is a game: the notes fly towards the neck and the player plays them as th
 - Q: For levels 1 to 4, how are the sounds kept (for example 30 %) chosen? → A: **Spread evenly over the piece and always the same ones** at every run, so that the player can learn the piece and a test can check the choice. (Chosen by the owner among: spread evenly and fixed, the most important first, random at each run.)
 - Q: At level 2 the request says "30 % of the chords and 30 % of the chords": what is the second share? → A: **30 % of the chords and 30 % of the notes.** (The five levels are then: no chord and 30 % of the notes; 30 % and 30 %; 50 % and 50 %; 75 % and 75 %; everything.)
 - Q: What happens when the player plays a note that is close to the right one but not exact? → A: It is **accepted as right, without penalty**: the recognition lets more uncertain sounds count as played, at the price of a few wrong notes counted right. (Chosen by the owner among: accepted as right, counted wrong without breaking the streak, both.)
+- Q: How many clearly wrong notes may the game accept as right at its default position? → A: **At most 5 %** of the clearly wrong notes of the negative tests (today 0 of 98 on the reference recording); the figure of each position is reported. (Chosen by the owner among 2 %, 5 %, 10 %, no figure.)
+- Q: How fast must the game give its verdict on a played note? → A: **At least 20 % faster than the verdict of Follow**, in median, on the same recordings (at the default position). (Chosen by the owner among: not slower than today, 20 % faster, under 150 ms, as fast as the data allow with no figure.)
+- Q: Which level is proposed the first time, before the player has chosen anything? → A: **Level 1 (the lowest) at the first launch, then the last level chosen**; and the player MUST be able to **choose the level by hand when Arcade is launched**. (Chosen by the owner, with the addition of the manual choice, among: level 5 as today, level 3, level 1 then the last chosen.)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -44,7 +47,7 @@ The player starts Arcade on a piece. The recognition gives its verdicts sooner, 
 
 ### User Story 2 - Five levels from a few notes to the whole piece (Priority: P1)
 
-Before a run the player chooses a level from 1 to 5. Level 1 keeps no chord and about 30 % of the notes; level 2 keeps 30 % of the chords and 30 % of the notes; level 3, 50 % and 50 %; level 4, 75 % and 75 %; level 5 keeps everything. The sounds that are not kept are neither shown, nor expected, nor judged, and the score is counted on the sounds kept. The kept sounds are spread evenly over the piece and are the same at every run.
+When Arcade is launched the player can choose a level from 1 to 5 (the level proposed is level 1 the first time, then the last level chosen). Level 1 keeps no chord and about 30 % of the notes; level 2 keeps 30 % of the chords and 30 % of the notes; level 3, 50 % and 50 %; level 4, 75 % and 75 %; level 5 keeps everything. The sounds that are not kept are neither shown, nor expected, nor judged, and the score is counted on the sounds kept. The kept sounds are spread evenly over the piece and are the same at every run.
 
 **Why this priority**: it is the second thing the owner asks for, and it makes a hard piece playable and lets the player climb a ladder on the same piece.
 
@@ -57,6 +60,8 @@ Before a run the player chooses a level from 1 to 5. Level 1 keeps no chord and 
 3. **Given** level 5, **When** the run is played, **Then** every note and every chord of the piece is shown, as today.
 4. **Given** any level, **When** the run ends, **Then** the score and the result are counted on the sounds kept, and the result says which level was played.
 5. **Given** a level chosen, **When** the application is restarted, **Then** the same level is proposed.
+6. **Given** Arcade has never been launched with levels, **When** it is launched, **Then** level 1 is proposed, and the player can pick any other level before the run starts.
+7. **Given** the launch of Arcade, **When** the level choice is shown, **Then** the player can change it by hand every time, and the choice made applies to that run and is the one proposed next time.
 
 ---
 
@@ -81,6 +86,7 @@ The control of the leniency and the choice of the level are in the Arcade prepar
 - **A chord is kept or removed as a whole**: it never loses some of its notes.
 - **The leniency never accepts silence**: a sound must have been heard for something to count as played.
 - **Changing the level or the leniency during a run**: it applies to the next run, not to the one in progress.
+- **A player who already uses Arcade** sees level 1 proposed the first time after this feature (a one-time change that the owner chose); level 5 is one choice away and then remembered.
 - **A saved level or leniency that is missing or out of range** falls back to the default or the nearest allowed value without an error.
 
 ## Requirements *(mandatory)*
@@ -92,28 +98,28 @@ The control of the leniency and the choice of the level are in the Arcade prepar
 - **FR-003**: The timing of Arcade MUST be a little more flexible at the permissive positions, in addition to the timing window of the player (spec 012); at "like Practice" it MUST be exactly today's.
 - **FR-004**: The permissiveness MUST apply to **Arcade only**: Follow, Wait, the tuner window and the calibration keep their recognition and their figures, identical to before this feature. A device profile (spec 013) keeps applying, and the Arcade permissiveness is applied on top of it.
 - **FR-005**: The judging MUST remain **deterministic**: the same performance, the same position and the same level give the same result.
-- **FR-006**: Arcade MUST offer **five levels**, chosen before a run, remembered between launches, defaulting to **level 5**: level 1 keeps **no chord and 30 % of the notes**; level 2 keeps **30 % of the chords and 30 % of the notes**; level 3 keeps **50 % and 50 %**; level 4 keeps **75 % and 75 %**; level 5 keeps **all the notes and all the chords**.
+- **FR-006**: Arcade MUST offer **five levels**. **At the first launch the level proposed is level 1**; afterwards it is **the last level chosen**, remembered between launches. The player MUST be able to **choose the level by hand each time Arcade is launched**, before the run starts. The levels are: level 1 keeps **no chord and 30 % of the notes**; level 2 keeps **30 % of the chords and 30 % of the notes**; level 3 keeps **50 % and 50 %**; level 4 keeps **75 % and 75 %**; level 5 keeps **all the notes and all the chords**.
 - **FR-007**: The sounds kept at levels 1 to 4 MUST be **spread evenly over the piece** and be **the same at every run** of that level on that piece.
 - **FR-008**: A sound that is not kept MUST be neither shown, nor expected, nor judged; the score, the best streak and the result MUST be counted **on the sounds kept**; a chord is kept or removed **as a whole**.
 - **FR-009**: A share MUST be applied by rounding to the nearest whole number of sounds, and **at least one sound MUST be kept** at every level whenever the piece has one.
 - **FR-010**: The result MUST name the **level** and the **leniency position** used.
 - **FR-011**: With the leniency at "like Practice" and level 5, every judgement, score and result MUST equal what the application gave before this feature.
-- **FR-012**: A missing, invalid or out-of-range saved level or position MUST fall back to the default or to the nearest allowed value without an error.
+- **FR-012**: A missing, invalid or out-of-range saved level or position MUST fall back to the default (level 1 for the level) or to the nearest allowed value without an error.
 - **FR-013**: The controls and their texts MUST exist in the three shipped languages (English, French, Spanish) and be described in the documentation.
 - **FR-014**: The feature MUST NOT change the recognition algorithms themselves, the Follow, Wait and tuner behaviour, the backing band, or the latency compensation of the route.
 
 ### Key Entities
 
 - **Leniency position**: one of the ordered positions of the Arcade permissiveness, from "like Practice" to "very permissive", with its default.
-- **Level**: 1 to 5, with its share of the notes and its share of the chords.
+- **Level**: 1 to 5, with its share of the notes and its share of the chords; the level proposed is level 1 at the first launch, then the last one chosen.
 - **Sounds kept**: the notes and chords of the piece that a level keeps, in a fixed order, spread over the piece.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: On the recorded performances of the project, at the default position the share of **right notes and chords accepted** is **higher than in Follow**, and the time from the sound to the verdict is **not longer**; both figures are reported with the figures of Follow next to them.
-- **SC-002**: At the default position, **at most 5 % of the clearly wrong notes** of the negative tests are accepted (today: 0 of 98 on the reference recording); the figure is reported, not hidden, and the position "very permissive" is reported the same way.
+- **SC-001**: On the recorded performances of the project, at the default position the share of **right notes and chords accepted** is **higher than in Follow**, and the **median time from the sound to the verdict is at least 20 % shorter** than in Follow on the same recordings (**decided by the owner**); both figures are reported with the figures of Follow next to them.
+- **SC-002**: At the default position, **at most 5 % of the clearly wrong notes** of the negative tests are accepted (**decided by the owner**; today: 0 of 98 on the reference recording); the figure is reported, not hidden, and the position "very permissive" is reported the same way (it has no limit of its own, only the report).
 - **SC-003**: At "like Practice" and level 5, **0 differences** with the figures recorded before this feature; Follow, Wait and the tuner give **0 differences** at every position.
 - **SC-004**: At each level, the **count of kept notes and of kept chords** is the stated share within one sound on the reference pieces, the kept sounds are the same at two runs (100 %), and no chord is partly kept.
 - **SC-005**: The texts exist in **3 of 3 languages**.
@@ -121,7 +127,7 @@ The control of the leniency and the choice of the level are in the Arcade prepar
 
 ## Assumptions
 
-- "A little more flexible on the tempo" is understood as a wider window **on top of** the adjustable window of spec 012, not a replacement for it; the figures are decided at the plan from the measures of SC-001 and SC-002.
+- "A little more flexible on the tempo" is understood as a wider window **on top of** the adjustable window of spec 012, not a replacement for it; the figures are decided at the plan from the measures of SC-001, within the limit of SC-002.
 - The control of the permissiveness has **three positions** (like Practice, fun as the default, very permissive); the plan may refine the number of positions if the measures call for it.
 - The share kept is of the sounds of the **player's track** (the one played in Arcade); the backing band is unchanged.
 - The even spread is by position in the sequence of the sounds of the piece (every third sound for 30 %, every second for 50 %, and so on), the plan fixes the exact rule; "always the same" holds for the same piece.
