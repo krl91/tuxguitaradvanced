@@ -9,7 +9,7 @@
 Two additions, both **Arcade only**, both built on what exists:
 
 1. **A leniency** (three positions: like Practice, fun as the default, very permissive). It is a set of relaxations of existing recognition parameters (note acceptance in cents, confidence, stability time = the speed of the verdict, the chord evidence, minimum partials and confirmation time) applied to the *effective* settings (default + calibration profile) **when an Arcade run is prepared**, plus a wider on-time window. At "like Practice" nothing changes. Follow, Wait, the tuner and the calibration never see it.
-2. **Five levels**: a pure filter that keeps a share of the notes and of the chords of the track the player performs, spread evenly and always the same (kept index of rank *i* of *k* among *n*: `floor((i + 0.5) * n / k)`), producing a smaller `PracticeSequence` before the run is built. Everything downstream (the timeline, the judging, the scene, the score, the result) already works from the sequence, so the sounds not kept simply do not exist for the run.
+2. **Five levels**: a pure filter that keeps a share of the notes and of the chords of the track the player performs, always the same, the first of each kind kept and the others spread evenly after it (kept rank *i* of *k* among *n*: `floor(i * n / k)`), producing a smaller `PracticeSequence` before the run is built. Everything downstream (the timeline, the judging, the scene, the score, the result) already works from the sequence, so the sounds not kept simply do not exist for the run. They are **heard in the backing**: a small player sends them to the player's MIDI output at their written time (research R10), which is the one new piece of machinery of this feature.
 
 The level and the leniency are remembered in a small store of their own (like the default-input store), and the level is chosen in the **start window** that every Arcade start already shows (spec 010), so the player can choose it by hand at every launch.
 
@@ -40,11 +40,11 @@ The level and the leniency are remembered in a small store of their own (like th
 | Principle | Check | Result |
 |---|---|---|
 | I Preserve TuxGuitar Compatibility | no file format, no core file touched; new configuration keys are additive and ignored by older versions | pass |
-| II Extend Before Modifying Core | only the fork's practice module; the engine is untouched; `PracticeSequence` gets one method as `onlyEvent` did (spec 013); `FollowStarter` gets an overload, its signature stays | pass |
+| II Extend Before Modifying Core | only the fork's practice module (the removed sounds go through the player's MIDI output as `MidiClickPlayer` does; a core change would be justified in R10 first); the engine is untouched; `PracticeSequence` gets one method as `onlyEvent` did (spec 013); `FollowStarter` gets an overload, its signature stays | pass |
 | III Evidence-Based Architecture | each decision cites a file (research R1 to R9); the one thing not read to the end, the exact constraints of the source-structure tests on `PracticeWindow`, is a first task | pass |
 | IV Spec-Driven Development | specify, clarify (three questions), plan in order; this plan before any code | pass |
 | V Incremental Delivery | phases: pure parts (filter, overlay, store), then the start path, then the UI, then the measure; each green | pass |
-| VI Real-Time Audio Correctness | no change on the audio path: the overlay is computed once when a run is prepared, the filter once per start; nothing is allocated per hop | pass |
+| VI Real-Time Audio Correctness | no change on the analysis path: the overlay is computed once when a run is prepared, the filter once per start; nothing is allocated per hop. The removed sounds are sent to the MIDI output from a scheduler of their own, never from the analysis thread, never blocking it | pass, to confirm by the spike |
 | VII Separable, Testable Audio Logic | the filter, the overlay and the store are pure and tested without UI or hardware | pass |
 | VIII Deterministic, Explainable | fixed values per position, a printed table; the same performance gives the same result; no randomness in the levels | pass |
 | IX Cross-Platform Conscious | no platform code; validated on macOS only, stated | pass |
@@ -74,6 +74,7 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── arcade/core/ArcadeLevelFilter.java      # NEW: the even, fixed choice of the sounds kept
 ├── arcade/core/ArcadeLeniency.java         # NEW: the three positions and their overlay on RecognitionSettings, and the window factor
 ├── arcade/core/ArcadeChoices.java          # NEW: the level and the position, remembered (own configuration module)
+├── session/RemovedSoundsPlayer.java        # NEW (R10): plays the sounds a level removed, through the player's MIDI output, in step with the run
 ├── model/PracticeSequence.java             # + keeping(...) (one method, like onlyEvent)
 ├── session/FollowStarter.java              # + prepare(...) overload with the window given (the existing one delegates)
 ├── ui/PracticeWindow.java                  # startArcade: filter and overlay applied; at most a few lines (see R8)
@@ -93,10 +94,11 @@ desktop/TuxGuitar-practice/test/...         # new tests only
 | P0 | Baseline (the default suite, the recognition reports, the replay figures of Follow for SC-001), and **read the constraints** of the source-structure tests on `PracticeWindow` and the start path (R8) |
 | P1 | `ArcadeLevel`, `ArcadeLevelFilter`, `PracticeSequence.keeping`: pure, tests first (counts, even spread, determinism, chords whole, at least one sound, a piece with no chords or only chords, the start index) |
 | P2 | `ArcadeLeniency` (overlay + window factor) and `ArcadeChoices` (store), tests first; the measure of SC-001 and SC-002 on the recorded performances to **fix the values** of the two permissive positions |
+| P2b | **A spike, then `RemovedSoundsPlayer`** (FR-015, SC-007, research R10): how a note is sent to the track's channel and ended, how its time comes from the run's clock, tempo percentage, pause, stop, restart; tests first with a fake output; **the spike ends in a go or a no-go for the owner** |
 | P3 | The Arcade start path: the filter and the overlay applied in `startArcade`, `FollowStarter` overload, restart and replay keep the level |
 | P4 | UI: level row in the start window, leniency line in the Arcade preparation, level and position in the result; texts in three languages |
 | P5 | Validation (measures reported honestly), documentation, STATUS, the build, **the owner's trial** (is it fun?) |
 
 ## Complexity Tracking
 
-No constitution violation. The one choice to watch: the level is asked in the start window (R7) which also carries the tuning question and the strum check; if that window cannot take a row without breaking its native layout tests, the fallback is the line in the Arcade preparation plus "the last level chosen" at a one-click start, which weakens FR-006 and needs the owner's agreement.
+No constitution violation. **The risk to watch is R10** (the removed sounds heard in the backing): it is new machinery in step with the run's clock. It stays in the practice module and uses the player's existing MIDI output as `MidiClickPlayer` does (no core change planned, to be confirmed by the spike); if the spike shows it cannot be made to keep time, the fallback is that the removed sounds are silent (the earlier choice), which **needs the owner's agreement**. The other choice to watch: the level is asked in the start window (R7) which also carries the tuning question and the strum check; if that window cannot take a row without breaking its native layout tests, the fallback is the line in the Arcade preparation plus "the last level chosen" at a one-click start, which weakens FR-006 and needs the owner's agreement.

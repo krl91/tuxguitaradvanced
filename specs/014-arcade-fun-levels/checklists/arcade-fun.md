@@ -14,7 +14,7 @@
 
 - [ ] CHK001 Is "more permissive" defined by the quantities that bound it (the clearly wrong notes accepted, the speed of the verdict) rather than by the adjective alone? [Clarity, Spec §FR-001, §SC-001, §SC-002]
 - [ ] CHK002 Is "a clearly wrong note" defined (which negative tests, which data) so that the 5 % limit can be checked by someone else? [Ambiguity, Spec §SC-002, Research §R6]
-- [ ] CHK003 Does the spec say what happens to the 5 % limit when the data already exceeds it (the built-in-microphone corpus already accepts 1 of 21 as a negative control with the default settings)? [Conflict, Research §R6]
+- [x] CHK003 Does the spec say what happens to the 5 % limit when the data already exceeds it (the built-in-microphone corpus already accepts 1 of 21 as a negative control with the default settings)? [Conflict, Research §R6]
 - [ ] CHK004 Is "at least 20 % faster than Follow" stated on a named set of recordings and with a named statistic (median), and is the figure for Follow written as the base? [Measurability, Spec §SC-001]
 - [ ] CHK005 Is it written that a note that is a semitone or more away can never be accepted, so that "a few more wrong notes" is understood as sounds within half a semitone? [Gap, Research §R2]
 - [ ] CHK006 Are the three positions (like Practice, fun, very permissive) defined by their values, or is it written that the values are fixed by the measure and where they will be recorded? [Completeness, Spec §FR-002, Contract arcade-leniency §8]
@@ -28,12 +28,12 @@
 
 - [ ] CHK012 Are the five levels listed with both shares in one place, without the wording of the first draft that said "chords" twice? [Consistency, Spec §FR-006, Clarifications]
 - [ ] CHK013 Is the rounding of a share to a whole number of sounds stated, with the rule for a piece too short to give one sound? [Completeness, Spec §FR-009]
-- [ ] CHK014 Is the "even spread" defined precisely enough that two implementations give the same sounds (the rank formula is in the plan, is it in the spec or the contract as a requirement)? [Clarity, Spec §FR-007, Contract arcade-levels §3]
+- [x] CHK014 Is the "even spread" defined precisely enough that two implementations give the same sounds (the rank formula is in the plan, is it in the spec or the contract as a requirement)? [Clarity, Spec §FR-007, Contract arcade-levels §3]
 - [ ] CHK015 Is it defined which events count as notes and which as chords (the multi-note events with a pitch-changing effect, the events that are not judged)? [Gap, Contract arcade-levels §8, Research §R4]
 - [ ] CHK016 Is the behaviour defined for a kept note whose legato origin was removed? [Edge Case, Contract arcade-levels §9]
 - [ ] CHK017 Is it defined what the start in the middle of a piece (the caret) and the replay of a section keep of the level? [Coverage, Research §R4]
 - [ ] CHK018 Is the score at a lower level explicitly not comparable with another level, and does the result say which level was played? [Consistency, Spec §FR-008, §FR-010, Assumptions]
-- [ ] CHK019 Does the spec say whether the backing band and the unkept sounds of the player's track are heard or silent? [Ambiguity, Assumptions]
+- [x] CHK019 Does the spec say whether the backing band and the unkept sounds of the player's track are heard or silent? [Ambiguity, Assumptions]
 - [ ] CHK020 Is "level 5 equals what the application gives today" tied to the leniency position in the same requirement, so that level 5 alone is not mistaken for non-regression? [Clarity, Spec §FR-011, §SC-003]
 
 ## Choosing and remembering
@@ -65,3 +65,4 @@
 - Leave items unchecked when they still require clarification, correction, or reviewer evaluation
 - Items that fail point to a requirement to write or sharpen in the spec, the plan or the tasks before `/speckit-implement`
 - Number new items continuing from CHK034
+- 2026-10-21: CHK003, CHK014 and CHK019 were reviewed with the owner and ticked after the answers were written into the spec, the plan, the research and the contract (reference recording only; first sound kept; removed sounds played by the backing, which amended FR-014 and added FR-015, SC-007 and research R10).
