@@ -1,5 +1,6 @@
 package app.tuxguitar.app.tools.custom.practice.arcade.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeResult;
@@ -28,11 +29,20 @@ public final class ArcadeResultWindow {
 	private final UIWindow window;
 
 	public ArcadeResultWindow(UIFactory factory, UIWindow parent, ArcadeTexts texts, ArcadeResult result, int firstMeasure, int lastMeasure, int startedMeasure, Replay replay) {
+		this(factory, parent, texts, result, firstMeasure, lastMeasure, startedMeasure, replay, new ArrayList<ArcadeResultText.Line>());
+	}
+
+	/** @param settingsLines the lines naming the level and the leniency position of the run, shown first (spec 014, FR-010); empty for none */
+	public ArcadeResultWindow(UIFactory factory, UIWindow parent, ArcadeTexts texts, ArcadeResult result, int firstMeasure, int lastMeasure, int startedMeasure, Replay replay,
+			List<ArcadeResultText.Line> settingsLines) {
 		this.window = factory.createWindow(parent, false, true);
 		this.window.setText(texts.get("arcade.result.title"));
 		UITableLayout layout = new UITableLayout();
 		this.window.setLayout(layout);
 		int row = 1;
+		for (ArcadeResultText.Line line : settingsLines) {
+			row = addLine(factory, layout, row, line);
+		}
 		List<ArcadeResultText.Line> lines = ArcadeResultText.of(result, texts);
 		for (ArcadeResultText.Line line : lines) {
 			row = addLine(factory, layout, row, line);

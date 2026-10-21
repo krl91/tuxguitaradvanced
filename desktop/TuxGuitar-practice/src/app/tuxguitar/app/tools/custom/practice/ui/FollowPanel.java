@@ -1,6 +1,8 @@
 package app.tuxguitar.app.tools.custom.practice.ui;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniencyPosition;
+import app.tuxguitar.app.tools.custom.practice.session.ArcadeChoices;
 import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationRun;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationTaps;
@@ -73,6 +75,11 @@ public final class FollowPanel {
 	private final UISpinner horizon;
 	private final UILabel flamesLabel;
 	private final UIDropDownSelect<FlameSetting> flames;
+	/** The permissiveness of the Arcade recognition (spec 014): null when the panel is built without the remembered choices. */
+	private final ArcadeChoices arcadeChoices;
+	private final UILabel leniencyLabel;
+	private final UIDropDownSelect<ArcadeLeniencyPosition> leniency;
+	private final UILabel leniencyHint;
 	private final UILabel percentHint;
 	private final UILabel toleranceLabel;
 	private final UIScale tolerance;
@@ -98,6 +105,12 @@ public final class FollowPanel {
 	private Runnable modeListener;
 
 	public FollowPanel(UIFactory uiFactory, UIContainer parent, FollowSettings settings, Backend backend) {
+		this(uiFactory, parent, settings, backend, null);
+	}
+
+	/** @param arcadeChoices where the position of the Arcade permissiveness is remembered (spec 014); null: no such line */
+	public FollowPanel(UIFactory uiFactory, UIContainer parent, FollowSettings settings, Backend backend, ArcadeChoices arcadeChoices) {
+		this.arcadeChoices = arcadeChoices;
 		this.settings = settings;
 		this.backend = backend;
 		this.panel = uiFactory.createPanel(parent, false);
@@ -165,6 +178,25 @@ public final class FollowPanel {
 		this.flames.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("arcade.flames.discreet"), FlameSetting.DISCREET));
 		this.flames.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("arcade.flames.full"), FlameSetting.FULL));
 		layout.set(this.flames, 18, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+
+		// the permissiveness of the Arcade recognition (spec 014, FR-002): three positions, stored at once, read when a run starts
+		if (arcadeChoices != null) {
+			this.leniencyLabel = uiFactory.createLabel(this.panel);
+			this.leniencyLabel.setText(TuxGuitar.getProperty("arcade.leniency.label"));
+			layout.set(this.leniencyLabel, 19, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+			this.leniency = uiFactory.createDropDownSelect(this.panel);
+			for (ArcadeLeniencyPosition position : ArcadeLeniencyPosition.values()) {
+				this.leniency.addItem(new UISelectItem<ArcadeLeniencyPosition>(TuxGuitar.getProperty("arcade.leniency." + position.name().toLowerCase(java.util.Locale.ROOT)), position));
+			}
+			layout.set(this.leniency, 19, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+			this.leniencyHint = wrap(uiFactory, layout, 20);
+			this.leniency.setSelectedValue(arcadeChoices.leniency());
+			showLeniencyHint();
+		} else {
+			this.leniencyLabel = null;
+			this.leniency = null;
+			this.leniencyHint = null;
+		}
 
 		this.toleranceLabel = uiFactory.createLabel(this.panel);
 		this.toleranceLabel.setText(TuxGuitar.getProperty("practice.follow.tolerance"));
@@ -269,6 +301,15 @@ public final class FollowPanel {
 				this.updating = false;
 			}
 		}));
+		if (this.leniency != null) {
+			this.leniency.addSelectionListener(selected(() -> {
+				ArcadeLeniencyPosition chosen = this.leniency.getSelectedValue();
+				if (chosen != null) {
+					this.arcadeChoices.setLeniency(chosen);
+					showLeniencyHint();
+				}
+			}));
+		}
 		this.flames.addSelectionListener(selected(() -> {
 			FlameSetting chosen = this.flames.getSelectedValue();
 			if (chosen != null) {
@@ -340,6 +381,13 @@ public final class FollowPanel {
 			this.flames.setSelectedValue(this.settings.getFlames());
 			this.flamesLabel.setVisible(this.settings.isArcade());
 			this.flames.setVisible(this.settings.isArcade());
+			if (this.leniency != null) {
+				this.leniency.setSelectedValue(this.arcadeChoices.leniency());
+				showLeniencyHint();
+				this.leniencyLabel.setVisible(this.settings.isArcade());
+				this.leniency.setVisible(this.settings.isArcade());
+				this.leniencyHint.setVisible(this.settings.isArcade());
+			}
 			this.tolerance.setValue(this.settings.getWindowMillis());
 			showWindowText();
 			this.modeHint.setText(this.settings.isArcade() ? TuxGuitar.getProperty("practice.mode.arcade.hint") + "\n" + TuxGuitar.getProperty("arcade.monitoring.unavailable")
@@ -372,6 +420,9 @@ public final class FollowPanel {
 			this.farScale.setEnabled(idle);
 			this.horizon.setEnabled(idle);
 			this.flames.setEnabled(idle);
+			if (this.leniency != null) {
+				this.leniency.setEnabled(idle);
+			}
 			this.tolerance.setEnabled(idle);
 			this.manual.setEnabled(idle);
 			AudioRoute route = this.backend.route();
@@ -564,6 +615,24 @@ public final class FollowPanel {
 
 	UIDropDownSelect<FlameSetting> flamesSelect() {
 		return this.flames;
+	}
+
+	/** The line of the Arcade permissiveness, or null when the panel has no remembered choices. */
+	UIDropDownSelect<ArcadeLeniencyPosition> leniencySelect() {
+		return this.leniency;
+	}
+
+	UILabel leniencyLabel() {
+		return this.leniencyLabel;
+	}
+
+	UILabel leniencyHint() {
+		return this.leniencyHint;
+	}
+
+	private void showLeniencyHint() {
+		ArcadeLeniencyPosition position = this.leniency.getSelectedValue();
+		this.leniencyHint.setText(TuxGuitar.getProperty("arcade.leniency.hint." + (position == null ? ArcadeLeniencyPosition.DEFAULT : position).name().toLowerCase(java.util.Locale.ROOT)));
 	}
 
 	UISpinner percentSpinner() {

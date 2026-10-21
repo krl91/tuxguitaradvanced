@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.function.LongSupplier;
 
 import app.tuxguitar.app.tools.custom.practice.ui.PreRunCheck.State;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevel;
 import app.tuxguitar.audio.engine.analysis.StrumClipMeter;
 import app.tuxguitar.audio.engine.analysis.StrumVerdict;
 import app.tuxguitar.ui.UIFactory;
@@ -16,6 +17,8 @@ import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.resource.UIKey;
 import app.tuxguitar.ui.widget.UIButton;
+import app.tuxguitar.ui.widget.UIDropDownSelect;
+import app.tuxguitar.ui.widget.UISelectItem;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
 import app.tuxguitar.ui.widget.UIProgressBar;
@@ -67,6 +70,8 @@ final class PreRunWindow {
 	private final UIButton continueButton;
 	private final UIButton checkAgainButton;
 	private final UIButton cancelButton;
+	private final UILabel levelLabel;
+	private final UIDropDownSelect<ArcadeLevel> levelSelect;
 	private State shown;
 	private long strumSince;
 	private boolean finished;
@@ -75,6 +80,12 @@ final class PreRunWindow {
 	private String laidOutFor = "";
 
 	PreRunWindow(UIFactory factory, UIWindow parent, PreRunCheck check, PreRunSource source, Texts texts, LongSupplier clock, TunerOpener tuner, Runnable onFinished) {
+		this(factory, parent, check, source, texts, clock, tuner, onFinished, null);
+	}
+
+	/** @param levelChoice for an Arcade start (spec 014): the row that asks the level of the run is shown first; null for the other modes (no row) */
+	PreRunWindow(UIFactory factory, UIWindow parent, PreRunCheck check, PreRunSource source, Texts texts, LongSupplier clock, TunerOpener tuner, Runnable onFinished,
+			LevelChoice levelChoice) {
 		this.check = check;
 		this.source = source;
 		this.texts = texts;
@@ -89,35 +100,64 @@ final class PreRunWindow {
 		layout.set(UITableLayout.IGNORE_INVISIBLE, Boolean.TRUE);
 		this.window.setLayout(layout);
 
+		// the level of an Arcade run (spec 014, FR-006): asked at every launch, on the first row; the other rows are one lower when it is there
+		final int first = levelChoice != null ? 2 : 1;
+		if (levelChoice != null) {
+			UITableLayout levelLayout = new UITableLayout(0f);
+			UIPanel levelRow = factory.createPanel(this.window, false);
+			levelRow.setLayout(levelLayout);
+			layout.set(levelRow, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+			this.levelLabel = factory.createLabel(levelRow);
+			this.levelLabel.setText(texts.get("practice.arcade.level.label"));
+			levelLayout.set(this.levelLabel, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+			this.levelSelect = factory.createDropDownSelect(levelRow);
+			for (ArcadeLevel level : ArcadeLevel.values()) {
+				this.levelSelect.addItem(new UISelectItem<ArcadeLevel>(texts.get("practice.arcade.level." + level.number()), level));
+			}
+			this.levelSelect.setSelectedValue(levelChoice.level());
+			levelLayout.set(this.levelSelect, 1, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+			this.levelSelect.addSelectionListener(new UISelectionListener() {
+				public void onSelect(UISelectionEvent event) {
+					ArcadeLevel chosen = PreRunWindow.this.levelSelect.getSelectedValue();
+					if (chosen != null) {
+						levelChoice.choose(chosen);
+					}
+				}
+			});
+		} else {
+			this.levelLabel = null;
+			this.levelSelect = null;
+		}
+
 		this.question = factory.createWrapLabel(this.window);
 		this.question.setText(texts.get("practice.prerun.tuned.question"));
-		layout.set(this.question, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.question, first, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		layout.set(this.question, UITableLayout.PACKED_WIDTH, InputSelectorPanel.WRAP_WIDTH);
 		UITableLayout answersLayout = new UITableLayout(0f);
 		UIPanel answers = factory.createPanel(this.window, false);
 		answers.setLayout(answersLayout);
-		layout.set(answers, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(answers, first + 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.yesButton = button(factory, answers, answersLayout, 1, "practice.prerun.tuned.yes");
 		this.noButton = button(factory, answers, answersLayout, 2, "practice.prerun.tuned.no");
 
 		this.ask = factory.createLabel(this.window);
 		this.ask.setText(texts.get("practice.prerun.strum.ask"));
-		layout.set(this.ask, 3, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.ask, first + 2, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
 		this.meter = factory.createProgressBar(this.window);
 		this.meter.setMinimum(0);
 		this.meter.setMaximum(METER_FLOOR_DB);
-		layout.set(this.meter, 4, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.meter, first + 3, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.sentence = factory.createWrapLabel(this.window);
-		layout.set(this.sentence, 5, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.sentence, first + 4, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		layout.set(this.sentence, UITableLayout.PACKED_WIDTH, InputSelectorPanel.WRAP_WIDTH);
 		this.advice = factory.createWrapLabel(this.window);
-		layout.set(this.advice, 6, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.advice, first + 5, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		layout.set(this.advice, UITableLayout.PACKED_WIDTH, InputSelectorPanel.WRAP_WIDTH);
 
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel buttons = factory.createPanel(this.window, false);
 		buttons.setLayout(buttonsLayout);
-		layout.set(buttons, 7, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(buttons, first + 6, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.checkAgainButton = button(factory, buttons, buttonsLayout, 1, "practice.prerun.check-again");
 		this.continueButton = button(factory, buttons, buttonsLayout, 2, "practice.prerun.continue");
 		this.cancelButton = button(factory, buttons, buttonsLayout, 3, "practice.prerun.cancel");
@@ -155,6 +195,26 @@ final class PreRunWindow {
 		this.check.setMeterReset(this.source::reset);
 		this.source.setChangeListener(this::refresh);
 		this.shown = null;
+	}
+
+	/** What an Arcade start asks of the player and remembers: the level, level 1 the first time, then the last one chosen. */
+	interface LevelChoice {
+		ArcadeLevel level();
+
+		void choose(ArcadeLevel level);
+	}
+
+	/** The row of the level, or null when this start is not an Arcade one. */
+	UIDropDownSelect<ArcadeLevel> levelSelect() {
+		return this.levelSelect;
+	}
+
+	UILabel levelLabel() {
+		return this.levelLabel;
+	}
+
+	boolean hasLevelRow() {
+		return this.levelSelect != null;
 	}
 
 	private UIButton button(UIFactory factory, UIPanel parent, UITableLayout layout, int column, String key) {

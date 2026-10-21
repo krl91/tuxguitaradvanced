@@ -13,6 +13,7 @@ import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniencyPositio
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeStarter;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeController;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeEndRouter;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeResultText;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeResultWindow;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeRunPort;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSceneLabels;
@@ -142,6 +143,7 @@ public class PracticeWindow {
 	private PracticeSequence arcadeWhole;
 	/** The level of the Arcade run in progress, for its result (spec 014). */
 	private ArcadeLevel arcadeLevel = ArcadeLevel.HIGHEST;
+	private ArcadeLeniencyPosition arcadeLeniency = ArcadeLeniencyPosition.DEFAULT;
 	/** The sounds the level removed, as a sequence, and the player that plays them in the backing during the run (spec 014, FR-015). */
 	private PracticeSequence arcadeRemovedSequence;
 	private RemovedSoundsPlayer removedSounds;
@@ -408,7 +410,7 @@ public class PracticeWindow {
 		// ---- tab 3: the mode, and for the tempo-following modes the tempo, the tolerance and the rhythm calibration (spec 002 T097, T098)
 		UITableLayout modeLayout = new UITableLayout();
 		UIPanel modePanel = tab(uiFactory, folder, "practice.tab.mode", modeLayout);
-		this.followPanel = new FollowPanel(uiFactory, modePanel, FollowSettings.getInstance(this.context), this.followAdapter);
+		this.followPanel = new FollowPanel(uiFactory, modePanel, FollowSettings.getInstance(this.context), this.followAdapter, ArcadeChoices.of(this.context));
 		modeLayout.set(this.followPanel.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.followPanel.setContentListener(this::refit);
 		this.followPanel.setModeListener(this::modeChanged);
@@ -800,6 +802,7 @@ public class PracticeWindow {
 	private void startArcade(PracticeTrackCandidate candidate, PracticeSequence full) {
 		// the permissiveness of Arcade (spec 014): the effective settings relaxed one way, the window widened; only this start reads it
 		final ArcadeLeniencyPosition leniency = ArcadeChoices.of(this.context).leniency();
+		this.arcadeLeniency = leniency;
 		RecognitionSettings recognition = ArcadeLeniency.apply(leniency, RecognitionSettingsStore.getInstance(this.context).get());
 		PracticeParameters parameters = PracticeParameters.of(recognition);
 		this.arcadeCandidate = candidate;
@@ -936,7 +939,8 @@ public class PracticeWindow {
 				started = full.getEvents().get(full.getStartIndex()).getMeasureIndex() + 1;
 			}
 			this.arcadeResult = new ArcadeResultWindow(this.host.factory(), this.host.mainWindow(),
-					ARCADE_TEXTS, result, first, last, started, measure -> replayArcade(candidate, whole, measure));
+					ARCADE_TEXTS, result, first, last, started, measure -> replayArcade(candidate, whole, measure),
+					ArcadeResultText.settings(this.arcadeLevel, this.arcadeLeniency, ARCADE_TEXTS));
 			this.arcadeResult.open();
 			return;
 		}

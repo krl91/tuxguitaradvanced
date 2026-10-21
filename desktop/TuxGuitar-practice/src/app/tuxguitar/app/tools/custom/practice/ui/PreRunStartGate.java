@@ -3,6 +3,9 @@ package app.tuxguitar.app.tools.custom.practice.ui;
 import java.util.function.Supplier;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevel;
+import app.tuxguitar.app.tools.custom.practice.session.ArcadeChoices;
+import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
 import app.tuxguitar.app.tools.custom.practice.ui.PreRunCheck.State;
 import app.tuxguitar.audio.engine.AudioEngine;
 import app.tuxguitar.util.TGContext;
@@ -38,10 +41,27 @@ final class PreRunStartGate implements StartGate {
 					} else if (check.state() == State.CANCELLED) {
 						this.onCancelled.run();
 					}
-				});
+				}, levelChoiceFor(check));
 		this.current = window;
 		window.refresh();
 		window.open();
+	}
+
+	/** An Arcade start asks the level of the run (spec 014, FR-006): the last one chosen is proposed, level 1 the first time, and a change is kept at once. */
+	private PreRunWindow.LevelChoice levelChoiceFor(PreRunCheck check) {
+		if (check.mode() != FollowSettings.Mode.ARCADE) {
+			return null;
+		}
+		final ArcadeChoices choices = ArcadeChoices.of(this.context);
+		return new PreRunWindow.LevelChoice() {
+			public ArcadeLevel level() {
+				return choices.level();
+			}
+
+			public void choose(ArcadeLevel level) {
+				choices.setLevel(level);
+			}
+		};
 	}
 
 	@Override

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniencyPosition;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevel;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeResult;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSummary;
 import app.tuxguitar.app.tools.custom.practice.model.TechniqueVerdict;
@@ -67,6 +69,15 @@ public final class ArcadeResultText {
 	 * The techniques, apart from the score: one line for each technique that was written, with what was heard of it, in the words the practice window already
 	 * uses ({@code practice.technique.*}); empty when none was written. They never change the score, the streak or a verdict.
 	 */
+	/** The level and the leniency position the run was played at (spec 014, FR-010): shown first, so that two runs can be compared fairly. */
+	public static List<Line> settings(ArcadeLevel level, ArcadeLeniencyPosition position, ArcadeTexts texts) {
+		List<Line> lines = new ArrayList<Line>();
+		lines.add(new Line(texts.get("arcade.result.level"),
+				texts.get("arcade.result.level.value", Integer.toString(level.number()), Integer.toString(level.notePercent()), Integer.toString(level.chordPercent()))));
+		lines.add(new Line(texts.get("arcade.result.leniency"), texts.get("arcade.leniency." + position.name().toLowerCase(java.util.Locale.ROOT))));
+		return lines;
+	}
+
 	public static List<Line> techniques(ArcadeResult result, ArcadeTexts texts) {
 		List<Line> lines = new ArrayList<Line>();
 		for (Map.Entry<PlayingTechnique, Map<TechniqueVerdict, Integer>> entry : result.summary().techniques().entrySet()) {

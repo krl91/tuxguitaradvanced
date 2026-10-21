@@ -14,8 +14,8 @@ import app.tuxguitar.util.configuration.TGConfigManager;
 public final class ArcadeChoices {
 
 	static final String MODULE = "tuxguitar-practice-arcade";
-	static final String LEVEL_KEY = "arcade.level";
-	static final String LENIENCY_KEY = "arcade.leniency";
+	public static final String LEVEL_KEY = "arcade.level";
+	public static final String LENIENCY_KEY = "arcade.leniency";
 
 	/** Where the choices are read and written; the application's configuration in practice, a map in a test. */
 	public interface Persistence {
