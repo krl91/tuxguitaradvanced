@@ -38,7 +38,7 @@
 
 ## Choosing and remembering
 
-- [ ] CHK021 Is it clear which launches offer the level choice (the Start button, the transport-bar button, the quick start, a restart, a replay)? [Completeness, Spec §FR-006, Research §R7]
+- [x] CHK021 Is it clear which launches offer the level choice (the Start button, the transport-bar button, the quick start, a restart, a replay)? [Completeness, Spec §FR-006, Research §R7]
 - [ ] CHK022 Is the consequence for a player who already uses Arcade (level 1 the first time) written, together with its being the owner's decision? [Assumption, Spec Edge Cases, Clarifications]
 - [ ] CHK023 Is the fallback written for the case where the start window cannot take the level row (the plan's weaker alternative), and is it said that it needs the owner's agreement? [Dependency, Plan Complexity Tracking]
 - [ ] CHK024 Are the default level and the default position written as two separate defaults that do not depend on each other? [Clarity, Spec §FR-002, §FR-006]
@@ -65,4 +65,5 @@
 - Leave items unchecked when they still require clarification, correction, or reviewer evaluation
 - Items that fail point to a requirement to write or sharpen in the spec, the plan or the tasks before `/speckit-implement`
 - Number new items continuing from CHK034
+- 2026-10-21 (analysis fixes): CHK021 ticked after FR-006 was amended (a restart or a replay keeps the level and does not ask again).
 - 2026-10-21: CHK003, CHK014 and CHK019 were reviewed with the owner and ticked after the answers were written into the spec, the plan, the research and the contract (reference recording only; first sound kept; removed sounds played by the backing, which amended FR-014 and added FR-015, SC-007 and research R10).

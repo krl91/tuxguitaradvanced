@@ -89,6 +89,8 @@ desktop/TuxGuitar-practice/test/...         # new tests only
 
 ## Phases
 
+*Numbering: these phases P0 to P5 and P2b are not the phases of `tasks.md`; the correspondence is written at the top of its Dependencies section (the measure of the leniency comes before the levels there).*
+
 | Phase | Content |
 |---|---|
 | P0 | Baseline (the default suite, the recognition reports, the replay figures of Follow for SC-001), and **read the constraints** of the source-structure tests on `PracticeWindow` and the start path (R8) |
