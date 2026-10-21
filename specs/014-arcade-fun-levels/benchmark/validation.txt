@@ -22,3 +22,9 @@ Harness: ArcadeLeniencyReplayTest (a copy of the harness of RecordedPracticeRepl
    (a) a shorter decision delay of the attack detector for an Arcade run: it is an engine constant shared by every mode on the same analysis; changing it is a change of the recognition algorithm (spec FR-014 forbids it), weakens the rejection of sustain, vibrato and clicks (it was chosen to "miss weak re-plucks rather than report sustain"), and would have to be switched on and off around an Arcade run;
    (b) a verdict before the attack is reported (acceptance from the pitch evidence alone): the early-stability mechanism that exists in PracticeParameters (EARLY_STABILITY_ENABLED = false) acts on the stability time, which is not the bottleneck, and was switched off because on this microphone the evidence does not separate a right note from a wrong one;
    (c) leave the recognition's speed as it is and give the "speed" of the game elsewhere: the timing window (already widened by the position), the display of the verdict.
+
+== UPDATE 2026-10-21 (after the owner's decision to drop the 20 % target): the final values and the figures
+   NOTE_ACCEPT is no longer relaxed. With the five other settings (contract arcade-leniency item 8):
+   base / LIKE_PRACTICE / FUN / VERY_PERMISSIVE: each recognised 35 of 38, false accepts 0/98, chords with a note missing 2/12, delay median 105 ms p90 169 ms.
+   SC-001 (revised: right notes not lower, median delay not longer than Follow's): holds, equal. SC-002 (at most 4 of 98 false accepts): holds, 0.
+   Honest reading: on this recording the relaxation of the recognition changes nothing; what Arcade gains in forgiveness comes from the wider timing window (x1.25, x1.5, capped at 200 ms) which this measure does not see. Whether the five relaxed settings help on a weaker input (an audio interface with a low level, a noisy room) is NOT measured. Scope: this reference recording, this guitar, this room.

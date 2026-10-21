@@ -18,7 +18,7 @@ import app.tuxguitar.audio.engine.settings.RecognitionSettings;
  * <li>it stays inside the range every setting already guarantees, and never touches the level thresholds of the input, the attack level or any other setting;</li>
  * <li>{@link ArcadeLeniencyPosition#LIKE_PRACTICE} changes nothing at all.</li>
  * </ul>
- * The values of the two permissive positions are provisional until the measure of the plan (research R6, task T012) fixes them within the limits of the spec.
+ * The values were checked on the reference recording (research R6-ter): neutral there (no right note lost, no false accept more, same delay).
  */
 public final class ArcadeLeniency {
 
@@ -41,12 +41,14 @@ public final class ArcadeLeniency {
 		}
 	}
 
-	/** The acceptance in cents grows, the confidence, the stability and confirmation times, the chord evidence and the minimum of partials shrink. */
+	/**
+	 * The confidence, the stability and confirmation times, the chord evidence and the minimum of partials shrink. The acceptance in cents is <b>not</b> relaxed: the
+	 * measure of spec 014 (research R6-ter) showed that widening it loses a right note. None of these makes the verdict quicker (the attack detector's decision does).
+	 */
 	private static final List<Row> ROWS = Collections.unmodifiableList(rows());
 
 	private static List<Row> rows() {
 		List<Row> rows = new ArrayList<Row>();
-		rows.add(new Row(RecognitionParameters.NOTE_ACCEPT, true, 42.0, 45.0));
 		rows.add(new Row(RecognitionParameters.NOTE_CONFIDENCE, false, 0.70, 0.60));
 		rows.add(new Row(RecognitionParameters.NOTE_STABILITY, false, 75.0, 55.0));
 		rows.add(new Row(RecognitionParameters.CHORD_EVIDENCE, false, 0.28, 0.22));

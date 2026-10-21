@@ -1,4 +1,4 @@
-package app.tuxguitar.app.tools.custom.practice.arcade.core;
+package app.tuxguitar.app.tools.custom.practice.session;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniencyPosition;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevel;
 
 /**
  * Spec 014 (T006, FR-006, FR-012): what the player chose in Arcade is remembered between launches: the level (level 1 when nothing is saved) and the

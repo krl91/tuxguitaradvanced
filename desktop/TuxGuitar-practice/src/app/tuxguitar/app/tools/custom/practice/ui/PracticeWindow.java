@@ -6,6 +6,8 @@ import java.util.Map;
 import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeResult;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniency;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniencyPosition;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeStarter;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeController;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeEndRouter;
@@ -24,6 +26,7 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidate;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
+import app.tuxguitar.app.tools.custom.practice.session.ArcadeChoices;
 import app.tuxguitar.app.tools.custom.practice.session.AttackCandidates;
 import app.tuxguitar.app.tools.custom.practice.session.ChordMatcher;
 import app.tuxguitar.app.tools.custom.practice.session.FollowEvents;
@@ -782,7 +785,9 @@ public class PracticeWindow {
 	 * the player, the others are the backing), seen on the isometric view in its own window. The preparation window is hidden while it runs.
 	 */
 	private void startArcade(PracticeTrackCandidate candidate, PracticeSequence full) {
-		RecognitionSettings recognition = RecognitionSettingsStore.getInstance(this.context).get();
+		// the permissiveness of Arcade (spec 014): the effective settings relaxed one way, the window widened; only this start reads it
+		final ArcadeLeniencyPosition leniency = ArcadeChoices.of(this.context).leniency();
+		RecognitionSettings recognition = ArcadeLeniency.apply(leniency, RecognitionSettingsStore.getInstance(this.context).get());
 		PracticeParameters parameters = PracticeParameters.of(recognition);
 		this.arcadeCandidate = candidate;
 		this.arcadeFull = full;
@@ -791,7 +796,8 @@ public class PracticeWindow {
 		// the end of this run is told to its own controller only: a run given back by a restart reports its end later, when the next run exists
 		final ArcadeEndRouter.Run endRun = this.arcadeEnds.next();
 		try {
-			plan = ArcadeStarter.prepareFrom(this.context, this.song, candidate.getTrack(), full, FollowSettings.getInstance(this.context), parameters,
+			plan = ArcadeStarter.prepareFrom(this.context, this.song, candidate.getTrack(), full, FollowSettings.getInstance(this.context),
+					ArcadeLeniency.windowMillis(leniency, FollowSettings.getInstance(this.context).getWindowMillis()), parameters,
 					new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
 					() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()), this.followAdapter, this::renderArcade,
 					runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), endRun::ended,

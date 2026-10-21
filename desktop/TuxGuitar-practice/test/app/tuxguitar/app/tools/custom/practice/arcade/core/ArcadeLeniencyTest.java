@@ -27,7 +27,6 @@ public class ArcadeLeniencyTest {
 	private static final Map<RecognitionParameter.Number, Boolean> HIGHER_IS_MORE_LENIENT = new LinkedHashMap<RecognitionParameter.Number, Boolean>();
 
 	static {
-		HIGHER_IS_MORE_LENIENT.put(RecognitionParameters.NOTE_ACCEPT, true);
 		HIGHER_IS_MORE_LENIENT.put(RecognitionParameters.NOTE_CONFIDENCE, false);
 		HIGHER_IS_MORE_LENIENT.put(RecognitionParameters.NOTE_STABILITY, false);
 		HIGHER_IS_MORE_LENIENT.put(RecognitionParameters.CHORD_EVIDENCE, false);
@@ -72,7 +71,9 @@ public class ArcadeLeniencyTest {
 			assertTrue(atLeastAsLenient(parameter, very.get(parameter), fun.get(parameter)), "very permissive is at least as lenient as fun for " + parameter.getKey());
 		}
 		assertTrue(funChangesSomething, "the default position relaxes something");
-		assertTrue(fun.get(RecognitionParameters.NOTE_STABILITY) < base.get(RecognitionParameters.NOTE_STABILITY), "a shorter stability time is what makes the verdict quicker");
+		assertTrue(fun.get(RecognitionParameters.NOTE_STABILITY) < base.get(RecognitionParameters.NOTE_STABILITY), "a shorter stability time (no effect on the delay, measured)");
+		assertEquals(base.get(RecognitionParameters.NOTE_ACCEPT), fun.get(RecognitionParameters.NOTE_ACCEPT), "the acceptance in cents is not relaxed: it lost a right note");
+		assertEquals(base.get(RecognitionParameters.NOTE_ACCEPT), very.get(RecognitionParameters.NOTE_ACCEPT));
 	}
 
 	@Test

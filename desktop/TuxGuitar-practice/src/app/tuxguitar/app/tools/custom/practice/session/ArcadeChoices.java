@@ -1,11 +1,13 @@
-package app.tuxguitar.app.tools.custom.practice.arcade.core;
+package app.tuxguitar.app.tools.custom.practice.session;
 
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniencyPosition;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevel;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.configuration.TGConfigManager;
 
 /**
  * What the player chose in Arcade, kept from one launch to the next (spec 014, FR-006, FR-012): the level and the leniency position. They live in a small
- * configuration module of their own, like the remembered input: nothing is added to the recognition settings, so their page, their file and their tests are
+ * configuration module of their own, like the remembered input (it is here and not in {@code arcade/core}, which has no input or output of any kind): nothing is added to the recognition settings, so their page, their file and their tests are
  * as they were. A missing, empty, non-numeric, out-of-range or unknown value gives the default (level 1 the first time, the fun position) or the nearest level,
  * and an unreadable file keeps the defaults: never an error.
  */

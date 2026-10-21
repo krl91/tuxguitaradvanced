@@ -10,9 +10,9 @@
 
 ## Why this exists
 
-Arcade is a game: the notes fly towards the neck and the player plays them as they land. The practice modes ask the recognition to be **right**; a game asks it to be **quick and forgiving**, because a verdict that comes late or a good attempt refused breaks the fun. Two things are asked:
+Arcade is a game: the notes fly towards the neck and the player plays them as they land. The practice modes ask the recognition to be **right**; a game asks it to be **forgiving**, because a good attempt refused breaks the fun (the verdict itself is as quick as Follow's: the delay of the recognition is fixed by the attack detector and is not changed). Two things are asked:
 
-1. **A recognition tuned for play in Arcade only**: quicker, a little more tolerant of near-misses and of the tempo, and still adjustable by the player. The other modes (Follow, Wait, the tuner) keep the strict recognition they have today.
+1. **A recognition tuned for play in Arcade only**: a little more tolerant of near-misses and of the tempo, as quick as Follow's, and still adjustable by the player. The other modes (Follow, Wait, the tuner) keep the strict recognition they have today.
 2. **Five levels** that make a real piece playable by a beginner: the same piece, with only a share of its sounds to play, from a few notes (level 1) to the whole piece (level 5).
 
 ## Clarifications
@@ -24,6 +24,7 @@ Arcade is a game: the notes fly towards the neck and the player plays them as th
 - Q: What happens when the player plays a note that is close to the right one but not exact? → A: It is **accepted as right, without penalty**: the recognition lets more uncertain sounds count as played, at the price of a few wrong notes counted right. (Chosen by the owner among: accepted as right, counted wrong without breaking the streak, both.)
 - Q: How many clearly wrong notes may the game accept as right at its default position? → A: **At most 5 %** of the clearly wrong notes of the negative tests (today 0 of 98 on the reference recording); the figure of each position is reported. (Chosen by the owner among 2 %, 5 %, 10 %, no figure.)
 - Q: How fast must the game give its verdict on a played note? → A: **At least 20 % faster than the verdict of Follow**, in median, on the same recordings (at the default position). (Chosen by the owner among: not slower than today, 20 % faster, under 150 ms, as fast as the data allow with no figure.)
+- Q: The measure (T012) showed that none of the relaxable recognition settings makes the verdict quicker (the delay is bound by the attack detector's fixed 13-hop decision, about 69 ms), what becomes of the 20 % faster target? → A: **The target is dropped** (owner, 2026-10-21, among: drop it, shorten the detector's decision for Arcade only, keep only the timing window and the levels): the verdict is **not slower** than Follow's and **no right note is lost**; the speed of the game comes from the wider timing window and the acceptance of near-misses, not from a quicker verdict. The detector is not touched (FR-014).
 - Q: Which level is proposed the first time, before the player has chosen anything? → A: **Level 1 (the lowest) at the first launch, then the last level chosen**; and the player MUST be able to **choose the level by hand when Arcade is launched**. (Chosen by the owner, with the addition of the manual choice, among: level 5 as today, level 3, level 1 then the last chosen.)
 - Q: On which data is the limit of 5 % of wrong notes measured? → A: **On the reference recording only** (its 98 negative tests: at most 4 accepted); the built-in-microphone corpus, which already accepts 1 of 21 as a negative control with the default settings, is **reported without a limit**. (Chosen by the owner at the review of the checklist, 2026-10-21.)
 - Q: Which sounds are kept at levels 1 to 4 exactly? → A: **The first sound of each kind (notes, chords) is always kept**, the others spread evenly after it by rank (not by time); on the calibration piece (10 notes, 3 chords) level 1 keeps notes 1, 4, 7 and level 3 keeps notes 1, 3, 5, 7, 9 and chords 1 and 2. (Chosen by the owner among: centred, anchored at the start, anchored at both ends.)
@@ -31,9 +32,9 @@ Arcade is a game: the notes fly towards the neck and the player plays them as th
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Arcade is quick and forgiving (Priority: P1)
+### User Story 1 - Arcade is forgiving (Priority: P1)
 
-The player starts Arcade on a piece. The recognition gives its verdicts sooner, accepts a sound that is close to the expected note or chord, and is a little more flexible on the timing, so that a good attempt is not refused and the game keeps flowing. The player can change how permissive it is, from "like Practice" (exactly the recognition of today) to "very permissive", and the choice is remembered.
+The player starts Arcade on a piece. The recognition accepts a sound that is close to the expected note or chord, and is a little more flexible on the timing, so that a good attempt is not refused and the game keeps flowing. The player can change how permissive it is, from "like Practice" (exactly the recognition of today) to "very permissive", and the choice is remembered.
 
 **Why this priority**: it is the first thing the owner asks for and what makes the game fun; the levels (story 2) are of little use if the game still refuses good attempts.
 
@@ -97,7 +98,7 @@ The control of the leniency and the choice of the level are in the Arcade prepar
 
 ### Functional Requirements
 
-- **FR-001**: In Arcade, the recognition of notes and chords MUST be **more permissive and quicker** than in the practice modes: a sound close to the expected note or chord counts as played, **without penalty**, and the verdict MUST NOT wait for more certainty than the game needs.
+- **FR-001**: In Arcade, the recognition of notes and chords MUST be **more permissive** than in the practice modes: a sound close to the expected note or chord counts as played, **without penalty**, and the verdict MUST NOT be slower than Follow's.
 - **FR-002**: The permissiveness MUST be **configurable** by the player over several positions, from **"like Practice"** (exactly today's recognition) to **"very permissive"**, with a default position that is **more permissive than today**; the choice is remembered between runs and launches and applies to the **next run**.
 - **FR-003**: The timing of Arcade MUST be a little more flexible at the permissive positions, in addition to the timing window of the player (spec 012); at "like Practice" it MUST be exactly today's.
 - **FR-004**: The permissiveness MUST apply to **Arcade only**: Follow, Wait, the tuner window and the calibration keep their recognition and their figures, identical to before this feature. A device profile (spec 013) keeps applying, and the Arcade permissiveness is applied on top of it.
@@ -123,7 +124,7 @@ The control of the leniency and the choice of the level are in the Arcade prepar
 
 ### Measurable Outcomes
 
-- **SC-001**: On the recorded performances of the project, at the default position the share of **right notes and chords accepted** is **higher than in Follow**, and the **median time from the sound to the verdict is at least 20 % shorter** than in Follow on the same recordings (**decided by the owner**); both figures are reported with the figures of Follow next to them.
+- **SC-001**: On the recorded performances of the project, at each position the number of **right notes and chords accepted is not lower than in Follow** and the **median time from the sound to the verdict is not longer** than in Follow on the same recordings (**revised by the owner on 2026-10-21**: the first target, 20 % shorter, is dropped because the delay is fixed by the attack detector); the figures are reported with the figures of Follow next to them.
 - **SC-002**: At the default position, **at most 5 % of the clearly wrong notes** of the **98 negative tests of the reference recording** are accepted, i.e. **at most 4** (**decided by the owner**; today: 0 of 98); the built-in-microphone corpus, where the default already accepts 1 of 21 of its negative control, is **reported without a limit**; the figure is reported, not hidden, and the position "very permissive" is reported the same way (it has no limit of its own, only the report).
 - **SC-003**: At "like Practice" and level 5, **0 differences** with the figures recorded before this feature; Follow, Wait and the tuner give **0 differences** at every position.
 - **SC-004**: At each level, the **count of kept notes and of kept chords** is the stated share within one sound on the reference pieces, the first sound of each kind is kept, the kept sounds are the same at two runs (100 %), and no chord is partly kept.

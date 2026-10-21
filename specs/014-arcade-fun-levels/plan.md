@@ -8,7 +8,7 @@
 
 Two additions, both **Arcade only**, both built on what exists:
 
-1. **A leniency** (three positions: like Practice, fun as the default, very permissive). It is a set of relaxations of existing recognition parameters (note acceptance in cents, confidence, stability time = the speed of the verdict, the chord evidence, minimum partials and confirmation time) applied to the *effective* settings (default + calibration profile) **when an Arcade run is prepared**, plus a wider on-time window. At "like Practice" nothing changes. Follow, Wait, the tuner and the calibration never see it.
+1. **A leniency** (three positions: like Practice, fun as the default, very permissive). It is a set of relaxations of existing recognition parameters (confidence, stability time, the chord evidence, minimum partials and confirmation time; **not** the acceptance in cents, which the measure showed to lose a right note, and none of them makes the verdict quicker: research R6-ter) applied to the *effective* settings (default + calibration profile) **when an Arcade run is prepared**, plus a wider on-time window. At "like Practice" nothing changes. Follow, Wait, the tuner and the calibration never see it.
 2. **Five levels**: a pure filter that keeps a share of the notes and of the chords of the track the player performs, always the same, the first of each kind kept and the others spread evenly after it (kept rank *i* of *k* among *n*: `floor(i * n / k)`), producing a smaller `PracticeSequence` before the run is built. Everything downstream (the timeline, the judging, the scene, the score, the result) already works from the sequence, so the sounds not kept simply do not exist for the run. They are **heard in the backing**: a small player sends them to the player's MIDI output at their written time (research R10), which is the one new piece of machinery of this feature.
 
 The level and the leniency are remembered in a small store of their own (like the default-input store), and the level is chosen in the **start window** that every Arcade start already shows (spec 010), so the player can choose it by hand at every launch.
@@ -27,7 +27,7 @@ The level and the leniency are remembered in a small store of their own (like th
 
 **Project Type**: desktop application, plugin module.
 
-**Performance Goals** (spec SC-001, SC-002): verdict at least 20 % faster than Follow in median, at most 5 % of the clearly wrong notes accepted at the default position; measured, reported, not assumed.
+**Performance Goals** (spec SC-001, SC-002): verdict not slower than Follow's and no right note lost, at most 4 of the 98 negatives accepted at the default position; measured, reported, not assumed.
 
 **Constraints**: nothing changes for Follow, Wait, the tuner, the calibration; at "like Practice" and level 5 every figure equals the base bit for bit; deterministic; the leniency never makes a setting *stricter* than the player's own; no recognition algorithm changes.
 
