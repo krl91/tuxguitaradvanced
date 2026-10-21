@@ -42,6 +42,7 @@ import app.tuxguitar.app.tools.custom.practice.session.TechniqueJudge;
 import app.tuxguitar.app.tools.custom.practice.session.PassageSettings;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeParameters;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
+import app.tuxguitar.app.tools.custom.practice.session.RemovedSoundsPlayer;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeSession;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeSnapshot;
 import app.tuxguitar.app.tools.custom.practice.session.SessionEvents;
@@ -141,6 +142,9 @@ public class PracticeWindow {
 	private PracticeSequence arcadeWhole;
 	/** The level of the Arcade run in progress, for its result (spec 014). */
 	private ArcadeLevel arcadeLevel = ArcadeLevel.HIGHEST;
+	/** The sounds the level removed, as a sequence, and the player that plays them in the backing during the run (spec 014, FR-015). */
+	private PracticeSequence arcadeRemovedSequence;
+	private RemovedSoundsPlayer removedSounds;
 	private static final long QUICK_START_PATIENCE_MILLIS = 2500L;
 	/** The "starting at measure..." text, to which the quick-start waiting hint is added while it applies. */
 	private String startBase = "";
@@ -683,6 +687,7 @@ public class PracticeWindow {
 			final ArcadeLevel level = ArcadeChoices.of(this.context).level();
 			this.arcadeLevel = level;
 			this.arcadeWhole = this.preparedSequence != null ? ArcadeLevelFilter.apply(this.preparedSequence.startingAt(0), level).kept() : null;
+			this.arcadeRemovedSequence = this.preparedSequence != null ? ArcadeLevelFilter.apply(this.preparedSequence.startingAt(0), level).removedSequence() : null;
 			startArcade(candidate, this.preparedSequence != null ? ArcadeLevelFilter.apply(this.preparedSequence, level).kept() : null);
 			return;
 		}
@@ -818,6 +823,12 @@ public class PracticeWindow {
 		}
 		this.followPlan = plan;
 		this.followLast = null;
+		// the sounds the level removed are heard in the backing at their written time (spec 014, FR-015): nothing at level 5
+		this.removedSounds = RemovedSoundsPlayer.forRun(this.song, this.arcadeRemovedSequence, plan.percent(), candidate.getTrack(), this.followAdapter.player().clock(),
+				this.followAdapter.removedSoundsOutput());
+		if( this.removedSounds != null ) {
+			this.removedSounds.start();
+		}
 		// the floating measure (FR-076): the picture holds what comes in the length of one measure of the track
 		long measureNanos = ArcadeSession.measureNanos(plan.timeline(), plan.timeline().targetTicks(0),
 				this.song.getMeasureHeader(plan.sequence().getEvents().get(0).getMeasureIndex()).getLength());
@@ -989,6 +1000,10 @@ public class PracticeWindow {
 
 	/** Gives the window and the controller of the run back; the run itself is stopped by {@link #teardownFollow}. */
 	private void teardownArcade() {
+		if( this.removedSounds != null ) {
+			this.removedSounds.stop();
+			this.removedSounds = null;
+		}
 		ArcadeWindow window = this.arcadeWindow;
 		this.arcadeWindow = null;
 		this.arcadeController = null;

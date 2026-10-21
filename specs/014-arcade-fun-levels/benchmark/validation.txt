@@ -28,3 +28,9 @@ Harness: ArcadeLeniencyReplayTest (a copy of the harness of RecordedPracticeRepl
    base / LIKE_PRACTICE / FUN / VERY_PERMISSIVE: each recognised 35 of 38, false accepts 0/98, chords with a note missing 2/12, delay median 105 ms p90 169 ms.
    SC-001 (revised: right notes not lower, median delay not longer than Follow's): holds, equal. SC-002 (at most 4 of 98 false accepts): holds, 0.
    Honest reading: on this recording the relaxation of the recognition changes nothing; what Arcade gains in forgiveness comes from the wider timing window (x1.25, x1.5, capped at 200 ms) which this measure does not see. Whether the five relaxed settings help on a weaker input (an audio interface with a low level, a noisy room) is NOT measured. Scope: this reference recording, this guitar, this room.
+
+== T025 (SC-007), 2026-10-21: the sounds a level removes, heard in the backing. What was measured and what was not
+   MEASURED (RemovedSoundsTimingTest, gated by -Darcade.measure=true, a real clock and the real polling thread, two runs of 150 sounds each, no audio):
+      the time between a sound's written time and the moment its note is handed to the output: median 2.4 to 3.0 ms, p95 5.8 to 5.9 ms, max 6.3 ms, never early (min 0.0 ms). It is bounded by the polling step (5 ms).
+   NOT MEASURED, and not measurable without sound: the offset between these sounds and the ones the sequencer plays (both reach the player's output transmitter, so the synthesizer's delay is common; the clock's own estimation error is not known here), and the sound of a bend or a slide in a removed note (only the written pitch is sent, without effect), and a tie. These are the owner's ear, task T040.
+   Scope: this machine, the software scheduling only.

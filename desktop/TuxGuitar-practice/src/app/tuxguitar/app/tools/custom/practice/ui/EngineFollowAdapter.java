@@ -5,6 +5,7 @@ import app.tuxguitar.app.tools.custom.practice.session.CalibrationRun;
 import app.tuxguitar.app.tools.custom.practice.session.FollowPlayer;
 import app.tuxguitar.app.tools.custom.practice.session.FollowStarter;
 import app.tuxguitar.app.tools.custom.practice.session.MidiClickPlayer;
+import app.tuxguitar.app.tools.custom.practice.session.RemovedSoundsPlayer;
 import app.tuxguitar.app.tools.custom.practice.session.MidiFollowPlayer;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeParameters;
 import app.tuxguitar.app.tools.custom.practice.session.RouteCalibrationStore;
@@ -18,6 +19,7 @@ import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.player.base.MidiOutputPort;
 import app.tuxguitar.player.base.MidiPlayer;
+import app.tuxguitar.player.base.MidiPlayerException;
 import app.tuxguitar.util.TGContext;
 import app.tuxguitar.util.TGSynchronizer;
 
@@ -103,6 +105,33 @@ public final class EngineFollowAdapter implements PracticeHost.RunEnvironment {
 		}
 		PracticeParameters parameters = PracticeParameters.of(RecognitionSettingsStore.getInstance(this.context).get());
 		return new CalibrationRun(new MidiClickPlayer(this.midiPlayer), parameters.articulationLatencyNanos());
+	}
+
+	/** The output of the player, as the editor audition and the calibration click use it: a note on the channel of its track, straight to the transmitter. */
+	@Override
+	public RemovedSoundsPlayer.Output removedSoundsOutput() {
+		final boolean[] prepared = { false };
+		return new RemovedSoundsPlayer.Output() {
+			public void noteOn(int channel, int key, int velocity) {
+				try {
+					if (!prepared[0]) {
+						EngineFollowAdapter.this.midiPlayer.updateChannels();
+						prepared[0] = true;
+					}
+					EngineFollowAdapter.this.midiPlayer.getOutputTransmitter().sendNoteOn(channel, key, velocity, -1, false);
+				} catch (MidiPlayerException | RuntimeException exception) {
+					// a note that cannot be sent is a note not heard: the run goes on
+				}
+			}
+
+			public void noteOff(int channel, int key) {
+				try {
+					EngineFollowAdapter.this.midiPlayer.getOutputTransmitter().sendNoteOff(channel, key, 0, -1, false);
+				} catch (MidiPlayerException | RuntimeException exception) {
+					// the same
+				}
+			}
+		};
 	}
 
 	@Override

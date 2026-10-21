@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 
 import app.tuxguitar.app.tools.custom.practice.session.FollowStarter;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeCommand;
+import app.tuxguitar.app.tools.custom.practice.session.RemovedSoundsPlayer;
 import app.tuxguitar.audio.engine.AudioEngine;
 import app.tuxguitar.song.models.TGSong;
 import app.tuxguitar.ui.UIFactory;
@@ -19,6 +20,11 @@ interface PracticeHost {
 
 	/** What a run needs and what the tempo-following panel needs, from the same adapter. */
 	interface RunEnvironment extends FollowStarter.Environment, FollowPanel.Backend {
+
+		/** Where the notes of the sounds a level of Arcade removed are sent (spec 014), or null when this environment cannot play them. */
+		default RemovedSoundsPlayer.Output removedSoundsOutput() {
+			return null;
+		}
 	}
 
 	// ---- the application's

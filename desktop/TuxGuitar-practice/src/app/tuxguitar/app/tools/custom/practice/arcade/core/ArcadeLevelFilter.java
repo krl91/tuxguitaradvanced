@@ -21,10 +21,12 @@ public final class ArcadeLevelFilter {
 	public static final class Result {
 		private final PracticeSequence kept;
 		private final List<PracticeEvent> removed;
+		private final PracticeSequence removedSequence;
 
-		Result(PracticeSequence kept, List<PracticeEvent> removed) {
+		Result(PracticeSequence kept, List<PracticeEvent> removed, PracticeSequence removedSequence) {
 			this.kept = kept;
 			this.removed = Collections.unmodifiableList(removed);
+			this.removedSequence = removedSequence;
 		}
 
 		/** The sequence the run is made of. */
@@ -36,6 +38,11 @@ public final class ArcadeLevelFilter {
 		public List<PracticeEvent> removed() {
 			return this.removed;
 		}
+
+		/** The same sounds as a sequence of their own (their times still come from the song), for the timeline of the backing that plays them; null at level 5. */
+		public PracticeSequence removedSequence() {
+			return this.removedSequence;
+		}
 	}
 
 	private ArcadeLevelFilter() {
@@ -44,7 +51,7 @@ public final class ArcadeLevelFilter {
 	public static Result apply(PracticeSequence full, ArcadeLevel level) {
 		List<PracticeEvent> events = full.getEvents();
 		if (level.keepsEverything() || events.isEmpty()) {
-			return new Result(full, new ArrayList<PracticeEvent>());
+			return new Result(full, new ArrayList<PracticeEvent>(), null);
 		}
 		List<Integer> notes = new ArrayList<Integer>();
 		List<Integer> chords = new ArrayList<Integer>();
@@ -65,12 +72,14 @@ public final class ArcadeLevelFilter {
 			keep[chords.get(0)] = true;
 		}
 		List<PracticeEvent> removed = new ArrayList<PracticeEvent>();
+		boolean[] gone = new boolean[keep.length];
 		for (int i = 0; i < keep.length; i++) {
 			if (!keep[i]) {
 				removed.add(events.get(i));
+				gone[i] = true;
 			}
 		}
-		return new Result(full.keeping(keep), removed);
+		return new Result(full.keeping(keep), removed, removed.isEmpty() ? null : full.keeping(gone));
 	}
 
 	/** Marks the sounds of one kind that the share keeps, and tells how many. */
