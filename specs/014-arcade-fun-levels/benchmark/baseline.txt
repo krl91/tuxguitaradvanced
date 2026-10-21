@@ -1,0 +1,15 @@
+Spec 014, phase 1 (T001 to T003), 2026-10-21. Local branch feature/interactive-practice at 5dd4d55ff plus the T021 wording; JDK 21 (Temurin).
+
+== T001 the whole default suite after a clean compile (mvn -e clean verify -P native-modules, from the macOS SWT build directory)
+   practice 1070 tests, 0 failures, 7 skipped (the gated and native ones; one more than at the end of spec 013: CalibrationTakeValidationTest); audio engine 373, 0 failures; BUILD SUCCESS in 626 s.
+   The scene-baseline file rewritten by ArcadeRenderBenchmarkTest was restored and is not committed.
+
+== T002 the source-structure tests read to the end: see research.md R8-bis
+   The level row can go in the start window and the filter on the fresh-start path (startSessionNow): no stop for the owner.
+
+== T003 Follow's figures, the base every position is compared with (RecordedPracticeReplayTest, default settings, reference recording tests/1, local to this machine)
+   reference recording: 42 events, 38 judged (4 within 0.15 s of a neighbour are a speed limit), recognised 35, missed [8@2.287, 13@4.133, 32@11.389],
+   false accepts 0/98, KNOWN LIMIT chords with a note missing recognised 2/12, related pairs not counted 44, accepted before the attack none, delay median 105 ms, p90 169 ms.
+   These equal the figures of 2026-10-06 in STATUS.md. The SC-001 target (median delay at least 20 % shorter) is therefore about 84 ms or less; the SC-002 limit is at most 4 false accepts of the 98 negatives.
+   Scope: the recording is not in git (tests/1 is untracked) and is read with macOS afconvert: these measures run on this machine only, not in CI.
+   How the harness works and the decision to copy it for T012: research.md R6-bis.
