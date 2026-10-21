@@ -6,6 +6,8 @@ import java.util.Map;
 import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeResult;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevel;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevelFilter;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniency;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniencyPosition;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeStarter;
@@ -137,6 +139,8 @@ public class PracticeWindow {
 	private boolean hiddenByArcade;
 	/** The whole sequence of the track, from its first event: the replays of the result start from it, whatever the passage the run began with. */
 	private PracticeSequence arcadeWhole;
+	/** The level of the Arcade run in progress, for its result (spec 014). */
+	private ArcadeLevel arcadeLevel = ArcadeLevel.HIGHEST;
 	private static final long QUICK_START_PATIENCE_MILLIS = 2500L;
 	/** The "starting at measure..." text, to which the quick-start waiting hint is added while it applies. */
 	private String startBase = "";
@@ -674,8 +678,12 @@ public class PracticeWindow {
 			return;
 		}
 		if( mode == FollowSettings.Mode.ARCADE ) {
-			this.arcadeWhole = this.preparedSequence != null ? this.preparedSequence.startingAt(0) : null;
-			startArcade(candidate, this.preparedSequence);
+			// the level the player chose (spec 014): the filter runs here, once per fresh start, on the prepared sequence, which stays whole; the whole piece the
+			// replays start from is filtered at the same level, so a restart and a replay reuse the filtered sequence and never filter again
+			final ArcadeLevel level = ArcadeChoices.of(this.context).level();
+			this.arcadeLevel = level;
+			this.arcadeWhole = this.preparedSequence != null ? ArcadeLevelFilter.apply(this.preparedSequence.startingAt(0), level).kept() : null;
+			startArcade(candidate, this.preparedSequence != null ? ArcadeLevelFilter.apply(this.preparedSequence, level).kept() : null);
 			return;
 		}
 		if( mode == FollowSettings.Mode.FOLLOW ) {

@@ -74,6 +74,29 @@ public final class PracticeSequence {
 		return new PracticeSequence(only, 0, this.trackTuning);
 	}
 
+	/**
+	 * The events marked in {@code keep} (one flag per event of this sequence), as a sequence of their own (spec 014: a level of Arcade keeps a share of the sounds).
+	 * They are the same events, in the same order, so their measure, play index and times still come from the song; the destination of a legato is looked for in
+	 * the events kept (a note whose origin was removed is judged as a plain note, as after {@link #startingAt}). The start index is the first kept event at or
+	 * after this sequence's start, at its new rank; when none is kept at or after it, it is past the last event (nothing to play).
+	 */
+	public PracticeSequence keeping(boolean[] keep) {
+		if (keep == null || keep.length != this.events.size()) {
+			throw new IllegalArgumentException("one flag per event: " + this.events.size());
+		}
+		List<PracticeEvent> kept = new ArrayList<PracticeEvent>();
+		int start = -1;
+		for (int i = 0; i < keep.length; i++) {
+			if (keep[i]) {
+				if (start < 0 && i >= this.startIndex) {
+					start = kept.size();
+				}
+				kept.add(this.events.get(i));
+			}
+		}
+		return new PracticeSequence(kept, start < 0 ? kept.size() : start, this.trackTuning);
+	}
+
 	public boolean isEmpty() {
 		return this.events.isEmpty();
 	}
