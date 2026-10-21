@@ -64,10 +64,22 @@ public final class ArcadeStarter {
 			PracticeParameters parameters, TechniqueJudge judge, Supplier<PolyphonicAcceptance> polyphonic, FollowStarter.Environment environment,
 			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
 			Runnable restart) {
+		return prepareFrom(context, song, track, sequence, settings, settings.getWindowMillis(), parameters, judge, polyphonic, environment, uiSink, uiExecutor,
+				endListener, eventsFactory, restart);
+	}
+
+	/**
+	 * The same run with the width of the on-time window given (spec 014: the permissiveness of Arcade widens the window of the learner, never beyond the range of
+	 * spec 012); see {@link FollowStarter#prepare}.
+	 */
+	public static FollowStarter.Plan prepareFrom(TGContext context, TGSong song, TGTrack track, PracticeSequence sequence, FollowSettings settings, int windowMillis,
+			PracticeParameters parameters, TechniqueJudge judge, Supplier<PolyphonicAcceptance> polyphonic, FollowStarter.Environment environment,
+			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
+			Runnable restart) {
 		if (track == null) {
 			throw new IllegalArgumentException("the learner must choose the track to perform");
 		}
-		return FollowStarter.prepare(context, song, sequence, track.getNumber(), settings, parameters, judge, polyphonic, environment, uiSink, uiExecutor,
+		return FollowStarter.prepare(context, song, sequence, track.getNumber(), settings, windowMillis, parameters, judge, polyphonic, environment, uiSink, uiExecutor,
 				endListener, eventsFactory, restart);
 	}
 }

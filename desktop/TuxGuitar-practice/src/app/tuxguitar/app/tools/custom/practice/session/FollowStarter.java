@@ -104,8 +104,19 @@ public final class FollowStarter {
 			PracticeParameters parameters, TechniqueJudge judge, java.util.function.Supplier<PolyphonicAcceptance> polyphonic, Environment environment,
 			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
 			Runnable restart) {
+		return prepare(context, song, full, trackNumber, settings, settings.getWindowMillis(), parameters, judge, polyphonic, environment, uiSink, uiExecutor, endListener,
+				eventsFactory, restart);
+	}
+
+	/**
+	 * The same run with the width of the on-time window given (spec 014: Arcade widens the window of the learner), in milliseconds each side at 120 beats a minute, from
+	 * {@link TimingTolerance#MIN_WIDTH_MILLIS} to {@link TimingTolerance#MAX_WIDTH_MILLIS} (another width is refused); the other choices are read from the settings.
+	 */
+	public static Plan prepare(TGContext context, TGSong song, PracticeSequence full, int trackNumber, FollowSettings settings, int windowMillis,
+			PracticeParameters parameters, TechniqueJudge judge, java.util.function.Supplier<PolyphonicAcceptance> polyphonic, Environment environment,
+			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
+			Runnable restart) {
 		final int percent = settings.getPercent();
-		final int windowMillis = settings.getWindowMillis();
 		final PracticeSequence sequence = full.startingAt(full.getStartIndex());
 		final FollowTimeline timeline = FollowTimeline.build(song, sequence, percent);
 		final FollowPlayer player = environment.player();

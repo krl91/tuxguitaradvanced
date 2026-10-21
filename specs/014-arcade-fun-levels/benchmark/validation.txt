@@ -1,0 +1,24 @@
+Spec 014, T012: the measure that was to fix the values of the Arcade permissiveness, 2026-10-21. RESULT: THE LIMITS OF SC-001 ARE NOT REACHED. Stopped for the owner's decision (the gate written in T012).
+
+Harness: ArcadeLeniencyReplayTest (a copy of the harness of RecordedPracticeReplayTest with the settings as a parameter; the original is untouched), on the reference recording (local, tests/1), the shared recognition on a PracticeSession, default settings = Follow's recognition. Command:
+  mvn test -pl ../../TuxGuitar-practice -am -Dtest=ArcadeLeniencyReplayTest -Dgroups=dataset -DexcludedGroups= -Darcade.measure=true -Dsurefire.failIfNoSpecifiedTests=false
+
+== The three positions (starting values of research R2)
+   base / LIKE_PRACTICE : recognised 35 of 38 judged, false accepts 0/98, chords with a note missing accepted 2/12, delay median 105 ms, p90 169 ms. LIKE_PRACTICE equals the base (asserted: FR-011).
+   FUN                  : recognised 34 (one LESS: event 35 is missed), false accepts 0/98, chords with a note missing 2/12, delay median 105 ms, p90 169 ms.
+   VERY_PERMISSIVE      : recognised 34 (the same one less), false accepts 0/98, chords with a note missing 2/12, delay median 105 ms, p90 169 ms.
+   SC-001 asks for a median at least 20 % shorter (about 84 ms or less) and MORE right notes than Follow: neither holds. SC-002 (at most 4 false accepts of 98) holds trivially (0).
+
+== One parameter at a time (an exploratory run, not kept as a test)
+   NOTE_STABILITY 50 and 75 ms; NOTE_CONFIDENCE 0.6 and 0.5; CHORD_EVIDENCE 0.22 and 0.28; CHORD_MIN_PARTIALS 1; CHORD_CONFIRM 24 and 32 ms; CHORD_WINDOW 400 ms:
+      every one gives exactly the base: recognised 35, false accepts 0/98, delay median 105 ms p90 169 ms. NOTHING CHANGES.
+   NOTE_ACCEPT 42 and 45 cents: recognised 34 (event 35 is lost), false accepts 0/98, delay unchanged. Widening the acceptance in cents makes the result WORSE here.
+
+== What the delay is made of (read in the source)
+   A note is accepted only once its attack has been reported, and the attack is reported ArticulationDetector.DECISION_DELAY_HOPS = 13 hops (about 69 ms) after its transient: the detector needs the level that follows the transient (research: a spectral-flux transient and a level gate of 4 to 13 hops after). PracticeParameters.articulationLatencyNanos() is that constant, not a setting. The stability time is already satisfied by the time the attack is reported, so shortening it changes nothing. The median delay of 105 ms is therefore about 69 ms of detector decision plus the analysis window and the player's own timing.
+   The only levers the permissiveness uses (acceptance cents, confidence, stability, the chord evidence, partials and confirmation) do not act on that delay.
+
+== What would make the verdict quicker (not done, none is a "setting")
+   (a) a shorter decision delay of the attack detector for an Arcade run: it is an engine constant shared by every mode on the same analysis; changing it is a change of the recognition algorithm (spec FR-014 forbids it), weakens the rejection of sustain, vibrato and clicks (it was chosen to "miss weak re-plucks rather than report sustain"), and would have to be switched on and off around an Arcade run;
+   (b) a verdict before the attack is reported (acceptance from the pitch evidence alone): the early-stability mechanism that exists in PracticeParameters (EARLY_STABILITY_ENABLED = false) acts on the stability time, which is not the bottleneck, and was switched off because on this microphone the evidence does not separate a right note from a wrong one;
+   (c) leave the recognition's speed as it is and give the "speed" of the game elsewhere: the timing window (already widened by the position), the display of the verdict.
