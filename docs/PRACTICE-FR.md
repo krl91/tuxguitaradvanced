@@ -82,6 +82,12 @@ Deux façons de le lancer : le **bouton Arcade coloré** de la barre de transpor
 
 *Captures de l'application.*
 
+### Niveaux d'Arcade et permissivité
+
+**Cinq niveaux** rendent jouable un morceau difficile. La fenêtre de démarrage d'Arcade demande le niveau à chaque fois (le niveau 1 la première fois, puis le dernier choisi) : le **niveau 1** garde environ 30 % des notes et aucun accord ; le **niveau 2** 30 % des notes et 30 % des accords ; le **niveau 3** 50 % et 50 % ; le **niveau 4** 75 % et 75 % ; le **niveau 5** tout le morceau, comme avant. Le premier son de chaque sorte est toujours gardé et les autres sont répartis régulièrement après lui, les mêmes à chaque partie. Les sons qu'un niveau laisse de côté ne sont **ni affichés, ni attendus, ni jugés**, et le score est compté sur les sons gardés ; **l'accompagnement les joue pour vous**, pour que la musique reste complète (ils sont envoyés avec l'instrument de votre piste, sans bends ni glissés). La fenêtre de résultat indique le niveau et la permissivité.
+
+**Permissivité** (onglet Mode, Arcade) : *Comme l'entraînement* (la reconnaissance et le timing des modes d'entraînement, rien n'est relâché), *Ludique* (le défaut) ou *Très permissif*. Elle ne s'applique qu'à Arcade (Suivi, Attente et l'accordeur ne changent pas) et ne fait que relâcher, jamais durcir, ce que vous ou un profil de calibration avez déjà réglé : elle élargit la fenêtre de timing (d'un quart ou de moitié, jamais au-delà de 200 ms) et relâche la confiance, le temps de stabilité et les seuils des accords. **Mesuré :** sur la prise de référence et sur les notes du micro intégré, elle ne change **rien** à ce qui est reconnu (les réglages par défaut atteignent déjà le plafond) et elle ne rend **pas** le verdict plus rapide : ce délai est fixé par le détecteur d'attaque. Son effet sur des entrées plus faibles n'est pas mesuré.
+
 ### Alpha : ce qui n'est pas encore vérifié
 
 * C'est une **alpha** : le timing de la vue Arcade et du suivi de tempo est validé par des tests automatiques, et l'aspect de la vue par le propriétaire sur un Mac ; il n'a **pas** été validé avec d'autres joueurs, guitares, micros ou machines.

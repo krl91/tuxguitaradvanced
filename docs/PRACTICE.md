@@ -82,6 +82,12 @@ Two ways to start it: the **coloured Arcade button** of the transport bar (right
 
 *Screenshots of the application, shown with its French interface.*
 
+### Arcade levels and permissiveness
+
+**Five levels** make a hard piece playable. The start window of Arcade asks the level each time (level 1 the first time, then the last one you chose): **level 1** keeps about 30 % of the notes and no chord; **level 2** 30 % of the notes and 30 % of the chords; **level 3** 50 % and 50 %; **level 4** 75 % and 75 %; **level 5** the whole piece, as before. The first sound of each kind is always kept and the others are spread evenly after it, the same ones at every run. The sounds that a level leaves out are **not shown, not expected and not judged**, and the score is counted on the sounds kept; **the band plays them for you**, so the music stays complete (they are sent with the instrument of your track, without bends or slides). The result window names the level and the permissiveness.
+
+**Permissiveness** (Mode tab, Arcade): *Like Practice* (the recognition and the timing of the practice modes, nothing relaxed), *Fun* (the default) or *Very permissive*. It is applied to Arcade **only** (Follow, Wait and the tuner are unchanged) and only relaxes, never tightens, what you or a calibration profile already set: it widens the timing window (by a quarter or a half, never beyond 200 ms) and relaxes the confidence, the stability time and the chord thresholds. **Measured:** on the reference recording and on the built-in-microphone notes it changes **nothing** in what is recognised (the default settings already reach the ceiling there) and it does **not** make the verdict quicker: that delay is fixed by the attack detector. Its effect on weaker inputs is not measured.
+
 ### Alpha: what is not verified yet
 
 * This is an **alpha**: the timing of the Arcade view and of the tempo-following run is validated by automatic tests, and the look of the view by the owner on a Mac; it has **not** been validated by other players, guitars, microphones or machines.

@@ -87,6 +87,7 @@ Available now (version 0.5.0-beta.1): practice note by note and chord by chord w
 | <img src="docs/images/features/analyse-score.png" width="44" alt="Analyse the score"> | **Score analysis** | A score that opens is no longer interrupted by a dialog. *Edit > Display invalid measures* (or the toolbar icon) lists every problem of the song, with a one-click fix. |
 | | **Diagnostic trace** | An optional text trace (numbers only, no audio) to understand why a note was or was not recognised. |
 | | **Per-input calibration** | Play a short piece once and the recognition settings that suit this input (your microphone or interface) are searched and kept; a coloured dot shows whether the input is calibrated. No audio is kept. |
+| | **Arcade levels** | Five levels keep a share of the notes and of the chords of a piece (from 30 % of the notes and no chord to the whole piece); the sounds left out are played by the band. A permissiveness setting makes Arcade more forgiving. |
 
 ## Interactive Practice in 30 seconds
 

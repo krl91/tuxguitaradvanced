@@ -65,6 +65,12 @@ Elige **Arcade** en la pestaña Modo, la pista que tocas en la pestaña Pista (c
 
 *Capturas de la aplicación, mostradas con su interfaz en francés.*
 
+### Niveles de Arcade y permisividad
+
+**Cinco niveles** hacen tocable una pieza difícil. La ventana de inicio de Arcade pregunta el nivel cada vez (el nivel 1 la primera vez, luego el último elegido): el **nivel 1** conserva cerca del 30 % de las notas y ningún acorde; el **nivel 2** el 30 % de las notas y el 30 % de los acordes; el **nivel 3** el 50 % y el 50 %; el **nivel 4** el 75 % y el 75 %; el **nivel 5** toda la pieza, como antes. El primer sonido de cada clase siempre se conserva y los demás se reparten con regularidad después, los mismos en cada partida. Los sonidos que un nivel deja fuera **no se muestran, no se esperan y no se juzgan**, y la puntuación se cuenta sobre los sonidos conservados; **el acompañamiento los toca por usted**, para que la música siga completa (se envían con el instrumento de su pista, sin bends ni deslizamientos). La ventana de resultado indica el nivel y la permisividad.
+
+**Permisividad** (pestaña Modo, Arcade): *Como la práctica* (el reconocimiento y el ritmo de los modos de práctica, nada se relaja), *Divertido* (el valor por defecto) o *Muy permisivo*. Solo se aplica a Arcade (Seguimiento, Espera y el afinador no cambian) y solo relaja, nunca endurece, lo que usted o un perfil de calibración ya fijó: ensancha la ventana de ritmo (un cuarto o la mitad, nunca más de 200 ms) y relaja la confianza, el tiempo de estabilidad y los umbrales de acordes. **Medido:** en la grabación de referencia y en las notas del micrófono integrado **no cambia nada** de lo reconocido (los ajustes por defecto ya alcanzan el techo) y **no** hace el veredicto más rápido: ese retardo lo fija el detector de ataques. Su efecto en entradas más débiles no está medido.
+
 ### Alfa: lo que aún no está verificado
 
 * Es una **alfa**: el tiempo de la vista Arcade y del seguimiento de tempo está validado con pruebas automáticas, y el aspecto de la vista por el propietario en un Mac; **no** se ha validado con otros jugadores, guitarras, micrófonos o máquinas.
