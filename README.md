@@ -14,11 +14,11 @@
 
 <p align="center"><em>Image drawn by the Arcade renderer of the application from a reference scene (not a screenshot of a window): a streak of 12 notes on time, the flames rising on both sides, a hammer-on/pull-off and a bend.</em></p>
 
-TuxGuitarAdvanced is a free, open source tablature editor that **listens to your guitar** (a microphone or an audio interface is all you need). Open any score (Guitar Pro, MIDI, TuxGuitar...), pick a track, and play along with the rest of the band. No subscription, no catalogue, no account: **your songs, your guitar, your machine**.
+**Your own tablatures, played on your real guitar: no subscription, no imposed catalogue.** TuxGuitarAdvanced is a free, open source tablature editor that **listens to your guitar** (a microphone or an audio interface is all you need). Open any score (Guitar Pro, MIDI, TuxGuitar...), pick a track, and play along with the rest of the band. No subscription, no catalogue, no account: **your songs, your guitar, your machine**.
 
 > 🙏 **Built on TuxGuitar, which is already excellent.** TuxGuitarAdvanced is a **fork of [TuxGuitar](https://www.tuxguitar.app/)**, the great free multitrack tablature editor and player. Everything TuxGuitar does is still here, untouched: editing, playback, Guitar Pro / MIDI / MusicXML / PDF import and export, many languages. **We only add new things on top**: the practice modes (Wait, Follow the tempo, Arcade) and a steadier tuner. All the credit for the editor goes to TuxGuitar's authors and contributors ([helge17](https://github.com/helge17/tuxguitar) and many others); if you only want a superb editor, [go and use TuxGuitar](https://www.tuxguitar.app/) too, it deserves it.
 
-> ⚠️ **Beta.** Its modes are still marked alpha below: it works, we play it, and it is honestly rough in places. That is exactly why we need players like you. [See what is not done yet](#where-it-stands-today) and [how to help](#join-the-band-help-us-level-it-up).
+> ⚠️ **Read this before you rely on it.** TuxGuitarAdvanced is young. The automatic tests are numerous and the recorded benchmarks are good, **but live validation is small**: it has been played mostly on the author's own Mac and guitar, **the Windows and Linux packages have never been run by anyone**, and very few microphones and audio interfaces have been tried. The practice modes are still marked alpha below. It works for us and it is honestly rough in places, which is exactly why we need players like you, on **your** machine and **your** interface. [What is validated, and what is not](#what-is-validated-and-what-is-not) · [how to help](#join-the-band-help-us-level-it-up).
 
 ## Choose your game mode
 
@@ -69,7 +69,7 @@ This is a young project and every kind of help changes it. You do **not** need t
 
 ### Where it stands today
 
-Available now (version 0.5.0-beta.1): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, a measure ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
+Available now (version 0.6.0): practice note by note and chord by chord with your real guitar (the pitch is checked), bends, releases and pre-bends followed along their written path, hammer-on, pull-off and slide destinations accepted without a new pick, a steady tuner, input gain and noise reduction. **New, in alpha:** the **tempo-following mode** (the score plays at its tempo with the other tracks as a backing, and each note is judged on time: early, late, missed) and **Arcade**, the same run as a game where the notes come towards you on a neck, a measure ahead. **Not available yet:** a verdict *heard / not heard* for each technique (the detectors are not yet validated on enough real recordings, so the technique line still says "cannot be checked yet"). The user guide lists what is measured and what is not: [English](docs/PRACTICE.md) · [Français](docs/PRACTICE-FR.md) · [Español](docs/PRACTICE-ES.md).
 
 **User manual** (editing and creating a score, and the whole Practice, with screenshots): [English](docs/MANUAL.md) · [Français](docs/MANUAL-FR.md).
 
@@ -100,7 +100,11 @@ Available now (version 0.5.0-beta.1): practice note by note and chord by chord w
 
 What is verified: **pitch** (and every note of a chord). String and fret are never claimed from audio, and the written techniques (hammer-on, pull-off, slide, bend, vibrato) are shown with what was heard, or "cannot be checked yet" while no detector meets its quality target. Details, settings and limits: [docs/PRACTICE.md](docs/PRACTICE.md) (English), [docs/PRACTICE-FR.md](docs/PRACTICE-FR.md) (français), [docs/PRACTICE-ES.md](docs/PRACTICE-ES.md) (español).
 
-## Tuned and tested on real recordings
+## What is validated, and what is not
+
+Two different things are measured here, and only the first one is large.
+
+### 1. Offline, on recordings: measured, and numerous
 
 The recognition was not tuned on synthetic sounds only. It was measured and adjusted on **more than 1,200 annotated recordings of real guitars** (single notes, intervals and chords, clean and with 11 audio effects such as distortion, overdrive, chorus, flanger, phaser, delay, reverb), plus recordings of an acoustic guitar played fingerstyle on a real score.
 
@@ -112,7 +116,13 @@ On that benchmark (6,178 automatic tests):
 
 Known limits are documented and measured, not hidden: chords whose bass note is G2 can be confused with the chord a whole tone higher, four-note seventh chords are recognised less often, and notes less than 0.15 s apart cannot be told apart. See [docs/PRACTICE.md](docs/PRACTICE.md#measured-quality-and-limits).
 
-The default build runs **479 automatic tests**; the benchmark on recordings is an extra test you can run yourself (see the user guide). No audio of the benchmark is stored in this repository.
+The default build runs **more than 1,500 automatic tests**; the benchmark on recordings is an extra test you can run yourself (see the user guide). No audio of the benchmark is stored in this repository. These figures say how the recognition behaves **on recorded sounds**; they are not a promise about your setup.
+
+### 2. Live, in real conditions: small, and said so
+
+* **Validated by a person, live:** playing on the author's own Mac and guitar (the measurements of the calibration and of Arcade were made with the built-in microphone of that Mac; the calibration found nothing better than the defaults there, so **no gain from calibration has been measured yet**); the macOS package (0.6.0-beta.3, the same application as 0.6.0) opens with *Open Anyway* on the author's Mac.
+* **Not validated by anyone yet:** the **Windows and Linux packages** (built, and the version inside them checked, but never run); **other computers and operating system versions**; **other audio interfaces and microphones** (the calibration exists to adapt to them, and has been tried on almost none); the **sound of the sounds Arcade removes**, and the **layout of the About window** on screen; long sessions.
+* **How you can change that:** play it on your machine and interface, run the calibration, and [tell us](https://github.com/krl91/tuxguitaradvanced/issues) what happened, good or bad. A report with your system, your input device and what you saw is worth more to us than a star.
 
 ## Arcade at a glance
 
@@ -124,7 +134,7 @@ The notes come towards you on a neck, a measure ahead; a chord arrives as a fram
 
 ## Download and installation
 
-Packages are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). **Today the alphas ship a macOS (Apple Silicon) package only**; Linux and Windows packages are built by the release workflow when GitHub Actions is available, and can always be built from source. The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; the three packages include the Interactive Practice modules.
+Packages are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). Each release has a **macOS (Apple Silicon)**, a **Windows** and a **Linux** (tar.gz and .deb) package, all built by the release workflow, which checks the version and the commit inside each one. **Only the macOS package has been opened by a person; the Windows and Linux packages have never been run** (see above). They can always be built from source. The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; the three packages include the Interactive Practice modules.
 
 To build from source, refer to [INSTALL.md](INSTALL.md). The practice modules need a few more things:
 
