@@ -123,6 +123,16 @@ To build from source, refer to [INSTALL.md](INSTALL.md). The practice modules ne
 * the audio engine uses TarsosDSP, which is fetched from `https://mvn.0110.be/releases` (it is not on Maven Central), so the first build needs network access;
 * on macOS, the launcher is compiled and signed with `clang` and `codesign`: install the Xcode Command Line Tools (`xcode-select --install`). The build does not embed a Java runtime in the `.app`: link or copy one into `Contents/Resources/tuxguitar/jre` to run it from the build folder (the application is in `Contents/Resources/tuxguitar`: macOS accepts only the launcher in `Contents/MacOS`, and a bundle that does not follow that rule cannot be signed).
 
+
+**Opening the macOS app the first time** (the app is signed with a self-made certificate and not notarised by Apple, so macOS asks you to approve it once):
+
+1. Unzip the download and move `TuxGuitarAdvanced.app` to *Applications* (or anywhere you like).
+2. Double-click it. macOS answers *« Apple could not verify that TuxGuitarAdvanced is free of malware… »*: click **Done** (not *Move to Bin*).
+3. Open **System Settings → Privacy & Security**, scroll down to the *Security* section: the message *« TuxGuitarAdvanced was blocked… »* is there, with an **Open Anyway** button. Click it, then confirm with your password or Touch ID.
+4. From then on, the app opens normally. For practice, allow the microphone when macOS asks (*System Settings → Privacy & Security → Microphone*).
+
+If macOS says the app is *damaged* instead (a build before 0.6.0-beta.3), download 0.6.0-beta.3 or later; as a workaround, run `xattr -cr /path/to/TuxGuitarAdvanced.app` in a Terminal once.
+
 ## Documentation
 
 * [Interactive Practice, user guide](docs/PRACTICE.md) - [Guide en français](docs/PRACTICE-FR.md) - [Guía en español](docs/PRACTICE-ES.md)
