@@ -22,6 +22,7 @@ What the code does today (inspected 2026-10-22): `TGAboutDialog` builds its titl
 - Q: What does a build that is not a release show? → A: A **development label** with the commit when it is known, for example `dev (a1b2c3d)`, and **modified** when the working copy has uncommitted changes; never a release number and never `9.99-SNAPSHOT`.
 - Q: Should the title of the main window also show the version? → A: **Yes**, so that a screenshot in a report shows it (chosen by the owner, 2026-10-22, among: About and the packages only, the title when no file is open, always in the title). The title is a layout that every user can change (default `${appname} - ${filename}`, with a variable `${appversion}` that gives the application version, today the hard-coded 2.1.1): the **default layout adds the version after the name**, `TuxGuitarAdvanced 0.6.0-beta.1 - song.tg`, and a layout that a user has set himself is **kept as he wrote it**.
 - Q: Should About offer a button that copies the version and the commit for a bug report? → A: **Yes** (chosen by the owner, 2026-10-22): a "Copy the version" button copies one line, `TuxGuitarAdvanced <version> (<full commit>)`, with the full commit of 40 characters and, for a development build, its label and **modified** mark.
+- Q: Which labels may a version tag carry? → A: **Any label** (chosen by the owner, 2026-10-22, among: `alpha`/`beta`/`rc` only; `alpha`/`beta` only; any). The label is free text made of letters, digits, dots and hyphens (`v0.6.0-test`, `v0.6.0-beta.2`); a tag **with** a label is published as a pre-release, a tag **without** one as a final release.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -114,7 +115,7 @@ A build made on a developer's machine, outside a release, shows a **development 
 - **FR-010**: The texts of the new fields MUST exist in the three shipped languages (English, French, Spanish) and be described in the documentation.
 - **FR-012**: The **application version variable** that the title layout and any other text already use (`${appversion}`) MUST give the **release version** (or the development label), never the hard-coded upstream number, so that everything that shows "the application version" shows the right one.
 - **FR-013**: The **About window** MUST offer a button that copies to the clipboard one line stating the application name, the version and the **full** commit (with the development label and the **modified** mark when they apply), so that it can be pasted into a bug report; its text exists in the three shipped languages (FR-010).
-- **FR-011**: A tag that is not a version (not of the form `vMAJOR.MINOR.PATCH` with an optional label) MUST be refused before anything is built.
+- **FR-011**: A tag that is not a version (not of the form `vMAJOR.MINOR.PATCH` with an optional label of letters, digits, dots and hyphens, whatever the label) MUST be refused before anything is built; a tag with a label is published as a pre-release and a tag without one as a final release.
 
 ### Key Entities
 
