@@ -55,6 +55,8 @@ desktop/TuxGuitar/src/app/tuxguitar/app/view/dialog/about/TGAboutDialog.java   (
 desktop/TuxGuitar/src/app/tuxguitar/app/system/variables/TGVarAppVersion.java  (edit)
 desktop/TuxGuitar/src/app/tuxguitar/app/system/config/TGConfigDefaults.java    (default title layout)
 common/resources/lang/messages{,_fr,_es}.properties
+desktop/TuxGuitar-ui-toolkit/src/app/tuxguitar/ui/UITextClipboard.java   (new, 1 method)
+desktop/TuxGuitar-ui-toolkit-swt/src/app/tuxguitar/ui/swt/SWTFactory.java   (implements it)
 desktop/build-scripts/{tuxguitar-macosx-swt-cocoa,tuxguitar-windows-swt-x86_64,tuxguitar-linux-swt,tuxguitar-linux-swt-deb}/pom.xml
 misc/stamp-build-info.sh, misc/verify-version.sh, misc/verify-release.sh and their self-tests   (new)
 .github/workflows/release.yml

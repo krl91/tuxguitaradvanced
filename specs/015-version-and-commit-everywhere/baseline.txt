@@ -1,0 +1,13 @@
+Baseline before spec 015 (2026-10-22, macOS arm64, Temurin 21, branch feature/interactive-practice, commit 80e25247d plus the uncommitted new test files of the spec):
+
+Command: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -e clean verify -P native-modules
+Result of the modules before the packaging module: every test module ran, the last summaries read
+  Tests run: 373, Failures: 0, Errors: 0, Skipped: 0
+  Tests run: 24, Failures: 0, Errors: 0, Skipped: 0
+  Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
+  Tests run: 1148, Failures: 0, Errors: 0, Skipped: 10   (the practice module)
+Then BUILD FAILURE in the last module, tuxguitar-macosx-swt-cocoa: "Failed to clean project: Failed to delete .../tuxguitar-macosx-swt-cocoa/target"
+(a .DS_Store file recreated in the folder by Finder while Maven deleted it). The packaging of the .app was therefore NOT verified by this run.
+A second attempt with -Dmaven.test.skip=true failed earlier, on dependency resolution of the audio-engine test jar (that option removes it): not a code problem.
+The packaging is verified by the build of task T021 (after the phase 3 changes), not before.
+Log files: scratchpad of the session (not kept in git).
