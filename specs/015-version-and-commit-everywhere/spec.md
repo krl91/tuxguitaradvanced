@@ -21,6 +21,7 @@ What the code does today (inspected 2026-10-22): `TGAboutDialog` builds its titl
 - Q: Which commit identifier is shown, and where? → A: Defaults taken by the author, to be confirmed by the owner: the **short form (7 characters)** next to the version where space is small (the title of About, the name of a file) and the **full 40 characters** in the details (a line of About, the release page, the package metadata where it fits).
 - Q: What does a build that is not a release show? → A: A **development label** with the commit when it is known, for example `dev (a1b2c3d)`, and **modified** when the working copy has uncommitted changes; never a release number and never `9.99-SNAPSHOT`.
 - Q: Should the title of the main window also show the version? → A: **Yes**, so that a screenshot in a report shows it (chosen by the owner, 2026-10-22, among: About and the packages only, the title when no file is open, always in the title). The title is a layout that every user can change (default `${appname} - ${filename}`, with a variable `${appversion}` that gives the application version, today the hard-coded 2.1.1): the **default layout adds the version after the name**, `TuxGuitarAdvanced 0.6.0-beta.1 - song.tg`, and a layout that a user has set himself is **kept as he wrote it**.
+- Q: Should About offer a button that copies the version and the commit for a bug report? → A: **Yes** (chosen by the owner, 2026-10-22): a "Copy the version" button copies one line, `TuxGuitarAdvanced <version> (<full commit>)`, with the full commit of 40 characters and, for a development build, its label and **modified** mark.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -112,6 +113,7 @@ A build made on a developer's machine, outside a release, shows a **development 
 - **FR-009**: Where a system accepts only a numeric version (the macOS bundle version, the Windows file version) the field MUST carry the **numeric part** of the release version, and the **full text** MUST be carried by another field of the same package; for the Debian package the version MUST use Debian's own punctuation for pre-releases so that a final release sorts after its alpha and beta; in every case the digits and the label are the same as the release's.
 - **FR-010**: The texts of the new fields MUST exist in the three shipped languages (English, French, Spanish) and be described in the documentation.
 - **FR-012**: The **application version variable** that the title layout and any other text already use (`${appversion}`) MUST give the **release version** (or the development label), never the hard-coded upstream number, so that everything that shows "the application version" shows the right one.
+- **FR-013**: The **About window** MUST offer a button that copies to the clipboard one line stating the application name, the version and the **full** commit (with the development label and the **modified** mark when they apply), so that it can be pasted into a bug report; its text exists in the three shipped languages (FR-010).
 - **FR-011**: A tag that is not a version (not of the form `vMAJOR.MINOR.PATCH` with an optional label) MUST be refused before anything is built.
 
 ### Key Entities
@@ -127,6 +129,7 @@ A build made on a developer's machine, outside a release, shows a **development 
 
 - **SC-001**: For every release, the version read from **each of the 9 places** (About window, macOS bundle, Windows package, Linux archive, Debian package, file names, release tag, title and page) is **the version asked for**, in 100 % of the releases built after this feature; the check of FR-006 reports **0 differences**.
 - **SC-002**: The commit read from each place that carries it is **the commit built** (and the tag's), in 100 % of the releases.
+- **SC-009**: The line copied by the About button holds the same version and the same full commit as the window shows, in 100 % of the builds tried.
 - **SC-008**: A screenshot of the main window with the **default title** shows the release version in 100 % of the releases.
 - **SC-003**: A person can quote the version and the commit of the application they run **from About alone**, without any other tool, in under **10 seconds**.
 - **SC-004**: A release built with **one** wrong value in **any** place is **not published** in 100 % of the cases tried (one case per place).
