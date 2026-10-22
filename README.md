@@ -12,7 +12,7 @@
 
 <p align="center"><img src="docs/images/arcade-flames.png" width="760" alt="Arcade mode with the flames of a streak of 12 notes on time, a hammer-on/pull-off and a bend"></p>
 
-<p align="center">*Image drawn by the Arcade renderer of the application from a reference scene (not a screenshot of a window): a streak of 12 notes on time, the flames rising on both sides, a hammer-on/pull-off and a bend.*</p>
+<p align="center"><em>Image drawn by the Arcade renderer of the application from a reference scene (not a screenshot of a window): a streak of 12 notes on time, the flames rising on both sides, a hammer-on/pull-off and a bend.</em></p>
 
 TuxGuitarAdvanced is a free, open source tablature editor that **listens to your guitar** (a microphone or an audio interface is all you need). Open any score (Guitar Pro, MIDI, TuxGuitar...), pick a track, and play along with the rest of the band. No subscription, no catalogue, no account: **your songs, your guitar, your machine**.
 
