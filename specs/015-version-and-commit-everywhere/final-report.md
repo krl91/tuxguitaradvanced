@@ -37,3 +37,6 @@ Date: 2026-10-22. Branch `feature/interactive-practice`, local commits only (not
 - 23 translations of the `appversion` variable description still say "version of TuxGuitar" (only en/fr/es were refreshed).
 - The annotated-tag branch of `verify-release.sh` has no test.
 - The 29 items of `checklists/release-consistency.md` are still unchecked (reviewer-owned).
+
+## Addendum: first real release, v0.6.0-beta.2 (2026-10-22)
+Pushed 69338944c (one push) and dispatched the Release workflow: run 39822851217, **all six jobs succeeded on the first run**; the release is published as a **pre-release**, its git tag `v0.6.0-beta.2` points to 69338944c, its four files are attached. I then downloaded the published files and read them again with `misc/verify-version.sh` on this machine: macOS zip 10 places OK, **Windows zip 9 places OK (the real launch4j exe: file and product version 0.6.0.0, text versions 0.6.0-beta.2)**, Linux tar.gz 5 places OK. The .deb was not run through the verifier here (no dpkg-deb); its control file, extracted by hand, reads `Version: 0.6.0~beta.2` and the description line `TuxGuitarAdvanced 0.6.0-beta.2 (69338944c3bf…)`; the workflow's own verification of it passed in CI. Still not seen on screen: About, the title and the Copy button (T021).

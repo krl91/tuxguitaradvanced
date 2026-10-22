@@ -77,7 +77,7 @@ description: "Tasks: the same version and commit everywhere (spec 015)"
 - [x] T039 [P] (BUILD SUCCESS, 1172 tests, 0 failures, 10 skipped as in the baseline) Run the whole macOS build with tests (`mvn -e clean verify -P native-modules`) and compare with `baseline.txt`; report exactly what passed and what did not.
 - [x] T040 Write `specs/015-version-and-commit-everywhere/final-report.md`: what ran, what only CI can prove (Windows, Linux, the workflow), what was seen by hand, the open points; note that 23 translations of the `appversion` description still say "TuxGuitar".
 - [x] T041 Commit the phase.
-- [ ] T042 **Owner**: give the go to push and to dispatch a labelled release (for example `v0.6.0-beta.2`) so the checks run on real packages; read the nine places in the four packages with `misc/verify-version.sh` and the release with `misc/verify-release.sh` (SC-001, SC-002).
+- [x] T042 (done 2026-10-22: pushed 69338944c, release v0.6.0-beta.2, run 39822851217 all jobs green; packages downloaded and read again by hand, see final-report.md addendum) **Owner**: give the go to push and to dispatch a labelled release (for example `v0.6.0-beta.2`) so the checks run on real packages; read the nine places in the four packages with `misc/verify-version.sh` and the release with `misc/verify-release.sh` (SC-001, SC-002).
 
 ## Dependencies and order
 
