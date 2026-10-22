@@ -10,7 +10,9 @@
 
 **Press play on a tab. Play the notes as they fly towards your fretboard. Get judged on pitch *and* timing, in real time, with your own guitar.**
 
-<p align="center"><img src="docs/images/manual-en/arcade-run.png" width="760" alt="Arcade mode: rectangles come from the horizon towards the neck in a straight line, coloured like the strings, and are judged as they land"></p>
+<p align="center"><img src="docs/images/arcade-flames.png" width="760" alt="Arcade mode with the flames of a streak of 12 notes on time, a hammer-on/pull-off and a bend"></p>
+
+<p align="center">*Image drawn by the Arcade renderer of the application from a reference scene (not a screenshot of a window): a streak of 12 notes on time, the flames rising on both sides, a hammer-on/pull-off and a bend.*</p>
 
 TuxGuitarAdvanced is a free, open source tablature editor that **listens to your guitar** (a microphone or an audio interface is all you need). Open any score (Guitar Pro, MIDI, TuxGuitar...), pick a track, and play along with the rest of the band. No subscription, no catalogue, no account: **your songs, your guitar, your machine**.
 
@@ -114,13 +116,11 @@ The default build runs **479 automatic tests**; the benchmark on recordings is a
 
 ## Arcade at a glance
 
-The notes come towards you on a neck, a measure ahead; the **flames** grow with your streak of notes played on time, and a chord arrives as a frame with its name.
-
-![Arcade: a streak of 12 notes on time, the flames rising on both sides, a hammer-on/pull-off and a bend drawn as arrows](docs/images/arcade-flames.png)
+The notes come towards you on a neck, a measure ahead; a chord arrives as a frame with its name, and the **flames** of the picture at the top of this page grow with your streak of notes on time.
 
 ![Arcade: a chord progression coming towards the player, each chord a frame with its name (C, G7, Dm, E, Am)](docs/images/arcade-chords.png)
 
-*These two images are drawn by the application's own Arcade renderer from reference scenes (the same drawing code as the game, on a test painter): they are not screenshots of a running window.*
+*Drawn by the application's own Arcade renderer from a reference scene, not a screenshot of a running window.*
 
 ## Download and installation
 

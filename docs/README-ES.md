@@ -10,7 +10,9 @@
 
 **Abre una tablatura. Toca las notas que vuelan hacia tu mástil. Te juzgan por la altura *y* el ritmo, en tiempo real, con tu guitarra de verdad.**
 
-<p align="center"><img src="images/manual-en/arcade-run.png" width="760" alt="Modo Arcade: las notas vienen del horizonte hacia el mástil, del color de las cuerdas, y se juzgan al llegar"></p>
+<p align="center"><img src="images/arcade-flames.png" width="760" alt="Modo Arcade con las llamas de una racha de 12 notas a tiempo, un hammer-on/pull-off y un bend"></p>
+
+<p align="center">*Imagen dibujada por el motor de render de Arcade de la aplicación a partir de una escena de referencia (no es una captura de una ventana): una racha de 12 notas a tiempo, las llamas a ambos lados, un hammer-on/pull-off y un bend.*</p>
 
 TuxGuitarAdvanced es un editor de tablaturas libre y de código abierto que **escucha tu guitarra** (basta un micrófono o una interfaz de audio). Abre cualquier partitura (Guitar Pro, MIDI, TuxGuitar...), elige una pista y toca con el resto de la banda. Sin suscripción, sin catálogo, sin cuenta: **tus canciones, tu guitarra, tu máquina**.
 
