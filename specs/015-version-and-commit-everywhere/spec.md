@@ -117,6 +117,7 @@ A build made on a developer's machine, outside a release, shows a **development 
 - **FR-010**: The texts of the new fields MUST exist in the three shipped languages (English, French, Spanish) and be described in the documentation.
 - **FR-012**: The **application version variable** that the title layout and any other text already use (`${appversion}`) MUST give the **release version** (or the development label), never the hard-coded upstream number, so that everything that shows "the application version" shows the right one.
 - **FR-013**: The **About window** MUST offer a button that copies to the clipboard one line stating the application name, the version and the **full** commit (with the development label and the **modified** mark when they apply), so that it can be pasted into a bug report; its text exists in the three shipped languages (FR-010).
+- **FR-014**: The **command-line version output** (`--version`) MUST print the same name, version and short commit as About.
 - **FR-011**: A tag that is not a version (not of the form `vMAJOR.MINOR.PATCH` with an optional label of letters, digits, dots and hyphens, whatever the label) MUST be refused before anything is built; a tag with a label is published as a pre-release and a tag without one as a final release.
 
 ### Key Entities
@@ -149,3 +150,10 @@ A build made on a developer's machine, outside a release, shows a **development 
 - **Releases already published are not changed** (their tags are immutable); only releases built after this feature carry the new identity. The release notes of an older release may mention it.
 - The **owner's trial** is the final check: About on his Mac for a real release.
 - Out of scope: an update-checking feature, a changelog window, the version of the plugins or of the file format, the Android application, the installers that are not part of the release workflow.
+- **Decisions taken while preparing the tasks (2026-10-22, from the checklist `release-consistency.md`; to be confirmed by the owner)**:
+  - "Identical" means the same version **in the notation the place accepts**; the expected value of each place is derived from the one release version by the table of `contracts/verify-version.md` (macOS short version `X.Y.Z`, bundle version and Windows file version `X.Y.Z.0`, Debian `X.Y.Z~label` with `-` written `.`); the full text and the full commit are always also carried by a text field or by the build-info file.
+  - A check that fails leaves the release a **draft** (never published, nothing deleted); running the release again for the same tag replaces the attached packages.
+  - On macOS the metadata is stamped **before** the launcher is signed; the check runs on the signed, zipped package.
+  - A stored title layout equal to the old default (`${appname} - ${filename}`) counts as "not customised" and shows the new default; any other stored layout is kept.
+  - A release build is never "modified" (untracked and ignored files are not counted); only development builds can be.
+  - Out of scope: Android, the JavaFX/Qt/FreeBSD/installer build variants, and releases already published (they are not re-stamped).
