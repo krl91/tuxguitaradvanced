@@ -2,6 +2,7 @@ package app.tuxguitar.app.view.main;
 
 import app.tuxguitar.app.action.TGActionProcessorListener;
 import app.tuxguitar.app.action.impl.system.TGDisposeAction;
+import app.tuxguitar.app.system.TitleLayoutDefault;
 import app.tuxguitar.app.system.config.TGConfigKeys;
 import app.tuxguitar.app.system.config.TGConfigManager;
 import app.tuxguitar.app.system.icons.TGSkinEvent;
@@ -171,7 +172,7 @@ public class TGWindow implements TGEventListener {
 
 	public void loadTitleInCurrentThread() {
 		if(!this.isDisposed()) {
-			String titleLayout = TGConfigManager.getInstance(this.context).getStringValue(TGConfigKeys.WINDOW_TITLE);
+			String titleLayout = TitleLayoutDefault.resolve(TGConfigManager.getInstance(this.context).getStringValue(TGConfigKeys.WINDOW_TITLE));
 			String title = TGExpressionResolver.getInstance(this.context).resolve(titleLayout);
 
 			this.window.setText(title != null ? title : TGApplication.NAME);

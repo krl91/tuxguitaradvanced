@@ -17,6 +17,9 @@
 		<project.rootPath>${project.parent.relativePath}</project.rootPath>
 		<project.finalName>tuxguitar-${project.version}-macosx-swt-cocoa.app</project.finalName>
 		<org.eclipse.swt.artifactId>org.eclipse.swt.cocoa.macosx</org.eclipse.swt.artifactId>
+		<!-- spec 015: the release identity, given by the Release workflow (-Drelease.version=0.6.0-beta.1 -Drelease.commit=<40 hex>); empty = a development build -->
+		<release.version></release.version>
+		<release.commit></release.commit>
 		<macos.microphoneUsageDescription>TuxGuitarAdvanced uses the microphone to detect notes for the tuner and interactive practice.</macos.microphoneUsageDescription>
 	</properties>
 
@@ -451,6 +454,15 @@
 									<arg value="-c" />
 									<arg value="Set :CFBundleGetInfoString TuxGuitarAdvanced ${project.version}" />
 									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
+								</exec>
+								<!-- spec 015: the build identity the application reads (release version and commit, or the development identity from git) -->
+								<exec executable="/bin/bash" failonerror="true">
+									<arg value="-c" />
+									<arg value="if [ -n &quot;$2&quot; ]; then exec &quot;$0&quot; &quot;$1&quot; --release &quot;$2&quot; &quot;$3&quot;; else exec &quot;$0&quot; &quot;$1&quot; --dev; fi" />
+									<arg value="${project.basedir}/../../../misc/stamp-build-info.sh" />
+									<arg value="${project.build.directory}/${project.finalName}/Contents/MacOS/share" />
+									<arg value="${release.version}" />
+									<arg value="${release.commit}" />
 								</exec>
 								<!-- exactly one tuner: legacy and evolved tuners share module id tuxguitar-tuner (research R19) -->
 								<resourcecount property="tuner.jar.count">

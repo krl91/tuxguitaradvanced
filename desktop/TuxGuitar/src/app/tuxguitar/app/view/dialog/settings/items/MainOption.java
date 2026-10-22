@@ -3,6 +3,7 @@ package app.tuxguitar.app.view.dialog.settings.items;
 import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.system.config.TGConfigKeys;
 import app.tuxguitar.app.system.variables.TGVarAppName;
+import app.tuxguitar.app.system.TitleLayoutDefault;
 import app.tuxguitar.app.system.variables.TGVarAppVersion;
 import app.tuxguitar.app.system.variables.TGVarFileName;
 import app.tuxguitar.app.system.variables.TGVarFilePath;
@@ -105,7 +106,7 @@ public class MainOption extends TGSettingsOption {
 	protected void loadConfig(){
 		new Thread(new Runnable() {
 			public void run() {
-				final String windowTitle = getConfig().getStringValue(TGConfigKeys.WINDOW_TITLE);
+				final String windowTitle = TitleLayoutDefault.resolve(getConfig().getStringValue(TGConfigKeys.WINDOW_TITLE));
 				final boolean showSplash = getConfig().getBooleanValue(TGConfigKeys.SHOW_SPLASH);
 				final boolean autoSizeTable = getConfig().getBooleanValue(TGConfigKeys.TABLE_AUTO_SIZE);
 				final boolean playWhenMoving = getConfig().getBooleanValue(TGConfigKeys.PLAY_WHEN_MOVING);

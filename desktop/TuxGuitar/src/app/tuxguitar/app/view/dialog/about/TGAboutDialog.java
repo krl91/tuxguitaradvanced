@@ -1,12 +1,15 @@
 package app.tuxguitar.app.view.dialog.about;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.system.BuildIdentity;
+import app.tuxguitar.app.system.TGBuildInfo;
 import app.tuxguitar.app.system.config.TGConfigKeys;
 import app.tuxguitar.app.system.config.TGConfigManager;
 import app.tuxguitar.app.ui.TGApplication;
 import app.tuxguitar.app.view.controller.TGViewContext;
 import app.tuxguitar.app.view.util.TGDialogUtil;
 import app.tuxguitar.ui.UIFactory;
+import app.tuxguitar.ui.UITextClipboard;
 import app.tuxguitar.ui.event.UIDisposeEvent;
 import app.tuxguitar.ui.event.UIDisposeListener;
 import app.tuxguitar.ui.event.UIPaintEvent;
@@ -26,11 +29,9 @@ import app.tuxguitar.ui.widget.UIReadOnlyTextBox;
 import app.tuxguitar.ui.widget.UITabFolder;
 import app.tuxguitar.ui.widget.UITabItem;
 import app.tuxguitar.ui.widget.UIWindow;
-import app.tuxguitar.util.TGVersion;
 
 public class TGAboutDialog {
 
-	private static final String RELEASE_NAME = (TGApplication.NAME + " " + TGVersion.CURRENT.getVersion());
 	private static final String PROPERTY_PREFIX = ("help.about.");
 
 	private static final float IMAGE_WIDTH = 100;
@@ -62,6 +63,7 @@ public class TGAboutDialog {
 		header.setLayout(headerLayout);
 		dialogLayout.set(header, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true);
 
+		final BuildIdentity identity = TGBuildInfo.current();
 		this.image = TuxGuitar.getInstance().getIconManager().getAboutDescription();
 
 		this.imageComposite = uiFactory.createCanvas(header, false);
@@ -81,7 +83,7 @@ public class TGAboutDialog {
 		UILabel title = uiFactory.createLabel(header);
 		title.setFont(titleFont);
 		title.setFgColor(titleColor);
-		title.setText(RELEASE_NAME);
+		title.setText(identity.title());
 		title.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
 				titleFont.dispose();
@@ -89,6 +91,10 @@ public class TGAboutDialog {
 			}
 		});
 		headerLayout.set(title, 1, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+
+		UILabel commit = uiFactory.createLabel(header);
+		commit.setText(commitLine(identity));
+		headerLayout.set(commit, 2, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_TOP, true, false);
 
 		//-------------------TABS-----------------------
 		UITableLayout tabsLayout = new UITableLayout();
@@ -101,7 +107,7 @@ public class TGAboutDialog {
 
 		TGAboutContentReader docReader = new TGAboutContentReader(context.getContext());
 
-		createTabItem(uiFactory, tabFolder, TGAboutContentReader.DESCRIPTION, docReader.read(TGAboutContentReader.DESCRIPTION).toString());
+		createTabItem(uiFactory, tabFolder, TGAboutContentReader.DESCRIPTION, buildLines(identity) + docReader.read(TGAboutContentReader.DESCRIPTION).toString());
 		createTabItem(uiFactory, tabFolder, TGAboutContentReader.AUTHORS, docReader.read(TGAboutContentReader.AUTHORS).toString());
 		createTabItem(uiFactory, tabFolder, TGAboutContentReader.LICENSE, docReader.read(TGAboutContentReader.LICENSE).toString());
 
@@ -125,6 +131,20 @@ public class TGAboutDialog {
 		buttons.setLayout(buttonsLayout);
 		dialogLayout.set(buttons, 3, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_FILL, true, true);
 
+		final UILabel copyStatus = uiFactory.createLabel(buttons);
+		buttonsLayout.set(copyStatus, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, true);
+
+		UIButton buttonCopy = uiFactory.createButton(buttons);
+		buttonCopy.setText(TuxGuitar.getProperty("help.about.copy-version"));
+		buttonCopy.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				boolean copied = (uiFactory instanceof UITextClipboard) && ((UITextClipboard) uiFactory).copyText(identity.copyLine());
+				copyStatus.setText(TuxGuitar.getProperty(copied ? "help.about.copy-version.done" : "help.about.copy-version.error"));
+				dialog.layout();
+			}
+		});
+		buttonsLayout.set(buttonCopy, 1, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, false, true, 1, 1, null, 25f, null);
+
 		UIButton buttonClose = uiFactory.createButton(buttons);
 		buttonClose.setDefaultButton();
 		buttonClose.setText(TuxGuitar.getProperty("close"));
@@ -133,11 +153,28 @@ public class TGAboutDialog {
 				dialog.dispose();
 			}
 		});
-		buttonsLayout.set(buttonClose, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 80f, 25f, null);
+		buttonsLayout.set(buttonClose, 1, 3, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 80f, 25f, null);
 
 		tabFolder.setSelectedIndex(0);
 
 		TGDialogUtil.openDialog(dialog,TGDialogUtil.OPEN_STYLE_CENTER | TGDialogUtil.OPEN_STYLE_PACK);
+	}
+
+	/** The short commit, and "modified" when the build was made from a changed working copy: the second line of the header. */
+	private String commitLine(BuildIdentity identity) {
+		String commit = BuildIdentity.UNKNOWN.equals(identity.getShortCommit()) ? TuxGuitar.getProperty("help.about.commit.unknown") : identity.getShortCommit();
+		String line = TuxGuitar.getProperty("help.about.commit", new String[] { commit });
+		return identity.isModified() ? (line + " (" + TuxGuitar.getProperty("help.about.commit.modified") + ")") : line;
+	}
+
+	/** The full commit, first lines of the description tab. */
+	private String buildLines(BuildIdentity identity) {
+		String commit = BuildIdentity.UNKNOWN.equals(identity.getCommit()) ? TuxGuitar.getProperty("help.about.commit.unknown") : identity.getCommit();
+		String line = TuxGuitar.getProperty("help.about.commit.full", new String[] { commit });
+		if (identity.isModified()) {
+			line += " (" + TuxGuitar.getProperty("help.about.commit.modified") + ")";
+		}
+		return identity.title() + "\n" + line + "\n\n";
 	}
 
 	private void createTabItem(UIFactory uiFactory, UITabFolder tabFolder, String itemName, String itemText){

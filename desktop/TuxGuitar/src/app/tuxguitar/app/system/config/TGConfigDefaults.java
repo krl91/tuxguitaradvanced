@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.system.TitleLayoutDefault;
 import app.tuxguitar.app.view.component.tab.edit.EditorKit;
 import app.tuxguitar.app.view.dialog.fretboard.TGFretBoardConfig;
 import app.tuxguitar.graphics.control.TGLayout;
@@ -34,7 +35,7 @@ public class TGConfigDefaults{
 	public static void loadProperties(TGProperties properties){
 		loadProperty(properties, TGConfigKeys.SKIN, DEFAULT_SKIN);
 		loadProperty(properties, TGConfigKeys.SKIN_DARK_AUTO, true);
-		loadProperty(properties, TGConfigKeys.WINDOW_TITLE, "${appname} - ${filename}");
+		loadProperty(properties, TGConfigKeys.WINDOW_TITLE, TitleLayoutDefault.DEFAULT);
 		loadProperty(properties, TGConfigKeys.SHOW_SPLASH, true);
 		loadProperty(properties, TGConfigKeys.MAXIMIZED, false);
 		loadProperty(properties, TGConfigKeys.WIDTH, 1200);

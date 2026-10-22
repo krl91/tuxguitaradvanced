@@ -3,9 +3,13 @@ package app.tuxguitar.ui.swt;
 import java.io.InputStream;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import app.tuxguitar.ui.UIFactory;
+import app.tuxguitar.ui.UITextClipboard;
 import app.tuxguitar.ui.chooser.UIColorChooser;
 import app.tuxguitar.ui.chooser.UIDirectoryChooser;
 import app.tuxguitar.ui.chooser.UIFileChooser;
@@ -100,7 +104,7 @@ import app.tuxguitar.ui.widget.UIToggleButton;
 import app.tuxguitar.ui.widget.UIWindow;
 import app.tuxguitar.ui.widget.UIWrapLabel;
 
-public class SWTFactory implements UIFactory {
+public class SWTFactory implements UIFactory, UITextClipboard {
 
 	private Display display;
 	private UIResourceFactory resourceFactory;
@@ -375,5 +379,20 @@ public class SWTFactory implements UIFactory {
 	@SuppressWarnings("unchecked")
 	public UIBrowser createBrowser(UIWindow parent) {
 		return new SWTBrowser((SWTContainer<Composite>) parent);
+	}
+
+	public boolean copyText(String text) {
+		if (text == null || this.display == null || this.display.isDisposed()) {
+			return false;
+		}
+		Clipboard clipboard = new Clipboard(this.display);
+		try {
+			clipboard.setContents(new Object[] { text }, new Transfer[] { TextTransfer.getInstance() });
+			return true;
+		} catch (Throwable throwable) {
+			return false;
+		} finally {
+			clipboard.dispose();
+		}
 	}
 }

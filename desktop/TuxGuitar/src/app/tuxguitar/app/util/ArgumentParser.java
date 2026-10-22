@@ -3,8 +3,8 @@ package app.tuxguitar.app.util;
 import java.io.File;
 import java.net.URL;
 
+import app.tuxguitar.app.system.TGBuildInfo;
 import app.tuxguitar.app.ui.TGApplication;
-import app.tuxguitar.util.TGVersion;
 
 public class ArgumentParser {
 
@@ -59,7 +59,7 @@ public class ArgumentParser {
 		for(int i = 0;i < this.arguments.length;i++){
 			for(int j = 0;j < OPTION_VERSION.length;j++){
 				if(this.arguments[i].equals(OPTION_VERSION[j])){
-					print(TGApplication.NAME + " - " + TGVersion.CURRENT.getVersion());
+					print(TGBuildInfo.current().commandLine());
 
 					this.processAndExit = true;
 				}
