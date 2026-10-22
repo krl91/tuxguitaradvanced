@@ -16,6 +16,10 @@
 	<properties>
 		<project.rootPath>${project.parent.relativePath}</project.rootPath>
 		<project.packageName>tuxguitar-${project.version}-linux-swt</project.packageName>
+		<!-- spec 015: the release identity, given by the Release workflow (-Drelease.version=0.6.0-beta.1 -Drelease.debversion=0.6.0~beta.1 -Drelease.commit=<40 hex>); "dev" = a local build -->
+		<release.version>dev</release.version>
+		<release.debversion>0.0.0~dev</release.debversion>
+		<release.commit>unknown</release.commit>
 	</properties>
 
 	<modules>
@@ -42,6 +46,10 @@
 								<copy todir="${project.build.directory}/${project.packageName}" overwrite="true">
 									<fileset dir="./src/resources" />
 								</copy>
+								<!-- spec 015: the Debian version (X.Y.Z~label) and the full text and commit in the description -->
+								<replace file="${project.build.directory}/${project.packageName}/DEBIAN/control" token="@RELEASE_DEBVERSION@" value="${release.debversion}" />
+								<replace file="${project.build.directory}/${project.packageName}/DEBIAN/control" token="@RELEASE_VERSION@" value="${release.version}" />
+								<replace file="${project.build.directory}/${project.packageName}/DEBIAN/control" token="@RELEASE_COMMIT@" value="${release.commit}" />
 
 								<mkdir dir="${project.build.directory}/${project.packageName}/usr" />
 								<mkdir dir="${project.build.directory}/${project.packageName}/usr/bin" />

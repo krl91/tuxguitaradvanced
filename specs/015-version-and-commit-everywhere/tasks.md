@@ -55,11 +55,11 @@ description: "Tasks: the same version and commit everywhere (spec 015)"
 
 **Independent test**: build a package with `-Drelease.version=0.6.0-test -Drelease.numeric=0.6.0.0 -Drelease.commit=<sha>` and read it.
 
-- [ ] T026 [US2] macOS POM `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml`: PlistBuddy steps set `CFBundleShortVersionString` `X.Y.Z`, `CFBundleVersion` `X.Y.Z.0`, `CFBundleGetInfoString` `TuxGuitarAdvanced <version> (<short commit>)`, custom keys `TGBuildVersion` and `TGBuildCommit` (full), from the properties; defaults = dev values. Done before the launcher is signed.
-- [ ] T027 [US2] Windows POM `desktop/build-scripts/tuxguitar-windows-swt-x86_64/pom.xml`: launch4j `versionInfo` per T003 (fileVersion and productVersion `X.Y.Z.0`, text versions the full text, product name `TuxGuitarAdvanced`) + the stamp script call for `share/build-info.properties`.
-- [ ] T028 [US2] Linux POMs `desktop/build-scripts/tuxguitar-linux-swt/pom.xml` and `tuxguitar-linux-swt-deb/pom.xml`: the stamp script call; Debian `Version` from the property (`X.Y.Z~label`, `-` written `.`), full text and commit in the `Description` trailer of `src/resources/DEBIAN/control` (substituted by property).
-- [ ] T029 [US2] Build macOS with `-Drelease.version=0.6.0-test -Drelease.numeric=0.6.0.0 -Drelease.commit=<HEAD sha>` and read Info.plist, `build-info.properties`, About; report the values read. Windows and Linux are not built here; say so.
-- [ ] T030 Commit phase 5.
+- [x] T026 [US2] macOS POM `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml`: PlistBuddy steps set `CFBundleShortVersionString` `X.Y.Z`, `CFBundleVersion` `X.Y.Z.0`, `CFBundleGetInfoString` `TuxGuitarAdvanced <version> (<short commit>)`, custom keys `TGBuildVersion` and `TGBuildCommit` (full), from the properties; defaults = dev values. Done before the launcher is signed.
+- [x] T027 [US2] (written, NOT run: needs the Windows SWT artifact and Mingw, CI only) Windows POM `desktop/build-scripts/tuxguitar-windows-swt-x86_64/pom.xml`: launch4j `versionInfo` per T003 (fileVersion and productVersion `X.Y.Z.0`, text versions the full text, product name `TuxGuitarAdvanced`) + the stamp script call for `share/build-info.properties`.
+- [x] T028 [US2] (written, NOT run: needs the Linux SWT artifact and dpkg-deb, CI only) Linux POMs `desktop/build-scripts/tuxguitar-linux-swt/pom.xml` and `tuxguitar-linux-swt-deb/pom.xml`: the stamp script call; Debian `Version` from the property (`X.Y.Z~label`, `-` written `.`), full text and commit in the `Description` trailer of `src/resources/DEBIAN/control` (substituted by property).
+- [x] T029 (macOS: 9 places read OK in the .app and 10 in a zip named like a release, built with 0.6.0-test; the Windows and Linux builds cannot run on this machine: no SWT artifact for them in the local repository; their POM changes are read, not run) [US2] Build macOS with `-Drelease.version=0.6.0-test -Drelease.numeric=0.6.0.0 -Drelease.commit=<HEAD sha>` and read Info.plist, `build-info.properties`, About; report the values read. Windows and Linux are not built here; say so.
+- [x] T030 Commit phase 5.
 
 ## Phase 6: User Story 3 — a release that does not match is not published (P2)
 

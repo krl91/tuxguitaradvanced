@@ -17,6 +17,10 @@
 		<project.rootPath>${project.parent.relativePath}</project.rootPath>
 		<project.finalName>tuxguitar-${project.version}-windows-swt-x86_64</project.finalName>
 		<org.eclipse.swt.artifactId>org.eclipse.swt.win32.win32</org.eclipse.swt.artifactId>
+		<!-- spec 015: the release identity, given by the Release workflow (-Drelease.version=0.6.0-beta.1 -Drelease.numeric=0.6.0.0 -Drelease.commit=<40 hex>); "dev" = a local build -->
+		<release.version>dev</release.version>
+		<release.numeric>0.0.0.0</release.numeric>
+		<release.commit></release.commit>
 	</properties>
 
 	<modules>
@@ -389,6 +393,15 @@
 								<copy todir="${project.build.directory}/${project.finalName}/dist" overwrite="true">
 									<fileset dir="./dist/" />
 								</copy>
+								<!-- spec 015: the build identity the application reads (release version and commit, or the development identity from git) -->
+								<exec executable="/bin/bash" failonerror="true">
+									<arg value="-c" />
+									<arg value="if [ &quot;$2&quot; != dev ]; then exec &quot;$0&quot; &quot;$1&quot; --release &quot;$2&quot; &quot;$3&quot;; else exec &quot;$0&quot; &quot;$1&quot; --dev; fi" />
+									<arg value="${project.basedir}/../../../misc/stamp-build-info.sh" />
+									<arg value="${project.build.directory}/${project.finalName}/share" />
+									<arg value="${release.version}" />
+									<arg value="${release.commit}" />
+								</exec>
 							</target>
 						</configuration>
 						<goals>
@@ -416,6 +429,18 @@
 							<icon>${project.build.directory}/${project.finalName}/dist/tuxguitar.ico</icon>
 							<errTitle>encc</errTitle>
 							<chdir>.</chdir>
+							<!-- spec 015: the version resource of the exe: numbers X.Y.Z.0 and the full text of the release version -->
+							<versionInfo>
+								<fileVersion>${release.numeric}</fileVersion>
+								<txtFileVersion>${release.version}</txtFileVersion>
+								<fileDescription>TuxGuitarAdvanced</fileDescription>
+								<copyright>TuxGuitarAdvanced</copyright>
+								<productVersion>${release.numeric}</productVersion>
+								<txtProductVersion>${release.version}</txtProductVersion>
+								<productName>TuxGuitarAdvanced</productName>
+								<internalName>tuxguitar</internalName>
+								<originalFilename>tuxguitar.exe</originalFilename>
+							</versionInfo>
 							<classPath>
 								<mainClass>app.tuxguitar.app.TGMainSingleton</mainClass>
 								<addDependencies>false</addDependencies>

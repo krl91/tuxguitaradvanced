@@ -17,6 +17,9 @@
 		<project.rootPath>${project.parent.relativePath}</project.rootPath>
 		<project.finalName>tuxguitar-${project.version}-linux-swt</project.finalName>
 		<org.eclipse.swt.artifactId>org.eclipse.swt.gtk.linux</org.eclipse.swt.artifactId>
+		<!-- spec 015: the release identity, given by the Release workflow (-Drelease.version=0.6.0-beta.1 -Drelease.commit=<40 hex>); "dev" = a local build -->
+		<release.version>dev</release.version>
+		<release.commit></release.commit>
 	</properties>
 
 	<modules>
@@ -388,6 +391,15 @@
 								</copy>
 
 								<chmod file="${project.build.directory}/${project.finalName}/tuxguitar.sh" perm="755" />
+								<!-- spec 015: the build identity the application reads (release version and commit, or the development identity from git) -->
+								<exec executable="/bin/bash" failonerror="true">
+									<arg value="-c" />
+									<arg value="if [ &quot;$2&quot; != dev ]; then exec &quot;$0&quot; &quot;$1&quot; --release &quot;$2&quot; &quot;$3&quot;; else exec &quot;$0&quot; &quot;$1&quot; --dev; fi" />
+									<arg value="${project.basedir}/../../../misc/stamp-build-info.sh" />
+									<arg value="${project.build.directory}/${project.finalName}/share" />
+									<arg value="${release.version}" />
+									<arg value="${release.commit}" />
+								</exec>
 							</target>
 						</configuration>
 						<goals>
