@@ -74,9 +74,9 @@ description: "Tasks: the same version and commit everywhere (spec 015)"
 ## Phase 7: Polish, documentation, report
 
 - [x] T038 [P] Update the documentation: how a version is given and where it shows (`README.md` or `docs/`, `INSTALL.md` if it names versions), the title variable, the dev label, consistent with `spec.md`.
-- [ ] T039 [P] Run the whole macOS build with tests (`mvn -e clean verify -P native-modules`) and compare with `baseline.txt`; report exactly what passed and what did not.
-- [ ] T040 Write `specs/015-version-and-commit-everywhere/final-report.md`: what ran, what only CI can prove (Windows, Linux, the workflow), what was seen by hand, the open points; note that 23 translations of the `appversion` description still say "TuxGuitar".
-- [ ] T041 Commit the phase.
+- [x] T039 [P] (BUILD SUCCESS, 1172 tests, 0 failures, 10 skipped as in the baseline) Run the whole macOS build with tests (`mvn -e clean verify -P native-modules`) and compare with `baseline.txt`; report exactly what passed and what did not.
+- [x] T040 Write `specs/015-version-and-commit-everywhere/final-report.md`: what ran, what only CI can prove (Windows, Linux, the workflow), what was seen by hand, the open points; note that 23 translations of the `appversion` description still say "TuxGuitar".
+- [x] T041 Commit the phase.
 - [ ] T042 **Owner**: give the go to push and to dispatch a labelled release (for example `v0.6.0-beta.2`) so the checks run on real packages; read the nine places in the four packages with `misc/verify-version.sh` and the release with `misc/verify-release.sh` (SC-001, SC-002).
 
 ## Dependencies and order
