@@ -40,9 +40,10 @@ No deviation to record. Post-design re-check: unchanged.
 
 ## Phases (each buildable, tests first)
 
+0. **Gate and check of the unknowns** — owner confirms the decisions of the spec Assumptions; launch4j 2.1.2 version-info fields are confirmed from its documentation/jar before the Windows work is planned further.
 1. **Identity in the app (macOS, local)** — `TGBuildInfo` (read `share/build-info.properties`; formats: title `TuxGuitarAdvanced <version>`, copy line, short commit 7); `TGAboutDialog` title + commit lines + Copy button; `TGVarAppVersion` = `TGBuildInfo.version()`; default title layout; strings ×3 languages; `misc/stamp-build-info.sh` and its call from the macOS POM (dev label, commit from git, `modified`). Covers US1 (app side), US4, FR-002, 007, 012, 013.
 2. **Package metadata + names** — the three SWT POMs take `-Drelease.version/-Drelease.numeric/-Drelease.commit` (defaults = dev values): Info.plist (`CFBundleShortVersionString` text, `CFBundleVersion` `X.Y.Z.0`, `CFBundleGetInfoString`), launch4j `versionInfo` (`fileVersion`/`txtFileVersion`/`productVersion`), Debian `Version` (`~` for the label), the build-info call in the Linux and Windows POMs. Covers US2 packages, FR-003, FR-009.
-3. **Workflow + pre-publish check** — tag validation job first (FR-011), derive identity once and pass it to the three builds, release notes footer with the commit, `misc/verify-version.sh <package> <platform> <version> <commit>` run on each package before upload, any label ⇒ pre-release, self-test of the verifier. Covers US3, FR-001, 004, 005, 006.
+3. **Workflow + pre-publish check** — tag validation job first (FR-011), derive identity once and pass it to the three builds, release notes footer with the commit, `misc/verify-version.sh <package> <platform> <version> <commit>` run on each package before upload, `misc/verify-release.sh <tag> <version> <commit>` on the release (tag, title, commit, notes, assets) before publication, a published tag refused up front, any label ⇒ pre-release, self-test of the verifier. Covers US3, FR-001, 004, 005, 006.
 4. **Docs + a real release** — README/INSTALL/release docs, `docs/release-notes`; the check run on the packages of an actual labelled release (needs the owner's go to push and dispatch).
 
 ## Project Structure
@@ -55,7 +56,7 @@ desktop/TuxGuitar/src/app/tuxguitar/app/system/variables/TGVarAppVersion.java  (
 desktop/TuxGuitar/src/app/tuxguitar/app/system/config/TGConfigDefaults.java    (default title layout)
 common/resources/lang/messages{,_fr,_es}.properties
 desktop/build-scripts/{tuxguitar-macosx-swt-cocoa,tuxguitar-windows-swt-x86_64,tuxguitar-linux-swt,tuxguitar-linux-swt-deb}/pom.xml
-misc/stamp-build-info.sh, misc/verify-version.sh, misc/test-verify-version.sh   (new)
+misc/stamp-build-info.sh, misc/verify-version.sh, misc/verify-release.sh and their self-tests   (new)
 .github/workflows/release.yml
 ```
 

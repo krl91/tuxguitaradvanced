@@ -15,3 +15,14 @@ Derived: `shortCommit` = first 7 characters (or `unknown`); `title()` = `TuxGuit
 Missing or unreadable file ⇒ `dev`, commit `unknown`, no error (FR-007 case 3). File format: [contracts/build-info.md](contracts/build-info.md).
 
 **Place** (spec): the 9 surfaces; each is checked by `verify-version.sh` against the identity (contract [verify-version.md](contracts/verify-version.md)).
+
+## Forms of the development build (one table)
+
+| Place | Form |
+|---|---|
+| `build-info.properties` | `version=dev`, `commit=<40 hex or unknown>`, `modified=true|false` |
+| About title and main window title | `TuxGuitarAdvanced dev` (no commit in the title, clarification 5) |
+| About details | short commit, full commit, `modified` when true; `unknown` for a build without git |
+| Copy line | `TuxGuitarAdvanced dev (<full commit or unknown>[, modified])` |
+| `--version` | `TuxGuitarAdvanced dev (<short commit or unknown>)` |
+| `${appversion}` | `dev` |
