@@ -1,6 +1,6 @@
 # Data model: build identity
 
-**BuildIdentity** (value, immutable; `common/TuxGuitar-lib`, `app.tuxguitar.util`)
+**BuildIdentity** (value, immutable; `desktop/TuxGuitar`, `app.tuxguitar.app.system`)
 
 | Field | Rule |
 |---|---|

@@ -156,4 +156,5 @@ A build made on a developer's machine, outside a release, shows a **development 
   - On macOS the metadata is stamped **before** the launcher is signed; the check runs on the signed, zipped package.
   - A stored title layout equal to the old default (`${appname} - ${filename}`) counts as "not customised" and shows the new default; any other stored layout is kept.
   - A release build is never "modified" (untracked and ignored files are not counted); only development builds can be.
+  - The tag of a release is checked in two moments: the draft's target commit before publication, the git tag itself right after; a tag found wrong after publication puts the release back to draft and fails the run.
   - Out of scope: Android, the JavaFX/Qt/FreeBSD/installer build variants, and releases already published (they are not re-stamped).

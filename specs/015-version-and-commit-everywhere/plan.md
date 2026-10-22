@@ -14,7 +14,7 @@ The release version is given **once**, as the tag of the Release workflow (`v0.6
 **Testing**: JUnit 5 for the parsing/formatting class and the title; shell self-test of the verifier (like `misc/test-verify-branding.sh`); native SWT test for About if a test fits the existing pattern; final check on the real packages of a release.
 **Target Platform**: macOS arm64 (validated by hand), Windows x86_64 and Linux amd64/tar.gz (CI only, stated as such).
 **Project Type**: desktop app + release pipeline.
-**Constraints**: no change to `.tg` content; no new dependency; packages already complete (TarsosDSP) stay complete; the existing 8 workflow gates (branding verify) stay.
+**Constraints**: no change to `.tg` content; no new dependency; packages already complete (TarsosDSP) stay complete; the existing branding steps of the workflow (asset test, verifier self-test, verification of each package) stay.
 **Scale/Scope**: 4 packages × 9 places (spec SC-001).
 
 ## Constitution Check
@@ -22,12 +22,12 @@ The release version is given **once**, as the tag of the Release workflow (`v0.6
 | Principle | Verdict |
 |---|---|
 | I Preserve compatibility | OK. `TGVersion.CURRENT` and `TGSongWriterImpl` untouched (FR-008); `${appversion}` changes value only in the fork's text (title, version line), the user's own title layout is kept. Config `CONFIG_APP_VERSION` (`TGConfigManager:39`) and `KeyBindingWriter:85` keep `TGVersion.CURRENT` (file/config formats). |
-| II Extend before modifying core | **Justified core change**, minimal. Inspected limitation: `TGAboutDialog.RELEASE_NAME` (line 33) and `TGVarAppVersion.toString()` read the hard-coded `TGVersion.CURRENT` and there is no extension point for either; the default title layout is `TGConfigDefaults` WINDOW_TITLE. Changes: one new class `TGBuildInfo` (in `desktop/TuxGuitar`, package `app.tuxguitar.app.system`, no core model), 2-line edits in `TGAboutDialog` and `TGVarAppVersion`, one default-layout string, one button. `common/` is not touched (Android keeps its own `TGVarAppVersion`; out of scope). |
+| II Extend before modifying core | **Justified core change**, minimal. Inspected limitation: `TGAboutDialog.RELEASE_NAME` (line 33) and `TGVarAppVersion.toString()` read the hard-coded `TGVersion.CURRENT` and there is no extension point for either; the default title layout is `TGConfigDefaults` WINDOW_TITLE. Changes: three new classes in `desktop/TuxGuitar`, package `app.tuxguitar.app.system` (`BuildIdentity`, `TGBuildInfo`, `TitleLayoutDefault`; no song or core model class), short edits in `TGAboutDialog`, `TGVarAppVersion`, `TGWindow` and `ArgumentParser`, one default-layout string, one button. `common/` is not touched (Android keeps its own `TGVarAppVersion`; out of scope). The pure classes are tested from `desktop/TuxGuitar-practice/test/`, which depends on the `tuxguitar` module, so no limitation forces a change in `common/TuxGuitar-lib` (confirmed by task T004 before any code). |
 | III Evidence-based | Sources cited in research.md R1–R8. |
 | IV Spec-driven | Spec + 5 clarifications done; this is the plan. |
 | V Incremental | Phases in plan below, each leaves the app buildable. |
 | VI Real-time audio | Not concerned (no audio path). |
-| VII Separable logic | `TGBuildInfo` parsing/formatting is a pure class tested without UI. |
+| VII Separable logic | `BuildIdentity` (parsing/formatting) and `TitleLayoutDefault` are pure classes tested without UI. |
 | VIII Deterministic | N/A. |
 | IX Cross-platform | Stated per phase: macOS validated here; Windows/Linux by CI only. |
 | X No unrelated refactoring | Only the files listed; no reformatting. |
@@ -43,14 +43,14 @@ No deviation to record. Post-design re-check: unchanged.
 0. **Gate and check of the unknowns** — owner confirms the decisions of the spec Assumptions; launch4j 2.1.2 version-info fields are confirmed from its documentation/jar before the Windows work is planned further.
 1. **Identity in the app (macOS, local)** — `TGBuildInfo` (read `share/build-info.properties`; formats: title `TuxGuitarAdvanced <version>`, copy line, short commit 7); `TGAboutDialog` title + commit lines + Copy button; `TGVarAppVersion` = `TGBuildInfo.version()`; default title layout; strings ×3 languages; `misc/stamp-build-info.sh` and its call from the macOS POM (dev label, commit from git, `modified`). Covers US1 (app side), US4, FR-002, 007, 012, 013.
 2. **Package metadata + names** — the three SWT POMs take `-Drelease.version/-Drelease.numeric/-Drelease.commit` (defaults = dev values): Info.plist (`CFBundleShortVersionString` text, `CFBundleVersion` `X.Y.Z.0`, `CFBundleGetInfoString`), launch4j `versionInfo` (`fileVersion`/`txtFileVersion`/`productVersion`), Debian `Version` (`~` for the label), the build-info call in the Linux and Windows POMs. Covers US2 packages, FR-003, FR-009.
-3. **Workflow + pre-publish check** — tag validation job first (FR-011), derive identity once and pass it to the three builds, release notes footer with the commit, `misc/verify-version.sh <package> <platform> <version> <commit>` run on each package before upload, `misc/verify-release.sh <tag> <version> <commit>` on the release (tag, title, commit, notes, assets) before publication, a published tag refused up front, any label ⇒ pre-release, self-test of the verifier. Covers US3, FR-001, 004, 005, 006.
+3. **Workflow + pre-publish check** — tag validation job first (FR-011), derive identity once and pass it to the three builds, release notes footer with the commit, `misc/verify-version.sh <package> <platform> <version> <commit>` run on each package before upload, `misc/verify-release.sh <tag> <version> <commit>` on the draft before publication (title, target commit, notes, assets) and again right after (the tag points to the commit), a published tag refused up front, any label ⇒ pre-release, self-test of the verifier. Covers US3, FR-001, 004, 005, 006.
 4. **Docs + a real release** — README/INSTALL/release docs, `docs/release-notes`; the check run on the packages of an actual labelled release (needs the owner's go to push and dispatch).
 
 ## Project Structure
 
 ```text
 specs/015-version-and-commit-everywhere/  spec, plan, research, data-model, quickstart, contracts/build-info.md, contracts/verify-version.md
-desktop/TuxGuitar/src/app/tuxguitar/app/system/TGBuildInfo.java   (new)
+desktop/TuxGuitar/src/app/tuxguitar/app/system/{BuildIdentity,TGBuildInfo,TitleLayoutDefault}.java   (new)
 desktop/TuxGuitar/src/app/tuxguitar/app/view/dialog/about/TGAboutDialog.java   (edit)
 desktop/TuxGuitar/src/app/tuxguitar/app/system/variables/TGVarAppVersion.java  (edit)
 desktop/TuxGuitar/src/app/tuxguitar/app/system/config/TGConfigDefaults.java    (default title layout)
@@ -60,4 +60,4 @@ misc/stamp-build-info.sh, misc/verify-version.sh, misc/verify-release.sh and the
 .github/workflows/release.yml
 ```
 
-Tests of `desktop/TuxGuitar` live where the module's tests are (to confirm in the first task; `desktop/TuxGuitar` has no `src/test` today, see research R9).
+`desktop/TuxGuitar` has no test directory; its new classes are tested from `desktop/TuxGuitar-practice/test/app/tuxguitar/app/system/` and `…/ui/` (research R9).
