@@ -126,6 +126,7 @@ To build from source, refer to [INSTALL.md](INSTALL.md). The practice modules ne
 ## Documentation
 
 * [Interactive Practice, user guide](docs/PRACTICE.md) - [Guide en français](docs/PRACTICE-FR.md) - [Guía en español](docs/PRACTICE-ES.md)
+* [Version and commit of a build: where to read them, how a release gets its version](docs/VERSIONING.md)
 * [Architecture: CESAM views and sequence diagrams](docs/architecture/README.md)
 * [INSTALL.md](INSTALL.md), [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
 

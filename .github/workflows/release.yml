@@ -2,8 +2,17 @@
 # the packages as a GitHub Release. Each platform is built only if the one before succeeded (a macOS minute
 # counts ten times and a Windows minute twice on a private repository: a failure stops the chain early).
 #
-# Trigger: only by hand (Actions > Release > Run workflow), giving the tag such as v1.0.0:
+# Trigger: only by hand (Actions > Release > Run workflow), giving the tag such as v1.0.0 or v0.6.0-beta.2:
 # a push or a tag push starts nothing.
+#
+# The version and the commit (spec 015): the tag is the ONE place where the release version is given (vMAJOR.MINOR.PATCH, any label).
+#  - the first job derives from it, with the commit built (GITHUB_SHA), every notation (misc/release-identity.sh), refuses a tag that is not a version, a tag
+#    whose release is already published and a git tag on another commit, and runs the self-tests of the scripts;
+#  - each build stamps the identity in its package (build-info.properties, Info.plist, exe version resource, Debian version) and misc/verify-version.sh
+#    reads every place of the package before it is attached to the draft release;
+#  - the last job checks the draft (title, target commit, notes, the four files: misc/verify-release.sh --draft) before publishing it, publishes it as a
+#    pre-release when the tag has a label, then checks that the git tag points to the commit (--published); if not, the release goes back to draft.
+# A label of the tag makes a pre-release, whatever the label. A failed check leaves a draft: running the workflow again for the same tag replaces it.
 #
 # Notes:
 #  - All three packages include the Interactive Practice modules (audio-engine, tuner-next,
@@ -35,13 +44,46 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  TG_VERSION: '9.99-SNAPSHOT'
+  TG_VERSION: '9.99-SNAPSHOT'   # the Maven version of the modules (names inside target/), NOT the release version: see the validate job
   RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
-  # The packages are attached to a draft release straight from each build job: no intermediate
-  # artifact storage (its quota was hit), the draft is published once all builds succeeded.
+  # spec 015: the release identity, derived once; nothing is built if the tag is not a version or is already taken
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
+      numeric: ${{ steps.identity.outputs.numeric }}
+      debversion: ${{ steps.identity.outputs.debversion }}
+      commit: ${{ steps.identity.outputs.commit }}
+      prerelease: ${{ steps.identity.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Self-tests of the version scripts
+        run: |
+          misc/test-release-identity.sh
+          misc/test-stamp-build-info.sh
+          misc/test-verify-version.sh
+          misc/test-verify-release.sh
+      - name: Derive the release identity from the tag
+        id: identity
+        run: misc/release-identity.sh "$RELEASE_TAG" "$GITHUB_SHA" | tee -a "$GITHUB_OUTPUT"
+      - name: Refuse a tag that is already published or on another commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # a published release is never replaced and its tag is never moved
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq '.isDraft' 2>/dev/null | grep -qx false; then
+            echo "::error::the release $RELEASE_TAG is already published: choose another version"; exit 1
+          fi
+          # a git tag of that name (pushed by hand) must be on the commit built
+          if TAGSHA="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq .object.sha 2>/dev/null)"; then
+            echo "git tag $RELEASE_TAG exists: $TAGSHA"
+            [ "$TAGSHA" = "$GITHUB_SHA" ] || { echo "::error::the git tag $RELEASE_TAG is on $TAGSHA, not on the commit built ($GITHUB_SHA)"; exit 1; }
+          fi
+
   create-release:
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -49,14 +91,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # hand-written notes (docs/release-notes/<tag>.md) when they exist, generated notes otherwise
-          if [ -f "docs/release-notes/${RELEASE_TAG}.md" ]; then NOTES="--notes-file docs/release-notes/${RELEASE_TAG}.md"; else NOTES="--generate-notes"; fi
+          # a draft left by an earlier run (its check failed) is replaced: it has no git tag, so nothing published is touched
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --yes
+          fi
+          # hand-written notes (docs/release-notes/<tag>.md) when they exist, generated notes otherwise; both state the full commit
+          FOOTER="Built from commit \`$GITHUB_SHA\` (TuxGuitarAdvanced $RELEASE_TAG)."
+          if [ -f "docs/release-notes/${RELEASE_TAG}.md" ]; then
+            { cat "docs/release-notes/${RELEASE_TAG}.md"; printf '\n\n---\n%s\n' "$FOOTER"; } > "$RUNNER_TEMP/notes.md"
+            NOTES=(--notes-file "$RUNNER_TEMP/notes.md")
+          else
+            NOTES=(--generate-notes --notes "$FOOTER")
+          fi
           gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft \
-            --target "$GITHUB_SHA" --title "TuxGuitarAdvanced $RELEASE_TAG" $NOTES
+            --target "$GITHUB_SHA" --title "TuxGuitarAdvanced $RELEASE_TAG" "${NOTES[@]}"
 
   build-macos-arm64:
-    needs: create-release
+    needs: [validate, create-release]
     runs-on: macos-14   # Apple Silicon
+    env:
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+      RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
     steps:
       - uses: actions/checkout@v5
       - name: Set up JDK 21
@@ -70,8 +125,11 @@ jobs:
         uses: ./.github/actions/install-swt
         with:
           platform: macos
+      - name: Self-test of the Info.plist stamp
+        run: misc/test-stamp-macos-plist.sh
+      # spec 015: the release identity goes into the build-info file and the Info.plist (before the launcher is signed)
       - name: Build
-        run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests
+        run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests "-Drelease.version=$RELEASE_VERSION" "-Drelease.commit=$RELEASE_COMMIT"
       # spec 008: the official logo is in the app (test of the assets of the repository, then identity of the packaged icons)
       - name: Branding assets (test)
         run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e test -pl ../../TuxGuitar-practice -am -Dtest=BrandingAssetsTest -Dbranding.release=true -Dsurefire.failIfNoSpecifiedTests=false
@@ -95,14 +153,20 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent TuxGuitarAdvanced.app "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
       - name: Verify the branding in the package
         run: misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" macos
+      - name: Verify the version and the commit in the package
+        run: misc/verify-version.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" macos "$RELEASE_VERSION" "$RELEASE_COMMIT"
       - name: Attach the package to the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-macos-arm64.zip --repo "$GITHUB_REPOSITORY" --clobber
 
   build-linux:
-    needs: build-windows   # Linux only if macOS and Windows succeeded
+    needs: [validate, build-windows]   # Linux only if macOS and Windows succeeded
     runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+      RELEASE_DEBVERSION: ${{ needs.validate.outputs.debversion }}
+      RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
     steps:
       - uses: actions/checkout@v5
       - name: Set up JDK 21
@@ -121,7 +185,7 @@ jobs:
           platform: linux
       # the Debian variant builds the tuxguitar-linux-swt bundle first, then wraps it in a .deb of the architecture of the runner (amd64)
       - name: Build
-        run: cd desktop/build-scripts/tuxguitar-linux-swt-deb && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests
+        run: cd desktop/build-scripts/tuxguitar-linux-swt-deb && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests "-Drelease.version=$RELEASE_VERSION" "-Drelease.debversion=$RELEASE_DEBVERSION" "-Drelease.commit=$RELEASE_COMMIT"
       - name: Package
         run: |
           cd desktop/build-scripts/tuxguitar-linux-swt/target
@@ -134,14 +198,22 @@ jobs:
         run: |
           misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" linux
           misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb" linux
+      - name: Verify the version and the commit in the packages
+        run: |
+          misc/verify-version.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" linux "$RELEASE_VERSION" "$RELEASE_COMMIT"
+          misc/verify-version.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb" linux "$RELEASE_VERSION" "$RELEASE_COMMIT"
       - name: Attach the packages to the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-linux-*.tar.gz TuxGuitarAdvanced-*-linux-*.deb --repo "$GITHUB_REPOSITORY" --clobber
 
   build-windows:
-    needs: build-macos-arm64   # Windows only if macOS succeeded
+    needs: [validate, build-macos-arm64]   # Windows only if macOS succeeded
     runs-on: ubuntu-latest   # cross-compiled with Mingw-w64
+    env:
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+      RELEASE_NUMERIC: ${{ needs.validate.outputs.numeric }}
+      RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
     steps:
       - uses: actions/checkout@v5
       - name: Set up JDK 21
@@ -159,7 +231,7 @@ jobs:
         with:
           platform: windows
       - name: Build
-        run: cd desktop/build-scripts/tuxguitar-windows-swt-x86_64 && mvn -B --no-transfer-progress -e clean verify -P native-modules -P -platform-linux -P platform-windows -DskipTests
+        run: cd desktop/build-scripts/tuxguitar-windows-swt-x86_64 && mvn -B --no-transfer-progress -e clean verify -P native-modules -P -platform-linux -P platform-windows -DskipTests "-Drelease.version=$RELEASE_VERSION" "-Drelease.numeric=$RELEASE_NUMERIC" "-Drelease.commit=$RELEASE_COMMIT"
       - name: Package
         run: |
           cd desktop/build-scripts/tuxguitar-windows-swt-x86_64/target
@@ -167,21 +239,37 @@ jobs:
           zip -qr "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" TuxGuitarAdvanced
       - name: Verify the branding in the package
         run: misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" windows
+      - name: Verify the version and the commit in the package (the version resource of the exe included)
+        run: misc/verify-version.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" windows "$RELEASE_VERSION" "$RELEASE_COMMIT"
       - name: Attach the package to the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$RELEASE_TAG" TuxGuitarAdvanced-*-windows-*.zip --repo "$GITHUB_REPOSITORY" --clobber
 
   release:
-    needs: build-linux
+    needs: [validate, build-linux]
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+      RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+      RELEASE_PRERELEASE: ${{ needs.validate.outputs.prerelease }}
     steps:
+      - uses: actions/checkout@v5
+      - name: Check the draft release (title, target commit, notes, the four files)
+        run: misc/verify-release.sh --draft "$RELEASE_TAG" "$RELEASE_VERSION" "$RELEASE_COMMIT"
       - name: Publish the release
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name'
-          # a tag with alpha, beta or rc in its name is published as a pre-release
+          # a tag with a label (alpha, beta, rc, any other) is published as a pre-release, a tag without one as a final release
           PRE=""
-          case "$RELEASE_TAG" in *alpha*|*beta*|*rc*) PRE="--prerelease";; esac
+          [ "$RELEASE_PRERELEASE" = true ] && PRE="--prerelease"
           gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false $PRE
+      - name: Check the published release (the git tag is on the commit built)
+        run: |
+          if ! misc/verify-release.sh --published "$RELEASE_TAG" "$RELEASE_VERSION" "$RELEASE_COMMIT"; then
+            # the tag is reported, never moved: the release goes back to draft so that nobody downloads it
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=true
+            echo "::error::the published release $RELEASE_TAG failed its check and was put back to draft"
+            exit 1
+          fi
