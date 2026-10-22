@@ -151,7 +151,7 @@ A build made on a developer's machine, outside a release, shows a **development 
 - **Releases already published are not changed** (their tags are immutable); only releases built after this feature carry the new identity. The release notes of an older release may mention it.
 - The **owner's trial** is the final check: About on his Mac for a real release.
 - Out of scope: an update-checking feature, a changelog window, the version of the plugins or of the file format, the Android application, the installers that are not part of the release workflow.
-- **Decisions taken while preparing the tasks (2026-10-22, from the checklist `release-consistency.md`; to be confirmed by the owner)**:
+- **Decisions taken while preparing the tasks (2026-10-22, from the checklist `release-consistency.md`; **confirmed by the owner on 2026-10-22**)**:
   - "Identical" means the same version **in the notation the place accepts**; the expected value of each place is derived from the one release version by the table of `contracts/verify-version.md` (macOS short version `X.Y.Z`, bundle version and Windows file version `X.Y.Z.0`, Debian `X.Y.Z~label` with `-` written `.`); the full text and the full commit are always also carried by a text field or by the build-info file.
   - A check that fails leaves the release a **draft** (never published, nothing deleted); running the release again for the same tag replaces the attached packages.
   - On macOS the metadata is stamped **before** the launcher is signed; the check runs on the signed, zipped package.

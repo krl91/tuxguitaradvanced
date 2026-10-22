@@ -11,7 +11,7 @@ description: "Tasks: the same version and commit everywhere (spec 015)"
 
 ## Phase 0: Gate (nothing is implemented before it)
 
-- [ ] T001 **Owner**: confirm or correct the decisions listed in `spec.md` (Assumptions, "Decisions taken while preparing the tasks") and review `checklists/release-consistency.md`. `/speckit-implement` does not start until this is done.
+- [x] T001 **Owner** (confirmed 2026-10-22): confirm or correct the decisions listed in `spec.md` (Assumptions, "Decisions taken while preparing the tasks") and review `checklists/release-consistency.md`. `/speckit-implement` does not start until this is done.
 
 ## Phase 1: Setup and unknowns
 
