@@ -112,6 +112,16 @@ Known limits are documented and measured, not hidden: chords whose bass note is 
 
 The default build runs **479 automatic tests**; the benchmark on recordings is an extra test you can run yourself (see the user guide). No audio of the benchmark is stored in this repository.
 
+## Arcade at a glance
+
+The notes come towards you on a neck, a measure ahead; the **flames** grow with your streak of notes played on time, and a chord arrives as a frame with its name.
+
+![Arcade: a streak of 12 notes on time, the flames rising on both sides, a hammer-on/pull-off and a bend drawn as arrows](docs/images/arcade-flames.png)
+
+![Arcade: a chord progression coming towards the player, each chord a frame with its name (C, G7, Dm, E, Am)](docs/images/arcade-chords.png)
+
+*These two images are drawn by the application's own Arcade renderer from reference scenes (the same drawing code as the game, on a test painter): they are not screenshots of a running window.*
+
 ## Download and installation
 
 Packages are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). **Today the alphas ship a macOS (Apple Silicon) package only**; Linux and Windows packages are built by the release workflow when GitHub Actions is available, and can always be built from source. The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; the three packages include the Interactive Practice modules.
