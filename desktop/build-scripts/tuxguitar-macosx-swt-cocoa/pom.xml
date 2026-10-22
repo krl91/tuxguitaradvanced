@@ -495,6 +495,22 @@
 							<goal>run</goal>
 						</goals>
 					</execution>
+					<!-- macOS accepts only executables in Contents/MacOS (a bundle with anything else cannot be signed, and a signature that does not verify makes macOS call the downloaded app "damaged"):
+					     once everything is assembled (the native modules profile included), the application moves to Contents/Resources/tuxguitar; the launcher starts Resources/tuxguitar/tuxguitar.sh -->
+					<execution>
+						<id>relocate-payload</id>
+						<phase>verify</phase>
+						<configuration>
+							<target name="relocate-payload">
+								<exec executable="${project.basedir}/../../../misc/relocate-macos-payload.sh" failonerror="true">
+									<arg value="${project.build.directory}/${project.finalName}" />
+								</exec>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>

@@ -125,8 +125,10 @@ jobs:
         uses: ./.github/actions/install-swt
         with:
           platform: macos
-      - name: Self-test of the Info.plist stamp
-        run: misc/test-stamp-macos-plist.sh
+      - name: Self-tests of the macOS scripts (Info.plist stamp, payload relocation)
+        run: |
+          misc/test-stamp-macos-plist.sh
+          misc/test-relocate-macos-payload.sh
       # spec 015: the release identity goes into the build-info file and the Info.plist (before the launcher is signed)
       - name: Build
         run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests "-Drelease.version=$RELEASE_VERSION" "-Drelease.commit=$RELEASE_COMMIT"
@@ -135,11 +137,12 @@ jobs:
         run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e test -pl ../../TuxGuitar-practice -am -Dtest=BrandingAssetsTest -Dbranding.release=true -Dsurefire.failIfNoSpecifiedTests=false
       - name: Self-test of the branding verifier (it must fail on a missing or a different icon)
         run: misc/test-verify-branding.sh
+      # the application lives in Contents/Resources/tuxguitar (the build moved it there): macOS accepts only the launcher in Contents/MacOS
       - name: Embed the JRE
         run: |
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
-          cp -R "$JAVA_HOME" "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app/Contents/MacOS/jre"
-      - name: Sign the launcher (stable self-signed certificate, if the secrets exist)
+          cp -R "$JAVA_HOME" "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app/Contents/Resources/tuxguitar/jre"
+      - name: Sign the whole application (stable self-signed certificate if the secrets exist, ad hoc otherwise) and check the signature
         timeout-minutes: 10
         env:
           MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
@@ -151,6 +154,8 @@ jobs:
           # the app bundle carries the product name (it is also the top-level folder of the zip)
           mv "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app" TuxGuitarAdvanced.app
           ditto -c -k --sequesterRsrc --keepParent TuxGuitarAdvanced.app "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
+      - name: Verify the bundle (only the launcher in Contents/MacOS, a valid signature)
+        run: misc/verify-macos-bundle.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
       - name: Verify the branding in the package
         run: misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" macos
       - name: Verify the version and the commit in the package

@@ -121,7 +121,7 @@ To build from source, refer to [INSTALL.md](INSTALL.md). The practice modules ne
 * JDK 17 or later (Temurin 21 is the version the project is built and tested with) and Maven; SWT installed into the local Maven repository as described in [INSTALL.md](INSTALL.md);
 * the build is run from the folder of your platform: `cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa` (or `tuxguitar-linux-swt`, `tuxguitar-windows-swt-x86_64`), then `mvn -e clean verify -P native-modules` (add `-DskipTests` to skip the tests);
 * the audio engine uses TarsosDSP, which is fetched from `https://mvn.0110.be/releases` (it is not on Maven Central), so the first build needs network access;
-* on macOS, the launcher is compiled and signed with `clang` and `codesign`: install the Xcode Command Line Tools (`xcode-select --install`). The build does not embed a Java runtime in the `.app`: link or copy one into `Contents/MacOS/jre` to run it from the build folder.
+* on macOS, the launcher is compiled and signed with `clang` and `codesign`: install the Xcode Command Line Tools (`xcode-select --install`). The build does not embed a Java runtime in the `.app`: link or copy one into `Contents/Resources/tuxguitar/jre` to run it from the build folder (the application is in `Contents/Resources/tuxguitar`: macOS accepts only the launcher in `Contents/MacOS`, and a bundle that does not follow that rule cannot be signed).
 
 ## Documentation
 

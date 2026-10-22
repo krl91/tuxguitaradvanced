@@ -34,8 +34,8 @@ PY
 }
 # the correct packages
 macos_pkg() { # dir
-  local app="$1/TuxGuitarAdvanced.app"; mkdir -p "$app/Contents/MacOS/share"
-  info "$app/Contents/MacOS/share" "$VERSION" "$NUMERIC" "$COMMIT"
+  local app="$1/TuxGuitarAdvanced.app"; mkdir -p "$app/Contents/Resources/tuxguitar/share"
+  info "$app/Contents/Resources/tuxguitar/share" "$VERSION" "$NUMERIC" "$COMMIT"
   plist "$app/Contents/Info.plist" "$BASE" "$NUMERIC" "TuxGuitarAdvanced $VERSION (${COMMIT:0:7})" "$VERSION" "$COMMIT"
 }
 windows_pkg() { # dir
@@ -71,8 +71,8 @@ mw "a wrong short version fails" plist "$APP/Contents/Info.plist" 0.5.0 "$NUMERI
 mw "a wrong bundle version fails" plist "$APP/Contents/Info.plist" "$BASE" 9.99 "TuxGuitarAdvanced $VERSION (${COMMIT:0:7})" "$VERSION" "$COMMIT"
 mw "a wrong text version fails" plist "$APP/Contents/Info.plist" "$BASE" "$NUMERIC" "TuxGuitarAdvanced 9.99-SNAPSHOT (${COMMIT:0:7})" "$VERSION" "$COMMIT"
 mw "a short commit in place of the full one fails" plist "$APP/Contents/Info.plist" "$BASE" "$NUMERIC" "TuxGuitarAdvanced $VERSION (${COMMIT:0:7})" "$VERSION" "${COMMIT:0:7}"
-mw "a modified build fails" info "$APP/Contents/MacOS/share" "$VERSION" "$NUMERIC" "$COMMIT" true
-mw "a build-info with another commit fails" info "$APP/Contents/MacOS/share" "$VERSION" "$NUMERIC" "$OTHER"
+mw "a modified build fails" info "$APP/Contents/Resources/tuxguitar/share" "$VERSION" "$NUMERIC" "$COMMIT" true
+mw "a build-info with another commit fails" info "$APP/Contents/Resources/tuxguitar/share" "$VERSION" "$NUMERIC" "$OTHER"
 
 # ---- Windows
 rm -rf "$TMP/w"; windows_pkg "$TMP/w"; WZ="$TMP/TuxGuitarAdvanced-v$VERSION-windows-x86_64.zip"; zipit "$TMP/w" "$WZ" TuxGuitarAdvanced

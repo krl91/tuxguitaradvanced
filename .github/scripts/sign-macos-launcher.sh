@@ -1,5 +1,5 @@
 #!/bin/bash
-# Signs the native launcher of a TuxGuitarAdvanced .app with a stable self-signed
+# Signs a whole TuxGuitarAdvanced .app (launcher and sealed resources) with a stable self-signed
 # code-signing certificate (same identity for every release, so macOS keeps the
 # microphone permission across updates). This is NOT an Apple Developer ID: Gatekeeper
 # still asks the user to approve the first launch (System Settings > Privacy & Security >
@@ -9,7 +9,7 @@
 # Environment (GitHub Actions secrets):
 #   MACOS_CERT_P12_BASE64  the .p12 (certificate + private key), base64 encoded
 #   MACOS_CERT_PASSWORD    the .p12 password
-# Without them the script does nothing and the build keeps its ad-hoc signature.
+# Without them the bundle is sealed with an ad-hoc signature (valid, but not stable across releases).
 # Meant for an ephemeral CI runner: it adds the certificate to the admin trust settings.
 set -euo pipefail
 
@@ -18,8 +18,8 @@ LAUNCHER="$APP/Contents/MacOS/tuxguitar-launcher"
 [ -f "$LAUNCHER" ] || { echo "launcher not found: $LAUNCHER" >&2; exit 1; }
 
 if [ -z "${MACOS_CERT_P12_BASE64:-}" ] || [ -z "${MACOS_CERT_PASSWORD:-}" ]; then
-  echo "No signing certificate provided: keeping the ad-hoc signature"
-  exit 0
+  echo "No signing certificate provided: sealing the bundle with an ad-hoc signature"
+  exec "$(dirname "$0")/../../misc/seal-macos-app.sh" "$APP"
 fi
 
 WORK="$(mktemp -d)"
@@ -52,13 +52,7 @@ echo "looking for the identity"
 IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | awk 'NR==1 {print $2}')"
 [ -n "$IDENTITY" ] || { echo "no valid code-signing identity in the keychain" >&2; exit 1; }
 
-# Sign a standalone copy: inside the .app, codesign would treat the launcher as the main
-# executable of the bundle and try to seal everything next to it (the embedded JRE, lib/,
-# share/ live in Contents/MacOS), which fails. The signature is embedded in the Mach-O file,
-# so copying it back keeps it.
-cp -p "$LAUNCHER" "$WORK/tuxguitar-launcher"
-codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" --identifier app.tuxguitaradvanced "$WORK/tuxguitar-launcher"
-codesign --verify --strict -v "$WORK/tuxguitar-launcher"
-cp -p "$WORK/tuxguitar-launcher" "$LAUNCHER"
-codesign -dvv "$LAUNCHER" 2>&1 | grep -E 'Identifier|Authority|Signature'
-codesign -d -r- "$LAUNCHER" 2>&1 | grep designated
+# Seal the whole bundle (the application was moved to Contents/Resources/tuxguitar by the build): a bundle whose signature does not verify is called
+# "damaged" by macOS when it is downloaded, with no "Open Anyway"; a valid self-signed one gets "Open Anyway" in System Settings > Privacy & Security.
+"$(dirname "$0")/../../misc/seal-macos-app.sh" "$APP" "$IDENTITY" "$KEYCHAIN"
+codesign -d -r- "$APP" 2>&1 | grep designated

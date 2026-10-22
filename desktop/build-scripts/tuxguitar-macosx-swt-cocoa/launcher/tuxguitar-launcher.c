@@ -32,7 +32,8 @@ int main(int argc, char **argv) {
 	*separator = '\0';
 
 	char script[PATH_MAX];
-	if (snprintf(script, sizeof(script), "%s/tuxguitar.sh", resolved) >= (int) sizeof(script)) {
+	/* macOS accepts only executables in Contents/MacOS: the application (JRE, jars, resources, tuxguitar.sh) is in Contents/Resources/tuxguitar */
+	if (snprintf(script, sizeof(script), "%s/../Resources/tuxguitar/tuxguitar.sh", resolved) >= (int) sizeof(script)) {
 		return 126;
 	}
 
