@@ -16,7 +16,7 @@ description: "Tasks: the same version and commit everywhere (spec 015)"
 ## Phase 1: Setup and unknowns
 
 - [ ] T002 Build the baseline on macOS (`cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -e clean verify -P native-modules`) and note which tests pass today in `specs/015-version-and-commit-everywhere/baseline.txt`.
-- [ ] T003 Confirm from the launch4j-maven-plugin 2.1.2 documentation or jar which `versionInfo` elements exist (file version 4 numbers, text file version, product version, text product version, product name, original file name, internal name) and write the answer in `research.md` R7. If the text version cannot be carried, stop and report to the owner.
+- [ ] T003 Choose and write in `research.md` R7 the tool that reads the version resource of `tuxguitar.exe` on the Ubuntu runner and on macOS (for example `python3` with the `pefile` module, or `strings`; check what is installed and what `pip` would add, and keep the choice free of new project dependencies). Confirm from the launch4j-maven-plugin 2.1.2 documentation or jar which `versionInfo` elements exist (file version 4 numbers, text file version, product version, text product version, product name, original file name, internal name) and write the answer in `research.md` R7. If the text version cannot be carried, stop and report to the owner.
 - [ ] T004 Confirm in `research.md` R9: a test in `desktop/TuxGuitar-practice/test/app/tuxguitar/app/system/` can load a class of `desktop/TuxGuitar` (dependency in `desktop/TuxGuitar-practice/pom.xml`; one trivial throwaway check, then deleted). Read `TGWindow.loadTitleInCurrentThread` (~line 174) and find the class that resolves `${…}` variables (`TGVarAdapter` and its resolver); say whether it can be exercised without a window; if not, T016 tests the resolver with the layout string only and says so.
 - [ ] T005 **Owner approval, then experiment** (outward-facing, a few network calls): create a throwaway draft release with `gh release create zz-probe-015 --draft --target <sha>`, read whether a git tag exists (`gh api repos/<repo>/git/ref/tags/zz-probe-015`) and what `target_commitish` shows, then delete the draft; write the result in `research.md` R11. Not done without the owner's go.
 
@@ -81,7 +81,7 @@ description: "Tasks: the same version and commit everywhere (spec 015)"
 
 ## Dependencies and order
 
-- Phase 0 → 1 → 2 → 3 (MVP) → 4 → 5 → 6 → 7. Phase 5 needs T011 and T020; phase 6 needs phase 5; T027 needs T003.
+- Phase 0 → 1 → 2 → 3 (MVP) → 4 → 5 → 6 → 7. Phase 5 needs T011 and T020; phase 6 needs phase 5; T027 needs T003; T033, T034 and T035 need the result of T005 (if a draft turns out to have a git tag, the two modes of `verify-release.sh` and the contract are rewritten before T033).
 - [P] only where files differ and no earlier task is needed: T006 ∥ T008; T038 ∥ T039.
 - Within a phase: the test (seen failing) before the code that makes it pass.
 
