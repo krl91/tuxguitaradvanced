@@ -5,12 +5,12 @@ From `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`, with `export JAVA_HOME=
 ## Automatic
 
 1. **Reasons** ([contracts/refusal-reasons.md](contracts/refusal-reasons.md)): `mvn test -pl ../../TuxGuitar-practice -am -Dtest='RefusalReasonTest,FollowSummaryReasonsTest' -Dsurefire.failIfNoSpecifiedTests=false`.
-2. **Verdicts unchanged by the reasons**: the recorded Follow run (`FollowBenchmarkTest`, tag `benchmark`) gives the same figures as `specs/002-practice-industrialization/benchmark/follow-benchmark-recorded-2026-10-08.txt`, plus a reason for each of its 7 missed events.
+2. **Verdicts unchanged by the reasons**: `-Dtest=FollowReasonParityTest` (synthetic runs; with tag `dataset`, the reference recording laid as in `FollowBenchmarkTest`) gives the same figures as `specs/002-practice-industrialization/benchmark/follow-benchmark-recorded-2026-10-08.txt`, plus a reason for each of its 7 missed events.
 3. **Time to play** ([contracts/play-time-window.md](contracts/play-time-window.md)): `-Dtest='PlayTimeWindowTest'`; the old windows: `TimingWindowParityTest` unchanged and green.
 4. **Pitch positions** ([contracts/follow-leniency.md](contracts/follow-leniency.md)): `-Dtest='FollowLeniencyTest'`; the measure: `-Dtest=FollowLeniencyReplayTest -Dgroups=dataset -DexcludedGroups= -Dfollow.measure=true` prints, per position, the right notes accepted and the negatives accepted (≤ 4 of 98 at Permissive).
 5. **The record and its replay** ([contracts/run-record.md](contracts/run-record.md)): `-Dtest='FollowRunRecordTest'`; with the owner's take: `-Dtest=FollowTakeReplayTest -Dgroups=dataset -DexcludedGroups=` (newest file in `~/tuxguitar-follow-takes/`, or `-Dfollow.take=<file>`).
 6. **Calibration offer** ([contracts/calibration-offer.md](contracts/calibration-offer.md)): `-Dtest='PreRunCheckRhythmTest,DeclinedRoutesTest'`; the start path source tests unchanged and green; natively `-P swt-gui-tests -Dtest=PreRunWindowRhythmSwtTest`.
-7. **Nothing else changed** (SC-006): `mvn -e clean verify -P native-modules`: practice and engine counts equal to the baseline plus the new tests; recognition reports equal to `specs/010-pre-run-check/benchmark/after/`; Arcade's spec 014 figures equal; `git diff --name-status <start>` shows no M/D/R under any `test` directory.
+7. **Nothing else changed** (SC-006): `mvn -e clean verify -P native-modules`: practice and engine counts equal to the baseline plus the new tests; recognition reports equal to `specs/010-pre-run-check/benchmark/after/`; Arcade's spec 014 figures equal; `git diff --name-status <start>` shows only `A` under the `test` directories, plus `M` for `FollowPanelTest.java` and `FollowPanelSwtTest.java` (owner's exception, T028) and nothing else.
 
 ## By hand (the owner)
 

@@ -8,7 +8,7 @@ Why an event of a Follow run was not accepted on time (FR-001). Kept on the even
 |---|---|---|
 | `NONE` | — | — |
 | `NO_ATTACK` | — | "No attack heard" |
-| `UNCLEAR` | best confidence seen | "A sound was heard but not clearly enough to tell the note" |
+| `UNCLEAR` | best confidence seen (×100) | "A sound was heard but not clearly enough to tell the note" |
 | `OTHER_PITCH` | heard pitch (MIDI) | "Heard {note} instead of {expected}" |
 | `EARLY_OUTSIDE` | offset (ms, negative) | "Right note, {n} ms too early" |
 | `LATE_OUTSIDE` | offset (ms) | "Right note, {n} ms too late" |

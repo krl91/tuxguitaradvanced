@@ -24,7 +24,7 @@ Follow refuses notes the owner played right. The plan measures before it relaxes
 
 **Performance Goals**: no allocation added on the analysis thread (the recorder is the existing allocation-free `HopRecorder`); the verdict delay unchanged
 
-**Constraints**: no existing test modified (owner's rule); the source-structure tests of the start path unchanged and green; Arcade's figures of spec 014 equal; the semitone never accepted
+**Constraints**: no existing test modified (owner's rule), except the Follow-mode assertions on the old timing-window slider in `FollowPanelTest` and `FollowPanelSwtTest` (owner's exception of 2026-10-29, tasks T002/T028); the source-structure tests of the start path unchanged and green; Arcade's figures of spec 014 equal; the semitone never accepted
 
 **Scale/Scope**: one session class extended additively, one new window policy, one leniency class, one record writer, one step of the start window, one slider and one choice in the preparation window, texts in three languages
 
@@ -44,7 +44,7 @@ Follow refuses notes the owner played right. The plan measures before it relaxes
 | VIII. Deterministic DSP | Pass: no new detector; FR-009 determinism tested. |
 | IX. macOS first | Pass; Windows/Linux by CI, said in the report. |
 | X. No unrelated refactoring | Pass: `TimingTolerance` only gains `implements WindowPolicy`. |
-| XI. Build and test integrity | Pass: baseline taken first, existing tests unchanged. |
+| XI. Build and test integrity | Pass: baseline taken first, existing tests unchanged except the Follow-mode slider assertions the owner explicitly allowed to change (T028), listed line by line in the commit. |
 | XII. Truthful reporting | Pass: SC-003 reported "not measured" until the owner's run exists. |
 | XIII. Honest audio semantics | Pass: the semitone is never a near-miss; "not clear enough" is not called wrong. |
 | XIV. Learner-centred feedback | Pass: the reasons say what was heard and by how much. |
