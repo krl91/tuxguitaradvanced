@@ -3,6 +3,8 @@ package app.tuxguitar.audio.engine;
 import java.util.List;
 import java.util.function.IntFunction;
 
+import javax.sound.sampled.AudioFormat;
+
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.analysis.ArticulationDetector;
 import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
@@ -65,6 +67,18 @@ public final class AudioEngine {
 	private volatile int lastSampleRate = INITIAL_SAMPLE_RATE;
 	/** Revision of the input the current gain was set for (see {@link #syncGainWithInput}). */
 	private long gainInputRevision;
+	/** The last format the capture negotiated, and the id of the input it was negotiated for. */
+	private static final class Negotiated {
+		final String inputId;
+		final AudioFormat format;
+
+		Negotiated(String inputId, AudioFormat format) {
+			this.inputId = inputId;
+			this.format = format;
+		}
+	}
+
+	private volatile Negotiated negotiated;
 
 	AudioEngine(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection,
 			int ringBufferCapacity, LevelAnalyzer levelAnalyzer, IntFunction<PitchEstimator> estimatorFactory) {
@@ -87,7 +101,10 @@ public final class AudioEngine {
 				estimatorFactory.apply(INITIAL_SAMPLE_RATE), INITIAL_SAMPLE_RATE,
 				TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE, TarsosFastYinEstimator.DEFAULT_HOP_SIZE);
 		this.captureService = new CaptureService(context, catalog, selection, this.ringBuffer);
-		this.captureService.setFormatListener(format -> rebuildAnalysis(Math.round(format.getSampleRate())));
+		this.captureService.setFormatListener(format -> {
+			formatNegotiated(format);
+			rebuildAnalysis(Math.round(format.getSampleRate()));
+		});
 		this.assessor = new InputAssessor(new InputAssessor.Parameters(), this::levelCheckCompleted);
 		this.checkedInputRevision = selection.snapshot().getInputRevision();
 		this.gainInputRevision = this.checkedInputRevision;
@@ -224,6 +241,21 @@ public final class AudioEngine {
 	/** The articulation detector the analysis uses (from the saved settings); diagnostics and tests only. */
 	public ArticulationDetector getArticulationDetector() {
 		return this.analysisService.getRequestedArticulationDetector();
+	}
+
+	/** Keeps the format the capture just negotiated, for the input selected now (capture thread). */
+	void formatNegotiated(AudioFormat format) {
+		AudioInputDescriptor input = this.selection.snapshot().getInput();
+		this.negotiated = (input != null ? new Negotiated(input.getId(), format) : null);
+	}
+
+	/**
+	 * The format the capture negotiated for this input, or null when it has not been opened since that input was selected. The selection itself never
+	 * holds a format (every caller selects an input alone), so the route of the practice window reads it here (spec 016).
+	 */
+	public AudioFormat getNegotiatedFormat(AudioInputDescriptor input) {
+		Negotiated last = this.negotiated;
+		return (input != null && last != null && input.getId().equals(last.inputId) ? last.format : null);
 	}
 
 	/** Diagnostic for tests and measurements only; never shown to the learner. */

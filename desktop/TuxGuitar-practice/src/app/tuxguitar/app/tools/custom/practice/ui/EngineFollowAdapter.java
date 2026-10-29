@@ -75,7 +75,8 @@ public final class EngineFollowAdapter implements PracticeHost.RunEnvironment {
 	@Override
 	public AudioRoute route() {
 		CurrentInputSelection.Snapshot snapshot = this.engine.getSelection().snapshot();
-		AudioFormat format = snapshot.getFormat();
+		// the selection holds no format (an input is selected alone): the one the capture negotiated for that input
+		AudioFormat format = (snapshot.getFormat() != null ? snapshot.getFormat() : this.engine.getNegotiatedFormat(snapshot.getInput()));
 		if (snapshot.getInput() == null || format == null) {
 			return null;
 		}
