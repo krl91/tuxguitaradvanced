@@ -28,7 +28,7 @@ Derivation rules: [contracts/refusal-reasons.md](contracts/refusal-reasons.md). 
 
 | Field | Value |
 |---|---|
-| `playTimeMillis` | 100–600, default 300 (FR-011) |
+| `playTimeMillis` | 100–1200, default 600 (FR-011, since gate G2; was 100–600, 300) |
 | `advanceMillis` | 50 (constant) |
 | `gapToNextMillis` | 20 (constant) |
 | `onTimeShare` | 0.5 of the time to play (provisional, research R3) |
@@ -41,7 +41,7 @@ Produces the existing `TimingTolerance.Window` (target, onTimeFrom, onTimeTo, ou
 
 ## FollowSettings (existing, extended)
 
-+ `playTimeMillis` (stored as `RecognitionParameters.FOLLOW_PLAY_TIME` in the default layer; out of range → brought to 100 or 600; absent → 300; the learner's choice, never in a device profile, like `TEMPO_WINDOW`).
++ `playTimeMillis` (stored as `RecognitionParameters.FOLLOW_PLAY_TIME` in the default layer; out of range → brought to 100 or 1200; absent → 600; the learner's choice, never in a device profile, like `TEMPO_WINDOW`).
 + `leniencyPosition` (stored like Arcade's leniency, `ArcadeChoices.LENIENCY_KEY = "arcade.leniency"`, under its own key `practice.follow.leniency`).
 + `recordRun`, `recordAudio`: booleans, memory only, false at each launch.
 

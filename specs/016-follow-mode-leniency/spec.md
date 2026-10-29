@@ -31,6 +31,11 @@ Three facts frame the problem:
 - Q: After *Go on without* the rhythm calibration, is the offer made again at the next start? → A: **Once per launch**: not again for that input and output until the application is closed; again at the next launch or when the input or the output changes. (Chosen by the owner among: once per launch, at every start, never again with a box.)
 - Q: In the owner's timing rule, which moment counts for the 300 ms: the moment the note is played or the moment it is detected (about 105 ms later, up to 170 ms)? → A: **The moment the note is played** (its attack), corrected for the delay of the detector and of the audio route, as the mode does today: the learner really has 300 ms to play, the same on every machine and input. (Asked at /speckit-plan; chosen by the owner among: the moment played, the moment detected.)
 
+### Session 2026-10-29 (gate G2)
+
+- Q: After gate G2, is the time to play the note long enough? → A: **No: twice as long by default.** The owner's three recorded runs after calibration (Rocksmith, 100 %) show the right pitch heard almost every time, but 400 to 760 ms after the red; the pitch positions cannot change that. The time to play becomes **600 ms by default, adjustable from 100 to 1200 ms**; it is still cut 20 ms before the next red, and the on-time part stays half of it. (Chosen by the owner among: 600 by default with 1200 at most, 600 by default with 600 at most, no change.) The three tests that pinned 300 and 600 are adapted on those values only (owner's exception of 2026-10-29, like T028).
+- Q: The start window says "or set it by hand" without saying where; what should it do? → A: **Say where**: in the Mode tab, *Delay (ms)*. (Chosen by the owner among: say where, a delay field in the start window.)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Know why a note was refused (Priority: P1)
@@ -72,7 +77,7 @@ Before a run of *Follow the tempo* or Arcade, if the rhythm of the current input
 
 ### User Story 3 - Follow accepts a right note played roughly in time (Priority: P2)
 
-The learner plays the right note at about the right moment, as a guitarist practising a piece does. *Follow the tempo* accepts it: the judging of the pitch tolerates a sound that is close to the expected note, and the judging of the time gives the learner a time to play the note from the moment it turns red (300 ms by default, adjustable). The learner can choose how permissive it is, and the choice is remembered. A clearly wrong note is still refused, within a stated limit.
+The learner plays the right note at about the right moment, as a guitarist practising a piece does. *Follow the tempo* accepts it: the judging of the pitch tolerates a sound that is close to the expected note, and the judging of the time gives the learner a time to play the note from the moment it turns red (600 ms by default since gate G2, adjustable). The learner can choose how permissive it is, and the choice is remembered. A clearly wrong note is still refused, within a stated limit.
 
 **Why this priority**: it is what the owner asked for, but its settings must come from the measures of story 1, so it comes after.
 
@@ -85,6 +90,7 @@ The learner plays the right note at about the right moment, as a guitarist pract
 3. **Given** any position, **When** the learner plays a clearly wrong pitch, the neighbouring semitone included, **Then** it is refused, within the limit of SC-004.
 4. **Given** the Strict position, **When** a run is judged, **Then** the pitch of every event is judged exactly as before this feature (the same recognition settings); its time is judged by the time to play (FR-011), which has no position "as today".
 5. **Given** a change of position or of the time to play during a run, **When** it is made, **Then** it applies to the next run.
+6. **Given** the default settings (since gate G2), **When** the learner plays the right pitch 550 ms after the note turned red, with no other note within that time, **Then** it is accepted, marked late.
 6. **Given** a finished run, **When** the summary is shown, **Then** it names the position and the time to play used.
 
 ### Edge Cases
@@ -104,7 +110,7 @@ The learner plays the right note at about the right moment, as a guitarist pract
 - **FR-001**: In Follow, every event not accepted on time MUST carry one **reason** among a fixed list: no attack heard; other pitch heard (naming it); right pitch, early or late (with the offset); sound not clear enough; not judged (pause, input lost). The list is the same in the run feedback, in the summary and in the record of a run.
 - **FR-002**: The summary at the end of a Follow run MUST count the refusals **by reason**.
 - **FR-003**: The learner MUST be able to ask for a **record of a run** of Follow, written to a file outside the project, holding per event the expected time and pitch, what was heard (pitch, certainty, level, attack time) and the reason of its verdict. It is off by default and MUST NOT change any verdict. A copy of the run's **audio** MUST be written only when the learner ticks a separate box, outside the project. Neither the record nor the audio copy is written for a run that was cancelled before its count-in ended.
-- **FR-004**: Before a run of Follow or Arcade on a route that has **no rhythm calibration**, the start window MUST say so and offer to calibrate now or to go on; a calibrated route MUST NOT be asked; after *Go on without*, the same route MUST NOT be asked again until the application is closed; the wait mode MUST NOT be asked.
+- **FR-004**: Before a run of Follow or Arcade on a route that has **no rhythm calibration**, the start window MUST say so and offer to calibrate now or to go on; a calibrated route MUST NOT be asked; after *Go on without*, the same route MUST NOT be asked again until the application is closed; the wait mode MUST NOT be asked. When the calibration fails there, the message MUST say where the delay can be set by hand (the Mode tab, *Delay (ms)*).
 - **FR-005**: Follow MUST offer a **permissiveness** setting with **three positions: Strict** (today's pitch judging: the recognition settings unchanged), **Permissive** (the default) and **Very permissive**; for the **pitch** (a **near-miss** counts as the expected note: the right note a little out of tune, or a sound not clear enough to be sure; the **neighbouring semitone is never a near-miss**, at any position). The **time** is judged by FR-011, not by the positions. It is a **setting of Follow only, separate from Arcade's leniency** (spec 014): Arcade keeps its own setting, its positions and its figures.
 - **FR-006**: The permissiveness MUST never accept silence and MUST never count one attack for two events.
 - **FR-007**: The summary and the record MUST name the permissiveness position and the time to play used.
@@ -112,14 +118,14 @@ The learner plays the right note at about the right moment, as a guitarist pract
 - **FR-009**: The judging MUST stay **deterministic**: the same performance with the same settings gives the same verdicts.
 - **FR-010**: All new texts MUST exist in English, French and Spanish, and the practice guides MUST describe the reasons, the calibration offer and the permissiveness.
 
-- **FR-011**: In Follow, the time of an event MUST be judged from the moment it **turns red** (its written time): it is accepted when the note is **played** (its attack, corrected for the delay of the detector and of the audio route) no later than the **time to play the note** after it turned red (**300 ms by default**, adjustable from **100 to 600 ms**, remembered), and no earlier than **50 ms before** it turned red (then marked early); when the next event turns red sooner, the window of an event MUST end **20 ms before** that moment, so that no two windows overlap. This slider **replaces** the *timing window* of spec 012 **in Follow only**; Arcade keeps the timing window of spec 012 unchanged.
+- **FR-011**: In Follow, the time of an event MUST be judged from the moment it **turns red** (its written time): it is accepted when the note is **played** (its attack, corrected for the delay of the detector and of the audio route) no later than the **time to play the note** after it turned red (**600 ms by default**, adjustable from **100 to 1200 ms**, remembered; changed from 300 / 600 after gate G2), and no earlier than **50 ms before** it turned red (then marked early); when the next event turns red sooner, the window of an event MUST end **20 ms before** that moment, so that no two windows overlap. This slider **replaces** the *timing window* of spec 012 **in Follow only**; Arcade keeps the timing window of spec 012 unchanged.
 
 ### Key Entities
 
 - **Refusal reason**: why an event was not accepted on time; one of the fixed list of FR-001, with its detail (heard pitch, offset in ms).
 - **Run record**: the per-event account of one Follow run (expected, heard, reason, settings used), written only on request.
 - **Permissiveness position**: the chosen pitch tolerance of Follow: Strict (today's pitch judging), Permissive (default), Very permissive; remembered between launches. The plan and the code call it Follow's *leniency* (`FollowLeniency`), as Arcade's; the learner reads "permissiveness" in the texts.
-- **Time to play the note**: the time after a note turns red within which its attack counts (100 to 600 ms, 300 by default), cut 20 ms before the next note turns red; remembered between launches.
+- **Time to play the note**: the time after a note turns red within which its attack counts (100 to 1200 ms, 600 by default; 300 / 600 before gate G2), cut 20 ms before the next note turns red; remembered between launches.
 - **Route calibration**: the measured delay of one input + output + format (existing, spec 002), now checked before a run.
 
 ## Success Criteria *(mandatory)*
@@ -132,7 +138,7 @@ The learner plays the right note at about the right moment, as a guitarist pract
 - **SC-004**: At the default position, at most **5 %** of the clearly wrong notes of the **98 negative tests of the reference recording** are accepted, i.e. **at most 4** (today: 0), the same limit as Arcade (spec 014 SC-002); the figure of every position is reported.
 - **SC-005**: A learner with an uncalibrated route reaches the end of a calibration from the start window in **one click and under 15 seconds**, and the offer appears before **100 %** of the runs of Follow and Arcade on such a route.
 - **SC-006**: The wait mode, the tuner and the calibration give **0 differences** on the existing recognition reports.
-- **SC-007**: The owner reruns test sheet F01 step 3 at the default settings (time to play the note 300 ms, tempo 70 %, route calibrated) and judges that a right note played roughly in time is accepted.
+- **SC-007**: The owner reruns test sheet F01 step 3 at the default settings (time to play the note 600 ms since gate G2, tempo 70 %, route calibrated) and judges that a right note played roughly in time is accepted.
 
 ## Assumptions
 

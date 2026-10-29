@@ -2,7 +2,7 @@
 
 `PlayTimeWindow implements WindowPolicy`; `TimingTolerance implements WindowPolicy` unchanged otherwise. Times are compensated attack times (the attack, less the detector latency, less the route offset), as today.
 
-For event *i* with target (red) time `T`, gap to the previous event `gb`, to the next `ga` (`Long.MAX_VALUE` when none), time to play `P` (100–600 ms):
+For event *i* with target (red) time `T`, gap to the previous event `gb`, to the next `ga` (`Long.MAX_VALUE` when none), time to play `P` (100–1200 ms, 600 by default since gate G2):
 
 - `late = max(0, min(P, ga − 20 ms))`
 - `previousLate = max(0, min(P, gb − 20 ms))` (the late limit of the previous event, same rule)
