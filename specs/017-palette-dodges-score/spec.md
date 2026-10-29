@@ -15,6 +15,11 @@
 - Q: What should the palette do when it hides the score? → A: **Move aside by itself**: when the note to play goes under it, it jumps to another free corner of the main window, without taking the focus. (Chosen by the owner among: move aside by itself, dock below the score, remember the position the learner gave it.)
 - Q: In which modes is it a problem? → A: **Wait for the right note** and **Follow the tempo**. (Arcade has its own window and is not concerned.)
 
+### Session 2026-10-30
+
+- Q: When the framed note moves towards the palette along the same line, should the palette move aside ahead of time, or only once the note is under it? → A: **Ahead of time**: it moves aside as soon as the framed note **or the next note to play** would be under it, so that the note to play is never hidden.
+- Q: Which places can the palette take when it moves aside? → A: **The four corners of the score area**, as written.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The note to play is never hidden by the palette (Priority: P1)
@@ -28,7 +33,7 @@ A learner practises a piece in *Wait for the right note* or *Follow the tempo*. 
 **Acceptance Scenarios**:
 
 1. **Given** a run in *Wait for the right note* with the palette in its usual place, **When** the note to play is framed at a place covered by the palette, **Then** the palette moves to another corner of the main window where it does not cover the framed note, and the framed note is entirely visible.
-2. **Given** a run in *Follow the tempo*, **When** the framed note moves under the palette as the piece goes on, **Then** the palette moves before the note is hidden for more than a brief moment, and the run goes on (no pause, no lost note because of the move).
+2. **Given** a run in *Follow the tempo*, **When** the next note to play would come under the palette as the piece goes on, **Then** the palette moves aside before that note is framed, so the framed note is never hidden, and the run goes on (no pause, no lost note because of the move).
 3. **Given** the palette has just moved, **When** the learner plays or uses a practice shortcut, **Then** the keyboard focus is where it was before the move: the palette never takes it, and the shortcuts work as before.
 4. **Given** a framed note that is not under the palette, **When** the run goes on, **Then** the palette does not move.
 5. **Given** an Arcade run, **When** it is played, **Then** nothing of this feature applies (Arcade has its own window).
@@ -79,10 +84,10 @@ The learner can still drag the palette by hand, as today. The automatic move the
 
 ### Functional Requirements
 
-- **FR-001**: In *Wait for the right note* and *Follow the tempo*, while a run is going, the palette MUST NOT cover the framed note to play (the whole framed area) for more than a brief moment (see SC-001).
-- **FR-002**: When the framed note to play comes under the palette, the palette MUST move by itself to another place inside the main window where it does not cover the framed note; the candidate places are the corners of the area where the score is shown.
+- **FR-001**: In *Wait for the right note* and *Follow the tempo*, while a run is going, the palette MUST NOT cover the framed note to play (the whole framed area); the only exceptions are the first picture of a run, a scroll or a resize of the window, after which it MUST be uncovered within 0.3 s (see SC-001).
+- **FR-002**: When the framed note to play, **or the next note to play**, is under the palette, the palette MUST move by itself to another place inside the main window where it does not cover the framed note; the candidate places are the corners of the area where the score is shown.
 - **FR-003**: Among the free places, the palette MUST choose one that the next notes to play are not about to reach (not the side the notes are heading to on the same line), and otherwise the one nearest to where it is.
-- **FR-004**: The palette MUST move only when it covers, or is about to cover, the framed note; it MUST NOT move back on its own to a place it left; it MUST NOT move more than once for the same framed note, except when the main window or the palette changes size.
+- **FR-004**: The palette MUST move only when it covers, or is about to cover, the framed note; it MUST NOT move back on its own to a place it left; it MUST NOT move more than once for the same framed note, except when the main window or the palette changes size. "About to cover" means: the area of the next note to play (the one framed after the current one) is under the palette.
 - **FR-005**: When no place is free, the palette MUST go to the place that covers the least of the framed note and stay there.
 - **FR-006**: A move MUST NOT take the keyboard focus, MUST NOT pause or slow the run, and MUST NOT change any verdict.
 - **FR-007**: The learner MUST still be able to drag the palette by hand; it then stays where it was put until it covers the framed note; a palette put outside the main window MUST never be moved automatically.
@@ -99,7 +104,7 @@ The learner can still drag the palette by hand, as today. The automatic move the
 
 ### Measurable Outcomes
 
-- **SC-001**: In a whole run of each of the two modes on a piece whose notes cross the palette's place, the framed note is covered by the palette for **no more than 0.3 s** each time it comes under it, and **never** covered once the palette has moved.
+- **SC-001**: In a whole run of each of the two modes on a piece whose notes cross the palette's place, the framed note is **never** covered by the palette while a free corner exists, except just after the first picture of the run, a scroll or a resize of the window, and then for **no more than 0.3 s**.
 - **SC-002**: The palette moves **at most once per framed note**, and on a whole run it **never** returns to a place it left while the framed note is still near that place (no back and forth).
 - **SC-003**: After every move, the practice shortcuts work **without any click** (the focus never goes to the palette), and the run's verdicts are **the same** as without the feature on the same played notes.
 - **SC-004**: The owner practises test sheet F01 (and a *Wait for the right note* run) and judges that the palette no longer hinders the reading of the score.
@@ -107,8 +112,8 @@ The learner can still drag the palette by hand, as today. The automatic move the
 ## Assumptions
 
 - The framed note's area on the screen and the palette's place are both known to the practice window while a run goes; no change of the editor is needed to know them (to be confirmed in the plan, Constitution II).
-- "A brief moment" (SC-001) is 0.3 s: the time to notice the note is covered and to move; a note shorter than that in *Follow the tempo* may be covered for its whole duration only if it is the first note under the palette.
-- The candidate places are the four corners of the score area; a smarter free-space search is out of scope.
+- The 0.3 s of SC-001 only applies to the first picture of a run, a scroll and a resize: the time to notice the note is covered and to move; otherwise the palette moves ahead of time (owner's answer of 2026-10-30).
+- The candidate places are the four corners of the score area (owner's answer of 2026-10-30); a smarter free-space search is out of scope.
 - The move is a jump, not a slow slide (the owner said "jumps"); a short slide may be considered in the plan only if it keeps SC-001.
 - The learner's manual drag is kept (Story 3); the place is remembered for the session only, as today; remembering it between launches is out of scope.
 - Arcade, the tuner and the editor are out of scope.

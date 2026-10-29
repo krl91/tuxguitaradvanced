@@ -32,4 +32,4 @@
 ## Notes
 
 - The owner's choices (variant A with sparks, 2026-10-29; translucent flames, 2026-10-30) are recorded in the spec's Clarifications.
-- Defaults chosen without asking, listed in Assumptions, for /speckit-clarify to confirm: the new look replaces the old one (no choice between them); opacity at most 75 %; sparks behind the game; the demo's grid size as the starting point.
+- Defaults chosen without asking, listed in Assumptions, for /speckit-clarify to confirm: the new look replaces the old one (confirmed 2026-10-30); opacity at most 60 % (confirmed 2026-10-30); sparks behind the game; the demo's grid size as the starting point.

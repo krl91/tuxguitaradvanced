@@ -15,6 +15,11 @@
 - Q: Which of the demo's renders? → A: **A · the classic fire alone**: a coarse grid of heat drawn with big hard pixels, each cell fed by the cells below it and cooling as it rises, coloured from deep red through red, orange and yellow to white at the hottest; **sparks** thrown on each right note. (Chosen among: classic fire, fire with plasma, fire with copper bars.)
 - Q: Opaque fire or see-through? → A: **Translucent**: the game behind the fire (the neck, the lanes, the background) must keep showing through the flames, as with today's flames; the cold parts of the fire are fully transparent (no black band), and even the hottest parts let the game show through.
 
+### Session 2026-10-30
+
+- Q: How see-through must the fire be where it is hottest? → A: **As today's flames**: at most about **60 % of opacity** (the opacity of the strongest layer of spec 009's tongues), so the game stays clearly visible behind the fire.
+- Q: Does the new fire replace today's flames, or do both stay to choose from in the Mode tab? → A: **It replaces them**: one look only; the setting stays *off / discreet / full*.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The flames look like a demo-scene fire (Priority: P1)
@@ -81,7 +86,7 @@ Each time the learner plays a note right, a few sparks fly up from the fire and 
 ### Functional Requirements
 
 - **FR-001** (look): In an Arcade run with the flames on, the flames MUST be drawn as a coarse fire of big hard-edged square pixels (each pixel of the fire covers several pixels of the screen and its edges are not smoothed), whose heat rises from the bottom edge of the picture, spreads upwards and cools as it rises, with a flicker that keeps changing the tongues; the colours go from red at the coolest visible heat through orange and yellow to white at the hottest (variant A of the demo).
-- **FR-002** (translucency): The fire MUST be translucent at every point: its opacity grows with the heat but MUST stay below full at the hottest point, so that the game behind it always shows through; where the heat is nil the fire MUST draw nothing (no black and no darkening of the game).
+- **FR-002** (translucency): The fire MUST be translucent at every point: its opacity grows with the heat but MUST NOT exceed **60 %** at the hottest point (as today's strongest flames), so that the game behind it always shows through; where the heat is nil the fire MUST draw nothing (no black and no darkening of the game).
 - **FR-003** (what it shows, unchanged): The height and the brightness of the fire MUST follow spec 009 FR-002 to FR-004 (share of the maximum, embers at 50 % or less, full fire at 100 %, linear between; 4 judged events before leaving the embers; fall about 3 s, rise about 0.5 s).
 - **FR-004** (placement, unchanged): The fire MUST stay inside the picture, behind every other item of the game, stronger at the left and right corners, with the weakened central zone of spec 009 FR-001 (in the middle at most 22 % of the height and of the opacity of the corners; at most 55 % of the height of the picture at the corners at full level).
 - **FR-005** (sparks): Each note judged right MUST throw a short burst of sparks rising from the fire and fading within about one second; their number grows with the streak up to a fixed maximum; wrong, missed and unjudged events throw none; the sparks in the air at the same time MUST stay under a fixed maximum.
@@ -105,7 +110,7 @@ Each time the learner plays a note right, a few sparks fly up from the fire and 
 ### Measurable Outcomes
 
 - **SC-001**: On the owner's look check (gate), the owner judges the fire on the built application to be "the demo's variant A" (big pixels, white-yellow base, red top, flicker) and keeps it.
-- **SC-002**: At every point covered by the fire at full level, the game's colour still contributes at least **25 %** of the colour seen (the fire's opacity never exceeds 75 %); where the heat is nil the picture is identical to the picture without fire, pixel for pixel.
+- **SC-002**: At every point covered by the fire at full level, the game's colour still contributes at least **40 %** of the colour seen (the fire's opacity never exceeds 60 %); where the heat is nil the picture is identical to the picture without fire, pixel for pixel.
 - **SC-003**: The heights of spec 009 SC-001 hold: shares of 60 %, 80 % and 100 % give 20 %, 60 % and 100 % of the maximum height, to within 5 points; the fall and rise of spec 009 SC-003 hold.
 - **SC-004**: On the reference scenes and the seven window shapes of spec 009 SC-002, every readable item keeps a contrast ratio of at least 4.5 to 1, and no fire pixel or spark above 12 % of opacity meets the box of a text widened by 4 pixels.
 - **SC-005**: On a replayed run, the number of bursts of sparks equals the number of notes judged right, and is 0 with the setting *off*; no spark lives more than about one second.
@@ -114,10 +119,10 @@ Each time the learner plays a note right, a few sparks fly up from the fire and 
 
 ## Assumptions
 
-- The new look replaces spec 009's vector tongues; there is no setting to choose between the old and the new look.
+- The new look replaces spec 009's vector tongues; there is no setting to choose between the old and the new look (owner's answer of 2026-10-30).
 - Everything spec 009 decided about what the flames show (level, start, fall and rise, placement, setting, tiers, pause, reduced motion, decoration only, no monochrome look) stays; only the look changes, and the sparks are added.
 - The sparks stay behind the game, inside the flame zone and above it, like the fire; they are not the "effects in front of the game" spec 009 kept out of scope.
 - The size of the big pixels is a choice of the plan, adjustable on the built application; the demo's grid (about 192 by 108 for a 16:9 picture) is the starting point.
-- The 75 % maximum opacity (SC-002) is a starting value, adjustable at the owner's look gate without changing this specification.
+- The 60 % maximum opacity (SC-002, owner's answer of 2026-10-30) is a ceiling: the owner's look gate may lower it, not raise it, without changing this specification.
 - Plasma, copper bars and any other effect of the demo are out of scope.
 - The tuner, the Wait and Follow modes and the editor are out of scope.

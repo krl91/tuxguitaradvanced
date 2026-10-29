@@ -32,4 +32,4 @@
 ## Notes
 
 - The owner's two answers of 2026-10-29 (move aside by itself; Wait and Follow only) are recorded in the spec's Clarifications.
-- Defaults chosen without asking, listed in Assumptions, for /speckit-clarify to confirm: the manual drag is kept and the automatic move starts from it; 0.3 s at most covered; the four corners of the score area; a jump, not a slide; the place remembered for the session only.
+- Defaults chosen without asking, listed in Assumptions, for /speckit-clarify to confirm: the manual drag is kept and the automatic move starts from it; ahead-of-time move and the four corners (both confirmed 2026-10-30); the four corners of the score area; a jump, not a slide; the place remembered for the session only.
