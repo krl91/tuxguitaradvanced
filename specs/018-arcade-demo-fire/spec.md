@@ -19,6 +19,7 @@
 
 - Q: How see-through must the fire be where it is hottest? → A: **As today's flames**: at most about **60 % of opacity** (the opacity of the strongest layer of spec 009's tongues), so the game stays clearly visible behind the fire.
 - Q: Does the new fire replace today's flames, or do both stay to choose from in the Mode tab? → A: **It replaces them**: one look only; the setting stays *off / discreet / full*.
+- Q (asked while planning): the tests of spec 009 that pin the **shape** of the tongues (their number, their layers, the reference picture file of the flames) cannot pass with the new look: what about them? → A: **A targeted exception**: only what pins the tongue shape may be adapted (tongue and layer counts, exact proportional height of a tongue, the regenerated reference file `flame-reading.scene.txt`); every rule of spec 009 (heights, corners 55 %, middle 22 %, discreet 60 %, nothing when off, contrast of texts, identical verdicts) stays checked, and each changed line is listed in its commit (Constitution XI).
 
 ## User Scenarios & Testing *(mandatory)*
 
