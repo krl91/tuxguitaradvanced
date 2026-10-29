@@ -198,3 +198,7 @@ Límites, medidos y no ocultos:
 * los acordes de séptima de cuatro notas y algunos acordes abiertos (La mayor, Mi mayor) se reconocen con menos frecuencia;
 * una octava, o una nota que es un armónico de una nota grave del acorde, no se puede verificar por separado de ella;
 * los ajustes se afinaron con las grabaciones anteriores; otra guitarra u otro micrófono pueden pedir otra ganancia u otra sensibilidad.
+
+## Preguntas frecuentes
+
+**El botón de inicio está en gris: ¿por qué?** La entrada todavía no ha oído tu guitarra. Antes de empezar, hay que comprobar el nivel de la entrada elegida: toca unas notas (o rasguea un acorde) y el botón se activa. Si sigue en gris, la entrada no se puede usar: la línea *Nivel* de la pestaña *Entrada* dice por qué (demasiado bajo, saturación, desconectada, acceso al micrófono denegado). Desde el 2026-10-29 una línea bajo la posición de inicio lo dice también.

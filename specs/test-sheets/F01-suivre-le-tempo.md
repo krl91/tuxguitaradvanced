@@ -13,13 +13,16 @@
 1. Lance l'application, ouvre la partition.
 2. Branche la guitare par le Rocksmith.
 3. Ouvre la pratique : bouton **Pratique** de la barre d'outils (à droite de Lecture/Stop), ou Outils › Pratique interactive.
+4. **Joue quelques notes** : le bouton de départ reste grisé tant que l'entrée n'a pas entendu la guitare (niveau pas encore vérifié). Depuis le 2026-10-29, une ligne sous la position de départ le dit.
+
+> Premier essai du 2026-10-29 : étape 2 KO, « le bouton est grisé ». Cause : aucun son n'était encore arrivé sur l'entrée. Corrigé : le bouton reste grisé mais c'est expliqué (`GreyedStartExplainedTest`), et la préparation dit maintenant de jouer quelques notes. **Refais la fiche depuis l'étape 1 avec la nouvelle construction.**
 
 ## Étapes
 
 | # | Fais | Attendu | OK / KO | Ce que j'ai vu |
 |---|---|---|---|---|
-| 1 | Onglet **Piste** : choisis la piste guitare. Onglet **Entrée** : choisis le Rocksmith. Onglet **Mode** : choisis **Suivre le tempo**, **Fenêtre de temps** sur la valeur par défaut (100 ms), **Tempo** à **70 %**. | Le bouton de départ devient **« Suivre le tempo de cette piste »**. | | |
-| 2 | Appuie sur ce bouton. Réponds à la fenêtre « Avant de commencer » (*Oui, accordée*, puis gratte un accord à un niveau correct). | Un **décompte** est joué. La piste travaillée est **muette**, les autres pistes jouent. | | |
+| 1 | Onglet **Piste** : choisis la piste guitare. Onglet **Entrée** : choisis le Rocksmith. Onglet **Mode** : choisis **Suivre le tempo**, **Fenêtre de temps** sur la valeur par défaut (100 ms), **Tempo** à **70 %**. | Le bouton de départ devient **« Suivre le tempo de cette piste »**. |OK | |
+| 2 | Appuie sur ce bouton. Réponds à la fenêtre « Avant de commencer » (*Oui, accordée*, puis gratte un accord à un niveau correct). | Un **décompte** est joué. La piste travaillée est **muette**, les autres pistes jouent. |KO | le bouton est grisé je ne peux pas continuer|
 | 3 | Joue avec la partition : quelques notes à l'heure, une en avance exprès, une en retard exprès. | Chaque note est marquée **✓ À l'heure**, **✓ Bonne note, en avance (xx ms)** ou **✓ Bonne note, en retard (xx ms)**. | | |
 | 4 | Joue une note qui n'est pas dans la partition (entre deux notes écrites). | Elle est marquée **+ Note en trop**. | | |
 | 5 | Erreur exprès : joue une mauvaise note, puis saute une note. | Marquées **✗ Mauvaise note** et **✗ Manquée**. Les notes **suivantes** sont toujours jugées à leur propre heure (l'erreur ne décale pas la suite). | | |

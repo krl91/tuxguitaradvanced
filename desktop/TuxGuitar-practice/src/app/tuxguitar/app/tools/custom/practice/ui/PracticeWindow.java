@@ -634,9 +634,9 @@ public class PracticeWindow {
 		FollowSettings modes = FollowSettings.getInstance(this.context);
 		this.startButton.setText(modes.isArcade() ? TuxGuitar.getProperty("practice.start.arcade", new String[] { TuxGuitar.getProperty("arcade.name") })
 				: TuxGuitar.getProperty(modes.isFollow() ? "practice.start.follow" : "practice.start"));
-		// a one-click start is waiting for the guitar: say so instead of leaving a greyed button unexplained
-		boolean waiting = (this.autoStart && !canStart && this.tracks.getSelectedValue() != null);
-		this.startLabel.setText(waiting ? this.startBase + "\n" + TuxGuitar.getProperty("practice.quickstart.waiting") : this.startBase);
+		// a greyed button is never left unexplained: a one-click start waits for the guitar, or the level check has not heard it yet or cannot use it
+		String greyed = QuickStart.greyedReason(this.tracks.getSelectedValue() != null, this.assessment.getStatus(), this.immediateStart && this.autoStart, this.autoStart);
+		this.startLabel.setText(greyed != null ? this.startBase + "\n" + TuxGuitar.getProperty(greyed) : this.startBase);
 		if( QuickStart.startNow(this.autoStart, canStart) ) {
 			// after the window is shown: the start hides it
 			TGSynchronizer.getInstance(this.context).executeLater(() -> {

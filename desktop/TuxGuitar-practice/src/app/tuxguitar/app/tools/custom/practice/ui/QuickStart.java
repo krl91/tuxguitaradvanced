@@ -25,6 +25,20 @@ final class QuickStart {
 		return immediate ? trackSelected : canStart(trackSelected, status);
 	}
 
+	/**
+	 * Why the start button is greyed, as a text key, or null when it can be pressed or no track is chosen (the track tab says that). A one-click start
+	 * keeps its own text; otherwise the reason follows the level check: nothing heard yet, or an input that cannot be used (owner, 2026-10-29).
+	 */
+	static String greyedReason(boolean trackSelected, InputAssessment.Status status, boolean immediate, boolean oneClickWaiting) {
+		if( !trackSelected || canStart(trackSelected, status, immediate) ) {
+			return null;
+		}
+		if( oneClickWaiting ) {
+			return "practice.quickstart.waiting";
+		}
+		return (status == InputAssessment.Status.UNCHECKED ? "practice.start.greyed.UNCHECKED" : "practice.start.greyed.UNUSABLE");
+	}
+
 	/** The preparation window shows itself for an unusable input only when nothing else is going on: never over a run (Arcade, tempo following) or a start at once. */
 	static boolean showForUnusableInput(boolean windowShown, boolean runOngoing, boolean immediateStart, InputAssessment.Status status) {
 		return !windowShown && !runOngoing && !immediateStart && status == InputAssessment.Status.UNUSABLE;

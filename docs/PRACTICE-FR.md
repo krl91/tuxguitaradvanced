@@ -197,3 +197,7 @@ Limites, mesurées et non cachées :
 * les accords de septième à quatre notes et certains accords ouverts (La majeur, Mi majeur) sont moins souvent reconnus ;
 * une octave, ou une note qui est un harmonique d'une note plus grave de l'accord, ne peut pas être vérifiée séparément de celle-ci ;
 * les réglages ont été ajustés sur les enregistrements ci-dessus : une autre guitare ou un autre micro peut demander un autre gain ou une autre sensibilité.
+
+## Questions fréquentes
+
+**Le bouton de départ est grisé : pourquoi ?** L'entrée n'a pas encore entendu votre guitare. Avant un départ, le niveau de l'entrée choisie doit être vérifié : jouez quelques notes (ou grattez un accord) et le bouton s'active. S'il reste grisé, l'entrée n'est pas utilisable : la ligne *Niveau* de l'onglet *Entrée* dit pourquoi (trop faible, saturation, débranchée, accès au micro refusé). Une ligne sous la position de départ le dit aussi depuis le 2026-10-29.
