@@ -30,6 +30,7 @@ Asserting the tongue shape, to be adapted with each line listed in the commit:
 - `FlameSceneTest.theTonguesAndTheirLayersFollowTheTierAndTheSetting` (28×3 / 14×2 / 14×3 / 7×2 pieces) → the counts become the field's (FULL more cells than BALANCED; discreet lower).
 - `FlameSceneTest.pieces/tallest/layerCount` helpers rely on one code per tongue layer; the height, corner and discreet tests keep their rules with the field's columns as pieces; the exact proportionality `level × top` gets the tolerance of one cell (SC-003: 5 points).
 - `ArcadeSceneQualityTest.theFlamesAreDecorationOnlyTheLowestTierDrawsNoneAndTheBalancedTierDrawsHalfTheTonguesInTwoLayers`: "half the tongues in two layers" → "coarser cells, no sparks".
-- `ArcadeFlamesSettingTest` lines 74–82 if they count tongues.
+- `ArcadeFlamesSettingTest.offDrawsNoFlameDiscreetFewerAndFaintersThanFull` line 113 ("discreet has fewer tongues", counted by the helper `tongues`, one code per tongue): only if the field's pieces do not give fewer pieces for discreet; the "fainter" line 114 stays.
+- `ArcadeSceneQualityTest` lines 177–178 (28×3 and 14×2 layers).
 - `reference/flame-reading.scene.txt`: regenerated from the new drawing.
 Kept unchanged and expected green: `FlameContrastTest`, `FlameParityTest`, `ArcadeReferenceSceneTest` (with the new file), every off / level-0 / order / monochrome / clamp test. If any other existing test fails, stop and report.
