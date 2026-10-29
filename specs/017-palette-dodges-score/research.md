@@ -19,7 +19,7 @@
 
 ## R5. The decision (pure)
 - **Decision**: `PaletteDodge.decide(input)` with: the palette box, the score area, the current box, the next box (both may be null), the palette's state (auto place left, learner's place, outside), returns a new position or none.
-  - Move only if the palette box (grown by a margin of 8 px) meets the current or the next box.
+  - Move only if the palette box (grown by a margin of 8 px) meets the current or the next box; while the run is paused the next box is not passed (spec Edge Cases).
   - Candidates: the four corners of the score area at a margin of 16 px (palette fully inside the area).
   - Free = meets neither box. Among free corners: exclude the corner just left while the current box is still within one palette width of it; prefer corners not on the side the notes head to (the next box's centre compared with the current box's centre on the same line: same line = vertical overlap); then the nearest to the current place.
   - No free corner: the corner covering the least area of the current box, and stay (no further move until a corner becomes free or the window changes size).
@@ -27,7 +27,7 @@
 - **Rationale**: pure and testable; covers FR-002–FR-005 and US2.
 
 ## R6. The learner's move
-- **Decision**: the palette remembers the position it set last; if its actual position differs (by more than 2 px) the learner moved it: that becomes the learner's place. If the palette box is not inside the main window's box, it is "outside": never moved (FR-007). Reopening uses `lastBounds` as today (FR-008).
+- **Decision**: the palette remembers the position it set last; if its actual position differs (by more than 2 px) the learner moved it: that becomes the learner's place. If, **at that learner's move**, the palette box is not inside the main window's box, it is "outside": never moved until the learner moves it back inside (FR-007); a palette that ends up outside because the main window moved is not "outside". The opening place (`placeWindow`) is recorded as the first automatic place, so it is not taken for a learner's move. Reopening uses `lastBounds` as today (FR-008).
 
 ## R7. Focus
 - **Finding**: SWT `Shell.setBounds` does not activate the shell; the move uses only `setBounds`.

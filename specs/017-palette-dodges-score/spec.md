@@ -75,7 +75,7 @@ The learner can still drag the palette by hand, as today. The automatic move the
 - The main window is resized or moved during a run: the palette's places follow the main window; a palette that now covers the framed note moves aside.
 - The score scrolls (the framed note jumps to another line or page): the decision is taken on the new place of the framed note.
 - A chord, or a note framed across two lines: the whole framed area counts.
-- The run is paused (unusable input, the learner's pause): the palette does not move while nothing advances, except if the framed note is covered.
+- The run is paused (unusable input, the learner's pause): the palette does not move while nothing advances, except if the framed note is covered (the next note is not looked at while paused).
 - The palette's own size changes (a longer message, the end-of-run summary): it is the new size that must not cover the framed note.
 - The end of a run: there is no framed note any more; the palette stays where it is, with its summary and its Restart button.
 - Multiple screens: the corners are those of the main window, whatever screen it is on.
@@ -90,14 +90,14 @@ The learner can still drag the palette by hand, as today. The automatic move the
 - **FR-004**: The palette MUST move only when it covers, or is about to cover, the framed note; it MUST NOT move back on its own to a place it left; it MUST NOT move more than once for the same framed note, except when the main window or the palette changes size. "About to cover" means: the area of the next note to play (the one framed after the current one) is under the palette.
 - **FR-005**: When no place is free, the palette MUST go to the place that covers the least of the framed note and stay there.
 - **FR-006**: A move MUST NOT take the keyboard focus, MUST NOT pause or slow the run, and MUST NOT change any verdict.
-- **FR-007**: The learner MUST still be able to drag the palette by hand; it then stays where it was put until it covers the framed note; a palette put outside the main window MUST never be moved automatically.
+- **FR-007**: The learner MUST still be able to drag the palette by hand; it then stays where it was put until it covers the framed note; a palette the learner put outside the main window MUST never be moved automatically (a palette left outside because the main window itself moved is not concerned).
 - **FR-008**: The palette MUST still open where it was last in the session (today's behaviour), and otherwise in today's default place.
 - **FR-009**: Arcade MUST be unchanged; the editor outside practice MUST be unchanged.
 
 ### Key Entities
 
 - **Palette**: the floating window of a practice run (detected note, verdict, status, buttons). Its place and size are what is checked against the framed note.
-- **Framed note**: the area of the score that shows the note or chord to play now (the red frame). It changes with each event and when the score scrolls.
+- **Framed note**: the area of the score that shows the note or chord to play now: the red frame in *Wait for the right note*; in *Follow the tempo*, where the song plays, the score highlights the beat being played instead, at the same place (correction found in the inspected source while planning, `research.md` R2; no question to the owner). It changes with each event and when the score scrolls.
 - **Candidate places**: the corners of the area of the main window where the score is shown, at a small margin from its edges.
 
 ## Success Criteria *(mandatory)*

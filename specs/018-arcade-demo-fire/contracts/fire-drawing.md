@@ -11,6 +11,7 @@
 | corners vs middle | corner height ≤ 55 % of the picture; middle height and opacity ≤ 22 % of the corners' |
 | discreet | 60 % of the height and of the opacity of full |
 | BALANCED | cells twice as big; no spark |
-| bursts (FULL, motion) | per burst ≤ 10 spark cells (`FLAME_EMBER`), ≤ 60 in all, each gone after 1 s |
+| bursts (FULL, motion) | per burst ≤ 10 spark cells (`FLAME_EMBER`), ≤ 60 in all, each gone after 1 s; spark over a cell: combined opacity ≤ 0.60 |
+| overlap | fire cells and ember rows never overlap each other; only sparks lie over cells |
 | reduced motion | clock ignored: still fire, no spark |
 | same inputs | same items (deterministic) |

@@ -23,7 +23,7 @@
 
 ## R7. Sparks
 - **Finding**: `ArcadeFrameSource.flamesAt` reads `ArcadeRun.View` (score, judged, `streak()`, `states()`); nothing under `arcade/core` mentions flames (`FlameParityTest`).
-- **Decision**: `ArcadeFrameSource` counts the right states of each view; each new one adds a burst (flame clock, streak) kept 1 s; `FlameState` carries the list. `FlameDrawing` draws each burst as 4 + min(streak, 12) / 2 sparks (at most 10 per burst, 60 in the air), single cells (QUAD, role `FLAME_EMBER`), position and path from a hash of the burst's time and index, rising and fading over 1 s, faded near texts. None at BALANCED, off, reduced motion, or paused (the flame clock stands still).
+- **Decision**: `ArcadeFrameSource` counts the right states of each view; each new one adds a burst (flame clock, streak) kept 1 s; `FlameState` carries the list. `FlameDrawing` draws each burst as 4 + min(streak, 12) / 2 sparks (at most 10 per burst, 60 in the air), single cells (QUAD, role `FLAME_EMBER`), position and path from a hash of the burst's time and index, rising and fading over 1 s, faded near texts; over a fire cell of opacity a the spark's opacity is at most (0.60 − a) / (1 − a), so that both together never exceed 0.60 (FR-002). None at BALANCED, off, reduced motion, or paused (the flame clock stands still).
 
 ## R8. The owner's targeted exception (Constitution XI)
 Asserting the tongue shape, to be adapted with each line listed in the commit:

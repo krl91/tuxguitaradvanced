@@ -17,7 +17,7 @@ x, y, width, height (doubles). Empty or null = unknown.
 - `leftCorner`: the corner left by the last move, or none.
 - `movedFor`: the identity of the current event when the last move was made (one move per framed note).
 - `areaSize`, `paletteSize`: the sizes at the last move (a change allows a new move).
-- `outside`: true when the learner put the palette outside the main window (never moved).
+- `outside`: true when the learner's last move put the palette outside the main window (never moved); not set when the main window moves away from the palette.
 
 ## Corner
 TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT; position = the corner of `area` inset by 16 px, palette fully inside.
