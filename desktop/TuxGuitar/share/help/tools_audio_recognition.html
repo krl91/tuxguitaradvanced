@@ -104,7 +104,7 @@
     <tr><td>Repeat passages</td><td>choice</td><td>—</td><td>—</td><td>Every 2 measures</td><td>Off plays straight through; 1 or 4 measures give shorter or longer passages</td><td>—</td></tr>
     <tr><td>Repeat when errors exceed</td><td>%</td><td>25</td><td>75</td><td>50</td><td>25 %: repeats even with a few mistakes</td><td>75 %: repeats only when most notes failed</td></tr>
     <tr><td>Maximum repeats</td><td></td><td>0</td><td>5</td><td>2</td><td>0 never repeats</td><td>a difficult passage may be played up to 6 times</td></tr>
-    <tr><td>Time to play the note (Follow the tempo)</td><td>ms</td><td>100</td><td>600</td><td>300</td><td>stricter: in Follow the tempo, a note must come sooner after its written time to be accepted</td><td>more lenient: a note played later after its written time is still accepted; when the notes are close, the time stops before the next note so that one note never counts for two</td></tr>
+    <tr><td>Time to play the note (Follow the tempo)</td><td>ms</td><td>100</td><td>1200</td><td>600</td><td>stricter: in Follow the tempo, a note must come sooner after its written time to be accepted</td><td>more lenient: a note played later after its written time is still accepted; when the notes are close, the time stops before the next note so that one note never counts for two</td></tr>
     </table>
     <h2 id="engine">Recognition engine</h2>
     <p>This version has one pitch detection engine, <strong>FastYin</strong> (TarsosDSP). It finds <strong>one note at a time</strong> (monophonic); chords are checked with a separate spectrum analysis against the written chord (polyphonic, but only for the expected notes). "Automatic" always uses the recommended engine. No other engine is offered because none exists yet.</p>

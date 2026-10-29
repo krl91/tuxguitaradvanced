@@ -215,6 +215,11 @@ final class PreRunWindow {
 				PreRunWindow.this.offer.calibrationEnded(calibrated);
 				PreRunWindow.this.refresh();
 			}
+
+			public String unstableKey() {
+				// this window has no field for the delay: the sentence says where it is (spec 016, gate G2)
+				return "practice.prerun.rhythm.unstable";
+			}
 		}) : null);
 		this.calibrateNowButton.addSelectionListener(selected(this::calibrateNow));
 		this.goOnWithoutButton.addSelectionListener(selected(() -> {

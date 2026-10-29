@@ -94,7 +94,7 @@ public class PlayTimeWindowTest {
 	@Test
 	public void aTimeToPlayOutsideOneHundredToSixHundredIsRefused() {
 		assertThrows(IllegalArgumentException.class, () -> new PlayTimeWindow(99));
-		assertThrows(IllegalArgumentException.class, () -> new PlayTimeWindow(601));
+		assertThrows(IllegalArgumentException.class, () -> new PlayTimeWindow(1201));
 		assertEquals(100, new PlayTimeWindow(100).playTimeMillis());
 		assertEquals(600, new PlayTimeWindow(600).playTimeMillis());
 	}

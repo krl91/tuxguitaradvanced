@@ -26,6 +26,11 @@ final class CalibrationFlow {
 		/** The calibration ended; {@code calibrated} when the route now has a measured delay. */
 		default void ended(boolean calibrated) {
 		}
+
+		/** The sentence of a calibration too scattered to keep: it says where the delay is set by hand when the view has no field for it. */
+		default String unstableKey() {
+			return "practice.follow.calibration.unstable";
+		}
 	}
 
 	private final FollowPanel.Backend backend;
@@ -104,7 +109,7 @@ final class CalibrationFlow {
 				break;
 			case UNSTABLE:
 			case OUT_OF_RANGE:
-				this.view.progress(TuxGuitar.getProperty("practice.follow.calibration.unstable", new String[] { Long.toString(Math.round(result.spreadMillis())) }));
+				this.view.progress(TuxGuitar.getProperty(this.view.unstableKey(), new String[] { Long.toString(Math.round(result.spreadMillis())) }));
 				break;
 			default:
 				this.view.progress(TuxGuitar.getProperty("practice.follow.calibration.too-few",

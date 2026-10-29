@@ -9,8 +9,8 @@ package app.tuxguitar.app.tools.custom.practice.session;
 public final class PlayTimeWindow implements WindowPolicy {
 
 	public static final int MIN_MILLIS = 100;
-	public static final int MAX_MILLIS = 600;
-	public static final int DEFAULT_MILLIS = 300;
+	public static final int MAX_MILLIS = 1200;
+	public static final int DEFAULT_MILLIS = 600;
 	/** How long before its red a note may be played. */
 	static final long ADVANCE_NANOS = 50_000_000L;
 	/** What is left between the end of a window and the next red. */

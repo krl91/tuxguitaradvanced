@@ -30,8 +30,8 @@ public class FollowSettingsPlayTimeTest {
 
 	@Test
 	public void absentItIsThreeHundredMilliseconds() {
-		assertEquals(300, new FollowSettings(new RecognitionSettingsStore(new Memory())).getPlayTimeMillis());
-		assertEquals(300, new FollowSettings().getPlayTimeMillis(), "without a store too");
+		assertEquals(600, new FollowSettings(new RecognitionSettingsStore(new Memory())).getPlayTimeMillis());
+		assertEquals(600, new FollowSettings().getPlayTimeMillis(), "without a store too");
 	}
 
 	@Test
@@ -51,7 +51,7 @@ public class FollowSettingsPlayTimeTest {
 		settings.setPlayTimeMillis(20);
 		assertEquals(100, settings.getPlayTimeMillis());
 		settings.setPlayTimeMillis(5000);
-		assertEquals(600, settings.getPlayTimeMillis());
+		assertEquals(1200, settings.getPlayTimeMillis());
 		FollowSettings own = new FollowSettings();
 		own.setPlayTimeMillis(-1);
 		assertEquals(100, own.getPlayTimeMillis());

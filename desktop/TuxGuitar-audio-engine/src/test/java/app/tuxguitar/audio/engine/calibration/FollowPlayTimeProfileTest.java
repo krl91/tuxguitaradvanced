@@ -53,7 +53,7 @@ public class FollowPlayTimeProfileTest {
 		RecognitionParameter.Number accept = RecognitionParameters.NOTE_ACCEPT;
 		values.put(accept, accept.getMinimum() == accept.getDefault() ? accept.getMaximum() : accept.getMinimum());
 		store.setActiveProfile(profile(values));
-		assertEquals(300.0, store.get().get(RecognitionParameters.FOLLOW_PLAY_TIME), "the default, 300 ms");
+		assertEquals(600.0, store.get().get(RecognitionParameters.FOLLOW_PLAY_TIME), "the default, 600 ms");
 		store.setActiveProfile(null);
 		store.update(store.getDefault().with(RecognitionParameters.FOLLOW_PLAY_TIME, 450.0));
 		store.setActiveProfile(profile(values));
@@ -63,9 +63,9 @@ public class FollowPlayTimeProfileTest {
 	@Test
 	public void theTimeToPlayGoesFromOneHundredToSixHundredMillisecondsWithThePassages() {
 		RecognitionParameter.Number playTime = RecognitionParameters.FOLLOW_PLAY_TIME;
-		assertEquals(300.0, playTime.getDefault());
+		assertEquals(600.0, playTime.getDefault());
 		assertEquals(100.0, playTime.getMinimum());
-		assertEquals(600.0, playTime.getMaximum());
+		assertEquals(1200.0, playTime.getMaximum());
 		assertEquals(RecognitionParameter.Section.PASSAGES, playTime.getSection(), "the owner's choice of 2026-10-29: the notes have no room left");
 	}
 }

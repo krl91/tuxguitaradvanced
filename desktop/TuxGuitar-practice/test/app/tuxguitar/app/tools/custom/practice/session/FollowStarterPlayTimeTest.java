@@ -231,6 +231,26 @@ public class FollowStarterPlayTimeTest {
 		}
 		List<FollowSession.EventResult> results = prepared.run();
 		assertEquals(Status.MATCHED, results.get(2).status());
-		assertEquals(TimingVerdict.LATE, results.get(2).timing());
+		assertEquals(TimingVerdict.ON_TIME, results.get(2).timing(), "within half of 600 ms since gate G2");
+	}
+
+	@Test
+	public void atTheDefaultSettingsTheRightPitchPlayedFiveHundredFiftyMillisecondsLateIsAccepted() {
+		// spec US3 scenario 6 (gate G2, T043): one note at 120 beats a minute for the count-in, then quarters 1.5 s apart at 40 beats a minute
+		SongFixture fixture = new SongFixture(2);
+		fixture.quarter(0, 0, 1, 0);
+		fixture.tempoChange(1, 40);
+		fixture.quarter(1, 0, 1, 2);
+		fixture.quarter(1, 1, 1, 4);
+		FollowSettings settings = new FollowSettings();
+		settings.setMode(FollowSettings.Mode.FOLLOW);
+		Prepared prepared = new Prepared(fixture, settings, FOLLOW);
+		assertEquals(1500 * MS, prepared.target(2) - prepared.target(1));
+		prepared.play(prepared.target(0), prepared.midi(0));
+		prepared.play(prepared.target(1) + 550 * MS, prepared.midi(1));
+		prepared.play(prepared.target(2), prepared.midi(2));
+		List<FollowSession.EventResult> results = prepared.run();
+		assertEquals(Status.MATCHED, results.get(1).status());
+		assertEquals(TimingVerdict.LATE, results.get(1).timing());
 	}
 }
