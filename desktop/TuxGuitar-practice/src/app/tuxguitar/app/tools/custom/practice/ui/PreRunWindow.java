@@ -72,6 +72,15 @@ final class PreRunWindow {
 	private final UIButton cancelButton;
 	private final UILabel levelLabel;
 	private final UIDropDownSelect<ArcadeLevel> levelSelect;
+	/** The offer of the rhythm calibration after the level (spec 016), or null: then the mode begins as soon as the check is ready. */
+	private final RhythmOffer offer;
+	private final CalibrationFlow calibration;
+	private final UILabel rhythmSentence;
+	private final UILabel rhythmProgress;
+	private final UIPanel rhythmButtons;
+	private final UIButton calibrateNowButton;
+	private final UIButton goOnWithoutButton;
+	private final UIButton calibrationCancelButton;
 	private State shown;
 	private long strumSince;
 	private boolean finished;
@@ -86,7 +95,17 @@ final class PreRunWindow {
 	/** @param levelChoice for an Arcade start (spec 014): the row that asks the level of the run is shown first; null for the other modes (no row) */
 	PreRunWindow(UIFactory factory, UIWindow parent, PreRunCheck check, PreRunSource source, Texts texts, LongSupplier clock, TunerOpener tuner, Runnable onFinished,
 			LevelChoice levelChoice) {
+		this(factory, parent, check, source, texts, clock, tuner, onFinished, levelChoice, null, null);
+	}
+
+	/**
+	 * @param offer the offer of the rhythm calibration once the check is ready (spec 016 FR-004), or null for none
+	 * @param backend runs the calibration of the offer as the Mode tab runs it; null when there is no offer
+	 */
+	PreRunWindow(UIFactory factory, UIWindow parent, PreRunCheck check, PreRunSource source, Texts texts, LongSupplier clock, TunerOpener tuner, Runnable onFinished,
+			LevelChoice levelChoice, RhythmOffer offer, FollowPanel.Backend backend) {
 		this.check = check;
+		this.offer = (backend != null ? offer : null);
 		this.source = source;
 		this.texts = texts;
 		this.clock = clock;
@@ -162,6 +181,48 @@ final class PreRunWindow {
 		this.continueButton = button(factory, buttons, buttonsLayout, 2, "practice.prerun.continue");
 		this.cancelButton = button(factory, buttons, buttonsLayout, 3, "practice.prerun.cancel");
 
+		// the offer of the rhythm calibration (spec 016): its sentence, the calibration's own sentence, and its buttons
+		this.rhythmSentence = factory.createWrapLabel(this.window);
+		this.rhythmSentence.setText(texts.get("practice.prerun.rhythm.sentence"));
+		layout.set(this.rhythmSentence, first + 7, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.rhythmSentence, UITableLayout.PACKED_WIDTH, InputSelectorPanel.WRAP_WIDTH);
+		this.rhythmProgress = factory.createWrapLabel(this.window);
+		this.rhythmProgress.setText("");
+		layout.set(this.rhythmProgress, first + 8, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.rhythmProgress, UITableLayout.PACKED_WIDTH, InputSelectorPanel.WRAP_WIDTH);
+		UITableLayout rhythmLayout = new UITableLayout(0f);
+		rhythmLayout.set(UITableLayout.IGNORE_INVISIBLE, Boolean.TRUE);
+		this.rhythmButtons = factory.createPanel(this.window, false);
+		this.rhythmButtons.setLayout(rhythmLayout);
+		layout.set(this.rhythmButtons, first + 9, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.calibrateNowButton = button(factory, this.rhythmButtons, rhythmLayout, 1, "practice.prerun.rhythm.calibrate");
+		this.goOnWithoutButton = button(factory, this.rhythmButtons, rhythmLayout, 2, "practice.prerun.rhythm.go-on");
+		this.calibrationCancelButton = button(factory, this.rhythmButtons, rhythmLayout, 3, "practice.follow.calibration.cancel");
+		this.calibration = (this.offer != null ? new CalibrationFlow(backend, new CalibrationFlow.View() {
+			public void progress(String text) {
+				PreRunWindow.this.rhythmProgress.setText(text);
+			}
+
+			public void refresh() {
+				PreRunWindow.this.refresh();
+			}
+
+			public void relayout() {
+				PreRunWindow.this.refresh();
+			}
+
+			public void ended(boolean calibrated) {
+				PreRunWindow.this.offer.calibrationEnded(calibrated);
+				PreRunWindow.this.refresh();
+			}
+		}) : null);
+		this.calibrateNowButton.addSelectionListener(selected(this::calibrateNow));
+		this.goOnWithoutButton.addSelectionListener(selected(() -> {
+			this.offer.goOnWithout();
+			refresh();
+		}));
+		this.calibrationCancelButton.addSelectionListener(selected(() -> this.calibration.cancel()));
+
 		this.yesButton.addSelectionListener(selected(() -> {
 			this.check.answerTuned(true);
 			refresh();
@@ -177,6 +238,7 @@ final class PreRunWindow {
 		}));
 		this.cancelButton.addSelectionListener(selected(() -> {
 			this.check.cancel();
+			cancelOffer();
 			refresh();
 		}));
 		this.window.addDisposeListener(new UIDisposeListener() {
@@ -195,6 +257,23 @@ final class PreRunWindow {
 		this.check.setMeterReset(this.source::reset);
 		this.source.setChangeListener(this::refresh);
 		this.shown = null;
+	}
+
+	/** Calibrate now: one action, the clicks begin at once inside this window; when they cannot, the offer stays with the reason. */
+	private void calibrateNow() {
+		this.offer.calibrate();
+		if (!this.calibration.start()) {
+			this.offer.calibrationEnded(false);
+		}
+		refresh();
+	}
+
+	/** The start is cancelled during the offer: the clicks stop and nothing begins. */
+	private void cancelOffer() {
+		if (this.offer != null) {
+			this.calibration.dispose();
+			this.offer.cancel();
+		}
 	}
 
 	/** What an Arcade start asks of the player and remembers: the level, level 1 the first time, then the last one chosen. */
@@ -282,6 +361,10 @@ final class PreRunWindow {
 				state = this.check.state();
 			}
 		}
+		if (state == State.READY && this.offer != null && this.offer.enter()) {
+			showOffer();
+			return;
+		}
 		if (state == State.READY || state == State.CANCELLED) {
 			finish();
 			return;
@@ -322,9 +405,39 @@ final class PreRunWindow {
 		this.checkAgainButton.setVisible(bad);
 		this.continueButton.setVisible(bad || (strum && this.clock.getAsLong() - this.strumSince >= GO_ON_AFTER_NANOS));
 		this.cancelButton.setVisible(true);
+		this.rhythmSentence.setVisible(false);
+		this.rhythmProgress.setVisible(false);
+		this.rhythmButtons.setVisible(false);
 		// a control made visible after the window was laid out has no size until the layout is redone (found by the owner: an empty window with only its buttons)
 		String layoutKey = state + "|" + this.tunerMissing + "|" + this.sentence.getText() + "|" + this.advice.getText() + "|" + this.continueButton.isVisible() + "|" + this.checkAgainButton.isVisible();
 		if (!layoutKey.equals(this.laidOutFor) && state != State.TUNER_OPEN) {
+			this.laidOutFor = layoutKey;
+			WindowFit.refit(this.window, null);
+		}
+	}
+
+	/** The step of the rhythm calibration (spec 016): the strum is over, its parts give way to the offer, then to the clicks of the calibration. */
+	private void showOffer() {
+		boolean calibrating = this.offer.state() == RhythmOffer.State.CALIBRATING;
+		this.window.setVisible(true);
+		this.question.setVisible(false);
+		this.yesButton.setVisible(false);
+		this.noButton.setVisible(false);
+		this.ask.setVisible(false);
+		this.meter.setVisible(false);
+		this.sentence.setVisible(false);
+		this.advice.setVisible(false);
+		this.checkAgainButton.setVisible(false);
+		this.continueButton.setVisible(false);
+		this.cancelButton.setVisible(true);
+		this.rhythmSentence.setVisible(true);
+		this.rhythmProgress.setVisible(!this.rhythmProgress.getText().isEmpty());
+		this.rhythmButtons.setVisible(true);
+		this.calibrateNowButton.setVisible(!calibrating);
+		this.goOnWithoutButton.setVisible(!calibrating);
+		this.calibrationCancelButton.setVisible(calibrating);
+		String layoutKey = "RHYTHM|" + calibrating + "|" + this.rhythmProgress.getText();
+		if (!layoutKey.equals(this.laidOutFor)) {
 			this.laidOutFor = layoutKey;
 			WindowFit.refit(this.window, null);
 		}
@@ -348,13 +461,20 @@ final class PreRunWindow {
 		if (this.check.state() != State.READY) {
 			this.check.cancel();
 		}
+		cancelOffer();
 		finish();
 	}
 
 	/** The Escape key: a cancel. */
 	void escapePressed() {
 		this.check.cancel();
+		cancelOffer();
 		refresh();
+	}
+
+	/** True when the mode may begin: the check is ready and the offer of the rhythm, if any, allows it. */
+	boolean mayBegin() {
+		return this.check.state() == State.READY && (this.offer == null || this.offer.allowsStart());
 	}
 
 	/** Gives the hand back once: the audio listeners are released, the window closes and the flow is told. */
@@ -410,5 +530,25 @@ final class PreRunWindow {
 
 	UIButton cancelButton() {
 		return this.cancelButton;
+	}
+
+	UILabel rhythmSentenceLabel() {
+		return this.rhythmSentence;
+	}
+
+	UILabel rhythmProgressLabel() {
+		return this.rhythmProgress;
+	}
+
+	UIButton calibrateNowButton() {
+		return this.calibrateNowButton;
+	}
+
+	UIButton goOnWithoutButton() {
+		return this.goOnWithoutButton;
+	}
+
+	UIButton calibrationCancelButton() {
+		return this.calibrationCancelButton;
 	}
 }

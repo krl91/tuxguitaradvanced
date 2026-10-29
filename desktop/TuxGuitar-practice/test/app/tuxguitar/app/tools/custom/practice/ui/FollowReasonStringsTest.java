@@ -93,4 +93,21 @@ public class FollowReasonStringsTest {
 			}
 		}
 	}
+
+	@Test
+	public void theOfferOfTheRhythmAndTheRecordOfARunHaveTheirTextsInTheThreeLanguages() throws IOException {
+		// spec 016 T011, T019: the boxes of the record, its failure, and the step of the start window
+		for (String file : FILES) {
+			Properties properties = load(file);
+			for (String key : new String[] { "practice.prerun.rhythm.sentence", "practice.prerun.rhythm.calibrate", "practice.prerun.rhythm.go-on",
+					"practice.follow.record.run", "practice.follow.record.audio" }) {
+				String text = properties.getProperty(key);
+				assertTrue(text != null && !text.trim().isEmpty(), file + " " + key);
+				assertTrue(placeholders(text).isEmpty(), file + " " + key + " takes no value");
+			}
+			String failed = properties.getProperty("practice.follow.record.failed");
+			assertTrue(failed != null && placeholders(failed).contains("0"), file + " says what went wrong");
+		}
+	}
+
 }

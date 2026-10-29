@@ -103,7 +103,8 @@ public final class FollowPanel {
 	private final UILabel progress;
 	private final UILabel precision;
 	private boolean updating;
-	private CalibrationRun running;
+	/** The rhythm calibration of the Mode tab, the same one as the start window's (spec 016). */
+	private final CalibrationFlow calibration;
 	private Runnable contentListener;
 	private Runnable modeListener;
 
@@ -116,6 +117,19 @@ public final class FollowPanel {
 		this.arcadeChoices = arcadeChoices;
 		this.settings = settings;
 		this.backend = backend;
+		this.calibration = new CalibrationFlow(backend, new CalibrationFlow.View() {
+			public void progress(String text) {
+				FollowPanel.this.progress.setText(text);
+			}
+
+			public void refresh() {
+				FollowPanel.this.refresh();
+			}
+
+			public void relayout() {
+				FollowPanel.this.relayout();
+			}
+		});
 		this.panel = uiFactory.createPanel(parent, false);
 		UITableLayout layout = new UITableLayout();
 		// what is hidden takes no room: the wait mode shows the choice of the mode and nothing else
@@ -411,11 +425,11 @@ public final class FollowPanel {
 			this.recordAudio.setSelected(this.settings.isRecordAudio());
 			this.recordRun.setVisible(followOnly);
 			this.recordAudio.setVisible(followOnly);
-			this.recordRun.setEnabled(this.running == null);
-			this.recordAudio.setEnabled(this.running == null && this.settings.isRecordRun());
+			this.recordRun.setEnabled(!this.calibration.isRunning());
+			this.recordAudio.setEnabled(!this.calibration.isRunning() && this.settings.isRecordRun());
 			this.modeHint.setText(this.settings.isArcade() ? TuxGuitar.getProperty("practice.mode.arcade.hint") + "\n" + TuxGuitar.getProperty("arcade.monitoring.unavailable")
 					: TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
-			boolean idle = (this.running == null);
+			boolean idle = !this.calibration.isRunning();
 			this.percentLabel.setVisible(follow);
 			this.percent.setVisible(follow);
 			this.percentHint.setVisible(follow);
@@ -520,84 +534,20 @@ public final class FollowPanel {
 	}
 
 	private void startCalibration() {
-		if (this.running != null || this.backend.route() == null) {
-			return;
-		}
-		CalibrationRun run = this.backend.newCalibration();
-		if (run == null) {
-			this.progress.setText(TuxGuitar.getProperty(this.backend.playerBusy() ? "practice.follow.player-busy" : "practice.follow.calibration.no-input"));
-			relayout();
-			return;
-		}
-		this.running = run;
-		run.start();
-		this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.running", new String[] { "0", Integer.toString(run.clickCount()) }));
-		refresh();
-		this.backend.begin(run, this::calibrationChanged);
+		this.calibration.start();
 	}
 
 	/** The run moved (UI thread). */
 	void calibrationChanged() {
-		CalibrationRun run = this.running;
-		if (run == null || this.panel.isDisposed()) {
+		if (this.panel.isDisposed()) {
 			return;
 		}
-		switch (run.state()) {
-			case FINISHED:
-				finish(run);
-				break;
-			case FAILED:
-				this.backend.end(run);
-				this.running = null;
-				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.no-input"));
-				refresh();
-				break;
-			case CANCELLED:
-				break;
-			default:
-				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.running",
-						new String[] { Integer.toString(run.clicksPlayed()), Integer.toString(run.clickCount()) }));
-				relayout();
-				break;
-		}
-	}
-
-	private void finish(CalibrationRun run) {
-		this.backend.end(run);
-		this.running = null;
-		CalibrationTaps.Result result = run.result();
-		AudioRoute route = this.backend.route();
-		switch (result.status()) {
-			case CALIBRATED:
-				if (route != null) {
-					this.backend.calibrations().set(route, result.compensation());
-				}
-				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.done",
-						new String[] { Long.toString(Math.round(result.medianMillis())), Integer.toString(result.used()) }));
-				break;
-			case UNSTABLE:
-			case OUT_OF_RANGE:
-				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.unstable", new String[] { Long.toString(Math.round(result.spreadMillis())) }));
-				break;
-			default:
-				this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.too-few",
-						new String[] { Integer.toString(result.used()), Integer.toString(result.total()) }));
-				break;
-		}
-		refresh();
+		this.calibration.changed();
 	}
 
 	/** Cancel: the clicks stop at once and nothing is kept. */
 	private void cancelCalibration() {
-		CalibrationRun run = this.running;
-		if (run == null) {
-			return;
-		}
-		run.cancel();
-		this.backend.end(run);
-		this.running = null;
-		this.progress.setText(TuxGuitar.getProperty("practice.follow.calibration.cancelled"));
-		refresh();
+		this.calibration.cancel();
 	}
 
 	/** A message of the run (why it ended, why it did not start) under the controls, in the language of the learner. */
@@ -610,17 +560,12 @@ public final class FollowPanel {
 
 	/** Whether a calibration is running now. */
 	public boolean isCalibrating() {
-		return this.running != null;
+		return this.calibration.isRunning();
 	}
 
 	/** The window closes: a calibration that runs stops at once. */
 	public void dispose() {
-		CalibrationRun run = this.running;
-		if (run != null) {
-			run.cancel();
-			this.backend.end(run);
-			this.running = null;
-		}
+		this.calibration.dispose();
 	}
 
 	private void relayout() {

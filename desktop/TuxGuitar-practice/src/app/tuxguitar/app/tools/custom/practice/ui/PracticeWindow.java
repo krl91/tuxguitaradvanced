@@ -191,7 +191,7 @@ public class PracticeWindow {
 		this.context = context;
 		this.host = host;
 		this.shared = PracticeTunerContext.getInstance(context);
-		this.startFlow = new StartFlow(new PreRunStartGate(context, host, () -> this.engine, this::startCancelled));
+		this.startFlow = new StartFlow(new PreRunStartGate(context, host, () -> this.engine, this::startCancelled, () -> this.followAdapter));
 		this.highlight = new PracticeHighlight(context);
 		this.palette = new PracticePalette(context, new PracticePalette.Controller() {
 			public void post(PracticeCommand command) {

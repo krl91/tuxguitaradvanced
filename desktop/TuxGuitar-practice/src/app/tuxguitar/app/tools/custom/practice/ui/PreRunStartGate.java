@@ -22,26 +22,38 @@ final class PreRunStartGate implements StartGate {
 	private final Supplier<AudioEngine> engine;
 	private final PracticeHost host;
 	private final Runnable onCancelled;
+	/** The route, its calibrations and the calibration of the Mode tab, for the offer of the rhythm calibration (spec 016); read when the start is asked. */
+	private final Supplier<FollowPanel.Backend> backend;
 	private PreRunWindow current;
 
 	PreRunStartGate(TGContext context, PracticeHost host, Supplier<AudioEngine> engine, Runnable onCancelled) {
+		this(context, host, engine, onCancelled, () -> null);
+	}
+
+	PreRunStartGate(TGContext context, PracticeHost host, Supplier<AudioEngine> engine, Runnable onCancelled, Supplier<FollowPanel.Backend> backend) {
 		this.context = context;
 		this.engine = engine;
 		this.host = host;
 		this.onCancelled = onCancelled;
+		this.backend = backend;
 	}
 
 	@Override
 	public void request(PreRunCheck check, Runnable onReady) {
+		final FollowPanel.Backend rhythm = this.backend.get();
+		RhythmOffer offer = (rhythm != null ? new RhythmOffer(check.mode(), rhythm::route, rhythm.calibrations(), DeclinedRoutes.of(this.context)) : null);
+		final PreRunWindow[] made = new PreRunWindow[1];
 		PreRunWindow window = new PreRunWindow(this.host.factory(), this.host.mainWindow(), check, new EnginePreRunSource(this.context, this.engine.get()), TEXTS, this.host::nanoTime,
 				new PracticeTunerOpener(this.context), () -> {
 					this.current = null;
-					if (check.state() == State.READY) {
+					if (made[0].mayBegin()) {
 						onReady.run();
-					} else if (check.state() == State.CANCELLED) {
+					} else if (check.state() == State.CANCELLED || check.state() == State.READY) {
+						// a start cancelled during the offer of the rhythm calibration: the check was ready, the offer was not
 						this.onCancelled.run();
 					}
-				}, levelChoiceFor(check));
+				}, levelChoiceFor(check), offer, rhythm);
+		made[0] = window;
 		this.current = window;
 		window.refresh();
 		window.open();
