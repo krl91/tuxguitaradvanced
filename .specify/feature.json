@@ -1,1 +1,3 @@
-{"feature_directory": "specs/015-version-and-commit-everywhere"}
+{
+  "feature_directory": "specs/016-follow-mode-leniency"
+}
