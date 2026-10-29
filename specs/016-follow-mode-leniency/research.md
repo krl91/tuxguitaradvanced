@@ -66,3 +66,62 @@ Date: 2026-10-29. Every claim cites the file it was read in (paths relative to `
 ## R7. Order of the work
 
 Story 1 (reasons and record) first, then a **human gate**: the owner plays one run with both boxes ticked; the shares of the reasons are reported (SC-002) before any value of story 3 is chosen. Story 2 is independent and can go between. Story 3 last.
+
+## R8. The owner's record (gate G1, SC-002)
+
+Recorded by the owner on 2026-10-29 at 22:05 (`~/tuxguitar-follow-takes/follow-2026-10-29-220514.csv` and `.wav`, 48 kHz mono, 42.6 s), replayed on 2026-10-29 with `FollowTakeReplayTest` (tag `dataset`, `-Dfollow.score=tests/basic_test.tg`). Conditions: the score **`basic_test.tg`** (not `tests/1/_TEST_verifie.tg` as the gate asked; the owner chose to keep this run), track 1, tempo 70 %, timing window 100 ms, the Rocksmith adapter, rhythm **not calibrated** (`calibration=NONE`, confirmed by the owner). It is the application of story 1 (before story 3): no time to play, no position in the record.
+
+13 events (10 single notes, 3 chords), 2.857 s apart. 1 accepted (event 0, late), 12 refused:
+
+| Reason (SC-002) | Recorded | Share | Replayed |
+|---|---|---|---|
+| No attack heard (`NO_ATTACK`) | 8 | 66.7 % | 10 |
+| Played too late (`LATE_OUTSIDE`, 467 to 943 ms after the red) | 3 | 25.0 % | 1 |
+| Unclear pitch (`UNCLEAR`) | 1 | 8.3 % | 1 |
+| Wrong pitch, too early, chord incomplete, offset of the route | 0 | 0 % | 0 |
+
+Replay agreement: 12 of 13 verdicts (event 0, recorded MATCHED late at +288.9 ms, is NOT_JUDGED in the replay; the replay counts two more NO_ATTACK and two fewer LATE_OUTSIDE). The levels heard are low (−38 to −44 dBFS).
+
+SC-003 on this record: **not measurable**. No event was heard at the right pitch between 50 ms before its red and 300 ms after it (0 of 0); with 600 ms, 2 events qualify and 0 are accepted with the run's settings.
+
+What it says: on the owner's guitar, **two refusals out of three are an attack that was never heard**, and none is a wrong or out-of-tune pitch. The pitch positions of story 3 cannot act on that (they change no level threshold and no attack detection, contracts/follow-leniency.md); the time to play of story 3 acts on the three late ones only if they are within it (467 ms would be with 600 ms, not with 300 ms). The attack detection at a low input level is outside this spec; it is reported to the owner.
+
+## R9 (preliminary, before gate G1). The pitch positions measured on the reference recording
+
+Measured on 2026-10-29 with `FollowLeniencyReplayTest` (`-Dfollow.measure=true`, tag `dataset`), on `tests/1` (38 events judged, 98 negative tests), before the owner's record exists. The values of `FollowLeniency` are still the provisional ones (Arcade's, the acceptance in cents unchanged at 35).
+
+| Settings | Right notes accepted | Negatives accepted | Chords with a note missing accepted | Median delay |
+|---|---|---|---|---|
+| Base (default settings) = Strict | 35 / 38 (missed 8, 13, 32) | 0 / 98 | 2 / 12 | 105 ms |
+| Permissive (provisional) | 35 / 38 | 0 / 98 | 2 / 12 | 105 ms |
+| Very permissive (provisional) | 35 / 38 | 0 / 98 | 2 / 12 | 105 ms |
+| `NOTE_ACCEPT` 40 | 34 / 38 (event 35 lost too) | 0 / 98 | 2 / 12 | 105 ms |
+| `NOTE_ACCEPT` 45 | 34 / 38 | 0 / 98 | 2 / 12 | 105 ms |
+| `NOTE_ACCEPT` 40, confidence 0.60, stability 55 ms | 34 / 38 | 0 / 98 | 2 / 12 | 105 ms |
+| `NOTE_ACCEPT` 45, confidence 0.55, stability 50 ms | 34 / 38 | 0 / 98 | 2 / 12 | 105 ms |
+
+What it says: as for Arcade (spec 014, R6-ter), the confidence, stability and chord rows change nothing on this recording, and widening the acceptance in cents **loses a right note** (no gain). SC-004 holds at every position (0 of 98, the limit is 4). The three refused events of the base are the NO_ATTACK events of story 1 (R8 will say the same of the owner's take or not). The choice of T032 waited for the owner's record (T015, T016, R8).
+
+## R9 (final, T032). The values chosen
+
+Measured on 2026-10-29 after R8, with the same test and `-Dfollow.candidates`. Every set below, down to the bounds of each setting, gives the base figures (35 of 38 right notes, 0 of 98 negatives, 2 of 12 chords with a note missing, median delay 105 ms); only the acceptance in cents loses a note (event 35 at 40 and 45 cents).
+
+| Candidate | Right | Negatives |
+|---|---|---|
+| confidence 0.50, stability 50 ms | 35 / 38 | 0 / 98 |
+| chord evidence 0.20, partials 1, confirm 20 ms | 35 / 38 | 0 / 98 |
+| all of the above together | 35 / 38 | 0 / 98 |
+| confidence 0.60, stability 55, evidence 0.22, partials 1, confirm 24 | 35 / 38 | 0 / 98 |
+
+Rule of T032: the most lenient values with at most 4 of 98 negatives at Permissive and no right note lost. Chosen, so that the two positions stay apart:
+
+| Row | Default | Permissive | Very permissive |
+|---|---|---|---|
+| Acceptance in cents (`NOTE_ACCEPT`) | 35 | 35 | 35 |
+| Note confidence | 0.80 | 0.60 | 0.50 (bound) |
+| Note stability | 107 ms | 55 ms | 50 ms (bound) |
+| Chord evidence | 0.33 | 0.22 | 0.20 (bound) |
+| Chord minimum partials | 2 | 1 | 1 (bound) |
+| Chord confirmation | 43 ms | 24 ms | 20 ms (bound) |
+
+Figures at every position with these values: Strict, Permissive and Very permissive each 35 / 38, 0 / 98 (SC-004 holds, limit 4), 2 / 12, median 105 ms. SC-003 on the owner's record: not measurable (R8, 0 qualifying events); the best reachable figure is therefore not reported. Spec US3 scenario 1 (the right pitch 20 cents out of tune, 250 ms after its red, at the default settings, accepted late) is pinned by `FollowStarterPlayTimeTest`; the values by `FollowLeniencyTest.theValuesMeasuredForT032`.

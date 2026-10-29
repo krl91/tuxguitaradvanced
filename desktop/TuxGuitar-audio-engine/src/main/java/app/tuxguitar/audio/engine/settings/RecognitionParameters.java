@@ -76,6 +76,12 @@ public final class RecognitionParameters {
 	public static final Choice PASSAGE_MEASURES = new Choice(PREFIX + "passage.measures", Section.PASSAGES, "2", PASSAGES_OFF, "1", "2", "4");
 	public static final Choice PASSAGE_THRESHOLD = new Choice(PREFIX + "passage.threshold", Section.PASSAGES, "50", "25", "50", "75");
 	public static final Number PASSAGE_RETRIES = new Number(PREFIX + "passage.retries", Section.PASSAGES, "", 2, 0, 5, true);
+	/**
+	 * The time to play a note in Follow (spec 016, FR-011): from the moment a note turns red, how long it may still be played, in milliseconds. It replaces
+	 * {@link #TEMPO_WINDOW} in Follow only (Arcade keeps that one). The learner's choice, like the window: never a parameter of a device profile. Shown with the passages (spec 016 T029):
+	 * the section of the notes has no room left in the Configuration window.
+	 */
+	public static final Number FOLLOW_PLAY_TIME = new Number(PREFIX + "follow.play-time", Section.PASSAGES, "ms", 300, 100, 600, true);
 
 	// ---------------------------------------------------------------- engine
 	public static final Choice ENGINE_PITCH = new Choice(PREFIX + "engine.pitch", Section.ENGINE,
@@ -98,7 +104,7 @@ public final class RecognitionParameters {
 				TUNER_IN_TUNE, TUNER_HOLD,
 				NOTE_ACCEPT, NOTE_FRET_SHARP, NOTE_CONFIDENCE, NOTE_STABILITY, NOTE_ATTACK, NOTE_LEGATO, NOTE_TECHNIQUE, TEMPO_WINDOW,
 				CHORD_EVIDENCE, CHORD_WINDOW, CHORD_COMPLETENESS, CHORD_FOREIGN,
-				PASSAGE_MEASURES, PASSAGE_THRESHOLD, PASSAGE_RETRIES,
+				PASSAGE_MEASURES, PASSAGE_THRESHOLD, PASSAGE_RETRIES, FOLLOW_PLAY_TIME,
 				ENGINE_PITCH,
 				LEVEL_CLIP_SAMPLE, LEVEL_CLIP_SHARE, TUNER_CONFIDENCE, ATTACK_MIN_LEVEL, CHORD_MIN_PARTIALS, CHORD_CONFIRM);
 		for( int i = 0 ; i < all.size() ; i ++ ) {

@@ -8,8 +8,11 @@ import app.tuxguitar.app.tools.custom.practice.session.CalibrationRun;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationTaps;
 import app.tuxguitar.app.tools.custom.practice.session.ClockUncertainty;
 import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
+import app.tuxguitar.app.tools.custom.practice.session.FollowChoices;
+import app.tuxguitar.app.tools.custom.practice.session.FollowLeniencyPosition;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
 import app.tuxguitar.app.tools.custom.practice.session.LatencyCompensation;
+import app.tuxguitar.app.tools.custom.practice.session.PlayTimeWindow;
 import app.tuxguitar.app.tools.custom.practice.session.RouteCalibrations;
 import app.tuxguitar.app.tools.custom.practice.session.TimingTolerance;
 import app.tuxguitar.ui.UIFactory;
@@ -81,10 +84,17 @@ public final class FollowPanel {
 	private final UILabel leniencyLabel;
 	private final UIDropDownSelect<ArcadeLeniencyPosition> leniency;
 	private final UILabel leniencyHint;
+	private final FollowChoices followChoices;
+	private final UILabel followLeniencyLabel;
+	private final UIDropDownSelect<FollowLeniencyPosition> followLeniency;
+	private final UILabel followLeniencyHint;
 	private final UILabel percentHint;
 	private final UILabel toleranceLabel;
 	private final UIScale tolerance;
 	private final UILabel toleranceHint;
+	private final UILabel playTimeLabel;
+	private final UIScale playTime;
+	private final UILabel playTimeHint;
 	private final UILabel calibrationTitle;
 	private final UILabel calibrationState;
 	private final UILabel calibrationRoute;
@@ -114,7 +124,13 @@ public final class FollowPanel {
 
 	/** @param arcadeChoices where the position of the Arcade permissiveness is remembered (spec 014); null: no such line */
 	public FollowPanel(UIFactory uiFactory, UIContainer parent, FollowSettings settings, Backend backend, ArcadeChoices arcadeChoices) {
+		this(uiFactory, parent, settings, backend, arcadeChoices, null);
+	}
+
+	/** @param followChoices where the position of Follow's permissiveness is remembered (spec 016); null: no such line */
+	public FollowPanel(UIFactory uiFactory, UIContainer parent, FollowSettings settings, Backend backend, ArcadeChoices arcadeChoices, FollowChoices followChoices) {
 		this.arcadeChoices = arcadeChoices;
+		this.followChoices = followChoices;
 		this.settings = settings;
 		this.backend = backend;
 		this.calibration = new CalibrationFlow(backend, new CalibrationFlow.View() {
@@ -214,6 +230,24 @@ public final class FollowPanel {
 			this.leniency = null;
 			this.leniencyHint = null;
 		}
+		// the pitch permissiveness of Follow (spec 016, FR-005): the same place as Arcade's, shown in Follow only, its own saved choice
+		if (followChoices != null) {
+			this.followLeniencyLabel = uiFactory.createLabel(this.panel);
+			this.followLeniencyLabel.setText(TuxGuitar.getProperty("practice.follow.leniency.label"));
+			layout.set(this.followLeniencyLabel, 19, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+			this.followLeniency = uiFactory.createDropDownSelect(this.panel);
+			for (FollowLeniencyPosition position : FollowLeniencyPosition.values()) {
+				this.followLeniency.addItem(new UISelectItem<FollowLeniencyPosition>(TuxGuitar.getProperty("practice.follow.leniency." + position.name().toLowerCase(java.util.Locale.ROOT)), position));
+			}
+			layout.set(this.followLeniency, 19, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+			this.followLeniencyHint = wrap(uiFactory, layout, 20);
+			this.followLeniency.setSelectedValue(followChoices.leniency());
+			showFollowLeniencyHint();
+		} else {
+			this.followLeniencyLabel = null;
+			this.followLeniency = null;
+			this.followLeniencyHint = null;
+		}
 
 		this.toleranceLabel = uiFactory.createLabel(this.panel);
 		this.toleranceLabel.setText(TuxGuitar.getProperty("practice.follow.tolerance"));
@@ -227,6 +261,19 @@ public final class FollowPanel {
 		layout.set(this.tolerance, 5, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.toleranceHint = wrap(uiFactory, layout, 6);
 		showWindowText();
+		// spec 016: in Follow, the time to play the note takes the same place; the timing window above is Arcade's only
+		this.playTimeLabel = uiFactory.createLabel(this.panel);
+		this.playTimeLabel.setText(TuxGuitar.getProperty("practice.follow.play-time"));
+		layout.set(this.playTimeLabel, 5, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.playTime = uiFactory.createHorizontalScale(this.panel);
+		// the maximum first: a scale refuses a minimum that is not below its maximum (100 at creation)
+		this.playTime.setMaximum(PlayTimeWindow.MAX_MILLIS);
+		this.playTime.setMinimum(PlayTimeWindow.MIN_MILLIS);
+		this.playTime.setIncrement(10);
+		this.playTime.setValue(settings.getPlayTimeMillis());
+		layout.set(this.playTime, 5, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.playTimeHint = wrap(uiFactory, layout, 6);
+		showPlayTimeText();
 
 		this.calibrationTitle = uiFactory.createLabel(this.panel);
 		this.calibrationTitle.setText(TuxGuitar.getProperty("practice.follow.calibration"));
@@ -326,6 +373,15 @@ public final class FollowPanel {
 				this.updating = false;
 			}
 		}));
+		if (this.followLeniency != null) {
+			this.followLeniency.addSelectionListener(selected(() -> {
+				FollowLeniencyPosition chosen = this.followLeniency.getSelectedValue();
+				if (chosen != null) {
+					this.followChoices.setLeniency(chosen);
+					showFollowLeniencyHint();
+				}
+			}));
+		}
 		if (this.leniency != null) {
 			this.leniency.addSelectionListener(selected(() -> {
 				ArcadeLeniencyPosition chosen = this.leniency.getSelectedValue();
@@ -344,6 +400,10 @@ public final class FollowPanel {
 		this.tolerance.addSelectionListener(selected(() -> {
 			this.settings.setWindowMillis(this.tolerance.getValue());
 			showWindowText();
+		}));
+		this.playTime.addSelectionListener(selected(() -> {
+			this.settings.setPlayTimeMillis(this.playTime.getValue());
+			showPlayTimeText();
 		}));
 		this.recordRun.addSelectionListener(selected(() -> {
 			this.settings.setRecordRun(this.recordRun.isSelected());
@@ -418,8 +478,17 @@ public final class FollowPanel {
 				this.leniency.setVisible(this.settings.isArcade());
 				this.leniencyHint.setVisible(this.settings.isArcade());
 			}
+			if (this.followLeniency != null) {
+				this.followLeniency.setSelectedValue(this.followChoices.leniency());
+				showFollowLeniencyHint();
+				this.followLeniencyLabel.setVisible(this.settings.isFollow());
+				this.followLeniency.setVisible(this.settings.isFollow());
+				this.followLeniencyHint.setVisible(this.settings.isFollow());
+			}
 			this.tolerance.setValue(this.settings.getWindowMillis());
 			showWindowText();
+			this.playTime.setValue(this.settings.getPlayTimeMillis());
+			showPlayTimeText();
 			boolean followOnly = this.settings.isFollow();
 			this.recordRun.setSelected(this.settings.isRecordRun());
 			this.recordAudio.setSelected(this.settings.isRecordAudio());
@@ -433,9 +502,13 @@ public final class FollowPanel {
 			this.percentLabel.setVisible(follow);
 			this.percent.setVisible(follow);
 			this.percentHint.setVisible(follow);
-			this.toleranceLabel.setVisible(follow);
-			this.tolerance.setVisible(follow);
-			this.toleranceHint.setVisible(follow);
+			// spec 016: the timing window is Arcade's, the time to play Follow's
+			this.toleranceLabel.setVisible(this.settings.isArcade());
+			this.tolerance.setVisible(this.settings.isArcade());
+			this.toleranceHint.setVisible(this.settings.isArcade());
+			this.playTimeLabel.setVisible(this.settings.isFollow());
+			this.playTime.setVisible(this.settings.isFollow());
+			this.playTimeHint.setVisible(this.settings.isFollow());
 			this.calibrationTitle.setVisible(follow);
 			this.calibrationState.setVisible(follow);
 			this.calibrationRoute.setVisible(follow);
@@ -460,7 +533,11 @@ public final class FollowPanel {
 			if (this.leniency != null) {
 				this.leniency.setEnabled(idle);
 			}
+			if (this.followLeniency != null) {
+				this.followLeniency.setEnabled(idle);
+			}
 			this.tolerance.setEnabled(idle);
+			this.playTime.setEnabled(idle);
 			this.manual.setEnabled(idle);
 			AudioRoute route = this.backend.route();
 			LatencyCompensation compensation = this.backend.calibrations().forRoute(route);
@@ -590,12 +667,26 @@ public final class FollowPanel {
 		return this.leniency;
 	}
 
+	/** The line of Follow's permissiveness, or null when the panel has no remembered choices. */
+	UIDropDownSelect<FollowLeniencyPosition> followLeniencySelect() {
+		return this.followLeniency;
+	}
+
+	UILabel followLeniencyHintLabel() {
+		return this.followLeniencyHint;
+	}
+
 	UILabel leniencyLabel() {
 		return this.leniencyLabel;
 	}
 
 	UILabel leniencyHint() {
 		return this.leniencyHint;
+	}
+
+	private void showFollowLeniencyHint() {
+		FollowLeniencyPosition position = this.followLeniency.getSelectedValue();
+		this.followLeniencyHint.setText(TuxGuitar.getProperty("practice.follow.leniency.hint." + (position == null ? FollowLeniencyPosition.DEFAULT : position).name().toLowerCase(java.util.Locale.ROOT)));
 	}
 
 	private void showLeniencyHint() {
@@ -615,6 +706,20 @@ public final class FollowPanel {
 
 	UIScale windowSlider() {
 		return this.tolerance;
+	}
+
+	/** The time to play the note and what it means (spec 016). */
+	private void showPlayTimeText() {
+		this.playTimeHint.setText(TuxGuitar.getProperty("practice.follow.play-time.value", new String[] { Integer.toString(this.playTime.getValue()) }) + "\n"
+				+ TuxGuitar.getProperty("practice.follow.play-time.hint"));
+	}
+
+	UIScale playTimeSlider() {
+		return this.playTime;
+	}
+
+	UILabel playTimeHintLabel() {
+		return this.playTimeHint;
 	}
 
 	UICheckBox recordRunBox() {

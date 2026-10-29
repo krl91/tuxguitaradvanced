@@ -20,13 +20,15 @@
 > Premier essai du 2026-10-29 : étape 2 KO, « le bouton est grisé ». Cause : aucun son n'était encore arrivé sur l'entrée. Corrigé : le bouton reste grisé mais c'est expliqué (`GreyedStartExplainedTest`), et la préparation dit maintenant de jouer quelques notes. **Refais la fiche depuis l'étape 1 avec la nouvelle construction.**
 >
 > Deuxième essai du 2026-10-29 : étape 3 KO, la reconnaissance est trop stricte, pour la note comme pour le moment (Rocksmith, rythme **pas calibré**, 100 ms, 70 %). Suite : la fiche est refaite avec les réglages faciles ci-dessus pour valider le reste du mode, et la spec 016 traite la permissivité.
+>
+> **Spec 016 (2026-10-29) : refais la fiche entière avec la nouvelle construction, aux réglages par défaut** (c'est la porte G2 de la spec 016). En Suivre le tempo, la **Fenêtre de temps** n'existe plus : elle est remplacée par **Temps pour jouer la note** (**300 ms** par défaut) et **Permissivité** (**Permissive** par défaut). La fenêtre de temps reste pour Arcade. Le réglage facile de l'étape 5 de la préparation ne sert plus : garde les valeurs par défaut, tempo **70 %**, et **calibre le rythme** quand la fenêtre « Avant de commencer » te le propose. Les lignes 16 à 22 vérifient la raison donnée sous chaque note refusée.
 
 ## Étapes
 
 | # | Fais | Attendu | OK / KO | Ce que j'ai vu |
 |---|---|---|---|---|
-| 1 | Onglet **Piste** : choisis la piste guitare. Onglet **Entrée** : choisis le Rocksmith. Onglet **Mode** : choisis **Suivre le tempo**, **Fenêtre de temps** sur la valeur par défaut (100 ms), **Tempo** à **70 %**. | Le bouton de départ devient **« Suivre le tempo de cette piste »**. |OK | |
-| 2 | Appuie sur ce bouton. Réponds à la fenêtre « Avant de commencer » (*Oui, accordée*, puis gratte un accord à un niveau correct). | Un **décompte** est joué. La piste travaillée est **muette**, les autres pistes jouent. |OK | |
+| 1 | Onglet **Piste** : choisis la piste guitare. Onglet **Entrée** : choisis le Rocksmith. Onglet **Mode** : choisis **Suivre le tempo**, **Temps pour jouer la note** sur la valeur par défaut (300 ms), **Permissivité** sur **Permissive**, **Tempo** à **70 %**. *(Avant la spec 016 : Fenêtre de temps 100 ms.)* | Le bouton de départ devient **« Suivre le tempo de cette piste »**. Il n'y a **pas** de curseur « Fenêtre de temps » en Suivre le tempo (il est en Arcade). |OK | |
+| 2 | Appuie sur ce bouton. Réponds à la fenêtre « Avant de commencer » (*Oui, accordée*, puis gratte un accord à un niveau correct). Si le rythme n'est pas calibré pour le Rocksmith, la fenêtre le dit : appuie **une fois** sur **Calibrer maintenant** et joue une note sur chacun des 8 clics. | Sans calibrage, une phrase dit que le rythme n'est pas calibré, avec **Calibrer maintenant** et **Continuer sans**. Après les 8 clics (moins de 15 s), le calibrage est enregistré et le **décompte** est joué. La piste travaillée est **muette**, les autres pistes jouent. |OK | |
 | 3 | Joue avec la partition : quelques notes à l'heure, une en avance exprès, une en retard exprès. | Chaque note est marquée **✓ À l'heure**, **✓ Bonne note, en avance (xx ms)** ou **✓ Bonne note, en retard (xx ms)**. |ko | trop difficile de faire la bonne note au bon moment quelque chose ne va pas, le moteur de reconnaissance de note n'est pas assez permissif que ce soit pour la note comme le moment où il faut jouer la note|
 | 4 | Joue une note qui n'est pas dans la partition (entre deux notes écrites). | Elle est marquée **+ Note en trop**. | | |
 | 5 | Erreur exprès : joue une mauvaise note, puis saute une note. | Marquées **✗ Mauvaise note** et **✗ Manquée**. Les notes **suivantes** sont toujours jugées à leur propre heure (l'erreur ne décale pas la suite). | | |
@@ -40,6 +42,13 @@
 | 13 | Ouvre l'accordeur, puis reviens en mode **Attendre la bonne note**. | L'accordeur et le mode Attendre **ne dépendent pas** du calibrage (rien ne change pour eux). | | |
 | 14 | Pendant une exécution *Suivre le tempo*, appuie sur **Lecture** dans la barre de transport. | Le suivi s'arrête avec le message **« Le suivi du tempo s'est arrêté parce que vous avez lancé la lecture de la partition. La lecture normale continue. »** | | |
 | 15 | Reviens en **Attendre la bonne note** et joue quelques notes. | Le mode Attendre se comporte **exactement comme avant**. | | |
+| 16 | *(Spec 016)* En Suivre le tempo, ne joue pas une note. | Sous la note : **Aucune attaque entendue**. | | |
+| 17 | Joue une autre note à la place d'une note écrite (par exemple une case plus haut). | Sous la note : **Entendu X au lieu de Y** (la note entendue et la note écrite). | | |
+| 18 | Joue la bonne note nettement trop tard (presque à la note suivante). | Sous la note : **Bonne note, N ms trop tard**. | | |
+| 19 | Joue la bonne note nettement trop tôt (bien avant qu'elle devienne rouge). | Sous la note : **Bonne note, N ms trop tôt**. | | |
+| 20 | Effleure une corde sans vraie note (un son étouffé) au moment d'une note. | Sous la note : **Un son a été entendu, mais pas assez net pour reconnaître la note** (avec sa certitude en %). Ce n'est **jamais** compté comme une mauvaise note. | | |
+| 21 | Joue la bonne note environ un quart de seconde après qu'elle devient rouge. | Elle est **acceptée** (en retard), avec le temps pour jouer de 300 ms. | | |
+| 22 | Fin de la partie. | Le bilan compte chaque raison, et une dernière ligne dit **Permissivité : Permissive, temps pour jouer la note : 300 ms**. | | |
 
 ## Ta décision finale (à me dire)
 

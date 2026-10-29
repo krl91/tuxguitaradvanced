@@ -50,6 +50,8 @@ public final class TimingContext {
 	}
 
 	private final TimingTolerance tolerance;
+	/** How the windows are made: the tolerance itself, or the time to play of Follow (spec 016). */
+	private final WindowPolicy windowPolicy;
 	private final LatencyCompensation compensation;
 	private final ClockUncertainty uncertainty;
 	private final boolean captureClockReady;
@@ -58,6 +60,21 @@ public final class TimingContext {
 	public TimingContext(TimingTolerance tolerance, LatencyCompensation compensation, ClockUncertainty uncertainty,
 			boolean captureClockReady, boolean playerClockReady) {
 		this.tolerance = tolerance;
+		this.windowPolicy = tolerance;
+		this.compensation = compensation;
+		this.uncertainty = uncertainty;
+		this.captureClockReady = captureClockReady;
+		this.playerClockReady = playerClockReady;
+	}
+
+	/**
+	 * A context whose windows come from another policy (spec 016: the time to play of Follow). {@link #tolerance()} is then the policy when it is a
+	 * {@link TimingTolerance}, otherwise null: the windows are asked of {@link #windowPolicy()}.
+	 */
+	public TimingContext(WindowPolicy windowPolicy, LatencyCompensation compensation, ClockUncertainty uncertainty, boolean captureClockReady,
+			boolean playerClockReady) {
+		this.tolerance = (windowPolicy instanceof TimingTolerance ? (TimingTolerance) windowPolicy : null);
+		this.windowPolicy = windowPolicy;
 		this.compensation = compensation;
 		this.uncertainty = uncertainty;
 		this.captureClockReady = captureClockReady;
@@ -71,6 +88,11 @@ public final class TimingContext {
 
 	public TimingTolerance tolerance() {
 		return this.tolerance;
+	}
+
+	/** How the windows of the events are made. */
+	public WindowPolicy windowPolicy() {
+		return this.windowPolicy;
 	}
 
 	public LatencyCompensation compensation() {

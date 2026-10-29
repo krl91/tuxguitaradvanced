@@ -7,6 +7,7 @@ import app.tuxguitar.app.tools.custom.practice.model.PlayingTechnique;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.TechniqueResult;
 import app.tuxguitar.app.tools.custom.practice.model.TechniqueVerdict;
+import app.tuxguitar.app.tools.custom.practice.session.FollowLeniencyPosition;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSession;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSummary;
 import app.tuxguitar.app.tools.custom.practice.session.RefusalReason;
@@ -69,6 +70,16 @@ public final class FollowView {
 	 * @param shownExtras the number of extra notes it showed last
 	 */
 	public static FollowView of(FollowSession.Snapshot snapshot, List<PracticeEvent> events, int shownEvent, int shownExtras, Text text) {
+		return of(snapshot, events, shownEvent, shownExtras, text, null, -1);
+	}
+
+	/**
+	 * The same, for a run of Follow (spec 016 FR-007): its summary names the position of the permissiveness and the time to play.
+	 *
+	 * @param position null for a run prepared without one: no such line
+	 */
+	public static FollowView of(FollowSession.Snapshot snapshot, List<PracticeEvent> events, int shownEvent, int shownExtras, Text text,
+			FollowLeniencyPosition position, int playTimeMillis) {
 		int latestEvent = -1;
 		List<FollowSession.EventResult> results = snapshot.results();
 		for (int i = 0; i < results.size(); i++) {
@@ -149,7 +160,7 @@ public final class FollowView {
 		}
 		String summary = "";
 		if (snapshot.state() == FollowSession.State.COMPLETE || snapshot.state() == FollowSession.State.STOPPED) {
-			summary = summaryText(FollowSummary.of(snapshot), text);
+			summary = summaryText(FollowSummary.of(snapshot), text, position, playTimeMillis);
 		}
 		return new FollowView(tone, latest, reasonLine, state.toString(), next, countsLine.toString(), precision, techniques, summary, latestEvent, extras);
 	}
@@ -232,6 +243,16 @@ public final class FollowView {
 		}
 		line(lines, text.get("practice.follow.summary.memory"));
 		return lines.toString();
+	}
+
+	/** The summary, and for a run of Follow (spec 016 FR-007) one more line: the position of the permissiveness and the time to play; none without a position. */
+	public static String summaryText(FollowSummary summary, Text text, FollowLeniencyPosition position, int playTimeMillis) {
+		String lines = summaryText(summary, text);
+		if (position == null) {
+			return lines;
+		}
+		return lines + "\n" + text.get("practice.follow.summary.settings", text.get("practice.follow.leniency." + position.name().toLowerCase(java.util.Locale.ROOT)),
+				Integer.toString(playTimeMillis));
 	}
 
 	private static void line(StringBuilder lines, String text) {

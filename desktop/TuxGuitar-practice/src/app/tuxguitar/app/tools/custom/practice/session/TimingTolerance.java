@@ -15,7 +15,7 @@ package app.tuxguitar.app.tools.custom.practice.session;
  * <b>The numbers are provisional</b> until the benchmark T101 and real validation: they were chosen so that at 120 beats a minute a normal tight window is
  * 75 ms each side, and are pinned by a test only so that changing one is a decision.
  */
-public final class TimingTolerance {
+public final class TimingTolerance implements WindowPolicy {
 
 	public enum Preset {
 		//          tight: fraction floor ceil    outer early/late: fraction floor ceil   (milliseconds)
@@ -131,6 +131,7 @@ public final class TimingTolerance {
 	 * @param gapBeforeNanos the distance to the previous event of another time, {@link Long#MAX_VALUE} when there is none
 	 * @param gapAfterNanos the distance to the next event of another time, {@link Long#MAX_VALUE} when there is none
 	 */
+	@Override
 	public Window windowFor(long targetNanos, long beatNanos, long gapBeforeNanos, long gapAfterNanos) {
 		if (beatNanos < 0) {
 			throw new IllegalArgumentException("a beat cannot be negative: " + beatNanos);

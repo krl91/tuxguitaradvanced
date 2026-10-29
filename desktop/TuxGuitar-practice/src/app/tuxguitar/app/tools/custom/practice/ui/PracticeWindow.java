@@ -38,6 +38,7 @@ import app.tuxguitar.app.tools.custom.practice.session.ChordMatcher;
 import app.tuxguitar.app.tools.custom.practice.session.FollowEvents;
 import app.tuxguitar.app.tools.custom.practice.session.FollowPlayback;
 import app.tuxguitar.app.tools.custom.practice.session.FollowRun;
+import app.tuxguitar.app.tools.custom.practice.session.FollowChoices;
 import app.tuxguitar.app.tools.custom.practice.session.FollowRunRecorder;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSession;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
@@ -416,7 +417,8 @@ public class PracticeWindow {
 		// ---- tab 3: the mode, and for the tempo-following modes the tempo, the tolerance and the rhythm calibration (spec 002 T097, T098)
 		UITableLayout modeLayout = new UITableLayout();
 		UIPanel modePanel = tab(uiFactory, folder, "practice.tab.mode", modeLayout);
-		this.followPanel = new FollowPanel(uiFactory, modePanel, FollowSettings.getInstance(this.context), this.followAdapter, ArcadeChoices.of(this.context));
+		this.followPanel = new FollowPanel(uiFactory, modePanel, FollowSettings.getInstance(this.context), this.followAdapter, ArcadeChoices.of(this.context),
+				FollowChoices.of(this.context));
 		modeLayout.set(this.followPanel.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.followPanel.setContentListener(this::refit);
 		this.followPanel.setModeListener(this::modeChanged);
@@ -1037,15 +1039,15 @@ public class PracticeWindow {
 		PracticeTrackSelection selection = new PracticeTrackSelection(this.song, candidate, this.shared);
 		selection.accept();
 		RecognitionSettings recognition = RecognitionSettingsStore.getInstance(this.context).get();
-		PracticeParameters parameters = PracticeParameters.of(recognition);
-		this.palette.setDisplayTolerance(parameters.tolerance());
-		FollowStarter.Plan plan = FollowStarter.prepare(this.context, this.song, this.preparedSequence, candidate.getTrack().getNumber(),
-				FollowSettings.getInstance(this.context), parameters,
+		// spec 016: the time to play of the learner and the pitch permissiveness chosen in the Mode tab, read when the run starts
+		FollowStarter.Plan plan = FollowStarter.prepareFollow(this.context, this.song, this.preparedSequence, candidate.getTrack().getNumber(),
+				FollowSettings.getInstance(this.context), FollowChoices.of(this.context).leniency(), recognition,
 				new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
 				() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()), this.followAdapter, this::renderFollow,
 				runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), this::followEnded,
 				(loop, handler) -> new FollowEvents(this.context, loop, handler, this.engine.getSelection(), this.shared),
 				() -> TGSynchronizer.getInstance(this.context).executeLater(this::restartFollow));
+		this.palette.setDisplayTolerance(PracticeParameters.of(plan.recognition()).tolerance());
 		this.followPlan = plan;
 		this.followLast = null;
 		this.followShownEvent = -1;
@@ -1096,7 +1098,7 @@ public class PracticeWindow {
 		};
 		AudioRoute route = this.followAdapter.route();
 		return new FollowRunRecorder(hops, audio, plan.timeline().durationNanos(), new FollowRunRecorder.Start(scoreName(), candidate.getTrack().getNumber(),
-				plan.percent(), plan.windowMillis(), route, this.followAdapter.calibrations().forRoute(route)));
+				plan.percent(), plan.windowMillis(), plan.playTimeMillis(), plan.leniency(), route, this.followAdapter.calibrations().forRoute(route)));
 	}
 
 	/** The file name of the score, without opening a document for it. */
@@ -1145,7 +1147,8 @@ public class PracticeWindow {
 			return;
 		}
 		this.followLast = snapshot;
-		FollowView view = FollowView.of(snapshot, plan.sequence().getEvents(), this.followShownEvent, this.followShownExtras, PracticeWindow::followText);
+		FollowView view = FollowView.of(snapshot, plan.sequence().getEvents(), this.followShownEvent, this.followShownExtras, PracticeWindow::followText,
+				plan.leniency(), plan.playTimeMillis());
 		this.followShownEvent = view.latestEvent();
 		this.followShownExtras = view.latestExtras();
 		this.palette.renderFollow(view, snapshot.state(), this.assessment);

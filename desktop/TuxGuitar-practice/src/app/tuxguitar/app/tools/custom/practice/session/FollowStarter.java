@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
 import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.input.InputAssessment;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.song.models.TGSong;
 import app.tuxguitar.util.TGContext;
 
@@ -48,9 +49,17 @@ public final class FollowStarter {
 		private final int windowMillis;
 		private final int percent;
 		private final long startTick;
+		private final int playTimeMillis;
+		private final FollowLeniencyPosition leniency;
+		private final RecognitionSettings recognition;
 
 		Plan(FollowRun run, FollowSession session, FollowTimeline timeline, PracticeSequence sequence, int windowMillis, int percent,
 				long startTick) {
+			this(run, session, timeline, sequence, windowMillis, percent, startTick, -1, null, null);
+		}
+
+		Plan(FollowRun run, FollowSession session, FollowTimeline timeline, PracticeSequence sequence, int windowMillis, int percent,
+				long startTick, int playTimeMillis, FollowLeniencyPosition leniency, RecognitionSettings recognition) {
 			this.run = run;
 			this.session = session;
 			this.timeline = timeline;
@@ -58,6 +67,9 @@ public final class FollowStarter {
 			this.windowMillis = windowMillis;
 			this.percent = percent;
 			this.startTick = startTick;
+			this.playTimeMillis = playTimeMillis;
+			this.leniency = leniency;
+			this.recognition = recognition;
 		}
 
 		public FollowRun run() {
@@ -90,6 +102,21 @@ public final class FollowStarter {
 		public long startTick() {
 			return this.startTick;
 		}
+
+		/** The time to play the note of a Follow run (spec 016), in milliseconds; -1 when the run judges with the timing window. */
+		public int playTimeMillis() {
+			return this.playTimeMillis;
+		}
+
+		/** The pitch permissiveness of a Follow run (spec 016), or null when the run was prepared without one. */
+		public FollowLeniencyPosition leniency() {
+			return this.leniency;
+		}
+
+		/** The recognition settings of a Follow run, relaxed to its position, or null when the run was prepared without one. */
+		public RecognitionSettings recognition() {
+			return this.recognition;
+		}
 	}
 
 	private FollowStarter() {
@@ -116,14 +143,38 @@ public final class FollowStarter {
 			PracticeParameters parameters, TechniqueJudge judge, java.util.function.Supplier<PolyphonicAcceptance> polyphonic, Environment environment,
 			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
 			Runnable restart) {
+		final TimingTolerance tolerance = TimingTolerance.ofMillis(windowMillis);
+		return prepare(context, song, full, trackNumber, settings, tolerance, windowMillis, -1, null, null, parameters, judge, polyphonic, environment, uiSink,
+				uiExecutor, endListener, eventsFactory, restart);
+	}
+
+	/**
+	 * A run of Follow (spec 016, US3): judged with the time to play of the settings ({@link PlayTimeWindow}) instead of the timing window, and with the recognition
+	 * settings relaxed to the pitch permissiveness ({@link FollowLeniency}, one way). Arcade keeps {@code prepare} and its window.
+	 *
+	 * @param effective the recognition settings of the learner, a device profile already applied
+	 */
+	public static Plan prepareFollow(TGContext context, TGSong song, PracticeSequence full, int trackNumber, FollowSettings settings, FollowLeniencyPosition position,
+			RecognitionSettings effective, TechniqueJudge judge, java.util.function.Supplier<PolyphonicAcceptance> polyphonic, Environment environment,
+			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
+			Runnable restart) {
+		int playTimeMillis = settings.getPlayTimeMillis();
+		RecognitionSettings recognition = FollowLeniency.apply(position, effective);
+		return prepare(context, song, full, trackNumber, settings, new PlayTimeWindow(playTimeMillis), settings.getWindowMillis(), playTimeMillis, position,
+				recognition, PracticeParameters.of(recognition), judge, polyphonic, environment, uiSink, uiExecutor, endListener, eventsFactory, restart);
+	}
+
+	private static Plan prepare(TGContext context, TGSong song, PracticeSequence full, int trackNumber, FollowSettings settings, final WindowPolicy policy,
+			int windowMillis, int playTimeMillis, FollowLeniencyPosition position, RecognitionSettings recognition, PracticeParameters parameters, TechniqueJudge judge,
+			java.util.function.Supplier<PolyphonicAcceptance> polyphonic, Environment environment, Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor,
+			Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory, Runnable restart) {
 		final int percent = settings.getPercent();
 		final PracticeSequence sequence = full.startingAt(full.getStartIndex());
 		final FollowTimeline timeline = FollowTimeline.build(song, sequence, percent);
 		final FollowPlayer player = environment.player();
-		final TimingTolerance tolerance = TimingTolerance.ofMillis(windowMillis);
 		final TempoClock clock = player.clock();
 		FollowSession session = new FollowSession(sequence, timeline, FIRST_TICK, clock, environment::wallNanosOf,
-				() -> new TimingContext(tolerance, environment.calibrations().forRoute(environment.route()), ClockUncertainty.ofMeasurement(environment.lagSpreadMillis()),
+				() -> new TimingContext(policy, environment.calibrations().forRoute(environment.route()), ClockUncertainty.ofMeasurement(environment.lagSpreadMillis()),
 						environment.captureReady(), clock.isReady() && !clock.isStalled(clock.nowNanos())),
 				parameters.noteInterpreter(), parameters.tolerance(), new ChordMatcher(parameters.chordParameters()), parameters.stabilityNanos(),
 				parameters.articulationLatencyNanos());
@@ -137,6 +188,6 @@ public final class FollowStarter {
 		}
 		long startTick = FIRST_TICK + (sequence.isEmpty() ? 0L : timeline.playStartTicks(0));
 		FollowRun run = new FollowRun(context, session, player, trackNumber, percent, startTick, uiSink, uiExecutor, endListener, eventsFactory, restart);
-		return new Plan(run, session, timeline, sequence, windowMillis, percent, startTick);
+		return new Plan(run, session, timeline, sequence, windowMillis, percent, startTick, playTimeMillis, position, recognition);
 	}
 }

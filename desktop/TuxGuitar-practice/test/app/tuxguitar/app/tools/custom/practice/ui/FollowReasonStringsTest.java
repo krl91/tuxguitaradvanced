@@ -110,4 +110,20 @@ public class FollowReasonStringsTest {
 		}
 	}
 
+	@Test
+	public void theTimeToPlayHasItsSettingAndTheTimingWindowSaysItIsArcadesInTheThreeLanguages() throws IOException {
+		// spec 016 T029: the Configuration window lists FOLLOW_PLAY_TIME; TEMPO_WINDOW is now a setting of Arcade only
+		String[] arcade = { "Arcade", "Arcade", "Arcade" };
+		String[] follow = { "Follow the tempo", "Suivre le tempo", "Seguir el tempo" };
+		for (int f = 0; f < FILES.length; f++) {
+			Properties properties = load(FILES[f]);
+			for (String key : new String[] { "recognition.follow.play-time.name", "recognition.follow.play-time.tip" }) {
+				String text = properties.getProperty(key);
+				assertTrue(text != null && text.contains(follow[f]), FILES[f] + " " + key + " names Follow: " + text);
+				assertTrue(placeholders(text).isEmpty(), FILES[f] + " " + key + " takes no value");
+			}
+			assertTrue(properties.getProperty("recognition.tempo.window.name").contains(arcade[f]), FILES[f] + " the timing window is Arcade's");
+			assertTrue(properties.getProperty("recognition.tempo.window.tip").contains(arcade[f]), FILES[f] + " its tip says Arcade");
+		}
+	}
 }

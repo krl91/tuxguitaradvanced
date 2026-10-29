@@ -77,6 +77,20 @@ public class FollowRunRecorderTest {
 	}
 
 	@Test
+	public void theRecordOfAFollowRunNamesItsTimeToPlayAndItsPosition() {
+		// spec 016 T033, FR-007: the start of a Follow run gives the time to play and the pitch position to the header
+		FollowHarness harness = new FollowHarness(fiveNotes(), 100);
+		FollowRunRecorder recorder = new FollowRunRecorder(new FakeHops(), false, harness.timeline.durationNanos(),
+				new FollowRunRecorder.Start("_TEST_verifie.tg", 1, 70, 100, 300, FollowLeniencyPosition.PERMISSIVE, ROUTE, LatencyCompensation.none()));
+		recorder.begin();
+		harness.session.start();
+		harness.playEvent(0, 0);
+		harness.runAll();
+		String[] lines = recorder.ended(harness.session, harness.sequence.getEvents(), harness.timeline, "follow-x").record().split("\n");
+		assertEquals("# score=_TEST_verifie.tg,track=1,percent=70,window_ms=100,play_time_ms=300,pitch_position=PERMISSIVE", lines[1]);
+	}
+
+	@Test
 	public void aRunEndedDuringItsCountInHasNoRecordAndLetsTheHopsGo() {
 		FollowHarness harness = new FollowHarness(fiveNotes(), 100);
 		FakeHops hops = new FakeHops();

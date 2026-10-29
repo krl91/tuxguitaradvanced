@@ -31,6 +31,8 @@ public final class FollowRunRecorder {
 		final int track;
 		final int percent;
 		final int windowMillis;
+		final int playTimeMillis;
+		final FollowLeniencyPosition position;
 		final AudioRoute route;
 		final LatencyCompensation calibration;
 
@@ -39,10 +41,23 @@ public final class FollowRunRecorder {
 		 * @param route the route of the run, or null when it is not known
 		 */
 		public Start(String score, int track, int percent, int windowMillis, AudioRoute route, LatencyCompensation calibration) {
+			this(score, track, percent, windowMillis, -1, null, route, calibration);
+		}
+
+		/**
+		 * A run of Follow judged with a time to play and a pitch permissiveness (spec 016 FR-007).
+		 *
+		 * @param playTimeMillis the time to play, or a negative number when the run judges with the timing window
+		 * @param position the pitch permissiveness, or null when the run has none
+		 */
+		public Start(String score, int track, int percent, int windowMillis, int playTimeMillis, FollowLeniencyPosition position, AudioRoute route,
+				LatencyCompensation calibration) {
 			this.score = score;
 			this.track = track;
 			this.percent = percent;
 			this.windowMillis = windowMillis;
+			this.playTimeMillis = playTimeMillis;
+			this.position = position;
 			this.route = route;
 			this.calibration = calibration;
 		}
@@ -163,7 +178,7 @@ public final class FollowRunRecorder {
 		}
 		AudioRoute route = this.start.route;
 		LatencyCompensation calibration = this.start.calibration;
-		FollowRunRecord.Header header = new FollowRunRecord.Header(this.start.score, this.start.track, this.start.percent, this.start.windowMillis, -1, "",
+		FollowRunRecord.Header header = new FollowRunRecord.Header(this.start.score, this.start.track, this.start.percent, this.start.windowMillis, this.start.playTimeMillis, this.start.position != null ? this.start.position.name() : "",
 				route != null ? route.input() : "", route != null ? route.output() : "", route != null ? route.sampleRate() + " Hz " + route.profile() : "",
 				calibration.source().name(), calibration.offsetNanos() / 1e6, samples != null ? stem + ".wav" : null, rate, firstSample, truncated);
 		String text = FollowRunRecord.text(header, events, snapshot.results(), i -> timeline.targetNanos(i) / 1e6, session::heard, origin);

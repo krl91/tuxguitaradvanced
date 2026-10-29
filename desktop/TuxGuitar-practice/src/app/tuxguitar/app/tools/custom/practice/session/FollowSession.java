@@ -837,7 +837,7 @@ public final class FollowSession {
 	}
 
 	private Window window(int i, TimingContext context) {
-		return context.tolerance().windowFor(targetWall(i), this.timeline.beatNanos(i), this.gapBefore[i], this.gapAfter[i]);
+		return context.windowPolicy().windowFor(targetWall(i), this.timeline.beatNanos(i), this.gapBefore[i], this.gapAfter[i]);
 	}
 
 	/** The first event worth looking at: the matched ones just before can still be in window for a second attack. */

@@ -145,7 +145,7 @@ public class FollowPanelTest {
 
 		assertEquals(FollowSettings.Mode.FOLLOW, this.settings.getMode());
 		assertTrue(visible(this.panel.percentSpinner()));
-		assertTrue(visible(this.panel.windowSlider()));
+		assertTrue(visible(this.panel.playTimeSlider()));
 		assertTrue(visible(this.panel.calibrateButton()));
 		assertTrue(this.panel.announceLabel().getText().contains("practice.follow.calibration.announce"));
 	}

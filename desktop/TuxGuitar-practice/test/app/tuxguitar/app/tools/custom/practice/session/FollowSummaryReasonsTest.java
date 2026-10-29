@@ -2,6 +2,8 @@ package app.tuxguitar.app.tools.custom.practice.session;
 
 import static app.tuxguitar.app.tools.custom.practice.session.FollowHarness.MS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +56,34 @@ public class FollowSummaryReasonsTest {
 		FollowSummary summary = FollowSummary.of(run.last);
 		assertEquals(0, summary.refused());
 		assertTotalOfReasons(summary);
+	}
+
+	private static final app.tuxguitar.app.tools.custom.practice.ui.FollowView.Text KEYS = (key, arguments) -> arguments.length == 0 ? key
+			: key + java.util.Arrays.toString(arguments);
+
+	@Test
+	public void theSummaryOfAFollowRunNamesItsPositionAndItsTimeToPlay() {
+		// spec 016 T033, FR-007
+		FakePlayerRun run = new FakePlayerRun(sixNotes(), 100);
+		run.start();
+		run.playEvent(0, 0);
+		run.runAll();
+		FollowSummary summary = FollowSummary.of(run.last);
+		String text = app.tuxguitar.app.tools.custom.practice.ui.FollowView.summaryText(summary, KEYS, FollowLeniencyPosition.VERY_PERMISSIVE, 450);
+		assertTrue(text.contains("practice.follow.summary.settings[practice.follow.leniency.very_permissive, 450]"), text);
+		assertEquals(app.tuxguitar.app.tools.custom.practice.ui.FollowView.summaryText(summary, KEYS) + "\n"
+				+ "practice.follow.summary.settings[practice.follow.leniency.very_permissive, 450]", text, "one line more, at the end");
+	}
+
+	@Test
+	public void aSummaryWithoutAPositionHasNoSuchLine() {
+		FakePlayerRun run = new FakePlayerRun(sixNotes(), 100);
+		run.start();
+		run.runAll();
+		FollowSummary summary = FollowSummary.of(run.last);
+		String text = app.tuxguitar.app.tools.custom.practice.ui.FollowView.summaryText(summary, KEYS, null, -1);
+		assertEquals(app.tuxguitar.app.tools.custom.practice.ui.FollowView.summaryText(summary, KEYS), text);
+		assertFalse(text.contains("practice.follow.summary.settings"));
 	}
 
 	private static void assertTotalOfReasons(FollowSummary summary) {

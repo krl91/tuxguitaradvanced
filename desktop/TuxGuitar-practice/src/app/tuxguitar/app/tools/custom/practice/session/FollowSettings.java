@@ -53,6 +53,8 @@ public final class FollowSettings {
 	private int percent = DEFAULT_PERCENT;
 	/** The window of a settings object that has no store (tests, a window without one). */
 	private int ownWindowMillis = DEFAULT_WINDOW_MILLIS;
+	/** The time to play of a settings object that has no store. */
+	private int ownPlayTimeMillis = PlayTimeWindow.DEFAULT_MILLIS;
 	/** The record of a Follow run and the copy of its sound (spec 016 FR-003): asked for each time, never saved, so off at each launch. */
 	private boolean recordRun;
 	private boolean recordAudio;
@@ -156,6 +158,28 @@ public final class FollowSettings {
 		}
 		// the default layer: with a device profile in force, get() holds the profile's values, which must not be written into the default (spec 013)
 		this.store.update(this.store.getDefault().with(RecognitionParameters.TEMPO_WINDOW, (double) bounded));
+	}
+
+	/** The time to play a note in Follow (spec 016 FR-011), in milliseconds from the moment it turns red: 300 until it is set. */
+	public int getPlayTimeMillis() {
+		if (this.store == null) {
+			synchronized (this) {
+				return this.ownPlayTimeMillis;
+			}
+		}
+		return (int) Math.round(this.store.get().get(RecognitionParameters.FOLLOW_PLAY_TIME));
+	}
+
+	/** Sets the time to play, brought into 100 to 600 ms, and saves it at once in the default layer, as the window. */
+	public void setPlayTimeMillis(int millis) {
+		int bounded = Math.max(PlayTimeWindow.MIN_MILLIS, Math.min(PlayTimeWindow.MAX_MILLIS, millis));
+		if (this.store == null) {
+			synchronized (this) {
+				this.ownPlayTimeMillis = bounded;
+			}
+			return;
+		}
+		this.store.update(this.store.getDefault().with(RecognitionParameters.FOLLOW_PLAY_TIME, (double) bounded));
 	}
 
 	public synchronized boolean isFollow() {
