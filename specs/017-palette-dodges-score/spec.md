@@ -24,7 +24,7 @@
 
 ### User Story 1 - The note to play is never hidden by the palette (Priority: P1)
 
-A learner practises a piece in *Wait for the right note* or *Follow the tempo*. The score shows the note to play, framed. The palette (the detected note, whether it is right, the buttons Skip, Resume, Restart, Stop) floats over the main window. When the framed note comes under the palette, the palette jumps to another corner of the main window where it hides neither the framed note nor what the learner is about to read, and the learner keeps reading without touching the mouse.
+A learner practises a piece in *Wait for the right note* or *Follow the tempo*. The score shows the note to play, framed. The palette (the detected note, whether it is right, the buttons Skip, Resume, Restart, Stop) floats over the main window. When the framed note comes under the palette, the palette jumps to another corner of the area where the score is shown (clarification of 2026-10-30) where it hides neither the framed note nor what the learner is about to read, and the learner keeps reading without touching the mouse.
 
 **Why this priority**: it is the owner's whole request; a hidden note to play makes the practice impossible at that moment.
 
@@ -32,7 +32,7 @@ A learner practises a piece in *Wait for the right note* or *Follow the tempo*. 
 
 **Acceptance Scenarios**:
 
-1. **Given** a run in *Wait for the right note* with the palette in its usual place, **When** the note to play is framed at a place covered by the palette, **Then** the palette moves to another corner of the main window where it does not cover the framed note, and the framed note is entirely visible.
+1. **Given** a run in *Wait for the right note* with the palette in its usual place, **When** the note to play is framed at a place covered by the palette, **Then** the palette moves to another corner of the score area where it does not cover the framed note, and the framed note is entirely visible.
 2. **Given** a run in *Follow the tempo*, **When** the next note to play would come under the palette as the piece goes on, **Then** the palette moves aside before that note is framed, so the framed note is never hidden, and the run goes on (no pause, no lost note because of the move).
 3. **Given** the palette has just moved, **When** the learner plays or uses a practice shortcut, **Then** the keyboard focus is where it was before the move: the palette never takes it, and the shortcuts work as before.
 4. **Given** a framed note that is not under the palette, **When** the run goes on, **Then** the palette does not move.
