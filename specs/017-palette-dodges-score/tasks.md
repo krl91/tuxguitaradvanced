@@ -19,7 +19,7 @@ description: "Tasks of spec 017: the practice palette moves aside so it never hi
 
 ## Phase 2: Foundational (the two hooks, research R2 and R3)
 
-- [ ] T003 [P] Add to `TOOLKIT/UIControl.java` `default UIPosition toDisplay(UIPosition point) { return null; }` with a Javadoc ("screen position of a point given relative to this control, or null when the toolkit cannot tell"); release 9 kept; nothing else in the interface changes.
+- [ ] T003 [P] Add to `TOOLKIT/UIControl.java` `default UIPosition toDisplay(UIPosition point) { return null; }` with a Javadoc ("screen position of a point given relative to this control, or null when the toolkit cannot tell"); `UIPosition` is the existing `app.tuxguitar.ui.resource.UIPosition` of `common/TuxGuitar-lib` (already used by `UIRectangle`), so nothing changes in `common/`; release 9 kept; nothing else in the interface changes.
 - [ ] T004 [P] Override it in `SWT/SWTControl.java` with `getControl().toDisplay(Math.round(x), Math.round(y))` returning a new `UIPosition`; null when the control is disposed.
 - [ ] T005 In `TAB/TGExternalNoteFramePainter.java` extract the box computations of `paintScoreFrame` and `paintTablatureFrame` into `public static UIRectangle frameBounds(TGLayout layout, List<TGNote> notes, int trackSelection)` (the union of the score and tablature boxes as painted, canvas coordinates; null for empty notes, a non-`TGNoteImpl`, a measure out of bounds or of another track); `paint` uses the same per-staff boxes and draws exactly what it drew before (no visible change).
 - [ ] T006 Build from `BUILD` (`mvn -o -q -DskipTests install -pl ../../TuxGuitar -am`) and check that the default test suite still has the baseline's counts.
