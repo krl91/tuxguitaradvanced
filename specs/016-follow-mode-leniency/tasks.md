@@ -1,0 +1,109 @@
+---
+description: "Tasks of spec 016: Follow the tempo, made playable"
+---
+
+# Tasks: Follow the tempo, made playable
+
+**Input**: `specs/016-follow-mode-leniency/` (spec.md, plan.md, research.md, data-model.md, contracts/, quickstart.md)
+
+**Tests**: written first and seen failing for every behaviour (owner's bug-fix and test rules, constitution XI). **Existing tests are never modified**, with **one exception granted by the owner on 2026-10-29** (see T028): the assertions that impose the old *timing window* slider **in the Follow mode**.
+
+**Paths**: `PRACTICE` = `desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice`, `TST` = `desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice`, `ENGINE` = `desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine`, `LANG` = `desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties`, `BUILD` = `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`. Commands as in `quickstart.md`.
+
+## Format: `[ID] [P?] [Story] Description`
+
+## Phase 1: Setup
+
+- [ ] T001 Baseline before any code, in `specs/016-follow-mode-leniency/baseline.txt`: `mvn -e clean verify -P native-modules` from `BUILD` (practice and engine test counts, skipped, failures), the recognition reports compared with `specs/010-pre-run-check/benchmark/after/`, the Follow benchmark (`FollowBenchmarkTest`, tag `benchmark`) against `specs/002-practice-industrialization/benchmark/follow-benchmark-recorded-2026-10-08.txt`, and the Arcade figures of spec 014 (`ArcadeLeniencyReplayTest -Darcade.measure=true`, tag `dataset`); the commit the work starts from. Restore `specs/003-arcade-mode/benchmark/scene-baseline-2026-10-08.txt` after each build (a benchmark rewrites it).
+- [ ] T002 Write in `specs/016-follow-mode-leniency/baseline.txt` the list of the existing tests that read what this feature touches and must stay unchanged and green: `FollowStarterTest`, `FollowStarterWindowTest`, `TimingWindowParityTest`, `FollowSessionTest`, `FollowFunctionalTest`, `PracticeWindowStartPathSourceTest`, `PreRunParityTest`, `ArcadeLeniencyTest`, `ArcadeLikePracticeParityTest`, `ArcadeScopeParityTest`, `FollowSettingsTest`, `FollowSettingsProfileTest`, `StoreWritersTest`, `RecognitionSettingsSwtTest`, `FollowStringsTest`; and the only ones the owner allowed to change (T028): `TST/ui/FollowPanelTest.java` (methods `theWaitModeIsShownFirstAndTheFollowControlsAreOnlyThereInTheFollowMode`, `thePercentageAndTheWindowTheLearnerPicksAreTheSettingsAndTheSliderGoesFromFortyToTwoHundred`, `changingOneControlNeverMovesTheOthersNorTheCalibration`, `theSliderShowsTheSavedWindowWhenThePanelOpensAndFollowsAChangeMadeElsewhere`) and `TST/ui/FollowPanelSwtTest.java` (the window slider lines of `thePickedValuesReachTheSettingsAndEveryVisibleControlStaysInsideTheWindow`).
+
+## Phase 2: Foundational
+
+No task blocks all the stories: story 1 and story 2 are independent; story 3 uses the record of story 1 for its measure (T032).
+
+## Phase 3: User Story 1 - Know why a note was refused (Priority: P1) 🎯 MVP
+
+**Goal**: every event not accepted on time has a reason (FR-001), the summary counts them (FR-002), and an opt-in record of a run (FR-003), with its audio on a second box, lets the owner's playing be replayed.
+
+**Independent Test**: a short score in Follow with, on purpose, one note not played, one wrong note, one right note very late and one very soft: each shows its own reason and the summary counts one of each.
+
+- [ ] T003 [P] [US1] Write first (red) `TST/session/RefusalReasonTest.java` through the existing `TST/session/FollowHarness.java`: one case per row of `contracts/refusal-reasons.md` (MATCHED → `NONE`; WRONG_PITCH → `OTHER_PITCH` with the pitch heard most often; MISSED with the right pitch decided outside the window within the search span → `EARLY_OUTSIDE` / `LATE_OUTSIDE` with the offset in ms; MISSED with an attack inside the window and no decisive pitch → `UNCLEAR`; otherwise `NO_ATTACK`; NOT_JUDGED → `NOT_JUDGED`); an attack matched by another event is not used; the search span is "from the target minus 1 s (but not before the previous event's target) to the target plus 1 s (but not after the next event's target)". Seen failing (classes absent).
+- [ ] T004 [US1] Create `PRACTICE/session/RefusalReason.java` with the values of `data-model.md` (`NONE`, `NO_ATTACK`, `UNCLEAR`, `OTHER_PITCH`, `EARLY_OUTSIDE`, `LATE_OUTSIDE`, `NOT_JUDGED`).
+- [ ] T005 [US1] In `PRACTICE/session/FollowSession.java`, additively: `EventResult.reason()` and `reasonDetail()` (MIDI or ms by reason), chosen at the closing of an event **after** its verdict, from the attacks the session already registers (keep, per attack, its compensated time and its decided pitch, if any, for the search span); no status, timing or offset changes. T003 passes.
+- [ ] T006 [US1] Write `TST/session/FollowReasonParityTest.java`: the synthetic runs of `FollowFunctionalTest`'s kind give the same statuses, timings and offsets as before (compare to the values those runs give with the reasons ignored), and, tag `dataset`, the reference recording laid as in `FollowBenchmarkTest#theRealRecordingAtTheScoreTempoIsReportedWhenItIsThere` gives the figures of `specs/002-practice-industrialization/benchmark/follow-benchmark-recorded-2026-10-08.txt` (matched 35, missed 7) and a reason other than `NONE` for **100 %** of the events not matched (SC-001); the reasons of the 7 printed.
+- [ ] T007 [P] [US1] Write first (red) `TST/session/FollowSummaryReasonsTest.java`, then add to `PRACTICE/session/FollowSummary.java` the count per `RefusalReason`; the counts add up to the events not accepted on time (FR-002).
+- [ ] T008 [US1] Show the reason in the per-event text of `PRACTICE/ui/FollowView.java` and the counts in the summary of `PRACTICE/ui/PracticePalette.java`, keys `practice.follow.reason.<REASON>` (with `{0}` for the detail) in `LANG`; write first `TST/ui/FollowReasonStringsTest.java`: every reason has a non-empty text in the three languages with the same placeholders, and a reason with a detail shows it (constitution XIV: `UNCLEAR` never says "wrong").
+- [ ] T009 [P] [US1] Write first (red) `TST/session/FollowRunRecordTest.java` for `contracts/run-record.md` (the four header lines, the column line, one line per event, empty fields, dot decimals, UTF-8), then create `PRACTICE/session/FollowRunRecord.java` (pure: builds the text from a finished run's results, settings and alignment).
+- [ ] T010 [US1] Write first `TST/ui/FollowTakeCopyTest.java` (a temporary home: the folder `tuxguitar-follow-takes` is created, the names `follow-<yyyy-MM-dd-HHmmss>.csv` / `.wav` share a stem, a failing write returns an error told once and throws nothing), then create `PRACTICE/ui/FollowTakeCopy.java` in the manner of `PRACTICE/ui/DiagnosticCopy.java`, and wire the recording of a Follow run: an `ENGINE/calibration/HopRecorder` of capacity **10 minutes** added as a hop listener when the run's count-in begins and removed at its end (`audio_truncated=true` beyond), `first_sample_ms` taken at the first recorded hop; the files written at the end of a run (complete, stopped, ended by a manual play), **never** for a run cancelled before its count-in ended; writing off the analysis thread (constitution VI).
+- [ ] T011 [US1] Two boxes in the Mode tab of `PRACTICE/ui/FollowPanel.java`, **Follow only**: *Record this run* and, enabled only with it, *Keep a copy of the sound*; held in `PRACTICE/session/FollowSettings.java` as `recordRun` / `recordAudio`, **memory only, false at each launch**; texts in `LANG`. Write first `TST/ui/FollowPanelRecordBoxesTest.java` (headless, as `FollowPanelTest` does it, without changing it): hidden in Wait and Arcade, the second disabled until the first is ticked, both false for a new `FollowSettings`.
+- [ ] T012 [US1] Write `TST/replay/FollowTakeReplayTest.java` (tag `dataset`, skipped without a record): reads the newest record of `~/tuxguitar-follow-takes/` (or `-Dfollow.take=<file>`) and its WAV, lays the score with `percent` and `first_sample_ms`, replays through `TST/session/FakePlayerRun.java` with `OfflineAnalysis`, and prints the reasons' shares (SC-002) and, for a given time to play and pitch position (`-Dfollow.playTime`, `-Dfollow.position`), the accepted share of the events the record judged right-pitch within the time to play (SC-003); first check: replaying the record with its own settings gives its own verdicts.
+- [ ] T013 [US1] Describe the reasons and the record (where the files go, that the audio copy is opt-in, that nothing leaves the computer) in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md`, `docs/PRACTICE-ES.md`.
+- [ ] T014 [US1] Checkpoint: full build from `BUILD` with tests green (counts = baseline + new tests), the T002 tests unchanged (`git diff --name-status <T001 commit> -- '*/test/*'` shows only `A`), relaunch the built application for the owner (the `jre` symlink as in `CLAUDE.md`); commit the phase.
+- [ ] T015 [US1] [HUMAN] **Gate G1** (`quickstart.md`, "By hand"): the owner plays `tests/1/_TEST_verifie.tg` in Follow at 70 % with the Rocksmith, both boxes ticked, says whether the route was calibrated, and gives the file name.
+- [ ] T016 [US1] Run `FollowTakeReplayTest` on the owner's record and write the shares of the reasons into `specs/016-follow-mode-leniency/research.md` (new section R8, SC-002), as measured, **before** any value of T032 is chosen.
+
+**Checkpoint**: story 1 is usable on its own: the learner sees why, the owner can send a run.
+
+## Phase 4: User Story 2 - The route is calibrated before it matters (Priority: P1)
+
+**Goal**: before a run of Follow or Arcade on a route with no rhythm calibration, the start window offers *Calibrate now* / *Go on without* (FR-004); once per launch after *Go on without*.
+
+**Independent Test**: a route never calibrated: start Follow, the offer appears; calibrate; start again: not asked; change the input: asked again; Wait: never asked.
+
+- [ ] T017 [P] [US2] Write first (red) `TST/ui/DeclinedRoutesTest.java`, then create `PRACTICE/ui/DeclinedRoutes.java`: a launch-scoped set of `PRACTICE/session/AudioRoute.java` values (per `TGContext`, memory only), `decline(route)`, `isDeclined(route)`; a null route is never declined.
+- [ ] T018 [US2] Write first (red) `TST/ui/PreRunCheckRhythmTest.java` for `contracts/calibration-offer.md` and the state of `data-model.md` (`RHYTHM` entered after a good level or *Continue anyway*, only for Follow and Arcade, only on a route not calibrated per `RouteCalibrations.forRoute(route).isCalibrated()` and not declined; calibrate success → ready; cancel or failure → `RHYTHM` again with the reason; *Go on without* → ready and the route declined; a null route → ready; Wait → never `RHYTHM`), then add the state to `PRACTICE/ui/PreRunCheck.java`.
+- [ ] T019 [US2] Show the step in `PRACTICE/ui/PreRunWindow.java`: the sentence, *Calibrate now* (runs the existing `PRACTICE/session/CalibrationRun.java` inside the start window, its 8 clicks and *Cancel*) and *Go on without*; texts `practice.prerun.rhythm.*` in `LANG` (strings test in the same file as T008's, a new method); `PreRunWindow` gets the route and the mode from the window that starts it. Close or Escape during the step: nothing begins.
+- [ ] T020 [US2] Write `TST/ui/PreRunWindowRhythmSwtTest.java` (profile `swt-gui-tests`): the two buttons by native clicks, the step inside the window at a small size, Escape cancels.
+- [ ] T021 [US2] Run `PracticeWindowStartPathSourceTest` and `PreRunParityTest` unchanged and green (the step lives inside the check, not as a new way to start); if one fails, stop and report (owner's rule).
+- [ ] T022 [US2] Describe the offer in the three practice guides (section of the start window).
+- [ ] T023 [US2] Checkpoint: as T014; commit the phase.
+
+**Checkpoint**: story 2 works on its own and does not depend on story 1.
+
+## Phase 5: User Story 3 - Follow accepts a right note played roughly in time (Priority: P2)
+
+**Goal**: the owner's time to play (FR-011) replaces the timing window in Follow only; a separate pitch permissiveness Strict / Permissive / Very permissive (FR-005), never the semitone, never silence, at most 4 of the 98 negative tests at Permissive (SC-004).
+
+**Independent Test**: the reference recording and the owner's record replayed at Strict and at Permissive: more right notes accepted, no more than 4 negatives accepted.
+
+- [ ] T024 [P] [US3] Write first (red) `TST/session/PlayTimeWindowTest.java` for `contracts/play-time-window.md`: `late = max(0, min(P, ga − 20 ms))`, `early = max(0, min(50 ms, gb − previousLate − 1 ns))`, ON_TIME in `[T, T + min(late, P / 2)]`, EARLY before, LATE after; no overlap of two consecutive windows; 20 ms between a window's end and the next red; `[T − 50, T + P]` without neighbours; the beat changes nothing; P = 300 with notes 1 s apart → `[T − 50, T + 300]`; 200 ms apart → late 180 and the next advance 20; P outside 100–600 refused.
+- [ ] T025 [US3] Create `PRACTICE/session/WindowPolicy.java` (one method, `windowFor(long target, long beat, long gapBefore, long gapAfter)` returning `TimingTolerance.Window`); `PRACTICE/session/TimingTolerance.java` only gains `implements WindowPolicy` and `@Override`; `PRACTICE/session/TimingContext.java` gains a constructor taking a `WindowPolicy`, the existing one kept; create `PRACTICE/session/PlayTimeWindow.java`. T024 passes; `TimingWindowParityTest` and every T002 test unchanged and green.
+- [ ] T026 [US3] Add `FOLLOW_PLAY_TIME` (ms, default **300**, range **100–600**, Notes section) to `ENGINE/settings/RecognitionParameters.java` and to `FollowSettings` (`getPlayTimeMillis` / `setPlayTimeMillis`, stored in the default layer as `setWindowMillis` does; out of range → brought to 100 or 600; absent → 300). Write first `TST/session/FollowSettingsPlayTimeTest.java`. If an existing test counts or lists the parameters and fails, stop and report.
+- [ ] T027 [US3] Add `FollowStarter.prepareFollow(...)` in `PRACTICE/session/FollowStarter.java`: the session gets a `TimingContext` with `PlayTimeWindow(settings.getPlayTimeMillis())` and the recognition of `FollowLeniency.apply(position, effective)` (T030); the existing `prepare` overloads stay exactly as they are (Arcade's path and `FollowStarterTest` / `FollowStarterWindowTest` unchanged); `PRACTICE/ui/PracticeWindow.java` starts Follow through `prepareFollow` and Arcade as today. Write first `TST/session/FollowStarterPlayTimeTest.java` (a note 250 ms after its red is accepted at P = 300 and missed at P = 200; Arcade's plan unchanged).
+- [ ] T028 [US3] In `PRACTICE/ui/FollowPanel.java`: in Follow, the slider *Time to play the note* (100–600 ms, showing `FollowSettings.getPlayTimeMillis()`, writing it back) in place of the old window slider; the old slider stays for Arcade only; accessor `playTimeSlider()`. Write first `TST/ui/FollowPanelPlayTimeTest.java`. **Owner's exception of 2026-10-29**: in the methods of `TST/ui/FollowPanelTest.java` and `TST/ui/FollowPanelSwtTest.java` listed in T002, replace **only** the assertions on `windowSlider()` made **in the Follow mode** by the same assertions on `playTimeSlider()` (range 100–600 instead of 40–200, the values moved into that range); nothing else in those files changes; the Arcade assertions on `windowSlider()` stay; the commit message lists each changed line.
+- [ ] T029 [US3] Show `FOLLOW_PLAY_TIME` in the Configuration window (its label and tip in `LANG`), and add "(Arcade)" to the label of `TEMPO_WINDOW` in the three languages; `RecognitionSettingsSwtTest` unchanged and green.
+- [ ] T030 [P] [US3] Write first (red) `TST/session/FollowLeniencyTest.java` for `contracts/follow-leniency.md` (one way; `STRICT` returns the effective settings themselves; `NOTE_ACCEPT` never above 45 cents; no level threshold changed; a device profile first, the position on top; an unknown saved name → `PERMISSIVE`), then create `PRACTICE/session/FollowLeniencyPosition.java` (`STRICT`, `PERMISSIVE` default, `VERY_PERMISSIVE`) and `PRACTICE/session/FollowLeniency.java` with the rows of the contract, **provisional values equal to Arcade's** (and `NOTE_ACCEPT` 35, i.e. unchanged) until T032.
+- [ ] T031 [US3] Write `TST/replay/FollowLeniencyReplayTest.java` (tag `dataset`, gated `-Dfollow.measure=true`, skipped without `tests/1`): a copy of the harness of `TST/replay/ArcadeLeniencyReplayTest.java` (which stays as it is) with Follow's positions and candidate values as parameters; prints per position: right notes of the reference recording accepted, the 98 negatives accepted, the median delay.
+- [ ] T032 [US3] Choose the values of Permissive and Very permissive: the most lenient values for which, at Permissive, **at most 4 of the 98** negatives are accepted (SC-004), no right note of the reference recording is lost, and, on the owner's record (T015), the share of SC-003 (**at least 90 %** of the right-pitch events played within 300 ms after their red are accepted) is reached or the best reachable figure is reported; write the values and the figures of every position into `research.md` (section R9) **before** committing them into `FollowLeniency`; pin them in `FollowLeniencyTest` (new method).
+- [ ] T033 [US3] The position choice in the Mode tab of `FollowPanel` (Follow only), saved with its own key (applies to the next run); the summary and the record name the position and the time to play (FR-007): `FollowSummary`, `FollowRunRecord` header; texts in `LANG`; tests first in `TST/ui/FollowPanelLeniencyTest.java` and `TST/session/FollowSummaryReasonsTest.java` (new methods).
+- [ ] T034 [P] [US3] Write `TST/session/FollowDeterminismTest.java` (FR-009): the same frames, settings, position and time to play twice give the same verdicts and reasons; silence at Very permissive accepts nothing (FR-006); one attack never counts for two events at P = 600 with notes 300 ms apart.
+- [ ] T035 [US3] Describe the time to play (with the shrinking advance of close notes, `contracts/play-time-window.md`) and the three positions in the three practice guides.
+- [ ] T036 [US3] Checkpoint: as T014; Arcade's figures of spec 014 equal to T001's; commit the phase.
+
+## Phase 6: Polish & Cross-Cutting Concerns
+
+- [ ] T037 Update `specs/test-sheets/F01-suivre-le-tempo.md` for the new controls (time to play 300 ms, Permissive, the calibration offer, the reasons) and add a line per reason to check.
+- [ ] T038 Full gate (SC-006): `mvn -e clean verify -P native-modules,swt-gui-tests` from `BUILD` green; counts = T001 + new tests; recognition reports equal to `specs/010-pre-run-check/benchmark/after/`; Wait, tuner and calibration figures unchanged; `git diff --name-status <T001 commit> -- '*/test/*'` shows only `A`, plus `M` for the two files of T028 and nothing else; report exactly what ran.
+- [ ] T039 Write `specs/016-follow-mode-leniency/final-report.md` (what ran, what was measured, the values chosen, the exception of T028 with its lines, what was not seen, Windows/Linux by CI only) and the row of 016 in `specs/STATUS.md`; commit.
+- [ ] T040 Relaunch the built application for the owner (after closing a previous instance launched by this session).
+- [ ] T041 [HUMAN] **Gate G2** (SC-007): the owner reruns `specs/test-sheets/F01-suivre-le-tempo.md` at the default settings (time to play 300 ms, Permissive, tempo 70 %, route calibrated) and says whether a right note played roughly in time is accepted; the answer goes into `final-report.md` and this task.
+
+## Dependencies & Execution Order
+
+- Phase 1 → Phases 3, 4, 5. Story 1 (Phase 3) and story 2 (Phase 4) are independent. Story 3 (Phase 5) can start with T024–T031 at any time, but **T032 waits for T016** (the owner's record measured), as research R7 requires.
+- Inside a story: tests first (red), then the code, then the checkpoint.
+- Human gates: T015 (blocks T016 and T032), T041 (closes the feature).
+
+## Parallel Opportunities
+
+- US1: T003, T007, T009 (different files) together; T010 and T011 after T009.
+- US2: T017 with T018's test writing.
+- US3: T024, T030, T034 together; T031 after T030.
+- US2 can be done entirely while waiting for the owner's gate T015.
+
+## Implementation Strategy
+
+1. MVP = Phase 1 + story 1 (T001–T014), then gate G1: the learner sees why notes are refused, and the owner can send a run.
+2. Story 2 while waiting for the owner's run.
+3. Story 3, whose values come from the measures of T016 and T031.
+4. Polish and gate G2.
