@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Map;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.document.TGDocument;
+import app.tuxguitar.app.document.TGDocumentListManager;
 import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeResult;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevel;
@@ -31,10 +33,12 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
 import app.tuxguitar.app.tools.custom.practice.session.ArcadeChoices;
 import app.tuxguitar.app.tools.custom.practice.session.AttackCandidates;
+import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
 import app.tuxguitar.app.tools.custom.practice.session.ChordMatcher;
 import app.tuxguitar.app.tools.custom.practice.session.FollowEvents;
 import app.tuxguitar.app.tools.custom.practice.session.FollowPlayback;
 import app.tuxguitar.app.tools.custom.practice.session.FollowRun;
+import app.tuxguitar.app.tools.custom.practice.session.FollowRunRecorder;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSession;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSettings;
 import app.tuxguitar.app.tools.custom.practice.session.FollowStarter;
@@ -156,6 +160,8 @@ public class PracticeWindow {
 	private PracticeHost.RunEnvironment followAdapter;
 	private FollowStarter.Plan followPlan;
 	private AnalysisService.Listener followFrameListener;
+	/** The record of the Follow run, when the learner asked for it (spec 016 FR-003); null otherwise. */
+	private FollowRunRecorder followRecorder;
 	private FollowSession.Snapshot followLast;
 	private int followShownEvent = -1;
 	private int followShownExtras;
@@ -1047,7 +1053,20 @@ public class PracticeWindow {
 		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
 		final FollowRun run = plan.run();
-		this.followFrameListener = run::postFrame;
+		FollowSettings followSettings = FollowSettings.getInstance(this.context);
+		final FollowRunRecorder recorder = (followSettings.isRecordRun() ? newFollowRecorder(plan, candidate, followSettings.isRecordAudio()) : null);
+		this.followRecorder = recorder;
+		if( recorder != null ) {
+			this.followFrameListener = frame -> {
+				recorder.frame(this.followAdapter.wallNanosOf(frame));
+				run.postFrame(frame);
+			};
+			run.setEndHook(session -> writeFollowTake(recorder, session, plan));
+			// the count-in begins with the run: the sound is kept from it
+			recorder.begin();
+		} else {
+			this.followFrameListener = run::postFrame;
+		}
 		this.engine.subscribe(this.followFrameListener);
 		this.host.commandSink(run::postCommand);
 		this.palette.setFollowMode(true);
@@ -1061,6 +1080,62 @@ public class PracticeWindow {
 		// the score is the practice interface: only the compact palette stays on screen (FR-076)
 		this.palette.open();
 		setVisible(this.window, false);
+	}
+
+	/** The record of a run that starts now: its score, track, tempo, route and calibration, and the sound when asked. */
+	private FollowRunRecorder newFollowRecorder(FollowStarter.Plan plan, PracticeTrackCandidate candidate, boolean audio) {
+		final AudioEngine audioEngine = this.engine;
+		FollowRunRecorder.Hops hops = new FollowRunRecorder.Hops() {
+			public void add(app.tuxguitar.audio.engine.analysis.HopListener listener) {
+				audioEngine.addHopListener(listener);
+			}
+
+			public void remove(app.tuxguitar.audio.engine.analysis.HopListener listener) {
+				audioEngine.removeHopListener(listener);
+			}
+		};
+		AudioRoute route = this.followAdapter.route();
+		return new FollowRunRecorder(hops, audio, plan.timeline().durationNanos(), new FollowRunRecorder.Start(scoreName(), candidate.getTrack().getNumber(),
+				plan.percent(), plan.windowMillis(), route, this.followAdapter.calibrations().forRoute(route)));
+	}
+
+	/** The file name of the score, without opening a document for it. */
+	private String scoreName() {
+		TGDocumentListManager documents = TGDocumentListManager.getInstance(this.context);
+		for( TGDocument document : documents.getDocuments() ) {
+			if( document.getSong() == this.song ) {
+				return documents.getDocumentName(document);
+			}
+		}
+		return this.song.getName();
+	}
+
+	/**
+	 * The end of a recorded run, on the session's thread: the record is made there, then written on a thread of its own ({@link FollowTakeCopy#writeLater});
+	 * a write that fails is told once, under the summary or in the window.
+	 */
+	private void writeFollowTake(FollowRunRecorder recorder, FollowSession session, FollowStarter.Plan plan) {
+		final FollowTakeCopy copy = new FollowTakeCopy();
+		final String stem = copy.stem();
+		final FollowRunRecorder.Take take = recorder.ended(session, plan.sequence().getEvents(), plan.timeline(), stem);
+		if( take == null ) {
+			return;
+		}
+		copy.writeLater(stem, take.record(), take.samples(), take.sampleRate(),
+				error -> TGSynchronizer.getInstance(this.context).executeLater(() -> followTakeFailed(error)));
+	}
+
+	private void followTakeFailed(String error) {
+		if( !isOpen() ) {
+			return;
+		}
+		String text = TuxGuitar.getProperty("practice.follow.record.failed", new String[] { error });
+		if( this.palette.isOpen() ) {
+			this.palette.showFollowNotice(text);
+		} else {
+			this.followPanel.message(text);
+			refit();
+		}
 	}
 
 	/** A snapshot of the run (UI thread). */
@@ -1130,6 +1205,11 @@ public class PracticeWindow {
 
 	/** Stops listening to the engine for the run; the run itself is untouched. */
 	private void releaseFollowHooks() {
+		if( this.followRecorder != null ) {
+			// the run lets the hops go at its end already; this covers a run that never ended on its thread
+			this.followRecorder.release();
+			this.followRecorder = null;
+		}
 		if( this.followFrameListener != null ) {
 			this.engine.unsubscribe(this.followFrameListener);
 			this.followFrameListener = null;

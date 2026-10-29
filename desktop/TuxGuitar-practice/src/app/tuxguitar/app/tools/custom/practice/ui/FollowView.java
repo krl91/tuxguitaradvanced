@@ -9,6 +9,7 @@ import app.tuxguitar.app.tools.custom.practice.model.TechniqueResult;
 import app.tuxguitar.app.tools.custom.practice.model.TechniqueVerdict;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSession;
 import app.tuxguitar.app.tools.custom.practice.session.FollowSummary;
+import app.tuxguitar.app.tools.custom.practice.session.RefusalReason;
 import app.tuxguitar.app.tools.custom.practice.session.TimingContext;
 import app.tuxguitar.app.tools.custom.practice.session.TimingVerdict;
 
@@ -45,11 +46,13 @@ public final class FollowView {
 	private final String summary;
 	private final int latestEvent;
 	private final int latestExtras;
+	private final String reason;
 
-	private FollowView(Tone tone, String latest, String state, String next, String counts, String precision, String techniques, String summary,
+	private FollowView(Tone tone, String latest, String reason, String state, String next, String counts, String precision, String techniques, String summary,
 			int latestEvent, int latestExtras) {
 		this.tone = tone;
 		this.latest = latest;
+		this.reason = reason;
 		this.state = state;
 		this.next = next;
 		this.counts = counts;
@@ -83,11 +86,13 @@ public final class FollowView {
 		int extras = snapshot.extras().size();
 		Tone tone = Tone.NONE;
 		String latest = " ";
+		String reasonLine = "";
 		if (extras > shownExtras && latestEvent == shownEvent) {
 			tone = Tone.BAD;
 			latest = text.get("practice.follow.event.EXTRA");
 		} else if (latestEvent >= 0) {
 			FollowSession.EventResult result = results.get(latestEvent);
+			reasonLine = reasonText(result, events.get(latestEvent), text);
 			switch (result.status()) {
 				case MATCHED:
 					tone = Tone.GOOD;
@@ -146,7 +151,31 @@ public final class FollowView {
 		if (snapshot.state() == FollowSession.State.COMPLETE || snapshot.state() == FollowSession.State.STOPPED) {
 			summary = summaryText(FollowSummary.of(snapshot), text);
 		}
-		return new FollowView(tone, latest, state.toString(), next, countsLine.toString(), precision, techniques, summary, latestEvent, extras);
+		return new FollowView(tone, latest, reasonLine, state.toString(), next, countsLine.toString(), precision, techniques, summary, latestEvent, extras);
+	}
+
+	/**
+	 * Why the event was not accepted on time (spec 016 FR-001), in the words of a guitarist; empty for an event accepted. A reason with a detail always
+	 * shows it: the note heard and the one expected, the milliseconds, the certainty.
+	 */
+	public static String reasonText(FollowSession.EventResult result, PracticeEvent event, Text text) {
+		RefusalReason reason = result.reason();
+		long detail = result.reasonDetail();
+		switch (reason) {
+			case NONE:
+				return "";
+			case OTHER_PITCH:
+				if (detail == Integer.MIN_VALUE) {
+					return text.get("practice.follow.reason.OTHER_PITCH_UNNAMED", "", expectedText(event));
+				}
+				return text.get("practice.follow.reason.OTHER_PITCH", PracticePalette.noteName((int) detail), expectedText(event));
+			case EARLY_OUTSIDE:
+			case LATE_OUTSIDE:
+			case UNCLEAR:
+				return text.get("practice.follow.reason." + reason.name(), Long.toString(Math.abs(detail)));
+			default:
+				return text.get("practice.follow.reason." + reason.name());
+		}
 	}
 
 	private static String matchedText(FollowSession.EventResult result, Text text) {
@@ -186,6 +215,11 @@ public final class FollowView {
 		if (summary.autoPassed() > 0) {
 			line(lines, text.get("practice.follow.summary.auto-passed", Integer.toString(summary.autoPassed())));
 		}
+		for (RefusalReason reason : RefusalReason.values()) {
+			if (summary.reasonCount(reason) > 0) {
+				line(lines, text.get("practice.follow.summary.reason." + reason.name(), Integer.toString(summary.reasonCount(reason))));
+			}
+		}
 		if (summary.techniqueTotal() > 0) {
 			StringBuilder techniques = new StringBuilder();
 			for (Map.Entry<PlayingTechnique, Map<TechniqueVerdict, Integer>> technique : summary.techniques().entrySet()) {
@@ -223,6 +257,11 @@ public final class FollowView {
 	/** The feedback of the latest event (or extra note): the big symbol and its words. */
 	public String latest() {
 		return this.latest;
+	}
+
+	/** Why the latest event was not accepted on time (spec 016), or an empty text. */
+	public String reason() {
+		return this.reason;
 	}
 
 	public String state() {

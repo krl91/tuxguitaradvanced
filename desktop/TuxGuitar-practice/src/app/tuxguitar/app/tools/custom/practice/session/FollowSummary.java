@@ -32,9 +32,10 @@ public final class FollowSummary {
 	private final int extra;
 	private final Map<TechniqueVerdict, Integer> techniqueVerdicts;
 	private final Map<PlayingTechnique, Map<TechniqueVerdict, Integer>> techniques;
+	private final Map<RefusalReason, Integer> reasons;
 
 	private FollowSummary(int events, int onTime, int early, int late, int wrong, int missed, int notJudged, int autoPassed, int pending, int extra,
-			Map<TechniqueVerdict, Integer> techniqueVerdicts, Map<PlayingTechnique, Map<TechniqueVerdict, Integer>> techniques) {
+			Map<TechniqueVerdict, Integer> techniqueVerdicts, Map<PlayingTechnique, Map<TechniqueVerdict, Integer>> techniques, Map<RefusalReason, Integer> reasons) {
 		this.events = events;
 		this.onTime = onTime;
 		this.early = early;
@@ -47,6 +48,7 @@ public final class FollowSummary {
 		this.extra = extra;
 		this.techniqueVerdicts = techniqueVerdicts;
 		this.techniques = techniques;
+		this.reasons = reasons;
 	}
 
 	/** The summary of the snapshot: every event once, whatever its status. */
@@ -63,6 +65,10 @@ public final class FollowSummary {
 		Map<PlayingTechnique, Map<TechniqueVerdict, Integer>> byTechnique = new EnumMap<PlayingTechnique, Map<TechniqueVerdict, Integer>>(PlayingTechnique.class);
 		for (TechniqueVerdict verdict : TechniqueVerdict.values()) {
 			verdicts.put(verdict, 0);
+		}
+		Map<RefusalReason, Integer> reasons = new EnumMap<RefusalReason, Integer>(RefusalReason.class);
+		for (RefusalReason reason : RefusalReason.values()) {
+			reasons.put(reason, 0);
 		}
 		List<FollowSession.EventResult> results = snapshot.results();
 		for (FollowSession.EventResult result : results) {
@@ -92,6 +98,9 @@ public final class FollowSummary {
 					pending++;
 					break;
 			}
+			if (result.reason() != RefusalReason.NONE) {
+				reasons.merge(result.reason(), 1, Integer::sum);
+			}
 			for (TechniqueResult technique : result.techniques()) {
 				verdicts.merge(technique.getVerdict(), 1, Integer::sum);
 				byTechnique.computeIfAbsent(technique.getTechnique(), key -> new EnumMap<TechniqueVerdict, Integer>(TechniqueVerdict.class))
@@ -99,7 +108,7 @@ public final class FollowSummary {
 			}
 		}
 		return new FollowSummary(results.size(), onTime, early, late, wrong, missed, notJudged, autoPassed, pending, snapshot.extras().size(),
-				Collections.unmodifiableMap(verdicts), Collections.unmodifiableMap(byTechnique));
+				Collections.unmodifiableMap(verdicts), Collections.unmodifiableMap(byTechnique), Collections.unmodifiableMap(reasons));
 	}
 
 	/** The events of the run, extra notes excluded (they belong to no event). */
@@ -164,6 +173,20 @@ public final class FollowSummary {
 	/** What the techniques said, by technique. */
 	public Map<PlayingTechnique, Map<TechniqueVerdict, Integer>> techniques() {
 		return this.techniques;
+	}
+
+	/** How many events were refused for the reason (spec 016 FR-002); 0 for {@link RefusalReason#NONE}, which is no refusal. */
+	public int reasonCount(RefusalReason reason) {
+		return this.reasons.get(reason);
+	}
+
+	/** The events not accepted on time, counted by reason: wrong, missed and not judged. */
+	public int refused() {
+		int total = 0;
+		for (int count : this.reasons.values()) {
+			total += count;
+		}
+		return total;
 	}
 
 	public int techniqueCount(TechniqueVerdict verdict) {

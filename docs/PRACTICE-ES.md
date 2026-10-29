@@ -36,6 +36,12 @@ En la pestaña **Modo** de la ventana de práctica eliges cómo se trabaja la pa
 
 Los dos modos cronometrados comparten el **tempo** (20 % a 150 % del tempo escrito), la **ventana de tiempo** (un control deslizante de 40 a 200 ms a cada lado a 120 pulsos por minuto, **100 ms** por defecto; crece y se reduce con el tempo, es un único ajuste guardado que también aparece en la ventana de Configuración, y una elección antigua se convierte: estricta 50 ms, flexible 125 ms, normal el nuevo valor por defecto; una ventana ancha puede hacer confundir una nota con la que aún suena en un pasaje denso) y la **calibración del ritmo** de tu cadena de audio (calibra con clics, o escribe el retraso a mano: sin ella las notas pueden juzgarse algo pronto o tarde, y la ventana indica *Precisión rítmica reducida*).
 
+### Seguir el tempo: por qué se rechazó una nota, y el registro de una partida
+
+En **Seguir el tempo**, la paleta dice bajo cada nota rechazada por qué, de una lista fija: *no se oyó ningún ataque*, *se oyó un sonido, pero no con claridad suficiente para reconocer la nota* (con su certeza; nunca cuenta como nota falsa), *se oyó X en lugar de Y*, *nota correcta, N ms demasiado pronto* o *demasiado tarde*, *no juzgada*. El resumen final cuenta cada motivo.
+
+Dos casillas de la pestaña **Modo**, visibles solo en Seguir y desmarcadas cada vez que TuxGuitar arranca, guardan un registro de las partidas siguientes: **Registrar esta partida** escribe, al final de una partida (completa, detenida, o terminada al reproducir la partitura), un archivo CSV `follow-<fecha>-<hora>.csv` en la carpeta `tuxguitar-follow-takes` de tu carpeta personal: por nota, lo esperado, lo oído, cuándo, con qué certeza, el veredicto y su motivo, y los ajustes de la partida. **Guardar también una copia del sonido**, ofrecida solo con el registro, añade un WAV de lo que oyó el reconocimiento (10 minutos como máximo) con el mismo nombre. No se escribe nada para una partida detenida durante su cuenta atrás, nada sin la casilla, y nada sale de tu ordenador: eres tú quien envía el archivo si quieres que se examine. Detalles: `specs/016-follow-mode-leniency/`.
+
 ### Arcade
 
 Elige **Arcade** en la pestaña Modo, la pista que tocas en la pestaña Pista (cualquier pista con altura, bajo incluido) y pulsa *Iniciar Arcade*. La ventana de práctica se oculta mientras corre la ventana del juego.

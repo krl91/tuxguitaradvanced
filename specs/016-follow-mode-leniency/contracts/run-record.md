@@ -6,13 +6,14 @@ CSV, UTF-8, comma separated, dot decimals:
 
 ```text
 # follow-run-record 1
-# score=<file name>,track=<n>,percent=<p>,play_time_ms=<P>,pitch_position=<STRICT|PERMISSIVE|VERY_PERMISSIVE>
+# score=<file name>,track=<n>,percent=<p>,window_ms=<w>,play_time_ms=<P>,pitch_position=<STRICT|PERMISSIVE|VERY_PERMISSIVE>
 # route=<input>|<output>|<format>,calibration=<NONE|CALIBRATED|MANUAL>,offset_ms=<o>
 # audio=<file name or none>,sample_rate=<hz>,first_sample_ms=<ms of the first recorded sample on the timeline>,audio_truncated=<true|false>
 index,kind,expected,target_ms,status,timing,offset_ms,reason,detail,attack_ms,heard,confidence,level_dbfs
 ```
 
 - One line per event, in order; empty fields for what does not apply.
+- `window_ms` is the timing window the run judged with (added during T010: without it a replay cannot give the run's own verdicts); `play_time_ms` and `pitch_position` are empty before story 3.
 - `first_sample_ms` aligns the WAV on the timeline so the replay test can lay the score on it exactly (no least-squares fit needed).
 - The WAV holds the hops the analysis saw (after the front end), mono, at the run's sample rate, at most 10 minutes (`audio_truncated=true` beyond).
 

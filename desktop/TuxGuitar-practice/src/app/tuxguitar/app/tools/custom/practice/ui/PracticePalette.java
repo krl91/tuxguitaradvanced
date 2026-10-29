@@ -75,6 +75,8 @@ public class PracticePalette {
 	private UIButton resumeButton;
 	private UIButton restartButton;
 	private boolean followMode;
+	/** A sentence about the run under its summary (spec 016: its record could not be written), until the palette opens again. */
+	private String followNotice = "";
 
 	public PracticePalette(TGContext context, Controller controller, TolerancePolicy displayTolerance) {
 		this.context = context;
@@ -83,6 +85,7 @@ public class PracticePalette {
 	}
 
 	public void open() {
+		this.followNotice = "";
 		if( isOpen() ) {
 			this.window.moveToTop();
 			return;
@@ -174,7 +177,8 @@ public class PracticePalette {
 				this.verdictLabel.setText(" ");
 				break;
 		}
-		this.detectedLabel.setText(view.latest());
+		// why a note was refused (spec 016) under its verdict, on a line of its own
+		this.detectedLabel.setText(view.reason().isEmpty() ? view.latest() : view.latest() + "\n" + view.reason());
 		this.statusLabel.setText(view.next().isEmpty() ? view.state() : view.state() + "\n" + view.next());
 		this.techniqueLabel.setText(view.techniques());
 		this.outcomeLabel.setText(view.counts());
@@ -182,12 +186,25 @@ public class PracticePalette {
 		if( !view.summary().isEmpty() ) {
 			extra.append(extra.length() > 0 ? "\n" : "").append(view.summary());
 		}
+		if( !this.followNotice.isEmpty() ) {
+			extra.append(extra.length() > 0 ? "\n" : "").append(this.followNotice);
+		}
 		this.passageLabel.setText(extra.toString());
 		setInput(assessment);
 		this.skipButton.setVisible(false);
 		this.resumeButton.setEnabled(state == FollowSession.State.READY_TO_RESUME);
 		this.restartButton.setEnabled(state == FollowSession.State.COMPLETE || state == FollowSession.State.FOLLOWING);
 		refit();
+	}
+
+	/** Tells something about the run under what the palette shows, once (spec 016: the record of the run could not be written). */
+	public void showFollowNotice(String notice) {
+		this.followNotice = notice;
+		if( isOpen() ) {
+			String shown = this.passageLabel.getText();
+			this.passageLabel.setText(shown == null || shown.isEmpty() ? notice : shown + "\n" + notice);
+			refit();
+		}
 	}
 
 	/** The tuning-state ranges shown for the detected note (the session's settings, T102). */

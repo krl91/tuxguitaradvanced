@@ -89,8 +89,15 @@ public final class FollowSession {
 		private final int[] missing;
 		private final List<TechniqueResult> techniques;
 		private final int attempts;
+		private final RefusalReason reason;
+		private final long reasonDetail;
 
 		EventResult(int eventIndex, Status status, PitchResult pitch, TimingVerdict timing, long offsetNanos, int[] missing, List<TechniqueResult> techniques, int attempts) {
+			this(eventIndex, status, pitch, timing, offsetNanos, missing, techniques, attempts, RefusalReason.NONE, 0L);
+		}
+
+		private EventResult(int eventIndex, Status status, PitchResult pitch, TimingVerdict timing, long offsetNanos, int[] missing, List<TechniqueResult> techniques, int attempts,
+				RefusalReason reason, long reasonDetail) {
 			this.eventIndex = eventIndex;
 			this.status = status;
 			this.pitch = pitch;
@@ -99,6 +106,8 @@ public final class FollowSession {
 			this.missing = missing;
 			this.techniques = techniques;
 			this.attempts = attempts;
+			this.reason = reason;
+			this.reasonDetail = reasonDetail;
 		}
 
 		EventResult with(Status status, PitchResult pitch, TimingVerdict timing, long offsetNanos, int[] missing) {
@@ -106,11 +115,16 @@ public final class FollowSession {
 		}
 
 		EventResult withAttempts(int attempts) {
-			return new EventResult(this.eventIndex, this.status, this.pitch, this.timing, this.offsetNanos, this.missing, this.techniques, attempts);
+			return new EventResult(this.eventIndex, this.status, this.pitch, this.timing, this.offsetNanos, this.missing, this.techniques, attempts, this.reason, this.reasonDetail);
 		}
 
 		EventResult withTechniques(List<TechniqueResult> techniques) {
-			return new EventResult(this.eventIndex, this.status, this.pitch, this.timing, this.offsetNanos, this.missing, Collections.unmodifiableList(new ArrayList<TechniqueResult>(techniques)), this.attempts);
+			return new EventResult(this.eventIndex, this.status, this.pitch, this.timing, this.offsetNanos, this.missing, Collections.unmodifiableList(new ArrayList<TechniqueResult>(techniques)), this.attempts,
+					this.reason, this.reasonDetail);
+		}
+
+		EventResult withReason(RefusalReason reason, long reasonDetail) {
+			return new EventResult(this.eventIndex, this.status, this.pitch, this.timing, this.offsetNanos, this.missing, this.techniques, this.attempts, reason, reasonDetail);
 		}
 
 		public int eventIndex() {
@@ -148,6 +162,44 @@ public final class FollowSession {
 		public int attempts() {
 			return this.attempts;
 		}
+
+		/** Why the event was not accepted on time (spec 016 FR-001); {@link RefusalReason#NONE} for an event accepted, passed or not resolved yet. It never changes the verdict. */
+		public RefusalReason reason() {
+			return this.reason;
+		}
+
+		/**
+		 * The detail of the reason: the MIDI pitch heard for {@link RefusalReason#OTHER_PITCH} ({@link Integer#MIN_VALUE} when no single pitch was decided,
+		 * as for a chord), the offset in milliseconds from the target for {@link RefusalReason#EARLY_OUTSIDE} (negative) and
+		 * {@link RefusalReason#LATE_OUTSIDE}, the best confidence seen in hundredths for {@link RefusalReason#UNCLEAR}; 0 otherwise.
+		 */
+		public long reasonDetail() {
+			return this.reasonDetail;
+		}
+	}
+
+	/** What was heard for an event, for the record of a run (spec 016 FR-003). Immutable. */
+	public static final class Heard {
+		private final long attackWall;
+		private final int midi;
+		private final double confidence;
+		private final double levelDbfs;
+
+		Heard(long attackWall, int midi, double confidence, double levelDbfs) {
+			this.attackWall = attackWall;
+			this.midi = midi;
+			this.confidence = confidence;
+			this.levelDbfs = levelDbfs;
+		}
+
+		/** The compensated time of the attack, on the wall clock. */
+		public long attackWall() { return this.attackWall; }
+		/** The pitch heard, {@link Integer#MIN_VALUE} when no single pitch was decided. */
+		public int midi() { return this.midi; }
+		/** The best confidence of the pitch seen during the attack, 0 to 1. */
+		public double confidence() { return this.confidence; }
+		/** The loudest level seen during the attack, in dBFS. */
+		public double levelDbfs() { return this.levelDbfs; }
 	}
 
 	/** An onset with pitch evidence that matched no event. */
@@ -238,13 +290,15 @@ public final class FollowSession {
 		final SpectrumFrame spectrum;
 		final boolean usable;
 		final double[] hop;
+		final double confidence;
 
-		Seen(long wall, PitchReading reading, SpectrumFrame spectrum, boolean usable, double[] hop) {
+		Seen(long wall, PitchReading reading, SpectrumFrame spectrum, boolean usable, double[] hop, double confidence) {
 			this.wall = wall;
 			this.reading = reading;
 			this.spectrum = spectrum;
 			this.usable = usable;
 			this.hop = hop;
+			this.confidence = confidence;
 		}
 	}
 
@@ -263,6 +317,12 @@ public final class FollowSession {
 		int heldMidi = Integer.MIN_VALUE;
 		long heldSince;
 		boolean resolved;
+		/** For the reasons (spec 016): the event it was matched on, the event it was a wrong attempt of, the stable pitch it was decided on, the best confidence seen. */
+		int matchedEvent = -1;
+		int wrongFor = -1;
+		int decidedMidi = Integer.MIN_VALUE;
+		double bestConfidence;
+		double bestLevel = Double.NEGATIVE_INFINITY;
 
 		PendingOnset(long transient_, long adjusted, int[] candidates) {
 			this.transient_ = transient_;
@@ -281,6 +341,36 @@ public final class FollowSession {
 
 		RecentOnset(long transient_) {
 			this.transient_ = transient_;
+		}
+	}
+
+	/** A resolved onset, as the reasons of the events around it need it (spec 016, contracts/refusal-reasons.md). */
+	private static final class Attack {
+		final long adjusted;
+		final int[] inWindow;
+		final int matchedEvent;
+		final int wrongFor;
+		final int decidedMidi;
+		final double bestConfidence;
+		final double bestLevel;
+
+		Attack(PendingOnset onset) {
+			this.adjusted = onset.adjusted;
+			this.inWindow = onset.inWindow.stream().mapToInt(Integer::intValue).toArray();
+			this.matchedEvent = onset.matchedEvent;
+			this.wrongFor = onset.wrongFor;
+			this.decidedMidi = onset.decidedMidi;
+			this.bestConfidence = onset.bestConfidence;
+			this.bestLevel = onset.bestLevel;
+		}
+
+		boolean inWindowOf(int index) {
+			for (int i : this.inWindow) {
+				if (i == index) {
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 
@@ -332,6 +422,8 @@ public final class FollowSession {
 	private static final long TECHNIQUE_WINDOW_NANOS = 1_500_000_000L;
 	private static final long BEND_WINDOW_MIN_NANOS = 1_000_000_000L;
 	private static final long BEND_WINDOW_MAX_NANOS = 2_500_000_000L;
+	/** How far from its target an attack of the right pitch is looked for, to say that a missed event was played too early or too late (spec 016). */
+	private static final long REASON_SPAN_NANOS = 1_000_000_000L;
 	private static final double BEND_MARGIN_SEMITONES = 0.5;
 	private static final BendDetector.Parameters BEND = BendDetector.Parameters.defaults();
 
@@ -374,6 +466,8 @@ public final class FollowSession {
 	/** The attacks reported by the detector lately, with the transient time of each. */
 	private final List<RecentOnset> recentOnsets = new ArrayList<RecentOnset>();
 	private final List<Collector> collectors = new ArrayList<Collector>();
+	/** The resolved onsets of the run, for the reasons of the events (spec 016). */
+	private final List<Attack> attacks = new ArrayList<Attack>();
 	private final Deque<Seen> history = new ArrayDeque<Seen>();
 	private int scanFrom;
 	private TimingContext lastContext;
@@ -423,7 +517,8 @@ public final class FollowSession {
 				// several notes with a pitch-changing effect: nothing can be checked, the wait mode asks for Skip, this mode goes on
 				status = Status.NOT_JUDGED;
 			}
-			this.results[i] = new EventResult(i, status, PitchResult.NONE, null, 0L, new int[0], Collections.<TechniqueResult>emptyList(), 0);
+			this.results[i] = new EventResult(i, status, PitchResult.NONE, null, 0L, new int[0], Collections.<TechniqueResult>emptyList(), 0)
+					.withReason(status == Status.NOT_JUDGED ? RefusalReason.NOT_JUDGED : RefusalReason.NONE, 0L);
 			this.open[i] = new OpenEvent();
 			// the note a hammer-on, a pull-off or a slide arrives on has no attack of its own
 			if (event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE) {
@@ -567,6 +662,54 @@ public final class FollowSession {
 		return snapshot(this.contextSupplier.get());
 	}
 
+	/** The wall time of the start of the timeline: the target of the first event less its time on the timeline (spec 016, the record of a run). */
+	public long timelineOriginWall() {
+		return this.results.length == 0 ? this.playerClock.wallNanosAt(this.firstTick) : targetWall(0) - this.timeline.targetNanos(0);
+	}
+
+	/**
+	 * What was heard for the event, for the record of a run (spec 016 FR-003): the attack it was matched on, else its first wrong attempt, else the
+	 * attack its reason names (the right pitch outside its window, a sound not clear enough); null when none. An event matched from the attack
+	 * evidence alone has no attack of its own here: its time is in its offset.
+	 */
+	public Heard heard(int index) {
+		EventResult result = this.results[index];
+		Attack chosen = null;
+		for (Attack attack : this.attacks) {
+			if (attack.matchedEvent == index) {
+				chosen = attack;
+				break;
+			}
+		}
+		if (chosen == null) {
+			for (Attack attack : this.attacks) {
+				if (attack.wrongFor == index) {
+					chosen = attack;
+					break;
+				}
+			}
+		}
+		if (chosen == null && result.status() == Status.MISSED) {
+			chosen = rightPitchOutside(index, window(index, this.lastContext));
+			if (chosen == null && result.reason() == RefusalReason.UNCLEAR) {
+				for (Attack attack : this.attacks) {
+					if (attack.matchedEvent < 0 && attack.wrongFor < 0 && attack.decidedMidi == Integer.MIN_VALUE && attack.inWindowOf(index)) {
+						chosen = attack;
+						break;
+					}
+				}
+			}
+		}
+		if (chosen == null) {
+			return null;
+		}
+		int midi = chosen.decidedMidi;
+		if (midi == Integer.MIN_VALUE && chosen.matchedEvent == index && this.events.get(index).getKind() == PracticeEvent.Kind.EXPECTED_NOTE) {
+			midi = this.events.get(index).getExpectedMidi();
+		}
+		return new Heard(chosen.adjusted, midi, chosen.bestConfidence, chosen.bestLevel);
+	}
+
 	private Snapshot snapshot(TimingContext context) {
 		int onTime = 0, early = 0, late = 0, wrong = 0, missed = 0, notJudged = 0, auto = 0, openIndex = -1;
 		for (int i = 0; i < this.results.length; i++) {
@@ -616,6 +759,7 @@ public final class FollowSession {
 			for (int i = 0; i < this.results.length; i++) {
 				if (this.results[i].status() == Status.PENDING && window(i, context).outerTo() < this.judgingSince) {
 					this.results[i] = this.results[i].with(Status.NOT_JUDGED, PitchResult.NONE, null, 0L, new int[0]);
+					updateReason(i);
 				}
 			}
 		}
@@ -644,7 +788,7 @@ public final class FollowSession {
 		double f0 = frame.getF0Hz();
 		double midi = (Double.isFinite(f0) && f0 > 0.0 && frame.getConfidence() >= 0.8 ? 69.0 + 12.0 * Math.log(f0 / 440.0) / Math.log(2.0) : Double.NaN);
 		double[] hop = new double[] { wall, midi, frame.getRmsDbfs(), frame.isOnset() ? 1.0 : 0.0 };
-		Seen seen = new Seen(wall, reading, frame.getSpectrum(), usable, hop);
+		Seen seen = new Seen(wall, reading, frame.getSpectrum(), usable, hop, frame.getConfidence());
 		this.history.addLast(seen);
 		while (!this.history.isEmpty() && wall - this.history.peekFirst().wall > HISTORY_NANOS) {
 			this.history.removeFirst();
@@ -765,6 +909,8 @@ public final class FollowSession {
 
 	private void evaluateFrame(PendingOnset onset, Seen seen, TimingContext context) {
 		this.evaluatedUpTo.put(onset, seen.wall);
+		onset.bestConfidence = Math.max(onset.bestConfidence, seen.confidence);
+		onset.bestLevel = Math.max(onset.bestLevel, seen.hop[2]);
 		long age = seen.wall - onset.transient_;
 		if (hasPendingChord(onset)) {
 			// a chord has no single pitch: its evidence is the spectrum
@@ -805,6 +951,7 @@ public final class FollowSession {
 						return;
 					}
 					if (age > this.chordMatcher.getParameters().windowNanos) {
+						onset.wrongFor = index;
 						wrongAttempt(index, onset, context, r.getMissing());
 						resolve(onset);
 						return;
@@ -881,11 +1028,17 @@ public final class FollowSession {
 	}
 
 	private void resolve(PendingOnset onset) {
+		if (!onset.resolved) {
+			// the reasons of the events around it may change with it (spec 016): an attack of the right pitch outside a window, a sound not clear enough
+			this.attacks.add(new Attack(onset));
+			refreshReasonsNear(onset.adjusted);
+		}
 		onset.resolved = true;
 		this.evaluatedUpTo.remove(onset);
 	}
 
 	private void resolveWrongOrExtra(PendingOnset onset, TimingContext context) {
+		onset.decidedMidi = onset.heldMidi;
 		int nearest = -1;
 		long best = Long.MAX_VALUE;
 		for (int index : onset.candidates) {
@@ -898,6 +1051,7 @@ public final class FollowSession {
 			}
 		}
 		if (nearest >= 0) {
+			onset.wrongFor = nearest;
 			wrongAttempt(nearest, onset, context, new int[0]);
 		} else {
 			// no open event holds it: an event already matched, or none at all
@@ -907,6 +1061,7 @@ public final class FollowSession {
 			for (int index : onset.inWindow) {
 				if (this.soundAt[index] != Long.MIN_VALUE && Math.abs(this.soundAt[index] - onset.transient_) <= SAME_SOUND_NANOS) {
 					// the attack of a sound an event was already matched on, by the attack evidence or from the pitch of a step
+					onset.matchedEvent = index;
 					resolve(onset);
 					return;
 				}
@@ -932,6 +1087,7 @@ public final class FollowSession {
 		this.results[index] = this.results[index].withAttempts(this.results[index].attempts() + 1);
 		if (closed) {
 			this.results[index] = this.results[index].with(Status.WRONG_PITCH, PitchResult.WRONG, open.wrongTiming, open.wrongOffset, open.wrongMissing);
+			updateReason(index);
 		}
 	}
 
@@ -943,6 +1099,7 @@ public final class FollowSession {
 				this.results[other] = this.results[other].withAttempts(this.results[other].attempts() + 1);
 			}
 		}
+		onset.matchedEvent = index;
 		finishMatch(index, outcome, onset.transient_);
 		resolve(onset);
 	}
@@ -953,6 +1110,7 @@ public final class FollowSession {
 		cutCollectors(transient_);
 		EventResult previous = this.results[index];
 		this.results[index] = previous.with(Status.MATCHED, PitchResult.CORRECT, outcome.verdict(), outcome.offsetNanos(), new int[0]).withAttempts(previous.attempts() + 1);
+		updateReason(index);
 		startTechniques(index, transient_);
 	}
 
@@ -1159,6 +1317,7 @@ public final class FollowSession {
 			} else {
 				this.results[i] = this.results[i].with(Status.MISSED, PitchResult.NONE, TimingVerdict.MISSED, 0L, new int[0]);
 			}
+			updateReason(i);
 		}
 	}
 
@@ -1172,6 +1331,117 @@ public final class FollowSession {
 			}
 		}
 		return false;
+	}
+
+	// ------------------------------------------------------------------------------------------------------------- reasons
+
+	/** The events whose reason an attack at this compensated time may change: the ones missed or wrong whose target lies within the search span. */
+	private void refreshReasonsNear(long adjusted) {
+		for (int i = 0; i < this.results.length; i++) {
+			Status status = this.results[i].status();
+			if ((status == Status.MISSED || status == Status.WRONG_PITCH) && Math.abs(targetWall(i) - adjusted) <= REASON_SPAN_NANOS) {
+				updateReason(i);
+			}
+		}
+	}
+
+	/**
+	 * The reason of the event, from its verdict and the attacks resolved so far (spec 016, contracts/refusal-reasons.md). The verdict is decided
+	 * before and is never changed here.
+	 */
+	private void updateReason(int i) {
+		EventResult result = this.results[i];
+		RefusalReason reason = RefusalReason.NONE;
+		long detail = 0L;
+		switch (result.status()) {
+			case NOT_JUDGED:
+				reason = RefusalReason.NOT_JUDGED;
+				break;
+			case WRONG_PITCH:
+				reason = RefusalReason.OTHER_PITCH;
+				detail = pitchHeardMostOften(i);
+				break;
+			case MISSED:
+				Window w = window(i, this.lastContext);
+				Attack outside = rightPitchOutside(i, w);
+				if (outside != null) {
+					long offset = outside.adjusted - w.target();
+					reason = (offset < 0 ? RefusalReason.EARLY_OUTSIDE : RefusalReason.LATE_OUTSIDE);
+					detail = Math.round(offset / 1e6);
+				} else {
+					double best = -1.0;
+					for (Attack attack : this.attacks) {
+						if (attack.matchedEvent < 0 && attack.wrongFor < 0 && attack.decidedMidi == Integer.MIN_VALUE && attack.inWindowOf(i)) {
+							best = Math.max(best, attack.bestConfidence);
+						}
+					}
+					if (best >= 0.0) {
+						reason = RefusalReason.UNCLEAR;
+						detail = Math.round(best * 100.0);
+					} else {
+						reason = RefusalReason.NO_ATTACK;
+					}
+				}
+				break;
+			default:
+				break;
+		}
+		if (result.reason() != reason || result.reasonDetail() != detail) {
+			this.results[i] = result.withReason(reason, detail);
+		}
+	}
+
+	/** The stable pitch heard most often in the wrong attempts of the event (ties: the first heard); {@link Integer#MIN_VALUE} when none was decided. */
+	private int pitchHeardMostOften(int index) {
+		int best = Integer.MIN_VALUE;
+		int bestCount = 0;
+		for (int a = 0; a < this.attacks.size(); a++) {
+			Attack attack = this.attacks.get(a);
+			if (attack.wrongFor != index || attack.decidedMidi == Integer.MIN_VALUE) {
+				continue;
+			}
+			int count = 0;
+			for (Attack other : this.attacks) {
+				count += (other.wrongFor == index && other.decidedMidi == attack.decidedMidi ? 1 : 0);
+			}
+			if (count > bestCount) {
+				best = attack.decidedMidi;
+				bestCount = count;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * The attack decided on the expected pitch of a single note, outside its window, within the search span (from the target less a second, not
+	 * before the previous event's target, to the target plus a second, not after the next event's target), and not matched by another event: the
+	 * nearest to the target; null when none.
+	 */
+	private Attack rightPitchOutside(int i, Window w) {
+		PracticeEvent event = this.events.get(i);
+		if (event.getKind() != PracticeEvent.Kind.EXPECTED_NOTE) {
+			return null;
+		}
+		long target = w.target();
+		long from = target - REASON_SPAN_NANOS;
+		long to = target + REASON_SPAN_NANOS;
+		if (i > 0) {
+			from = Math.max(from, targetWall(i - 1));
+		}
+		if (i + 1 < this.results.length) {
+			to = Math.min(to, targetWall(i + 1));
+		}
+		Attack best = null;
+		for (Attack attack : this.attacks) {
+			if (attack.matchedEvent >= 0 || attack.decidedMidi != event.getExpectedMidi() || attack.adjusted <= from || attack.adjusted >= to
+					|| w.classify(attack.adjusted) != null) {
+				continue;
+			}
+			if (best == null || Math.abs(attack.adjusted - target) < Math.abs(best.adjusted - target)) {
+				best = attack;
+			}
+		}
+		return best;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------- techniques

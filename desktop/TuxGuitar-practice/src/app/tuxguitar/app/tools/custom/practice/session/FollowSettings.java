@@ -53,6 +53,9 @@ public final class FollowSettings {
 	private int percent = DEFAULT_PERCENT;
 	/** The window of a settings object that has no store (tests, a window without one). */
 	private int ownWindowMillis = DEFAULT_WINDOW_MILLIS;
+	/** The record of a Follow run and the copy of its sound (spec 016 FR-003): asked for each time, never saved, so off at each launch. */
+	private boolean recordRun;
+	private boolean recordAudio;
 
 	FollowSettings(RecognitionSettingsStore store) {
 		this.store = store;
@@ -166,5 +169,27 @@ public final class FollowSettings {
 	/** True for the modes that play the score at its tempo and judge on time: they share the percentage, the tolerance and the calibration. */
 	public synchronized boolean isTimed() {
 		return this.mode == Mode.FOLLOW || this.mode == Mode.ARCADE;
+	}
+
+	/** True when the learner asked for the record of the next Follow runs (spec 016 FR-003). */
+	public synchronized boolean isRecordRun() {
+		return this.recordRun;
+	}
+
+	/** Without the record there is no copy of the sound either. */
+	public synchronized void setRecordRun(boolean recordRun) {
+		this.recordRun = recordRun;
+		if (!recordRun) {
+			this.recordAudio = false;
+		}
+	}
+
+	/** True when the record keeps a copy of the sound too; never without the record. */
+	public synchronized boolean isRecordAudio() {
+		return this.recordRun && this.recordAudio;
+	}
+
+	public synchronized void setRecordAudio(boolean recordAudio) {
+		this.recordAudio = this.recordRun && recordAudio;
 	}
 }

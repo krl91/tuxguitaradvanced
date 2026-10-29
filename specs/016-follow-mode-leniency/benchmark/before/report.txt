@@ -1,0 +1,64 @@
+DATASET BENCHMARK: 180 recordings, 942 tests: 592 OK, 28 KO, 322 not run
+
+Run tests, by dataset and kind of test:
+  IDMT-SMT-Audio-Effects mono | recognised when played                                       OK    48  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects mono | wrong note +1 semitone(s) refused                            OK    48  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects mono | wrong note +2 semitone(s) refused                            OK    48  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | chord a whole tone higher refused                            OK    44  KO    22  (66,7% OK)
+  IDMT-SMT-Audio-Effects poly | incomplete chord refused (one more note expected)            OK    35  KO     1  (97,2% OK)
+  IDMT-SMT-Audio-Effects poly | recognised when played                                       OK    63  KO     3  (95,5% OK)
+  IDMT-SMT-Guitar | chord a whole tone higher refused                                        OK    16  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | incomplete chord refused (one more note expected)                        OK     8  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | legato (simulated hammer-on or pull-off): second note recognised         OK    40  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | recognised when played                                                   OK    47  KO     1  (97,9% OK)
+  IDMT-SMT-Guitar | second note recognised while the first still rings (other pitch)         OK    39  KO     1  (97,5% OK)
+  IDMT-SMT-Guitar | wrong note +1 semitone(s) refused                                        OK    32  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | wrong note +2 semitone(s) refused                                        OK    32  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | wrong note -1 semitone(s) refused                                        OK    28  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | wrong note -2 semitone(s) refused                                        OK    28  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | wrong second note refused while the first still rings                    OK    36  KO     0  (100,0% OK)
+
+By guitar / effect (all kinds of test together):
+  Chorus / chorus                                              OK    47  KO     5  (90,4% OK)
+  Distortion / distortion                                      OK    45  KO     7  (86,5% OK)
+  EQ / amplifier simulation                                    OK    47  KO     5  (90,4% OK)
+  FeedbackDelay / feedback delay                               OK    48  KO     4  (92,3% OK)
+  Fender Strat Clean Neck SC                                   OK    66  KO     1  (98,5% OK)
+  Fender Strat Clean Neck SC Chords                            OK    19  KO     1  (95,0% OK)
+  Flanger / flanger                                            OK    48  KO     4  (92,3% OK)
+  Ibanez Power Strat Clean Bridge HU                           OK    67  KO     0  (100,0% OK)
+  Ibanez Power Strat Clean Bridge HU Chords                    OK    20  KO     0  (100,0% OK)
+  Ibanez Power Strat Clean Bridge+Neck SC                      OK    67  KO     0  (100,0% OK)
+  Ibanez Power Strat Clean Neck HU                             OK    67  KO     0  (100,0% OK)
+  NoFX / no effect                                             OK    51  KO     1  (98,1% OK)
+
+Recognised when played, by what was played:
+  IDMT-SMT-Audio-Effects mono | single note                              OK    48  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | major seventh                            OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | major third                              OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | major triad                              OK     4  KO     2  (66,7% OK)
+  IDMT-SMT-Audio-Effects poly | minor seventh                            OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | minor third                              OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | minor triad                              OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | octave                                   OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | perfect fifth                            OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | perfect fourth                           OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | power chord                              OK     6  KO     0  (100,0% OK)
+  IDMT-SMT-Audio-Effects poly | sus4 triad                               OK     5  KO     1  (83,3% OK)
+  IDMT-SMT-Guitar | 1-E1-Major                                           OK     3  KO     1  (75,0% OK)
+  IDMT-SMT-Guitar | 2-E1-Minor                                           OK     4  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | 3-A2-Major                                           OK     4  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | 4-A2-Minor                                           OK     4  KO     0  (100,0% OK)
+  IDMT-SMT-Guitar | single note                                          OK    32  KO     0  (100,0% OK)
+
+Tests not run, by reason:
+      80  an octave cannot be told from a partial of the played note (spec FR-004)
+      82  extra strings sounding are tolerated by design (like the chord setting "foreign strings: ignore")
+      56  notes cannot be played together on six strings
+     104  the wrong note is outside the guitar range
+
+KO by kind:
+      22  chord a whole tone higher refused -> wrong chord accepted
+       1  incomplete chord refused (one more note expected) -> chord with a note missing accepted
+       4  recognised when played -> not recognised
+       1  second note recognised while the first still rings (other pitch) -> accepted 1 of 2 (62 then 65)

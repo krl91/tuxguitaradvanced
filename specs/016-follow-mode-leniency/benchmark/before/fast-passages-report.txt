@@ -1,0 +1,29 @@
+FAST PASSAGE BENCHMARK (spec 002 T051, SC-002, SC-004): four notes in order at 4 to 12 notes per second, each ringing under the next
+Code revision: 60027dd1d (+ uncommitted changes)
+Data: IDMT-SMT-Guitar V2 dataset 1, plain single notes (CC BY-NC-ND 4.0, evaluation only, kept outside the repository); 236 passages of 4 guitars. Settings: RecognitionSettings.defaults(), PolyphonicAcceptance.Parameters.defaults().
+A note is recognised when accepted in its turn between 50 ms before and 0.6 s after its onset (read from the annotation). False accept: the last note expected is a wrong one (two semitones from the real one) and is accepted.
+Targets of the specification: SC-002 at least 95 % of the notes recognised at 8 notes per second and 90 % at 12, false accepts under 1 %; SC-004 identical repeats at 8 notes per second separated in at least 95 % of the passages.
+
+four different pitches:
+  rate     passages notes recognised     followed in full   wrong last note accepted delay median / p95 / max (ms)
+     4 /s        80  215 / 320  ( 67.2%)   39 / 80  ( 48.8%)    0 / 80  ( 0.0%)        165 / 174 / 237
+     6 /s        80   98 / 320  ( 30.6%)    0 / 80  (  0.0%)    0 / 80  ( 0.0%)        107 / 190 / 199
+     8 /s        80   79 / 320  ( 24.7%)    0 / 80  (  0.0%)    0 / 80  ( 0.0%)        107 / 113 / 169
+    10 /s        80   77 / 320  ( 24.1%)    0 / 80  (  0.0%)    0 / 80  ( 0.0%)        107 / 113 / 113
+    12 /s        80   76 / 320  ( 23.8%)    0 / 80  (  0.0%)    0 / 80  ( 0.0%)        107 / 113 / 113
+
+the same pitch four times:
+  rate     passages notes recognised     followed in full   wrong last note accepted delay median / p95 / max (ms)
+     4 /s        80  294 / 320  ( 91.9%)   64 / 80  ( 80.0%)    0 / 80  ( 0.0%)        109 / 186 / 594
+     6 /s        80  190 / 320  ( 59.4%)    1 / 80  (  1.3%)    0 / 80  ( 0.0%)        192 / 418 / 544
+     8 /s        80  159 / 320  ( 49.7%)    0 / 80  (  0.0%)    0 / 80  ( 0.0%)        114 / 343 / 462
+    10 /s        80  151 / 320  ( 47.2%)    0 / 80  (  0.0%)    0 / 80  ( 0.0%)        153 / 326 / 459
+    12 /s        80  142 / 320  ( 44.4%)    0 / 80  (  0.0%)    0 / 80  ( 0.0%)        113 / 343 / 405
+
+two pitches a semitone apart, alternating:
+  rate     passages notes recognised     followed in full   wrong last note accepted delay median / p95 / max (ms)
+     4 /s        76  243 / 304  ( 79.9%)   42 / 76  ( 55.3%)    0 / 76  ( 0.0%)        153 / 192 / 570
+     6 /s        76  153 / 304  ( 50.3%)    0 / 76  (  0.0%)    0 / 76  ( 0.0%)        146 / 193 / 517
+     8 /s        76  135 / 304  ( 44.4%)    0 / 76  (  0.0%)    0 / 76  ( 0.0%)        113 / 438 / 559
+    10 /s        76  131 / 304  ( 43.1%)    0 / 76  (  0.0%)    0 / 76  ( 0.0%)        113 / 384 / 593
+    12 /s        76  111 / 304  ( 36.5%)    0 / 76  (  0.0%)    0 / 76  ( 0.0%)        113 / 372 / 596

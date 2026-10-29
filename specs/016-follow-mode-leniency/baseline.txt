@@ -1,0 +1,53 @@
+Spec 016 baseline (T001, T002), 2026-10-29, before any code of the feature.
+
+Commit the work starts from: 60027dd1d
+
+T001: full build from desktop/build-scripts/tuxguitar-macosx-swt-cocoa, `mvn -o -e clean verify -P native-modules`, JDK Temurin 21.
+Every module up to tuxguitar-audiounit-macos: SUCCESS with its tests. The last module (the .app) failed at `clean` only: Finder had
+recreated target/.DS_Store (no test involved); the app is rebuilt with -DskipTests at the first checkpoint.
+
+Test counts (Tests run, Failures, Errors, Skipped):
+  tuxguitar-lib            73 / 0 / 0 / 0
+  tuxguitar-editor-utils    1 / 0 / 0 / 0
+  tuxguitar-compat          1 / 0 / 0 / 0
+  tuxguitar-gtp            10 / 0 / 0 / 1
+  tuxguitar-midi            2 / 0 / 0 / 0
+  tuxguitar-audio-engine  373 / 0 / 0 / 0
+  tuxguitar-tuner-next     24 / 0 / 0 / 0
+  tuxguitar-synth-gervill   9 / 0 / 0 / 0
+  tuxguitar-practice     1175 / 0 / 0 / 10
+
+Recognition reports: the default build writes desktop/TuxGuitar-practice/target/dataset-benchmark/; copied as they are now into
+specs/016-follow-mode-leniency/benchmark/before/. Compared with specs/010-pre-run-check/benchmark/after/: report.txt,
+technique-report.txt, weak-input-report.txt, weak-input-frontend-report.txt are byte-equal; the others differ by their revision line
+and by the work of the specs after 010 (cases added to outcomes.csv, the chord acceptance parameters line). SC-006 is therefore checked
+against benchmark/before/ (this commit), the revision line aside.
+
+Follow benchmark on the reference recording (FollowBenchmarkTest, printed by this build): events 42, matched 35 (on time 33, early 2,
+late 0), wrong pitch 0, missed 7 (all 7 with the note inside its window), not judged 0, extra 0 — equal to
+specs/002-practice-industrialization/benchmark/follow-benchmark-recorded-2026-10-08.txt.
+
+Arcade figures of spec 014 (ArcadeLeniencyReplayTest -Darcade.measure=true, tag dataset), run at this commit:
+  ARCADE MEASURE base (the default settings = Follow's recognition): judged 38, recognised 35, missed [8@2.287, 13@4.133, 32@11.389], false accepts 0/98 [], chords with a note missing accepted 2/12, accepted before the attack 0, delay median 105 ms p90 169 ms
+  ARCADE MEASURE LIKE_PRACTICE: judged 38, recognised 35, missed [8@2.287, 13@4.133, 32@11.389], false accepts 0/98 [], chords with a note missing accepted 2/12, accepted before the attack 0, delay median 105 ms p90 169 ms
+  ARCADE MEASURE LIKE_PRACTICE vs base: right accepted +0, false accepts +0, median delay 0% shorter
+  ARCADE MEASURE FUN: judged 38, recognised 35, missed [8@2.287, 13@4.133, 32@11.389], false accepts 0/98 [], chords with a note missing accepted 2/12, accepted before the attack 0, delay median 105 ms p90 169 ms
+  ARCADE MEASURE FUN vs base: right accepted +0, false accepts +0, median delay 0% shorter
+  ARCADE MEASURE VERY_PERMISSIVE: judged 38, recognised 35, missed [8@2.287, 13@4.133, 32@11.389], false accepts 0/98 [], chords with a note missing accepted 2/12, accepted before the attack 0, delay median 105 ms p90 169 ms
+  ARCADE MEASURE VERY_PERMISSIVE vs base: right accepted +0, false accepts +0, median delay 0% shorter
+
+The tracked file specs/003-arcade-mode/benchmark/scene-baseline-2026-10-08.txt is rewritten by a benchmark: restored after each build.
+
+T002: existing tests that read what this feature touches and must stay unchanged and green:
+  practice: FollowStarterTest, FollowStarterWindowTest, TimingWindowParityTest, FollowSessionTest, FollowFunctionalTest,
+            PracticeWindowStartPathSourceTest, PreRunParityTest, ArcadeLeniencyTest, ArcadeLikePracticeParityTest, ArcadeScopeParityTest,
+            FollowSettingsTest, FollowSettingsProfileTest, StoreWritersTest, RecognitionSettingsSwtTest, FollowStringsTest,
+            FollowViewTest (found while reading: it checks the exact text of the per-event line, so the reason goes on a line of its own),
+            FollowSummaryTest
+  audio engine: settings/RecognitionSettingsTest, settings/RecognitionSettingsStoreProfileTest, calibration/RecognitionProfileTest,
+            calibration/ProfileReuseTest
+The only ones the owner allowed to change (exception of 2026-10-29, T028), and only for the Follow-mode assertions on windowSlider():
+  TST/ui/FollowPanelTest.java: theWaitModeIsShownFirstAndTheFollowControlsAreOnlyThereInTheFollowMode,
+      thePercentageAndTheWindowTheLearnerPicksAreTheSettingsAndTheSliderGoesFromFortyToTwoHundred,
+      changingOneControlNeverMovesTheOthersNorTheCalibration, theSliderShowsTheSavedWindowWhenThePanelOpensAndFollowsAChangeMadeElsewhere
+  TST/ui/FollowPanelSwtTest.java: the window slider lines of thePickedValuesReachTheSettingsAndEveryVisibleControlStaysInsideTheWindow

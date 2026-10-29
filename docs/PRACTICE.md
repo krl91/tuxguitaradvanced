@@ -54,6 +54,12 @@ In the **Mode** tab of the practice window you choose how the score is practised
 
 Both timed modes share the **tempo** (20 % to 150 % of the written tempo), the **timing window** (a slider from 40 to 200 ms each side at 120 beats a minute, **100 ms** by default; it grows and shrinks with the tempo, is one saved setting also shown in the Configuration window, and an older choice is converted: strict 50 ms, lenient 125 ms, normal the new default; a wide window can take a note for the one still ringing in a dense passage) and the **rhythm calibration** of your audio route (calibrate with clicks, or type the delay by hand: without it the notes may be judged a little early or late, and the window says *Reduced rhythmic precision*).
 
+### Follow the tempo: why a note was refused, and the record of a run
+
+In **Follow the tempo**, the palette says under each refused note why it was refused, from a fixed list: *no attack heard*, *a sound was heard but not clearly enough to tell the note* (with its certainty; this is never counted as a wrong note), *heard X instead of Y*, *right note, N ms too early* or *too late*, *not judged*. The summary at the end counts each reason.
+
+Two boxes of the **Mode** tab, shown in Follow only and off each time TuxGuitar starts, keep a record of the next runs: **Record this run** writes, at the end of a run (complete, stopped, or ended by playing the score), a CSV file `follow-<date>-<time>.csv` in the folder `tuxguitar-follow-takes` of your home folder: per note, what was expected, what was heard, when, with what certainty, the verdict and its reason, and the settings of the run. **Keep a copy of the sound**, offered only with the record, adds a WAV of what the recognition heard (at most 10 minutes) with the same name. Nothing is written for a run stopped during its count-in, nothing is written without the box, and nothing leaves your computer: you send the file yourself if you want it looked at. Details: `specs/016-follow-mode-leniency/`.
+
 ### Arcade
 
 Two ways to start it: the **coloured Arcade button** of the transport bar (right after the ♪ Practice button) starts Arcade **at once** on the track under the score cursor, with the current input, without the preparation window; or choose **Arcade** in the Mode tab, choose the track you play in the Track tab (any pitched track, bass included), then press *Start Arcade*. The practice window hides while the game window runs.

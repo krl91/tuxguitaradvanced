@@ -17,6 +17,7 @@ import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.widget.UIButton;
+import app.tuxguitar.ui.widget.UICheckBox;
 import app.tuxguitar.ui.widget.UIContainer;
 import app.tuxguitar.ui.widget.UIDropDownSelect;
 import app.tuxguitar.ui.widget.UIScale;
@@ -97,6 +98,8 @@ public final class FollowPanel {
 	private final UIButton calibrate;
 	private final UIButton cancel;
 	private final UILabel announce;
+	private final UICheckBox recordRun;
+	private final UICheckBox recordAudio;
 	private final UILabel progress;
 	private final UILabel precision;
 	private boolean updating;
@@ -259,6 +262,14 @@ public final class FollowPanel {
 		this.progress = wrap(uiFactory, layout, 13);
 		this.precision = wrap(uiFactory, layout, 14);
 
+		// the record of a Follow run (spec 016 FR-003): asked for here, off at each launch; the sound only with the record
+		this.recordRun = uiFactory.createCheckBox(this.panel);
+		this.recordRun.setText(TuxGuitar.getProperty("practice.follow.record.run"));
+		layout.set(this.recordRun, 21, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		this.recordAudio = uiFactory.createCheckBox(this.panel);
+		this.recordAudio.setText(TuxGuitar.getProperty("practice.follow.record.audio"));
+		layout.set(this.recordAudio, 22, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+
 		this.mode.addSelectionListener(selected(() -> {
 			FollowSettings.Mode chosen = this.mode.getSelectedValue();
 			if (chosen != null) {
@@ -320,6 +331,11 @@ public final class FollowPanel {
 			this.settings.setWindowMillis(this.tolerance.getValue());
 			showWindowText();
 		}));
+		this.recordRun.addSelectionListener(selected(() -> {
+			this.settings.setRecordRun(this.recordRun.isSelected());
+			refresh();
+		}));
+		this.recordAudio.addSelectionListener(selected(() -> this.settings.setRecordAudio(this.recordAudio.isSelected())));
 		this.manualApply.addSelectionListener(selected(this::applyManual));
 		this.manualForget.addSelectionListener(selected(this::forget));
 		this.calibrate.addSelectionListener(selected(this::startCalibration));
@@ -390,6 +406,13 @@ public final class FollowPanel {
 			}
 			this.tolerance.setValue(this.settings.getWindowMillis());
 			showWindowText();
+			boolean followOnly = this.settings.isFollow();
+			this.recordRun.setSelected(this.settings.isRecordRun());
+			this.recordAudio.setSelected(this.settings.isRecordAudio());
+			this.recordRun.setVisible(followOnly);
+			this.recordAudio.setVisible(followOnly);
+			this.recordRun.setEnabled(this.running == null);
+			this.recordAudio.setEnabled(this.running == null && this.settings.isRecordRun());
 			this.modeHint.setText(this.settings.isArcade() ? TuxGuitar.getProperty("practice.mode.arcade.hint") + "\n" + TuxGuitar.getProperty("arcade.monitoring.unavailable")
 					: TuxGuitar.getProperty(follow ? "practice.mode.follow.hint" : "practice.mode.wait.hint"));
 			boolean idle = (this.running == null);
@@ -647,6 +670,14 @@ public final class FollowPanel {
 
 	UIScale windowSlider() {
 		return this.tolerance;
+	}
+
+	UICheckBox recordRunBox() {
+		return this.recordRun;
+	}
+
+	UICheckBox recordAudioBox() {
+		return this.recordAudio;
 	}
 
 	UISpinner manualSpinner() {

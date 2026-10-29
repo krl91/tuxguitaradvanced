@@ -39,6 +39,7 @@ public final class FollowRun {
 	private final Consumer<Ended> endListener;
 	private final AtomicBoolean finished = new AtomicBoolean();
 	private boolean started;
+	private volatile Consumer<FollowSession> endHook;
 
 	/**
 	 * @param uiSink receives the snapshots, on {@code uiExecutor}
@@ -124,6 +125,14 @@ public final class FollowRun {
 		return true;
 	}
 
+	/**
+	 * Told once, on the thread of the session, when the run ends for whatever reason, before the session stops: the record of the run (spec 016
+	 * FR-003) reads the session there, where nothing else changes it. Set before {@link #start()}; what it throws is ignored.
+	 */
+	public void setEndHook(Consumer<FollowSession> endHook) {
+		this.endHook = endHook;
+	}
+
 	/** A frame of the analysis (any thread). */
 	public void postFrame(AnalysisFrame frame) {
 		this.loop.postFrame(frame);
@@ -169,7 +178,15 @@ public final class FollowRun {
 		if (this.events != null) {
 			this.events.disconnect();
 		}
+		final Consumer<FollowSession> hook = this.endHook;
 		this.loop.post(() -> {
+			if (hook != null) {
+				try {
+					hook.accept(this.session);
+				} catch (RuntimeException exception) {
+					// the record of a run never changes how it ends
+				}
+			}
 			this.session.stop();
 			return this.session.snapshot();
 		});
