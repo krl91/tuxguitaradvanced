@@ -22,7 +22,6 @@ Written 2026-10-29, branch `feature/interactive-practice`, local commits only (n
 On the owner's guitar the refusals come mostly from **attacks that were never detected**, at a low input level. Neither the pitch permissiveness nor the time to play changes the attack detection (the contract forbids touching level thresholds). The time to play does accept a note played up to 300 ms late (100 ms before), which covers the "moment" half of the owner's complaint; whether it is enough is gate G2's question.
 
 ## Not seen or not done
-- **T041, gate G2** (the owner reruns F01 at the default settings, route calibrated): open.
 - The record of G1 has an **empty route** (`route=||`): the route was not known when the recorder started; not fixed, reported.
 - Event 0 of the owner's record is MATCHED in the run and NOT_JUDGED in the replay: not explained.
 - The 50 ms early limit and the on-time half are the plan's choices (research R3), pinned by tests, not validated by the owner.
@@ -30,3 +29,9 @@ On the owner's guitar the refusals come mostly from **attacks that were never de
 
 ## Deviations from the plan
 `RhythmOffer` instead of a RHYTHM state of the start flow; the replay test lives in the `session` package (it needs `FakePlayerRun`); `window_ms` added to the record header; the recorder's sound is sized to the timeline plus 60 s, at most 10 minutes; the end hook is in `FollowRun`; `FOLLOW_PLAY_TIME` is in the Passages section (owner's choice: Notes would exceed eight rows).
+
+## Gate G2 and what followed (2026-10-29/30)
+- First run of G2: three recorded runs after the calibration showed the right notes heard but played 0.4–0.7 s after their red; the owner found it much too strict. Two defects found on the way and fixed with a reproducing test first: the rhythm calibration was always greyed out (the route had no format, `c6621f45e`) and Restart at the end of a Follow run did nothing (`41e7c6184`).
+- The owner's decisions (spec, Session gate G2): the time to play is 600 ms by default, 100–1200 ms; the start window says where to set the delay by hand. Done by `/speckit-converge` T042–T047 (`caa92e184`); four existing tests adapted on the old values only, by the owner's explicit exceptions.
+- **G2 passed**: the owner's run at 600 ms (Very permissive, tempo 100 %) accepted 13 of 13; "c'est bon".
+- Released as `v0.7.0-beta.1` (pre-release, all four packages, version verified by the workflow).
