@@ -78,7 +78,7 @@ Each time the learner plays a note right, a few sparks fly up from the fire and 
 - Very small or very wide window (the seven window shapes of spec 009 SC-002): the pixels of the fire stay big and visible, the fire still fits inside the picture.
 - Pause: the fire holds its level and its motion holds still, the sparks hold still too (spec 009 FR-010); the count-in after a resume: the motion goes on, the level holds.
 - Reduced motion asked by the system: the fire does not move and no spark is thrown; its height alone follows the play (spec 009 FR-013).
-- The picture quality drops (tiers FULL, BALANCED, PERFORMANCE of spec 003): the sparks go first, then the fire is made coarser or lower, and in PERFORMANCE nothing of the fire is drawn.
+- The picture quality drops (tiers FULL, BALANCED, PERFORMANCE of spec 003): at BALANCED the sparks go and the fire is drawn with coarser pixels; in PERFORMANCE nothing of the fire is drawn (FR-008).
 - End of a run, result and preparation windows: no fire, as today.
 - Many right notes very close together (fast passages): the number of sparks in the air stays under a fixed maximum.
 
@@ -111,7 +111,7 @@ Each time the learner plays a note right, a few sparks fly up from the fire and 
 ### Measurable Outcomes
 
 - **SC-001**: On the owner's look check (gate), the owner judges the fire on the built application to be "the demo's variant A" (big pixels, white-yellow base, red top, flicker) and keeps it.
-- **SC-002**: At every point covered by the fire or its sparks at full level, the game's colour still contributes at least **40 %** of the colour seen (the fire's opacity never exceeds 60 %); where the heat is nil the picture is identical to the picture without fire, pixel for pixel.
+- **SC-002**: At every point covered by the fire or its sparks at full level, the game's colour still contributes at least **40 %** of the colour seen (the opacity of the fire and its sparks never exceeds 60 %); where neither a fire cell nor a spark is drawn, the picture is identical to the picture without fire, pixel for pixel.
 - **SC-003**: The heights of spec 009 SC-001 hold: shares of 60 %, 80 % and 100 % give 20 %, 60 % and 100 % of the maximum height, to within 5 points; the fall and rise of spec 009 SC-003 hold.
 - **SC-004**: On the reference scenes and the seven window shapes of spec 009 SC-002, every readable item keeps a contrast ratio of at least 4.5 to 1, and no fire pixel or spark above 12 % of opacity meets the box of a text widened by 4 pixels.
 - **SC-005**: On a replayed run, the number of bursts of sparks equals the number of notes judged right, and is 0 with the setting *off*; no spark lives more than about one second.
