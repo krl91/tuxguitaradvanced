@@ -79,7 +79,7 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 │   ├── RefusalReason.java          # new: the fixed list of FR-001
 │   ├── WindowPolicy.java           # new: one-method interface; TimingTolerance implements it
 │   ├── PlayTimeWindow.java         # new: the owner's rule (FR-011)
-│   ├── TimingContext.java          # takes a WindowPolicy
+│   ├── TimingContext.java          # takes a WindowPolicy, + windowPolicy(); FollowSession asks it for each window (nanoseconds)
 │   ├── FollowStarter.java          # Follow builds PlayTimeWindow + FollowLeniency; the Arcade overload unchanged
 │   ├── FollowLeniency.java         # new: positions applied one way (like ArcadeLeniency)
 │   ├── FollowLeniencyPosition.java # new
