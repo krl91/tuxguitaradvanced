@@ -15,5 +15,5 @@ From `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`, with `export JAVA_HOME=
 ## By hand (the owner)
 
 - **Gate G1 (after story 1)**: in the Mode tab tick *Record this run* and *Keep a copy of the sound*, play `tests/1/_TEST_verifie.tg` in Follow at 70 % with the Rocksmith (calibrated or not, say which); each refused note shows its reason; the summary counts the reasons; two files appear in `~/tuxguitar-follow-takes/`. Tell the developer the file name.
-- **Story 2**: with an input never calibrated, start Follow: the start window offers the calibration; *Go on without*, restart: not asked; quit and relaunch: asked again; *Calibrate now*: 8 clicks, then the run begins; Wait mode: never asked.
+- **Story 2**: with an input never calibrated, start Follow: the start window offers the calibration; *Go on without*, restart: not asked; quit and relaunch: asked again; *Calibrate now*: one click, 8 clicks heard, the run begins in under 15 seconds (SC-005); Wait mode: never asked.
 - **Gate G2 (end, SC-007)**: test sheet `specs/test-sheets/F01-suivre-le-tempo.md` rerun at the default settings (time to play 300 ms, Permissive, tempo 70 %, route calibrated): is a right note played roughly in time accepted?

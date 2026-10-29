@@ -37,7 +37,7 @@ Follow refuses notes the owner played right. The plan measures before it relaxes
 | I. Compatibility | Pass: no file format, no core module touched; `.tg` untouched. |
 | II. Extend before modifying core | Pass: all in the fork's plugin and audio-engine modules; one new parameter in `RecognitionParameters` (fork module). |
 | III. Evidence-based | Pass: research cites the files and the measured benchmark; values of story 3 come from measures (R4, R6). |
-| IV. Spec-driven | Pass: specify, clarify (and one question at plan) done; tasks next. |
+| IV. Spec-driven | Pass: specify, clarify (and one question at plan), tasks and analysis done. |
 | V. Incremental | Pass: stories 1, 2, 3 each shippable; a human gate between 1 and 3. |
 | VI. Real-time | Pass: recording by the existing allocation-free `HopRecorder`; file writing at the end of a run, off the analysis thread. |
 | VII. Separable logic | Pass: reasons, window policy, leniency and record are pure classes tested without the UI. |
@@ -67,7 +67,7 @@ specs/016-follow-mode-leniency/
 │   ├── follow-leniency.md
 │   ├── run-record.md
 │   └── calibration-offer.md
-└── tasks.md            (next: /speckit-tasks)
+└── tasks.md
 ```
 
 ### Source Code (repository root)
@@ -90,6 +90,10 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 │   ├── FollowPanel.java            # slider "time to play the note" + position choice + the two boxes (Follow only)
 │   ├── FollowView.java             # the reason in the per-event text
 │   ├── PreRunCheck.java / PreRunWindow.java  # + the calibration step (Follow, Arcade)
+│   ├── DeclinedRoutes.java         # new: the routes declined in this launch (memory only)
+│   ├── PracticePalette.java        # the summary shows the counts by reason
+│   ├── PracticeWindow.java         # starts Follow through FollowStarter.prepareFollow
+│   ├── RecognitionSettingsPanel.java # lists RecognitionParameters.of(section) itself: FOLLOW_PLAY_TIME appears with its label
 │   └── FollowTakeCopy.java         # new: writes the WAV, like DiagnosticCopy
 └── share/lang/messages*.properties # en, fr, es
 
@@ -99,6 +103,8 @@ docs/PRACTICE.md, PRACTICE-FR.md, PRACTICE-ES.md
 ```
 
 **Structure Decision**: everything stays in the existing fork modules, beside the classes it extends; no new module.
+
+**Terminology**: the spec's *permissiveness* (what the learner reads) is *leniency* in the code (`FollowLeniency`, `FollowLeniencyPosition`), as Arcade's (`ArcadeLeniency`); its Strict position keeps today's **pitch** judging, while the time is judged by the time to play in every position (FR-011).
 
 ## Phases
 

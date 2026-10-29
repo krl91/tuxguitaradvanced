@@ -15,4 +15,4 @@
 
 Invariants (tested): the semitone is never accepted (`NOTE_ACCEPT` stays ≤ 45 cents, below the 50 cents halfway); silence is never accepted (no level threshold is a row); `STRICT` gives byte-equal settings; a device profile (spec 013) applies first and the position on top; Arcade's leniency, Wait and the tuner read none of this.
 
-Persisted: its own key, `PERMISSIVE` for a missing or unknown value; applies to the next run.
+Persisted: its own key `practice.follow.leniency` (Arcade's is `arcade.leniency`, `session/ArcadeChoices.java`), `PERMISSIVE` for a missing or unknown value; applies to the next run.
