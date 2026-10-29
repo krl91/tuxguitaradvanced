@@ -26,6 +26,7 @@ import app.tuxguitar.ui.menu.UIPopupMenu;
 import app.tuxguitar.ui.resource.UIColor;
 import app.tuxguitar.ui.resource.UICursor;
 import app.tuxguitar.ui.resource.UIFont;
+import app.tuxguitar.ui.resource.UIPosition;
 import app.tuxguitar.ui.resource.UIRectangle;
 import app.tuxguitar.ui.resource.UISize;
 import app.tuxguitar.ui.swt.event.SWTDisposeListenerManager;
@@ -132,6 +133,14 @@ public abstract class SWTControl<T extends Control> extends SWTEventReceiver<T> 
 
 	public boolean isDisposed() {
 		return this.getControl().isDisposed();
+	}
+
+	public UIPosition toDisplay(UIPosition point) {
+		if( this.isDisposed() ) {
+			return null;
+		}
+		Point location = this.getControl().toDisplay(Math.round(point.getX()), Math.round(point.getY()));
+		return new UIPosition(location.x, location.y);
 	}
 
 	public boolean isEnabled() {

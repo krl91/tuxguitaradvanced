@@ -20,6 +20,7 @@ import app.tuxguitar.ui.menu.UIPopupMenu;
 import app.tuxguitar.ui.resource.UIColor;
 import app.tuxguitar.ui.resource.UICursor;
 import app.tuxguitar.ui.resource.UIFont;
+import app.tuxguitar.ui.resource.UIPosition;
 import app.tuxguitar.ui.resource.UIRectangle;
 import app.tuxguitar.ui.resource.UISize;
 
@@ -130,4 +131,11 @@ public interface UIControl extends UIComponent {
 	void addZoomListener(UIZoomListener listener);
 
 	void removeZoomListener(UIZoomListener listener);
+
+	/**
+	 * The position on the screen of a point given relative to this control, or null when the toolkit cannot tell.
+	 */
+	default UIPosition toDisplay(UIPosition point) {
+		return null;
+	}
 }

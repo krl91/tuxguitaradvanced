@@ -1,6 +1,7 @@
 package app.tuxguitar.app.tools.custom.practice.ui;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import app.tuxguitar.app.TuxGuitar;
@@ -106,6 +107,10 @@ public class PracticeWindow {
 	private final PracticeHost host;
 	private final PracticeTunerContext shared;
 	private final PracticeHighlight highlight;
+	/** Keeps the palette off the note to play in Wait and Follow (spec 017). */
+	private final PaletteGuard paletteGuard;
+	/** The events of the Wait run, to find the note after the framed one (spec 017). */
+	private List<PracticeEvent> waitEvents;
 	private AudioEngine engine;
 
 	private UIWindow window;
@@ -207,6 +212,7 @@ public class PracticeWindow {
 				PracticeWindow.this.post(PracticeCommand.STOP);
 			}
 		}, PracticeParameters.of(RecognitionSettingsStore.getInstance(context).get()).tolerance());
+		this.paletteGuard = new PaletteGuard(context, this.palette, () -> this.host.mainWindow());
 	}
 
 	/**
@@ -708,6 +714,7 @@ public class PracticeWindow {
 		PracticeTrackSelection selection = new PracticeTrackSelection(this.song, candidate, this.shared);
 		selection.accept();
 		PracticeSequence sequence = this.preparedSequence;
+		this.waitEvents = sequence.getEvents();
 		// the validated audio-recognition settings (T102), fixed for this session
 		RecognitionSettings recognition = RecognitionSettingsStore.getInstance(this.context).get();
 		PracticeParameters parameters = PracticeParameters.of(recognition);
@@ -788,6 +795,8 @@ public class PracticeWindow {
 		// the current event framed red (none once complete), the just-accepted one flashed green
 		this.highlight.show(state == PracticeSession.State.COMPLETE ? null : snapshot.getCurrentEvent(), snapshot.getLastAccepted(),
 				snapshot.getAcceptedCount());
+		this.paletteGuard.show(state == PracticeSession.State.COMPLETE ? null : snapshot.getCurrentEvent(), this.waitEvents,
+				state == PracticeSession.State.PAUSED || state == PracticeSession.State.READY_TO_RESUME);
 	}
 
 	// ---------------------------------------------------------------- Arcade (spec 003, Increment D)
@@ -1164,6 +1173,8 @@ public class PracticeWindow {
 			}
 		}
 		this.highlight.show(current, lastRight, right);
+		boolean paused = (snapshot.state() == FollowSession.State.PAUSED || snapshot.state() == FollowSession.State.READY_TO_RESUME);
+		this.paletteGuard.show((running || paused) && open >= 0 ? plan.sequence().getEvents().get(open) : null, plan.sequence().getEvents(), paused);
 	}
 
 	private static String followText(String key, String... arguments) {
@@ -1239,6 +1250,7 @@ public class PracticeWindow {
 	private void teardownSession() {
 		teardownFollow();
 		this.highlight.hide();
+		this.paletteGuard.stop();
 		if( this.loop != null ) {
 			this.host.commandSink(null);
 			this.engine.unsubscribe(this.frameListener);

@@ -504,6 +504,28 @@ public class PracticePalette {
 		return NOTE_NAMES[midi % 12] + (midi / 12 - 1);
 	}
 
+	/** The palette's box on the screen, or null when it is closed (spec 017). */
+	public PaletteDodge.Box bounds() {
+		if( !isOpen() ) {
+			return null;
+		}
+		UIRectangle bounds = this.window.getBounds();
+		return new PaletteDodge.Box(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight());
+	}
+
+	/** Moves the palette aside, without taking the focus (spec 017, FR-006). */
+	public void moveTo(float x, float y) {
+		if( isOpen() ) {
+			moveWindow(this.window, x, y);
+		}
+	}
+
+	/** The position only: same size, no focus, not brought to the top (research R7). */
+	static void moveWindow(UIWindow window, float x, float y) {
+		UIRectangle bounds = window.getBounds();
+		window.setBounds(new UIRectangle(x, y, bounds.getWidth(), bounds.getHeight()));
+	}
+
 	/** Top right of the main window at first; afterwards where the learner left it. */
 	private void placeWindow(UIWindow parent) {
 		UIRectangle bounds = this.window.getBounds();

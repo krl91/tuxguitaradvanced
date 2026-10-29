@@ -1,0 +1,11 @@
+Baseline of spec 017 (T001, T002), 2026-10-30, starting commit 5b64785a7
+
+mvn -o -e clean verify -P native-modules (desktop/build-scripts/tuxguitar-macosx-swt-cocoa): BUILD SUCCESS
+  TuxGuitar-lib 73, compat 1, editor-utils 1, gtp 10 (1 skipped), midi 2, audio-engine 378, tuner-next 24, synth 9,
+  TuxGuitar-practice 1282 (0 failures, 12 skipped)
+mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am: BUILD SUCCESS, practice SWT tests 36
+
+Existing tests that read what this feature touches, to stay unchanged and green (T002):
+  TST/ui (naming PracticePalette, PracticeWindow or PracticeHighlight): InputSelectorPanelOptInTest, PracticeWindowStartPathSourceTest,
+  AppPracticeHostTest, ArcadeLevelWiringSourceTest, PreRunWindowTest, TransportButtonTest, PracticeWindowSwtTest,
+  RemovedSoundsWiringSourceTest, PracticeHostSourceTest, GreyedStartExplainedTest

@@ -11,6 +11,7 @@ import app.tuxguitar.song.models.TGNote;
 import app.tuxguitar.ui.resource.UIColor;
 import app.tuxguitar.ui.resource.UIColorModel;
 import app.tuxguitar.ui.resource.UIPainter;
+import app.tuxguitar.ui.resource.UIRectangle;
 import app.tuxguitar.ui.resource.UIResourceFactory;
 
 /**
@@ -27,29 +28,45 @@ public class TGExternalNoteFramePainter {
 	private UIColor acceptedColor;
 
 	public void paint(TGLayout layout, UIPainter painter, UIResourceFactory factory, List<TGNote> notes, boolean accepted, int trackSelection) {
-		if( notes == null || notes.isEmpty() ) {
-			return;
-		}
-		// notes of one event share a beat, hence a measure
-		if( !(notes.get(0) instanceof TGNoteImpl) ) {
-			return;
-		}
-		TGMeasureImpl measure = ((TGNoteImpl) notes.get(0)).getMeasureImpl();
-		if( measure == null || measure.isOutOfBounds() || (trackSelection >= 0 && measure.getTrack().getNumber() != trackSelection) ) {
+		TGMeasureImpl measure = displayedMeasure(notes, trackSelection);
+		if( measure == null ) {
 			return;
 		}
 		painter.setForeground(getColor(factory, accepted));
 		painter.setLineWidth(Math.max(1f, 1.5f * layout.getScale()));
 		painter.setAntialias(true);
+		float scale = layout.getScale();
 		if( (layout.getStyle() & TGLayout.DISPLAY_SCORE) != 0 ) {
-			paintScoreFrame(layout, painter, measure, notes);
+			float[] box = scoreFrame(layout, measure, notes);
+			paintFrame(painter, box[0], box[1], box[2], box[3], scale);
 		}
 		if( (layout.getStyle() & TGLayout.DISPLAY_TABLATURE) != 0 ) {
-			paintTablatureFrame(layout, painter, measure, notes);
+			float[] box = tablatureFrame(layout, measure, notes);
+			paintFrame(painter, box[0], box[1], box[2], box[3], scale);
 		}
 	}
 
-	private void paintScoreFrame(TGLayout layout, UIPainter painter, TGMeasureImpl measure, List<TGNote> notes) {
+	/**
+	 * The box, in the coordinates of the score canvas, of the frames {@link #paint} draws around these notes (the score and the tablature frames
+	 * together), or null when it would draw none. Reads only.
+	 */
+	public static UIRectangle frameBounds(TGLayout layout, List<TGNote> notes, int trackSelection) {
+		TGMeasureImpl measure = displayedMeasure(notes, trackSelection);
+		if( measure == null ) {
+			return null;
+		}
+		float[] union = null;
+		if( (layout.getStyle() & TGLayout.DISPLAY_SCORE) != 0 ) {
+			union = scoreFrame(layout, measure, notes);
+		}
+		if( (layout.getStyle() & TGLayout.DISPLAY_TABLATURE) != 0 ) {
+			float[] box = tablatureFrame(layout, measure, notes);
+			union = (union == null ? box : new float[] { Math.min(union[0], box[0]), Math.min(union[1], box[1]), Math.max(union[2], box[2]), Math.max(union[3], box[3]) });
+		}
+		return (union == null ? null : new UIRectangle(union[0], union[1], union[2] - union[0], union[3] - union[1]));
+	}
+
+	private static float[] scoreFrame(TGLayout layout, TGMeasureImpl measure, List<TGNote> notes) {
 		float scale = layout.getScale();
 		float line = layout.getScoreLineSpacing();
 		float fromX = measure.getPosX() + measure.getHeaderImpl().getLeftSpacing(layout);
@@ -66,10 +83,10 @@ public class TGExternalNoteFramePainter {
 			y1 = Math.min(y1, y - (3f * scale));
 			y2 = Math.max(y2, y + line + (3f * scale));
 		}
-		paintFrame(painter, x1, y1, x2, y2, scale);
+		return new float[] { x1, y1, x2, y2 };
 	}
 
-	private void paintTablatureFrame(TGLayout layout, UIPainter painter, TGMeasureImpl measure, List<TGNote> notes) {
+	private static float[] tablatureFrame(TGLayout layout, TGMeasureImpl measure, List<TGNote> notes) {
 		float scale = layout.getScale();
 		float stringSpacing = layout.getStringSpacing();
 		float fromX = measure.getPosX() + measure.getHeaderImpl().getLeftSpacing(layout) + (2f * scale);
@@ -88,7 +105,19 @@ public class TGExternalNoteFramePainter {
 			y1 = Math.min(y1, y - halfHeight);
 			y2 = Math.max(y2, y + halfHeight);
 		}
-		paintFrame(painter, x1, y1, x2, y2, scale);
+		return new float[] { x1, y1, x2, y2 };
+	}
+
+	/** The measure of the notes when it is displayed (notes of one event share a beat, hence a measure), else null. */
+	private static TGMeasureImpl displayedMeasure(List<TGNote> notes, int trackSelection) {
+		if( notes == null || notes.isEmpty() || !(notes.get(0) instanceof TGNoteImpl) ) {
+			return null;
+		}
+		TGMeasureImpl measure = ((TGNoteImpl) notes.get(0)).getMeasureImpl();
+		if( measure == null || measure.isOutOfBounds() || (trackSelection >= 0 && measure.getTrack().getNumber() != trackSelection) ) {
+			return null;
+		}
+		return measure;
 	}
 
 	private void paintFrame(UIPainter painter, float x1, float y1, float x2, float y2, float scale) {
