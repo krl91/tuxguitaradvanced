@@ -88,10 +88,9 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 │   └── FollowRunRecord.java        # new: the CSV of a run (pure writer)
 ├── ui/
 │   ├── FollowPanel.java            # slider "time to play the note" + position choice + the two boxes (Follow only)
-│   ├── FollowView.java             # the reason in the per-event text
+│   ├── FollowView.java             # the reason in the per-event text; summaryText adds the counts by reason
 │   ├── PreRunCheck.java / PreRunWindow.java  # + the calibration step (Follow, Arcade)
 │   ├── DeclinedRoutes.java         # new: the routes declined in this launch (memory only)
-│   ├── PracticePalette.java        # the summary shows the counts by reason
 │   ├── PracticeWindow.java         # starts Follow through FollowStarter.prepareFollow
 │   ├── RecognitionSettingsPanel.java # lists RecognitionParameters.of(section) itself: FOLLOW_PLAY_TIME appears with its label
 │   └── FollowTakeCopy.java         # new: writes the WAV, like DiagnosticCopy
