@@ -52,6 +52,7 @@ public final class FollowRun {
 		this.session = session;
 		this.endListener = endListener;
 		this.uiExecutor = uiExecutor;
+		this.restart = restart;
 		FollowHandler handler = new FollowHandler(session, player, restart, exception -> failed(), this::commanded);
 		this.handler = handler;
 		this.loop = new SessionLoop<FollowSession.Snapshot>(context, handler, snapshot -> {
@@ -67,6 +68,7 @@ public final class FollowRun {
 	}
 
 	private final Executor uiExecutor;
+	private final Runnable restart;
 
 	/** Builds the events of a run on its loop and handler. */
 	public interface EventsFactory {
@@ -139,6 +141,13 @@ public final class FollowRun {
 	}
 
 	public void postCommand(PracticeCommand command) {
+		if (command == PracticeCommand.RESTART && this.finished.get()) {
+			// the song ended and the session thread with it: the Restart of the palette still asks the window for a new run
+			if (this.restart != null) {
+				this.restart.run();
+			}
+			return;
+		}
 		this.loop.postCommand(command);
 	}
 
