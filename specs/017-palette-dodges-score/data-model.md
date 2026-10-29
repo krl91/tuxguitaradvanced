@@ -7,9 +7,10 @@ x, y, width, height (doubles). Empty or null = unknown.
 
 ## DodgeInput
 - `palette`: Box of the palette window.
+- `window`: Box of the main window (to tell a learner's move outside it, FR-007).
 - `area`: Box of the score area (the canvas mapped to the screen); null → no decision.
 - `current`: Box of the current event's notes, or null (not displayed, end of run).
-- `next`: Box of the next event's notes, or null.
+- `next`: Box of the next event's notes, or null (always null while the run is paused).
 - `state`: PaletteState.
 
 ## PaletteState

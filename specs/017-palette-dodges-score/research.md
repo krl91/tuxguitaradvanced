@@ -18,7 +18,7 @@
 - **Alternatives**: listen to resize/scroll events (no scroll event exposed by `TGControl`; rejected).
 
 ## R5. The decision (pure)
-- **Decision**: `PaletteDodge.decide(input)` with: the palette box, the score area, the current box, the next box (both may be null), the palette's state (auto place left, learner's place, outside), returns a new position or none.
+- **Decision**: `PaletteDodge.decide(input)` with: the palette box, the main window's box, the score area, the current box, the next box (both may be null), the palette's state (auto place left, learner's place, outside), returns a new position or none.
   - Move only if the palette box (grown by a margin of 8 px) meets the current or the next box; while the run is paused the next box is not passed (spec Edge Cases).
   - Candidates: the four corners of the score area at a margin of 16 px (palette fully inside the area).
   - Free = meets neither box. Among free corners: exclude the corner just left while the current box is still within one palette width of it; prefer corners not on the side the notes head to (the next box's centre compared with the current box's centre on the same line: same line = vertical overlap); then the nearest to the current place.

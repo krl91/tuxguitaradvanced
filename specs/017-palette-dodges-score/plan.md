@@ -77,11 +77,12 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/ui/
 ├── PaletteDodge.java        # new, pure: the decision (FR-002–FR-005, FR-007)
 ├── ScoreBoxes.java          # new, UI glue: canvas → screen boxes of the current and next event, score area
 ├── PracticePalette.java     # + moveTo without focus, manual-drag detection, place reported
-└── PracticeWindow.java      # wires the check for Wait and Follow (not Arcade), 100 ms timer while running
+└── PracticeWindow.java      # wires the check for Wait and Follow (not Arcade), `PaletteDodge.CHECK_MILLIS` (100 ms) repeat while running
 desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/
 ├── PaletteDodgeTest.java    # new
 └── PaletteMoveSwtTest.java  # new, tag swt-gui
 docs/PRACTICE.md, PRACTICE-FR.md, PRACTICE-ES.md
+specs/test-sheets/F10-palette-ecartee.md   # new manual sheet of the gate
 ```
 
 **Structure Decision**: the decision lives in the plugin as a pure class; only the two minimal hooks live outside it.

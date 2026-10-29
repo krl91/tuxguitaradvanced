@@ -73,7 +73,8 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/arcade/
 ├── view/FlameState.java       # + the recent bursts (flame-clock time, streak) — additive constructor
 └── ui/ArcadeFrameSource.java  # records a burst at each new right note (from ArcadeRun.View states and streak)
 desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/arcade/view/
-├── FireFieldTest.java, FireColoursTest.java, FlameSparksTest.java   # new
+├── FireFieldTest.java, FireColoursTest.java, FireTranslucencyTest.java, FlameSparksTest.java   # new
+desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/arcade/ui/ArcadeFrameSourceBurstsTest.java   # new
 └── (FlameSceneTest, ArcadeSceneQualityTest, ArcadeFlamesSettingTest, reference/flame-reading.scene.txt: owner's exception, R8)
 docs/PRACTICE.md, PRACTICE-FR.md, PRACTICE-ES.md, specs/test-sheets/F06-flammes-arcade.md
 ```
@@ -85,7 +86,7 @@ docs/PRACTICE.md, PRACTICE-FR.md, PRACTICE-ES.md, specs/test-sheets/F06-flammes-
 1. **Baseline** (no code): default and SWT suite counts; item counts and frame cost of today's flames on the reference scene (for SC-007).
 2. **Story 1+2 — the fire, translucent** (P1): `FireColours`, `FireField`, `FlameDrawing` drawing the cells; the new tests first; then the exception edits of R8, listed line by line.
 3. **Story 3 — sparks** (P2): bursts in `FlameState`, recorded by `ArcadeFrameSource`, drawn by `FlameDrawing`; removed at BALANCED, off, reduced motion.
-4. **Closing**: guides and test sheet F06 in three languages, full gate, relaunch the application, **gate [HUMAN]**: the owner judges the look and the smoothness (SC-001, SC-007); values (cell size, opacity ≤ 60 %, colours) tuned there.
+4. **Closing**: guides in three languages and the manual sheet F06, full gate, relaunch the application, **gate [HUMAN]**: the owner judges the look and the smoothness (SC-001, SC-007); values (cell size, opacity ≤ 60 %, colours) tuned there.
 
 ## Complexity Tracking
 
