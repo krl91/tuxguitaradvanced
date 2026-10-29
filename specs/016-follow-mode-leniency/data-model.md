@@ -41,7 +41,7 @@ Produces the existing `TimingTolerance.Window` (target, onTimeFrom, onTimeTo, ou
 
 ## FollowSettings (existing, extended)
 
-+ `playTimeMillis` (stored as `RecognitionParameters.FOLLOW_PLAY_TIME` in the default layer; out of range → brought to 100 or 600; absent → 300).
++ `playTimeMillis` (stored as `RecognitionParameters.FOLLOW_PLAY_TIME` in the default layer; out of range → brought to 100 or 600; absent → 300; the learner's choice, never in a device profile, like `TEMPO_WINDOW`).
 + `leniencyPosition` (stored like Arcade's leniency, `ArcadeChoices.LENIENCY_KEY = "arcade.leniency"`, under its own key `practice.follow.leniency`).
 + `recordRun`, `recordAudio`: booleans, memory only, false at each launch.
 
