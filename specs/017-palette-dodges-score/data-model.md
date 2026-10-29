@@ -1,0 +1,28 @@
+# Data Model: spec 017
+
+All values are screen pixels, held only while a run goes; nothing is stored.
+
+## Box
+x, y, width, height (doubles). Empty or null = unknown.
+
+## DodgeInput
+- `palette`: Box of the palette window.
+- `area`: Box of the score area (the canvas mapped to the screen); null → no decision.
+- `current`: Box of the current event's notes, or null (not displayed, end of run).
+- `next`: Box of the next event's notes, or null.
+- `state`: PaletteState.
+
+## PaletteState
+- `lastAuto`: the position the dodge set last, or null.
+- `leftCorner`: the corner left by the last move, or none.
+- `movedFor`: the identity of the current event when the last move was made (one move per framed note).
+- `areaSize`, `paletteSize`: the sizes at the last move (a change allows a new move).
+- `outside`: true when the learner put the palette outside the main window (never moved).
+
+## Corner
+TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT; position = the corner of `area` inset by 16 px, palette fully inside.
+
+## Decision
+Either `Stay` or `MoveTo(corner, x, y)`.
+
+Rules: research R5 and R6; validation: a MoveTo position is always inside `area`.
