@@ -112,7 +112,7 @@ final class FireField {
 				heat = weight;
 			} else {
 				double u = Math.min(1.0, (k + 0.5) / exact);
-				heat = weight * clamp((1.0 - u) + 0.45 * (noise(col, k) - 0.5) * (0.3 + u));
+				heat = weight * clamp(1.15 * (1.0 - Math.pow(u, 1.5)) + 1.3 * (noise(col, k) - 0.5) * (0.2 + u));
 			}
 		} else {
 			return 0;
@@ -120,11 +120,11 @@ final class FireField {
 		return (int) Math.max(1, Math.min(FireColours.STEPS - 1, Math.round(heat * (FireColours.STEPS - 1))));
 	}
 
-	/** Three octaves of value noise at a cell, scrolled upwards by the clock with a slight sway: 0 to 1. */
+	/** Three octaves of value noise at a cell, twice as tall as wide (rising tongues), scrolled upwards by the clock with a slight sway: 0 to 1. */
 	private double noise(int col, int row) {
 		double x = col + 0.6 * Math.sin(this.seconds * 1.7 + row * 0.35);
 		double y = row - this.seconds * RISE;
-		return 0.5 * value(x / 3.0, y / 3.0) + 0.3 * value(x / 1.5, y / 1.5) + 0.2 * value(x / 0.75, y / 0.75);
+		return 0.5 * value(x / 2.0, y / 4.0) + 0.3 * value(x / 1.0, y / 2.0) + 0.2 * value(x / 0.5, y / 1.0);
 	}
 
 	private static double value(double x, double y) {
