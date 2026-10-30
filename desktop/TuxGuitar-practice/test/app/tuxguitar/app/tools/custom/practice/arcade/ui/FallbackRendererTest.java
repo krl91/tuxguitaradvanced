@@ -173,6 +173,6 @@ public class FallbackRendererTest {
 			}
 		}
 		assertEquals(others, fallbackCalls.count("initPath"), "the fallback draws the information and not one flame");
-		assertTrue(selectedCalls.count("initPath") >= fallbackCalls.count("initPath") + flames, "the selected path draws every flame item");
+		assertTrue(selectedCalls.count("addRectangle") > 0 && selectedCalls.count("addRectangle") <= flames, "the selected path fills the flame items, in batches (spec 018 research R10; covered exactly in FlameCellsPaintTest)");
 	}
 }

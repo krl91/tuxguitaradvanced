@@ -1,7 +1,12 @@
 package app.tuxguitar.app.tools.custom.practice.arcade.ui;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import app.tuxguitar.app.tools.custom.practice.arcade.view.QualityTier;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.Scene;
@@ -24,6 +29,7 @@ public final class UiPainterRenderer extends PainterRenderer {
 	private final Map<Integer, UIColor> colours = new HashMap<Integer, UIColor>();
 	private final Map<Integer, UIFont> fonts = new HashMap<Integer, UIFont>();
 	private final boolean minimal;
+	private final FlameCells flameCells = new FlameCells();
 	private UIPainter painter;
 
 	public UiPainterRenderer(UIFactory factory, String fontName) {
@@ -89,6 +95,11 @@ public final class UiPainterRenderer extends PainterRenderer {
 			if (this.minimal && leftOutByFallback(item)) {
 				continue;
 			}
+			if (!this.minimal && isFlameCell(item)) {
+				this.flameCells.add(p, item);
+				continue;
+			}
+			this.flameCells.paint(p);
 			if (!this.minimal) {
 				p.setAlpha((int) Math.round(Math.max(0.0, Math.min(1.0, item.alpha())) * 255.0));
 			}
@@ -175,7 +186,91 @@ public final class UiPainterRenderer extends PainterRenderer {
 					break;
 			}
 		}
+		this.flameCells.paint(p);
 		p.setAlpha(255);
+	}
+
+	/** A cell of the demo fire: a flame item drawn as an upright rectangle (spec 018 research R10). */
+	static boolean isFlameCell(SceneItem item) {
+		if (item.shape() != SceneItem.Shape.QUAD || (item.role() != SceneItem.Role.FLAME_TONGUE && item.role() != SceneItem.Role.FLAME_EMBER)) {
+			return false;
+		}
+		return item.value(0) == item.value(6) && item.value(2) == item.value(4) && item.value(1) == item.value(3) && item.value(5) == item.value(7);
+	}
+
+	/**
+	 * The cells of the demo fire, filled in batches (spec 018 research R10): thousands of big pixels, one native path each, cost more than the frame budget
+	 * of the full tier, so the cells of one colour and one painter alpha are filled as one path of rectangles, neighbours on a row joined into one. The cells lie on one grid ({@code FireField}),
+	 * so two of them meet only when they share their bottom-left corner: when a cell lands on a pending one, what is pending is filled first, which keeps
+	 * the order of the scene where it shows (a spark over a cell) and never puts two rectangles of one path on each other (the even-odd rule would hollow
+	 * them). Any other item fills what is pending before it is drawn.
+	 */
+	private final class FlameCells {
+
+		/** The pending rectangles by colour and alpha, in the order the groups appeared: x, y, width, height for each. */
+		private final Map<Long, float[]> groups = new LinkedHashMap<Long, float[]>();
+		private final Map<Long, Integer> sizes = new HashMap<Long, Integer>();
+		private final Set<Long> corners = new HashSet<Long>();
+
+		void add(UIPainter p, SceneItem item) {
+			long corner = (Math.round(item.value(0) * 8.0) << 32) ^ (Math.round(item.value(5) * 8.0) & 0xFFFFFFFFL);
+			if (!this.corners.add(corner)) {
+				paint(p);
+				this.corners.add(corner);
+			}
+			int alpha = (int) Math.round(Math.max(0.0, Math.min(1.0, item.alpha())) * 255.0);
+			long key = ((long) (item.colour() & 0xFFFFFF) << 8) | alpha;
+			float[] rectangles = this.groups.get(key);
+			int size = this.sizes.getOrDefault(key, 0);
+			if (rectangles == null || size + 4 > rectangles.length) {
+				float[] larger = new float[Math.max(64, size * 2)];
+				if (rectangles != null) {
+					System.arraycopy(rectangles, 0, larger, 0, size);
+				}
+				rectangles = larger;
+				this.groups.put(key, rectangles);
+			}
+			float x = (float) item.value(0);
+			float y = (float) item.value(1);
+			float width = (float) (item.value(2) - item.value(0));
+			float height = (float) (item.value(5) - item.value(1));
+			if (size >= 4 && rectangles[size - 3] == y && rectangles[size - 1] == height && Math.abs(rectangles[size - 4] + rectangles[size - 2] - x) < 0.01f) {
+				// the left neighbour on the same row, same colour and alpha: one wider rectangle
+				rectangles[size - 2] += width;
+				return;
+			}
+			rectangles[size] = x;
+			rectangles[size + 1] = y;
+			rectangles[size + 2] = width;
+			rectangles[size + 3] = height;
+			this.sizes.put(key, size + 4);
+		}
+
+		/** Fills what is pending, one path per colour and alpha. */
+		void paint(UIPainter p) {
+			if (this.corners.isEmpty()) {
+				return;
+			}
+			List<Long> keys = new ArrayList<Long>(this.groups.keySet());
+			for (Long key : keys) {
+				int size = this.sizes.getOrDefault(key, 0);
+				if (size == 0) {
+					continue;
+				}
+				float[] rectangles = this.groups.get(key);
+				p.setAlpha((int) (key & 0xFF));
+				p.setBackground(colour((int) (key >>> 8)));
+				p.initPath(UIPainter.PATH_FILL);
+				// hard pixels, as in the demos, and much cheaper: after initPath, which turns the antialiasing on in the SWT painter
+				p.setAntialias(false);
+				for (int i = 0; i < size; i += 4) {
+					p.addRectangle(rectangles[i], rectangles[i + 1], rectangles[i + 2], rectangles[i + 3]);
+				}
+				p.closePath();
+				this.sizes.put(key, 0);
+			}
+			this.corners.clear();
+		}
 	}
 
 
