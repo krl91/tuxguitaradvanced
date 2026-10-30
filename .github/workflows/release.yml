@@ -108,7 +108,7 @@ jobs:
 
   build-macos-arm64:
     needs: [validate, create-release]
-    runs-on: macos-14   # Apple Silicon
+    runs-on: macos-15   # Apple Silicon (the macos-14 images are retired on 2026-11-02)
     env:
       RELEASE_VERSION: ${{ needs.validate.outputs.version }}
       RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}

@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build-macOS:
-    runs-on: macos-14   # Apple Silicon
+    runs-on: macos-15   # Apple Silicon
     steps:
     - uses: actions/checkout@v5
     - name: Set up JDK 21
@@ -40,6 +40,6 @@ jobs:
         echo "TUX_ARCH=${TUX_ARCH}" >> "$GITHUB_ENV"
     - uses: actions/upload-artifact@v7
       with:
-        name: Package-MacOS-macos-14
+        name: Package-MacOS-macos-15
         path: desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target/tuxguitar-9.99-SNAPSHOT-macosx-${{ env.TUX_ARCH }}-swt-cocoa.app
         retention-days: 1
