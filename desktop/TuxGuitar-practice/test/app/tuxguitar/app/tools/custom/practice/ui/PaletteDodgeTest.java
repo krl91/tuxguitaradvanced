@@ -88,6 +88,94 @@ public class PaletteDodgeTest {
 		assertTrue(PaletteDodge.CHECK_MILLIS <= 100, "SC-001, research R4");
 	}
 
+	// ---- US2, the palette stays calm (T013)
+
+	@Test
+	public void itAvoidsTheCornerTheNotesAreHeadingTo() {
+		// a tall, narrow score: the top left corner is the nearest, but the notes of the top line run towards it
+		Box area = new Box(0, 100, 900, 1400);
+		Box window = new Box(0, 60, 900, 1460);
+		Box palette = PaletteDodge.place(PaletteDodge.Corner.TOP_RIGHT, area, new Box(0, 0, 360, 200));
+		Box current = note(600, 150);
+		Box next = note(540, 150);
+		Decision decision = new PaletteDodge().decide(palette, window, area, current, next, "e1");
+		assertTrue(decision.isMove());
+		assertTrue(decision.corner() == PaletteDodge.Corner.BOTTOM_LEFT || decision.corner() == PaletteDodge.Corner.BOTTOM_RIGHT,
+				"FR-003: not the corner the notes head to (" + decision.corner() + ")");
+	}
+
+	@Test
+	public void itNeverGoesBackToThePlaceItLeftWhileTheNotesAreStillNearIt() {
+		PaletteDodge dodge = new PaletteDodge();
+		Box topLeft = PaletteDodge.place(PaletteDodge.Corner.TOP_LEFT, AREA, new Box(0, 0, 360, 200));
+		Decision first = dodge.decide(topLeft, WINDOW, AREA, note(300, 300), null, "e1");
+		assertTrue(first.isMove());
+		assertTrue(first.corner() == PaletteDodge.Corner.BOTTOM_LEFT, "the nearest free corner: " + first.corner());
+		// the notes come down under the new place, still within a palette width of the place it left
+		Box bottomLeft = placed(topLeft, first);
+		Decision second = dodge.decide(bottomLeft, WINDOW, AREA, note(300, 560), null, "e2");
+		assertTrue(second.isMove());
+		assertTrue(second.corner() != PaletteDodge.Corner.TOP_LEFT, "SC-002: never back to the place it left (" + second.corner() + ")");
+	}
+
+	@Test
+	public void withoutAFreeCornerItTakesTheOneThatCoversTheLeastAndStaysThere() {
+		Box area = new Box(0, 100, 400, 260);
+		Box window = new Box(0, 60, 400, 300);
+		Box palette = new Box(20, 130, 360, 200);
+		Box current = new Box(0, 100, 200, 260);
+		PaletteDodge dodge = new PaletteDodge();
+		Decision first = dodge.decide(palette, window, area, current, null, "e1");
+		assertTrue(first.isMove(), "FR-005: the place that covers the least");
+		assertTrue(placed(palette, first).overlap(current) < palette.overlap(current));
+		Box moved = placed(palette, first);
+		assertFalse(dodge.decide(moved, window, area, current, null, "e1").isMove(), "and it stays");
+		assertFalse(dodge.decide(moved, window, area, current, null, "e2").isMove(), "no back and forth on the next notes");
+	}
+
+	@Test
+	public void oneMovePerFramedNoteUnlessTheScoreOrThePaletteChangesSize() {
+		PaletteDodge dodge = new PaletteDodge();
+		Decision first = dodge.decide(OPENING, WINDOW, AREA, note(900, 200), null, "e1");
+		assertTrue(first.isMove());
+		Box moved = placed(OPENING, first);
+		Box underTheNewPlace = note(moved.x() + 10, moved.y() + 10);
+		assertFalse(dodge.decide(moved, WINDOW, AREA, underTheNewPlace, null, "e1").isMove(), "FR-004: once for the same framed note");
+		Box resized = new Box(0, 100, 1200, 650);
+		assertTrue(dodge.decide(moved, WINDOW, resized, underTheNewPlace, null, "e1").isMove(), "a resized score allows a new move");
+	}
+
+	// ---- US3, the learner's place (T015)
+
+	@Test
+	public void aPlaceTheLearnerChoseIsKeptUntilItIsInTheWay() {
+		PaletteDodge dodge = new PaletteDodge();
+		assertFalse(dodge.decide(OPENING, WINDOW, AREA, note(100, 500), null, "e1").isMove());
+		Box dragged = new Box(400, 300, 360, 200);
+		assertFalse(dodge.decide(dragged, WINDOW, AREA, note(100, 700), null, "e1").isMove(), "US3/AC1: it stays where the learner put it");
+		assertTrue(dodge.decide(dragged, WINDOW, AREA, note(500, 350), null, "e2").isMove(), "and moves aside when it is in the way");
+	}
+
+	@Test
+	public void aPaletteTheLearnerPutOutsideTheMainWindowIsNeverMoved() {
+		PaletteDodge dodge = new PaletteDodge();
+		dodge.decide(OPENING, WINDOW, AREA, null, null, null);
+		Box beside = new Box(1250, 140, 360, 200);
+		assertFalse(dodge.decide(beside, WINDOW, AREA, note(1300, 200), null, "e1").isMove(), "FR-007: outside, never moved");
+		assertFalse(dodge.decide(beside, WINDOW, AREA, note(1300, 200), null, "e2").isMove());
+		Box backInside = new Box(816, 140, 360, 200);
+		assertTrue(dodge.decide(backInside, WINDOW, AREA, note(900, 200), null, "e3").isMove(), "back inside by the learner: it moves aside again");
+	}
+
+	@Test
+	public void aPaletteLeftOutsideBecauseTheMainWindowMovedStillMovesAside() {
+		PaletteDodge dodge = new PaletteDodge();
+		dodge.decide(OPENING, WINDOW, AREA, null, null, null);
+		Box movedWindow = new Box(500, 60, 1200, 760);
+		Box movedArea = new Box(500, 100, 1200, 700);
+		assertTrue(dodge.decide(OPENING, movedWindow, movedArea, note(900, 200), null, "e1").isMove(), "untouched by the learner: not outside");
+	}
+
 	static String read(String name) throws IOException {
 		for (String root : new String[] { "src", "TuxGuitar-practice/src", "desktop/TuxGuitar-practice/src" }) {
 			Path path = Paths.get(root, "app/tuxguitar/app/tools/custom/practice/ui/" + name);
