@@ -61,7 +61,7 @@ public class FireTranslucencyTest {
 				assertEquals(Math.rint(gy), gy, 1e-6, "on the grid");
 				assertTrue(taken.add(Math.rint(gx) + ":" + Math.rint(gy)), tier + ": two cells at the same place " + item);
 				assertTrue(item.alpha() > 0.0, "nothing is drawn where the fire is cold");
-				assertTrue(item.alpha() <= 0.60 + 1e-9, tier + ": at most 60 % opaque (FR-002, SC-002): " + item);
+				assertTrue(item.alpha() <= 0.85 + 1e-9, tier + ": at most 85 % opaque (FR-002, SC-002): " + item);
 			}
 			assertTrue(cells > 0);
 		}

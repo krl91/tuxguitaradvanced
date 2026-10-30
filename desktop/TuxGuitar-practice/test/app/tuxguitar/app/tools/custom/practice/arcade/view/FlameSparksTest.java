@@ -45,9 +45,9 @@ public class FlameSparksTest {
 	}
 
 	@Test
-	public void aRightNoteThrowsFourToTenSparksThatAreGoneAfterOneSecond() {
+	public void aRightNoteThrowsTwentyToFiftySparksThatAreGoneAfterOneSecond() {
 		List<SceneItem> young = sparks(QualityTier.FULL, state(FlameSetting.FULL, true, burst(200, 3)), NO_TEXT);
-		assertTrue(young.size() >= 4 && young.size() <= 10, "a burst 0.2 s old: " + young.size() + " sparks (SC-005)");
+		assertTrue(young.size() >= 20 && young.size() <= 50, "a burst 0.2 s old: " + young.size() + " sparks (SC-005)");
 		double cell = FireField.cell(SCREEN, QualityTier.FULL);
 		for (SceneItem spark : young) {
 			assertEquals(Role.FLAME_EMBER, spark.role());
@@ -59,17 +59,17 @@ public class FlameSparksTest {
 	}
 
 	@Test
-	public void aLongerStreakThrowsMoreSparksAtMostTenPerNoteAndSixtyInTheAir() {
+	public void aLongerStreakThrowsMoreSparksAtMostFiftyPerNoteAndThreeHundredInTheAir() {
 		int one = sparks(QualityTier.FULL, state(FlameSetting.FULL, true, burst(100, 1)), NO_TEXT).size();
 		int twelve = sparks(QualityTier.FULL, state(FlameSetting.FULL, true, burst(100, 12)), NO_TEXT).size();
 		int fifty = sparks(QualityTier.FULL, state(FlameSetting.FULL, true, burst(100, 50)), NO_TEXT).size();
 		assertTrue(twelve > one, "streak 12: " + twelve + " against " + one);
-		assertTrue(fifty <= 10, "at most 10 per note: " + fifty);
+		assertTrue(fifty <= 50, "at most 50 per note: " + fifty);
 		List<FlameState.Burst> many = new ArrayList<FlameState.Burst>();
 		for (int i = 0; i < 20; i++) {
 			many.add(new FlameState.Burst(CLOCK - (900 - i * 40) * MS, 12));
 		}
-		assertTrue(sparks(QualityTier.FULL, state(FlameSetting.FULL, true, many), NO_TEXT).size() <= 60, "at most 60 in the air");
+		assertTrue(sparks(QualityTier.FULL, state(FlameSetting.FULL, true, many), NO_TEXT).size() <= 300, "at most 300 in the air");
 	}
 
 	@Test
@@ -122,7 +122,7 @@ public class FlameSparksTest {
 	}
 
 	@Test
-	public void aSparkOverACellOfTheFireNeverMakesItMoreThanSixtyPercentOpaque() {
+	public void aSparkOverACellOfTheFireNeverMakesItMoreThanEightyFivePercentOpaque() {
 		List<FlameState.Burst> many = new ArrayList<FlameState.Burst>();
 		for (int i = 0; i < 12; i++) {
 			many.add(new FlameState.Burst(CLOCK - (950 - i * 80) * MS, 12));
@@ -138,7 +138,7 @@ public class FlameSparksTest {
 				Double under = cells.get(Math.rint(spark.value(0)) + ":" + Math.rint(spark.value(5)));
 				double a = under == null ? 0.0 : under;
 				double combined = 1.0 - (1.0 - a) * (1.0 - spark.alpha());
-				assertTrue(combined <= 0.60 + 1e-9, "a spark over a cell: " + combined);
+				assertTrue(combined <= 0.85 + 1e-9, "a spark over a cell: " + combined);
 			}
 		}
 	}

@@ -11,7 +11,7 @@ package app.tuxguitar.app.tools.custom.practice.arcade.view;
 final class FireField {
 
 	/** About this many columns across the picture at the full tier; the balanced tier has cells twice as big. */
-	static final double COLUMNS = 120.0;
+	static final double COLUMNS = 192.0;
 
 	/** The smallest cell, in screen pixels. */
 	static final double SMALLEST = 4.0;

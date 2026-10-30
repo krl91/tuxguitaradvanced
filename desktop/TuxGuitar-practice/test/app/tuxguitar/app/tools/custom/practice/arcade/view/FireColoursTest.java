@@ -29,17 +29,17 @@ public class FireColoursTest {
 	}
 
 	@Test
-	public void theOpacityGrowsWithTheHeatAndNeverPassesSixtyPercent() {
+	public void theOpacityGrowsWithTheHeatAndNeverPassesEightyFivePercent() {
 		double previous = 0.0;
 		for (int step = 1; step < FireColours.STEPS; step++) {
 			double alpha = FireColours.alpha(step, false);
 			assertTrue(alpha > previous, "step " + step + " is more opaque than the one before");
-			assertTrue(alpha <= 0.60 + 1e-9, "at most 60 % (owner's answer, FR-002)");
-			assertTrue(FireColours.alpha(step, true) <= 0.36 + 1e-9, "discreet at most 36 %");
+			assertTrue(alpha <= 0.85 + 1e-9, "at most 85 % (owner's look gate, FR-002)");
+			assertTrue(FireColours.alpha(step, true) <= 0.51 + 1e-9, "discreet at most 51 %");
 			assertEquals(0.6 * alpha, FireColours.alpha(step, true), 1e-9, "discreet is 60 % of full");
 			previous = alpha;
 		}
-		assertEquals(0.60, FireColours.alpha(FireColours.STEPS - 1, false), 1e-9);
+		assertEquals(0.85, FireColours.alpha(FireColours.STEPS - 1, false), 1e-9);
 	}
 
 	private static int red(int rgb) {

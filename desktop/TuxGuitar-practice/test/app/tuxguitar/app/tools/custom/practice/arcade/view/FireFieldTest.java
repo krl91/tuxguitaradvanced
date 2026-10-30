@@ -33,9 +33,9 @@ public class FireFieldTest {
 
 	@Test
 	public void theCellsAreBigPixelsAndTwiceAsBigAtTheBalancedTier() {
-		assertEquals(11.0, FireField.cell(SCREEN, QualityTier.FULL), 0.0, "1280 / 120, rounded");
-		assertEquals(22.0, FireField.cell(SCREEN, QualityTier.BALANCED), 0.0);
-		assertEquals(5.0, FireField.cell(new Viewport(640, 480), QualityTier.FULL), 0.0);
+		assertEquals(7.0, FireField.cell(SCREEN, QualityTier.FULL), 0.0, "1280 / 192, rounded");
+		assertEquals(14.0, FireField.cell(SCREEN, QualityTier.BALANCED), 0.0);
+		assertEquals(4.0, FireField.cell(new Viewport(640, 480), QualityTier.FULL), 0.0);
 		assertEquals(4.0, FireField.cell(new Viewport(300, 200), QualityTier.FULL), 0.0, "never under 4 screen pixels");
 	}
 

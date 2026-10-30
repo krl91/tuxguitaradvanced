@@ -22,7 +22,7 @@ Spec 009's flames are vector tongues built by `arcade/view/FlameDrawing.java` as
 
 **Project Type**: desktop application plugin
 
-**Performance Goals**: at FULL, at most about 2 500 flame items per picture at 1280×720 (run merging); the existing `QualityController` keeps the frame budget (SC-007)
+**Performance Goals**: at FULL, about 2 500 flame items per picture at 1280×720 at first; after the owner's look gate (research R9) one item per cell at 1/192 of the width, measured in T030; the existing `QualityController` keeps the frame budget (SC-007)
 
 **Constraints**: no existing test modified except the owner's targeted exception of 2026-10-30 (the tongue-shape assertions, listed in research R8 and line by line in the commit); no change under `arcade/core` (`FlameParityTest`); verdicts identical
 

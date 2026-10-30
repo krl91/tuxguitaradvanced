@@ -45,7 +45,7 @@ final class FlameDrawing {
 	static final long SPARK_LIFE = 1_000_000_000L;
 
 	/** The most sparks in the air at once. */
-	static final int MOST_SPARKS = 60;
+	static final int MOST_SPARKS = 300;
 
 	private FlameDrawing() {
 	}
@@ -99,9 +99,9 @@ final class FlameDrawing {
 	}
 
 	/**
-	 * The sparks of the right notes (spec 018 FR-005, research R7): each burst throws {@code 4 + min(streak, 12) / 2} single cells (60 % of them discreet)
+	 * The sparks of the right notes (spec 018 FR-005, research R7): each burst throws {@code 20 + 5 * min(streak, 12) / 2} single cells (60 % of them discreet)
 	 * from the top of the fire near a corner; they rise, drift and fade out within {@link #SPARK_LIFE}. At most {@link #MOST_SPARKS} in the air, the newest
-	 * first. Over a cell of the fire of opacity {@code a} a spark has at most {@code (0.60 - a) / (1 - a)}, so the two together never pass 60 % (FR-002).
+	 * first. Over a cell of the fire of opacity {@code a} a spark has at most {@code (MOST - a) / (1 - a)}, so the two together never pass the fire's most opacity (FR-002).
 	 */
 	private static void sparks(List<SceneItem> items, FireField field, FlameState flames, boolean discreet, List<double[]> texts) {
 		List<FlameState.Burst> bursts = flames.bursts();
@@ -115,7 +115,7 @@ final class FlameDrawing {
 				continue;
 			}
 			double life = age / (double) SPARK_LIFE;
-			int count = 4 + Math.min(burst.streak(), 12) / 2;
+			int count = 20 + 5 * Math.min(burst.streak(), 12) / 2;
 			if (discreet) {
 				count = (int) Math.round(count * DISCREET);
 			}
@@ -124,8 +124,8 @@ final class FlameDrawing {
 				boolean right = (h & 1L) != 0L;
 				int from = (int) Math.floor(((h >>> 1) & 0xFFFF) / 65536.0 * 0.25 * field.columns());
 				int start = right ? field.columns() - 1 - from : from;
-				double rise = 6.0 + 10.0 * (((h >>> 17) & 0xFFFF) / 65536.0);
-				double drift = (((h >>> 33) & 0xFFFF) / 65536.0 - 0.5) * 6.0;
+				double rise = 10.0 + 16.0 * (((h >>> 17) & 0xFFFF) / 65536.0);
+				double drift = (((h >>> 33) & 0xFFFF) / 65536.0 - 0.5) * 10.0;
 				int col = Math.max(0, Math.min(field.columns() - 1, start + (int) Math.round(drift * life)));
 				int row = Math.min(highest, FireField.EMBER_ROWS + field.tongueRows(start) + (int) Math.floor(rise * life));
 				double alpha = FireColours.MOST * (1.0 - life) * (discreet ? DISCREET : 1.0);

@@ -61,7 +61,7 @@ description: "Tasks of spec 018: Arcade's flames drawn like the classic fire of 
 - [X] T020 [P] Update the manual sheet `specs/test-sheets/F06-flammes-arcade.md` for the new look (what to watch: big pixels, the game visible through the fire, no black band, sparks, smoothness).
 - [X] T021 Full gate from `BUILD`: `mvn -o -e clean verify -P native-modules`, then the `swt-gui-tests` run; counts = baseline + new tests; `git diff --name-status <T001 commit> -- '*/test/*'` shows only added files plus the `M` of T011–T012; restore `specs/003-arcade-mode/benchmark/`.
 - [X] T022 Relaunch the built application (jre symlink, `open <app> --args ~/git/tuxguitar/tests/demo-arcade-morceau.tg`).
-- [ ] T023 **[HUMAN] Gate**: the owner plays Arcade with *full*, *discreet* and *off* (sheet F06) and judges the look ("the demo's variant A", SC-001) and the smoothness (SC-007); values tuned there (cell size, colours, opacity at most 60 %), each tuning with its test kept green.
+- [X] T023 **[HUMAN] Gate** (done 2026-10-30: too transparent, too few sparks, pixels too coarse → Phase 6): the owner plays Arcade with *full*, *discreet* and *off* (sheet F06) and judges the look ("the demo's variant A", SC-001) and the smoothness (SC-007); values tuned there (cell size, colours, opacity at most 60 %), each tuning with its test kept green.
 - [X] T024 Write `specs/018-arcade-demo-fire/final-report.md` (built, ran, measured item counts, the gate, the exception lines, not seen: Linux/Windows by CI only) and add the row of spec 018 to `specs/STATUS.md`.
 
 ## Dependencies & Execution Order
@@ -76,3 +76,16 @@ description: "Tasks of spec 018: Arcade's flames drawn like the classic fire of 
 ## Implementation Strategy
 
 MVP = Phases 1–3 (the translucent demo fire, every rule of spec 009 kept). Then the sparks (Phase 4). Each phase committed on its own; the owner's look gate at the end.
+
+## Phase 6: Owner's look gate tuning (2026-10-30)
+
+**Input**: the owner's look check (T023): too transparent, too few sparks, pixels too coarse. Values in spec.md (Session owner's look gate) and research R9; test exception granted for the lines listed there only.
+
+- [ ] T025 Adapt only the lines of `TST/arcade/view/FireColoursTest.java`, `TST/arcade/view/FireTranslucencyTest.java` and `TST/arcade/view/FlameSparksTest.java` that pin 0.60 and the spark counts (4–10 → 20–50 per note, 10 → 50, 60 → 300 in the air, 0.60 → 0.85); run them and see them red.
+- [ ] T026 Create `TST/arcade/view/FireLookTuningTest.java`: the cell at FULL is round(width / 192) (7 at 1280, 10 at 1920), BALANCED twice; see it red.
+- [ ] T027 `ARCADE/view/FireColours.java`: `MOST` 0.85; `ARCADE/view/FireField.java`: `COLUMNS` 192; `ARCADE/view/FlameDrawing.java`: 20 + 5 × min(streak, 12) / 2 sparks per burst, `MOST_SPARKS` 300, cap over a cell from `FireColours.MOST`; make T025–T026 green.
+- [ ] T028 Run every flame and Arcade test (`FlameContrastTest`, `FlameSceneTest`, `FlameParityTest`, `ArcadeSceneQualityTest`, `ArcadeFlamesSettingTest`, `ArcadeFrameSource*Test`, `FallbackRendererTest`, `FireFieldTest`); fix the code, never these tests.
+- [ ] T029 Regenerate `TST/arcade/reference/flame-reading.scene.txt` and `docs/images/arcade-flames.png`; `ArcadeReferenceSceneTest` and `ArcadeReferenceImagesTest` green without the write property.
+- [ ] T030 Measure the flame items of `flameReading()` at FULL and BALANCED, 1280×720, and write them in `specs/018-arcade-demo-fire/baseline.txt`.
+- [ ] T031 Update the numbers in `docs/PRACTICE*.md` (60 % → 85 %) and sheet F06; full gate from `BUILD` and the `swt-gui-tests` run; `git diff --name-status` on tests shows only the T025 files, the three `FireFieldTest` lines (owner's second grant) and T026's new file; relaunch the app.
+- [ ] T032 **[HUMAN] Gate**: the owner tries the tuned fire again (sheet F06 steps 10–14).

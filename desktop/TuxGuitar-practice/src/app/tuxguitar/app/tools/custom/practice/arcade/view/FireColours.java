@@ -2,7 +2,7 @@ package app.tuxguitar.app.tools.custom.practice.arcade.view;
 
 /**
  * The colours of the demo fire (spec 018, research R4): sixteen heat steps from dark red through red, orange and yellow to white, each translucent. Step 0
- * is cold and draws nothing. The opacity grows in proportion to the step up to 60 % (the owner's answer), so that the middle of the width, at a fifth of the
+ * is cold and draws nothing. The opacity grows in proportion to the step up to 85 % (the owner's look gate; 60 % before), so that the middle of the width, at a fifth of the
  * corners' heat, keeps at most 22 % of their opacity (spec 009 FR-001); discreet is 60 % of it. Pure.
  */
 final class FireColours {
@@ -11,7 +11,7 @@ final class FireColours {
 	static final int STEPS = 16;
 
 	/** The opacity of the hottest step. */
-	static final double MOST = 0.60;
+	static final double MOST = 0.85;
 
 	/** The colour scale, from the coolest lit step to the hottest. */
 	private static final int[] SCALE = { 0x5A0A04, 0xB7210F, 0xF26A12, 0xFFD23C, 0xFFF6D8 };

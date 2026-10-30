@@ -27,3 +27,9 @@ After US1 + US2 (T013), flameReading() at 1280x720:
 
 The owner's exception (T012) was not needed: every existing flame test passes unchanged; the only changed test file is the regenerated
 arcade/reference/flame-reading.scene.txt (T011).
+
+After the owner's look gate (T030, research R9: cell = width / 192, 85 %, sparks x5), flameReading() at 1280x720 (no burst in this scene):
+  FULL: FLAME_TONGUE 4938 + FLAME_EMBER 364 = 5302 flame items (5410 in all); BALANCED: 1268 + 182 = 1450 flame items (1557 in all).
+  Building the scene: about 2.9 ms at FULL, 0.8 ms at BALANCED (JDK 21, owner's Mac, mean of 200 builds; painting not measured).
+  About 2.3 times the items of T013, above the plan's first bound of 2500: kept at the owner's request; the QualityController drops to BALANCED
+  if the frame budget is missed, and the owner's smoothness check (T032, SC-007) decides.
