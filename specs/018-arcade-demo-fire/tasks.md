@@ -14,13 +14,13 @@ description: "Tasks of spec 018: Arcade's flames drawn like the classic fire of 
 
 ## Phase 1: Setup
 
-- [ ] T001 Baseline before any code in `specs/018-arcade-demo-fire/baseline.txt`: `mvn -o -e clean verify -P native-modules` from `BUILD` (counts per module) and the `swt-gui-tests` run; the starting commit; the number of flame items of `ReferenceScenes.flameReading()` at FULL and BALANCED (a throwaway count, not a committed test). Restore `specs/003-arcade-mode/benchmark/` after each build.
-- [ ] T002 Write in `specs/018-arcade-demo-fire/baseline.txt` the existing flame tests and their status: to stay unchanged and green — `TST/arcade/view/FlameContrastTest`, `TST/session/FlameParityTest`, `TST/arcade/view/ArcadeReferenceSceneTest` (code), `TST/arcade/ui/ArcadeFrameSourceTest`, `TST/arcade/ui/FallbackRendererTest`, `TST/arcade/ui/ArcadeCanvasSwtTest`, and every method of `FlameSceneTest`, `ArcadeSceneQualityTest`, `ArcadeFlamesSettingTest` not named in research R8; under the owner's exception — exactly the methods and lines of research R8.
+- [X] T001 Baseline before any code in `specs/018-arcade-demo-fire/baseline.txt`: `mvn -o -e clean verify -P native-modules` from `BUILD` (counts per module) and the `swt-gui-tests` run; the starting commit; the number of flame items of `ReferenceScenes.flameReading()` at FULL and BALANCED (a throwaway count, not a committed test). Restore `specs/003-arcade-mode/benchmark/` after each build.
+- [X] T002 Write in `specs/018-arcade-demo-fire/baseline.txt` the existing flame tests and their status: to stay unchanged and green — `TST/arcade/view/FlameContrastTest`, `TST/session/FlameParityTest`, `TST/arcade/view/ArcadeReferenceSceneTest` (code), `TST/arcade/ui/ArcadeFrameSourceTest`, `TST/arcade/ui/FallbackRendererTest`, `TST/arcade/ui/ArcadeCanvasSwtTest`, and every method of `FlameSceneTest`, `ArcadeSceneQualityTest`, `ArcadeFlamesSettingTest` not named in research R8; under the owner's exception — exactly the methods and lines of research R8.
 
 ## Phase 2: Foundational
 
-- [ ] T003 [P] Create `TST/arcade/view/FireColoursTest.java`: heat step 0 → no colour (nothing drawn); steps 1..15 go from dark red to white in that order (red ≤ green ≤ blue rising); opacity grows with the step and is **≤ 0.60** at step 15, **≤ 0.36** discreet; see it fail.
-- [ ] T004 Create `ARCADE/view/FireColours.java` (pure): 16 steps, the colour scale and opacity of research R4 (`0.60 × heat^0.8`, × 0.6 discreet); make T003 pass.
+- [X] T003 [P] Create `TST/arcade/view/FireColoursTest.java`: heat step 0 → no colour (nothing drawn); steps 1..15 go from dark red to white in that order (red ≤ green ≤ blue rising); opacity grows with the step and is **≤ 0.60** at step 15, **≤ 0.36** discreet; see it fail.
+- [X] T004 Create `ARCADE/view/FireColours.java` (pure): 16 steps, the colour scale and opacity of research R4 (`0.60 × heat^0.8`, × 0.6 discreet); make T003 pass.
 
 ## Phase 3: User Story 1 + 2 - The flames look like a demo-scene fire, and the game shows through (Priority: P1) 🎯 MVP
 

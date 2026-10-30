@@ -1,0 +1,19 @@
+Baseline of spec 018 (T001, T002), 2026-10-30, starting commit 8be3bcaa9
+
+The full gate was run at 2589ab242 + the docs of 8be3bcaa9 (same code), 2026-10-30:
+mvn -o -e clean verify -P native-modules (desktop/build-scripts/tuxguitar-macosx-swt-cocoa): BUILD SUCCESS
+  TuxGuitar-lib 73, compat 1, editor-utils 1, gtp 10 (1 skipped), midi 2, audio-engine 378, tuner-next 24, synth 9,
+  TuxGuitar-practice 1296 (0 failures, 12 skipped)
+mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am: BUILD SUCCESS, practice SWT tests 37
+
+Flame items of ReferenceScenes.flameReading() at 1280x720 (throwaway count, not committed):
+  FULL      FLAME_TONGUE 501, FLAME_EMBER 31 (532 flame items, 640 items in all)
+  BALANCED  FLAME_TONGUE 222, FLAME_EMBER 14 (236 flame items, 343 items in all)
+
+Existing flame tests (T002)
+  To stay unchanged and green: arcade/view/FlameContrastTest, session/FlameParityTest, arcade/view/ArcadeReferenceSceneTest (code),
+  arcade/ui/ArcadeFrameSourceTest, arcade/ui/FallbackRendererTest, arcade/ui/ArcadeCanvasSwtTest, and every method of FlameSceneTest,
+  ArcadeSceneQualityTest and ArcadeFlamesSettingTest not named in research R8.
+  Under the owner's exception (research R8), only if they fail: FlameSceneTest.theTonguesAndTheirLayersFollowTheTierAndTheSetting and the
+  pieces/tallest/layerCount helpers (one cell of tolerance on the exact proportionality), ArcadeSceneQualityTest lines 177-178,
+  ArcadeFlamesSettingTest line 113, and the regenerated arcade/reference/flame-reading.scene.txt.
