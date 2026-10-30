@@ -39,12 +39,19 @@ Not used for any assertion. **No existing test was changed.** `FlameSceneTest`, 
   - `git diff --name-status 8be3bcaa9 -- '*/test/*'`: the five added test files and the `M` of the regenerated reference.
 - The built application was relaunched on `tests/demo-arcade-morceau.tg` (T022).
 
-## The owner's gate (T023)
+## The owner's gate (T023) and the tuning (Phase 6, T025–T035)
 
-**Pending.** Sheet F06, steps 10 to 14: the look ("the demo's variant A", SC-001), the game seen through the fire, the sparks, and the smoothness (SC-007). Values to tune there: cell size, colours, opacity ≤ 60 %, heat profile.
+**Done 2026-10-30.** The owner found the fire too transparent, with too few sparks and pixels too coarse, and chose: **85 %** at most, **five times the sparks** (20 to 50 per right note, 300 at most in the air), **the demo's grid** (cell = width / 192, 7 px at 1280). Recorded in spec.md and research R9.
+
+- The real-painter test `ArcadeCanvasSwtTest` then fell from FULL to BALANCED (no sparks): about 12 ms to paint a frame. Three tries (bug-fix protocol): batching the cells by colour and alpha, joining row neighbours, then **filling without antialiasing**, which fixed it (about 2 ms; hard pixels, as in the demos). Research R10.
+- Measured: 5302 flame items at FULL, 1450 at BALANCED (1280×720); scene built in about 2.5 ms.
+- Test lines changed under the owner's exceptions (each listed in commits 01228dfcf and 0b069fc50): the 0.60 and spark-count lines of `FireColoursTest`, `FireTranslucencyTest`, `FlameSparksTest`; three lines of `FireFieldTest` (cell size); the last line of `FallbackRendererTest.theFallbackPaintsNoFlameAndTheSelectedPathPaintsThemAll`; `flame-reading.scene.txt` regenerated. Added: `FireLookTuningTest` (2), `FlameCellsPaintTest` (4), helper `FlameItemsAccess`.
+- Gate (T035): BUILD SUCCESS; **practice 1324 (= 1318 + 6), 0 failures, 12 skipped**; `swt-gui-tests` **37**, 0 failures.
+
+**Open: T036, the owner's second try** (sheet F06, steps 10–14).
 
 ## Not seen
 
-- The fire on screen in the application, and its cost per frame (about 2,300 quads at the full tier; the quality controller lowers the tier if frames are slow).
+- The fire on screen in the application with a real run (only the real-canvas test measured the paint cost).
 - Linux and Windows: by CI only.
 - The Arcade screenshots of the manual (`docs/images/manual/arcade-*.png`, `features/arcade-*.png`) are real captures of the old flames and were not retaken.

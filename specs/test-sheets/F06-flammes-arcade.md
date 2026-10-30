@@ -23,8 +23,8 @@
 | 8 | Active **Réglages Système › Accessibilité › Affichage › Réduire les animations**, lance une partie. | Les langues **ne bougent plus**, seule leur **hauteur** suit le jeu. (C'est la toute première fois que ce réglage est essayé : note bien ce que tu vois.) Pense à désactiver le réglage ensuite. | | |
 | 9 | Change le **look** du jeu (s'il y en a plusieurs : clair, sombre, monochrome). | Les flammes gardent **leurs couleurs** dans chaque look. | | |
 | 10 | **Pleines**, joue bien jusqu'à ce que le feu soit haut. Regarde-le de près. | Un feu en **gros pixels carrés**, du rouge sombre au blanc vers la base, qui **monte et scintille** comme le feu des démos Amiga (« variante A »). Plus haut dans les coins, faible au milieu. | | |
-| 11 | Regarde le manche, les notes et les cordes **à travers** le feu. | Le jeu **se voit à travers** le feu partout (jamais plus de 60 % d'opacité) : **pas de bande noire**, rien de caché. | | |
-| 12 | Enchaîne plusieurs notes justes, puis une série longue. | À chaque note juste, une **gerbe d'étincelles** part du haut du feu vers un coin et s'éteint en **moins d'une seconde** ; plus nombreuses avec une série plus longue. Une fausse note ou une note manquée n'en lance aucune. | | |
+| 11 | Regarde le manche, les notes et les cordes **à travers** le feu. | Le jeu **se voit à travers** le feu partout (jamais plus de 85 % d'opacité) : **pas de bande noire**, rien de caché. | | |
+| 12 | Enchaîne plusieurs notes justes, puis une série longue. | À chaque note juste, une **grosse gerbe d'étincelles** (20 à 50) part du haut du feu vers un coin et s'éteint en **moins d'une seconde** ; plus nombreuses avec une série plus longue. Une fausse note ou une note manquée n'en lance aucune. | | |
 | 13 | **Discrètes**, puis **Désactivées**. | Discrètes : feu **plus bas et plus pâle**, moins d'étincelles. Désactivées : **rien**. | | |
 | 14 | Joue une minute en **Pleines** en regardant la fluidité. | L'image reste **fluide** (pas de saccade due au feu). Si elle saccade, note-le : la qualité peut baisser d'elle-même (gros pixels doublés, sans étincelles). | | |
 
