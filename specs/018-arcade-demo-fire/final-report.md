@@ -48,7 +48,7 @@ Not used for any assertion. **No existing test was changed.** `FlameSceneTest`, 
 - Test lines changed under the owner's exceptions (each listed in commits 01228dfcf and 0b069fc50): the 0.60 and spark-count lines of `FireColoursTest`, `FireTranslucencyTest`, `FlameSparksTest`; three lines of `FireFieldTest` (cell size); the last line of `FallbackRendererTest.theFallbackPaintsNoFlameAndTheSelectedPathPaintsThemAll`; `flame-reading.scene.txt` regenerated. Added: `FireLookTuningTest` (2), `FlameCellsPaintTest` (4), helper `FlameItemsAccess`.
 - Gate (T035): BUILD SUCCESS; **practice 1324 (= 1318 + 6), 0 failures, 12 skipped**; `swt-gui-tests` **37**, 0 failures.
 
-**Open: T036, the owner's second try** (sheet F06, steps 10–14).
+**T036, the owner's second try: done 2026-10-31** — the owner tried the tuned fire on the built application: "ça marche bien" (SC-001 kept; smoothness seen by the owner, SC-007).
 
 ## Not seen
 

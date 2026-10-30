@@ -92,4 +92,4 @@ MVP = Phases 1–3 (the translucent demo fire, every rule of spec 009 kept). The
 - [X] T033 `ARCADE/ui/UiPainterRenderer.java`: batch the flame cells (R10); make T031–T032 green, `UiPainterRendererTest`, `FallbackRendererTest`, `PaintedAlignmentTest`, `TargetPrimitivesTest` green unchanged otherwise.
 - [X] T034 `ArcadeCanvasSwtTest` (profile `swt-gui-tests`) green at 1/192: the real painter keeps the FULL tier.
 - [X] T035 Update the numbers in `docs/PRACTICE*.md` (60 % → 85 %) and sheet F06; full gate from `BUILD` and the `swt-gui-tests` run; `git diff --name-status b5f218a8e -- '*/test/*'` shows only the T025 files, the three `FireFieldTest` lines, the `FallbackRendererTest` line, `flame-reading.scene.txt` and the new files; relaunch the app.
-- [ ] T036 **[HUMAN] Gate**: the owner tries the tuned fire again (sheet F06 steps 10–14).
+- [X] T036 **[HUMAN] Gate**: the owner tries the tuned fire again (sheet F06 steps 10–14). Done 2026-10-31: "ça marche bien".
