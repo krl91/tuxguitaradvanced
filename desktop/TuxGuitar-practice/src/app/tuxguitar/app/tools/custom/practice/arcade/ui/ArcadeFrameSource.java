@@ -1,10 +1,13 @@
 package app.tuxguitar.app.tools.custom.practice.arcade.ui;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeScoring;
+import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeVerdict;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeScene;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.FlameState;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.QualityController;
@@ -47,9 +50,15 @@ public final class ArcadeFrameSource {
 	private long flameClock;
 	private long flameLast = Long.MIN_VALUE;
 	private boolean levelHeld;
+	/** The right notes of the last second of flame clock, for the sparks (spec 018), and how many right notes the run had at the last picture. */
+	private final List<FlameState.Burst> bursts = new ArrayList<FlameState.Burst>();
+	private int rightsSeen;
 
 	/** How much the clock must have moved for the music to be taken as begun. */
 	private static final long MOVED_NANOS = 30_000_000L;
+
+	/** A burst of sparks lasts this long on the flame clock (spec 018 SC-005). */
+	private static final long SPARK_NANOS = 1_000_000_000L;
 
 	/** How far the clock of the player may be from the picture's own time for the music to be taken as begun. */
 	private static final long AGREE_NANOS = 400_000_000L;
@@ -198,7 +207,33 @@ public final class ArcadeFrameSource {
 		int judged = view == null ? 0 : view.judged();
 		int maximum = view == null ? 0 : this.scoring.maximum(judged);
 		this.flameLevel.update(maximum > 0 ? view.score() / (double) maximum : 0.0, judged, wallNanos);
-		return new FlameState(this.flames, this.flameLevel.level(), this.flameClock, this.flameMotion);
+		collectBursts(view);
+		return new FlameState(this.flames, this.flameLevel.level(), this.flameClock, this.flameMotion, this.bursts);
+	}
+
+	/** Each event newly right since the last picture adds a burst with the flame clock and the streak; a burst is dropped after one second. */
+	private void collectBursts(ArcadeRun.View view) {
+		if (view != null) {
+			int rights = 0;
+			for (ArcadeRun.EventState state : view.states()) {
+				ArcadeVerdict verdict = state.verdict();
+				if (verdict == ArcadeVerdict.ON_TIME || verdict == ArcadeVerdict.EARLY || verdict == ArcadeVerdict.LATE) {
+					rights++;
+				}
+			}
+			for (int i = this.rightsSeen; i < rights; i++) {
+				this.bursts.add(new FlameState.Burst(this.flameClock, view.streak()));
+			}
+			this.rightsSeen = rights;
+		}
+		while (!this.bursts.isEmpty() && this.flameClock - this.bursts.get(0).clockNanos() >= SPARK_NANOS) {
+			this.bursts.remove(0);
+		}
+	}
+
+	/** The bursts of sparks now, oldest first, for the tests. */
+	List<FlameState.Burst> bursts() {
+		return new ArrayList<FlameState.Burst>(this.bursts);
 	}
 
 	/** The monotonic flame clock, for the tests: it never goes back and stands still while the run is paused. */

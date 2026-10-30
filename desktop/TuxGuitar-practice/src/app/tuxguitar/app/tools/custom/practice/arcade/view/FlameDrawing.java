@@ -41,6 +41,12 @@ final class FlameDrawing {
 	/** The distance, in pixels, over which the flames come back to their own opacity: a fade and not an edge. */
 	static final double RAMP = 28.0;
 
+	/** A spark lives this long. */
+	static final long SPARK_LIFE = 1_000_000_000L;
+
+	/** The most sparks in the air at once. */
+	static final int MOST_SPARKS = 60;
+
 	private FlameDrawing() {
 	}
 
@@ -86,7 +92,65 @@ final class FlameDrawing {
 				break;
 			}
 		}
+		if (full && flames.motion()) {
+			sparks(items, field, flames, discreet, texts);
+		}
 		return items;
+	}
+
+	/**
+	 * The sparks of the right notes (spec 018 FR-005, research R7): each burst throws {@code 4 + min(streak, 12) / 2} single cells (60 % of them discreet)
+	 * from the top of the fire near a corner; they rise, drift and fade out within {@link #SPARK_LIFE}. At most {@link #MOST_SPARKS} in the air, the newest
+	 * first. Over a cell of the fire of opacity {@code a} a spark has at most {@code (0.60 - a) / (1 - a)}, so the two together never pass 60 % (FR-002).
+	 */
+	private static void sparks(List<SceneItem> items, FireField field, FlameState flames, boolean discreet, List<double[]> texts) {
+		List<FlameState.Burst> bursts = flames.bursts();
+		double cell = field.cell();
+		int highest = (int) Math.floor(field.top(0) / cell);
+		int thrown = 0;
+		for (int b = bursts.size() - 1; b >= 0 && thrown < MOST_SPARKS; b--) {
+			FlameState.Burst burst = bursts.get(b);
+			long age = flames.flameClockNanos() - burst.clockNanos();
+			if (age < 0L || age >= SPARK_LIFE) {
+				continue;
+			}
+			double life = age / (double) SPARK_LIFE;
+			int count = 4 + Math.min(burst.streak(), 12) / 2;
+			if (discreet) {
+				count = (int) Math.round(count * DISCREET);
+			}
+			for (int i = 0; i < count && thrown < MOST_SPARKS; i++) {
+				long h = mix(burst.clockNanos() * 31L + i);
+				boolean right = (h & 1L) != 0L;
+				int from = (int) Math.floor(((h >>> 1) & 0xFFFF) / 65536.0 * 0.25 * field.columns());
+				int start = right ? field.columns() - 1 - from : from;
+				double rise = 6.0 + 10.0 * (((h >>> 17) & 0xFFFF) / 65536.0);
+				double drift = (((h >>> 33) & 0xFFFF) / 65536.0 - 0.5) * 6.0;
+				int col = Math.max(0, Math.min(field.columns() - 1, start + (int) Math.round(drift * life)));
+				int row = Math.min(highest, FireField.EMBER_ROWS + field.tongueRows(start) + (int) Math.floor(rise * life));
+				double alpha = FireColours.MOST * (1.0 - life) * (discreet ? DISCREET : 1.0);
+				double under = FireColours.alpha(field.heat(col, row), discreet);
+				if (under > 0.0) {
+					alpha = Math.min(alpha, (FireColours.MOST - under) / (1.0 - under));
+				}
+				double x1 = field.left(col);
+				double y1 = field.top(row);
+				double[] hull = { x1, y1, x1 + cell, y1 + cell };
+				alpha = faded(alpha, hull, texts);
+				if (alpha > 1e-6) {
+					double[] corners = { x1, y1, x1 + cell, y1, x1 + cell, y1 + cell, x1, y1 + cell };
+					items.add(new SceneItem(Shape.QUAD, Role.FLAME_EMBER, corners, FireColours.colour(FireColours.STEPS - 1 - (int) (life * 8.0)), alpha, 0.0, null, -1, 0, null));
+				}
+				thrown++;
+			}
+		}
+	}
+
+	/** A 64-bit mix of a number: the same input, the same output. */
+	private static long mix(long z) {
+		z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
+		z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
+		return z ^ (z >>> 31);
 	}
 
 	/** 1 at the corners and {@link #MIDDLE} in the middle of the width; {@code t} is the place across the width, 0 to 1. */
