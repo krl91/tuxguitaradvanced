@@ -59,10 +59,10 @@ description: "Tasks of spec 018: Arcade's flames drawn like the classic fire of 
 
 - [X] T019 [P] Describe the new look in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md`, `docs/PRACTICE-ES.md` (the big-pixel fire, see-through, sparks on right notes, the setting unchanged, never changes the judgement; FR-012).
 - [X] T020 [P] Update the manual sheet `specs/test-sheets/F06-flammes-arcade.md` for the new look (what to watch: big pixels, the game visible through the fire, no black band, sparks, smoothness).
-- [ ] T021 Full gate from `BUILD`: `mvn -o -e clean verify -P native-modules`, then the `swt-gui-tests` run; counts = baseline + new tests; `git diff --name-status <T001 commit> -- '*/test/*'` shows only added files plus the `M` of T011–T012; restore `specs/003-arcade-mode/benchmark/`.
-- [ ] T022 Relaunch the built application (jre symlink, `open <app> --args ~/git/tuxguitar/tests/demo-arcade-morceau.tg`).
+- [X] T021 Full gate from `BUILD`: `mvn -o -e clean verify -P native-modules`, then the `swt-gui-tests` run; counts = baseline + new tests; `git diff --name-status <T001 commit> -- '*/test/*'` shows only added files plus the `M` of T011–T012; restore `specs/003-arcade-mode/benchmark/`.
+- [X] T022 Relaunch the built application (jre symlink, `open <app> --args ~/git/tuxguitar/tests/demo-arcade-morceau.tg`).
 - [ ] T023 **[HUMAN] Gate**: the owner plays Arcade with *full*, *discreet* and *off* (sheet F06) and judges the look ("the demo's variant A", SC-001) and the smoothness (SC-007); values tuned there (cell size, colours, opacity at most 60 %), each tuning with its test kept green.
-- [ ] T024 Write `specs/018-arcade-demo-fire/final-report.md` (built, ran, measured item counts, the gate, the exception lines, not seen: Linux/Windows by CI only) and add the row of spec 018 to `specs/STATUS.md`.
+- [X] T024 Write `specs/018-arcade-demo-fire/final-report.md` (built, ran, measured item counts, the gate, the exception lines, not seen: Linux/Windows by CI only) and add the row of spec 018 to `specs/STATUS.md`.
 
 ## Dependencies & Execution Order
 
