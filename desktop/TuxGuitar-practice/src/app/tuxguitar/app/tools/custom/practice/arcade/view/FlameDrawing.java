@@ -8,20 +8,22 @@ import app.tuxguitar.app.tools.custom.practice.arcade.view.SceneItem.Shape;
 import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
 
 /**
- * The stage flames behind the picture (spec 009, research R1, R2, R5, R8): tongues that taper to a tip, in three layers (dark red, orange, yellow core),
- * plus embers and a low glow, all made of the quads and discs the scene already has and all decoration. Pure: the same inputs give the same items; the
- * sway comes from the flame clock and fixed phases, never from a random source. The colours are the flames' own: no monochrome variant, no theme.
+ * The stage flames behind the picture, drawn like the classic fire of the Amiga demos (spec 018, replacing the tongues of spec 009): a field of square big
+ * pixels along the foot of the picture ({@link FireField}, the top cell of each column cut to the height of its flame), each coloured from dark red to white by its heat and translucent ({@link FireColours}), all
+ * decoration. Pure: the same inputs give the same items; the flicker comes from the flame clock, never from a random source. The colours are the fire's
+ * own: no monochrome variant, no theme.
  *
- * <p>The reading guard (FR-005, SC-002): a part of a flame that comes near the box of a text fades to almost nothing and is fully there again a few pixels
- * away. A tongue that meets a text is cut into thin horizontal strips so that only the part near the text fades, not the whole column.
- * The strips of a tongue layer share its code in {@code tgString} ({@code tongue * 4 + layer + 1}), so a tongue is still one tongue to a reader of the scene.
+ * <p>The reading guard (spec 009 FR-005, SC-002): a cell that comes near the box of a text fades to almost nothing and is fully there again a few pixels
+ * away. The cells of the flame carry in {@code tgString} the code of the group of columns they belong to ({@code tongue * 4 + part + 1}), the columns
+ * being grouped as the tongues and layers of spec 009 were counted (28 by 3 at the full tier, 14 by 2 at the balanced one, half of them discreet), so that a
+ * reader of the scene still finds that many pieces of flame.
  */
 final class FlameDrawing {
 
-	/** Tongues at the full tier; the balanced tier has half of them. */
+	/** The groups of columns at the full tier; the balanced tier and discreet have half of them each. */
 	static final int TONGUES = 28;
 
-	/** The tallest corner tongue at level 1 is this share of the picture height (FR-001). */
+	/** The tallest corner of the fire at level 1 is this share of the picture height (FR-001). */
 	static final double CORNER_HEIGHT = 0.55;
 
 	/** The weight of the middle of the width against the corners, and the growth towards them: {@code MIDDLE + (1 - MIDDLE) * d^2} (FR-001, R8). */
@@ -39,21 +41,6 @@ final class FlameDrawing {
 	/** The distance, in pixels, over which the flames come back to their own opacity: a fade and not an edge. */
 	static final double RAMP = 28.0;
 
-	private static final int DARK_RED = 0xB7210F;
-	private static final int ORANGE = 0xF26A12;
-	private static final int YELLOW = 0xFFD23C;
-	private static final int EMBER = 0xFF8A2A;
-	private static final int GLOW = 0xFF5A14;
-
-	/** Per layer from the outside: share of the height, share of the width, opacity. */
-	private static final double[][] LAYERS = { { 1.0, 1.0, 0.38 }, { 0.72, 0.62, 0.50 }, { 0.45, 0.30, 0.62 } };
-
-	/** The yellow core is never used where the flames are weak, in the middle of the width: it is orange there (R8 d). */
-	private static final double YELLOW_FROM_WEIGHT = 0.5;
-
-	/** The longest piece of a tongue near a text, in pixels. */
-	private static final double STRIP = 22.0;
-
 	private FlameDrawing() {
 	}
 
@@ -69,34 +56,35 @@ final class FlameDrawing {
 		}
 		boolean full = tier == QualityTier.FULL;
 		boolean discreet = flames.setting() == FlameSetting.DISCREET;
-		int tongues = (full ? TONGUES : TONGUES / 2) / (discreet ? 2 : 1);
-		int layers = full ? 3 : 2;
-		double factor = discreet ? DISCREET : 1.0;
-		double width = viewport.width();
-		double bottom = viewport.height();
-		double maxHeight = CORNER_HEIGHT * viewport.height();
-		double seconds = flames.motion() ? flames.flameClockNanos() / 1e9 : 0.0;
-		double span = Math.max(1.0, tongues - 1.0);
-		double baseWidth = width / span * 1.6;
-		double inset = baseWidth / 2.0;
-		if (full) {
-			glow(items, viewport, flames.level(), factor, texts);
-		}
-		for (int i = 0; i < tongues; i++) {
-			double t = tongues == 1 ? 0.5 : i / span;
-			double weight = weight(t);
-			double height = flames.level() * factor * maxHeight * weight;
-			if (height > 0.0) {
-				double x = inset + t * (width - 2.0 * inset);
-				for (int layer = 0; layer < layers; layer++) {
-					tongue(items, i, x, bottom, baseWidth, height, weight, factor, layer, seconds, texts);
+		int parts = full ? 3 : 2;
+		int groups = (full ? TONGUES : TONGUES / 2) / (discreet ? 2 : 1) * parts;
+		FireField field = new FireField(viewport, tier, flames);
+		double cell = field.cell();
+		for (int row = 0; ; row++) {
+			boolean any = false;
+			for (int col = 0; col < field.columns(); col++) {
+				int heat = field.heat(col, row);
+				if (heat == 0) {
+					continue;
+				}
+				any = true;
+				double x1 = field.left(col);
+				double y2 = field.top(row) + cell;
+				double y1 = y2 - field.cellHeight(col, row);
+				double[] corners = { x1, y1, x1 + cell, y1, x1 + cell, y2, x1, y2 };
+				double[] hull = { x1, y1, x1 + cell, y2 };
+				double alpha = faded(FireColours.alpha(heat, discreet), hull, texts);
+				if (row < FireField.EMBER_ROWS) {
+					items.add(new SceneItem(Shape.QUAD, Role.FLAME_EMBER, corners, FireColours.colour(heat), alpha, 0.0, null, -1, 0, null));
+				} else {
+					int group = (int) ((long) col * groups / field.columns());
+					int code = group / parts * 4 + group % parts + 1;
+					items.add(new SceneItem(Shape.QUAD, Role.FLAME_TONGUE, corners, FireColours.colour(heat), alpha, 0.0, null, -1, code, null));
 				}
 			}
-		}
-		for (int i = 0; i < tongues; i++) {
-			double t = tongues == 1 ? 0.5 : i / span;
-			double x = inset + t * (width - 2.0 * inset);
-			ember(items, i, x, bottom, viewport.height(), weight(t) * factor, flames.level(), seconds, texts);
+			if (!any) {
+				break;
+			}
 		}
 		return items;
 	}
@@ -105,67 +93,6 @@ final class FlameDrawing {
 	static double weight(double t) {
 		double d = Math.abs(2.0 * t - 1.0);
 		return MIDDLE + (1.0 - MIDDLE) * d * d;
-	}
-
-	private static void tongue(List<SceneItem> items, int index, double x, double bottom, double baseWidth, double height, double weight, double factor, int layer,
-			double seconds, List<double[]> texts) {
-		double[] shape = LAYERS[layer];
-		double top = bottom - height * shape[0];
-		double half = baseWidth / 2.0 * shape[1];
-		double sway = Math.sin(2.0 * Math.PI * (seconds * (0.9 + 0.13 * (index % 5))) + index * 1.7 + layer * 0.6) * baseWidth * 0.35 * shape[0];
-		double tipHalf = half * 0.18;
-		double alpha = shape[2] * weight * factor;
-		int colour = layer == 0 ? DARK_RED : layer == 1 ? ORANGE : (weight >= YELLOW_FROM_WEIGHT ? YELLOW : ORANGE);
-		int code = index * 4 + layer + 1;
-		double[] left = { x - half, x + sway - tipHalf };
-		double[] right = { x + half, x + sway + tipHalf };
-		// whole when no text is near, else in thin strips: the strips near a text fade and the others do not
-		double[] box = { x - half - RAMP, top - RAMP, x + half + RAMP + Math.abs(sway), bottom + RAMP };
-		int strips = near(box, texts) ? (int) Math.max(1, Math.min(24, Math.ceil((bottom - top) / STRIP))) : 1;
-		for (int s = 0; s < strips; s++) {
-			double t0 = s / (double) strips;
-			double t1 = (s + 1) / (double) strips;
-			double y0 = bottom + (top - bottom) * t0;
-			double y1 = bottom + (top - bottom) * t1;
-			double[] corners = { lerp(left[0], left[1], t0), y0, lerp(right[0], right[1], t0), y0, lerp(right[0], right[1], t1), y1, lerp(left[0], left[1], t1), y1 };
-			double[] hull = { Math.min(corners[0], corners[6]), Math.min(y0, y1), Math.max(corners[2], corners[4]), Math.max(y0, y1) };
-			items.add(new SceneItem(Shape.QUAD, Role.FLAME_TONGUE, corners, colour, faded(alpha, hull, texts), 0.0, null, -1, code, null));
-		}
-	}
-
-	private static void ember(List<SceneItem> items, int index, double x, double bottom, double height, double weight, double level, double seconds, List<double[]> texts) {
-		double rise = (seconds * (0.28 + 0.04 * (index % 4)) + index * 0.37) % 1.0;
-		double y = bottom - 6.0 - rise * height * 0.06 * (0.4 + level);
-		double radius = 2.0 + (index % 3);
-		double[] hull = { x - radius, y - radius, x + radius, y + radius };
-		items.add(new SceneItem(Shape.DISC, Role.FLAME_EMBER, new double[] { x, y, radius, radius }, EMBER, faded(0.55 * weight * (1.0 - 0.7 * rise), hull, texts), 0.0, null, -1,
-				0, null));
-	}
-
-	/** A low glow along the foot of the picture, under the numbers of the neck; the middle one is as weak as the middle of the flames. */
-	private static void glow(List<SceneItem> items, Viewport viewport, double level, double factor, List<double[]> texts) {
-		double ry = viewport.height() * 0.06;
-		double rx = viewport.width() * 0.18;
-		for (double share : new double[] { 0.18, 0.50, 0.82 }) {
-			double x = share * viewport.width();
-			double alpha = 0.10 * factor * weight(share) * (0.3 + 0.7 * level);
-			double[] hull = { x - rx, viewport.height() - 2.0 * ry, x + rx, viewport.height() };
-			items.add(new SceneItem(Shape.DISC, Role.FLAME_EMBER, new double[] { x, viewport.height() - ry, rx, ry }, GLOW, faded(alpha, hull, texts), 0.0, null, -1, 0, null));
-		}
-	}
-
-	private static double lerp(double a, double b, double t) {
-		return a + (b - a) * t;
-	}
-
-	/** True when the box is within the fade distance of any text. */
-	private static boolean near(double[] box, List<double[]> texts) {
-		for (double[] text : texts) {
-			if (gap(box, text) < RAMP) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/** The distance between two boxes {x1, y1, x2, y2}, 0 when they meet. */

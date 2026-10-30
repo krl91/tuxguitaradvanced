@@ -17,3 +17,13 @@ Existing flame tests (T002)
   Under the owner's exception (research R8), only if they fail: FlameSceneTest.theTonguesAndTheirLayersFollowTheTierAndTheSetting and the
   pieces/tallest/layerCount helpers (one cell of tolerance on the exact proportionality), ArcadeSceneQualityTest lines 177-178,
   ArcadeFlamesSettingTest line 113, and the regenerated arcade/reference/flame-reading.scene.txt.
+
+After US1 + US2 (T013), flameReading() at 1280x720:
+  first try, cell = width / 128 (10 px): FULL 2460 + 256 = 2716 flame items, BALANCED 636 + 128 = 764: above the plan (about 2500 / 700)
+  cells made coarser, cell = width / 120 (11 px at 1280): FULL FLAME_TONGUE 2036 + FLAME_EMBER 232 = 2268 flame items (2376 in all),
+                                                            BALANCED 530 + 116 = 646 flame items (753 in all)
+  One item per lit cell, no merging of runs: the kept test FlameSceneTest.theSameInputsGiveTheSameItemsAndTheClockMovesOnlyTheSway needs the same
+  number of items whatever the clock, so the lit cells depend on the level only and the clock moves only their heat.
+
+The owner's exception (T012) was not needed: every existing flame test passes unchanged; the only changed test file is the regenerated
+arcade/reference/flame-reading.scene.txt (T011).
