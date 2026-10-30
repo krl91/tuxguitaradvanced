@@ -62,12 +62,12 @@ description: "Tasks of spec 017: the practice palette moves aside so it never hi
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T017 [P] Describe the behaviour in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md`, `docs/PRACTICE-ES.md` (the palette moves aside ahead of time to a corner of the score, never takes the focus, stays where you drag it, never moves when put beside the window).
-- [ ] T018 [P] Add a manual sheet `specs/test-sheets/F10-palette-ecartee.md` (Wait run on `tests/basic_test.tg`, Follow run as in F01; what to watch: never hidden, no back and forth, shortcuts without a click, drag beside the window) and list it in `specs/test-sheets/README.md`.
-- [ ] T019 Full gate from `BUILD`: `mvn -o -e clean verify -P native-modules`, then `mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dsurefire.failIfNoSpecifiedTests=false`; counts = baseline + the new tests; `git diff --name-status <T001 commit> -- '*/test/*'` shows only added files; restore `specs/003-arcade-mode/benchmark/`.
-- [ ] T020 Relaunch the built application (jre symlink, `open <app> --args ~/git/tuxguitar/tests/basic_test.tg`).
+- [X] T017 [P] Describe the behaviour in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md`, `docs/PRACTICE-ES.md` (the palette moves aside ahead of time to a corner of the score, never takes the focus, stays where you drag it, never moves when put beside the window).
+- [X] T018 [P] Add a manual sheet `specs/test-sheets/F10-palette-ecartee.md` (Wait run on `tests/basic_test.tg`, Follow run as in F01; what to watch: never hidden, no back and forth, shortcuts without a click, drag beside the window) and list it in `specs/test-sheets/README.md`.
+- [X] T019 Full gate from `BUILD`: `mvn -o -e clean verify -P native-modules`, then `mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dsurefire.failIfNoSpecifiedTests=false`; counts = baseline + the new tests; `git diff --name-status <T001 commit> -- '*/test/*'` shows only added files; restore `specs/003-arcade-mode/benchmark/`.
+- [X] T020 Relaunch the built application (jre symlink, `open <app> --args ~/git/tuxguitar/tests/basic_test.tg`).
 - [ ] T021 **[HUMAN] Gate**: the owner practises F01 and a Wait run (sheet F10) and judges that the palette no longer hinders the reading (SC-004); record the answer in `specs/017-palette-dodges-score/final-report.md`.
-- [ ] T022 Write `specs/017-palette-dodges-score/final-report.md` (what was built, what ran, the gate, not seen: JavaFX/Qt have no mapping, Linux/Windows by CI only) and add the row of spec 017 to `specs/STATUS.md`.
+- [X] T022 Write `specs/017-palette-dodges-score/final-report.md` (what was built, what ran, the gate, not seen: JavaFX/Qt have no mapping, Linux/Windows by CI only) and add the row of spec 017 to `specs/STATUS.md`.
 
 ## Dependencies & Execution Order
 

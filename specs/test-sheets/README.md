@@ -22,6 +22,7 @@ Ces fiches regroupent **tout ce qui reste à tester par une personne** dans les 
 | [F07](F07-arcade-visuel.md) | 003 Arcade, jugements à l'écran | T106, T111, T117, T134, T136, T138, T144, T145 | guitare | 40 min | |
 | [F08](F08-industrialisation-phases-a-d.md) | 002 phases A à D | T022, T043, T055, T065, T075, T086 | guitare + Rocksmith | 40 min | |
 | [F09](F09-mvp-acceptation.md) | 001 MVP, recette | T049, T054, T062, T069, T072, T075, T096, T097, T082 | guitare + micro intégré + Rocksmith | 60-90 min (en plusieurs fois) | Le plus long ; une partie du comportement a évolué depuis (signalé dans la fiche) |
+| [F10](F10-palette-ecartee.md) | 017 la palette s'écarte de la partition | T021 | guitare (+ Rocksmith) | 15 min | Sans focus, sans allers-retours |
 
 ## Ce qui reste ouvert mais n'est pas une fiche pour toi seul
 
