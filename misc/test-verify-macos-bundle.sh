@@ -135,5 +135,22 @@ case_ "JRE library with no minimum" refuse:5 "$VERIFY" "$APP"
 APP="$(bundle "$(newdir)" 15.0 15.0 15.0 15.0 11.0)"; adhoc "$APP"
 case_ "JRE library 11.0" pass "$VERIFY" "$APP"
 
+# check 6, with --signed-by: the designated requirement names the stable certificate as root (spec 020, FR-005..FR-008)
+throwaway_identity
+sha1="$(echo "$SHA1" | tr 'A-F' 'a-f')"
+signed() { # app [requirement]: signed with the throwaway identity, with that designated requirement (codesign's default when none)
+  local req=()
+  [ $# -ge 2 ] && req=(-r="$2")
+  codesign --force --deep --keychain "$KC" -s "$SHA1" --identifier app.tuxguitaradvanced ${req[@]+"${req[@]}"} "$1" >/dev/null 2>&1 || die "cannot sign $1 with the throwaway identity"
+}
+ROOTREQ="designated => identifier \"app.tuxguitaradvanced\" and certificate root = H\"$sha1\""
+APP="$(bundle "$(newdir)" 15.0 15.0 15.0 15.0 11.0)"; "$SEAL" "$APP" "$SHA1" "$KC" "$ROOTREQ" >/dev/null 2>&1 || die "cannot seal $APP with the throwaway identity"
+case_ "throwaway certificate, forced root requirement, --signed-by its SHA1" pass "$VERIFY" "$APP" --signed-by "$SHA1"
+case_ "throwaway certificate, --signed-by another SHA1" refuse:6 "$VERIFY" "$APP" --signed-by 0123456789abcdef0123456789abcdef01234567
+APP="$(bundle "$(newdir)" 15.0 15.0 15.0 15.0 11.0)"; adhoc "$APP"
+case_ "ad hoc, --signed-by SHA1" refuse:6 "$VERIFY" "$APP" --signed-by "$SHA1"
+APP="$(bundle "$(newdir)" 15.0 15.0 15.0 15.0 11.0)"; signed "$APP"
+case_ "throwaway certificate, default requirement (certificate leaf), --signed-by SHA1" refuse:6 "$VERIFY" "$APP" --signed-by "$SHA1"
+
 [ "$fail" = 0 ] && echo "all cases as expected"
 exit $fail

@@ -66,3 +66,30 @@ VERIFY SEALED (a copy of the new build sealed ad hoc):
   OK      [5] no other native code declares a minimum above 15.0
   bundle verified: tuxguitar-9.99-SNAPSHOT-macosx-swt-cocoa.app
 TEST: all cases as expected (10)
+
+== T009 — cases of check 6, red against the verifier of phase 3 (it ignored --signed-by)
+
+  PASS throwaway certificate, forced root requirement, --signed-by its SHA1
+  FAIL throwaway certificate, --signed-by another SHA1 (expected refuse:6, got exit 0: no WRONG line)
+  FAIL ad hoc, --signed-by SHA1 (expected refuse:6, got exit 0: no WRONG line)
+  FAIL throwaway certificate, default requirement (certificate leaf), --signed-by SHA1 (expected refuse:6, got exit 0: no WRONG line)
+  exit 1
+
+== T010-T011 — check 6 in the verifier, the requirement argument of seal-macos-app.sh: TEST green, 14/14 cases as expected
+  usage error (--signed-by with no 40-hex value): exit 2
+
+== T012-T013 — the sign script with no trust step, on the owner's Mac (quickstart step 3)
+
+A copy of the T008 build, with the local Temurin 21 JDK copied into Contents/Resources/tuxguitar/jre; a throwaway certificate (.p12 -legacy, OpenSSL 4);
+CI=1; the keychain search list of the account saved before and restored after.
+  First run: the script stopped at its line 37 (openssl pkcs12 -in ... -out cert.pem): OpenSSL 4 cannot read a -legacy .p12 without -legacy
+  (RC2-40-CBC unsupported). cert.pem was used only by the trust commands T012 removed: the line is removed (bug fix protocol, try 1 of 3).
+  Second run:
+    no sudo prompt (the script has no sudo any more)
+    designated => identifier "app.tuxguitaradvanced" and certificate root = H"ed00f3fe018c11a4f81ed42fe9e3dbed79f183f5"   (the throwaway SHA-1)
+    VERIFY <copy> --signed-by ed00f3fe...: OK [1]..[6], bundle verified (check 5 passes with the real JRE inside)
+    VERIFY <copy> --signed-by 280bd902de0512b59d70228c5faa441d3eb6af55: WRONG [6], exit 1
+    security dump-trust-settings -d: "No Trust Settings were found." before and after
+    keychain search list: restored, equal to the saved one
+  Without the two variables: ad hoc seal, VERIFY <copy>: OK [1]..[5], bundle verified
+  The copies and the throwaway files are deleted.

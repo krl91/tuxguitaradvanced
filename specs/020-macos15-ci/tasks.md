@@ -114,7 +114,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 ### Tests for User Story 2 (write first, see them red)
 
-- [ ] T009 [US2] Add to `TEST` the cases of contracts/scripts.md for check 6. Each uses a right bundle (all 15.0, JRE 11.0):
+- [X] T009 [US2] Add to `TEST` the cases of contracts/scripts.md for check 6. Each uses a right bundle (all 15.0, JRE 11.0):
   - `throwaway certificate, forced root requirement, --signed-by its SHA1` (pass). Sign with `codesign --force --keychain "$KC" -s "$SHA1" --identifier app.tuxguitaradvanced -r='designated => identifier "app.tuxguitaradvanced" and certificate root = H"<sha1 lower>"'` directly, since `seal-macos-app.sh` gets its 4th argument only in T011;
   - `throwaway certificate, --signed-by another SHA1` (refuse:6);
   - `ad hoc, --signed-by SHA1` (refuse:6);
@@ -124,7 +124,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 ### Implementation for User Story 2
 
-- [ ] T010 [US2] In `VERIFY`:
+- [X] T010 [US2] In `VERIFY`:
   - parse an optional `--signed-by <sha1>` after the package (a 40-hex value, case-insensitive, stored in lower case; anything else exits 2 with a usage line);
   - with it, add check 6 of contracts/scripts.md:
     - the line `designated => …` of `codesign -d -r- "$APP"` must equal exactly `designated => identifier "app.tuxguitaradvanced" and certificate root = H"<sha1>"`;
@@ -133,19 +133,19 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - update the header comment (the checks and the usage).
   
   Make `TEST` green.
-- [ ] T011 [P] [US2] In `misc/seal-macos-app.sh`:
+- [X] T011 [P] [US2] In `misc/seal-macos-app.sh`:
   - accept an optional 4th argument, the requirement text, passed to codesign as `-r=<requirement>`;
   - update the usage line and the header comment;
   - with no 4th argument the codesign call is unchanged.
   
   Then switch the T009 pass case to sign through `seal-macos-app.sh <app> "$SHA1" "$KC" '<requirement>'`, and run `TEST` (green).
-- [ ] T012 [US2] In `.github/scripts/sign-macos-launcher.sh`:
+- [X] T012 [US2] In `.github/scripts/sign-macos-launcher.sh`:
   - remove `sudo security authorizationdb write com.apple.trust-settings.admin allow`, `sudo security add-trusted-cert …`, the `echo "adding the certificate to the trust settings"` and the `remove-trusted-cert` line of `cleanup`;
   - find the identity with `security find-identity -p codesigning "$KEYCHAIN"` (not `-v`): exactly one **distinct** SHA-1 expected among the lines of its *Matching identities* part (an identity trusted on the machine would be listed again under *Valid identities only*), otherwise print the listing and exit 1;
   - build `REQUIREMENT='designated => identifier "app.tuxguitaradvanced" and certificate root = H"'<sha1 lower>'"'` and call `seal-macos-app.sh "$APP" "$IDENTITY" "$KEYCHAIN" "$REQUIREMENT"`;
   - keep the last line that prints the designated requirement;
   - update the header comment: no trust step (research R3), why the requirement is forced (the microphone permission), and that the ad hoc path without secrets is unchanged.
-- [ ] T013 [US2] Gate, quickstart step 3, on the owner's Mac:
+- [X] T013 [US2] Gate, quickstart step 3, on the owner's Mac:
   - copy `APP` into the scratchpad;
   - copy the local Temurin 21 JDK into its `Contents/Resources/tuxguitar/jre`, as the release does;
   - make a throwaway certificate as in `TEST` (the same `-legacy` rule for the .p12) and export it as `MACOS_CERT_P12_BASE64` / `MACOS_CERT_PASSWORD`;

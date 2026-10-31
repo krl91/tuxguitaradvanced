@@ -4,13 +4,20 @@
 #   2. the code signature of the whole bundle is valid (codesign --verify --deep --strict);
 #   3. the Info.plist declares LSMinimumSystemVersion $MIN (spec 020: macOS refuses to open it on an older system, with its own message);
 #   4. the parts the build makes, the launcher and each slice of the AudioUnit library, declare the minimum $MIN;
-#   5. every other Mach-O file (the embedded JRE declares 11.0) declares a minimum, and none above $MIN.
+#   5. every other Mach-O file (the embedded JRE declares 11.0) declares a minimum, and none above $MIN;
+#   6. only with --signed-by: the designated requirement names that certificate as root, so that macOS keeps the microphone permission from one
+#      version to the next (spec 020), and the signature satisfies it.
 # Each line says OK or WRONG and the number of its check, so that misc/test-verify-macos-bundle.sh can tell which check refused.
-# usage: misc/verify-macos-bundle.sh <package>      (package: a .app folder or a .zip)
+# usage: misc/verify-macos-bundle.sh <package> [--signed-by <sha1>]      (package: a .app folder or a .zip; sha1: the certificate's SHA-1, 40 hex digits)
 set -uo pipefail
 # the minimum macOS of the package: the same value as macos.minimumVersion in desktop/pom.xml (spec 020)
 MIN=15.0
 PKG="${1:?package (.app or .zip)}"
+SIGNEDBY=""
+if [ $# -gt 1 ]; then
+  if [ $# -eq 3 ] && [ "$2" = --signed-by ] && [[ "$3" =~ ^[0-9A-Fa-f]{40}$ ]]; then SIGNEDBY="$(echo "$3" | tr 'A-F' 'a-f')"
+  else echo "usage: misc/verify-macos-bundle.sh <package> [--signed-by <sha1>]" >&2; exit 2; fi
+fi
 WORK="$(mktemp -d /tmp/verify-macos-bundle.XXXXXX)"; trap 'chmod -R u+w "$WORK" 2>/dev/null; rm -rf "$WORK"' EXIT
 case "$PKG" in
   *.zip) ditto -x -k "$PKG" "$WORK/x" 2>/dev/null || { echo "cannot open $PKG" >&2; exit 2; }; APP="$(find "$WORK/x" -maxdepth 2 -name '*.app' -type d | head -1)";;
@@ -68,6 +75,14 @@ while IFS= read -r -d '' f; do
   done
 done < <(find "$APP/Contents" -type f -print0)
 [ "$other" = 0 ] && ok 5 "no other native code declares a minimum above $MIN"
+
+if [ -n "$SIGNEDBY" ]; then
+  REQ="identifier \"app.tuxguitaradvanced\" and certificate root = H\"$SIGNEDBY\""
+  FOUND="$(codesign -d -r- "$APP" 2>/dev/null | grep '^designated => ')"
+  if [ "$FOUND" != "designated => $REQ" ]; then wrong 6 "the designated requirement is ${FOUND:-missing} instead of designated => $REQ"
+  elif ! codesign --verify --strict -R="$REQ" "$APP" >/dev/null 2>&1; then wrong 6 "the signature does not satisfy $REQ"
+  else ok 6 "signed by the certificate $SIGNEDBY: $FOUND"; fi
+fi
 
 [ "$fail" = 0 ] && echo "bundle verified: $(basename "$APP")"
 exit $fail
