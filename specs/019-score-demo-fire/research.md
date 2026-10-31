@@ -126,13 +126,14 @@
 
 **Decision**: a new class `SystemReducedMotion`, used by both fires (and by the previews) instead of `ReducedMotion.requested()`.
 - **macOS**: it delegates to `ReducedMotion.requested(runner, os)`, unchanged.
-- **Linux**, in order:
+- **Linux**: every question is asked, and the learner asked for less motion **if any answer says so**. `gsettings` is often installed on KDE too, where it gives GNOME's default `true`, so a first "no" must not hide KDE's answer.
   - `gsettings get org.gnome.desktop.interface enable-animations`: `false` means reduce;
-  - else `kreadconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor`, then `kreadconfig5` with the same arguments: `0` means reduce.
+  - `kreadconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor`, or `kreadconfig5` with the same arguments when `kreadconfig6` gives no answer: `0` means reduce.
+  - Other desktops (Cinnamon, XFCE, …) are not read; they get no reduction (FR-013). This is said in the final report and the release notes, with the call to Linux testers.
 - **Windows**: `powershell -NoProfile -NonInteractive -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.SystemParameters]::ClientAreaAnimation"` returns `False` when the learner turned off "Show animations in Windows". This is the system value `SPI_GETCLIENTAREAANIMATION`.
 - **Timing**:
-  - PowerShell can take more than the 500 ms limit, so on Windows the answer is fetched in the background when the practice window opens and again when each run starts. The run uses the latest answer, and until one arrives, no reduction.
-  - Linux and macOS are read synchronously when a run starts, with the existing 500 ms limit through `CommandRunner`.
+  - On Windows and Linux the answer is fetched in the background when the practice window opens and again when each run starts. PowerShell can take more than the 500 ms limit, and Linux asks up to three commands of 500 ms each. The run uses the latest answer; until one arrives, no reduction. A run therefore never waits (FR-013).
+  - macOS is read when a run starts, with the existing `ReducedMotion` of spec 009, unchanged: at most two questions, 500 ms each.
 - Any other answer, an error or another system: no reduction (FR-013).
 
 **Rationale**: `ReducedMotionTest` (lines 99–103) pins that `ReducedMotion.requested` runs nothing on Windows or Linux. Rules: existing tests are never modified, and every test must keep passing. So the old reader stays as it is, and the new class carries the new behaviour with its own tests. The answers of each system are parsed by pure functions tested with a fake `CommandRunner`.

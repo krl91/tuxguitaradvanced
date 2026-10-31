@@ -240,13 +240,15 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 - [ ] T041 [P] [US3] (FR-013, SC-008) Create `TST/arcade/ui/SystemReducedMotionTest.java` with a fake `CommandRunner` (research R7):
   - **macOS**: delegates (same questions as `ReducedMotionTest`).
-  - **Linux**: `gsettings` answering `false` gives reduce; `true` gives none; when `gsettings` fails, `kreadconfig6` answering `0` gives reduce; when it fails too, `kreadconfig5` answering `0` gives reduce; `1` gives none; when everything fails, none.
-  - **Windows**: the PowerShell command of research R7 answering `False` gives reduce and `True` gives none. It is fetched in the background: `requested()` returns the latest answer, none before the first one, and a fake slow runner never blocks the caller beyond 5 ms.
+  - **Linux** (every question is asked; reduce if any answer says so): `gsettings` answering `false` gives reduce; `gsettings` `true` with `kreadconfig6` `0` gives reduce (KDE with gsettings installed); `kreadconfig6` failing and `kreadconfig5` `0` gives reduce; `true` with `1` gives none; when everything fails, none. It is fetched in the background like Windows.
+  - **Windows**: the PowerShell command of research R7 answering `False` gives reduce and `True` gives none.
+  - **Background, on Windows and Linux**: `requested()` returns the latest answer, none before the first one, and a fake slow runner never blocks the caller beyond 5 ms.
   - Other systems: none, nothing run.
   - Every command has a limit, and a runner that throws gives none.
 - [ ] T042 [US3] (FR-013) Create `ARCADE/ui/SystemReducedMotion.java`:
-  - macOS through `ReducedMotion.requested(runner, os)`; the Linux order of research R7; Windows through a single-thread daemon executor, refreshed by `refresh()`;
-  - `requested()` is non-blocking on Windows and uses `LIMIT_MILLIS` elsewhere.
+  - macOS through `ReducedMotion.requested(runner, os)`, synchronous as today;
+  - Linux (all questions asked, reduce if any says so) and Windows through a single-thread daemon executor, refreshed by `refresh()`;
+  - `requested()` is non-blocking on Windows and Linux.
   Make T041 pass, with `ReducedMotionTest` unchanged.
 - [ ] T043 [US3] (FR-009, FR-013, SC-008) Use `SystemReducedMotion` for Arcade (`PR/ui/PracticeWindow.java` line ~858, in place of `!ReducedMotion.requested()`), for the score fire (T027) and for the previews (T037). Call `refresh()` when the practice window opens and at each run start. Check that T009 (now in Phase 2) is still green, then gate and commit the phase.
 
