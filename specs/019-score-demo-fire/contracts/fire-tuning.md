@@ -10,18 +10,15 @@
 
 - Every parameter has a key, a range, both defaults, a label key and a tooltip key, present in `messages.properties`, `messages_fr.properties` and `messages_es.properties`.
 - Each Arcade default equals the constant it comes from (one assertion per constant).
-- No literal shaping a fire is left in `FireField`, `FireColours` or `FlameDrawing` outside the tuning, apart from the fixed list (research R4). This is checked by a source-scan test for number literals in those three files, with an explicit allow-list. The rule:
-- The numbers 0 and 1 are allowed anywhere: complements, bounds, comparisons, indices.
-- The numbers 2 and 0.5 are allowed inside the named mathematical helpers (`value`, `hash`, `smooth`, `lerp`, `clamp`, `mix`, `gap`), and elsewhere only on the explicit allow-list with their reason.
-- Every other number must come from the tuning, be a fixed constant of research R4 (the reading guard, the seed, the hash and spark-draw bit fields, the item code), or be on the allow-list.
+- No literal shaping a fire is left in `FireField`, `FireColours` or `FlameDrawing` outside the tuning, apart from the fixed list (research R4). This is checked by a source-scan test for number literals in those three files, with an explicit allow-list. The rule, by principle (the exact list is the classification of research R11, written while T008 is red):
+- **Pure mathematical helpers**: every number is allowed inside them, because they are generic tools that set no look. These are the value noise, the smoothing, the hashes and the colour-channel blend (`value`, `hash`, `smooth`, `lerp`, `clamp`, the two `mix`, `gap`).
+- **0 and 1** are allowed anywhere: complements, bounds, comparisons, indices.
+- **Any other number** outside those helpers falls into one of three classes:
+  - **a setting**: it is read from the tuning;
+  - **a fixed value of research R4**: the reading guard, including the text-box estimates of `textBoxes` and the smoothstep of `faded`; the seed and the spark-draw bit fields; the item code; the BALANCED tier rule;
+  - **neutral arithmetic**, with its reason: centring, cell centre, symmetry, colour-channel shifts and palette indices of `colour`, epsilons.
 
-The allow-list holds only arithmetic that shapes nothing, each line with its method and its reason:
-- the centring `noise − 0.5` in `heat` and `r − 0.5` of the spark drift;
-- the cell centre `k + 0.5` in `heat`;
-- the symmetry `2 * col` in `weight(col)` and `2.0 * t − 1.0` in `weight(t)`;
-- the horizontal centring `/ 2.0` of `left`;
-- the epsilons `1e-9` and `1e-6`;
-- the BALANCED cell `2.0 * cell` (a fixed tier rule).
+The test holds the classification of R11 as its allow-list, one line per literal and method, with its class and reason. Every number it finds outside the list fails it.
 
 ## Clamping (FR-019)
 

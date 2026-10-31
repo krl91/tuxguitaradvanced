@@ -72,7 +72,8 @@
 **Fixed values, outside the tuning, with their reasons** (FR-015 and FR-016 exceptions, SC-009):
 - `FlameDrawing.WIDEN`, `NEAR_TEXT` and `RAMP`: the reading guard (owner's answer).
 - `FireField.SEED`, the `mix` hash constants, and the bit fields that draw each spark from the hash in `FlameDrawing.sparks` (`31L`, the shifts `>>> 1`, `17` and `33`, the masks `0xFFFF` and `& 1L`, the divisor `65536.0`): they keep the fire repeatable for the tests. They choose *which* random number a spark gets, never how the fire looks on average.
-- `FlameDrawing.TONGUES` and `parts = full ? 3 : 2` in `items`: they only number the groups of cells in the item `code`. It changes no pixel (the renderer does not read it) and keeps the reference scene stable.
+- The rest of the reading guard: the text-box estimates of `FlameDrawing.textBoxes` (0.66 of the font size per character, 0.6 of it above and below the baseline) and the smoothstep `3.0 − 2.0 · f` of `faded`. With `WIDEN`, `NEAR_TEXT` and `RAMP` they guarantee that no text is hidden (FR-016), so they stay fixed whatever the settings.
+- `FlameDrawing.TONGUES`, `parts = full ? 3 : 2` and the `* 4` of the group code in `items`: they only number the groups of cells in the item `code`. It changes no pixel (the renderer does not read it) and keeps the reference scene stable.
 - The coarser cell at BALANCED (×2) and the tier rules (`QualityController` PRESSURE, COMFORT and WINDOW): the quality tiers stay automatic (spec assumption).
 
 **Rationale**:
@@ -178,3 +179,15 @@ The guard itself is unchanged: 4 px widening, 28 px ramp, 0.2 % (FR-005, FR-016)
   - rise 0.5 s for the whole height;
   - fall 1.0 s to embers (FR-003: within about one second);
   - share = min(1, streak / streak of full height = 16).
+
+## R11. Classification of the number literals of the fire (written in T008)
+
+**Decision**: the exact allow-list of `FireSourceScanTest` is not guessed in advance. It is the classification of every literal the scanner finds in `FireField`, `FireColours` and `FlameDrawing` on today's code, written here while T008 is red:
+
+| Literal | Method | Class | Reason |
+|---|---|---|---|
+
+_To be filled in T008._
+
+**Rationale**: three analysis passes (4, 5 and 6) each found literals missing from a list written in advance. Classifying what the scanner actually finds is exact and leaves nothing out. A literal that shapes the look but is in no catalogue row stops the work and is reported (FR-015).
+

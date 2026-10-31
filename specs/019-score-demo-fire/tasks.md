@@ -71,11 +71,16 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - a corrupt value (`"abc"`), an out-of-range value or a colour without `#` gives the default or the clamped value;
   - a persistence that throws on get or set gives the defaults, and `false` on write, never an exception;
   - `scoreSetting()` is OFF when missing or unknown, and `setScoreSetting(FULL)` then `scoreSetting()` gives FULL.
-- [ ] T008 [P] Create `TST/arcade/view/FireSourceScanTest.java` (SC-009, contracts/fire-tuning.md "Catalogue"): it scans `ARCADE/view/FireField.java`, `FireColours.java` and `FlameDrawing.java` for number literals outside the declarations of the fixed constants (research R4) and of the constants that serve as defaults. The rule:
-  - 0 and 1 are allowed anywhere.
-  - 2 and 0.5 are allowed inside the named mathematical helpers `value`, `hash`, `smooth`, `lerp`, `clamp`, `mix` and `gap`, and elsewhere only on the allow-list.
-  - Every other number must come from the tuning or be a fixed constant of research R4, including the spark-draw bit fields and the item code `parts`. Examples: the octave divisors of `noise`, `life * 8.0`, the spark counts.
-  - The allow-list is explicit, one line per allowed literal and method, each with its reason; it holds only arithmetic that shapes nothing (contracts/fire-tuning.md, with the exact list). It fails on any value shaping the fire that the tuning does not cover. Written before T012, it is seen red on today's literals.
+- [ ] T008 [P] Create `TST/arcade/view/FireSourceScanTest.java` (SC-009, contracts/fire-tuning.md "Catalogue"). It scans the number literals of `ARCADE/view/FireField.java`, `FireColours.java` and `FlameDrawing.java`:
+  - inside the pure helpers (`value`, `hash`, `smooth`, `lerp`, `clamp`, the two `mix`, `gap`), every number is allowed;
+  - 0 and 1 are allowed anywhere;
+  - every other literal must be on the allow-list, classified as **fixed (R4)** or **neutral (with its reason)**.
+  Steps:
+  1. Write the scanner with an empty allow-list and run it on today's code. It is red, and it prints every literal with its method and line.
+  2. Classify each hit as **setting** (it must disappear once T012 is done), **fixed (R4)** or **neutral**. Write this classification as research **R11**, a table with literal, method, class and reason.
+  3. Put the fixed and neutral lines into the test's allow-list. The test stays red only on the settings.
+  4. A hit that shapes the look but is in no catalogue row is a missing setting: stop and report before adding it (spec FR-015).
+  T012 makes it green.
 - [ ] T009 [P] Create `TST/session/ScoreFireSettingKeptTest.java` (SC-007): a fresh store gives OFF. FULL, then a new `FireTuningStore` over the same persistence, gives FULL; the same for DISCREET; a tuned score value survives the same way. (It extends T007's scope through a new file; T007 is left as it is.) Written before T014, it is seen red (the store does not exist yet).
 
 ### Implementation
