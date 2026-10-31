@@ -25,6 +25,9 @@
 - Owner's request (2026-10-31): "pour les flammes et les étincelles, ajoute des réglages pour les deux modes : un onglet de réglage avancé pour le mode practice, avec un max de réglages : la transparence, la quantité d'étincelles, la densité des flammes, la longueur des flammes, la vitesse d'animation ; toutes les valeurs en dur de ces flammes doivent être réglables, une info-bulle sur chaque paramètre, les valeurs actuelles par défaut."
 - Q: Do the three values of the reading guard (the fire fades to 0.2 % near texts and notes, within a 4-pixel margin and a 28-pixel ramp) become adjustable too? → A: **No, a fixed guarantee**: every other value is adjustable, but the fire can never hide a note or a text, whatever the settings.
 - Q: Are the advanced settings separate for Arcade and for the score (Wait / Follow), or shared? → A: **Separate per mode**: one set for Arcade's fire, one for the score fire, each with its own *Default values* button.
+- Q: How does the learner see the effect of a setting while tuning? → A: **An animated preview in the Advanced tab**: a small live fire follows every setting at once, with a button that throws a burst of sparks and a slider that sets the streak (or, for Arcade, the share of the score); the real game applies the settings at its next run.
+- Q: How far do the settings go? → A: **Wide bounds**: creative freedom (for example the most opacity up to 100 %, flames up to the full height of the picture, many sparks); the only limits are the reading guard (fixed) and a ceiling of cost so that the automatic quality does not collapse.
+- Q: Where is the Off / Discreet / Full choice of the score fire? → A: **In the Mode tab**, beside the other settings of Wait and Follow (as Arcade's *Stage flames*); the Advanced tab holds only the fine settings.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -92,9 +95,10 @@ The learner opens a new **Advanced** tab of the practice window. It holds two gr
 1. **Given** a fresh install, **When** the Advanced tab is opened, **Then** each setting of both groups shows the value used by today's fires (spec 018 after the owner's look gate for Arcade; the defaults of this spec for the score fire).
 2. **Given** the pointer rests on a setting, **When** the tooltip shows, **Then** it says in the learner's language what the setting changes, its unit and its default.
 3. **Given** the learner changes a value of one group, **When** the next run of that mode starts, **Then** its fire follows the new value, and the other group's fire is unchanged.
-4. **Given** tuned values, **When** the learner presses *Default values* of a group, **Then** every value of that group returns to its default and the fire looks as before any tuning.
-5. **Given** any combination of values within their ranges, **When** a fire is drawn, **Then** it still never covers a text, the framed note or the next note (the reading guard is not adjustable), and the judging is unchanged.
-6. **Given** tuned values, **When** the application restarts, **Then** the values are kept.
+4. **Given** the Advanced tab is open, **When** the learner changes any setting of a group, **Then** the animated preview of that group shows the change at once (within a tenth of a second), and its *Sparks* button and its *Streak* slider let the sparks and the growth be seen without playing.
+5. **Given** tuned values, **When** the learner presses *Default values* of a group, **Then** every value of that group returns to its default and the fire looks as before any tuning.
+6. **Given** any combination of values within their ranges, **When** a fire is drawn, **Then** it still never covers a text, the framed note or the next note (the reading guard is not adjustable), and the judging is unchanged.
+7. **Given** tuned values, **When** the application restarts, **Then** the values are kept.
 
 ---
 
@@ -111,6 +115,7 @@ The learner opens a new **Advanced** tab of the practice window. It holds two gr
 - **Arcade**: keeps its own *Stage flames* setting (Off / Discreet / Full); its look changes only through its group of the Advanced tab.
 - **Values that cost a lot** (very small pixels, many sparks): the automatic quality tiers still protect the smoothness (coarser pixels, then no sparks, then no fire); every setting has bounds.
 - **A value typed out of its range**: it is brought back within the range, never refused with an error.
+- **An opaque setting** (opacity 100 %, full height): the hottest pixels hide the game behind them, except near the texts, the framed note and the next note, where the fire still fades (FR-016).
 - **A setting changed during a run**: it applies to the next run of that mode.
 
 ## Requirements *(mandatory)*
@@ -123,7 +128,7 @@ The learner opens a new **Advanced** tab of the practice window. It holds two gr
 - **FR-004** (size): At full height the fire MUST NOT rise above one third of the visible score area's height at the corners, and lower in the middle (as the corner/middle profile of spec 009).
 - **FR-005** (never hides what must be read): The fire and its sparks MUST NOT cover the framed note, the next note to play, nor the practice palette; near them they MUST fade out as near the texts of spec 018 (no pixel above 12 % opacity within 4 pixels of their boxes).
 - **FR-006** (sparks): Each right note MUST throw a burst of sparks rising from the bottom of the fire, fading within about one second; more with a longer streak, up to a fixed maximum per note and in the air; none for a mistake.
-- **FR-007** (setting): A setting *Score fire* MUST offer *Off* (the default), *Discreet* (a lower and fainter fire with fewer sparks, as spec 018's discreet) and *Full*; it MUST be kept between runs and sessions, and apply to Wait and Follow only; Arcade's *Stage flames* setting is unchanged.
+- **FR-007** (setting): A setting *Score fire*, in the **Mode tab** beside the other settings of Wait and Follow, MUST offer *Off* (the default), *Discreet* (a lower and fainter fire with fewer sparks, as spec 018's discreet) and *Full*; it MUST be kept between runs and sessions, and apply to Wait and Follow only; Arcade's *Stage flames* setting is unchanged.
 - **FR-008** (decoration only): The fire and the sparks MUST NOT change the recognition, the verdicts, the timing, the score, the streak, the moves of the score cursor, the palette's behaviour of spec 017, or anything recorded about a run.
 - **FR-009** (motion): The motion MUST hold still during a pause and MUST stop when the system asks to reduce motion (the height alone follows the streak, no spark).
 - **FR-013** (reduce motion on every system): The system's request to reduce motion MUST be read on macOS, Linux and Windows, when a run starts, for the score fire and for Arcade's fire of spec 018 alike; when it cannot be read, no reduction is assumed (no wait, no error shown).
@@ -133,9 +138,11 @@ The learner opens a new **Advanced** tab of the practice window. It holds two gr
 - **FR-014** (advanced tab): The practice window MUST have an **Advanced** tab with two groups, *Arcade fire* and *Score fire*, each holding every adjustable value of its fire and a *Default values* button for that group.
 - **FR-015** (every value adjustable): Every value that shapes a fire or its sparks MUST be adjustable in its group, at least: the most opacity; the size of the big pixels; the number of colour steps and the colours of the gradient (dark red to white); the length of the flames (height at the corners) and the height in the middle; the density of the flames (how full and how hot the body of the fire is); the strength and the speed of the flicker; the speed of the animation as a whole; the height and the glow of the embers; how fast the fire rises and falls (Arcade: about 0.5 s up, 3 s down, embers until 4 notes are judged; score fire: the streak of full height and the fall after a mistake); the share of *Discreet*; for the sparks: how many per right note, how many more with the streak and up to which streak, the most in the air, how long they live, how high they rise, how far they drift, and where they start. The only exceptions are the three values of the reading guard (FR-016) and what keeps the fire repeatable for the tests.
 - **FR-016** (reading guard fixed): The fade near texts and notes (to 0.2 % within 4 pixels, over a 28-pixel ramp) MUST stay fixed whatever the settings, so that FR-005 and spec 009's reading rules hold for every combination of values.
+- **FR-021** (spec 018's limits become defaults): spec 018's "at most 85 % opaque" and its spark counts describe the defaults of Arcade's group; a tuned value may go beyond them within FR-019's ranges, while the reading guard and the judging rules of specs 009 and 018 hold for every value.
 - **FR-017** (defaults): The default of every setting MUST be the value used today: Arcade's fire exactly as after spec 018's look gate (85 %, 1/192, 20 to 50 sparks per note, 300 in the air, …), the score fire as defined by this spec; with all defaults the pictures MUST be identical to the pictures without the Advanced tab.
 - **FR-018** (tooltips): Every setting and both *Default values* buttons MUST have a tooltip in English, French and Spanish saying what it changes, its unit and its default.
-- **FR-019** (bounds and saving): Every setting MUST have a range that keeps the practice usable (a value outside is brought back within it), MUST be saved with the practice settings, and MUST apply at the start of the next run of its mode.
+- **FR-020** (preview): Each group of the Advanced tab MUST show an animated preview of its fire that follows every setting at once, with a control that throws a burst of sparks and a control that sets the growth (the streak for the score fire, the share of the maximum score for Arcade); the preview MUST honour *Reduce motion* and stop animating when the tab is not shown.
+- **FR-019** (bounds and saving): Every setting MUST have a wide range (owner's answer: for example the most opacity from 0 to 100 %, the length of the flames up to the full height of the picture or of the score area), bounded only by the reading guard (FR-016) and by a ceiling of cost (the smallest pixel and the most sparks are capped so that the automatic quality tiers can still keep the picture smooth); a value outside is brought back within the range; MUST be saved with the practice settings, and MUST apply at the start of the next run of its mode.
 
 ### Key Entities
 
@@ -168,8 +175,7 @@ The learner opens a new **Advanced** tab of the practice window. It holds two gr
 - In Follow, early and late notes count as right, as Arcade's streak does; wrong, missed and not judged notes break it.
 - *Discreet* is 60 % of the height and the opacity of *Full*, as in spec 018.
 - The fire reuses the fire of spec 018 (same colours, grid of big pixels, translucency, sparks), not a new look.
-- The setting lives in the practice settings (Mode tab) beside the other settings of Wait and Follow.
 - Linux and Windows are checked by the automated builds and by testers' feedback; the owner checks macOS.
-- The Advanced tab applies at the next run (no live preview while a run goes); the ranges of each setting are chosen in the plan and adjusted at the owner's try.
+- The settings apply to the real game at its next run; the preview of the Advanced tab shows them at once; the ranges of each setting are chosen in the plan and adjusted at the owner's try.
 - The quality tiers (full, balanced, performance) stay automatic, not a setting.
 - Out of scope: a fire in Arcade other than spec 018's (it is only tuned), a fire around the framed note, sounds, and any change to the recognition or the judging.
