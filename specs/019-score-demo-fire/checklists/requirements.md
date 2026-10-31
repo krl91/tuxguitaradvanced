@@ -32,4 +32,5 @@
 ## Notes
 
 - The one marker (Reduce motion on Linux and Windows) was answered by the owner on 2026-10-31: yes, in this spec (FR-013, SC-008).
+- Scope extended on 2026-10-31 by the owner (User Story 4, the Advanced tab, FR-014 to FR-019, SC-009 to SC-011); two answers recorded; re-validated, all items pass.
 - All items pass; ready for `/speckit-clarify` or `/speckit-plan`.
