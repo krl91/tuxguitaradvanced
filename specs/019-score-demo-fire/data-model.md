@@ -76,10 +76,12 @@ Notes:
 - The score fire has no Arcade-only parameter. `growth.full` is shown only in the score group (`inArcade()` false); its Arcade default 16 is never read.
 
 **Fixed, not in the catalogue** (research R4):
-- `WIDEN`, `NEAR_TEXT` and `RAMP` (the reading guard);
-- `SEED` and the hash constants (repeatability);
-- `TONGUES` (the item code, no pixel);
-- the BALANCED ×2 cell and the `QualityController` rules (automatic tiers).
+- the reading guard: `WIDEN`, `NEAR_TEXT` and `RAMP`, the smoothstep of `faded`, and the text-box estimates of `textBoxes` (0.66 per character, 0.6 above and below);
+- repeatability: `SEED`, the hash constants, and the bit fields that draw each spark in `FlameDrawing.sparks`;
+- the item code, which changes no pixel: `TONGUES`, `parts = full ? 3 : 2` and the `* 4` of the group code;
+- the automatic tiers: the BALANCED ×2 cell and the `QualityController` rules.
+
+The exact list of the literals, with their class, is research R11, written in T008.
 
 ## FireTuning
 
