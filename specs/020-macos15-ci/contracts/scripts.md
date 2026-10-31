@@ -23,7 +23,7 @@ Exit code: 0 when every check is OK; 1 when one is WRONG; 2 when the package can
 misc/test-verify-macos-bundle.sh
 ```
 
-macOS only (needs clang, codesign, security, openssl). Builds fake bundles in a temporary folder and prints one line per case; exit 0 only when every case gives the expected result.
+macOS only (needs clang, codesign, security, openssl). Builds fake bundles in a temporary folder and prints one line per case; exit 0 only when every case gives the expected result. A *pass* case needs exit 0 and no `WRONG` line; a *refuse* case needs exit 1 **and** a `WRONG` line of the check named in parentheses (its keyword: `LSMinimumSystemVersion` 3, `launcher`/`audiounit` 4, `minimum` 5, `designated` 6), so that no case passes for another reason. A fake bundle that cannot be built stops the test with exit 2.
 
 | Case | Expected |
 |---|---|
