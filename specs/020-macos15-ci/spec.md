@@ -147,7 +147,7 @@ The owner can still start, by hand, the macOS build-and-test check and the pract
 - **SC-002**: After installing the first release made by this change over v0.8.0-beta.2 on the owner's Mac, 0 microphone permission requests appear and the input is heard in the tuner.
 - **SC-003**: In every published macOS package from then on, the application description and 100 % of its own native parts (FR-003) declare exactly macOS 15.0, and no other native code it carries declares more than macOS 15.0, checked automatically by the release.
 - **SC-004**: The automatic checks refuse 100 % of the wrong packages of their self-tests (missing or different minimum, different designated requirement or fingerprint).
-- **SC-005**: The macOS build-and-test check and the practice graphical tests each end green once on macOS 15 machines.
+- **SC-005**: The macOS build-and-test check and the practice graphical tests each end green once on macOS 15 machines, or each failing test is shown to be unrelated to macOS 15 (it depends on painting time, as `ArcadeCanvasSwtTest` did once on a busy Mac on 2026-10-31, and the graphical tests were never proved stable on GitHub's machines); such a test is reported, not changed.
 - **SC-006**: The Windows and Linux packages of the first release after this change pass all their existing checks, as before.
 - **SC-007**: In the first release run after this change, 100 % of the Ubuntu jobs run on the Ubuntu 24.04 image (read from the run's log).
 

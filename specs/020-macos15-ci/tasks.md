@@ -230,8 +230,13 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - the release is published with 4 files.
   
   On a failure, follow the bug fix protocol: read the log, reproduce locally if possible, fix, at most 3 tries, each try a new push and a run for the same tag, never a moved tag. Then report.
-- [ ] T026 [P] Start *MacOS Java CI with Maven*, *Practice GUI tests* and the Ubuntu build-and-test workflow (`ubuntu-maven.yml`) once each (`gh workflow run … -R krl91/tuxguitaradvanced --ref master`) and follow them; expected green, the first two on macOS 15 (SC-005), the third on Ubuntu 24.04 (FR-014, SC-007).
-- [ ] T027 Record the run ids, images and results in `specs/020-macos15-ci/baseline.txt`, set 020 in `specs/STATUS.md`, update the memories `pending-macos15-ci` (done) and `pending-score-fire-spec` (v0.8.0-beta.3 published). Commit; the push waits for the next round.
+- [ ] T026 [P] Start *MacOS Java CI with Maven*, *Practice GUI tests* and the Ubuntu build-and-test workflow (`ubuntu-maven.yml`) once each (`gh workflow run … -R krl91/tuxguitaradvanced --ref master`) and follow them; expected green, the first two on macOS 15 (SC-005), the third on Ubuntu 24.04 (FR-014, SC-007). If a graphical test fails:
+  - note its name and its message;
+  - run it once locally (`mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest=<name> -Dsurefire.failIfNoSpecifiedTests=false`);
+  - say whether it depends on painting time (for example a quality tier stepping down) or on macOS 15.
+  
+  Only a failure caused by macOS 15 is fixed within spec 020, following the bug fix protocol. Any other is reported to the owner. A test is never changed or skipped (never modify existing tests).
+- [ ] T027 Record the run ids, images and results in `specs/020-macos15-ci/baseline.txt`, set 020 in `specs/STATUS.md`, update the memories `pending-macos15-ci` (done) and `pending-score-fire-spec` (v0.8.0-beta.3 published). Set `.specify/feature.json` back to `specs/019-score-demo-fire`, so that the next `/speckit-implement` resumes spec 019 (phases 4 to 6), and say so in the report. Commit; the push waits for the next round.
 
 ---
 
