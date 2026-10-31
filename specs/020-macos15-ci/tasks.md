@@ -16,7 +16,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 - one commit per phase, with no Co-Authored-By trailer;
 - **no push before Phase 8**.
 
-**Paths**: `CB` = `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`; `APP` = `CB/target/tuxguitar-9.99-SNAPSHOT-macosx-swt-cocoa.app`; `TEST` = `misc/test-verify-macos-bundle.sh`; `VERIFY` = `misc/verify-macos-bundle.sh`.
+**Paths**: `CB` = `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`; `APP` = `CB/target/tuxguitar-9.99-SNAPSHOT-macosx-swt-cocoa.app`; `TEST` = `misc/test-verify-macos-bundle.sh`; `SEALED` = a fresh copy of `APP` in the scratchpad, sealed ad hoc with `misc/seal-macos-app.sh` (as the release seals the bundle; `APP` itself is never sealed or changed); `VERIFY` = `misc/verify-macos-bundle.sh`.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -28,7 +28,8 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - the result and the test counts;
   - the `minos` of `APP/Contents/MacOS/tuxguitar-launcher` and of each slice (`otool -arch x86_64|arm64 -l`) of `APP/Contents/Resources/tuxguitar/lib/libtuxguitar-audiounit-jni.jnilib` (27.0 expected, R1);
   - the absence of `LSMinimumSystemVersion` in `APP/Contents/Info.plist`;
-  - the output of `VERIFY APP` today (2 OK lines, signature ad hoc);
+  - the output of `VERIFY APP` today: check 1 OK and check 2 WRONG (*code has no resources but signature indicates they must be present*, seen in the second analysis), because the local build signs only the launcher and the whole bundle is sealed by the release;
+  - the output of `VERIFY SEALED`, where `SEALED` is a copy of `APP` in the scratchpad sealed ad hoc with `misc/seal-macos-app.sh` (2 OK lines expected);
   - the result of `misc/test-stamp-macos-plist.sh` and `misc/test-relocate-macos-payload.sh`.
 
 ---
@@ -59,7 +60,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 **Goal**: FR-002, FR-003, FR-004; SC-003.
 
-**Independent Test**: quickstart step 1 shows 15.0 four times; `TEST` passes; `VERIFY APP` prints the new OK lines.
+**Independent Test**: quickstart step 1 shows 15.0 four times; `TEST` passes; `VERIFY SEALED` prints the new OK lines.
 
 ### Tests for User Story 3 (write first, see them red)
 
@@ -94,7 +95,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 - [ ] T008 [US3] Gate:
   - the full gate in `CB` (green, same counts as T001);
   - quickstart step 1: launcher 15.0, both AudioUnit slices 15.0, `LSMinimumSystemVersion` 15.0;
-  - `VERIFY APP`: only OK lines;
+  - `VERIFY SEALED` (made from the new build): only OK lines;
   - `TEST` green.
   
   Record the results in baseline.txt, tick T003–T008, and commit the phase.
@@ -136,7 +137,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   Then switch the T009 pass case to sign through `seal-macos-app.sh <app> "$SHA1" "$KC" '<requirement>'`, and run `TEST` (green).
 - [ ] T012 [US2] In `.github/scripts/sign-macos-launcher.sh`:
   - remove `sudo security authorizationdb write com.apple.trust-settings.admin allow`, `sudo security add-trusted-cert …`, the `echo "adding the certificate to the trust settings"` and the `remove-trusted-cert` line of `cleanup`;
-  - find the identity with `security find-identity -p codesigning "$KEYCHAIN"` (not `-v`): exactly one SHA-1 expected, otherwise print the listing and exit 1;
+  - find the identity with `security find-identity -p codesigning "$KEYCHAIN"` (not `-v`): exactly one **distinct** SHA-1 expected among the lines of its *Matching identities* part (an identity trusted on the machine would be listed again under *Valid identities only*), otherwise print the listing and exit 1;
   - build `REQUIREMENT='designated => identifier "app.tuxguitaradvanced" and certificate root = H"'<sha1 lower>'"'` and call `seal-macos-app.sh "$APP" "$IDENTITY" "$KEYCHAIN" "$REQUIREMENT"`;
   - keep the last line that prints the designated requirement;
   - update the header comment: no trust step (research R3), why the requirement is forced (the microphone permission), and that the ad hoc path without secrets is unchanged.

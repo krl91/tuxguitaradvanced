@@ -51,7 +51,7 @@ With a 4th argument, codesign gets `-r=<requirement>` (the whole `designated => 
 ## `.github/scripts/sign-macos-launcher.sh` (changed)
 
 - No `authorizationdb write`, no `add-trusted-cert`, no `remove-trusted-cert`.
-- The identity is the SHA-1 of the only code-signing identity of the throwaway keychain, read with `security find-identity -p codesigning` (not `-v`); none or more than one: fail with a message.
+- The identity is the SHA-1 of the only code-signing identity of the throwaway keychain, read with `security find-identity -p codesigning` (not `-v`), counting the distinct SHA-1 of its *Matching identities* part; none or more than one: fail with a message.
 - Calls `seal-macos-app.sh <app> <sha1> <keychain> 'designated => identifier "app.tuxguitaradvanced" and certificate root = H"<sha1 lower case>"'`.
 - Prints the designated requirement of the result (existing last line).
 - Without the secrets: unchanged (ad hoc).
