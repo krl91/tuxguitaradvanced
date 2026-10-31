@@ -47,7 +47,7 @@ Ce manuel a trois parties :
 
 ## Installation et premier lancement
 
-* **Paquets :** macOS (Apple Silicon), Linux et Windows sont publiés dans les [Releases](https://github.com/krl91/tuxguitaradvanced/releases) du projet. Les paquets de chaque version ne sont pas forcément tous présents : la page de la release dit lesquels le sont. Le paquet Windows demande Java 17 ou plus ; les paquets macOS et Linux embarquent leur Java.
+* **Paquets :** macOS 15 Sequoia ou plus récent (Apple Silicon), Linux et Windows sont publiés dans les [Releases](https://github.com/krl91/tuxguitaradvanced/releases) du projet. Les paquets de chaque version ne sont pas forcément tous présents : la page de la release dit lesquels le sont. Le paquet Windows demande Java 17 ou plus ; les paquets macOS et Linux embarquent leur Java.
 * **macOS :** le paquet est signé avec un certificat auto-créé et n'est pas notarisé. Au premier lancement : décompressez, déplacez `TuxGuitarAdvanced.app` dans *Applications* et double-cliquez dessus ; macOS indique qu'il n'a pas pu vérifier l'app : cliquez sur **Terminé** (pas sur *Placer dans la corbeille*). Ouvrez ensuite *Réglages Système > Confidentialité et sécurité*, descendez jusqu'à la section *Sécurité*, cliquez sur **Ouvrir quand même** à côté de « TuxGuitarAdvanced a été bloqué… » et confirmez avec votre mot de passe ou Touch ID. Ensuite l'app s'ouvre normalement. Si macOS dit que l'app est *endommagée* (une version antérieure à 0.6.0-beta.3), téléchargez une version plus récente, ou lancez une fois `xattr -cr /chemin/vers/TuxGuitarAdvanced.app` dans un Terminal. La première fois que la pratique écoute le micro, macOS demande l'autorisation d'accès au micro : acceptez.
 * **Compiler soi-même :** voir [INSTALL.md](INSTALL.md).
 * **Fichiers :** le format natif est `.tg`. L'application ouvre aussi les formats Guitar Pro (`.gp3`, `.gp4`, `.gp5`, `.gpx`, `.gp`), Power Tab (`.ptb`), TablEdit (`.tef`), MIDI, et exporte vers de nombreux formats (voir [A11](#a11-les-fichiers)).
@@ -426,7 +426,7 @@ Le Practice **écoute votre guitare** et vérifie, **note par note et accord par
 
 **Il vous faut :**
 
-* macOS (Apple Silicon), Linux ou Windows (les modules sont dans les trois paquets) ;
+* macOS 15 Sequoia ou plus récent (Apple Silicon), Linux ou Windows (les modules sont dans les trois paquets) ;
 * une **entrée audio** avec le son de votre guitare : le micro intégré convient pour un jeu propre ; une **interface audio** avec un signal direct est meilleure. Un **casque** est conseillé si la partition joue aussi dans les haut-parleurs, pour que le son de l'ordinateur ne soit pas pris pour votre guitare ;
 * une partition avec une piste de guitare (accordage standard ou tout accordage écrit dans la partition).
 

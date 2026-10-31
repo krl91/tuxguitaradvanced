@@ -50,7 +50,7 @@ And before you play, a **steady tuner** (the needle stays still when you are in 
 
 ## Get started in two minutes
 
-1. **Download** the latest build from [Releases](https://github.com/krl91/tuxguitaradvanced/releases) (macOS Apple Silicon today; see below).
+1. **Download** the latest build from [Releases](https://github.com/krl91/tuxguitaradvanced/releases) (macOS 15 Sequoia or later (Apple Silicon) today; see below).
 2. Open a score, then **Tools > Interactive Practice** (or the ♪ button next to Play).
 3. Pick your track, your input (check the level by plucking a string) and a mode. **Start.** That is it.
 
@@ -134,7 +134,7 @@ The notes come towards you on a neck, a measure ahead; a chord arrives as a fram
 
 ## Download and installation
 
-Packages are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). Each release has a **macOS (Apple Silicon)**, a **Windows** and a **Linux** (tar.gz and .deb) package, all built by the release workflow, which checks the version and the commit inside each one. **Only the macOS package has been opened by a person; the Windows and Linux packages have never been run** (see above). They can always be built from source. The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; the three packages include the Interactive Practice modules.
+Packages are published in [Releases](https://github.com/krl91/tuxguitaradvanced/releases). Each release has a **macOS 15 Sequoia or later (Apple Silicon)**, a **Windows** and a **Linux** (tar.gz and .deb) package, all built by the release workflow, which checks the version and the commit inside each one. **Only the macOS package has been opened by a person; the Windows and Linux packages have never been run** (see above). They can always be built from source. The macOS package is signed with a self-made certificate and not notarised: the first launch needs *Open Anyway* in *System Settings > Privacy & Security*. The Windows package needs Java 17 or later; the three packages include the Interactive Practice modules.
 
 To build from source, refer to [INSTALL.md](INSTALL.md). The practice modules need a few more things:
 

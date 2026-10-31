@@ -207,14 +207,14 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 **Goal**: FR-001 (the two manual workflows), FR-010, FR-011 (notes).
 
-- [ ] T019 [P] [US5] In `.github/workflows/macos-maven.yml`, set `runs-on: macos-15   # Apple Silicon` and rename the artifact `Package-MacOS-macos-14` to `Package-MacOS-macos-15`.
-- [ ] T020 [P] [US5] In `.github/workflows/practice-gui-tests.yml`, set `runs-on: macos-15`.
-- [ ] T021 [P] [US3] In `README.md` and `docs/README.md` (~lines 53 and 137), `docs/MANUAL.md` and `docs/MANUAL-FR.md` (~lines 50 and 429), state the requirement as "macOS 15 Sequoia or later (Apple Silicon)" (FR: "macOS 15 Sequoia ou plus récent (Apple Silicon)"). Change only those words; keep everything else on those lines. `INSTALL.md` (upstream's build guide) is not changed (FR-010).
-- [ ] T022 [P] [US1] In `docs/release-notes/v0.8.0-beta.3.md`:
+- [X] T019 [P] [US5] In `.github/workflows/macos-maven.yml`, set `runs-on: macos-15   # Apple Silicon` and rename the artifact `Package-MacOS-macos-14` to `Package-MacOS-macos-15`.
+- [X] T020 [P] [US5] In `.github/workflows/practice-gui-tests.yml`, set `runs-on: macos-15`.
+- [X] T021 [P] [US3] In `README.md` and `docs/README.md` (~lines 53 and 137), `docs/MANUAL.md` and `docs/MANUAL-FR.md` (~lines 50 and 429), state the requirement as "macOS 15 Sequoia or later (Apple Silicon)" (FR: "macOS 15 Sequoia ou plus récent (Apple Silicon)"). Change only those words; keep everything else on those lines. `INSTALL.md` (upstream's build guide) is not changed (FR-010).
+- [X] T022 [P] [US1] In `docs/release-notes/v0.8.0-beta.3.md`:
   - under *About this release*, say that from this version the macOS package needs **macOS 15 Sequoia or later** and that macOS 14 is no longer supported; that the packages are now built on macOS 15 machines (macOS 14 machines retired) and the Linux and Windows ones on Ubuntu 24.04, as before;
   - under *What was checked*, say that the refusal on a Mac older than 15 is checked through the declarations only (no such Mac at hand), and that the microphone permission kept across the update is for the author to check;
   - keep the rest.
-- [ ] T023 Gate:
+- [X] T023 Gate:
   - the full gate in `CB`, green with the same counts as T001;
   - `TEST`, `misc/test-stamp-macos-plist.sh` and `misc/test-relocate-macos-payload.sh` green;
   - `grep -rn "macos-14\|ubuntu-latest" .github/` empty except comments;

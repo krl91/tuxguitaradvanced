@@ -47,7 +47,7 @@ This manual has three parts:
 
 ## Installation and first launch
 
-* **Packages:** macOS (Apple Silicon), Linux and Windows are published in the project's [Releases](https://github.com/krl91/tuxguitaradvanced/releases). Not every package is necessarily present for each version: the release page says which are. The Windows package needs Java 17 or later; the macOS and Linux packages embed their Java.
+* **Packages:** macOS 15 Sequoia or later (Apple Silicon), Linux and Windows are published in the project's [Releases](https://github.com/krl91/tuxguitaradvanced/releases). Not every package is necessarily present for each version: the release page says which are. The Windows package needs Java 17 or later; the macOS and Linux packages embed their Java.
 * **macOS:** the package is signed with a self-made certificate and not notarised. On first launch: unzip, move `TuxGuitarAdvanced.app` to *Applications* and double-click it; macOS says it could not verify the app: click **Done** (not *Move to Bin*). Then open *System Settings > Privacy & Security*, scroll to the *Security* section, click **Open Anyway** next to *"TuxGuitarAdvanced was blocked…"* and confirm with your password or Touch ID. After that the app opens normally. If macOS says the app is *damaged* (a build before 0.6.0-beta.3), download a later one, or run `xattr -cr /path/to/TuxGuitarAdvanced.app` once in a Terminal. The first time Practice listens to the microphone, macOS asks for microphone access: allow it.
 * **Building it yourself:** see [INSTALL.md](INSTALL.md).
 * **Files:** the native format is `.tg`. The application also opens Guitar Pro (`.gp3`, `.gp4`, `.gp5`, `.gpx`, `.gp`), Power Tab (`.ptb`), TablEdit (`.tef`) and MIDI, and exports to many formats (see [A11](#a11-files)).
@@ -426,7 +426,7 @@ Practice **listens to your guitar** and checks, **note by note and chord by chor
 
 **You need:**
 
-* macOS (Apple Silicon), Linux or Windows (the modules are in the three packages);
+* macOS 15 Sequoia or later (Apple Silicon), Linux or Windows (the modules are in the three packages);
 * an **audio input** with the sound of your guitar: the built-in microphone works for clean playing; an **audio interface** with a direct signal is better. **Headphones** are recommended if the score also plays through the speakers, so that the computer's sound is not taken for your guitar;
 * a score with a guitar track (standard tuning or any tuning written in the score).
 

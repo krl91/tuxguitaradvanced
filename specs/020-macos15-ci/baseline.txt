@@ -99,3 +99,10 @@ CI=1; the keychain search list of the account saved before and restored after.
 
 == T016-T018 — Ubuntu jobs pinned: release.yml validate, create-release, build-linux, build-windows, release and ubuntu-maven.yml build-ubuntu on ubuntu-24.04
   grep -rn "ubuntu-latest\|macos-14" .github/: nothing (the macOS workflows of phase 7 were changed in the same working tree); YAML parse ok for both files
+
+== T019-T023 — the manual workflows on macos-15 (artifact Package-MacOS-macos-15), the documents say "macOS 15 Sequoia or later (Apple Silicon)"
+   (README.md, docs/README.md is a link to it, docs/MANUAL.md, docs/MANUAL-FR.md; INSTALL.md untouched), the v0.8.0-beta.3 notes say it
+Full gate: BUILD SUCCESS, the same counts as T001
+  73/0, 1/0, 1/0, 10/0 (1 skipped), 2/0, audio-engine 378/0, 24/0, 9/0, practice 1371/0 (12 skipped)
+misc/test-verify-macos-bundle.sh, misc/test-stamp-macos-plist.sh, misc/test-relocate-macos-payload.sh: exit 0
+grep -rn "macos-14\|ubuntu-latest" .github/: nothing; the four workflow files parse
