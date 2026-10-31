@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-ubuntu-latest:
-    runs-on: ubuntu-latest
+  build-ubuntu:
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v5
     - name: Set up JDK 21

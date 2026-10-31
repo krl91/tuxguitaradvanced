@@ -96,3 +96,6 @@ CI=1; the keychain search list of the account saved before and restored after.
 
 == T014-T015 — release.yml, macOS job: runs-on macos-15, the bundle verifier's self-test, --signed-by $MACOS_CERT_SHA1 when the secret is set
   YAML parse ok (ruby -ryaml); the diff reviewed against contracts/scripts.md "Workflows"; TEST green (14/14)
+
+== T016-T018 — Ubuntu jobs pinned: release.yml validate, create-release, build-linux, build-windows, release and ubuntu-maven.yml build-ubuntu on ubuntu-24.04
+  grep -rn "ubuntu-latest\|macos-14" .github/: nothing (the macOS workflows of phase 7 were changed in the same working tree); YAML parse ok for both files

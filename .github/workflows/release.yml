@@ -53,7 +53,7 @@ env:
 jobs:
   # spec 015: the release identity, derived once; nothing is built if the tag is not a version or is already taken
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.identity.outputs.version }}
       numeric: ${{ steps.identity.outputs.numeric }}
@@ -87,7 +87,7 @@ jobs:
 
   create-release:
     needs: validate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - name: Create the draft release
@@ -180,7 +180,7 @@ jobs:
 
   build-linux:
     needs: [validate, build-windows]   # Linux only if macOS and Windows succeeded
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       RELEASE_VERSION: ${{ needs.validate.outputs.version }}
       RELEASE_DEBVERSION: ${{ needs.validate.outputs.debversion }}
@@ -227,7 +227,7 @@ jobs:
 
   build-windows:
     needs: [validate, build-macos-arm64]   # Windows only if macOS succeeded
-    runs-on: ubuntu-latest   # cross-compiled with Mingw-w64
+    runs-on: ubuntu-24.04   # cross-compiled with Mingw-w64
     env:
       RELEASE_VERSION: ${{ needs.validate.outputs.version }}
       RELEASE_NUMERIC: ${{ needs.validate.outputs.numeric }}
@@ -266,7 +266,7 @@ jobs:
 
   release:
     needs: [validate, build-linux]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_VERSION: ${{ needs.validate.outputs.version }}

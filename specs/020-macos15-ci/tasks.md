@@ -191,11 +191,11 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 **Goal**: FR-014, FR-009; SC-007.
 
-- [ ] T016 [P] [US4] In `.github/workflows/release.yml`, set `runs-on: ubuntu-24.04` on the jobs `validate`, `create-release`, `build-windows` (keep its comment `# cross-compiled with Mingw-w64`), `build-linux` and `release`.
-- [ ] T017 [P] [US4] In `.github/workflows/ubuntu-maven.yml`:
+- [X] T016 [P] [US4] In `.github/workflows/release.yml`, set `runs-on: ubuntu-24.04` on the jobs `validate`, `create-release`, `build-windows` (keep its comment `# cross-compiled with Mingw-w64`), `build-linux` and `release`.
+- [X] T017 [P] [US4] In `.github/workflows/ubuntu-maven.yml`:
   - set `runs-on: ubuntu-24.04`;
   - rename the job `build-ubuntu-latest` to `build-ubuntu`, and any name in the file derived from it.
-- [ ] T018 [US4] Gate:
+- [X] T018 [US4] Gate:
   - `grep -rn "ubuntu-latest\|macos-14" .github/` prints only comments, or nothing;
   - YAML parse of both files.
   
