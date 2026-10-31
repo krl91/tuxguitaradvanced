@@ -44,7 +44,7 @@ No foundational phase: the change needs no shared groundwork.
 - [ ] T002 [US1] Write `UIT/ArcadeDarkBackgroundSwtTest.java` (tag `swt-gui`, its own small harness; `ArcadePixelAlignmentSwtTest` and `PaintedAlignment` are not changed, only reused read-only where they are package-visible). It opens a real SWT window with an `ArcadeCanvas`, paints one frame on a fake clock and copies the canvas into pixels with `GC.copyArea`. It reads **every pixel** of the empty rectangles of the frame: the rectangles that no scene item covers, computed from the bounds of the frame's items, such as the band above the horizon outside the field (R3). `SceneItem` has no bounds method, so the test derives each item's box from its values, as `UiPainterRenderer` reads them:
   - LINE: its two endpoints; CURVE: its four points; both widened by half the line width;
   - QUAD: its four corners;
-  - DISC and RING: centre `value(0)`, `value(1)` ± radius `value(2)`, plus half the line width for a RING;
+  - DISC and RING: centre `value(0)`, `value(1)` ± the larger of the two radii `value(2)` and `value(3)` (`SceneItem.Shape`), plus half the line width for a RING;
   - ROUNDED and ROUNDED_RING: centre `value(0)`, `value(1)` ± half sizes `value(2)`, `value(3)`, plus half the line width for a ring;
   - TEXT, whose width the scene does not know: a strip of height 2 × size `value(2)` around `value(1)`, reaching from its anchor `value(0)` to the edge of the viewport on the side the text grows (both sides for a centred text);
   - every box with a 4-pixel margin. The rectangles are at least 8×8 pixels, and at least one is found at every size. Each pixel must be `0B0E13` within ±6 per channel (SC-001). The failure message gives the first wrong pixel, its position and its colour. Cases:
