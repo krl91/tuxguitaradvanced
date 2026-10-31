@@ -48,9 +48,9 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - `bundle <dir> <plist-min|none> <launcher-min> <au-x86-min> <au-arm-min> [jre-min|none]`: a `<dir>/T.app` with `Contents/MacOS/tuxguitar-launcher`, `Contents/Resources/tuxguitar/lib/libtuxguitar-audiounit-jni.jnilib` (two slices), optionally `Contents/Resources/tuxguitar/jre/lib/libjava.dylib`, and a `Contents/Info.plist` (written with `plistlib`) holding `CFBundleIdentifier=app.tuxguitaradvanced`, `CFBundleExecutable=tuxguitar-launcher` and `LSMinimumSystemVersion` when given;
   - `adhoc <app>`: `misc/seal-macos-app.sh <app>` (ad hoc);
   - `throwaway_identity`: an openssl self-signed code-signing certificate (CN `Throwaway Test Signing`, EKU codeSigning), exported to a .p12 with `openssl pkcs12 -export … -legacy`, and without `-legacy` if that option is unknown (LibreSSL's `/usr/bin/openssl`): OpenSSL 3 and later encrypt a .p12 by default in a way `security import` may refuse (research R3; the owner's Mac has Homebrew OpenSSL 4 first in its PATH), then imported into a throwaway keychain in the temporary folder (`security create-keychain`, `import -T /usr/bin/codesign`, `set-key-partition-list`), never trusted; sets `KC` and `SHA1` (from `security find-identity -p codesigning "$KC"`); the keychain is deleted on exit, whatever happens;
-  - `case_ <name> <pass|refuse:<keyword>> <command…>`: runs the command and counts failures. It prints `PASS <name>` or `FAIL <name> (expected …, got exit <n>: <last WRONG line or none>)`.
+  - `case_ <name> <pass|refuse:<n>> <command…>`: runs the command and counts failures. It prints `PASS <name>` or `FAIL <name> (expected …, got exit <n>: <last WRONG line or none>)`.
     - `pass` is PASS only for exit 0 with no `WRONG` line.
-    - `refuse:<keyword>` is PASS only for **exit 1 with a `WRONG` line containing the keyword** of the expected check, so that a case refused by another check, by an unreadable package (exit 2) or by a broken fake bundle never passes. The keywords are `LSMinimumSystemVersion` (check 3), `launcher` or `audiounit` (check 4, naming the part), `minimum` (check 5) and `designated` (check 6); the WRONG lines of T004 and T010 must contain them.
+    - `refuse:<n>` is PASS only for **exit 1 with a line starting `WRONG   [<n>]`**, the number of the expected check, so that a case refused by another check, by an unreadable package (exit 2) or by a broken fake bundle never passes. `VERIFY` prefixes every `OK` and `WRONG` line with its check number (T004 adds the prefix to the existing checks 1 and 2 too).
     - A helper that fails to build its fake bundle stops the test with exit 2 (not a FAIL of a case).
   
   The test ends with `exit 1` if any case failed, else 0.
@@ -68,15 +68,15 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 ### Tests for User Story 3 (write first, see them red)
 
 - [ ] T003 [US3] Add to `TEST` the cases of contracts/scripts.md for checks 3–5:
-  - `no LSMinimumSystemVersion` (refuse:LSMinimumSystemVersion);
-  - `LSMinimumSystemVersion 14.0` (refuse:LSMinimumSystemVersion);
-  - `launcher 14.0` (refuse:launcher);
-  - `launcher 16.0` (refuse:launcher);
-  - `AudioUnit x86_64 slice 27.0` (refuse:audiounit);
-  - `JRE library 16.0` (refuse:minimum);
-  - `JRE library with no minimum` (refuse:minimum);
+  - `no LSMinimumSystemVersion` (refuse:3);
+  - `LSMinimumSystemVersion 14.0` (refuse:3);
+  - `launcher 14.0` (refuse:4);
+  - `launcher 16.0` (refuse:4);
+  - `AudioUnit x86_64 slice 27.0` (refuse:4);
+  - `JRE library 16.0` (refuse:5);
+  - `JRE library with no minimum` (refuse:5);
   - `JRE library 11.0` (pass);
-  - `AudioUnit library missing` (refuse:audiounit).
+  - `AudioUnit library missing` (refuse:4).
   
   Every bundle is sealed ad hoc. Run `TEST`: the refuse cases FAIL against today's `VERIFY` (red). Record the red run in baseline.txt.
 
@@ -87,7 +87,8 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - Read `minos` per architecture with `lipo -archs` and `otool -arch <a> -l` (`LC_BUILD_VERSION` `minos`, else `LC_VERSION_MIN_MACOSX` `version`).
   - Compare versions numerically (major.minor).
   - Check 5 walks every regular file under `Contents/`, keeps the Mach-O ones (`file -b` starting with `Mach-O`), and skips the launcher and the AudioUnit library.
-  - A WRONG line names the file from `Contents/` and the value found, and contains the keyword of its check: `LSMinimumSystemVersion` (3), `launcher` or `audiounit` (4), `minimum` (5), as `TEST` requires.
+  - Every `OK` and `WRONG` line, the existing checks 1 and 2 included, starts with its check number after the word: `OK      [1] …`, `WRONG   [4] …`, as `TEST` requires.
+  - A WRONG line names the file from `Contents/` and the value found.
   
   Make `TEST` green.
 - [ ] T005 [US3] Add `<macos.minimumVersion>15.0</macos.minimumVersion>` to the `<properties>` of `desktop/pom.xml`, with a comment pointing to spec 020 and `misc/verify-macos-bundle.sh`.
@@ -115,9 +116,9 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 - [ ] T009 [US2] Add to `TEST` the cases of contracts/scripts.md for check 6. Each uses a right bundle (all 15.0, JRE 11.0):
   - `throwaway certificate, forced root requirement, --signed-by its SHA1` (pass). Sign with `codesign --force --keychain "$KC" -s "$SHA1" --identifier app.tuxguitaradvanced -r='designated => identifier "app.tuxguitaradvanced" and certificate root = H"<sha1 lower>"'` directly, since `seal-macos-app.sh` gets its 4th argument only in T011;
-  - `throwaway certificate, --signed-by another SHA1` (refuse:designated);
-  - `ad hoc, --signed-by SHA1` (refuse:designated);
-  - `throwaway certificate, default requirement (certificate leaf), --signed-by SHA1` (refuse:designated).
+  - `throwaway certificate, --signed-by another SHA1` (refuse:6);
+  - `ad hoc, --signed-by SHA1` (refuse:6);
+  - `throwaway certificate, default requirement (certificate leaf), --signed-by SHA1` (refuse:6).
   
   Run `TEST`: today's `VERIFY` ignores `--signed-by` (or fails on the unknown option), so the cases do not give the expected results (red). Record it in baseline.txt.
 
@@ -128,7 +129,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - with it, add check 6 of contracts/scripts.md:
     - the line `designated => …` of `codesign -d -r- "$APP"` must equal exactly `designated => identifier "app.tuxguitaradvanced" and certificate root = H"<sha1>"`;
     - `codesign --verify --strict -R='identifier "app.tuxguitaradvanced" and certificate root = H"<sha1>"' "$APP"` must pass;
-    - the WRONG line contains `designated` and shows the requirement found;
+    - its lines are numbered `[6]`, and the WRONG line shows the requirement found;
   - update the header comment (the checks and the usage).
   
   Make `TEST` green.

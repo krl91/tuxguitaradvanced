@@ -6,7 +6,7 @@
 misc/verify-macos-bundle.sh <package> [--signed-by <sha1>]     package: a .app folder or a .zip
 ```
 
-Checks, each printed on its own line as `OK      …` or `WRONG   …` (the existing format):
+Checks, each printed on its own line as `OK      [n] …` or `WRONG   [n] …`: the existing format, with the check's number added after the word (spec 020, so that the self-test can tell which check refused):
 
 1. `Contents/MacOS` holds only files (existing).
 2. The code signature of the bundle is valid, `codesign --verify --deep --strict` (existing).
@@ -23,7 +23,7 @@ Exit code: 0 when every check is OK; 1 when one is WRONG; 2 when the package can
 misc/test-verify-macos-bundle.sh
 ```
 
-macOS only (needs clang, codesign, security, openssl). Builds fake bundles in a temporary folder and prints one line per case; exit 0 only when every case gives the expected result. A *pass* case needs exit 0 and no `WRONG` line; a *refuse* case needs exit 1 **and** a `WRONG` line of the check named in parentheses (its keyword: `LSMinimumSystemVersion` 3, `launcher`/`audiounit` 4, `minimum` 5, `designated` 6), so that no case passes for another reason. A fake bundle that cannot be built stops the test with exit 2.
+macOS only (needs clang, codesign, security, openssl). Builds fake bundles in a temporary folder and prints one line per case; exit 0 only when every case gives the expected result. A *pass* case needs exit 0 and no `WRONG` line; a *refuse* case needs exit 1 **and** a line starting `WRONG   [n]` with the number of the check named in parentheses, so that no case passes for another reason. A fake bundle that cannot be built stops the test with exit 2.
 
 | Case | Expected |
 |---|---|
