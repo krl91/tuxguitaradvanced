@@ -60,17 +60,17 @@ A musician who already uses TuxGuitarAdvanced on macOS 15 or later replaces the 
 
 ### User Story 3 - A user on an older macOS is told clearly that the application needs macOS 15 (Priority: P2)
 
-A musician on macOS 14 or older downloads the new release. Before downloading, the release notes and the installation guide say that macOS 15 Sequoia or later is required. If they open it anyway, macOS itself refuses with its usual message about the required macOS version, instead of a crash or a silent failure.
+A musician on macOS 14 or older downloads the new release. Before downloading, the release notes and the user documentation say that macOS 15 Sequoia or later is required. If they open it anyway, macOS itself refuses with its usual message about the required macOS version, instead of a crash or a silent failure.
 
 **Why this priority**: the minimum changes for nobody in practice (the current releases already need macOS 14, and macOS 14 users lose only this and later versions), but saying it clearly avoids confused reports.
 
-**Independent Test**: read the application's description and every native part of the published package: each states macOS 15 as its minimum; read the release notes and the installation guide: both state it.
+**Independent Test**: read the application's description and every native part of the published package: each states macOS 15 as its minimum; read the release notes and the user documentation: both state it.
 
 **Acceptance Scenarios**:
 
 1. **Given** the published macOS package, **When** its application description and each of its native parts are read, **Then** every one declares macOS 15.0 as its minimum.
 2. **Given** a build of the macOS package on any newer macOS (such as the owner's Mac), **When** its native parts are read, **Then** they also declare macOS 15.0, not the build machine's version.
-3. **Given** the release notes and the installation guide of the first release after this change, **When** a user reads them, **Then** they state that macOS 15 Sequoia or later is required and that macOS 14 is no longer supported.
+3. **Given** the release notes and the user documentation of the first release after this change, **When** a user reads them, **Then** they state that macOS 15 Sequoia or later is required and that macOS 14 is no longer supported.
 
 ---
 
@@ -127,7 +127,7 @@ The owner can still start, by hand, the macOS build-and-test check and the pract
 - **FR-007**: When the stable certificate is not provided, the macOS package MUST be sealed with an ad hoc signature, as today.
 - **FR-008**: The signature of the whole application MUST stay valid under a strict verification, so that a downloaded package is offered *Open Anyway* and never reported as damaged.
 - **FR-009**: The Windows and Linux packages MUST be unchanged in content and behaviour, and their existing checks MUST still pass.
-- **FR-010**: The release notes of the first release after this change, the installation guide and the README MUST state that macOS 15 Sequoia or later is required (Apple Silicon), and the notes MUST say that macOS 14 is no longer supported.
+- **FR-010**: The release notes of the first release after this change, the user documentation (`README.md` and `docs/README.md`, where they tell how to download and install, and `docs/MANUAL.md` and `docs/MANUAL-FR.md`, where they list the packages and the requirements) MUST state that macOS 15 Sequoia or later is required (Apple Silicon), and the notes MUST say that macOS 14 is no longer supported. `INSTALL.md` (upstream's guide to building from source) is not changed.
 - **FR-011**: The pending v0.8.0-beta.3 release MUST be produced by running the changed release workflow again for the same tag, replacing its draft; its notes MUST include the new minimum. No published tag is moved.
 - **FR-012**: The existing self-tests of the macOS packaging scripts MUST keep passing, and the new checks of FR-004 and FR-006 MUST each have a self-test that shows them refusing a wrong package.
 - **FR-013**: The first run on macOS 15 machines MUST be the v0.8.0-beta.3 release itself (no separate trial workflow or throwaway release before it); the macOS build-and-test check and the practice graphical tests are each run once after it (SC-005).
@@ -145,7 +145,7 @@ The owner can still start, by hand, the macOS build-and-test check and the pract
 
 - **SC-001**: Before 2026-11-02, one release run ends published with its 4 files, with no manual step on a build machine.
 - **SC-002**: After installing the first release made by this change over v0.8.0-beta.2 on the owner's Mac, 0 microphone permission requests appear and the input is heard in the tuner.
-- **SC-003**: In every published macOS package from then on, 100 % of the native parts and the application description declare macOS 15.0, checked automatically by the release.
+- **SC-003**: In every published macOS package from then on, the application description and 100 % of its own native parts (FR-003) declare exactly macOS 15.0, and no other native code it carries declares more than macOS 15.0, checked automatically by the release.
 - **SC-004**: The automatic checks refuse 100 % of the wrong packages of their self-tests (missing or different minimum, different designated requirement or fingerprint).
 - **SC-005**: The macOS build-and-test check and the practice graphical tests each end green once on macOS 15 machines.
 - **SC-006**: The Windows and Linux packages of the first release after this change pass all their existing checks, as before.

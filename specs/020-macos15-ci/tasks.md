@@ -46,7 +46,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - `nominos <file>`: a Mach-O with no minimum: a minimal 64-bit arm64 Mach-O header (`MH_MAGIC_64`, filetype `MH_DYLIB`) with no load command, written by a small `python3` step; `file -b` says Mach-O and `otool -l` shows no minimum;
   - `bundle <dir> <plist-min|none> <launcher-min> <au-x86-min> <au-arm-min> [jre-min|none]`: a `<dir>/T.app` with `Contents/MacOS/tuxguitar-launcher`, `Contents/Resources/tuxguitar/lib/libtuxguitar-audiounit-jni.jnilib` (two slices), optionally `Contents/Resources/tuxguitar/jre/lib/libjava.dylib`, and a `Contents/Info.plist` (written with `plistlib`) holding `CFBundleIdentifier=app.tuxguitaradvanced`, `CFBundleExecutable=tuxguitar-launcher` and `LSMinimumSystemVersion` when given;
   - `adhoc <app>`: `misc/seal-macos-app.sh <app>` (ad hoc);
-  - `throwaway_identity`: an openssl self-signed code-signing certificate (CN `Throwaway Test Signing`, EKU codeSigning), imported into a throwaway keychain in the temporary folder (`security create-keychain`, `import -T /usr/bin/codesign`, `set-key-partition-list`), never trusted; sets `KC` and `SHA1` (from `security find-identity -p codesigning "$KC"`); the keychain is deleted on exit, whatever happens;
+  - `throwaway_identity`: an openssl self-signed code-signing certificate (CN `Throwaway Test Signing`, EKU codeSigning), exported to a .p12 with `openssl pkcs12 -export … -legacy`, and without `-legacy` if that option is unknown (LibreSSL's `/usr/bin/openssl`): OpenSSL 3 and later encrypt a .p12 by default in a way `security import` may refuse (research R3; the owner's Mac has Homebrew OpenSSL 4 first in its PATH), then imported into a throwaway keychain in the temporary folder (`security create-keychain`, `import -T /usr/bin/codesign`, `set-key-partition-list`), never trusted; sets `KC` and `SHA1` (from `security find-identity -p codesigning "$KC"`); the keychain is deleted on exit, whatever happens;
   - `case_ <name> <expect pass|refuse> <command…>`: runs the command, prints `PASS <name>` or `FAIL <name> (expected …, got …: <last WRONG line>)`, counts failures.
   
   The test ends with `exit 1` if any case failed, else 0.
@@ -143,15 +143,18 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 - [ ] T013 [US2] Gate, quickstart step 3, on the owner's Mac:
   - copy `APP` into the scratchpad;
   - copy the local Temurin 21 JDK into its `Contents/Resources/tuxguitar/jre`, as the release does;
-  - make a throwaway certificate as in `TEST` and export it as `MACOS_CERT_P12_BASE64` / `MACOS_CERT_PASSWORD`;
-  - run `.github/scripts/sign-macos-launcher.sh <copy>` with `CI=1`.
+  - make a throwaway certificate as in `TEST` (the same `-legacy` rule for the .p12) and export it as `MACOS_CERT_P12_BASE64` / `MACOS_CERT_PASSWORD`;
+  - **before**, save the keychain search list of the owner's account (`security list-keychains -d user > <scratch>/keychains.before`): the sign script adds its throwaway keychain to that list (line 44) and only its cleanup takes it out;
+  - run `.github/scripts/sign-macos-launcher.sh <copy>` with `CI=1`;
+  - **after, whatever happened** (also after a failure), restore the list (`security list-keychains -d user -s $(tr -d '"' < <scratch>/keychains.before)`) and check that `security list-keychains -d user` equals the saved list.
   
   Expected:
   - no `sudo` prompt;
   - the printed requirement uses the throwaway SHA-1;
   - `VERIFY <copy> --signed-by <that sha1>` prints only OK lines;
   - `VERIFY <copy> --signed-by 280bd902de0512b59d70228c5faa441d3eb6af55` refuses (check 6);
-  - `security dump-trust-settings -d` shows nothing new.
+  - `security dump-trust-settings -d` shows nothing new;
+  - the keychain search list is the saved one.
   
   Also run the sign script without the two variables: ad hoc, `VERIFY <copy>` OK. Delete the copy and the throwaway files. Record the results in baseline.txt, tick T009–T013, and commit the phase.
 
@@ -195,13 +198,13 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 ---
 
-## Phase 7: User Story 5 — the manual checks on macOS 15, and the texts (Priority: P3)
+## Phase 7: User Story 5 — the manual checks on macOS 15, and the texts of US1 and US3 (Priority: P3)
 
 **Goal**: FR-001 (the two manual workflows), FR-010, FR-011 (notes).
 
 - [ ] T019 [P] [US5] In `.github/workflows/macos-maven.yml`, set `runs-on: macos-15   # Apple Silicon` and rename the artifact `Package-MacOS-macos-14` to `Package-MacOS-macos-15`.
 - [ ] T020 [P] [US5] In `.github/workflows/practice-gui-tests.yml`, set `runs-on: macos-15`.
-- [ ] T021 [P] [US3] In `README.md` and `docs/README.md` (~lines 53 and 137), `docs/MANUAL.md` and `docs/MANUAL-FR.md` (~lines 50 and 429), state the requirement as "macOS 15 Sequoia or later (Apple Silicon)" (FR: "macOS 15 Sequoia ou plus récent (Apple Silicon)"). Change only those words; keep everything else on those lines.
+- [ ] T021 [P] [US3] In `README.md` and `docs/README.md` (~lines 53 and 137), `docs/MANUAL.md` and `docs/MANUAL-FR.md` (~lines 50 and 429), state the requirement as "macOS 15 Sequoia or later (Apple Silicon)" (FR: "macOS 15 Sequoia ou plus récent (Apple Silicon)"). Change only those words; keep everything else on those lines. `INSTALL.md` (upstream's build guide) is not changed (FR-010).
 - [ ] T022 [P] [US1] In `docs/release-notes/v0.8.0-beta.3.md`:
   - under *About this release*, say that from this version the macOS package needs **macOS 15 Sequoia or later** and that macOS 14 is no longer supported; that the packages are now built on macOS 15 machines (macOS 14 machines retired) and the Linux and Windows ones on Ubuntu 24.04, as before;
   - under *What was checked*, say that the refusal on a Mac older than 15 is checked through the declarations only (no such Mac at hand), and that the microphone permission kept across the update is for the author to check;
@@ -226,7 +229,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - the release is published with 4 files.
   
   On a failure, follow the bug fix protocol: read the log, reproduce locally if possible, fix, at most 3 tries, each try a new push and a run for the same tag, never a moved tag. Then report.
-- [ ] T026 [P] Start *MacOS Java CI with Maven* and *Practice GUI tests* once each (`gh workflow run … -R krl91/tuxguitaradvanced --ref master`) and follow them; expected green on macOS 15 (SC-005).
+- [ ] T026 [P] Start *MacOS Java CI with Maven*, *Practice GUI tests* and the Ubuntu build-and-test workflow (`ubuntu-maven.yml`) once each (`gh workflow run … -R krl91/tuxguitaradvanced --ref master`) and follow them; expected green, the first two on macOS 15 (SC-005), the third on Ubuntu 24.04 (FR-014, SC-007).
 - [ ] T027 Record the run ids, images and results in `specs/020-macos15-ci/baseline.txt`, set 020 in `specs/STATUS.md`, update the memories `pending-macos15-ci` (done) and `pending-score-fire-spec` (v0.8.0-beta.3 published). Commit; the push waits for the next round.
 
 ---
