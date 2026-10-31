@@ -73,10 +73,10 @@ No foundational phase: the change needs no shared groundwork.
 
 **Independent Test**: one green run of the workflow.
 
-- [ ] T006 [US2] One push of the branch and master (it carries every unpushed commit since `df545e3ca`). Start *Practice GUI tests* once (`gh workflow run practice-gui-tests.yml -R krl91/tuxguitaradvanced --ref master`) and follow it to the end.
+- [X] T006 [US2] One push of the branch and master (it carries every unpushed commit since `df545e3ca`). Start *Practice GUI tests* once (`gh workflow run practice-gui-tests.yml -R krl91/tuxguitaradvanced --ref master`) and follow it to the end.
   - **Green**: record the run id and the counts in `BASE`. Also record from the run's report that `ArcadeDarkBackgroundSwtTest` passed there, on the light-appearance machine, while it passed locally in dark appearance. Together with T004, that is SC-002 (the same picture in light and in dark).
   - **Red**: download the artifact `practice-gui-diagnostics` into the scratchpad and look at the pictures. Apply the bug fix protocol: a reproducing test first, at most 3 tries, one push and one run per try; then report and stop (R4). Never change a test.
-- [ ] T007 [US2] Close spec 020:
+- [X] T007 [US2] Close spec 020:
   - in `specs/020-macos15-ci/baseline.txt`, record the T006 run under T031 as the fix of the cause found by T030 (spec 021);
   - in `specs/020-macos15-ci/tasks.md`, tick T026 and T031, and T027 for what it still lacked;
   - in `specs/STATUS.md`, set 020 to its final count and add the 021 line;

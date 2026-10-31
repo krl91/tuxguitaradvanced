@@ -150,3 +150,11 @@ Run 41229170643 (191bfec41): every job green.
     it. It is not caused by macOS 15: any Mac in light mode (and the light default themes of Linux and Windows, not checked) shows the same pale Arcade view.
   The owner's Mac is in dark mode, so the local runs are green. Reported to the owner: choosing what the Arcade view does in light mode (always the dark
   design, or the light theme following the system) is a product decision outside spec 020 (T031: a cause that is not macOS 15 is reported). No test changed.
+
+== T031 — the cause found by T030 is fixed by spec 021 (owner's choices A, 2026-10-31 and 2026-11-01)
+  Spec 021 (1d7bdc154): the Arcade canvas paints the dark design's background, whatever the system appearance.
+  Practice GUI tests run 41251035766 (macos-15, light appearance): ArcadePixelAlignmentSwtTest 2/2 and the new ArcadeDarkBackgroundSwtTest 5/5 green;
+  ArcadeCanvasSwtTest's flame count red: the quality controller steps down a tier on the slow machine during the test's real frames (reproduced on the
+  owner's Mac under CPU load). The owner accepts it as a known speed-dependent check on GitHub's machines (spec 021 FR-009, SC-003).
+  T026 closed: MacOS CI and Ubuntu CI green (spec 020 T026), Practice GUI tests green but for that accepted check. No test changed.
+  T027 completed: .specify/feature.json goes back to specs/019-score-demo-fire at the end of spec 021 (its T009).

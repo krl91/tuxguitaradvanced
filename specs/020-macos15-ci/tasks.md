@@ -234,13 +234,13 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - the release is published with 4 files.
   
   On a failure, follow the bug fix protocol: read the log, reproduce locally if possible, fix, at most 3 tries, each try a new push and a run for the same tag, never a moved tag. Then report.
-- [ ] T026 [P] Start *MacOS Java CI with Maven*, *Practice GUI tests* and the Ubuntu build-and-test workflow (`ubuntu-maven.yml`) once each (`gh workflow run … -R krl91/tuxguitaradvanced --ref master`) and follow them; expected green, the first two on macOS 15 (SC-005), the third on Ubuntu 24.04 (FR-014, SC-007). If a graphical test fails:
+- [X] T026 [P] Start *MacOS Java CI with Maven*, *Practice GUI tests* and the Ubuntu build-and-test workflow (`ubuntu-maven.yml`) once each (`gh workflow run … -R krl91/tuxguitaradvanced --ref master`) and follow them; expected green, the first two on macOS 15 (SC-005), the third on Ubuntu 24.04 (FR-014, SC-007). If a graphical test fails:
   - note its name and its message;
   - run it once locally (`mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest=<name> -Dsurefire.failIfNoSpecifiedTests=false`);
   - say whether it depends on painting time (for example a quality tier stepping down) or on macOS 15.
   
   Only a failure caused by macOS 15 is fixed within spec 020, following the bug fix protocol. Any other is reported to the owner. A test is never changed or skipped (never modify existing tests).
-- [ ] T027 Record the run ids, images and results in `specs/020-macos15-ci/baseline.txt`, set 020 in `specs/STATUS.md`, update the memories `pending-macos15-ci` (done) and `pending-score-fire-spec` (v0.8.0-beta.3 published). Set `.specify/feature.json` back to `specs/019-score-demo-fire`, so that the next `/speckit-implement` resumes spec 019 (phases 4 to 6), and say so in the report. Commit; the push waits for the next round.
+- [X] T027 Record the run ids, images and results in `specs/020-macos15-ci/baseline.txt`, set 020 in `specs/STATUS.md`, update the memories `pending-macos15-ci` (done) and `pending-score-fire-spec` (v0.8.0-beta.3 published). Set `.specify/feature.json` back to `specs/019-score-demo-fire`, so that the next `/speckit-implement` resumes spec 019 (phases 4 to 6), and say so in the report. Commit; the push waits for the next round.
 
 ---
 
@@ -265,7 +265,7 @@ already saves the picture that failed (`PaintedAlignment.check`, in `java.io.tmp
 - [X] T030 Start *Practice GUI tests* once (`gh workflow run practice-gui-tests.yml -R krl91/tuxguitaradvanced --ref master`), follow it, download the artifact
   into the scratchpad, look at the picture of `fret 1 string 1 1280x720 p=0.3` and at its row of wires, and record in `baseline.txt` what differs from a
   local picture of the same frame (size, scale, colours). Name the cause.
-- [ ] T031 If the cause is in the code (not in the test, which is never changed), fix it with the bug fix protocol: a reproducing test first, seen red, at
+- [X] T031 If the cause is in the code (not in the test, which is never changed), fix it with the bug fix protocol: a reproducing test first, seen red, at
   most 3 tries; the full gate locally; then one push and one run of *Practice GUI tests*, expected green on macos-15 (SC-005). If the cause is the machine
   itself (no screen, a colour profile that no user has), report it to the owner with the picture and stop. Record it in `baseline.txt`; then do the
   rest of T026–T027 (feature.json back to spec 019 only when T026 is closed). Commit.
