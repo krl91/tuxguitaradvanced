@@ -41,3 +41,18 @@ T003. Existing tests that must stay unchanged and green (under desktop/TuxGuitar
   ui/FollowPanelTest, ui/FollowPanelPlayTimeTest, ui/FollowPanelRecordBoxesTest, ui/FollowPanelLeniencyTest, ui/FollowPanelSwtTest,
   ui/PracticeWindowSwtTest, ui/PracticeWindowStartPathSourceTest (a source scan of PracticeWindow: beware when wiring the fire there).
   And the reference file arcade/reference/flame-reading.scene.txt, unchanged.
+
+T029. Gate of US1 and the cost of the fire's own painting (SC-006, plan: "at most 4 ms per frame at FULL"), 2026-10-31
+mvn -o -e clean verify -P native-modules: BUILD SUCCESS, TuxGuitar-practice 1371 (0 failures, 12 skipped); the T003 tests unchanged and green.
+mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am: BUILD SUCCESS, 42 (the 37 of T001 + ScoreFireOverlaySwtTest 4 + OverlayOnlyRepaintSwtTest 1).
+  A first SWT run, started right after the gate on a busy machine, failed ArcadeCanvasSwtTest (the full tier saw the balanced tier's 28 layers:
+  the controller stepped down on real painting times); alone it passed 3 times out of 3, and the whole SWT suite passed when run again.
+How: a throwaway probe (not committed): 15 s after the plugin connected, it started ScoreFire on the score of the application at FULL with the
+score defaults and a streak of 16, and timed ScoreFire.paint() in the paint listener (scene + rendering on the real painter) once the level was 1.
+Built app (the practice jar swapped into the .app, then put back), second isolated instance (own user.home and java.io.tmpdir),
+tests/demo-arcade-morceau.tg, window 1280x800 (score canvas 1057x587), 100 frames each:
+  "Wait"   (player stopped, overlay-only repaints): median 3.312 ms, 95th percentile 4.383 ms (min 2.543, max 8.017), tier FULL, 2980 items
+  "Follow" (player playing):                        median 2.792 ms, 95th percentile 4.028 ms (min 2.271, max 7.171), tier FULL, 2980 items
+Result: the medians are below 4 ms, the 95th percentiles are slightly above it in both modes. Reported to the owner before going on (T029).
+Limit, stated: the runs were started by the probe, not through the practice window (starting a Wait or Follow run needs clicks in the window,
+not automated); the smoke check of Wait with Full through the practice window is left to the owner (T048).

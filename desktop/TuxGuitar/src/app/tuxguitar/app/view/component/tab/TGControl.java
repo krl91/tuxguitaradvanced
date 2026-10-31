@@ -37,6 +37,7 @@ public class TGControl {
 	private TGContext context;
 	private UIScrollBarPanel container;
 	private UICanvas canvas;
+	private TGBufferedPainterListenerLocked bufferedPainter;
 	private UIScrollBar hScroll;
 	private UIScrollBar vScroll;
 	private boolean excludeScrollbars;
@@ -93,7 +94,8 @@ public class TGControl {
 		this.hScroll = this.container.getHScroll();
 		this.vScroll = this.container.getVScroll();
 
-		this.canvas.addPaintListener(new TGBufferedPainterListenerLocked(this.context, new TGControlPaintListener(this)));
+		this.bufferedPainter = new TGBufferedPainterListenerLocked(this.context, new TGControlPaintListener(this));
+		this.canvas.addPaintListener(this.bufferedPainter);
 		this.canvas.addMouseDownListener(this.tablature.getEditorKit().getMouseKit());
 		this.canvas.addMouseUpListener(this.tablature.getEditorKit().getMouseKit());
 		this.canvas.addMouseMoveListener(this.tablature.getEditorKit().getMouseKit());
@@ -446,6 +448,15 @@ public class TGControl {
 	public void redraw(){
 		if(!this.isDisposed() ){
 			this.painting = true;
+			this.bufferedPainter.requestFull();
+			this.canvas.redraw();
+		}
+	}
+
+	/** Asks for a picture where only what another paint listener draws over the score changed: the score itself is not painted again. */
+	public void redrawOverlay(){
+		if(!this.isDisposed() ){
+			this.bufferedPainter.requestOverlayOnly();
 			this.canvas.redraw();
 		}
 	}

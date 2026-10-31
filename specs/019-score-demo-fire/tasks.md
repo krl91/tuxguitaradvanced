@@ -114,12 +114,12 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 ### Tests first (see them fail)
 
-- [ ] T016 [P] [US1] Create `TST/ui/ScoreStreakTest.java` (pure, data-model "ScoreStreak" table):
+- [X] T016 [P] [US1] Create `TST/ui/ScoreStreakTest.java` (pure, data-model "ScoreStreak" table):
   - **Wait**: three snapshots each passing an ACCEPTED event give streaks 1, 2 and 3 with three bursts; the same snapshot fed twice counts once; a WRONG verdict gives 0; SKIPPED gives 0; AUTO_PASSED leaves the streak unchanged with no burst.
   - **Follow**: results going PENDING → MATCHED count once per `eventIndex`, including early and late offsets; WRONG_PITCH and MISSED give 0; a result seen again counts nothing.
   - `reset()` gives 0 and no bursts.
   - The streak never changes the snapshot it reads.
-- [ ] T017 [P] [US1] (FR-001, FR-002, FR-004) Create `TST/arcade/view/ScoreFireSceneTest.java` on `ScoreFireScene.scene(viewport, tier, flames, guard)` with `SCORE_DEFAULTS`:
+- [X] T017 [P] [US1] (FR-001, FR-002, FR-004) Create `TST/arcade/view/ScoreFireSceneTest.java` on `ScoreFireScene.scene(viewport, tier, flames, guard)` with `SCORE_DEFAULTS`:
   - null, OFF or PERFORMANCE gives no item;
   - level 0 gives ember rows only, on the bottom two rows;
   - at level 1, the highest lit row at the corners is within one cell of 1/3 of the viewport height and never above it (FR-004), and the middle tenth is at most 22 % of the corners;
@@ -127,31 +127,31 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - a small score area (Edge Case): at 600×120 the corners stay within 40 px; at 600×24, fewer than 8 cells high, there are ember rows only, whatever the level (contracts/score-overlay.md);
   - with guard boxes at the bottom (a framed note, a next note, a palette), no item above 12 % opacity meets a box widened by 4 px (FR-005, SC-003), on the window shapes 1280×800, 800×600, 1500×500 and 600×300;
   - the same inputs give the same items.
-- [ ] T018 [P] [US1] (FR-003, FR-009) Create `TST/ui/ScoreFireLevelTest.java` on `new FlameLevel(SCORE_DEFAULTS)` fed with `share = min(1, streak / 16)` and `judged` = the number of events, on a scripted clock at 30 updates per second:
+- [X] T018 [P] [US1] (FR-003, FR-009) Create `TST/ui/ScoreFireLevelTest.java` on `new FlameLevel(SCORE_DEFAULTS)` fed with `share = min(1, streak / 16)` and `judged` = the number of events, on a scripted clock at 30 updates per second:
   - streak 0 stays at 0;
   - each right note raises the level towards `streak / 16`, reaching 1 at streak 16 and holding there;
   - after a mistake at full height, the level is 0 within 1.0 s (+ one step) (FR-003, SC-002);
   - `hold`/`resume` keep the level through a pause.
   It will likely pass at once, because `FlameLevel(FireTuning)` exists since T013. It is then seen red by a deliberate mutation (the score default of `growth.fall` set to 1/3 for one run, not committed), and the mutation is named in the commit message.
-- [ ] T019 [P] [US1] Create `TST/ui/ScoreFireOverlaySwtTest.java` (profile `swt-gui-tests`, real toolkit, like `ArcadeCanvasSwtTest`):
+- [X] T019 [P] [US1] Create `TST/ui/ScoreFireOverlaySwtTest.java` (profile `swt-gui-tests`, real toolkit, like `ArcadeCanvasSwtTest`):
   - a canvas with a first listener that fills it white, given to `ScoreFire` through its canvas port (T025), then `ScoreFire` started at level 1 and FULL: after a paint, the bottom-corner pixels are not white and the top half is white;
   - with setting OFF, `start` adds no listener and the canvas stays white;
   - after `stop()`, a paint leaves the canvas white;
   - the first listener's pixels outside the fire are unchanged.
   - a slow computer (Edge Case, FR-010): with a painting cost of 20 ms per frame fed through a test seam of `ScoreFire` (the measured cost replaced by a fake clock), the tier steps down to BALANCED, then to PERFORMANCE, where nothing of the fire is painted, within the controller's window. With a cost of 1 ms, it climbs back to FULL.
-- [ ] T020 [P] [US1] Create `TST/ui/ScoreGuardBoxesTest.java` on the pure `ScoreGuardBoxes` (SC-003, research R8):
+- [X] T020 [P] [US1] Create `TST/ui/ScoreGuardBoxesTest.java` on the pure `ScoreGuardBoxes` (SC-003, research R8):
   - with a layout stub giving frame boxes for the current and next events, the result is those two boxes as `{x1, y1, x2, y2}`, canvas-local, unchanged;
   - a palette at screen (900, 700, 200, 60) over a score area whose screen origin is (100, 80) gives the canvas box (800, 620, 1000, 680);
   - an event with no frame (off the visible score), no next event or no palette is left out, and no box at all gives an empty list;
   - a box partly outside the canvas is kept as it is (the guard fades the fire up to the canvas edge).
-- [ ] T021 [P] [US1] Create `TST/ui/ScoreFireVerdictsTest.java` (FR-008, SC-004): the same scripted Wait run and Follow run, with the fire OFF and FULL, give identical verdicts, accepted counts, streak, timings and summary, and identical calls to `paletteGuard` (the palette of spec 017 moves the same). It drives `ScoreStreak` + `ScoreFire` through a fake canvas port (T025) and checks that nothing of the session is written. Written now, it is red (`ScoreStreak` and `ScoreFire` do not exist yet); T025 makes it pass.
+- [X] T021 [P] [US1] Create `TST/ui/ScoreFireVerdictsTest.java` (FR-008, SC-004): the same scripted Wait run and Follow run, with the fire OFF and FULL, give identical verdicts, accepted counts, streak, timings and summary, and identical calls to `paletteGuard` (the palette of spec 017 moves the same). It drives `ScoreStreak` + `ScoreFire` through a fake canvas port (T025) and checks that nothing of the session is written. Written now, it is red (`ScoreStreak` and `ScoreFire` do not exist yet); T025 makes it pass.
 
 ### Implementation
 
-- [ ] T022 [US1] (FR-001) Create `ARCADE/view/ScoreFireScene.java` (public): `scene(Viewport, QualityTier, FlameState, List<double[]> guard)` returns a `Scene` holding only `FlameDrawing.items(viewport, tier, flames, guard, flames.tuning())`; when the viewport is fewer than 8 cells high, the level is taken as 0 (ember rows only). Make T017 pass.
-- [ ] T023 [US1] Create `PR/ui/ScoreStreak.java` (pure) per research R3. Make T016 pass.
-- [ ] T024 [US1] Check T018 with `FlameLevel(FireTuning)` and the score defaults, after its mutation; if it is red without the mutation, fix only `ARCADE/ui/FlameLevel.java` (or the score defaults of `FireParameter`), keeping `new FlameLevel()` identical (T006).
-- [ ] T025 [US1] (FR-001, FR-010) Create `PR/ui/ScoreFire.java` per contracts/score-overlay.md and data-model "ScoreFire":
+- [X] T022 [US1] (FR-001) Create `ARCADE/view/ScoreFireScene.java` (public): `scene(Viewport, QualityTier, FlameState, List<double[]> guard)` returns a `Scene` holding only `FlameDrawing.items(viewport, tier, flames, guard, flames.tuning())`; when the viewport is fewer than 8 cells high, the level is taken as 0 (ember rows only). Make T017 pass.
+- [X] T023 [US1] Create `PR/ui/ScoreStreak.java` (pure) per research R3. Make T016 pass.
+- [X] T024 [US1] Check T018 with `FlameLevel(FireTuning)` and the score defaults, after its mutation; if it is red without the mutation, fix only `ARCADE/ui/FlameLevel.java` (or the score defaults of `FireParameter`), keeping `new FlameLevel()` identical (T006).
+- [X] T025 [US1] (FR-001, FR-010) Create `PR/ui/ScoreFire.java` per contracts/score-overlay.md and data-model "ScoreFire":
   - `start(setting, tuning, motion)`, `update(streak, newBursts, paused, currentEvent, nextEvent, paletteBox)` and `stop()`;
   - a constructor taking a **canvas port**: a small interface `ScoreFire.Score` with `UICanvas canvas()` (null when there is none), `List<double[]> guardBoxes(PracticeEvent current, PracticeEvent next)` and `void redraw(boolean overlayOnly)`; the production port wraps `TGTabFolder.getInstance(context).findSelectedControl()` and `ScoreGuardBoxes`; the tests give a fake;
   - attaches one `UIPaintListener` to `port.canvas()` and re-attaches if it changes;
@@ -164,15 +164,23 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - a `UiPainterRenderer`;
   - `stop()` removes the listener and redraws once.
   Make T019 and T021 pass.
-- [ ] T026 [US1] **Only if T002 decided "hook needed"**: in `CORE/util/TGBufferedPainterLocked.java`, add `requestOverlayOnly()` (a one-shot flag; `paintBufferLocked` skips `fillPaintBuffer()` when the flag is set and the buffer exists with the canvas size, and clears it in every case). In `CORE/component/tab/TGControl.java`, add `redrawOverlay()`, and make `redraw()` clear the flag. `ScoreFire` uses `redrawOverlay()` in Wait.
+- [X] T026 [US1] **Only if T002 decided "hook needed"**: in `CORE/util/TGBufferedPainterLocked.java`, add `requestOverlayOnly()` (a one-shot flag; `paintBufferLocked` skips `fillPaintBuffer()` when the flag is set and the buffer exists with the canvas size, and clears it in every case). In `CORE/component/tab/TGControl.java`, add `redrawOverlay()`, and make `redraw()` clear the flag. `ScoreFire` uses `redrawOverlay()` in Wait.
   - **First**, a new test `TST/ui/OverlayOnlyRepaintSwtTest.java` (swt-gui-tests): after `redrawOverlay()`, `paintControl` of the handle is not called and the buffer is drawn; after `redraw()`, it is called.
   - Mark the task done with "not needed (T002)" otherwise.
-- [ ] T027 [US1] (FR-001, FR-009) Wire the fire in `PR/ui/PracticeWindow.java`:
+- [X] T027 [US1] (FR-001, FR-009) Wire the fire in `PR/ui/PracticeWindow.java`:
   - when a Wait or Follow run starts, read `FireTuningStore.of(context)` (setting and SCORE tuning) and `SystemReducedMotion` (Phase 6; until then `!ReducedMotion.requested()`), reset a `ScoreStreak` and call `ScoreFire.start`;
   - in `render(PracticeSnapshot)`, next to `paletteGuard.show` (~line 798), and in `renderFollow` (~line 1177), feed the streak and call `ScoreFire.update` with the pause state read as the palette reads it;
   - at `paletteGuard.stop()` (~line 1253) and in `stopNow()`, call `ScoreFire.stop()`.
-- [ ] T028 [US1] (FR-007) Add the *Score fire* drop-down to the Mode tab in `PR/ui/FollowPanel.java`, beside the existing flames choice (~line 210), with Off, Discreet and Full read from and written to `FireTuningStore.setScoreSetting` (contracts/advanced-tab.md "Mode tab"), and its label and tooltip keys `practice.fire.score.setting` and `practice.fire.score.setting.tip`. Add the EN/FR/ES texts in `LANG/messages*.properties`.
-- [ ] T029 [US1] (FR-010, SC-006) Gate: practice suite and `swt-gui-tests` green, T003 tests unchanged. Relaunch the app for a smoke check of Wait with Full on `tests/demo-arcade-morceau.tg`. With a throwaway timing print (not committed), measure the fire's own painting in the listener over 100 frames at FULL, window 1280×800, in Wait and in Follow. Record the median and the 95th percentile in `specs/019-score-demo-fire/baseline.txt` against the plan's 4 ms goal (SC-006). Above it, report before going on. Commit the phase.
+- [X] T028 [US1] (FR-007) Add the *Score fire* drop-down to the Mode tab in `PR/ui/FollowPanel.java`, beside the existing flames choice (~line 210), with Off, Discreet and Full read from and written to `FireTuningStore.setScoreSetting` (contracts/advanced-tab.md "Mode tab"), and its label and tooltip keys `practice.fire.score.setting` and `practice.fire.score.setting.tip`. Add the EN/FR/ES texts in `LANG/messages*.properties`.
+- [X] T029 [US1] (FR-010, SC-006) Gate: practice suite and `swt-gui-tests` green, T003 tests unchanged. Relaunch the app for a smoke check of Wait with Full on `tests/demo-arcade-morceau.tg`. With a throwaway timing print (not committed), measure the fire's own painting in the listener over 100 frames at FULL, window 1280×800, in Wait and in Follow. Record the median and the 95th percentile in `specs/019-score-demo-fire/baseline.txt` against the plan's 4 ms goal (SC-006). Above it, report before going on. Commit the phase.
+
+**Implementation notes (Phase 3, as built):**
+- `ScoreStreak` reads primitives (`waitSnapshot(acceptedCount, lastPassed, outcome, verdict)`, `followResult(eventIndex, status)`), with `waitSnapshot(PracticeSnapshot)` and `followSnapshot(FollowSession.Snapshot)` for the window: the snapshot constructors are package-private in `session`, so the tests drive the primitives.
+- `ScoreFire.update` takes `judged` as well (for `growth.minJudged`), and `Score.guardBoxes` takes the palette's screen box (the port knows the canvas's screen origin); see contracts/score-overlay.md "The ports (as built)".
+- `ScoreFireScene` gives the tongues `height.corners` minus the ember rows' share, so that the whole fire stays within that share of the score area (FR-004).
+- T026: `redraw()` asks for a full picture (`requestFull()`), which wins over an overlay request made since the last paint in either order (the toolkit merges both into one paint); contract and research R2 updated.
+- T018 passed at once; it was seen red by forcing the score's `growth.fall` to 1/3 for one run (not committed).
+- T029: the fire's own painting is below 4 ms at the median and slightly above at the 95th percentile (baseline.txt); reported to the owner before Phase 4.
 
 ## Phase 4: User Story 2 — Sparks on each right note (Priority: P2)
 

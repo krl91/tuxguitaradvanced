@@ -22,6 +22,12 @@
 
 It gives the flame items of an Arcade picture with no game (no lanes, no text), built by `FlameDrawing.items(viewport, tier, flames, no texts, flames.tuning())`, for the Advanced tab's Arcade preview only. With `ARCADE_DEFAULTS`, they are the same items as those of a real Arcade picture of that size, without the fading near texts.
 
+## The ports (as built)
+
+- `ScoreFire(factory, score, ticker, wall, cost)`: `ScoreFire.Score` gives `canvas()`, `guardBoxes(current, next, palette)` (asked at each paint; the palette's screen box is turned into canvas coordinates by the port, which knows the canvas's screen origin) and `redraw(overlayOnly)`; `ScoreFire.Ticker` is the 33 ms timer; `wall` and `cost` are clocks, so that the tests drive time and painting cost.
+- `update(streak, judged, newBursts, paused, current, next, palette)`: `judged` (the notes judged so far) feeds `growth.minJudged`.
+- The height: `height.corners` is the height of the whole fire, ember rows included (FR-004), so `ScoreFireScene` gives the tongues `height.corners` minus the ember rows' share of the score's height.
+
 ## Streak to level
 
 - `share = min(1, streak / growth.full)`; the level goes towards `share` at `growth.rise` per second and falls at `growth.fall` per second.
@@ -34,10 +40,11 @@ It gives the flame items of an Arcade picture with no game (no lanes, no text), 
 - **Follow**: `TGControl.redraw()`, which repaints the played beat only.
 - **Wait**: `TGControl.redraw()`; or `TGControl.redrawOverlay()` if the core hook of research R2 was added.
 
-## Conditional core hook (only if research R2's threshold is exceeded)
+## Core hook (added: research R2's threshold was exceeded, T002)
 
-- `TGBufferedPainterLocked.requestOverlayOnly()` sets a one-shot flag. At the next `paintBufferLocked`, if the flag is set and the buffer exists with the canvas size, `fillPaintBuffer()` is skipped and the buffer is drawn as it is; the flag is cleared in every case.
-- `TGControl.redrawOverlay()` calls `requestOverlayOnly()` and then `canvas.redraw()`. `TGControl.redraw()` clears the flag.
+- `TGBufferedPainterLocked.requestOverlayOnly()` sets a one-shot flag, and `requestFull()` records that a full picture was asked.
+- At the next `paintBufferLocked`, `fillPaintBuffer()` is skipped and the buffer is drawn as it is only if the overlay was asked, **no full picture was asked since the last paint** (in either order: the toolkit merges the two requests into one paint), and the buffer exists with the canvas size. Both flags are cleared at every paint.
+- `TGControl.redrawOverlay()` calls `requestOverlayOnly()` and then `canvas.redraw()`; it does not touch the `painting` flag of `redrawPlayingMode`. `TGControl.redraw()` calls `requestFull()`, and so does the retry of a paint that could not take the editor's lock.
 - With no caller of `redrawOverlay()`, the behaviour is unchanged.
 
 ## Never

@@ -7,6 +7,7 @@ import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationRun;
 import app.tuxguitar.app.tools.custom.practice.session.CalibrationTaps;
 import app.tuxguitar.app.tools.custom.practice.session.ClockUncertainty;
+import app.tuxguitar.app.tools.custom.practice.session.FireTuningStore;
 import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
 import app.tuxguitar.app.tools.custom.practice.session.FollowChoices;
 import app.tuxguitar.app.tools.custom.practice.session.FollowLeniencyPosition;
@@ -79,6 +80,9 @@ public final class FollowPanel {
 	private final UISpinner horizon;
 	private final UILabel flamesLabel;
 	private final UIDropDownSelect<FlameSetting> flames;
+	private final FireTuningStore scoreFireStore;
+	private final UILabel scoreFireLabel;
+	private final UIDropDownSelect<FlameSetting> scoreFire;
 	/** The permissiveness of the Arcade recognition (spec 014): null when the panel is built without the remembered choices. */
 	private final ArcadeChoices arcadeChoices;
 	private final UILabel leniencyLabel;
@@ -129,6 +133,13 @@ public final class FollowPanel {
 
 	/** @param followChoices where the position of Follow's permissiveness is remembered (spec 016); null: no such line */
 	public FollowPanel(UIFactory uiFactory, UIContainer parent, FollowSettings settings, Backend backend, ArcadeChoices arcadeChoices, FollowChoices followChoices) {
+		this(uiFactory, parent, settings, backend, arcadeChoices, followChoices, null);
+	}
+
+	/** @param scoreFireStore where the choice of the fire on the score is kept (spec 019); null: no such line */
+	public FollowPanel(UIFactory uiFactory, UIContainer parent, FollowSettings settings, Backend backend, ArcadeChoices arcadeChoices, FollowChoices followChoices,
+			FireTuningStore scoreFireStore) {
+		this.scoreFireStore = scoreFireStore;
 		this.arcadeChoices = arcadeChoices;
 		this.followChoices = followChoices;
 		this.settings = settings;
@@ -211,6 +222,22 @@ public final class FollowPanel {
 		this.flames.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("arcade.flames.discreet"), FlameSetting.DISCREET));
 		this.flames.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("arcade.flames.full"), FlameSetting.FULL));
 		layout.set(this.flames, 18, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		// the demo fire at the bottom of the score in Wait and Follow (spec 019 FR-007): the place of Arcade's flames, which are shown in Arcade only
+		if (scoreFireStore != null) {
+			this.scoreFireLabel = uiFactory.createLabel(this.panel);
+			this.scoreFireLabel.setText(TuxGuitar.getProperty("practice.fire.score.setting"));
+			this.scoreFireLabel.setToolTipText(TuxGuitar.getProperty("practice.fire.score.setting.tip"));
+			layout.set(this.scoreFireLabel, 18, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+			this.scoreFire = uiFactory.createDropDownSelect(this.panel);
+			this.scoreFire.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("practice.fire.score.off"), FlameSetting.OFF));
+			this.scoreFire.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("practice.fire.score.discreet"), FlameSetting.DISCREET));
+			this.scoreFire.addItem(new UISelectItem<FlameSetting>(TuxGuitar.getProperty("practice.fire.score.full"), FlameSetting.FULL));
+			layout.set(this.scoreFire, 18, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+			this.scoreFire.setSelectedValue(scoreFireStore.scoreSetting());
+		} else {
+			this.scoreFireLabel = null;
+			this.scoreFire = null;
+		}
 
 		// the permissiveness of the Arcade recognition (spec 014, FR-002): three positions, stored at once, read when a run starts
 		if (arcadeChoices != null) {
@@ -397,6 +424,14 @@ public final class FollowPanel {
 				this.settings.setFlames(chosen);
 			}
 		}));
+		if (this.scoreFire != null) {
+			this.scoreFire.addSelectionListener(selected(() -> {
+				FlameSetting chosen = this.scoreFire.getSelectedValue();
+				if (chosen != null) {
+					this.scoreFireStore.setScoreSetting(chosen);
+				}
+			}));
+		}
 		this.tolerance.addSelectionListener(selected(() -> {
 			this.settings.setWindowMillis(this.tolerance.getValue());
 			showWindowText();
@@ -471,6 +506,11 @@ public final class FollowPanel {
 			this.flames.setSelectedValue(this.settings.getFlames());
 			this.flamesLabel.setVisible(this.settings.isArcade());
 			this.flames.setVisible(this.settings.isArcade());
+			if (this.scoreFire != null) {
+				this.scoreFire.setSelectedValue(this.scoreFireStore.scoreSetting());
+				this.scoreFireLabel.setVisible(!this.settings.isArcade());
+				this.scoreFire.setVisible(!this.settings.isArcade());
+			}
 			if (this.leniency != null) {
 				this.leniency.setSelectedValue(this.arcadeChoices.leniency());
 				showLeniencyHint();
@@ -530,6 +570,9 @@ public final class FollowPanel {
 			this.farScale.setEnabled(idle);
 			this.horizon.setEnabled(idle);
 			this.flames.setEnabled(idle);
+			if (this.scoreFire != null) {
+				this.scoreFire.setEnabled(idle);
+			}
 			if (this.leniency != null) {
 				this.leniency.setEnabled(idle);
 			}

@@ -17,6 +17,8 @@ public class TGBufferedPainterLocked {
 	private TGContext context;
 	private UIImage buffer;
 	private TGBufferedPainterHandle handle;
+	private boolean overlayOnly;
+	private boolean fullRequested;
 
 	public TGBufferedPainterLocked(TGContext context, TGBufferedPainterHandle handle) {
 		this.context = context;
@@ -52,17 +54,40 @@ public class TGBufferedPainterLocked {
 		tgPainter.dispose();
 	}
 
+	/**
+	 * The next paint only draws the buffer as it is, for something painted over it by another listener, unless a full picture is asked before that paint,
+	 * or the buffer is missing or not of the control's size. Used once.
+	 */
+	public void requestOverlayOnly() {
+		this.overlayOnly = true;
+	}
+
+	/** The next paint paints the control into the buffer again, even if the overlay only was asked. */
+	public void requestFull() {
+		this.fullRequested = true;
+	}
+
+	private boolean isBufferCurrent() {
+		UIRectangle size = this.handle.getPaintableControl().getBounds();
+		return (this.buffer != null && !this.buffer.isDisposed() && this.buffer.getWidth() == size.getWidth() && this.buffer.getHeight() == size.getHeight());
+	}
+
 	public void paintBufferLocked(UIPainter painter) {
-		TGEditorManager editor = TGEditorManager.getInstance(this.context);
-		if (editor.tryLock()) {
-			try {
-				this.fillPaintBuffer();
-			} finally {
-				editor.unlock();
+		boolean skip = (this.overlayOnly && !this.fullRequested && this.isBufferCurrent());
+		this.overlayOnly = false;
+		this.fullRequested = false;
+		if (!skip) {
+			TGEditorManager editor = TGEditorManager.getInstance(this.context);
+			if (editor.tryLock()) {
+				try {
+					this.fillPaintBuffer();
+				} finally {
+					editor.unlock();
+				}
+			} else {
+				// try later
+				this.redrawLater();
 			}
-		} else {
-			// try later
-			this.redrawLater();
 		}
 
 		if( this.buffer != null && !this.buffer.isDisposed() ) {
@@ -75,6 +100,7 @@ public class TGBufferedPainterLocked {
 		TGSynchronizer.getInstance(this.context).executeLater(new Runnable() {
 			public void run() {
 				if(!paintableControl.isDisposed()) {
+					TGBufferedPainterLocked.this.requestFull();
 					paintableControl.redraw();
 				}
 			}

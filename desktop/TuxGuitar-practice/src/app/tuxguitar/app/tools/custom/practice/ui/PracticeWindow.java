@@ -111,6 +111,9 @@ public class PracticeWindow {
 	private final PracticeHighlight highlight;
 	/** Keeps the palette off the note to play in Wait and Follow (spec 017). */
 	private final PaletteGuard paletteGuard;
+	/** The demo fire at the bottom of the score in Wait and Follow (spec 019), and the streak of right notes it grows with. */
+	private final ScoreFire scoreFire;
+	private final ScoreStreak scoreStreak = new ScoreStreak();
 	/** The events of the Wait run, to find the note after the framed one (spec 017). */
 	private List<PracticeEvent> waitEvents;
 	private AudioEngine engine;
@@ -215,6 +218,7 @@ public class PracticeWindow {
 			}
 		}, PracticeParameters.of(RecognitionSettingsStore.getInstance(context).get()).tolerance());
 		this.paletteGuard = new PaletteGuard(context, this.palette, () -> this.host.mainWindow());
+		this.scoreFire = ScoreFire.onTheScore(this.host.factory(), context);
 	}
 
 	/**
@@ -426,7 +430,7 @@ public class PracticeWindow {
 		UITableLayout modeLayout = new UITableLayout();
 		UIPanel modePanel = tab(uiFactory, folder, "practice.tab.mode", modeLayout);
 		this.followPanel = new FollowPanel(uiFactory, modePanel, FollowSettings.getInstance(this.context), this.followAdapter, ArcadeChoices.of(this.context),
-				FollowChoices.of(this.context));
+				FollowChoices.of(this.context), FireTuningStore.of(this.context));
 		modeLayout.set(this.followPanel.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.followPanel.setContentListener(this::refit);
 		this.followPanel.setModeListener(this::modeChanged);
@@ -746,6 +750,7 @@ public class PracticeWindow {
 		this.engine.subscribe(this.frameListener);
 		this.host.commandSink(sessionLoop::postCommand);
 		this.loop.postCommand(PracticeCommand.START);
+		startScoreFire();
 
 		// the score is the practice interface: only the compact palette stays on screen (FR-076)
 		this.palette.open();
@@ -798,6 +803,9 @@ public class PracticeWindow {
 		this.highlight.show(state == PracticeSession.State.COMPLETE ? null : snapshot.getCurrentEvent(), snapshot.getLastAccepted(),
 				snapshot.getAcceptedCount());
 		this.paletteGuard.show(state == PracticeSession.State.COMPLETE ? null : snapshot.getCurrentEvent(), this.waitEvents,
+				state == PracticeSession.State.PAUSED || state == PracticeSession.State.READY_TO_RESUME);
+		this.scoreStreak.waitSnapshot(snapshot);
+		showScoreFire(state == PracticeSession.State.COMPLETE ? null : snapshot.getCurrentEvent(), this.waitEvents,
 				state == PracticeSession.State.PAUSED || state == PracticeSession.State.READY_TO_RESUME);
 	}
 
@@ -1091,9 +1099,24 @@ public class PracticeWindow {
 			refit();
 			return;
 		}
+		startScoreFire();
 		// the score is the practice interface: only the compact palette stays on screen (FR-076)
 		this.palette.open();
 		setVisible(this.window, false);
+	}
+
+	/** The score fire of a Wait or Follow run that starts now (spec 019): its choice and values as kept, read once, and a new streak. */
+	private void startScoreFire() {
+		FireTuningStore store = FireTuningStore.of(this.context);
+		this.scoreStreak.reset();
+		this.scoreFire.start(store.scoreSetting(), store.load(FireTuning.Group.SCORE), !ReducedMotion.requested());
+	}
+
+	/** The streak and the fire follow the run's picture, next to the palette guard; they only read it (FR-008). */
+	private void showScoreFire(PracticeEvent current, List<PracticeEvent> events, boolean paused) {
+		int index = (current != null && events != null ? events.indexOf(current) : -1);
+		PracticeEvent next = (index >= 0 && index + 1 < events.size() ? events.get(index + 1) : null);
+		this.scoreFire.update(this.scoreStreak.streak(), this.scoreStreak.judged(), this.scoreStreak.takeBursts(), paused, current, next, this.palette.bounds());
 	}
 
 	/** The record of a run that starts now: its score, track, tempo, route and calibration, and the sound when asked. */
@@ -1178,6 +1201,8 @@ public class PracticeWindow {
 		this.highlight.show(current, lastRight, right);
 		boolean paused = (snapshot.state() == FollowSession.State.PAUSED || snapshot.state() == FollowSession.State.READY_TO_RESUME);
 		this.paletteGuard.show((running || paused) && open >= 0 ? plan.sequence().getEvents().get(open) : null, plan.sequence().getEvents(), paused);
+		this.scoreStreak.followSnapshot(snapshot);
+		showScoreFire((running || paused) && open >= 0 ? plan.sequence().getEvents().get(open) : null, plan.sequence().getEvents(), paused);
 	}
 
 	private static String followText(String key, String... arguments) {
@@ -1254,6 +1279,7 @@ public class PracticeWindow {
 		teardownFollow();
 		this.highlight.hide();
 		this.paletteGuard.stop();
+		this.scoreFire.stop();
 		if( this.loop != null ) {
 			this.host.commandSink(null);
 			this.engine.unsubscribe(this.frameListener);

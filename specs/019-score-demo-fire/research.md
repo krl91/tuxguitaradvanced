@@ -22,7 +22,7 @@
 - Phase 1 measures that repaint on `tests/demo-arcade-morceau.tg` at 1280×800, 100 redraws. **If the median exceeds 3 ms or the 95th percentile exceeds 6 ms**, the plan adds a small, additive core hook:
   - `TGBufferedPainterLocked` gets `requestOverlayOnly()`, a one-shot flag. The next paint skips `fillPaintBuffer()` and draws the buffer as it is, if the buffer exists and has the canvas size.
   - `TGControl` gets `redrawOverlay()`, which sets the flag and calls `canvas.redraw()`.
-  - `TGControl.redraw()` clears the flag, so any real change still repaints.
+  - `TGControl.redraw()` asks for a full picture (`requestFull()`), so any real change still repaints. As built (T026): a full request since the last paint wins over the overlay request in either order, because the toolkit merges the two into one paint; both flags are cleared at every paint.
   - Nothing changes for upstream unless `redrawOverlay()` is called.
 - The decision and the numbers are written in `baseline.txt` and below.
 
