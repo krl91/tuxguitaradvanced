@@ -17,6 +17,10 @@ import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
  * away. The cells of the flame carry in {@code tgString} the code of the group of columns they belong to ({@code tongue * 4 + part + 1}), the columns
  * being grouped as the tongues and layers of spec 009 were counted (28 by 3 at the full tier, 14 by 2 at the balanced one, half of them discreet), so that a
  * reader of the scene still finds that many pieces of flame.
+ *
+ * <p>Every value that shapes the fire and its sparks comes from the {@link FireTuning} of the flame state (spec 019); the constants below are Arcade's
+ * defaults. The reading guard ({@link #WIDEN}, {@link #NEAR_TEXT}, {@link #RAMP}, the curve of {@link #faded} and the boxes of {@link #textBoxes}) is fixed
+ * whatever the settings (FR-016).
  */
 final class FlameDrawing {
 
@@ -56,6 +60,15 @@ final class FlameDrawing {
 	 * @param texts the boxes {x1, y1, x2, y2} of the texts of the picture
 	 */
 	static List<SceneItem> items(Viewport viewport, QualityTier tier, FlameState flames, List<double[]> texts) {
+		return items(viewport, tier, flames, texts, flames != null ? flames.tuning() : FireTuning.ARCADE_DEFAULTS);
+	}
+
+	/**
+	 * The flame items of a picture with a tuning (spec 019).
+	 *
+	 * @param texts the boxes {x1, y1, x2, y2} the fire must not cover: the texts of the picture, or the framed and next notes and the palette on the score
+	 */
+	static List<SceneItem> items(Viewport viewport, QualityTier tier, FlameState flames, List<double[]> texts, FireTuning tuning) {
 		List<SceneItem> items = new ArrayList<SceneItem>();
 		if (flames == null || flames.setting() == FlameSetting.OFF || tier == QualityTier.PERFORMANCE) {
 			return items;
@@ -64,7 +77,7 @@ final class FlameDrawing {
 		boolean discreet = flames.setting() == FlameSetting.DISCREET;
 		int parts = full ? 3 : 2;
 		int groups = (full ? TONGUES : TONGUES / 2) / (discreet ? 2 : 1) * parts;
-		FireField field = new FireField(viewport, tier, flames);
+		FireField field = new FireField(viewport, tier, flames, tuning);
 		double cell = field.cell();
 		for (int row = 0; ; row++) {
 			boolean any = false;
@@ -79,13 +92,13 @@ final class FlameDrawing {
 				double y1 = y2 - field.cellHeight(col, row);
 				double[] corners = { x1, y1, x1 + cell, y1, x1 + cell, y2, x1, y2 };
 				double[] hull = { x1, y1, x1 + cell, y2 };
-				double alpha = faded(FireColours.alpha(heat, discreet), hull, texts);
-				if (row < FireField.EMBER_ROWS) {
-					items.add(new SceneItem(Shape.QUAD, Role.FLAME_EMBER, corners, FireColours.colour(heat), alpha, 0.0, null, -1, 0, null));
+				double alpha = faded(FireColours.alpha(heat, discreet, tuning), hull, texts);
+				if (row < field.emberRows()) {
+					items.add(new SceneItem(Shape.QUAD, Role.FLAME_EMBER, corners, FireColours.colour(heat, tuning), alpha, 0.0, null, -1, 0, null));
 				} else {
 					int group = (int) ((long) col * groups / field.columns());
 					int code = group / parts * 4 + group % parts + 1;
-					items.add(new SceneItem(Shape.QUAD, Role.FLAME_TONGUE, corners, FireColours.colour(heat), alpha, 0.0, null, -1, code, null));
+					items.add(new SceneItem(Shape.QUAD, Role.FLAME_TONGUE, corners, FireColours.colour(heat, tuning), alpha, 0.0, null, -1, code, null));
 				}
 			}
 			if (!any) {
@@ -93,7 +106,7 @@ final class FlameDrawing {
 			}
 		}
 		if (full && flames.motion()) {
-			sparks(items, field, flames, discreet, texts);
+			sparks(items, field, flames, discreet, texts, tuning);
 		}
 		return items;
 	}
@@ -103,35 +116,46 @@ final class FlameDrawing {
 	 * from the top of the fire near a corner; they rise, drift and fade out within {@link #SPARK_LIFE}. At most {@link #MOST_SPARKS} in the air, the newest
 	 * first. Over a cell of the fire of opacity {@code a} a spark has at most {@code (MOST - a) / (1 - a)}, so the two together never pass the fire's most opacity (FR-002).
 	 */
-	private static void sparks(List<SceneItem> items, FireField field, FlameState flames, boolean discreet, List<double[]> texts) {
+	private static void sparks(List<SceneItem> items, FireField field, FlameState flames, boolean discreet, List<double[]> texts, FireTuning tuning) {
 		List<FlameState.Burst> bursts = flames.bursts();
 		double cell = field.cell();
 		int highest = (int) Math.floor(field.top(0) / cell);
 		int thrown = 0;
-		for (int b = bursts.size() - 1; b >= 0 && thrown < MOST_SPARKS; b--) {
+		int most = tuning.integer(FireParameter.SPARKS_MOST);
+		long lifeNanos = sparkLifeNanos(tuning);
+		double opacity = tuning.value(FireParameter.OPACITY_MOST);
+		double share = tuning.value(FireParameter.DISCREET_SHARE);
+		double zone = tuning.value(FireParameter.SPARKS_ZONE);
+		double riseBase = tuning.value(FireParameter.SPARKS_RISE);
+		double riseSpread = tuning.value(FireParameter.SPARKS_RISE_SPREAD);
+		double driftWidth = tuning.value(FireParameter.SPARKS_DRIFT);
+		double start = tuning.value(FireParameter.SPARKS_START);
+		double fade = tuning.value(FireParameter.SPARKS_FADE);
+		int hottest = tuning.integer(FireParameter.COLOUR_STEPS) - 1;
+		for (int b = bursts.size() - 1; b >= 0 && thrown < most; b--) {
 			FlameState.Burst burst = bursts.get(b);
 			long age = flames.flameClockNanos() - burst.clockNanos();
-			if (age < 0L || age >= SPARK_LIFE) {
+			if (age < 0L || age >= lifeNanos) {
 				continue;
 			}
-			double life = age / (double) SPARK_LIFE;
-			int count = 20 + 5 * Math.min(burst.streak(), 12) / 2;
+			double life = age / (double) lifeNanos;
+			int count = sparkCount(tuning, burst.streak());
 			if (discreet) {
-				count = (int) Math.round(count * DISCREET);
+				count = (int) Math.round(count * share);
 			}
-			for (int i = 0; i < count && thrown < MOST_SPARKS; i++) {
+			for (int i = 0; i < count && thrown < most; i++) {
 				long h = mix(burst.clockNanos() * 31L + i);
 				boolean right = (h & 1L) != 0L;
-				int from = (int) Math.floor(((h >>> 1) & 0xFFFF) / 65536.0 * 0.25 * field.columns());
-				int start = right ? field.columns() - 1 - from : from;
-				double rise = 10.0 + 16.0 * (((h >>> 17) & 0xFFFF) / 65536.0);
-				double drift = (((h >>> 33) & 0xFFFF) / 65536.0 - 0.5) * 10.0;
-				int col = Math.max(0, Math.min(field.columns() - 1, start + (int) Math.round(drift * life)));
-				int row = Math.min(highest, FireField.EMBER_ROWS + field.tongueRows(start) + (int) Math.floor(rise * life));
-				double alpha = FireColours.MOST * (1.0 - life) * (discreet ? DISCREET : 1.0);
-				double under = FireColours.alpha(field.heat(col, row), discreet);
+				int from = (int) Math.floor(((h >>> 1) & 0xFFFF) / 65536.0 * zone * field.columns());
+				int column = right ? field.columns() - 1 - from : from;
+				double rise = riseBase + riseSpread * (((h >>> 17) & 0xFFFF) / 65536.0);
+				double drift = (((h >>> 33) & 0xFFFF) / 65536.0 - 0.5) * driftWidth;
+				int col = Math.max(0, Math.min(field.columns() - 1, column + (int) Math.round(drift * life)));
+				int row = Math.min(highest, field.emberRows() + (int) Math.round(start * field.tongueRows(column)) + (int) Math.floor(rise * life));
+				double alpha = opacity * (1.0 - life) * (discreet ? share : 1.0);
+				double under = FireColours.alpha(field.heat(col, row), discreet, tuning);
 				if (under > 0.0) {
-					alpha = Math.min(alpha, (FireColours.MOST - under) / (1.0 - under));
+					alpha = Math.min(alpha, (opacity - under) / (1.0 - under));
 				}
 				double x1 = field.left(col);
 				double y1 = field.top(row);
@@ -139,7 +163,7 @@ final class FlameDrawing {
 				alpha = faded(alpha, hull, texts);
 				if (alpha > 1e-6) {
 					double[] corners = { x1, y1, x1 + cell, y1, x1 + cell, y1 + cell, x1, y1 + cell };
-					items.add(new SceneItem(Shape.QUAD, Role.FLAME_EMBER, corners, FireColours.colour(FireColours.STEPS - 1 - (int) (life * 8.0)), alpha, 0.0, null, -1, 0, null));
+					items.add(new SceneItem(Shape.QUAD, Role.FLAME_EMBER, corners, FireColours.colour(hottest - (int) (life * fade), tuning), alpha, 0.0, null, -1, 0, null));
 				}
 				thrown++;
 			}
@@ -155,8 +179,28 @@ final class FlameDrawing {
 
 	/** 1 at the corners and {@link #MIDDLE} in the middle of the width; {@code t} is the place across the width, 0 to 1. */
 	static double weight(double t) {
+		return weight(t, FireTuning.ARCADE_DEFAULTS);
+	}
+
+	/** 1 at the corners and the tuning's middle in the middle of the width, growing towards the corners as the tuning's curve ({@code d * d} by default). */
+	static double weight(double t, FireTuning tuning) {
 		double d = Math.abs(2.0 * t - 1.0);
-		return MIDDLE + (1.0 - MIDDLE) * d * d;
+		double middle = tuning.value(FireParameter.HEIGHT_MIDDLE);
+		double curve = tuning.value(FireParameter.HEIGHT_CURVE);
+		// d * d when the curve is 2, as before: Math.pow is not promised to give the very same bits
+		double grown = curve == 2.0 ? d * d : Math.pow(d, curve);
+		return middle + (1.0 - middle) * grown;
+	}
+
+	/** The sparks of a right note at this streak: a base, and more with the streak up to a cap (spec 018 R7; spec 019 FR-015). */
+	static int sparkCount(FireTuning tuning, int streak) {
+		int capped = Math.min(Math.max(0, streak), tuning.integer(FireParameter.SPARKS_STREAK_CAP));
+		return tuning.integer(FireParameter.SPARKS_BASE) + (int) Math.floor(tuning.value(FireParameter.SPARKS_PER_STREAK) * capped + 1e-9);
+	}
+
+	/** How long a spark lives with this tuning, in nanoseconds. */
+	static long sparkLifeNanos(FireTuning tuning) {
+		return Math.round(tuning.value(FireParameter.SPARKS_LIFE) * 1e9);
 	}
 
 	/** The distance between two boxes {x1, y1, x2, y2}, 0 when they meet. */

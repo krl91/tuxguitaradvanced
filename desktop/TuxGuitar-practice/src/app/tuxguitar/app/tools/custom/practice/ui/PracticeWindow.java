@@ -9,6 +9,7 @@ import app.tuxguitar.app.document.TGDocument;
 import app.tuxguitar.app.document.TGDocumentListManager;
 import app.tuxguitar.app.system.keybindings.KeyBindingActionManager;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeResult;
+import app.tuxguitar.app.tools.custom.practice.arcade.view.FireTuning;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevel;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLevelFilter;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeLeniency;
@@ -36,6 +37,7 @@ import app.tuxguitar.app.tools.custom.practice.session.ArcadeChoices;
 import app.tuxguitar.app.tools.custom.practice.session.AttackCandidates;
 import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
 import app.tuxguitar.app.tools.custom.practice.session.ChordMatcher;
+import app.tuxguitar.app.tools.custom.practice.session.FireTuningStore;
 import app.tuxguitar.app.tools.custom.practice.session.FollowEvents;
 import app.tuxguitar.app.tools.custom.practice.session.FollowPlayback;
 import app.tuxguitar.app.tools.custom.practice.session.FollowRun;
@@ -855,7 +857,8 @@ public class PracticeWindow {
 		this.arcadeSession = ArcadeSession.of(plan, arcadeTuning, new ArcadeSceneLabels(ARCADE_TEXTS), false,
 				FollowSettings.getInstance(this.context).getMarkerPercent() / 100.0, measureNanos,
 				FollowSettings.getInstance(this.context).getFarScalePercent() / 100.0, FollowSettings.getInstance(this.context).getHorizonPercent() / 100.0,
-				FollowSettings.getInstance(this.context).getFlames(), !ReducedMotion.requested());
+				FollowSettings.getInstance(this.context).getFlames(), !ReducedMotion.requested(),
+				FireTuningStore.of(this.context).load(FireTuning.Group.ARCADE));
 		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
 		final FollowRun run = plan.run();

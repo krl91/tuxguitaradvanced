@@ -11,6 +11,7 @@ import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeScoring;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeRenderEvent;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeScene;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.CameraTrack;
+import app.tuxguitar.app.tools.custom.practice.arcade.view.FireTuning;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.IsometricProjection;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.NeckModel;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.QualityController;
@@ -35,6 +36,7 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 	private final ArcadeScene scene;
 	private long lookAheadNanos;
 	private FlameSetting flames = FlameSetting.OFF;
+	private FireTuning fireTuning = FireTuning.ARCADE_DEFAULTS;
 	private boolean flameMotion;
 	private final AtomicReference<FollowSession.Snapshot> latest = new AtomicReference<FollowSession.Snapshot>();
 
@@ -88,6 +90,14 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 	 */
 	public static ArcadeSession of(FollowStarter.Plan plan, TrackTuning tuning, SceneLabels labels, boolean monochrome, double markerSize, long lookAheadNanos,
 			double farScale, double horizon, FlameSetting flames, boolean flameMotion) {
+		return of(plan, tuning, labels, monochrome, markerSize, lookAheadNanos, farScale, horizon, flames, flameMotion, FireTuning.ARCADE_DEFAULTS);
+	}
+
+	/**
+	 * @param fireTuning the values of Arcade's fire chosen in the Advanced tab (spec 019 FR-019), read when the run starts; null for the defaults
+	 */
+	public static ArcadeSession of(FollowStarter.Plan plan, TrackTuning tuning, SceneLabels labels, boolean monochrome, double markerSize, long lookAheadNanos,
+			double farScale, double horizon, FlameSetting flames, boolean flameMotion, FireTuning fireTuning) {
 		List<ArcadeRenderEvent> events = new ArrayList<ArcadeRenderEvent>();
 		List<PracticeEvent> practice = plan.sequence().getEvents();
 		for (int i = 0; i < practice.size(); i++) {
@@ -100,6 +110,7 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 		session.lookAheadNanos = lookAheadNanos;
 		session.flames = (flames != null ? flames : FlameSetting.OFF);
 		session.flameMotion = flameMotion;
+		session.fireTuning = (fireTuning != null ? fireTuning : FireTuning.ARCADE_DEFAULTS);
 		return session;
 	}
 
@@ -127,7 +138,7 @@ public final class ArcadeSession implements ArcadeController.Outcome {
 		// the metronome counts one measure in before the music, and the look-ahead is one measure: the first notes are at the far end when it starts
 		long startNanos = this.plan.timeline().nanosAtTick(this.plan.startTick() - FollowStarter.FIRST_TICK);
 		return new ArcadeFrameSource(this.scene, this.plan.timeline(), FollowStarter.FIRST_TICK, clock, this::view, speedPercent, quality, this.lookAheadNanos, startNanos,
-				this.flames, this.flameMotion, ArcadeScoring.standard());
+				this.flames, this.flameMotion, ArcadeScoring.standard(), this.fireTuning);
 	}
 
 	/** The result of the run so far, or null before the first snapshot. */

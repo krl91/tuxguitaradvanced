@@ -48,30 +48,30 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 ### Tests first (see them fail)
 
-- [ ] T004 [P] (FR-017, FR-021) Create `TST/arcade/view/FireParameterDefaultsTest.java`:
+- [X] T004 [P] (FR-017, FR-021) Create `TST/arcade/view/FireParameterDefaultsTest.java`:
   - every row of the data-model table exists as a `FireParameter`, with its key, kind, range and both defaults;
   - `min ≤ arcadeDefault ≤ max` and `min ≤ scoreDefault ≤ max` for every parameter, including `growth.full` (Arcade default 16, never read; `inArcade()` false);
   - one assertion per constant: `opacity.most == FireColours.MOST`, `cell.columns == FireField.COLUMNS`, `cell.smallest == FireField.SMALLEST`, `colour.steps == FireColours.STEPS`, `height.corners == FlameDrawing.CORNER_HEIGHT`, `height.middle == FlameDrawing.MIDDLE`, `discreet.share == FlameDrawing.DISCREET`, `ember.rows == FireField.EMBER_ROWS`, `sparks.most == FlameDrawing.MOST_SPARKS`, `sparks.life == FlameDrawing.SPARK_LIFE / 1e9`, `growth.minJudged == FlameLevel.MIN_JUDGED`, `growth.rise == FlameLevel.RISE_PER_SECOND`, `growth.fall == FlameLevel.FALL_PER_SECOND`, `growth.maxStep == FlameLevel.MAX_STEP_NANOS / 1e6`, and for the literals without a constant `height.curve == 2`, `noise.scale == 2`, `noise.aspect == 2`;
   - the score defaults: `height.corners` 1/3, `growth.full` 16, `growth.fall` 1.0, `growth.from` 0, `growth.minJudged` 0, `sparks.start` 0;
   - the cost ceilings: `cell.columns` max 384, `cell.smallest` min 3, `sparks.most` max 1000, `sparks.base` max 200, `sparks.perStreak` max 50, `colour.steps` max 64.
-- [ ] T005 [P] Create `TST/arcade/view/FireTuningTest.java`:
+- [X] T005 [P] Create `TST/arcade/view/FireTuningTest.java`:
   - `FireTuning.of(group, map)` clamps every value into `[min, max]`;
   - NaN or a missing value gives the group's default;
   - colours are masked to RGB;
   - `ARCADE_DEFAULTS` and `SCORE_DEFAULTS` differ only on the parameters whose two defaults differ;
   - equal maps give equal tunings (same `equals` and `hashCode`);
   - the spark count `floor(2.5 * min(streak, 12) + 1e-9) + 20` equals `20 + 5 * min(streak, 12) / 2` for every streak from 0 to 128.
-- [ ] T006 [P] (FR-017, SC-010) Create `TST/arcade/view/FireTuningIdentityTest.java`:
+- [X] T006 [P] (FR-017, SC-010) Create `TST/arcade/view/FireTuningIdentityTest.java`:
   - `FlameDrawing.items(viewport, tier, flames, texts)` and the new overload with `FireTuning.ARCADE_DEFAULTS` give equal item lists (shape, role, points, colour, opacity, code) for FULL and BALANCED, Discreet and Full, levels 0, 0.3 and 1, motion on and off, 0 and 5 bursts, on the seven window shapes of spec 009;
   - the reference scene built with the defaults is byte-identical to `reference/flame-reading.scene.txt` (read the file, do not regenerate it);
   - `new FlameLevel()` and `new FlameLevel(ARCADE_DEFAULTS)` give the same levels over a scripted sequence of updates, holds and resumes.
-- [ ] T007 [P] Create `TST/session/FireTuningStoreTest.java` with an in-memory `ArcadeChoices.Persistence`:
+- [X] T007 [P] Create `TST/session/FireTuningStoreTest.java` with an in-memory `ArcadeChoices.Persistence`:
   - `save` then `load` gives the same tuning for each group, and only values that differ from the default are written;
   - `reset(group)` gives the defaults and leaves the other group untouched;
   - a corrupt value (`"abc"`), an out-of-range value or a colour without `#` gives the default or the clamped value;
   - a persistence that throws on get or set gives the defaults, and `false` on write, never an exception;
   - `scoreSetting()` is OFF when missing or unknown, and `setScoreSetting(FULL)` then `scoreSetting()` gives FULL.
-- [ ] T008 [P] Create `TST/arcade/view/FireSourceScanTest.java` (SC-009, contracts/fire-tuning.md "Catalogue"). It scans the number literals of `ARCADE/view/FireField.java`, `FireColours.java` and `FlameDrawing.java`:
+- [X] T008 [P] Create `TST/arcade/view/FireSourceScanTest.java` (SC-009, contracts/fire-tuning.md "Catalogue"). It scans the number literals of `ARCADE/view/FireField.java`, `FireColours.java` and `FlameDrawing.java`:
   - inside the pure helpers (`value`, `hash`, `smooth`, `lerp`, `clamp`, the two `mix`, `gap`), every number is allowed;
   - 0 and 1 are allowed anywhere;
   - every other literal must be on the allow-list, classified as **fixed (R4)** or **neutral (with its reason)**.
@@ -81,28 +81,30 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   3. Put the fixed and neutral lines into the test's allow-list. The test stays red only on the settings.
   4. A hit that shapes the look but is in no catalogue row is a missing setting: stop and report before adding it (spec FR-015).
   T012 makes it green.
-- [ ] T009 [P] Create `TST/session/ScoreFireSettingKeptTest.java` (SC-007): a fresh store gives OFF. FULL, then a new `FireTuningStore` over the same persistence, gives FULL; the same for DISCREET; a tuned score value survives the same way. (It extends T007's scope through a new file; T007 is left as it is.) Written before T014, it is seen red (the store does not exist yet).
+  *Done*: research R11 holds the 71 hits of 344185cb8, all classified; the octave ratios of the noise are neutral (an octave doubles the frequency), so no setting was missing.
+- [X] T009 [P] Create `TST/session/ScoreFireSettingKeptTest.java` (SC-007): a fresh store gives OFF. FULL, then a new `FireTuningStore` over the same persistence, gives FULL; the same for DISCREET; a tuned score value survives the same way. (It extends T007's scope through a new file; T007 is left as it is.) Written before T014, it is seen red (the store does not exist yet).
 
 ### Implementation
 
-- [ ] T010 Create `ARCADE/view/FireParameter.java` (public enum): the catalogue of data-model.md, with the Arcade defaults referencing the existing constants where they exist, `labelKey()` = `practice.fire.<key>`, `tooltipKey()` = `practice.fire.<key>.tip`, `section()`, `unit()`, `kind()`, `inArcade()`/`inScore()` (`growth.full` is score only). Make T004 pass.
-- [ ] T011 Create `ARCADE/view/FireTuning.java` (public, immutable): `of(Group, Map<FireParameter, Double>)` with clamping, `ARCADE_DEFAULTS`, `SCORE_DEFAULTS`, `value`, `integer`, `colour`, `with(parameter, value)`, `equals` and `hashCode`; `Group` is ARCADE or SCORE. Make T005 pass.
-- [ ] T012 (FR-002, FR-015, FR-016) Give the fire classes a tuning **without changing any existing signature or constant**:
+- *Note on T004 and T006*: the `FlameLevel` constants are package-private in `arcade.ui`, so their two checks live in that package: `TST/arcade/ui/FireParameterLevelDefaultsTest.java` (the growth defaults) and `TST/arcade/ui/FireParameterFlameLevelIdentityTest.java` (the levels over a scripted run). `FireParameterDefaultsTest` counts 48 parameters: the data model has 44 rows, one of them the five colours (plan.md said 50 by mistake, fixed).
+- [X] T010 Create `ARCADE/view/FireParameter.java` (public enum): the catalogue of data-model.md, with the Arcade defaults referencing the existing constants where they exist, `labelKey()` = `practice.fire.<key>`, `tooltipKey()` = `practice.fire.<key>.tip`, `section()`, `unit()`, `kind()`, `inArcade()`/`inScore()` (`growth.full` is score only). Make T004 pass.
+- [X] T011 Create `ARCADE/view/FireTuning.java` (public, immutable): `of(Group, Map<FireParameter, Double>)` with clamping, `ARCADE_DEFAULTS`, `SCORE_DEFAULTS`, `value`, `integer`, `colour`, `with(parameter, value)`, `equals` and `hashCode`; `Group` is ARCADE or SCORE. Make T005 pass.
+- [X] T012 (FR-002, FR-015, FR-016) Give the fire classes a tuning **without changing any existing signature or constant**:
   - `ARCADE/view/FireColours.java`: `colour(step, tuning)` and `alpha(step, discreet, tuning)`; steps, scale, most and discreet are read from the tuning.
   - `ARCADE/view/FireField.java`: `FireField(viewport, tier, flames, tuning)` and `cell(viewport, tier, tuning)`. Every literal of `heat`/`noise` (0.12, 0.08, 3.0, 1.15, 1.5, 1.3, 0.2, 0.6, 1.7, 0.35, 0.5, 0.3, 0.2, the octave divisors 2, 1, 0.5 and 4, 2, 1 through `noise.scale` and `noise.aspect`, RISE, EMBER_ROWS, COLUMNS, SMALLEST, CORNER_HEIGHT, DISCREET) is read from the tuning, and the clock is multiplied by `motion.speed`.
   - `ARCADE/view/FlameDrawing.java`: `items(viewport, tier, flames, texts, tuning)`. The spark literals (20, 2.5, 12, 0.25, 10, 16, 10, 8, MOST_SPARKS, SPARK_LIFE) come from the tuning. The spark start row is `EMBER_ROWS + round(sparks.start × tongueRows(start))`, which at 1 is today's top of the flames. `weight` uses `height.middle` and `height.curve` (`d * d` when the curve is 2, so that the defaults stay bit-identical).
   - `ARCADE/view/FlameState.java`: an additive constructor with a `FireTuning`, and `tuning()`, which is `ARCADE_DEFAULTS` when absent.
   - The old entry points delegate with `ARCADE_DEFAULTS`, or `flames.tuning()`. Keep `WIDEN`, `NEAR_TEXT`, `RAMP`, `SEED`, the hash and `TONGUES` fixed (research R4).
   - Make T006 and T008 pass, with every T003 test green.
-- [ ] T013 `ARCADE/ui/FlameLevel.java`: an additive constructor `FlameLevel(FireTuning)` reading `growth.from`, `growth.minJudged`, `growth.rise`, `growth.fall` and `growth.maxStep`; `new FlameLevel()` keeps the constants. `ARCADE/ui/ArcadeFrameSource.java`: an additive constructor parameter for the Arcade tuning (default `ARCADE_DEFAULTS`), used for its `FlameLevel`, its spark life (in place of `SPARK_NANOS`) and its `FlameState`. Make the FlameLevel part of T006 pass; `ArcadeFrameSourceTest` and `ArcadeFrameSourceBurstsTest` stay green.
-- [ ] T014 Create `PR/session/FireTuningStore.java`:
+- [X] T013 `ARCADE/ui/FlameLevel.java`: an additive constructor `FlameLevel(FireTuning)` reading `growth.from`, `growth.minJudged`, `growth.rise`, `growth.fall` and `growth.maxStep`; `new FlameLevel()` keeps the constants. `ARCADE/ui/ArcadeFrameSource.java`: an additive constructor parameter for the Arcade tuning (default `ARCADE_DEFAULTS`), used for its `FlameLevel`, its spark life (in place of `SPARK_NANOS`) and its `FlameState`. Make the FlameLevel part of T006 pass; `ArcadeFrameSourceTest` and `ArcadeFrameSourceBurstsTest` stay green.
+- [X] T014 Create `PR/session/FireTuningStore.java`:
   - module `tuxguitar-practice-fire`;
   - keys `arcade.<key>`, `score.<key>` and `score.setting`;
   - numbers written with `Double.toString`, colours as `#RRGGBB`;
   - `of(TGContext)` built on `TGConfigManager` like `FollowChoices.of`;
   - `load`, `save`, `reset`, `scoreSetting`, `setScoreSetting`; never throws.
   Make T007 and T009 pass.
-- [ ] T015 Use the stored Arcade tuning in a real Arcade run: `PR/ui/PracticeWindow.java` (around line 858, where `ArcadeSession` gets `getFlames()`) passes `FireTuningStore.of(context).load(ARCADE)` down to `ArcadeFrameSource` (through `PR/arcade/ui/ArcadeSession.java`, with an additive parameter). With nothing stored, it is `ARCADE_DEFAULTS`. Gate: practice suite green, T003 tests unchanged. Commit the phase.
+- [X] T015 Use the stored Arcade tuning in a real Arcade run: `PR/ui/PracticeWindow.java` (around line 858, where `ArcadeSession` gets `getFlames()`) passes `FireTuningStore.of(context).load(ARCADE)` down to `ArcadeFrameSource` (through `PR/arcade/ui/ArcadeSession.java`, with an additive parameter). With nothing stored, it is `ARCADE_DEFAULTS`. Gate: practice suite green, T003 tests unchanged. Commit the phase.
 
 ## Phase 3: User Story 1 — A fire that grows with my streak (Priority: P1) 🎯 MVP
 

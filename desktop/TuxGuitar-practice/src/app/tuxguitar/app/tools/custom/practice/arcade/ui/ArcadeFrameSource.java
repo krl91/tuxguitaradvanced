@@ -9,6 +9,8 @@ import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeRun;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeScoring;
 import app.tuxguitar.app.tools.custom.practice.arcade.core.ArcadeVerdict;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.ArcadeScene;
+import app.tuxguitar.app.tools.custom.practice.arcade.view.FireParameter;
+import app.tuxguitar.app.tools.custom.practice.arcade.view.FireTuning;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.FlameState;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.QualityController;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.QualityTier;
@@ -46,7 +48,9 @@ public final class ArcadeFrameSource {
 	private final FlameSetting flames;
 	private final boolean flameMotion;
 	private final ArcadeScoring scoring;
-	private final FlameLevel flameLevel = new FlameLevel();
+	private final FireTuning tuning;
+	private final FlameLevel flameLevel;
+	private final long sparkNanos;
 	private long flameClock;
 	private long flameLast = Long.MIN_VALUE;
 	private boolean levelHeld;
@@ -56,9 +60,6 @@ public final class ArcadeFrameSource {
 
 	/** How much the clock must have moved for the music to be taken as begun. */
 	private static final long MOVED_NANOS = 30_000_000L;
-
-	/** A burst of sparks lasts this long on the flame clock (spec 018 SC-005). */
-	private static final long SPARK_NANOS = 1_000_000_000L;
 
 	/** How far the clock of the player may be from the picture's own time for the music to be taken as begun. */
 	private static final long AGREE_NANOS = 400_000_000L;
@@ -94,6 +95,21 @@ public final class ArcadeFrameSource {
 	 */
 	public ArcadeFrameSource(ArcadeScene scene, FollowTimeline timeline, long firstTick, TempoClock clock, Supplier<ArcadeRun.View> run,
 			IntSupplier speedPercent, QualityController quality, long countInNanos, long startNanos, FlameSetting flames, boolean flameMotion, ArcadeScoring scoring) {
+		this(scene, timeline, firstTick, clock, run, speedPercent, quality, countInNanos, startNanos, flames, flameMotion, scoring, FireTuning.ARCADE_DEFAULTS);
+	}
+
+	/**
+	 * With the values of the Arcade fire chosen in the Advanced tab (spec 019 FR-019): the growth of its level, the life of its sparks and its look.
+	 *
+	 * @param tuning the values of Arcade's fire, read when the run started; null for the defaults
+	 */
+	public ArcadeFrameSource(ArcadeScene scene, FollowTimeline timeline, long firstTick, TempoClock clock, Supplier<ArcadeRun.View> run,
+			IntSupplier speedPercent, QualityController quality, long countInNanos, long startNanos, FlameSetting flames, boolean flameMotion, ArcadeScoring scoring,
+			FireTuning tuning) {
+		this.tuning = (tuning != null ? tuning : FireTuning.ARCADE_DEFAULTS);
+		this.flameLevel = new FlameLevel(this.tuning);
+		// a burst of sparks lasts as long as a spark (spec 018 SC-005)
+		this.sparkNanos = Math.round(this.tuning.value(FireParameter.SPARKS_LIFE) * 1e9);
 		this.flames = (flames != null ? flames : FlameSetting.OFF);
 		this.flameMotion = flameMotion;
 		this.scoring = scoring;
@@ -208,7 +224,7 @@ public final class ArcadeFrameSource {
 		int maximum = view == null ? 0 : this.scoring.maximum(judged);
 		this.flameLevel.update(maximum > 0 ? view.score() / (double) maximum : 0.0, judged, wallNanos);
 		collectBursts(view);
-		return new FlameState(this.flames, this.flameLevel.level(), this.flameClock, this.flameMotion, this.bursts);
+		return new FlameState(this.flames, this.flameLevel.level(), this.flameClock, this.flameMotion, this.bursts, this.tuning);
 	}
 
 	/** Each event newly right since the last picture adds a burst with the flame clock and the streak; a burst is dropped after one second. */
@@ -226,7 +242,7 @@ public final class ArcadeFrameSource {
 			}
 			this.rightsSeen = rights;
 		}
-		while (!this.bursts.isEmpty() && this.flameClock - this.bursts.get(0).clockNanos() >= SPARK_NANOS) {
+		while (!this.bursts.isEmpty() && this.flameClock - this.bursts.get(0).clockNanos() >= this.sparkNanos) {
 			this.bursts.remove(0);
 		}
 	}

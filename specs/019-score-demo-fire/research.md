@@ -190,8 +190,34 @@ The guard itself is unchanged: 4 px widening, 28 px ramp, 0.2 % (FR-005, FR-016)
 
 | Literal | Method | Class | Reason |
 |---|---|---|---|
+| `/ 2.0` | FireField.FireField | neutral | centres the columns: half of what is left of the width |
+| `1e9` | FireField.FireField | neutral | nanoseconds to seconds |
+| `0.6`, `1.7`, `0.35` (sway), `0.12`, `0.08`, `3.0`, `1.15`, `1.5`, `1.3`, `0.2`, `0.5`/`0.3`/`0.2` (octave weights) | FireField.heat, noise | **setting** | `sway.width`, `sway.speed`, `sway.rows`, `ember.glow`, `ember.flicker`, `body.ramp`, `body.heat`, `body.falloff`, `flicker.strength`, `flicker.base`, `noise.large/medium/fine`: read from the tuning in T012 |
+| `2.0`, `4.0`, `1.0`, `0.5` (noise divisors, today) | FireField.noise | **setting** | the size and the proportion of the noise: `noise.scale` (2) and `noise.aspect` (2) in T012, `x / scale`, `y / (aspect × scale)` |
+| `2.0`, `4.0` (after T012: `scale / 2.0`, `scale / 4.0`, `tall / 2.0`, `tall / 4.0`) | FireField.noise | neutral | an octave doubles the frequency, by definition: the second and third octaves are the first at twice and four times the frequency. Their size, proportion and weight are set by `noise.scale`, `noise.aspect` and `noise.large/medium/fine` |
+| `2.0` | FireField.cell | fixed (R4) | the BALANCED tier has cells twice as big: a rule of the automatic tiers |
+| `1e-9` | FireField.tongueRows | neutral | rounding guard of a ceiling |
+| `2` | FireField.weight | neutral | `2 * col < columns`: the left half of the width |
+| `0.5` | FireField.heat | neutral | `k + 0.5`: the middle of a cell; `noise - 0.5`: the noise centred on 0 |
+| `2` | FireColours.colour | neutral | `steps - 2` and `SCALE.length - 2`: the number of gaps between the lit steps and between the five colours |
+| `16`, `8` | FireColours.colour | neutral | the red, green and blue bytes of a colour 0xRRGGBB |
+| `3`, `2` | FlameDrawing.items | fixed (R4) | the item code: `parts = full ? 3 : 2` layers per tongue, `TONGUES / 2` at BALANCED, half the tongues in Discreet |
+| `4` | FlameDrawing.items | fixed (R4) | the item code: `group / parts * 4 + group % parts + 1` |
+| `20`, `5`/`2` (2.5), `12`, `0.25`, `10.0`, `16.0`, `10.0` (drift), `8.0` | FlameDrawing.sparks | **setting** | `sparks.base`, `sparks.perStreak`, `sparks.streakCap`, `sparks.zone`, `sparks.rise`, `sparks.riseSpread`, `sparks.drift`, `sparks.fade`: read from the tuning in T012 |
+| `31L`, `0xFFFF`, `65536.0`, `17`, `33` | FlameDrawing.sparks | fixed (R4) | the hash that draws each spark: its bit fields (from 1, 17 and 33, 16 bits each) and their scale to 0..1 |
+| `0.5` | FlameDrawing.sparks | neutral | `- 0.5`: the drift centred on 0, left or right |
+| `1e-6` | FlameDrawing.sparks | neutral | a spark too faint to see is not drawn |
+| `1e-9` | FlameDrawing.sparkCount (new in T012) | neutral | rounding guard of a floor |
+| `1e9` | FlameDrawing.sparkLifeNanos (new in T012) | neutral | seconds to nanoseconds |
+| `2.0` | FlameDrawing.weight | neutral | `2.0 * t - 1.0`: the place across the width, -1 to 1; after T012 also `curve == 2.0`, the bit-identical `d * d` of the default curve |
+| `2`, `3` | FlameDrawing.faded | neutral | indices of a box {x1, y1, x2, y2} |
+| `3.0`, `2.0` | FlameDrawing.faded | fixed (R4) | the smoothstep of the reading guard |
+| `2` | FlameDrawing.textBoxes | neutral | index of the size of a text item; `i += 2`: the corners of a badge, two values each |
+| `0.66`, `0.6` | FlameDrawing.textBoxes | fixed (R4) | the estimate of a text's box: width per letter and half height |
+| `2.0` | FlameDrawing.textBoxes | neutral | a centred text: half its width on each side |
+| `8` | FlameDrawing.textBoxes | neutral | the eight values of a badge's four corners |
 
-_To be filled in T008._
+Run on 2026-10-31 at 344185cb8: 71 hits, all classified above. The hits marked **setting** must disappear once T012 reads them from the tuning; the fixed and neutral ones are the allow-list of the test (an entry is "class method literal", so the same number elsewhere is not allowed). No hit shapes the look without a catalogue row: the ratio between the octaves of the noise is the meaning of an octave, and every other shaping number has its row.
 
 **Rationale**: three analysis passes (4, 5 and 6) each found literals missing from a list written in advance. Classifying what the scanner actually finds is exact and leaves nothing out. A literal that shapes the look but is in no catalogue row stops the work and is reported (FR-015).
 

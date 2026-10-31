@@ -1,9 +1,15 @@
 package app.tuxguitar.app.tools.custom.practice.arcade.ui;
 
+import app.tuxguitar.app.tools.custom.practice.arcade.view.FireParameter;
+import app.tuxguitar.app.tools.custom.practice.arcade.view.FireTuning;
+
 /**
  * The level of the stage flames, 0 (embers) to 1 (full), of one run (spec 009 FR-002 to FR-004, FR-010; research R4, R11, R12). It follows a target that is
  * made of the real share of the maximum, rising quickly and falling slowly, so that the picture never leaps. It is state of the picture only: nothing of
  * the judging reads it. UI thread only; a new object is made for each run, so it starts at 0 and the count of judged events is that of the run.
+ *
+ * <p>Where the growth starts, the judged events it waits for, its speeds and its longest step come from a {@link FireTuning} (spec 019); the constants
+ * below are Arcade's defaults.
  */
 public final class FlameLevel {
 
@@ -19,10 +25,33 @@ public final class FlameLevel {
 	/** A long gap between two pictures (a stall) moves the level as if it were this long, never more. */
 	static final long MAX_STEP_NANOS = 50_000_000L;
 
+	private final double from;
+	private final int minJudged;
+	private final double risePerSecond;
+	private final double fallPerSecond;
+	private final long maxStepNanos;
+
 	private double level;
 	private long lastNanos;
 	private boolean started;
 	private boolean held;
+
+	public FlameLevel() {
+		this.from = 0.5;
+		this.minJudged = MIN_JUDGED;
+		this.risePerSecond = RISE_PER_SECOND;
+		this.fallPerSecond = FALL_PER_SECOND;
+		this.maxStepNanos = MAX_STEP_NANOS;
+	}
+
+	/** A level that grows as the tuning says (spec 019 FR-015); with Arcade's defaults it is the level of {@link #FlameLevel()}. */
+	public FlameLevel(FireTuning tuning) {
+		this.from = tuning.value(FireParameter.GROWTH_FROM);
+		this.minJudged = tuning.integer(FireParameter.GROWTH_MIN_JUDGED);
+		this.risePerSecond = tuning.value(FireParameter.GROWTH_RISE);
+		this.fallPerSecond = tuning.value(FireParameter.GROWTH_FALL);
+		this.maxStepNanos = Math.round(tuning.value(FireParameter.GROWTH_MAX_STEP) * 1e6);
+	}
 
 	/** The level now. */
 	public double level() {
@@ -40,17 +69,17 @@ public final class FlameLevel {
 			this.lastNanos = wallNanos;
 			return;
 		}
-		long elapsed = Math.max(0L, Math.min(wallNanos - this.lastNanos, MAX_STEP_NANOS));
+		long elapsed = Math.max(0L, Math.min(wallNanos - this.lastNanos, this.maxStepNanos));
 		this.lastNanos = wallNanos;
 		if (this.held) {
 			return;
 		}
 		double seconds = elapsed / 1e9;
-		double target = (judgedEvents < MIN_JUDGED ? 0.0 : Math.max(0.0, Math.min(1.0, (shareOfTheMaximum - 0.5) / 0.5)));
+		double target = (judgedEvents < this.minJudged ? 0.0 : Math.max(0.0, Math.min(1.0, (shareOfTheMaximum - this.from) / (1.0 - this.from))));
 		if (target > this.level) {
-			this.level = Math.min(target, this.level + RISE_PER_SECOND * seconds);
+			this.level = Math.min(target, this.level + this.risePerSecond * seconds);
 		} else {
-			this.level = Math.max(target, this.level - FALL_PER_SECOND * seconds);
+			this.level = Math.max(target, this.level - this.fallPerSecond * seconds);
 		}
 	}
 

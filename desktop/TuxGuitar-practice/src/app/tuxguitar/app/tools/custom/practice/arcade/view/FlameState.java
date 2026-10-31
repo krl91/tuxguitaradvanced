@@ -9,7 +9,7 @@ import app.tuxguitar.app.tools.custom.practice.session.FlameSetting;
 /**
  * What the scene needs to draw the stage flames of one picture (spec 009 FR-001, FR-013): the setting, the level 0..1 of the flames, the flame clock
  * that moves their sway, and whether they may move at all; and the bursts of sparks of the right notes of the last second (spec 018). Immutable; it never
- * comes from the judging.
+ * comes from the judging. It carries the {@link FireTuning} the fire is drawn with (spec 019): Arcade's defaults unless one is given.
  */
 public final class FlameState {
 
@@ -37,6 +37,7 @@ public final class FlameState {
 	private final long flameClockNanos;
 	private final boolean motion;
 	private final List<Burst> bursts;
+	private final FireTuning tuning;
 
 	/**
 	 * @param setting the setting of the run; null counts as off
@@ -52,11 +53,19 @@ public final class FlameState {
 	 * @param bursts the right notes of the last second, oldest first; null for none
 	 */
 	public FlameState(FlameSetting setting, double level, long flameClockNanos, boolean motion, List<Burst> bursts) {
+		this(setting, level, flameClockNanos, motion, bursts, null);
+	}
+
+	/**
+	 * @param tuning the values the fire is drawn with; null for Arcade's defaults
+	 */
+	public FlameState(FlameSetting setting, double level, long flameClockNanos, boolean motion, List<Burst> bursts, FireTuning tuning) {
 		this.setting = (setting != null ? setting : FlameSetting.OFF);
 		this.level = (Double.isNaN(level) ? 0.0 : Math.max(0.0, Math.min(1.0, level)));
 		this.flameClockNanos = flameClockNanos;
 		this.motion = motion;
 		this.bursts = (bursts != null && !bursts.isEmpty() ? Collections.unmodifiableList(new ArrayList<Burst>(bursts)) : Collections.<Burst>emptyList());
+		this.tuning = (tuning != null ? tuning : FireTuning.ARCADE_DEFAULTS);
 	}
 
 	public FlameSetting setting() {
@@ -78,5 +87,10 @@ public final class FlameState {
 	/** The bursts of sparks, oldest first; never null. */
 	public List<Burst> bursts() {
 		return this.bursts;
+	}
+
+	/** The values the fire is drawn with; never null. */
+	public FireTuning tuning() {
+		return this.tuning;
 	}
 }
