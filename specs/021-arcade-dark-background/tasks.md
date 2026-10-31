@@ -29,7 +29,7 @@ description: "Task list for spec 021: the Arcade view keeps its dark design in e
 
 ## Phase 1: Setup (baseline)
 
-- [ ] T001 Run the full gate `mvn -o -e clean verify -P native-modules` from `CB` and record its test counts in `BASE` (expected: the spec 020 counts, 73, 1, 1, 10 (1 skipped), 2, 378, 24, 9, 1371 (12 skipped)). Then, from `CB`, run `mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest='*SwtTest' -Dsurefire.failIfNoSpecifiedTests=false` once and record the number of native tests and their result. `ArcadeCanvasSwtTest` depends on painting time and has flaked under load before (spec 020 T026). If it, or any native test, fails, rerun that test once. Green on the rerun: record it as a known timing test, not a regression. Red twice: stop and report it to the owner. A test is never changed.
+- [X] T001 Run the full gate `mvn -o -e clean verify -P native-modules` from `CB` and record its test counts in `BASE` (expected: the spec 020 counts, 73, 1, 1, 10 (1 skipped), 2, 378, 24, 9, 1371 (12 skipped)). Then, from `CB`, run `mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest='*SwtTest' -Dsurefire.failIfNoSpecifiedTests=false` once and record the number of native tests and their result. `ArcadeCanvasSwtTest` depends on painting time and has flaked under load before (spec 020 T026). If it, or any native test, fails, rerun that test once. Green on the rerun: record it as a known timing test, not a regression. Red twice: stop and report it to the owner. A test is never changed.
 
 No foundational phase: the change needs no shared groundwork.
 
@@ -41,7 +41,7 @@ No foundational phase: the change needs no shared groundwork.
 
 **Independent Test**: `ArcadeDarkBackgroundSwtTest` is green on the owner's Mac in dark appearance (it was red before), and all the native tests stay green.
 
-- [ ] T002 [US1] Write `UIT/ArcadeDarkBackgroundSwtTest.java` (tag `swt-gui`, its own small harness; `ArcadePixelAlignmentSwtTest` and `PaintedAlignment` are not changed, only reused read-only where they are package-visible). It opens a real SWT window with an `ArcadeCanvas`, paints one frame on a fake clock and copies the canvas into pixels with `GC.copyArea`. It reads **every pixel** of the empty rectangles of the frame: the rectangles that no scene item covers, computed from the bounds of the frame's items, such as the band above the horizon outside the field (R3). `SceneItem` has no bounds method, so the test derives each item's box from its values, as `UiPainterRenderer` reads them:
+- [X] T002 [US1] Write `UIT/ArcadeDarkBackgroundSwtTest.java` (tag `swt-gui`, its own small harness; `ArcadePixelAlignmentSwtTest` and `PaintedAlignment` are not changed, only reused read-only where they are package-visible). It opens a real SWT window with an `ArcadeCanvas`, paints one frame on a fake clock and copies the canvas into pixels with `GC.copyArea`. It reads **every pixel** of the empty rectangles of the frame: the rectangles that no scene item covers, computed from the bounds of the frame's items, such as the band above the horizon outside the field (R3). `SceneItem` has no bounds method, so the test derives each item's box from its values, as `UiPainterRenderer` reads them:
   - LINE: its two endpoints; CURVE: its four points; both widened by half the line width;
   - QUAD: its four corners;
   - DISC and RING: centre `value(0)`, `value(1)` ± the larger of the two radii `value(2)` and `value(3)` (`SceneItem.Shape`), plus half the line width for a RING;

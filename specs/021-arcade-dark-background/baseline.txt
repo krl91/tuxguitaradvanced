@@ -1,0 +1,15 @@
+Spec 021 — baseline and gates (owner's Mac, Apple Silicon, dark appearance, Temurin 21, offline Maven)
+
+== T001 — baseline (2026-10-31)
+Full gate: mvn -o -e clean verify -P native-modules in desktop/build-scripts/tuxguitar-macosx-swt-cocoa
+  BUILD SUCCESS: 73/0, 1/0, 1/0, 10/0 (1 skipped), 2/0, audio-engine 378/0, 24/0, 9/0, practice 1371/0 (12 skipped)   (= spec 020)
+Native tests (-P swt-gui-tests -Dtest='*SwtTest'): 45 run, 5 failures, all of them the new ArcadeDarkBackgroundSwtTest (written during the run, see T002);
+  the 40 existing native tests: green, no rerun needed.
+
+== T002 — ArcadeDarkBackgroundSwtTest, red before the fix (same run)
+  theEmptyAreasOfAFrameHaveTheDesignsBackgroundOnTheNormalPath   normal path 1280x720: the empty pixel at 0,0 is 323232, not b0e13
+  theEmptyAreasOfAFrameHaveTheDesignsBackgroundOnTheSimplifiedPath  red (the system background, 323232)
+  theBackgroundFollowsALiveResize                                resize 1600x900: the empty pixel at 0,0 is 323232, not b0e13
+  theCanvasHasTheDesignsBackgroundAsItsOwn                       expected 0x0B0E13 (724499) but was 0x323232 (3289650)
+  theFrameBeforeTheFirstNoteHasTheDesignsBackground              red (the system background, 323232)
+  0x323232 is the window background the system gives in dark appearance: it is what shows under the translucent scene today.
