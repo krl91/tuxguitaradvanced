@@ -88,13 +88,13 @@ No foundational phase: the change needs no shared groundwork.
 
 ## Phase 4: The release v0.8.0-beta.4 (FR-010, SC-006)
 
-- [ ] T008 Push the T007 commit (both refs; one push). Start the release: `gh workflow run release.yml -R krl91/tuxguitaradvanced --ref master -f tag=v0.8.0-beta.4`. Follow it to the end. Expected:
+- [X] T008 Push the T007 commit (both refs; one push). Start the release: `gh workflow run release.yml -R krl91/tuxguitaradvanced --ref master -f tag=v0.8.0-beta.4`. Follow it to the end. Expected:
   - published as a pre-release with 4 files: `linux-amd64.deb`, `linux-x86_64.tar.gz`, `macos-arm64.zip`, `windows-x86_64.zip`;
   - the macOS package checks OK [1]–[6] (`H"280bd902…"`);
   - the notes of T005.
 
   Record the run id, the files and the checks in `BASE`. If it fails, apply the bug fix protocol (at most 3 tries) and never move a published tag.
-- [ ] T009 Polish:
+- [X] T009 Polish:
   - in `specs/STATUS.md`, record 021 with the release;
   - in the memories, update `pending-macos15-ci` (the GUI tests green, spec 020 closed by spec 021, the cause was the light appearance of the CI machine) and `pending-score-fire-spec` (v0.8.0-beta.4 published; spec 019 resumes at phases 4 to 6), and the matching lines of `MEMORY.md`;
   - set `.specify/feature.json` back to `specs/019-score-demo-fire`, so that the next `/speckit-implement` resumes spec 019 at phases 4 to 6, and say so in the report.

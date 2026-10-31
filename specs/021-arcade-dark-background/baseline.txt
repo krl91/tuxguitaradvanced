@@ -35,3 +35,12 @@ FR-004 (every tier) by construction: the toolkit fills the background before any
     without the load it passes (T004). On CI it passed once in four runs (spec 020: first run green, rerun red; 41246758808 red; 41251035766 red).
     The code behaves as designed (spec 003: a slow machine steps down a tier); the test depends on the speed of the machine. No code fix exists that keeps
     the product's behaviour, and the test is never changed: reported to the owner, T006 stopped (bug fix protocol: report).
+
+== T007 — spec 020 closed (T026, T027, T031), STATUS 020 and 021, the beta.4 notes add the GitHub run (f5f609adf); spec 021 FR-009/SC-003 amended by the owner (option A)
+
+== T008 — one push 1d7bdc154..f5f609adf (both refs); release run 41251492865: every job green
+  Images: validate, create-release, build-windows, build-linux, release: ubuntu-24.04; build-macos-arm64: macos-15-arm64
+  designated => identifier "app.tuxguitaradvanced" and certificate root = H"280bd902de0512b59d70228c5faa441d3eb6af55"; OK [6]; bundle verified: TuxGuitarAdvanced.app
+  Release v0.8.0-beta.4 published as a pre-release, target f5f609adf, 4 files: linux-amd64.deb, linux-x86_64.tar.gz, macos-arm64.zip, windows-x86_64.zip
+
+== T009 — STATUS 021, memories, .specify/feature.json back to specs/019-score-demo-fire
