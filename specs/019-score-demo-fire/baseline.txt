@@ -1,0 +1,43 @@
+Baseline of spec 019 (T001, T002, T003), 2026-10-31, starting commit 955d7a051
+
+T001. The full gate before any code, JDK 21 (Temurin 21.0.13), from desktop/build-scripts/tuxguitar-macosx-swt-cocoa:
+mvn -o -e clean verify -P native-modules: BUILD SUCCESS
+  TuxGuitar-lib 73, editor-utils 1, compat 1, gtp 10 (1 skipped), midi 2, audio-engine 378, tuner-next 24, synth-gervill 9,
+  TuxGuitar-practice 1324 (0 failures, 0 errors, 12 skipped)
+mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am: BUILD SUCCESS, practice SWT tests 37 (0 failures)
+specs/003-arcade-mode/benchmark/ restored after each build (only its timings change).
+
+Flame items of ReferenceScenes.flameReading() at 1280x720 (throwaway count, not committed):
+  FULL      FLAME_TONGUE 4938 + FLAME_EMBER 364 = 5302 flame items (5410 items in all)
+  BALANCED  FLAME_TONGUE 1268 + FLAME_EMBER 182 = 1450 flame items (1557 items in all)
+  The same as after the owner's look gate of spec 018 (T030).
+
+T002. The cost of a full Wait repaint of the score (research R2)
+How: a throwaway timing print around handle.paintControl() inside fillPaintBuffer() of
+desktop/TuxGuitar/src/app/tuxguitar/app/view/util/TGBufferedPainterLocked.java, and a throwaway loop of 100 redraws started 15 s after the
+first paint, each redraw asked by redrawLater() after the previous paint. Built app (the jar of desktop/TuxGuitar swapped into the .app, then
+put back), tests/demo-arcade-morceau.tg, window 1280x800 (score canvas 1057x587), player stopped (running=false at every paint).
+The app was started as a second, isolated instance (its own user.home and java.io.tmpdir) so that the owner's open TuxGuitar and its settings
+were not touched.
+  run 1: 100 repaints, median 3.199 ms, 95th percentile 3.940 ms (min 2.481, max 9.521)
+  run 2: 100 repaints, median 3.243 ms, 95th percentile 3.670 ms (min 2.496, max 6.455)
+  (a first run with the default window, canvas 977x462, gave about 2.3-2.5 ms per paint: the cost grows with the visible score)
+Decision: HOOK NEEDED. The median is above 3 ms in both runs (the 95th percentile stays below 6 ms). T026 adds the overlay-only repaint
+(TGBufferedPainterLocked.requestOverlayOnly, TGControl.redrawOverlay).
+The print and the loop were removed: git diff desktop/TuxGuitar is empty.
+
+Follow (research R2, "Follow"): FollowPlayback.start() (session/FollowPlayback.java) mutes the practised track with setPlayerOnlyMute and then
+calls play() on the application's MidiPlayer (session/MidiFollowPlayer.java), so MidiPlayer.isRunning() is true during a Follow run, backing on
+or muted, and TGControl.paintTablature takes its incremental branch (only the played beat, when it changed). This was checked by reading the
+source only: starting a Follow run needs the practice window and was not automated, so the print was not seen with running=true. With the
+hook added anyway, the score fire asks for the overlay-only repaint in both modes, so the Follow answer does not change the plan.
+
+T003. Existing tests that must stay unchanged and green (under desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/):
+  arcade/view/FireFieldTest, arcade/view/FireColoursTest, arcade/view/FireTranslucencyTest, arcade/view/FlameSparksTest,
+  arcade/view/FireLookTuningTest, arcade/ui/FlameCellsPaintTest, arcade/view/FlameSceneTest, arcade/view/FlameContrastTest,
+  session/FlameParityTest, arcade/view/ArcadeReferenceSceneTest, arcade/view/ArcadeSceneQualityTest, arcade/ui/ArcadeFlamesSettingTest,
+  arcade/ui/ArcadeFrameSourceTest, arcade/ui/ArcadeFrameSourceBurstsTest, arcade/ui/FallbackRendererTest, arcade/ui/ArcadeCanvasSwtTest,
+  arcade/ui/ReducedMotionTest, arcade/ui/FlameLevelTest,
+  ui/FollowPanelTest, ui/FollowPanelPlayTimeTest, ui/FollowPanelRecordBoxesTest, ui/FollowPanelLeniencyTest, ui/FollowPanelSwtTest,
+  ui/PracticeWindowSwtTest, ui/PracticeWindowStartPathSourceTest (a source scan of PracticeWindow: beware when wiring the fire there).
+  And the reference file arcade/reference/flame-reading.scene.txt, unchanged.

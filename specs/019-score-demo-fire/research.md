@@ -34,7 +34,10 @@
 
 **Follow**: the reasoning above assumes the MIDI player is running during a Follow run (`MidiFollowPlayer`, `FollowPlayback`), so that `paintTablature` takes its incremental branch. T002 checks it: whether `MidiPlayer.isRunning()` is true during a Follow run, also with the backing muted. If it is not, Follow repaints the whole score like Wait, its repaint is measured too, and the same threshold decides the hook for both modes.
 
-**Measured** (filled in Phase 1): _see `baseline.txt`_.
+**Measured** (Phase 1, T002, 2026-10-31; details in `baseline.txt`):
+- Wait, `tests/demo-arcade-morceau.tg`, window 1280×800 (canvas 1057×587), 100 repaints, two runs: median **3.20 ms** and **3.24 ms**, 95th percentile 3.94 ms and 3.67 ms.
+- **Decision: hook needed** (the median is above 3 ms). T026 adds `requestOverlayOnly()` and `redrawOverlay()`.
+- Follow: `FollowPlayback.start()` calls `play()` on the application's `MidiPlayer`, so `isRunning()` is true during a run, backing muted or not. Checked by reading the source; the runtime print was not seen in a Follow run. The score fire uses the overlay-only repaint in both modes.
 
 ## R3. The streak, and what counts as right or wrong
 

@@ -28,17 +28,17 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 ## Phase 1: Setup (baseline, no code)
 
-- [ ] T001 Write the baseline before any code in `specs/019-score-demo-fire/baseline.txt`:
+- [X] T001 Write the baseline before any code in `specs/019-score-demo-fire/baseline.txt`:
   - the starting commit;
   - the counts of `mvn -o -e clean verify -P native-modules` from `BUILD`, per module (practice expected 1324, 0 failures, 12 skipped);
   - the `swt-gui-tests` run (expected 37);
   - the number of flame items of `ReferenceScenes.flameReading()` at FULL and BALANCED.
   Restore `specs/003-arcade-mode/benchmark/` afterwards.
-- [ ] T002 Measure the cost of a full Wait repaint of the score (research R2) and record the median and the 95th percentile in `specs/019-score-demo-fire/baseline.txt`.
+- [X] T002 Measure the cost of a full Wait repaint of the score (research R2) and record the median and the 95th percentile in `specs/019-score-demo-fire/baseline.txt`.
   - **How**: a throwaway timing print around `fillPaintBuffer()` in `CORE/util/TGBufferedPainterLocked.java`, **not committed**. Built app, `tests/demo-arcade-morceau.tg`, window 1280×800, player stopped, 100 redraws forced by a throwaway loop.
   - **Follow** (research R2, "Follow"): with the same throwaway print, check whether `MidiPlayer.getInstance(context).isRunning()` is true during a Follow run, with the backing on and muted. If it is not, measure the Follow repaint in the same way; the threshold then decides the hook for both modes.
   - **Then**: remove the print, check that `git diff CORE` is empty, and write the decision: **hook needed** if the median is above 3 ms or the 95th percentile is above 6 ms, otherwise **no hook**. Copy the numbers and the decision into research R2 ("Measured").
-- [ ] T003 List in `specs/019-score-demo-fire/baseline.txt` the existing tests that must stay unchanged and green: `FireFieldTest`, `FireColoursTest`, `FireTranslucencyTest`, `FlameSparksTest`, `FireLookTuningTest`, `FlameCellsPaintTest`, `FlameSceneTest`, `FlameContrastTest`, `FlameParityTest`, `ArcadeReferenceSceneTest`, `ArcadeSceneQualityTest`, `ArcadeFlamesSettingTest`, `ArcadeFrameSourceTest`, `ArcadeFrameSourceBurstsTest`, `FallbackRendererTest`, `ArcadeCanvasSwtTest`, `ReducedMotionTest`, and the `FollowPanel`/`PracticeWindow` tests that exist. Find them with `grep -rl` under `TST`.
+- [X] T003 List in `specs/019-score-demo-fire/baseline.txt` the existing tests that must stay unchanged and green: `FireFieldTest`, `FireColoursTest`, `FireTranslucencyTest`, `FlameSparksTest`, `FireLookTuningTest`, `FlameCellsPaintTest`, `FlameSceneTest`, `FlameContrastTest`, `FlameParityTest`, `ArcadeReferenceSceneTest`, `ArcadeSceneQualityTest`, `ArcadeFlamesSettingTest`, `ArcadeFrameSourceTest`, `ArcadeFrameSourceBurstsTest`, `FallbackRendererTest`, `ArcadeCanvasSwtTest`, `ReducedMotionTest`, and the `FollowPanel`/`PracticeWindow` tests that exist. Find them with `grep -rl` under `TST`.
 
 ## Phase 2: Foundational — the tuning, with identical pictures (blocks every story)
 
