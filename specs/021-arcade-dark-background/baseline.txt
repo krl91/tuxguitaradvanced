@@ -23,3 +23,15 @@ Full gate: BUILD SUCCESS, the T001 counts: 73/0, 1/0, 1/0, 10/0 (1 skipped), 2/0
 FR-004 (every tier) by construction: the toolkit fills the background before any painter; confirmed on CI by ArcadeCanvasSwtTest (every tier) in T006.
 
 == T005 — docs/release-notes/v0.8.0-beta.4.md: only what was run locally; T007 adds the GitHub run
+
+== T006 — one push df545e3ca..1d7bdc154 (both refs); Practice GUI tests run 41251035766 (macos-15, light appearance, 1d7bdc154): FAILED, 45 run, 1 failure
+  ArcadeDarkBackgroundSwtTest: 5/5 green on the light-appearance machine (green locally in dark appearance too: SC-002)
+  ArcadePixelAlignmentSwtTest: 2/2 green (red on the three earlier CI runs: fixed by spec 021)
+  ArcadeCanvasSwtTest.theStageFlamesArePaintedOnTheRealPainterInEveryTierAndNotAtAllAtTheLowestOne: "the full tier at full level expected <84> but was <28>"
+    (the same as run 41246758808, before the fix). Not the background: the test counts flame items of the scene, not pixels.
+    Cause: the test paints 24 real frames at the full tier, then reads the scene at the source's current tier. The real paint costs go to the quality
+    controller; on a slow machine it steps down to BALANCED during those 24 frames, and BALANCED has 14 x 2 = 28 groups of flames (84 = 28 x 3 at FULL).
+    Reproduced on the owner's Mac: the same test with every core loaded (yes > /dev/null, 2 per core) fails with exactly "expected <84> but was <28>";
+    without the load it passes (T004). On CI it passed once in four runs (spec 020: first run green, rerun red; 41246758808 red; 41251035766 red).
+    The code behaves as designed (spec 003: a slow machine steps down a tier); the test depends on the speed of the machine. No code fix exists that keeps
+    the product's behaviour, and the test is never changed: reported to the owner, T006 stopped (bug fix protocol: report).
