@@ -134,3 +134,19 @@ Run 41229170643 (191bfec41): every job green.
     ArcadeCanvasSwtTest (rerun only): "the controller reached BALANCED ==> expected: <BALANCED> but was: <PERFORMANCE>": depends on painting time (the
       quality tier fell one step further on the slower machine; it already flaked under load locally). Reported, not changed.
   No test changed or skipped.
+
+== T029 — Practice GUI tests prints the displays and uploads the pictures that failed (df545e3ca; one push a0cfaac73.. -> df545e3ca with 602c48d60)
+
+== T030 — the diagnostic run 41246758808 (macos-15, df545e3ca): failed again, the same two tests
+  The machine's display: 1024x768, Scale 1 (com.apple.windowserver.displays); the system appearance is light (the owner's Mac: AppleInterfaceStyle Dark).
+  ArcadePixelAlignmentSwtTest: the same message as before; the saved picture failed-fret_1_string_1_1280x720_p=0.3.png (1280x720) shows the scene painted
+    over a light grey background (about #ECECEC): the neck body is NECK_COLOUR at NECK_ALPHA 0.10 and the field is translucent too, so the whole scene comes
+    out pale, and the fret wires come out dark on light. The test looks for wires lighter than 0x505060 on a dark neck: on the light picture every pixel of
+    the row is lighter than that, so no thin line is found ("[]").
+  ArcadeCanvasSwtTest.theStageFlamesArePaintedOnTheRealPainterInEveryTierAndNotAtAllAtTheLowestOne: "the full tier at full level expected <84> but was <28>"
+    (flames counted on the same pale background: very probably the same cause, not checked picture by picture).
+  Cause: nothing in the Arcade view paints the dark background of the design (Theme.background() 0x0B0E13 is used only for the images); the translucent
+    scene is drawn over the canvas's system background, which is dark in dark mode and light in light mode. Theme.LIGHT exists (FR-065) but nothing selects
+    it. It is not caused by macOS 15: any Mac in light mode (and the light default themes of Linux and Windows, not checked) shows the same pale Arcade view.
+  The owner's Mac is in dark mode, so the local runs are green. Reported to the owner: choosing what the Arcade view does in light mode (always the dark
+  design, or the light theme following the system) is a product decision outside spec 020 (T031: a cause that is not macOS 15 is reported). No test changed.

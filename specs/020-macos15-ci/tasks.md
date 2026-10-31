@@ -262,7 +262,7 @@ already saves the picture that failed (`PaintedAlignment.check`, in `java.io.tmp
   the colour profile of the main display; after the tests, even when they fail: a step that uploads, as the artifact `practice-gui-diagnostics`, the folder
   `arcade-pixels` of the Java temporary folder (`$TMPDIR`) and the surefire reports of the practice module (`if-no-files-found: warn`, kept 7 days).
   YAML parse ok. Commit; one push of the branch and master (it carries 602c48d60 too).
-- [ ] T030 Start *Practice GUI tests* once (`gh workflow run practice-gui-tests.yml -R krl91/tuxguitaradvanced --ref master`), follow it, download the artifact
+- [X] T030 Start *Practice GUI tests* once (`gh workflow run practice-gui-tests.yml -R krl91/tuxguitaradvanced --ref master`), follow it, download the artifact
   into the scratchpad, look at the picture of `fret 1 string 1 1280x720 p=0.3` and at its row of wires, and record in `baseline.txt` what differs from a
   local picture of the same frame (size, scale, colours). Name the cause.
 - [ ] T031 If the cause is in the code (not in the test, which is never changed), fix it with the bug fix protocol: a reproducing test first, seen red, at
