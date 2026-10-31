@@ -6,10 +6,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
 import app.tuxguitar.app.tools.custom.practice.arcade.view.Scene;
+import app.tuxguitar.app.tools.custom.practice.arcade.view.Theme;
 import app.tuxguitar.app.tools.custom.practice.arcade.view.Viewport;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UIPaintEvent;
 import app.tuxguitar.ui.event.UIPaintListener;
+import app.tuxguitar.ui.resource.UIColor;
 import app.tuxguitar.ui.resource.UIRectangle;
 import app.tuxguitar.ui.widget.UICanvas;
 import app.tuxguitar.ui.widget.UIContainer;
@@ -46,6 +48,7 @@ public final class ArcadeCanvas {
 	public static final long TICK_NANOS = FRAME_NANOS / 2L;
 
 	private final UICanvas canvas;
+	private final UIColor background;
 	private final ArcadeFrameSource source;
 	private final PainterRenderer renderer;
 	private final FrameScheduler scheduler;
@@ -65,6 +68,12 @@ public final class ArcadeCanvas {
 		this.wall = wall;
 		this.renderer = new GuardedRenderer(new UiPainterRenderer(factory, fontName), UiPainterRenderer.fallback(factory, fontName), forceFallback);
 		this.canvas = factory.createCanvas(parent, false);
+		// spec 021 FR-001: the scene is mostly translucent (the neck at 10 %), so what lies under it must be the design's own dark background, the one of the
+		// reference pictures, and not the window background the system gives (light grey in light appearance). It is the canvas's background, which the
+		// toolkit fills before every paint, whatever painter and tier follow; not an item of the scene, whose items and calls the existing tests record (R1)
+		int dark = Theme.DARK.background();
+		this.background = factory.createColor((dark >> 16) & 0xFF, (dark >> 8) & 0xFF, dark & 0xFF);
+		this.canvas.setBgColor(this.background);
 		this.scheduler = new FrameScheduler(() -> ui.post(this::requestRedraw), wall);
 		this.canvas.addPaintListener(new UIPaintListener() {
 			@Override
@@ -108,6 +117,7 @@ public final class ArcadeCanvas {
 		this.disposed = true;
 		stop();
 		this.renderer.dispose();
+		this.background.dispose();
 	}
 
 	public void setObserver(FrameObserver observer) {
