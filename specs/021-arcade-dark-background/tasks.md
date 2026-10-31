@@ -29,7 +29,7 @@ description: "Task list for spec 021: the Arcade view keeps its dark design in e
 
 ## Phase 1: Setup (baseline)
 
-- [ ] T001 Run the full gate `mvn -o -e clean verify -P native-modules` from `CB` and record its test counts in `BASE` (expected: the spec 020 counts, 73, 1, 1, 10 (1 skipped), 2, 378, 24, 9, 1371 (12 skipped)). Then, from `CB`, run `mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest='*SwtTest' -Dsurefire.failIfNoSpecifiedTests=false` once and record the number of native tests and their result.
+- [ ] T001 Run the full gate `mvn -o -e clean verify -P native-modules` from `CB` and record its test counts in `BASE` (expected: the spec 020 counts, 73, 1, 1, 10 (1 skipped), 2, 378, 24, 9, 1371 (12 skipped)). Then, from `CB`, run `mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest='*SwtTest' -Dsurefire.failIfNoSpecifiedTests=false` once and record the number of native tests and their result. `ArcadeCanvasSwtTest` depends on painting time and has flaked under load before (spec 020 T026). If it, or any native test, fails, rerun that test once. Green on the rerun: record it as a known timing test, not a regression. Red twice: stop and report it to the owner. A test is never changed.
 
 No foundational phase: the change needs no shared groundwork.
 
@@ -41,7 +41,7 @@ No foundational phase: the change needs no shared groundwork.
 
 **Independent Test**: `ArcadeDarkBackgroundSwtTest` is green on the owner's Mac in dark appearance (it was red before), and all the native tests stay green.
 
-- [ ] T002 [US1] Write `UIT/ArcadeDarkBackgroundSwtTest.java` (tag `swt-gui`, its own small harness; `ArcadePixelAlignmentSwtTest` and `PaintedAlignment` are not changed, only reused read-only where they are package-visible). It opens a real SWT window with an `ArcadeCanvas`, paints one frame on a fake clock and copies the canvas into pixels with `GC.copyArea`. It reads points with no scene item on them, chosen from the bounds of the frame's items (R3), and the expected colour is `0B0E13` within ±6 per channel. Cases:
+- [ ] T002 [US1] Write `UIT/ArcadeDarkBackgroundSwtTest.java` (tag `swt-gui`, its own small harness; `ArcadePixelAlignmentSwtTest` and `PaintedAlignment` are not changed, only reused read-only where they are package-visible). It opens a real SWT window with an `ArcadeCanvas`, paints one frame on a fake clock and copies the canvas into pixels with `GC.copyArea`. It reads **every pixel** of the empty rectangles of the frame: the rectangles that no scene item covers, computed from the bounds of the frame's items, such as the band above the horizon outside the field (R3). The rectangles are at least 8×8 pixels, and at least one is found at every size. Each pixel must be `0B0E13` within ±6 per channel (SC-001). The failure message gives the first wrong pixel, its position and its colour. Cases:
   - (a) the normal path, 1280×720;
   - (b) the simplified path (`forceFallback = true`), 1280×720;
   - (c) after a resize to 1600×900 and then to 800×500, the normal path;
@@ -52,9 +52,9 @@ No foundational phase: the change needs no shared groundwork.
   - in the constructor, after `factory.createCanvas`, create a `UIColor` once from `Theme.DARK.background()` and set it with `this.canvas.setBgColor(...)`;
   - release that colour in `dispose()`, after the canvas.
 
-  Add a comment that cites spec 021 FR-001 and says why the canvas and not the scene (research R1). Change nothing else: not the scene, not the renderers, not `Theme`.
-- [ ] T004 [US1] Run `ArcadeDarkBackgroundSwtTest` again and see it **green** (all four cases). Run all the native tests (`-Dtest='*SwtTest'`) and see them green, with the T001 count plus the new tests. Run the full gate: BUILD SUCCESS with the T001 counts. Record everything in `BASE`.
-- [ ] T005 [US1] Write `docs/release-notes/v0.8.0-beta.4.md`. It says that the Arcade view keeps its dark design when the system is in light appearance (before, it came out washed out), on macOS, Linux and Windows; that the other windows still follow the system; that macOS 15 is still the minimum; and what was checked. Name the release "TuxGuitarAdvanced", in the style of `docs/release-notes/v0.8.0-beta.3.md`. Commit the phase: T003–T005, the fix, the gates and the notes.
+  Add a comment that cites spec 021 FR-001 and says why the canvas and not the scene (research R1). Change nothing else: not the scene, not the renderers, not `Theme` (FR-005), not the demo fire over the score, `ScoreFireScene` and its overlay (FR-007).
+- [ ] T004 [US1] Run `ArcadeDarkBackgroundSwtTest` again and see it **green** (all four cases). Run all the native tests (`-Dtest='*SwtTest'`) and see them green, with the T001 count plus the new tests (a timing test that fails: one rerun, as in T001). FR-004 is covered by construction: the toolkit fills the background under whatever paints, so every tier is covered, and `ArcadeCanvasSwtTest`, which paints every tier, passing on CI (T006) confirms it. Record that in `BASE`. Run the full gate: BUILD SUCCESS with the T001 counts. Record everything in `BASE`.
+- [ ] T005 [US1] Write `docs/release-notes/v0.8.0-beta.4.md`. It says that the Arcade view keeps its dark design when the system is in light appearance (before, it came out washed out), on macOS, Linux and Windows; that the other windows still follow the system; that macOS 15 is still the minimum; and what was checked **locally** (the new test red then green, the native tests, the gate). Nothing that is not yet run is written: T007 adds the GitHub run. Name the release "TuxGuitarAdvanced", in the style of `docs/release-notes/v0.8.0-beta.3.md`. Commit the phase: T003–T005, the fix, the gates and the notes.
 
 **Checkpoint**: US1 is done locally. The light appearance itself is checked by US2 on the CI machine.
 
@@ -67,12 +67,13 @@ No foundational phase: the change needs no shared groundwork.
 **Independent Test**: one green run of the workflow.
 
 - [ ] T006 [US2] One push of the branch and master (it carries every unpushed commit since `df545e3ca`). Start *Practice GUI tests* once (`gh workflow run practice-gui-tests.yml -R krl91/tuxguitaradvanced --ref master`) and follow it to the end.
-  - **Green**: record the run id and the counts in `BASE`.
+  - **Green**: record the run id and the counts in `BASE`. Also record from the run's report that `ArcadeDarkBackgroundSwtTest` passed there, on the light-appearance machine, while it passed locally in dark appearance. Together with T004, that is SC-002 (the same picture in light and in dark).
   - **Red**: download the artifact `practice-gui-diagnostics` into the scratchpad and look at the pictures. Apply the bug fix protocol: a reproducing test first, at most 3 tries, one push and one run per try; then report and stop (R4). Never change a test.
 - [ ] T007 [US2] Close spec 020:
   - in `specs/020-macos15-ci/baseline.txt`, record the T006 run under T031 as the fix of the cause found by T030 (spec 021);
   - in `specs/020-macos15-ci/tasks.md`, tick T026 and T031, and T027 for what it still lacked;
-  - in `specs/STATUS.md`, set 020 to its final count and add the 021 line.
+  - in `specs/STATUS.md`, set 020 to its final count and add the 021 line;
+  - in `docs/release-notes/v0.8.0-beta.4.md`, add the T006 run, which checked the Arcade view's graphical tests on GitHub's light-appearance macOS 15 machine.
 
   Commit (the push waits for T008).
 
@@ -88,7 +89,7 @@ No foundational phase: the change needs no shared groundwork.
   Record the run id, the files and the checks in `BASE`. If it fails, apply the bug fix protocol (at most 3 tries) and never move a published tag.
 - [ ] T009 Polish:
   - in `specs/STATUS.md`, record 021 with the release;
-  - in the memories, update `pending-macos15-ci` (the GUI tests green, spec 020 closed) and add the dark-background fact where it belongs;
+  - in the memories, update `pending-macos15-ci` (the GUI tests green, spec 020 closed by spec 021, the cause was the light appearance of the CI machine) and `pending-score-fire-spec` (v0.8.0-beta.4 published; spec 019 resumes at phases 4 to 6), and the matching lines of `MEMORY.md`;
   - set `.specify/feature.json` back to `specs/019-score-demo-fire`, so that the next `/speckit-implement` resumes spec 019 at phases 4 to 6, and say so in the report.
 
   Commit; the push waits for the next round.
@@ -99,7 +100,8 @@ No foundational phase: the change needs no shared groundwork.
 
 - [ ] T010 [HUMAN] Install v0.8.0-beta.4 over v0.8.0-beta.3. With the Mac in light appearance (System Settings > Appearance > Light), open the Arcade view and play a song. Check that:
   - the scene is dark, as in dark appearance;
-  - the buttons under it and the other windows are light (SC-005).
+  - the buttons under it and the other windows are light (SC-005);
+  - switching the appearance between light and dark while the Arcade view is open leaves the scene dark (FR-003).
 
   Also do the pending check of spec 020, T028: *Open Anyway* is offered at the first launch, there is no new microphone request, and the tuner hears the input.
 
