@@ -29,5 +29,25 @@ jobs:
       uses: ./.github/actions/install-swt
       with:
         platform: macos
+    # spec 020 T029: what the machine has for a screen, to read a picture that failed
+    - name: Displays of the machine
+      run: |
+        system_profiler SPDisplaysDataType || true
+        defaults read /Library/Preferences/com.apple.windowserver.displays 2>/dev/null | head -60 || true
+        echo "TMPDIR=$TMPDIR"
     - name: SWT tests of the practice module
       run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e test -P swt-gui-tests -pl ../../TuxGuitar-practice -am -Dtest='*SwtTest' -Dsurefire.failIfNoSpecifiedTests=false
+    # the pixel tests save the picture that failed in the Java temporary folder (PaintedAlignment.check)
+    - name: Collect the pictures and reports
+      if: always()
+      run: |
+        mkdir -p "$RUNNER_TEMP/diagnostics"
+        cp -R "$TMPDIR/arcade-pixels" "$RUNNER_TEMP/diagnostics/" 2>/dev/null || echo "no picture saved"
+        cp -R desktop/TuxGuitar-practice/target/surefire-reports "$RUNNER_TEMP/diagnostics/" 2>/dev/null || echo "no surefire reports"
+    - uses: actions/upload-artifact@v7
+      if: always()
+      with:
+        name: practice-gui-diagnostics
+        path: ${{ runner.temp }}/diagnostics
+        if-no-files-found: warn
+        retention-days: 7

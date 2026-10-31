@@ -253,6 +253,25 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 ---
 
+## Phase 10: The pixel test on macOS 15 (owner's choice B, 2026-10-31; SC-005, T026)
+
+The owner chose to fix within spec 020 the failure of `ArcadePixelAlignmentSwtTest` on macos-15 (T026), first by seeing what the machine painted. The test
+already saves the picture that failed (`PaintedAlignment.check`, in `java.io.tmpdir/arcade-pixels/`); nothing in it changes.
+
+- [X] T029 In `.github/workflows/practice-gui-tests.yml`, before the tests: a step that prints the machine's displays (`system_profiler SPDisplaysDataType`) and
+  the colour profile of the main display; after the tests, even when they fail: a step that uploads, as the artifact `practice-gui-diagnostics`, the folder
+  `arcade-pixels` of the Java temporary folder (`$TMPDIR`) and the surefire reports of the practice module (`if-no-files-found: warn`, kept 7 days).
+  YAML parse ok. Commit; one push of the branch and master (it carries 602c48d60 too).
+- [ ] T030 Start *Practice GUI tests* once (`gh workflow run practice-gui-tests.yml -R krl91/tuxguitaradvanced --ref master`), follow it, download the artifact
+  into the scratchpad, look at the picture of `fret 1 string 1 1280x720 p=0.3` and at its row of wires, and record in `baseline.txt` what differs from a
+  local picture of the same frame (size, scale, colours). Name the cause.
+- [ ] T031 If the cause is in the code (not in the test, which is never changed), fix it with the bug fix protocol: a reproducing test first, seen red, at
+  most 3 tries; the full gate locally; then one push and one run of *Practice GUI tests*, expected green on macos-15 (SC-005). If the cause is the machine
+  itself (no screen, a colour profile that no user has), report it to the owner with the picture and stop. Record it in `baseline.txt`; then do the
+  rest of T026–T027 (feature.json back to spec 019 only when T026 is closed). Commit.
+
+---
+
 ## Dependencies & Execution Order
 
 - **Phase 1 → Phase 2** before any story.
