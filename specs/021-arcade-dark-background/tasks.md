@@ -51,7 +51,8 @@ No foundational phase: the change needs no shared groundwork.
   - (a) the normal path, 1280×720;
   - (b) the simplified path (`forceFallback = true`), 1280×720;
   - (c) after a resize to 1600×900 and then to 800×500, the normal path;
-  - (d) `getControl().getBgColor()` gives red 0x0B, green 0x0E, blue 0x13.
+  - (d) `getControl().getBgColor()` gives red 0x0B, green 0x0E, blue 0x13;
+  - (e) a frame painted before the first note (the clock before the first event, spec Edge Cases: the first frame, the countdown), the normal path, 1280×720. A pause shows a frame frozen at a moment like any other, so (a) covers it.
 
   Run it from `CB` with `-Dtest=ArcadeDarkBackgroundSwtTest` and see it **red**: the read colour is the system background. Record the failures and the read colours in `BASE`. Commit.
 - [ ] T003 [US1] In `UI/ArcadeCanvas.java`:
@@ -59,7 +60,7 @@ No foundational phase: the change needs no shared groundwork.
   - release that colour in `dispose()`, after the canvas.
 
   Add a comment that cites spec 021 FR-001 and says why the canvas and not the scene (research R1). Change nothing else: not the scene, not the renderers, not `Theme` (FR-005), not the demo fire over the score, `ScoreFireScene` and its overlay (FR-007).
-- [ ] T004 [US1] Run `ArcadeDarkBackgroundSwtTest` again and see it **green** (all four cases). Run all the native tests (`-Dtest='*SwtTest'`) and see them green, with the T001 count plus the new tests (a timing test that fails: one rerun, as in T001). FR-004 is covered by construction: the toolkit fills the background under whatever paints, so every tier is covered, and `ArcadeCanvasSwtTest`, which paints every tier, passing on CI (T006) confirms it. Run the full gate: BUILD SUCCESS with the T001 counts. Record everything in `BASE`.
+- [ ] T004 [US1] Run `ArcadeDarkBackgroundSwtTest` again and see it **green** (all five cases). Run all the native tests (`-Dtest='*SwtTest'`) and see them green, with the T001 count plus the new tests (a timing test that fails: one rerun, as in T001). FR-004 is covered by construction: the toolkit fills the background under whatever paints, so every tier is covered, and `ArcadeCanvasSwtTest`, which paints every tier, passing on CI (T006) confirms it. Run the full gate: BUILD SUCCESS with the T001 counts. Record everything in `BASE`.
 - [ ] T005 [US1] Write `docs/release-notes/v0.8.0-beta.4.md`. It says that the Arcade view keeps its dark design when the system is in light appearance (before, it came out washed out), on macOS, Linux and Windows; that the other windows still follow the system; that macOS 15 is still the minimum; and what was checked **locally** (the new test red then green, the native tests, the gate). Nothing that is not yet run is written: T007 adds the GitHub run. Name the release "TuxGuitarAdvanced", in the style of `docs/release-notes/v0.8.0-beta.3.md`. Commit the phase: T003–T005, the fix, the gates and the notes.
 
 **Checkpoint**: US1 is done locally. The light appearance itself is checked by US2 on the CI machine.
@@ -107,7 +108,8 @@ No foundational phase: the change needs no shared groundwork.
 - [ ] T010 [HUMAN] Install v0.8.0-beta.4 over v0.8.0-beta.3. With the Mac in light appearance (System Settings > Appearance > Light), open the Arcade view and play a song. Check that:
   - the scene is dark, as in dark appearance;
   - the buttons under it and the other windows are light (SC-005);
-  - switching the appearance between light and dark while the Arcade view is open leaves the scene dark (FR-003).
+  - switching the appearance between light and dark while the Arcade view is open leaves the scene dark (FR-003);
+  - optional: with System Settings > Accessibility > Display > *Reduce transparency* on, the Arcade scene stays dark (spec Edge Cases; this cannot be automated without changing the system settings).
 
   Also do the pending check of spec 020, T028: *Open Anyway* is offered at the first launch, there is no new microphone request, and the tuner hears the input.
 
