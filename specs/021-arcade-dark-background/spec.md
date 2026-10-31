@@ -22,6 +22,7 @@
 
 - Q: Should spec 021 cover only the Arcade scene, or also the demo fire over the score and the Arcade result window? → A: The Arcade scene only; the demo fire over the score and the Arcade result window stay unchanged (FR-006, FR-007).
 - Q: Once spec 021 is implemented and the graphical checks are green, should a new pre-release be published right away? → A: Yes: v0.8.0-beta.4 is published as soon as the checks are green, with the macOS, Linux and Windows packages and its release notes (FR-010).
+- Q (2026-11-01, after run 41251035766): the flame-count check of `ArcadeCanvasSwtTest` fails on GitHub's slow macOS 15 machine because the quality controller steps down a tier during its real frames (reproduced locally under CPU load; the code behaves as designed, and tests are never changed). What then? → A: Option A: it is a known speed-dependent check on GitHub's machines; FR-009 and SC-003 accept that one failure, spec 020 is closed and v0.8.0-beta.4 is published, its notes saying so.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -74,7 +75,7 @@ The owner starts the graphical checks of the practice module on GitHub's macOS 1
 - **FR-006**: The ordinary windows around the Arcade view (the Arcade result window, the practice windows, the menus and dialogs) MUST keep following the system appearance, unchanged; only the Arcade scene is in scope (owner, 2026-10-31).
 - **FR-007**: The demo fire painted over the score (spec 019) MUST stay unchanged: it is laid over the score on purpose and gets no background.
 - **FR-008**: Each new behaviour MUST have a new automated check, written first and seen failing; no existing check is changed, skipped or removed.
-- **FR-009**: After the change, the *Practice GUI tests* workflow MUST pass on GitHub's macOS 15 machine. Recording that run closes tasks T026 and T031 of spec 020.
+- **FR-009**: After the change, the *Practice GUI tests* workflow MUST pass on GitHub's macOS 15 machine, with one accepted exception (owner, 2026-11-01): the flame-count check of `ArcadeCanvasSwtTest` (`theStageFlamesArePaintedOnTheRealPainterInEveryTierAndNotAtAllAtTheLowestOne`), which depends on the machine's speed. It must pass on the owner's Mac. Recording that run closes tasks T026 and T031 of spec 020.
 - **FR-010**: Once FR-009 holds, the pre-release v0.8.0-beta.4 MUST be published right away (owner, 2026-10-31), with the macOS, Linux and Windows packages and release notes that say the Arcade view keeps its dark design in light appearance.
 
 ## Success Criteria *(mandatory)*
@@ -83,7 +84,7 @@ The owner starts the graphical checks of the practice module on GitHub's macOS 1
 
 - **SC-001**: With the system in light appearance, a painted Arcade frame shows the design's dark background in 100 % of the scene area not covered by a scene element (checked on the picture of the frame), and its fret wires are lighter than the neck.
 - **SC-002**: The same frame painted in light and in dark appearance gives the same picture, within the small colour shifts the system may apply.
-- **SC-003**: One run of *Practice GUI tests* on GitHub's macOS 15 machine ends with every check passing (0 failures), with no existing check changed.
+- **SC-003**: One run of *Practice GUI tests* on GitHub's macOS 15 machine ends with every check passing except, at most, the speed-dependent flame-count check of FR-009, with no existing check changed.
 - **SC-004**: The full local build passes with the same counts as before for every existing test, plus only new tests.
 - **SC-005**: The ordinary windows of the application in light appearance look as before the change (checked by the owner on the release).
 - **SC-006**: v0.8.0-beta.4 is published with its four files (macOS, Windows, Linux archive and Linux installer) and every check of the release passes.
