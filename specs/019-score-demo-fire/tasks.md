@@ -200,6 +200,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 - [ ] T034 [P] [US4] (FR-016, FR-019) Create `TST/ui/FireExtremesTest.java` (SC-011): for each parameter at its minimum and at its maximum, the others at their defaults, both groups:
   - the score scene (1280×800, guard boxes at the bottom) and the Arcade flame items (reference viewport, text boxes) have no item above 12 % opacity within 4 px of a box;
   - the item count is at most `(384 columns × rows) + 1000`;
+  - the scripted Wait and Follow runs of T021, replayed with the score tuning at that extreme, give the same verdicts, streak and summary as at the defaults (SC-011, "the verdicts are unchanged");
   - nothing throws.
   It may pass at once after T012; it is then seen red by a deliberate mutation (the guard's `faded` bypassed for one run, not committed), and the mutation is named in the commit message.
 - [ ] T035 [P] [US4] (FR-020) Create `TST/ui/FirePreviewTest.java` (pure part of `FirePreview`):
