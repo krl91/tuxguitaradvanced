@@ -44,7 +44,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 **Goal**: every value that shapes a fire lives in a `FireTuning` whose defaults are today's constants; no picture changes.
 
-**Independent test**: `FireParameterDefaultsTest`, `FireTuningTest`, `FireTuningIdentityTest` and `FireTuningStoreTest` are green, and every test of T003 is green, unchanged.
+**Independent test**: `FireParameterDefaultsTest`, `FireTuningTest`, `FireTuningIdentityTest`, `FireTuningStoreTest`, `FireSourceScanTest` and `ScoreFireSettingKeptTest` are green, and every test of T003 is green, unchanged.
 
 ### Tests first (see them fail)
 
@@ -84,7 +84,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - `ARCADE/view/FlameDrawing.java`: `items(viewport, tier, flames, texts, tuning)`. The spark literals (20, 2.5, 12, 0.25, 10, 16, 10, 8, MOST_SPARKS, SPARK_LIFE) come from the tuning. The spark start row is `EMBER_ROWS + round(sparks.start × tongueRows(start))`, which at 1 is today's top of the flames. `weight` uses `height.middle`.
   - `ARCADE/view/FlameState.java`: an additive constructor with a `FireTuning`, and `tuning()`, which is `ARCADE_DEFAULTS` when absent.
   - The old entry points delegate with `ARCADE_DEFAULTS`, or `flames.tuning()`. Keep `WIDEN`, `NEAR_TEXT`, `RAMP`, `SEED`, the hash and `TONGUES` fixed (research R4).
-  - Make T006 pass with every T003 test green.
+  - Make T006 and T008 pass, with every T003 test green.
 - [ ] T013 `ARCADE/ui/FlameLevel.java`: an additive constructor `FlameLevel(FireTuning)` reading `growth.from`, `growth.minJudged`, `growth.rise`, `growth.fall` and `growth.maxStep`; `new FlameLevel()` keeps the constants. `ARCADE/ui/ArcadeFrameSource.java`: an additive constructor parameter for the Arcade tuning (default `ARCADE_DEFAULTS`), used for its `FlameLevel`, its spark life (in place of `SPARK_NANOS`) and its `FlameState`. Make the FlameLevel part of T006 pass; `ArcadeFrameSourceTest` and `ArcadeFrameSourceBurstsTest` stay green.
 - [ ] T014 Create `PR/session/FireTuningStore.java`:
   - module `tuxguitar-practice-fire`;
@@ -92,14 +92,14 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - numbers written with `Double.toString`, colours as `#RRGGBB`;
   - `of(TGContext)` built on `TGConfigManager` like `FollowChoices.of`;
   - `load`, `save`, `reset`, `scoreSetting`, `setScoreSetting`; never throws.
-  Make T007 pass.
+  Make T007 and T009 pass.
 - [ ] T015 Use the stored Arcade tuning in a real Arcade run: `PR/ui/PracticeWindow.java` (around line 858, where `ArcadeSession` gets `getFlames()`) passes `FireTuningStore.of(context).load(ARCADE)` down to `ArcadeFrameSource` (through `PR/arcade/ui/ArcadeSession.java`, with an additive parameter). With nothing stored, it is `ARCADE_DEFAULTS`. Gate: practice suite green, T003 tests unchanged. Commit the phase.
 
 ## Phase 3: User Story 1 — A fire that grows with my streak (Priority: P1) 🎯 MVP
 
 **Goal**: with *Score fire* on, a fire burns at the bottom of the visible score in Wait and Follow, grows with the streak and falls on a mistake, without ever covering the framed note, the next note or the palette.
 
-**Independent test**: `ScoreStreakTest`, `ScoreFireSceneTest`, `ScoreFireLevelTest` and `ScoreFireOverlaySwtTest` are green; manually, Full in the Mode tab, then a Wait run of right notes and a wrong note.
+**Independent test**: `ScoreStreakTest`, `ScoreFireSceneTest`, `ScoreFireLevelTest`, `ScoreFireOverlaySwtTest`, `ScoreGuardBoxesTest` and `ScoreFireVerdictsTest` are green; manually, Full in the Mode tab, then a Wait run of right notes and a wrong note.
 
 ### Tests first (see them fail)
 
@@ -122,22 +122,23 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - after a mistake at full height, the level is 0 within 1.0 s (+ one step) (FR-003, SC-002);
   - `hold`/`resume` keep the level through a pause.
 - [ ] T019 [P] [US1] Create `TST/ui/ScoreFireOverlaySwtTest.java` (profile `swt-gui-tests`, real toolkit, like `ArcadeCanvasSwtTest`):
-  - a canvas with a first listener that fills it white, given to `ScoreFire` through its canvas port (T024), then `ScoreFire` started at level 1 and FULL: after a paint, the bottom-corner pixels are not white and the top half is white;
+  - a canvas with a first listener that fills it white, given to `ScoreFire` through its canvas port (T025), then `ScoreFire` started at level 1 and FULL: after a paint, the bottom-corner pixels are not white and the top half is white;
   - with setting OFF, `start` adds no listener and the canvas stays white;
   - after `stop()`, a paint leaves the canvas white;
   - the first listener's pixels outside the fire are unchanged.
-- [ ] TNEW [P] [US1] Create `TST/ui/ScoreGuardBoxesTest.java` on the pure `ScoreGuardBoxes` (SC-003, research R8):
+- [ ] T020 [P] [US1] Create `TST/ui/ScoreGuardBoxesTest.java` on the pure `ScoreGuardBoxes` (SC-003, research R8):
   - with a layout stub giving frame boxes for the current and next events, the result is those two boxes as `{x1, y1, x2, y2}`, canvas-local, unchanged;
   - a palette at screen (900, 700, 200, 60) over a score area whose screen origin is (100, 80) gives the canvas box (800, 620, 1000, 680);
   - an event with no frame (off the visible score), no next event or no palette is left out, and no box at all gives an empty list;
   - a box partly outside the canvas is kept as it is (the guard fades the fire up to the canvas edge).
+- [ ] T021 [P] [US1] Create `TST/ui/ScoreFireVerdictsTest.java` (FR-008, SC-004): the same scripted Wait run and Follow run, with the fire OFF and FULL, give identical verdicts, accepted counts, streak, timings and summary, and identical calls to `paletteGuard` (the palette of spec 017 moves the same). It drives `ScoreStreak` + `ScoreFire` through a fake canvas port (T025) and checks that nothing of the session is written. Written now, it is red (`ScoreStreak` and `ScoreFire` do not exist yet); T025 makes it pass.
 
 ### Implementation
 
-- [ ] T021 [US1] Create `ARCADE/view/ScoreFireScene.java` (public): `scene(Viewport, QualityTier, FlameState, List<double[]> guard)` returns a `Scene` holding only `FlameDrawing.items(viewport, tier, flames, guard, flames.tuning())`; when the viewport is fewer than 8 cells high, the level is taken as 0 (ember rows only). Make T017 pass.
-- [ ] T022 [US1] Create `PR/ui/ScoreStreak.java` (pure) per research R3. Make T016 pass.
-- [ ] T023 [US1] Make T018 pass with `FlameLevel(FireTuning)` and the score defaults. Change only `ARCADE/ui/FlameLevel.java` if needed, keeping `new FlameLevel()` identical (T006).
-- [ ] T024 [US1] Create `PR/ui/ScoreFire.java` per contracts/score-overlay.md and data-model "ScoreFire":
+- [ ] T022 [US1] Create `ARCADE/view/ScoreFireScene.java` (public): `scene(Viewport, QualityTier, FlameState, List<double[]> guard)` returns a `Scene` holding only `FlameDrawing.items(viewport, tier, flames, guard, flames.tuning())`; when the viewport is fewer than 8 cells high, the level is taken as 0 (ember rows only). Make T017 pass.
+- [ ] T023 [US1] Create `PR/ui/ScoreStreak.java` (pure) per research R3. Make T016 pass.
+- [ ] T024 [US1] Make T018 pass with `FlameLevel(FireTuning)` and the score defaults. Change only `ARCADE/ui/FlameLevel.java` if needed, keeping `new FlameLevel()` identical (T006).
+- [ ] T025 [US1] Create `PR/ui/ScoreFire.java` per contracts/score-overlay.md and data-model "ScoreFire":
   - `start(setting, tuning, motion)`, `update(streak, newBursts, paused, currentEvent, nextEvent, paletteBox)` and `stop()`;
   - a constructor taking a **canvas port**: a small interface `ScoreFire.Score` with `UICanvas canvas()` (null when there is none), `List<double[]> guardBoxes(PracticeEvent current, PracticeEvent next)` and `void redraw(boolean overlayOnly)`; the production port wraps `TGTabFolder.getInstance(context).findSelectedControl()` and `ScoreGuardBoxes`; the tests give a fake;
   - attaches one `UIPaintListener` to `port.canvas()` and re-attaches if it changes;
@@ -148,16 +149,15 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - a `QualityController(8_000_000L)` fed with the painting time;
   - a `UiPainterRenderer`;
   - `stop()` removes the listener and redraws once.
-  Make T019 pass.
-- [ ] T025 [US1] **Only if T002 decided "hook needed"**: in `CORE/util/TGBufferedPainterLocked.java`, add `requestOverlayOnly()` (a one-shot flag; `paintBufferLocked` skips `fillPaintBuffer()` when the flag is set and the buffer exists with the canvas size, and clears it in every case). In `CORE/component/tab/TGControl.java`, add `redrawOverlay()`, and make `redraw()` clear the flag. `ScoreFire` uses `redrawOverlay()` in Wait.
+  Make T019 and T021 pass.
+- [ ] T026 [US1] **Only if T002 decided "hook needed"**: in `CORE/util/TGBufferedPainterLocked.java`, add `requestOverlayOnly()` (a one-shot flag; `paintBufferLocked` skips `fillPaintBuffer()` when the flag is set and the buffer exists with the canvas size, and clears it in every case). In `CORE/component/tab/TGControl.java`, add `redrawOverlay()`, and make `redraw()` clear the flag. `ScoreFire` uses `redrawOverlay()` in Wait.
   - **First**, a new test `TST/ui/OverlayOnlyRepaintSwtTest.java` (swt-gui-tests): after `redrawOverlay()`, `paintControl` of the handle is not called and the buffer is drawn; after `redraw()`, it is called.
   - Mark the task done with "not needed (T002)" otherwise.
-- [ ] T026 [US1] Wire the fire in `PR/ui/PracticeWindow.java`:
+- [ ] T027 [US1] Wire the fire in `PR/ui/PracticeWindow.java`:
   - when a Wait or Follow run starts, read `FireTuningStore.of(context)` (setting and SCORE tuning) and `SystemReducedMotion` (Phase 6; until then `!ReducedMotion.requested()`), reset a `ScoreStreak` and call `ScoreFire.start`;
   - in `render(PracticeSnapshot)`, next to `paletteGuard.show` (~line 798), and in `renderFollow` (~line 1177), feed the streak and call `ScoreFire.update` with the pause state read as the palette reads it;
   - at `paletteGuard.stop()` (~line 1253) and in `stopNow()`, call `ScoreFire.stop()`.
-- [ ] T027 [US1] Add the *Score fire* drop-down to the Mode tab in `PR/ui/FollowPanel.java`, beside the existing flames choice (~line 210), with Off, Discreet and Full read from and written to `FireTuningStore.setScoreSetting` (contracts/advanced-tab.md "Mode tab"), and its label and tooltip keys `practice.fire.score.setting` and `practice.fire.score.setting.tip`. Add the EN/FR/ES texts in `LANG/messages*.properties`.
-- [ ] T028 [US1] Create `TST/ui/ScoreFireVerdictsTest.java` (FR-008, SC-004): the same scripted Wait run and Follow run, with the fire OFF and FULL, give identical verdicts, accepted counts, streak, timings and summary, and identical calls to `paletteGuard` (the palette of spec 017 moves the same). It drives `ScoreStreak` + `ScoreFire` through a fake canvas port and checks that nothing of the session is written. See it fail before the port exists, then make it pass.
+- [ ] T028 [US1] Add the *Score fire* drop-down to the Mode tab in `PR/ui/FollowPanel.java`, beside the existing flames choice (~line 210), with Off, Discreet and Full read from and written to `FireTuningStore.setScoreSetting` (contracts/advanced-tab.md "Mode tab"), and its label and tooltip keys `practice.fire.score.setting` and `practice.fire.score.setting.tip`. Add the EN/FR/ES texts in `LANG/messages*.properties`.
 - [ ] T029 [US1] Gate: practice suite and `swt-gui-tests` green, T003 tests unchanged. Relaunch the app for a smoke check of Wait with Full on `tests/demo-arcade-morceau.tg`. With a throwaway timing print (not committed), measure the fire's own painting in the listener over 100 frames at FULL, window 1280×800, in Wait and in Follow. Record the median and the 95th percentile in `specs/019-score-demo-fire/baseline.txt` against the plan's 4 ms goal (SC-006). Above it, report before going on. Commit the phase.
 
 ## Phase 4: User Story 2 — Sparks on each right note (Priority: P2)
@@ -200,7 +200,8 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - the panel builds two groups with one row per parameter of each group, and each label and control has a non-empty tooltip;
   - moving a scale writes the clamped value through a fake store at once;
   - *Default values* puts every row of the group back to its default and calls `reset`, leaving the other group untouched;
-  - hiding the panel stops the preview timer.
+  - hiding the panel stops the preview timer;
+  - a value changed while a run is going (a fake run holding the tuning it read at its start) leaves that run's tuning unchanged, and the next `load` gives the new value (FR-019, Edge Case "A setting changed during a run").
 - [ ] T037 [US4] Create `PR/ui/FirePreview.java`:
   - a `UICanvas` of about 360×120 painted by `UiPainterRenderer` from `ScoreFireScene` (score) or from the flame items of an empty Arcade picture (Arcade) through a public facade in `ARCADE/view` (`ScoreFireScene.arcadePreview(viewport, tier, flames)`);
   - its own `FlameLevel(tuning)`, clock, bursts and `QualityController(8_000_000L)`;
@@ -213,14 +214,14 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - tooltips from `tooltipKey()` + unit + "default: X";
   - changes go through `FireTuning.of` (clamped), are saved through `FireTuningStore` and refresh the preview at once.
   Make T036 pass.
-- [ ] T039 [US4] Add the tab `practice.tab.advanced` after *Passages* in `PR/ui/PracticeWindow.java` with `tab(uiFactory, folder, "practice.tab.advanced", layout)`, holding a `FireSettingsPanel`. The preview is shown only when this tab is selected and the window is visible (tab selection listener and window close). Arcade and score runs read the stored tunings at their start (T015, T026).
-- [ ] T040 [US4] Write every label and tooltip in `LANG/messages.properties` (EN), `messages_fr.properties` (FR) and `messages_es.properties` (ES): each tooltip says what the value changes in plain words. Make T033 pass; make T008 and T034 pass, fixing code only. Gate and commit the phase.
+- [ ] T039 [US4] Add the tab `practice.tab.advanced` after *Passages* in `PR/ui/PracticeWindow.java` with `tab(uiFactory, folder, "practice.tab.advanced", layout)`, holding a `FireSettingsPanel`. The preview is shown only when this tab is selected and the window is visible (tab selection listener and window close). Arcade and score runs read the stored tunings at their start (T015, T027).
+- [ ] T040 [US4] Write every label and tooltip in `LANG/messages.properties` (EN), `messages_fr.properties` (FR) and `messages_es.properties` (ES): each tooltip says what the value changes in plain words. Make T033 pass; make T034 pass and check that T008 is still green, fixing code only. Gate and commit the phase.
 
 ## Phase 6: User Story 3 — My choice kept, and the same everywhere (Priority: P3)
 
 **Goal**: the setting survives a restart, defaults to Off, and Reduce motion is read on macOS, Linux and Windows for both fires.
 
-**Independent test**: `ScoreFireSettingKeptTest` and `SystemReducedMotionTest` are green.
+**Independent test**: `SystemReducedMotionTest` is green, and `ScoreFireSettingKeptTest` (Phase 2) still is; manually, restart the app and find the setting kept.
 
 - [ ] T041 [P] [US3] Create `TST/arcade/ui/SystemReducedMotionTest.java` with a fake `CommandRunner` (research R7):
   - **macOS**: delegates (same questions as `ReducedMotionTest`).
@@ -232,7 +233,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - macOS through `ReducedMotion.requested(runner, os)`; the Linux order of research R7; Windows through a single-thread daemon executor, refreshed by `refresh()`;
   - `requested()` is non-blocking on Windows and uses `LIMIT_MILLIS` elsewhere.
   Make T041 pass, with `ReducedMotionTest` unchanged.
-- [ ] T043 [US3] Use `SystemReducedMotion` for Arcade (`PR/ui/PracticeWindow.java` line ~858, in place of `!ReducedMotion.requested()`), for the score fire (T026) and for the previews (T037). Call `refresh()` when the practice window opens and at each run start. Check that T009 (now in Phase 2) is still green, then gate and commit the phase.
+- [ ] T043 [US3] Use `SystemReducedMotion` for Arcade (`PR/ui/PracticeWindow.java` line ~858, in place of `!ReducedMotion.requested()`), for the score fire (T027) and for the previews (T037). Call `refresh()` when the practice window opens and at each run start. Check that T009 (now in Phase 2) is still green, then gate and commit the phase.
 
 ## Phase 7: Polish & cross-cutting concerns
 
@@ -255,16 +256,16 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 ## Dependencies & execution order
 
-- **Phase 1** comes before everything. **T002** decides **T025**.
+- **Phase 1** comes before everything. **T002** decides **T026**.
 - **Phase 2** (T004–T015) blocks every story. The tests T004–T009 come before T010–T014 (T008 before T012, T009 before T014, so both are seen red).
-- **US1** (Phase 3) is the MVP. **US2** (Phase 4) needs US1's `ScoreFire`. **US4** (Phase 5) needs Phase 2 and US1's `ScoreFireScene` for the score preview. **US3** (Phase 6) needs Phase 2. It can come before or after US4, but **T043 touches T026's and T037's call sites**, so it runs after them.
+- **US1** (Phase 3) is the MVP. **US2** (Phase 4) needs US1's `ScoreFire`. **US4** (Phase 5) needs Phase 2 and US1's `ScoreFireScene` for the score preview. **US3** (Phase 6) needs Phase 2. It can come before or after US4, but **T043 touches T027's and T037's call sites**, so it runs after them.
 - **Polish** (Phase 7) comes after all the stories. **T048** is the only human task.
-- **Same-file sequencing**: `PracticeWindow.java` is changed by T015, T026, T039 and T043, in that order; `FlameDrawing.java`, `FireField.java` and `FireColours.java` only by T012; `ScoreFire.java` by T024, T025 and T032.
+- **Same-file sequencing**: `PracticeWindow.java` is changed by T015, T027, T039 and T043, in that order; `FlameDrawing.java`, `FireField.java` and `FireColours.java` only by T012; `ScoreFire.java` by T025, T026 and T032.
 
 ## Parallel examples
 
 - **Phase 2**: T004–T009 together (six new test files).
-- **US1**: T016–T020 together; then T021 and T022 in parallel.
+- **US1**: T016–T021 together; then T022 and T023 in parallel.
 - **US4**: T033–T036 together (four new test files).
 - **US3**: T041 alone (T009 moved to Phase 2).
 - **Polish**: T044 and T045 together.

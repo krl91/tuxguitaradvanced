@@ -115,7 +115,7 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── arcade/view/FireColours.java      # + colour/alpha taking a FireTuning; the old ones unchanged
 ├── arcade/view/FlameDrawing.java     # + items(..., tuning, guard); sparks from a start height; the old items(...) unchanged
 ├── arcade/view/FlameState.java       # + optional FireTuning (additive constructor), ARCADE_DEFAULTS when absent
-├── arcade/view/ScoreFireScene.java   # new, public: the scene of the score fire (viewport, tier, flames, tuning, guard boxes)
+├── arcade/view/ScoreFireScene.java   # new, public: the scene of the score fire (viewport, tier, flames, guard boxes), and arcadePreview(...) for the Arcade preview
 ├── arcade/ui/FlameLevel.java         # + constructor taking rise, fall, min judged and max step; the default one unchanged
 ├── arcade/ui/ArcadeFrameSource.java  # uses the Arcade tuning (spark life, level); defaults unchanged
 ├── arcade/ui/SystemReducedMotion.java # new: macOS (delegates to ReducedMotion), GNOME, KDE, Windows; cached, asynchronous on Windows

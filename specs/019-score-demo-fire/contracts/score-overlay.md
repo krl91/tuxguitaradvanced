@@ -18,6 +18,10 @@
 | sparks | from `sparks.start` of the fire's height (0 = bottom), only at FULL and with motion; ≤ `sparks.most` in the air |
 | same inputs | same items |
 
+## The Arcade preview: `ScoreFireScene.arcadePreview(viewport, tier, flames)` (public, `arcade/view`)
+
+It gives the flame items of an Arcade picture with no game (no lanes, no text), built by `FlameDrawing.items(viewport, tier, flames, no texts, flames.tuning())`, for the Advanced tab's Arcade preview only. With `ARCADE_DEFAULTS`, they are the same items as those of a real Arcade picture of that size, without the fading near texts.
+
 ## Streak to level
 
 - `share = min(1, streak / growth.full)`; the level goes towards `share` at `growth.rise` per second and falls at `growth.fall` per second.
