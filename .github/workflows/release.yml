@@ -21,8 +21,11 @@
 #    tar.gz and the .deb (amd64). Windows uses the SWT build script of the same name.
 #  - The Windows build is cross-compiled on Linux with Mingw-w64 and does not
 #    embed a JRE: Java 17+ must be installed on the target machine.
+#  - The macOS package is built on macOS 15 machines (spec 020: the macOS 14 ones retire on 2026-11-02) and needs macOS 15 or later: the launcher,
+#    the AudioUnit library and the Info.plist declare it, and the bundle check verifies it.
 #  - The macOS launcher is signed with a stable self-signed certificate when the secrets
-#    MACOS_CERT_P12_BASE64 / MACOS_CERT_PASSWORD exist (ad hoc otherwise). The packages are
+#    MACOS_CERT_P12_BASE64 / MACOS_CERT_PASSWORD exist (ad hoc otherwise). The certificate is not trusted on the machine (no trust step: macOS 15
+#    refuses it); the designated requirement names it as root and the bundle check verifies that identity. The packages are
 #    not notarized: the first launch still needs "Open Anyway" in System Settings.
 
 name: Release
@@ -108,10 +111,12 @@ jobs:
 
   build-macos-arm64:
     needs: [validate, create-release]
-    runs-on: macos-14   # Apple Silicon
+    runs-on: macos-15   # Apple Silicon
     env:
       RELEASE_VERSION: ${{ needs.validate.outputs.version }}
       RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+      # the stable certificate's public fingerprint (SHA-1), read from the v0.8.0-beta.2 log: every signed release names it as root (spec 020, FR-006)
+      MACOS_CERT_SHA1: 280bd902de0512b59d70228c5faa441d3eb6af55
     steps:
       - uses: actions/checkout@v5
       - name: Set up JDK 21
@@ -125,10 +130,11 @@ jobs:
         uses: ./.github/actions/install-swt
         with:
           platform: macos
-      - name: Self-tests of the macOS scripts (Info.plist stamp, payload relocation)
+      - name: Self-tests of the macOS scripts (Info.plist stamp, payload relocation, bundle verifier)
         run: |
           misc/test-stamp-macos-plist.sh
           misc/test-relocate-macos-payload.sh
+          misc/test-verify-macos-bundle.sh
       # spec 015: the release identity goes into the build-info file and the Info.plist (before the launcher is signed)
       - name: Build
         run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests "-Drelease.version=$RELEASE_VERSION" "-Drelease.commit=$RELEASE_COMMIT"
@@ -142,7 +148,7 @@ jobs:
         run: |
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa/target
           cp -R "$JAVA_HOME" "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app/Contents/Resources/tuxguitar/jre"
-      - name: Sign the whole application (stable self-signed certificate if the secrets exist, ad hoc otherwise) and check the signature
+      - name: Sign the whole application (stable self-signed certificate if the secrets exist, ad hoc otherwise; no trust step) and check the signature
         timeout-minutes: 10
         env:
           MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
@@ -154,8 +160,15 @@ jobs:
           # the app bundle carries the product name (it is also the top-level folder of the zip)
           mv "tuxguitar-${TG_VERSION}-macosx-swt-cocoa.app" TuxGuitarAdvanced.app
           ditto -c -k --sequesterRsrc --keepParent TuxGuitarAdvanced.app "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
-      - name: Verify the bundle (only the launcher in Contents/MacOS, a valid signature)
-        run: misc/verify-macos-bundle.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
+      - name: Verify the bundle (only the launcher in Contents/MacOS, a valid signature, the minimum macOS 15, the signing identity)
+        env:
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+        run: |
+          if [ -n "$MACOS_CERT_P12_BASE64" ]; then
+            misc/verify-macos-bundle.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" --signed-by "$MACOS_CERT_SHA1"
+          else
+            misc/verify-macos-bundle.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip"
+          fi
       - name: Verify the branding in the package
         run: misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" macos
       - name: Verify the version and the commit in the package

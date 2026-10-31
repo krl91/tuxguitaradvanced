@@ -171,7 +171,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 **Independent Test**: the release run of Phase 8 (quickstart step 5); locally, a YAML parse of the file and a review of the changed steps.
 
-- [ ] T014 [US1] In `.github/workflows/release.yml`, job `build-macos-arm64`:
+- [X] T014 [US1] In `.github/workflows/release.yml`, job `build-macos-arm64`:
   - set `runs-on: macos-15   # Apple Silicon`;
   - in the step *Self-tests of the macOS scripts*, add `misc/test-verify-macos-bundle.sh`, and add "bundle verifier" to the step's name;
   - in the step *Verify the bundle*:
@@ -183,7 +183,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - update the file's header comment (Notes): macOS 15 machines; minimum macOS 15; the certificate is not trusted on the machine; the identity is checked.
   
   Check the file parses: `python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" .github/workflows/release.yml` (or `ruby -ryaml`).
-- [ ] T015 [US1] Gate: the YAML parse; `git diff .github/workflows/release.yml` reviewed against contracts/scripts.md ("Workflows"); `TEST` green. Tick T014–T015 and commit the phase.
+- [X] T015 [US1] Gate: the YAML parse; `git diff .github/workflows/release.yml` reviewed against contracts/scripts.md ("Workflows"); `TEST` green. Tick T014–T015 and commit the phase.
 
 ---
 

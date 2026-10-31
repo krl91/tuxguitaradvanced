@@ -93,3 +93,6 @@ CI=1; the keychain search list of the account saved before and restored after.
     keychain search list: restored, equal to the saved one
   Without the two variables: ad hoc seal, VERIFY <copy>: OK [1]..[5], bundle verified
   The copies and the throwaway files are deleted.
+
+== T014-T015 — release.yml, macOS job: runs-on macos-15, the bundle verifier's self-test, --signed-by $MACOS_CERT_SHA1 when the secret is set
+  YAML parse ok (ruby -ryaml); the diff reviewed against contracts/scripts.md "Workflows"; TEST green (14/14)
