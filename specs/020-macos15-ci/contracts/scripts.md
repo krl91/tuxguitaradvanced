@@ -30,9 +30,9 @@ macOS only (needs clang, codesign, security, openssl). Builds fake bundles in a 
 | right bundle, ad hoc, no `--signed-by` | pass |
 | right bundle, throwaway certificate, `--signed-by <its sha1>` | pass |
 | no `LSMinimumSystemVersion` / `14.0` | refuse (check 3) |
-| launcher at `14.0` / `16.0` | refuse (check 4) |
+| launcher at `14.0` / `26.0` | refuse (check 4) |
 | one AudioUnit slice at `27.0` | refuse (check 4) |
-| JRE-like library at `16.0` / with no minimum | refuse (check 5) |
+| JRE-like library at `26.0` / with no minimum | refuse (check 5) |
 | JRE-like library at `11.0` | pass |
 | throwaway certificate, `--signed-by <another sha1>` | refuse (check 6) |
 | ad hoc, `--signed-by <sha1>` | refuse (check 6) |

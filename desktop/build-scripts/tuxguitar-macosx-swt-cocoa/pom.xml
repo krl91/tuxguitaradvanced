@@ -409,6 +409,7 @@
 									<arg value="-Wall" />
 									<arg value="-Wextra" />
 									<arg value="-Werror" />
+									<arg value="-mmacosx-version-min=${macos.minimumVersion}" />
 									<arg value="-o" />
 									<arg value="${project.build.directory}/tuxguitar-launcher" />
 									<arg value="${project.basedir}/launcher/tuxguitar-launcher.c" />
@@ -432,6 +433,12 @@
 								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
 									<arg value="-c" />
 									<arg value="Add :NSMicrophoneUsageDescription string ${macos.microphoneUsageDescription}" />
+									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
+								</exec>
+								<!-- macOS refuses to open the app on an older system, with its own message (spec 020) -->
+								<exec executable="/usr/libexec/PlistBuddy" failonerror="true">
+									<arg value="-c" />
+									<arg value="Add :LSMinimumSystemVersion string ${macos.minimumVersion}" />
 									<arg value="${project.build.directory}/${project.finalName}/Contents/Info.plist" />
 								</exec>
 								<!-- the fork's product name (the shared common-macosx Info.plist still says TuxGuitar) -->

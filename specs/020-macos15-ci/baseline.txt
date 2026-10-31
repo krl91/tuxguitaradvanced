@@ -1,0 +1,68 @@
+Spec 020 — baseline and gates (owner's Mac, Apple Silicon, macOS 27.2, Temurin 21, offline Maven)
+
+== T001 — baseline, before any change (2026-10-31)
+
+Full gate: mvn -o -e clean verify -P native-modules in desktop/build-scripts/tuxguitar-macosx-swt-cocoa
+  BUILD SUCCESS. Test summaries:
+    73/0 failures, 1/0, 1/0, 10/0 (1 skipped), 2/0, audio-engine 378/0, 24/0, 9/0, practice 1371/0 (12 skipped)
+
+Minimum macOS of the build (otool -l, LC_BUILD_VERSION minos), R1: nothing sets it, the build takes the OS it runs on
+  Contents/MacOS/tuxguitar-launcher                                  27.0
+  libtuxguitar-audiounit-jni.jnilib x86_64                           27.0
+  libtuxguitar-audiounit-jni.jnilib arm64                            27.0
+  Info.plist LSMinimumSystemVersion                                  absent ("Does Not Exist")
+
+VERIFY APP (misc/verify-macos-bundle.sh as committed, on the local .app):
+  OK      Contents/MacOS holds only files
+  WRONG   the code signature of the bundle is not valid: the .app: code has no resources but signature indicates they must be present
+  exit 1   (the local build signs only the launcher; the release seals the whole bundle)
+
+VERIFY SEALED (a copy in the scratchpad sealed ad hoc with misc/seal-macos-app.sh as committed):
+  OK      Contents/MacOS holds only files
+  OK      the code signature of the bundle is valid
+  bundle verified: tuxguitar-9.99-SNAPSHOT-macosx-swt-cocoa.app
+  exit 0
+
+misc/test-stamp-macos-plist.sh     ok
+misc/test-relocate-macos-payload.sh ok
+
+== T002 — misc/test-verify-macos-bundle.sh, first case
+
+  PASS right bundle, ad hoc      (against the committed verifier, checks 1-2 only)
+
+== T003 — cases of checks 3-5, red against the committed verifier
+
+  PASS right bundle, ad hoc
+  FAIL no LSMinimumSystemVersion (expected refuse:3, got exit 0: no WRONG line)
+  FAIL LSMinimumSystemVersion 14.0 (expected refuse:3, got exit 0: no WRONG line)
+  FAIL launcher 14.0 (expected refuse:4, got exit 0: no WRONG line)
+  FAIL launcher 26.0 (expected refuse:4, got exit 0: no WRONG line)
+  FAIL AudioUnit x86_64 slice 27.0 (expected refuse:4, got exit 0: no WRONG line)
+  FAIL AudioUnit library missing (expected refuse:4, got exit 0: no WRONG line)
+  FAIL JRE library 26.0 (expected refuse:5, got exit 0: no WRONG line)
+  FAIL JRE library with no minimum (expected refuse:5, got exit 0: no WRONG line)
+  PASS JRE library 11.0
+  exit 1
+  Note: clang turns -mmacosx-version-min=16.0 into 26.0 (macOS went from 15 to 26), so the "above 15" cases use 26.0.
+
+== T004 — checks 3-5 in the verifier: the self-test is green, 10/10 cases as expected
+
+== T005-T007 — macos.minimumVersion 15.0 (desktop/pom.xml): launcher -mmacosx-version-min, LSMinimumSystemVersion, MACOSX_DEPLOYMENT_TARGET of the AudioUnit make
+
+== T008 — gate after phase 3 (2026-10-31)
+
+Full gate: BUILD SUCCESS, the same counts as T001
+  73/0, 1/0, 1/0, 10/0 (1 skipped), 2/0, audio-engine 378/0, 24/0, 9/0, practice 1371/0 (12 skipped)
+Quickstart step 1:
+  Contents/MacOS/tuxguitar-launcher                                  15.0
+  libtuxguitar-audiounit-jni.jnilib x86_64                           15.0
+  libtuxguitar-audiounit-jni.jnilib arm64                            15.0
+  Info.plist LSMinimumSystemVersion                                  15.0
+VERIFY SEALED (a copy of the new build sealed ad hoc):
+  OK      [1] Contents/MacOS holds only files
+  OK      [2] the code signature of the bundle is valid
+  OK      [3] the Info.plist declares LSMinimumSystemVersion 15.0
+  OK      [4] the launcher and the AudioUnit library declare the minimum 15.0
+  OK      [5] no other native code declares a minimum above 15.0
+  bundle verified: tuxguitar-9.99-SNAPSHOT-macosx-swt-cocoa.app
+TEST: all cases as expected (10)

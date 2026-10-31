@@ -24,7 +24,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 ## Phase 1: Setup (baseline)
 
-- [ ] T001 Run the full gate `mvn -o -e clean verify -P native-modules` in `CB` and record in `specs/020-macos15-ci/baseline.txt`:
+- [X] T001 Run the full gate `mvn -o -e clean verify -P native-modules` in `CB` and record in `specs/020-macos15-ci/baseline.txt`:
   - the result and the test counts;
   - the `minos` of `APP/Contents/MacOS/tuxguitar-launcher` and of each slice (`otool -arch x86_64|arm64 -l`) of `APP/Contents/Resources/tuxguitar/lib/libtuxguitar-audiounit-jni.jnilib` (27.0 expected, R1);
   - the absence of `LSMinimumSystemVersion` in `APP/Contents/Info.plist`;
@@ -38,7 +38,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 **Purpose**: the fake bundles every story's test cases are made from. No story can write its cases before it.
 
-- [ ] T002 Create `TEST` (bash, `set -uo pipefail`, executable), in the style of `misc/test-verify-version.sh`. Requirements:
+- [X] T002 Create `TEST` (bash, `set -uo pipefail`, executable), in the style of `misc/test-verify-version.sh`. Requirements:
   - a temporary folder removed on exit;
   - a refusal to run off macOS (`uname` ≠ Darwin: print why and exit 2).
   
@@ -67,13 +67,13 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 ### Tests for User Story 3 (write first, see them red)
 
-- [ ] T003 [US3] Add to `TEST` the cases of contracts/scripts.md for checks 3–5:
+- [X] T003 [US3] Add to `TEST` the cases of contracts/scripts.md for checks 3–5:
   - `no LSMinimumSystemVersion` (refuse:3);
   - `LSMinimumSystemVersion 14.0` (refuse:3);
   - `launcher 14.0` (refuse:4);
-  - `launcher 16.0` (refuse:4);
+  - `launcher 26.0` (refuse:4);
   - `AudioUnit x86_64 slice 27.0` (refuse:4);
-  - `JRE library 16.0` (refuse:5);
+  - `JRE library 26.0` (refuse:5);
   - `JRE library with no minimum` (refuse:5);
   - `JRE library 11.0` (pass);
   - `AudioUnit library missing` (refuse:4).
@@ -82,7 +82,7 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 ### Implementation for User Story 3
 
-- [ ] T004 [US3] In `VERIFY`, after check 2, add checks 3, 4 and 5 of contracts/scripts.md, in the existing `OK      …` / `WRONG   …` format.
+- [X] T004 [US3] In `VERIFY`, after check 2, add checks 3, 4 and 5 of contracts/scripts.md, in the existing `OK      …` / `WRONG   …` format.
   - The expected value is the constant `MIN=15.0`, commented as equal to `macos.minimumVersion` in `desktop/pom.xml`.
   - Read `minos` per architecture with `lipo -archs` and `otool -arch <a> -l` (`LC_BUILD_VERSION` `minos`, else `LC_VERSION_MIN_MACOSX` `version`).
   - Compare versions numerically (major.minor).
@@ -91,12 +91,12 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
   - A WRONG line names the file from `Contents/` and the value found.
   
   Make `TEST` green.
-- [ ] T005 [US3] Add `<macos.minimumVersion>15.0</macos.minimumVersion>` to the `<properties>` of `desktop/pom.xml`, with a comment pointing to spec 020 and `misc/verify-macos-bundle.sh`.
-- [ ] T006 [P] [US3] In `CB/pom.xml`:
+- [X] T005 [US3] Add `<macos.minimumVersion>15.0</macos.minimumVersion>` to the `<properties>` of `desktop/pom.xml`, with a comment pointing to spec 020 and `misc/verify-macos-bundle.sh`.
+- [X] T006 [P] [US3] In `CB/pom.xml`:
   - add `<arg value="-mmacosx-version-min=${macos.minimumVersion}" />` to the launcher's `/usr/bin/clang` exec (~line 407);
   - add a PlistBuddy exec `Add :LSMinimumSystemVersion string ${macos.minimumVersion}` beside the fork's other Info.plist edits (~line 437).
-- [ ] T007 [P] [US3] In `desktop/build-scripts/native-modules/tuxguitar-audiounit-macos/pom.xml`, add `<env key="MACOSX_DEPLOYMENT_TARGET" value="${macos.minimumVersion}" />` to the `make` exec that builds the library (~line 40), not the `clean` one. `desktop/TuxGuitar-AudioUnit/jni/Makefile` (upstream) stays unchanged.
-- [ ] T008 [US3] Gate:
+- [X] T007 [P] [US3] In `desktop/build-scripts/native-modules/tuxguitar-audiounit-macos/pom.xml`, add `<env key="MACOSX_DEPLOYMENT_TARGET" value="${macos.minimumVersion}" />` to the `make` exec that builds the library (~line 40), not the `clean` one. `desktop/TuxGuitar-AudioUnit/jni/Makefile` (upstream) stays unchanged.
+- [X] T008 [US3] Gate:
   - the full gate in `CB` (green, same counts as T001);
   - quickstart step 1: launcher 15.0, both AudioUnit slices 15.0, `LSMinimumSystemVersion` 15.0;
   - `VERIFY SEALED` (made from the new build): only OK lines;

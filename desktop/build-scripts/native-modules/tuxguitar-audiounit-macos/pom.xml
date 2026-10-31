@@ -38,6 +38,8 @@
 						<configuration>
 							<target name="compile-native">
 								<exec dir="${tuxguitar-audiounit.jni.path}" executable="make" failonerror="true" >
+									<!-- the minimum macOS of the library (spec 020); the upstream Makefile stays unchanged -->
+									<env key="MACOSX_DEPLOYMENT_TARGET" value="${macos.minimumVersion}" />
 								</exec>
 							</target>
 						</configuration>
