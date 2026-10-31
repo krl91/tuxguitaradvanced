@@ -121,6 +121,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - each right note raises the level towards `streak / 16`, reaching 1 at streak 16 and holding there;
   - after a mistake at full height, the level is 0 within 1.0 s (+ one step) (FR-003, SC-002);
   - `hold`/`resume` keep the level through a pause.
+  It will likely pass at once, because `FlameLevel(FireTuning)` exists since T013. It is then seen red by a deliberate mutation (the score default of `growth.fall` set to 1/3 for one run, not committed), and the mutation is named in the commit message.
 - [ ] T019 [P] [US1] Create `TST/ui/ScoreFireOverlaySwtTest.java` (profile `swt-gui-tests`, real toolkit, like `ArcadeCanvasSwtTest`):
   - a canvas with a first listener that fills it white, given to `ScoreFire` through its canvas port (T025), then `ScoreFire` started at level 1 and FULL: after a paint, the bottom-corner pixels are not white and the top half is white;
   - with setting OFF, `start` adds no listener and the canvas stays white;
@@ -137,7 +138,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 - [ ] T022 [US1] Create `ARCADE/view/ScoreFireScene.java` (public): `scene(Viewport, QualityTier, FlameState, List<double[]> guard)` returns a `Scene` holding only `FlameDrawing.items(viewport, tier, flames, guard, flames.tuning())`; when the viewport is fewer than 8 cells high, the level is taken as 0 (ember rows only). Make T017 pass.
 - [ ] T023 [US1] Create `PR/ui/ScoreStreak.java` (pure) per research R3. Make T016 pass.
-- [ ] T024 [US1] Make T018 pass with `FlameLevel(FireTuning)` and the score defaults. Change only `ARCADE/ui/FlameLevel.java` if needed, keeping `new FlameLevel()` identical (T006).
+- [ ] T024 [US1] Check T018 with `FlameLevel(FireTuning)` and the score defaults, after its mutation; if it is red without the mutation, fix only `ARCADE/ui/FlameLevel.java` (or the score defaults of `FireParameter`), keeping `new FlameLevel()` identical (T006).
 - [ ] T025 [US1] Create `PR/ui/ScoreFire.java` per contracts/score-overlay.md and data-model "ScoreFire":
   - `start(setting, tuning, motion)`, `update(streak, newBursts, paused, currentEvent, nextEvent, paletteBox)` and `stop()`;
   - a constructor taking a **canvas port**: a small interface `ScoreFire.Score` with `UICanvas canvas()` (null when there is none), `List<double[]> guardBoxes(PracticeEvent current, PracticeEvent next)` and `void redraw(boolean overlayOnly)`; the production port wraps `TGTabFolder.getInstance(context).findSelectedControl()` and `ScoreGuardBoxes`; the tests give a fake;
@@ -174,7 +175,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - none at BALANCED, with motion off or with OFF;
   - during a pause (the fire clock held), two pictures taken 0.5 s of wall time apart have the same sparks at the same places (Edge Case "Pause");
   - none above 12 % within 4 px of a guard box.
-  See it fail where the start row is wrong, then pass.
+  It will likely pass at once, because `sparks.start` exists since T012 and `ScoreFireScene` since T022. It is then seen red by a deliberate mutation (`sparks.start` forced to 1 for one run, not committed), and the mutation is named in the commit message.
 - [ ] T031 [P] [US2] Create `TST/ui/ScoreBurstsTest.java`: on a scripted Wait run of 10 right notes, 2 wrong and 1 skip, and on a Follow run of 12 results, the number of bursts equals the number of right notes, and is 0 with OFF (SC-005). `ScoreFire` drops bursts older than `sparks.life`.
 - [ ] T032 [US2] Feed the bursts of `ScoreStreak` into the `FlameState` of `ScoreFire` (stamped with the fire clock) in `PR/ui/ScoreFire.java`; drop expired bursts; keep the timer ticking while sparks live. Make T030 and T031 pass. Gate and commit the phase.
 

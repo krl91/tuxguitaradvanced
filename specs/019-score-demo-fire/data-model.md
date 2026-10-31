@@ -111,7 +111,7 @@ Notes:
 
 ## ScoreFire (runtime)
 
-- **Lifecycle**: `start(setting, tuning, motion)`, then `update(streak, bursts, paused)` from each render, then `stop()`.
+- **Lifecycle**: `start(setting, tuning, motion)`, then `update(streak, newBursts, paused, currentEvent, nextEvent, paletteBox)` from each render, then `stop()` (the same signature as T025).
 - **States**:
   - IDLE (no listener);
   - RUNNING (listener attached, timer ticking while the fire moves);
