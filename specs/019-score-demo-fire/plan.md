@@ -64,7 +64,7 @@ No new library.
 - no change under `arcade/core` (`FlameParityTest`).
 
 **Scale/Scope**:
-- about 50 parameters per group (data-model);
+- about 45 parameters per group (47 rows of the data-model catalogue, five of them colours);
 - 8 new classes in the plugin, 4 classes of the fire given a tuning, a new tab;
 - one optional core hook of about 20 lines in `desktop/TuxGuitar` (R2);
 - texts in three languages; the guides; the manual sheet F11.

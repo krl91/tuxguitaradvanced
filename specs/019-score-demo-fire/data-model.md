@@ -49,7 +49,7 @@
 | `discreet.share` | Look | number, share of Full | 0.05 – 1 | 0.6 (`FlameDrawing.DISCREET`) | 0.6 |
 | `growth.from` | Growth | number, share at which flames start | 0 – 0.95 | 0.5 (`FlameLevel.update`: `(share − 0.5) / 0.5`) | 0 |
 | `growth.minJudged` | Growth | integer, notes | 0 – 64 | 4 (`FlameLevel.MIN_JUDGED`) | 0 |
-| `growth.full` | Growth | integer, right notes in a row | 1 – 128 | — (not used by Arcade) | 16 |
+| `growth.full` | Growth | integer, right notes in a row | 1 – 128 | 16 (not used by Arcade, not shown in its group; set to the score's value so that every default lies within its range) | 16 |
 | `growth.rise` | Growth | number, heights per second | 0.05 – 20 | 2.0 (`FlameLevel.RISE_PER_SECOND`) | 2.0 |
 | `growth.fall` | Growth | number, heights per second | 0.02 – 20 | 0.3333 (`FlameLevel.FALL_PER_SECOND`, the exact constant) | 1.0 (FR-003) |
 | `growth.maxStep` | Growth | number, ms | 5 – 500 | 50 (`FlameLevel.MAX_STEP_NANOS`) | 50 |
@@ -68,7 +68,7 @@
 Notes:
 - `sparks.perStreak` reproduces the integer arithmetic of today: `5 * min(streak, 12) / 2` is computed as `floor(2.5 * min(streak, cap) + 1e-9)`. The test pins equality for every streak from 0 to 128.
 - `motion.speed` multiplies the fire clock. At 1.0 the clock is unchanged, bit for bit.
-- The score fire has no Arcade-only parameter, and `growth.full` is shown only in the score group.
+- The score fire has no Arcade-only parameter. `growth.full` is shown only in the score group (`inArcade()` false); its Arcade default 16 is never read.
 
 **Fixed, not in the catalogue** (research R4):
 - `WIDEN`, `NEAR_TEXT` and `RAMP` (the reading guard);

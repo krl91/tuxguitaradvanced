@@ -12,6 +12,7 @@
 |---|---|
 | flames null, OFF, or tier PERFORMANCE | an empty scene |
 | level 0 | ember rows only, along the bottom of the viewport |
+| viewport fewer than 8 cells high | ember rows only, whatever the level (Edge Case "very small score area") |
 | level 1 | corner height = `height.corners` × viewport height (1/3 by default); middle = `height.middle` of it |
 | any cell or spark | opacity ≤ `opacity.most` (× `discreet.share` if discreet); within 4 px of a guard box ≤ 0.2 % (fixed); never above 12 % there |
 | sparks | from `sparks.start` of the fire's height (0 = bottom), only at FULL and with motion; ≤ `sparks.most` in the air |

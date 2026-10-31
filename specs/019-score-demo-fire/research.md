@@ -32,6 +32,8 @@
 - Always adding the hook: a core change without evidence.
 - Lowering the frame rate to 10 per second in Wait: the fire would stutter, and the owner judges the look.
 
+**Follow**: the reasoning above assumes the MIDI player is running during a Follow run (`MidiFollowPlayer`, `FollowPlayback`), so that `paintTablature` takes its incremental branch. T002 checks it: whether `MidiPlayer.isRunning()` is true during a Follow run, also with the backing muted. If it is not, Follow repaints the whole score like Wait, its repaint is measured too, and the same threshold decides the hook for both modes.
+
 **Measured** (filled in Phase 1): _see `baseline.txt`_.
 
 ## R3. The streak, and what counts as right or wrong
