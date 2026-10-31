@@ -106,3 +106,31 @@ Full gate: BUILD SUCCESS, the same counts as T001
   73/0, 1/0, 1/0, 10/0 (1 skipped), 2/0, audio-engine 378/0, 24/0, 9/0, practice 1371/0 (12 skipped)
 misc/test-verify-macos-bundle.sh, misc/test-stamp-macos-plist.sh, misc/test-relocate-macos-payload.sh: exit 0
 grep -rn "macos-14\|ubuntu-latest" .github/: nothing; the four workflow files parse
+
+== T024 — one push of the branch and master: a0cfaac73..83e2c09b3
+
+== T025 — the v0.8.0-beta.3 release on GitHub
+Run 41228821440 (83e2c09b3): validate and create-release green; build-macos-arm64 (Image: macos-15-arm64) failed in its first step, the new self-test:
+  the 10 cases of checks 1-5 PASS, then "cannot seal ... with the throwaway identity" (exit 2; the test hid codesign's message). It passes on the owner's Mac.
+  Bug fix protocol, try 1 of 3 (191bfec41): the test's throwaway keychain is set up as the sign script does (lock timeout; on CI only, added to the user's
+  search list and the list restored on exit); a failed seal or signature now shows codesign's message. Locally green with and without CI=1, the owner's list unchanged.
+Run 41229170643 (191bfec41): every job green.
+  Images: validate, create-release, build-linux, build-windows, release: ubuntu-24.04; build-macos-arm64: macos-15-arm64
+  the self-test: all cases as expected (14), the throwaway cases included
+  designated => identifier "app.tuxguitaradvanced" and certificate root = H"280bd902de0512b59d70228c5faa441d3eb6af55"
+  OK [1]..[5], OK [6] signed by the certificate 280bd902de0512b59d70228c5faa441d3eb6af55, bundle verified: TuxGuitarAdvanced.app
+  Release v0.8.0-beta.3 published as a pre-release, target 191bfec41, 4 files: linux-amd64.deb, linux-x86_64.tar.gz, macos-arm64.zip, windows-x86_64.zip
+
+== T026 — the three other workflows, once each (83e2c09b3)
+  MacOS Java CI with Maven, run 41228851872 (macos-15): green
+  Ubuntu Java CI with Maven, run 41228856859 (ubuntu-24.04, job build-ubuntu): green
+  Practice GUI tests, run 41228854425 (macos-15, the workflow's first run ever): FAILED, 40 tests, then its failed job rerun once:
+    ArcadePixelAlignmentSwtTest.theTargetDiskIsOnItsPaintedCellAndItsPaintedStringForEveryFretAndStringAndSize, both times the same message:
+      "fret 1 string 1 1280x720 p=0.3: a painted wire on each side of the disk: [] around 492.5; the scene has the nut at 1 x 411.70153192331793"
+      Run locally once (mvn -o test -P swt-gui-tests ... -Dtest=ArcadePixelAlignmentSwtTest): 2/2 green.
+      Not painting time: the same values twice, and the lower quality tiers drop only decoration (halo, glow, trails), never the fret wires.
+      It depends on the macOS 15 machine (its screen or its display, not seen from here); not reproduced locally, so not fixed (bug fix protocol: a
+      reproduction first). Reported to the owner.
+    ArcadeCanvasSwtTest (rerun only): "the controller reached BALANCED ==> expected: <BALANCED> but was: <PERFORMANCE>": depends on painting time (the
+      quality tier fell one step further on the slower machine; it already flaked under load locally). Reported, not changed.
+  No test changed or skipped.

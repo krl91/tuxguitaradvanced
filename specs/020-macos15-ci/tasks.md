@@ -226,8 +226,8 @@ description: "Task list for spec 020: macOS package on macOS 15 machines, minimu
 
 ## Phase 8: On GitHub (FR-011, FR-013; SC-001, SC-005, SC-006, SC-007)
 
-- [ ] T024 One push of the branch and `master` together: `git push origin feature/interactive-practice feature/interactive-practice:master`. No fetch before or after.
-- [ ] T025 Start the release for the same tag, which replaces its draft: `gh workflow run release.yml -R krl91/tuxguitaradvanced --ref master -f tag=v0.8.0-beta.3`. Follow it with `gh run watch … --exit-status`. Expected (quickstart step 5):
+- [X] T024 One push of the branch and `master` together: `git push origin feature/interactive-practice feature/interactive-practice:master`. No fetch before or after.
+- [X] T025 Start the release for the same tag, which replaces its draft: `gh workflow run release.yml -R krl91/tuxguitaradvanced --ref master -f tag=v0.8.0-beta.3`. Follow it with `gh run watch … --exit-status`. Expected (quickstart step 5):
   - every job green;
   - the macOS job's log shows a macOS 15 image, the designated requirement with `H"280bd902de0512b59d70228c5faa441d3eb6af55"`, and the bundle check's OK lines including the identity;
   - every Ubuntu job shows `Image: ubuntu-24.04`;
