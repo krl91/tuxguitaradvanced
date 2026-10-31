@@ -16,6 +16,13 @@
 - The dark look is the design of the Arcade view (spec 003); its reference pictures are painted on the design's own dark background. A light variant of the colours exists but nothing selects it.
 - Owner's decision (2026-10-31, option A): the Arcade view always shows its dark design, whatever the appearance of the system.
 
+## Clarifications
+
+### Session 2026-10-31
+
+- Q: Should spec 021 cover only the Arcade scene, or also the demo fire over the score and the Arcade result window? → A: The Arcade scene only; the demo fire over the score and the Arcade result window stay unchanged (FR-006, FR-007).
+- Q: Once spec 021 is implemented and the graphical checks are green, should a new pre-release be published right away? → A: Yes: v0.8.0-beta.4 is published as soon as the checks are green, with the macOS, Linux and Windows packages and its release notes (FR-010).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The Arcade view looks the same in light and dark appearance (Priority: P1)
@@ -64,10 +71,11 @@ The owner starts the graphical checks of the practice module on GitHub's macOS 1
 - **FR-003**: The Arcade scene MUST look the same whether the system is in light or dark appearance, on macOS, Linux and Windows, including after the appearance changes while the view is open.
 - **FR-004**: FR-001 MUST hold in every quality tier and on the simplified painting path, at every window size.
 - **FR-005**: The light variant of the scene's colours MUST stay unselected: this spec does not add a light Arcade view.
-- **FR-006**: The ordinary windows around the Arcade view (the Arcade result window, the practice windows, the menus and dialogs) MUST keep following the system appearance, unchanged.
+- **FR-006**: The ordinary windows around the Arcade view (the Arcade result window, the practice windows, the menus and dialogs) MUST keep following the system appearance, unchanged; only the Arcade scene is in scope (owner, 2026-10-31).
 - **FR-007**: The demo fire painted over the score (spec 019) MUST stay unchanged: it is laid over the score on purpose and gets no background.
 - **FR-008**: Each new behaviour MUST have a new automated check, written first and seen failing; no existing check is changed, skipped or removed.
 - **FR-009**: After the change, the *Practice GUI tests* workflow MUST pass on GitHub's macOS 15 machine. Recording that run closes tasks T026 and T031 of spec 020.
+- **FR-010**: Once FR-009 holds, the pre-release v0.8.0-beta.4 MUST be published right away (owner, 2026-10-31), with the macOS, Linux and Windows packages and release notes that say the Arcade view keeps its dark design in light appearance.
 
 ## Success Criteria *(mandatory)*
 
@@ -78,13 +86,14 @@ The owner starts the graphical checks of the practice module on GitHub's macOS 1
 - **SC-003**: One run of *Practice GUI tests* on GitHub's macOS 15 machine ends with every check passing (0 failures), with no existing check changed.
 - **SC-004**: The full local build passes with the same counts as before for every existing test, plus only new tests.
 - **SC-005**: The ordinary windows of the application in light appearance look as before the change (checked by the owner on the release).
+- **SC-006**: v0.8.0-beta.4 is published with its four files (macOS, Windows, Linux archive and Linux installer) and every check of the release passes.
 
 ## Assumptions
 
 - On the owner's Mac in dark appearance, the system's window background is close to, but not exactly, the design's background; the Arcade view may therefore become very slightly darker there. This is accepted: it then matches the reference pictures.
 - The Arcade result window and the other practice windows are made of ordinary system controls and are not part of this change.
 - Linux and Windows are covered by the same change of the shared Arcade painting; they are checked only by the build and its tests, not by hand, since the owner tests on macOS.
-- The change ships with the next pre-release after v0.8.0-beta.3.
+- The change ships in v0.8.0-beta.4, published right after the checks are green (FR-010).
 
 ## Dependencies
 
