@@ -112,7 +112,7 @@
   - `setToolTipText` on the label and the scale, with the text, the unit and the default;
   - colours use `createColorChooser` and a swatch button.
 - At the top of each group: the preview, a *Sparks* button, a growth slider (the streak for the score, the share of the maximum for Arcade) and *Default values*.
-- The preview is a `UICanvas` of about 360×120, painted by `UiPainterRenderer` from the same scene builders as the real fires: `ScoreFireScene` for the score, and the flame items of `ArcadeScene` with an empty game for Arcade. It uses its own `FlameLevel`, clock and bursts, and its own `QualityController` with the same budget, so the preview shows the tier the settings would cause.
+- The preview is a `UICanvas` of about 360×120, painted by `UiPainterRenderer` from the same scene builders as the real fires: `ScoreFireScene` for the score, and `ScoreFireScene.arcadePreview(viewport, tier, flames)` for Arcade (the flame items of `FlameDrawing.items` with no texts, contracts/score-overlay.md). It uses its own `FlameLevel`, clock and bursts, and its own `QualityController` with the same budget, so the preview shows the tier the settings would cause.
 - It animates at 30 frames per second only while the tab is the selected one and the window is visible; it stops on another tab, on close, and with Reduce motion (it is still drawn, without motion and sparks).
 - Changing a value rebuilds the tuning at once (FR-020: within 0.1 s) and saves it.
 

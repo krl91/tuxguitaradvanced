@@ -59,7 +59,7 @@ No new library.
 **Constraints**:
 - no existing test modified (owner's rule): every constant and every existing signature stays, and the old entry points use the Arcade defaults;
 - with the defaults, `flame-reading.scene.txt` is byte-identical (SC-010);
-- the reading guard (`WIDEN`, `NEAR_TEXT`, `RAMP`) is fixed (FR-016);
+- the reading guard (FR-016: `WIDEN`, `NEAR_TEXT`, `RAMP`, the smooth curve of the fade and the text-box estimates) is fixed;
 - the verdicts are untouched (FR-008);
 - no change under `arcade/core` (`FlameParityTest`).
 

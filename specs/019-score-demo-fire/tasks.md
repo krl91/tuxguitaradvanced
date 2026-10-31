@@ -152,6 +152,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - `start(setting, tuning, motion)`, `update(streak, newBursts, paused, currentEvent, nextEvent, paletteBox)` and `stop()`;
   - a constructor taking a **canvas port**: a small interface `ScoreFire.Score` with `UICanvas canvas()` (null when there is none), `List<double[]> guardBoxes(PracticeEvent current, PracticeEvent next)` and `void redraw(boolean overlayOnly)`; the production port wraps `TGTabFolder.getInstance(context).findSelectedControl()` and `ScoreGuardBoxes`; the tests give a fake;
   - attaches one `UIPaintListener` to `port.canvas()` and re-attaches if it changes;
+  - the guard boxes are asked from `port.guardBoxes(current, next)` **at each paint**, not cached between paints. When the score scrolls, changes page or is resized, the protected boxes therefore follow at the next picture (Edge Case "The score scrolls"). `ScoreFireOverlaySwtTest` checks it with a fake port whose boxes move between two paints;
   - a timer at about 33 ms through `TGSynchronizer`/`UIApplication.runLater`, ticking only while the fire moves;
   - the fire clock advances only while running;
   - `FlameLevel(tuning)`;
