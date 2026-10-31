@@ -9,7 +9,9 @@ VERIFY="$ROOT/misc/verify-macos-bundle.sh"
 SEAL="$ROOT/misc/seal-macos-app.sh"
 TMP="$(mktemp -d /tmp/test-verify-macos-bundle.XXXXXX)"
 KC=""
+KEYCHAINS_BEFORE=""
 cleanup() {
+  [ -n "$KEYCHAINS_BEFORE" ] && security list-keychains -d user -s $KEYCHAINS_BEFORE
   [ -n "$KC" ] && security delete-keychain "$KC" >/dev/null 2>&1
   chmod -R u+w "$TMP" 2>/dev/null; rm -rf "$TMP"
 }
@@ -63,7 +65,7 @@ PY
 newdir() { mktemp -d "$TMP/case.XXXXXX"; }
 
 adhoc() { # app: sealed ad hoc, as the release does without the signing secrets
-  "$SEAL" "$1" >/dev/null 2>&1 || die "cannot seal $1 ad hoc"
+  local out; out="$("$SEAL" "$1" 2>&1)" || die "cannot seal $1 ad hoc: $out"
 }
 
 throwaway_identity() { # a self-signed code-signing certificate in a throwaway keychain, never trusted: sets KC and SHA1
@@ -86,10 +88,16 @@ CNF
     || openssl pkcs12 -export -inkey "$TMP/key.pem" -in "$TMP/cert.pem" -out "$TMP/cert.p12" -passout "pass:$pw" >/dev/null 2>&1 \
     || die "cannot export the throwaway certificate"
   KC="$TMP/throwaway.keychain-db"
-  security create-keychain -p "$pw" "$KC" && security unlock-keychain -p "$pw" "$KC" \
+  security create-keychain -p "$pw" "$KC" && security set-keychain-settings -lut 3600 "$KC" && security unlock-keychain -p "$pw" "$KC" \
     && security import "$TMP/cert.p12" -k "$KC" -P "$pw" -T /usr/bin/codesign >/dev/null \
     && security set-key-partition-list -S apple-tool:,apple: -s -k "$pw" "$KC" >/dev/null \
     || die "cannot set up the throwaway keychain"
+  # as .github/scripts/sign-macos-launcher.sh does: on a build machine, codesign reaches the private key only through the user's keychain search list.
+  # Only there (CI set): on the owner's Mac the list stays untouched. The list is restored on exit.
+  if [ -n "${CI:-}" ]; then
+    KEYCHAINS_BEFORE="$(security list-keychains -d user | tr -d '"')"
+    security list-keychains -d user -s "$KC" $KEYCHAINS_BEFORE || die "cannot add the throwaway keychain to the search list"
+  fi
   SHA1="$(security find-identity -p codesigning "$KC" | awk '/^ *1\)/ {print $2; exit}')"
   [ -n "$SHA1" ] || die "no identity in the throwaway keychain"
 }
@@ -141,10 +149,10 @@ sha1="$(echo "$SHA1" | tr 'A-F' 'a-f')"
 signed() { # app [requirement]: signed with the throwaway identity, with that designated requirement (codesign's default when none)
   local req=()
   [ $# -ge 2 ] && req=(-r="$2")
-  codesign --force --deep --keychain "$KC" -s "$SHA1" --identifier app.tuxguitaradvanced ${req[@]+"${req[@]}"} "$1" >/dev/null 2>&1 || die "cannot sign $1 with the throwaway identity"
+  local out; out="$(codesign --force --deep --keychain "$KC" -s "$SHA1" --identifier app.tuxguitaradvanced ${req[@]+"${req[@]}"} "$1" 2>&1)" || die "cannot sign $1 with the throwaway identity: $out"
 }
 ROOTREQ="designated => identifier \"app.tuxguitaradvanced\" and certificate root = H\"$sha1\""
-APP="$(bundle "$(newdir)" 15.0 15.0 15.0 15.0 11.0)"; "$SEAL" "$APP" "$SHA1" "$KC" "$ROOTREQ" >/dev/null 2>&1 || die "cannot seal $APP with the throwaway identity"
+APP="$(bundle "$(newdir)" 15.0 15.0 15.0 15.0 11.0)"; out="$("$SEAL" "$APP" "$SHA1" "$KC" "$ROOTREQ" 2>&1)" || die "cannot seal $APP with the throwaway identity: $out"
 case_ "throwaway certificate, forced root requirement, --signed-by its SHA1" pass "$VERIFY" "$APP" --signed-by "$SHA1"
 case_ "throwaway certificate, --signed-by another SHA1" refuse:6 "$VERIFY" "$APP" --signed-by 0123456789abcdef0123456789abcdef01234567
 APP="$(bundle "$(newdir)" 15.0 15.0 15.0 15.0 11.0)"; adhoc "$APP"
