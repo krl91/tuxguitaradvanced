@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-31
 
-**Status**: Clarified (2026-10-31)
+**Status**: Clarified and planned (2026-10-31)
 
 **Input**: User description: "spec 020 : migrer la CI macOS de macos-14 vers macos-15 avant la retraite de macos-14 (2 novembre 2026), pour que les releases TuxGuitarAdvanced continuent de sortir sur les trois OS." Owner's decisions of 2026-10-31: the application's minimum macOS is **macOS 15 Sequoia** (the native launcher, the AudioUnit library and the application's description declare it; today nothing sets it and the application inherits the macOS of the machine that built it); the signature keeps the **same stable self-signed certificate** (not an ad hoc signature), so that macOS keeps the microphone permission from one version to the next; the full Spec Kit method is followed. The three workflows that use macOS 14 machines are the release, the macOS build-and-test check and the practice graphical tests. The release run of v0.8.0-beta.3 failed during a scheduled macOS 14 brownout and waits to be run again.
 
@@ -121,7 +121,7 @@ The owner can still start, by hand, the macOS build-and-test check and the pract
 - **FR-001**: The release, the macOS build-and-test check and the practice graphical tests MUST run on macOS 15 machines, named by their explicit version.
 - **FR-002**: The application's description in the macOS package MUST declare macOS 15.0 as its minimum system version, so that macOS refuses to open it on an older system with its own message.
 - **FR-003**: Every native part of the macOS package (the launcher and the AudioUnit library, in each of its architectures) MUST declare macOS 15.0 as its minimum, whatever the macOS version of the machine that builds it, in the release and in a local build.
-- **FR-004**: The release MUST refuse to publish a macOS package whose application description or any native part declares a minimum other than macOS 15.0, or none.
+- **FR-004**: The release MUST refuse to publish a macOS package whose application description or any native part of its own (FR-003) declares a minimum other than macOS 15.0, or none, or in which any other native code it carries (such as the embedded Java runtime, which declares macOS 11.0) declares a minimum above macOS 15.0.
 - **FR-005**: When the stable certificate is provided, the macOS package MUST be signed with it without requiring the build machine to trust it.
 - **FR-006**: When the stable certificate is provided, the signature's designated requirement MUST be exactly `identifier "app.tuxguitaradvanced" and certificate root = H"<fingerprint of the stable certificate>"`, the form of the previous releases, and the release MUST refuse a package whose requirement differs or whose fingerprint is not `280bd902de0512b59d70228c5faa441d3eb6af55`.
 - **FR-007**: When the stable certificate is not provided, the macOS package MUST be sealed with an ad hoc signature, as today.
