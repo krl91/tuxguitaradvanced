@@ -209,7 +209,9 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - with motion off, the clock does not move and no burst is drawn;
   - `setShown(false)` stops the ticks.
 - [ ] T036 [P] [US4] Create `TST/ui/FireSettingsPanelSwtTest.java` (swt-gui-tests):
-  - the panel builds two groups with one row per parameter of each group, and each label and control has a non-empty tooltip;
+  - the panel builds two groups with one row per parameter of each group;
+  - with an empty store, each row shows its group's default, and with a stored value it shows that value (US4 scenario 1);
+  - each label and control has a tooltip that contains the parameter's text, its unit and its default as shown (US4 scenario 2, FR-018);
   - moving a scale writes the clamped value through a fake store at once;
   - *Default values* puts every row of the group back to its default and calls `reset`, leaving the other group untouched;
   - hiding the panel stops the preview timer;
