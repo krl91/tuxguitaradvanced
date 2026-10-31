@@ -30,6 +30,7 @@
 | `colour.1` … `colour.5` | Colours | colour | RGB | #5A0A04, #B7210F, #F26A12, #FFD23C, #FFF6D8 (`FireColours.SCALE`) | same |
 | `height.corners` | Flames | number, share of the picture height | 0.02 – 1 | 0.55 (`FlameDrawing.CORNER_HEIGHT`) | 0.3333 (FR-004) |
 | `height.middle` | Flames | number, share of the corners | 0 – 1 | 0.20 (`FlameDrawing.MIDDLE`) | 0.20 |
+| `height.curve` | Flames | number, exponent of the corner-to-middle profile | 0.25 – 8 | 2 (`FlameDrawing.weight`: `d * d`) | 2 |
 | `body.heat` | Flames (density) | number | 0.1 – 3 | 1.15 (`FireField.heat`) | 1.15 |
 | `body.falloff` | Flames (density) | number, exponent | 0.2 – 6 | 1.5 (`FireField.heat`) | 1.5 |
 | `body.ramp` | Flames (density) | number, × level | 0.5 – 20 | 3.0 (`FireField.heat`: `min(1, 3·level)`) | 3.0 |
@@ -43,6 +44,8 @@
 | `noise.large` | Motion (grain) | number | 0 – 1 | 0.5 (`FireField.noise`) | 0.5 |
 | `noise.medium` | Motion (grain) | number | 0 – 1 | 0.3 | 0.3 |
 | `noise.fine` | Motion (grain) | number | 0 – 1 | 0.2 | 0.2 |
+| `noise.scale` | Motion (grain) | number, columns of the largest grain (the next ones are half and a quarter) | 0.25 – 16 | 2 (`FireField.noise`: `x / 2.0`, `x / 1.0`, `x / 0.5`) | 2 |
+| `noise.aspect` | Motion (grain) | number, height of a tongue over its width | 0.25 – 8 | 2 (`FireField.noise`: `y / 4.0`, `y / 2.0`, `y / 1.0`) | 2 |
 | `ember.rows` | Embers | integer, rows | 0 – 8 | 2 (`FireField.EMBER_ROWS`) | 2 |
 | `ember.glow` | Embers | number, heat | 0 – 1 | 0.12 (`FireField.heat`) | 0.12 |
 | `ember.flicker` | Embers | number, heat | 0 – 1 | 0.08 (`FireField.heat`) | 0.08 |
@@ -68,6 +71,8 @@
 Notes:
 - `sparks.perStreak` reproduces the integer arithmetic of today: `5 * min(streak, 12) / 2` is computed as `floor(2.5 * min(streak, cap) + 1e-9)`. The test pins equality for every streak from 0 to 128.
 - `motion.speed` multiplies the fire clock. At 1.0 the clock is unchanged, bit for bit.
+- The grain: octave k (0, 1, 2) reads the noise at `x / (noise.scale / 2^k)` and `y / (noise.aspect × noise.scale / 2^k)`; with 2 and 2 these are today's divisors, exactly (powers of two).
+- The profile: `weight = middle + (1 − middle) × d^curve`, computed as `d * d` when the curve is 2, so that the defaults stay bit-identical (`Math.pow` is not promised to equal `d * d`).
 - The score fire has no Arcade-only parameter. `growth.full` is shown only in the score group (`inArcade()` false); its Arcade default 16 is never read.
 
 **Fixed, not in the catalogue** (research R4):

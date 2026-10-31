@@ -10,7 +10,7 @@
 
 - Every parameter has a key, a range, both defaults, a label key and a tooltip key, present in `messages.properties`, `messages_fr.properties` and `messages_es.properties`.
 - Each Arcade default equals the constant it comes from (one assertion per constant).
-- No literal shaping a fire is left in `FireField`, `FireColours` or `FlameDrawing` outside the tuning, apart from the fixed list (research R4). This is checked by a source-scan test for decimal literals in those three files, with an explicit allow-list.
+- No literal shaping a fire is left in `FireField`, `FireColours` or `FlameDrawing` outside the tuning, apart from the fixed list (research R4). This is checked by a source-scan test for number literals in those three files, with an explicit allow-list. The numbers 0, 1, 2 and 0.5 are allowed only inside the named mathematical helpers (`value`, `hash`, `smooth`, `lerp`, `clamp`, `mix`, `gap`); anywhere else every number must come from the tuning or be a fixed constant of research R4.
 
 ## Clamping (FR-019)
 

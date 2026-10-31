@@ -67,7 +67,7 @@
   - its message keys (label and tooltip).
 - **`FireTuning`** is an immutable map from parameter to value, clamped to the range when built. It provides `ARCADE_DEFAULTS` and `SCORE_DEFAULTS`.
 - The fire classes get overloads that take a tuning. Each old signature calls the new one with `ARCADE_DEFAULTS`, so every existing test compiles and passes unchanged.
-- The literals inside `FireField.heat`/`noise` and `FlameDrawing.sparks` become reads of the tuning: ember 0.12 and 0.08, ramp 3, body 1.15, exponent 1.5, flicker 1.3 and 0.2, sway 0.6, 1.7 and 0.35, octave weights 0.5, 0.3 and 0.2, sparks 20, 5/2 and 12, start zone 0.25, rise 10 and 16, drift 10, colour fade 8.
+- The literals inside `FireField.heat`/`noise` and `FlameDrawing.sparks` become reads of the tuning: ember 0.12 and 0.08, ramp 3, body 1.15, exponent 1.5, flicker 1.3 and 0.2, sway 0.6, 1.7 and 0.35, octave weights 0.5, 0.3 and 0.2, the grain size and the tongue aspect (the octave divisors 2, 1, 0.5 and 4, 2, 1), the exponent 2 of the corner-to-middle profile in `FlameDrawing.weight`, sparks 20, 5/2 and 12, start zone 0.25, rise 10 and 16, drift 10, colour fade 8.
 
 **Fixed values, outside the tuning, with their reasons** (FR-015 and FR-016 exceptions, SC-009):
 - `FlameDrawing.WIDEN`, `NEAR_TEXT` and `RAMP`: the reading guard (owner's answer).
