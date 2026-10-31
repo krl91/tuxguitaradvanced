@@ -10,7 +10,18 @@
 
 - Every parameter has a key, a range, both defaults, a label key and a tooltip key, present in `messages.properties`, `messages_fr.properties` and `messages_es.properties`.
 - Each Arcade default equals the constant it comes from (one assertion per constant).
-- No literal shaping a fire is left in `FireField`, `FireColours` or `FlameDrawing` outside the tuning, apart from the fixed list (research R4). This is checked by a source-scan test for number literals in those three files, with an explicit allow-list. The numbers 0, 1, 2 and 0.5 are allowed only inside the named mathematical helpers (`value`, `hash`, `smooth`, `lerp`, `clamp`, `mix`, `gap`); anywhere else every number must come from the tuning, be a fixed constant of research R4, or be on the explicit allow-list with its reason. That list holds only index and rounding arithmetic that shapes nothing, for example `row + 1` in `top`, the cell centre `k + 0.5` in `heat`, the symmetry test `2 * col` in `weight(col)`, and the epsilons `1e-9` and `1e-6`.
+- No literal shaping a fire is left in `FireField`, `FireColours` or `FlameDrawing` outside the tuning, apart from the fixed list (research R4). This is checked by a source-scan test for number literals in those three files, with an explicit allow-list. The rule:
+- The numbers 0 and 1 are allowed anywhere: complements, bounds, comparisons, indices.
+- The numbers 2 and 0.5 are allowed inside the named mathematical helpers (`value`, `hash`, `smooth`, `lerp`, `clamp`, `mix`, `gap`), and elsewhere only on the explicit allow-list with their reason.
+- Every other number must come from the tuning, be a fixed constant of research R4 (the reading guard, the seed, the hash and spark-draw bit fields, the item code), or be on the allow-list.
+
+The allow-list holds only arithmetic that shapes nothing, each line with its method and its reason:
+- the centring `noise − 0.5` in `heat` and `r − 0.5` of the spark drift;
+- the cell centre `k + 0.5` in `heat`;
+- the symmetry `2 * col` in `weight(col)` and `2.0 * t − 1.0` in `weight(t)`;
+- the horizontal centring `/ 2.0` of `left`;
+- the epsilons `1e-9` and `1e-6`;
+- the BALANCED cell `2.0 * cell` (a fixed tier rule).
 
 ## Clamping (FR-019)
 

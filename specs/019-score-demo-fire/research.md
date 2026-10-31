@@ -71,8 +71,8 @@
 
 **Fixed values, outside the tuning, with their reasons** (FR-015 and FR-016 exceptions, SC-009):
 - `FlameDrawing.WIDEN`, `NEAR_TEXT` and `RAMP`: the reading guard (owner's answer).
-- `FireField.SEED` and the `mix` hash constants: they keep the fire repeatable for the tests.
-- `FlameDrawing.TONGUES`: it only numbers the groups of cells in the item `code`. It changes no pixel (the renderer does not read it) and keeps the reference scene stable.
+- `FireField.SEED`, the `mix` hash constants, and the bit fields that draw each spark from the hash in `FlameDrawing.sparks` (`31L`, the shifts `>>> 1`, `17` and `33`, the masks `0xFFFF` and `& 1L`, the divisor `65536.0`): they keep the fire repeatable for the tests. They choose *which* random number a spark gets, never how the fire looks on average.
+- `FlameDrawing.TONGUES` and `parts = full ? 3 : 2` in `items`: they only number the groups of cells in the item `code`. It changes no pixel (the renderer does not read it) and keeps the reference scene stable.
 - The coarser cell at BALANCED (×2) and the tier rules (`QualityController` PRESSURE, COMFORT and WINDOW): the quality tiers stay automatic (spec assumption).
 
 **Rationale**:
