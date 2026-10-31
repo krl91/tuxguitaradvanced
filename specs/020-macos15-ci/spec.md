@@ -1,10 +1,10 @@
-# Feature Specification: Build and release the macOS package on macOS 15 machines, with macOS 15 as the stated minimum and the same stable signature
+# Feature Specification: Build and release the macOS package on macOS 15 machines, with macOS 15 as the stated minimum and the same stable signature; the Ubuntu machines pinned to Ubuntu 24.04
 
 **Feature Branch**: `feature/interactive-practice` (no branch of its own; spec directory `specs/020-macos15-ci`)
 
 **Created**: 2026-10-31
 
-**Status**: Draft
+**Status**: Clarified (2026-10-31)
 
 **Input**: User description: "spec 020 : migrer la CI macOS de macos-14 vers macos-15 avant la retraite de macos-14 (2 novembre 2026), pour que les releases TuxGuitarAdvanced continuent de sortir sur les trois OS." Owner's decisions of 2026-10-31: the application's minimum macOS is **macOS 15 Sequoia** (the native launcher, the AudioUnit library and the application's description declare it; today nothing sets it and the application inherits the macOS of the machine that built it); the signature keeps the **same stable self-signed certificate** (not an ad hoc signature), so that macOS keeps the microphone permission from one version to the next; the full Spec Kit method is followed. The three workflows that use macOS 14 machines are the release, the macOS build-and-test check and the practice graphical tests. The release run of v0.8.0-beta.3 failed during a scheduled macOS 14 brownout and waits to be run again.
 
@@ -14,7 +14,15 @@
 - A first try on macOS 15 machines (before this spec) showed two problems:
   1. **No minimum macOS is declared**: the native parts take the macOS version of the build machine as their minimum (macOS 27 for a build on the owner's Mac, checked; so the current releases, built on macOS 14 machines, already silently require macOS 14). A build on macOS 15 machines would require macOS 15 without saying it.
   2. **The signing step fails on macOS 15 machines**: making the machine trust the stable certificate is refused by the system (error -60005).
+- GitHub warns, in every run, that the "latest Ubuntu" machines move to Ubuntu 26 from 2026-10-19. The release's Ubuntu jobs (the checks, the draft, the Windows cross-build, the Linux build, the publication) and the Ubuntu build-and-test check use "the latest Ubuntu", so they would change by themselves; the v0.8.0-beta.2 release was built on Ubuntu 24.04.
 - Checked locally with a throwaway certificate: a signature made with a certificate the machine does **not** trust, chosen by its fingerprint, is valid and passes a strict verification; and the signature's "designated requirement", the rule by which macOS recognises the same application from one version to the next (and keeps its microphone permission), can be set to exactly the form the current releases have: `identifier "app.tuxguitaradvanced" and certificate root = H"280bd902de0512b59d70228c5faa441d3eb6af55"` (read from the v0.8.0-beta.2 release log).
+
+## Clarifications
+
+### Session 2026-10-31
+
+- Q: How is the first real check on macOS 15 machines made: the v0.8.0-beta.3 release directly, or the macOS build-and-test workflow first? → A: The v0.8.0-beta.3 release directly (only it signs with the stable certificate; a failed run leaves a draft that the next run for the same tag replaces); the two other workflows run once afterwards.
+- Q: Should spec 020 also pin the Linux and Windows build machines to a fixed Ubuntu version, given that GitHub warns `ubuntu-latest` is moving to Ubuntu 26? → A: Yes, included: every job that runs on "the latest Ubuntu" is pinned to Ubuntu 24.04, the image the v0.8.0-beta.2 release was built on (read from its log).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -66,7 +74,22 @@ A musician on macOS 14 or older downloads the new release. Before downloading, t
 
 ---
 
-### User Story 4 - The owner's manual checks run on the new machines (Priority: P3)
+### User Story 4 - The Linux and Windows packages are built on a fixed Ubuntu version (Priority: P2)
+
+The release's Linux and Windows packages, and its other jobs on Ubuntu machines, keep being built on Ubuntu 24.04, the version that built the previous releases, instead of following GitHub's move of "the latest Ubuntu" to Ubuntu 26.
+
+**Why this priority**: a silent change of build machine stopped the releases once (macOS 14); fixing the Ubuntu version makes the next change a deliberate decision, at no cost now.
+
+**Independent Test**: in the first release run after this change, every Ubuntu job reports the Ubuntu 24.04 image, and the Windows and Linux packages pass all their existing checks.
+
+**Acceptance Scenarios**:
+
+1. **Given** the release workflow and the Ubuntu build-and-test workflow, **When** they run, **Then** every job that runs on Ubuntu runs on Ubuntu 24.04, named explicitly.
+2. **Given** the first release after this change, **When** its Windows and Linux packages are checked, **Then** they pass every existing check, as before.
+
+---
+
+### User Story 5 - The owner's manual checks run on the new machines (Priority: P3)
 
 The owner can still start, by hand, the macOS build-and-test check and the practice graphical tests, and both run on macOS 15 machines.
 
@@ -86,6 +109,7 @@ The owner can still start, by hand, the macOS build-and-test check and the pract
 - **A native part without a declared minimum** (a new native part added later): the release checks refuse the package rather than publish one whose minimum depends on the build machine.
 - **The stable certificate is missing from the secrets**: ad hoc signature, as today (forks); the designated-requirement check applies only when the certificate is provided.
 - **The certificate's fingerprint does not match the one of the previous releases** (a certificate replaced by mistake): the release checks refuse the package, because users would lose the microphone permission.
+- **GitHub retires Ubuntu 24.04 machines later**: same rule; the explicit version makes the change visible.
 - **GitHub renames or retires the macOS 15 machines in turn**: the workflows name the macOS version explicitly (not "the latest macOS"), so a change of build machine is always a deliberate, visible decision; a warning from GitHub is the signal for the next migration.
 - **A brownout window before the change is pushed**: not handled; the change is meant to be in place before 2026-11-02.
 - **Intel Macs**: out of scope, unchanged (the macOS package is for Apple Silicon only; the AudioUnit library keeps its two architectures, both declaring macOS 15).
@@ -106,6 +130,8 @@ The owner can still start, by hand, the macOS build-and-test check and the pract
 - **FR-010**: The release notes of the first release after this change, the installation guide and the README MUST state that macOS 15 Sequoia or later is required (Apple Silicon), and the notes MUST say that macOS 14 is no longer supported.
 - **FR-011**: The pending v0.8.0-beta.3 release MUST be produced by running the changed release workflow again for the same tag, replacing its draft; its notes MUST include the new minimum. No published tag is moved.
 - **FR-012**: The existing self-tests of the macOS packaging scripts MUST keep passing, and the new checks of FR-004 and FR-006 MUST each have a self-test that shows them refusing a wrong package.
+- **FR-013**: The first run on macOS 15 machines MUST be the v0.8.0-beta.3 release itself (no separate trial workflow or throwaway release before it); the macOS build-and-test check and the practice graphical tests are each run once after it (SC-005).
+- **FR-014**: Every job of the release and of the Ubuntu build-and-test check that runs on Ubuntu MUST run on Ubuntu 24.04, named explicitly (no "latest" label left in the workflows).
 
 ### Key Entities
 
@@ -123,6 +149,7 @@ The owner can still start, by hand, the macOS build-and-test check and the pract
 - **SC-004**: The automatic checks refuse 100 % of the wrong packages of their self-tests (missing or different minimum, different designated requirement or fingerprint).
 - **SC-005**: The macOS build-and-test check and the practice graphical tests each end green once on macOS 15 machines.
 - **SC-006**: The Windows and Linux packages of the first release after this change pass all their existing checks, as before.
+- **SC-007**: In the first release run after this change, 100 % of the Ubuntu jobs run on the Ubuntu 24.04 image (read from the run's log).
 
 ## Assumptions
 
@@ -132,4 +159,5 @@ The owner can still start, by hand, the macOS build-and-test check and the pract
 - No Mac older than macOS 15 is at hand: the refusal on an older system (User Story 3) is checked through the declarations, not on a real older Mac; this is stated as unverified in the release notes' checks.
 - The embedded Java runtime (Temurin 21) and the graphical toolkit already run on macOS 15; they set no minimum above it.
 - macOS minutes cost ten times more on a private repository; each try on the build machines costs a push (and the owner's Keychain password), so trial runs are kept to the minimum.
+- GitHub keeps providing Ubuntu 24.04 machines under that explicit label for the life of this change.
 - Linux and Windows users are not affected; the three-OS rule (every feature in all three packages) is unchanged.
