@@ -136,6 +136,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - with setting OFF, `start` adds no listener and the canvas stays white;
   - after `stop()`, a paint leaves the canvas white;
   - the first listener's pixels outside the fire are unchanged.
+  - a slow computer (Edge Case, FR-010): with a painting cost of 20 ms per frame fed through a test seam of `ScoreFire` (the measured cost replaced by a fake clock), the tier steps down to BALANCED, then to PERFORMANCE, where nothing of the fire is painted, within the controller's window. With a cost of 1 ms, it climbs back to FULL.
 - [ ] T020 [P] [US1] Create `TST/ui/ScoreGuardBoxesTest.java` on the pure `ScoreGuardBoxes` (SC-003, research R8):
   - with a layout stub giving frame boxes for the current and next events, the result is those two boxes as `{x1, y1, x2, y2}`, canvas-local, unchanged;
   - a palette at screen (900, 700, 200, 60) over a score area whose screen origin is (100, 80) gives the canvas box (800, 620, 1000, 680);
