@@ -26,7 +26,7 @@
 
 ## R3 — How the change is tested
 
-**Decision**: a new native SWT test class, `ArcadeDarkBackgroundSwtTest` (tag `swt-gui`). It opens a real window with an `ArcadeCanvas` like the existing pixel test does, paints one frame and copies the canvas back to pixels with `GC.copyArea`, the way `ArcadePixelAlignmentSwtTest` reads its pictures. That test is not touched: the new class has its own small harness. It checks that points of the frame with no scene item on them (the top corners, above the horizon of the field) have the colour 0x0B0E13, within ±6 per channel:
+**Decision**: a new native SWT test class, `ArcadeDarkBackgroundSwtTest` (tag `swt-gui`). It opens a real window with an `ArcadeCanvas` like the existing pixel test does, paints one frame and copies the canvas back to pixels with `GC.copyArea`, the way `ArcadePixelAlignmentSwtTest` reads its pictures. That test is not touched: the new class has its own small harness. It checks that every pixel of the frame's empty rectangles (the areas no scene item covers, such as the band above the horizon outside the field; at least 8×8 pixels) has the colour 0x0B0E13, within ±6 per channel (SC-001). The items' boxes are derived from their values per shape, with a generous strip for texts, as tasks.md T002 states:
 1. with the normal path;
 2. with the simplified path (the constructor's `forceFallback = true`);
 3. after a resize to a larger and a smaller size;
@@ -34,7 +34,7 @@
 
 **Rationale**:
 - On the owner's Mac (dark appearance) the system's window background is not 0x0B0E13, so cases 1–4 fail before the fix: red first. Light appearance cannot be switched on the owner's Mac without touching their system settings, so the light case is checked by the CI machine, which is in light appearance. The two existing tests that fail there are the evidence (SC-003).
-- Which empty points to read is decided from the scene of the frame itself (the items' bounds), not guessed. If the corners are covered by an item at some size, the test picks a point that no item covers.
+- Which empty areas to read is decided from the scene of the frame itself (the items' boxes), not guessed. If none of at least 8×8 pixels is found at some size, the test fails and says so.
 
 ## R4 — Risk: the CI screen is smaller than some checked sizes
 
