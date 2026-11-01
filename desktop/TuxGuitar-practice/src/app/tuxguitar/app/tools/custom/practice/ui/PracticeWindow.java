@@ -24,7 +24,7 @@ import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSceneLabels;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSession;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeTexts;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeWindow;
-import app.tuxguitar.app.tools.custom.practice.arcade.ui.ReducedMotion;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.SystemReducedMotion;
 import app.tuxguitar.app.tools.custom.practice.model.ArcadeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
@@ -124,6 +124,8 @@ public class PracticeWindow {
 	private final PaletteGuard paletteGuard;
 	/** The demo fire at the bottom of the score in Wait and Follow (spec 019), and the streak of right notes it grows with. */
 	private final ScoreFire scoreFire;
+	/** Reduce motion as the system asks it, for both fires and the previews (spec 019 FR-013): fetched in the background on Linux and Windows. */
+	private final SystemReducedMotion reducedMotion = SystemReducedMotion.ofThisSystem();
 	private final ScoreStreak scoreStreak = new ScoreStreak();
 	/** The events of the Wait run, to find the note after the framed one (spec 017). */
 	private List<PracticeEvent> waitEvents;
@@ -290,6 +292,8 @@ public class PracticeWindow {
 			}
 			return;
 		}
+		// asked again when the window opens and at each start, so that a run never waits for the answer (Linux and Windows)
+		this.reducedMotion.refresh();
 		this.engine = this.host.engine();
 		this.followAdapter = this.host.environment(this.engine);
 		UIFactory uiFactory = this.host.factory();
@@ -384,7 +388,12 @@ public class PracticeWindow {
 	/** The previews of the Advanced tab move only while that tab is selected and the window is shown (FR-020). */
 	private void updateFirePreviews() {
 		if( this.fireSettings != null ) {
-			this.fireSettings.setShown(isOpen() && this.windowShown && !this.hiddenByArcade && this.folder.getSelectedTab() == this.advancedTab);
+			boolean shown = isOpen() && this.windowShown && !this.hiddenByArcade && this.folder.getSelectedTab() == this.advancedTab;
+			if( shown ) {
+				// the latest answer of the system, which may have come since the window opened
+				this.fireSettings.setMotion(!this.reducedMotion.requested());
+			}
+			this.fireSettings.setShown(shown);
 		}
 	}
 
@@ -471,7 +480,7 @@ public class PracticeWindow {
 		this.advancedTab = folder.createTab();
 		this.advancedTab.setText(TuxGuitar.getProperty("practice.tab.advanced"));
 		this.fireSettings = new FireSettingsPanel(uiFactory, this.window, this.advancedTab, FIRE_MESSAGES, FireTuningStore.of(this.context),
-				() -> ScoreFire.ticker(this.context), System::nanoTime, !ReducedMotion.requested());
+				() -> ScoreFire.ticker(this.context), System::nanoTime, !this.reducedMotion.requested());
 		this.folder = folder;
 
 		// a tab that was hidden is measured only once it is shown (its controls count as invisible before): the window is refitted when the learner changes tab
@@ -712,6 +721,7 @@ public class PracticeWindow {
 		}
 		// the mode and the track are those of the request, whatever happens in the window while the check runs
 		final FollowSettings.Mode mode = FollowSettings.getInstance(this.context).getMode();
+		this.reducedMotion.refresh();
 		this.startFlow.begin(new PreRunCheck(mode), () -> startSessionNow(mode, candidate));
 	}
 
@@ -897,7 +907,7 @@ public class PracticeWindow {
 		this.arcadeSession = ArcadeSession.of(plan, arcadeTuning, new ArcadeSceneLabels(ARCADE_TEXTS), false,
 				FollowSettings.getInstance(this.context).getMarkerPercent() / 100.0, measureNanos,
 				FollowSettings.getInstance(this.context).getFarScalePercent() / 100.0, FollowSettings.getInstance(this.context).getHorizonPercent() / 100.0,
-				FollowSettings.getInstance(this.context).getFlames(), !ReducedMotion.requested(),
+				FollowSettings.getInstance(this.context).getFlames(), !this.reducedMotion.requested(),
 				FireTuningStore.of(this.context).load(FireTuning.Group.ARCADE));
 		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
@@ -1142,7 +1152,7 @@ public class PracticeWindow {
 	private void startScoreFire() {
 		FireTuningStore store = FireTuningStore.of(this.context);
 		this.scoreStreak.reset();
-		this.scoreFire.start(store.scoreSetting(), store.load(FireTuning.Group.SCORE), !ReducedMotion.requested());
+		this.scoreFire.start(store.scoreSetting(), store.load(FireTuning.Group.SCORE), !this.reducedMotion.requested());
 	}
 
 	/** The streak and the fire follow the run's picture, next to the palette guard; they only read it (FR-008). */

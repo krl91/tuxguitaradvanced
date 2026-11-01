@@ -127,6 +127,13 @@ final class FireSettingsPanel {
 		}
 	}
 
+	/** False when the system asks to reduce motion: the previews are drawn still, without sparks. */
+	void setMotion(boolean motion) {
+		for (FirePreview preview : this.previews.values()) {
+			preview.setMotion(motion);
+		}
+	}
+
 	void dispose() {
 		for (FirePreview preview : this.previews.values()) {
 			preview.dispose();
