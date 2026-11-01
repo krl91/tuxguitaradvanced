@@ -328,3 +328,12 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 1. **MVP**: Phases 1–3. The fire on the score, at the defaults, chosen in the Mode tab. It can be shipped on its own.
 2. **Then**: US2 (sparks), US4 (the Advanced tab), US3 (kept everywhere, Reduce motion on every system).
 3. **Each phase ends green and committed**, without pausing between phases (owner's rule). The push comes after a few phases, in one round, and the release after the owner's gate T048.
+
+## Phase 8: Convergence
+
+- [X] T049 Bring the fire's own painting at FULL (1280×800, Wait and Follow, 100 frames, measured as in T029) to at most 4 ms at the 95th percentile (today 4.4 ms in Wait and 4.0 ms in Follow, medians 3.3 and 2.8 ms), without changing any picture of the identity tests; or, if the owner accepts the measured times, record the acceptance and its date in `specs/019-score-demo-fire/final-report.md` ("Measured") and leave the code as it is. The owner decides which one first. Per plan: Performance Goals (partial)
+- [ ] T050 When the next release that carries spec 019 is prepared, write its notes with the call for Linux and Windows feedback: whether Reduce motion is honoured (GNOME, KDE, Windows), and how the score fire and the Advanced tab look and run there, with a link to the issues and to the L1, L2, W1 and X1 rows of sheet F11. Per plan: step 7 Closing, release notes (missing)
+
+**Implementation notes (Phase 8, as built):**
+- T049: the owner chose on 2026-11-01 to accept the measured times (95th percentile 4.4 ms in Wait, 4.0 ms in Follow); recorded in `final-report.md` ("Measured"). No code changed.
+- T050 stays open until the next release that carries spec 019 is prepared.

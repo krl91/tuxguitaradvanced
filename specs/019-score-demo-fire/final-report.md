@@ -1,6 +1,6 @@
 # Final report: spec 019, the demo fire on the score and the Advanced tab
 
-Date: 2026-11-01. Status: every task done but T048 (the owner's gate, sheet F11).
+Date: 2026-11-01. Status: every task done but T044's screenshots, T048 (the owner's gate, sheet F11) and T050 (the release notes, at the next release).
 
 ## What was built
 
@@ -41,7 +41,7 @@ The fire's own painting at FULL, 1280×800, 100 frames (T029):
 | Wait | 3.3 ms | 4.4 ms |
 | Follow | 2.8 ms | 4.0 ms |
 
-The medians are below the plan's 4 ms goal; the 95th percentiles are slightly above it. This was reported to the owner, whose decision is pending.
+The medians are below the plan's 4 ms goal; the 95th percentiles are slightly above it. **The owner accepted these times on 2026-11-01 (T049)**: the gap is at most 0.4 ms on the slowest 5 % of frames, and the fire's own quality controller (8 ms budget) still makes it cheaper on a computer that cannot keep up. The code is unchanged.
 
 ## Not verified
 
