@@ -188,6 +188,7 @@ public final class MonitorEngine {
 			stage.start();
 			long blockNanos = Math.round(this.blockFrames * 1_000_000_000.0 / rate);
 			boolean stopping = false;
+			boolean inputStarted = false;
 			while( current(worker) ) {
 				if( this.stopRequested && !stopping ) {
 					stopping = true;
@@ -201,7 +202,12 @@ public final class MonitorEngine {
 				if( frames <= 0 ) {
 					this.silentBlocks.incrementAndGet();
 					frames = 0;
+					if( inputStarted && !stopping ) {
+						// the input is late: its frames come with the next reads, and a block of silence written now would push the sound back by a block
+						continue;
+					}
 				} else {
+					inputStarted = true;
 					checkClipping(block, frames);
 				}
 				if( frames < this.blockFrames ) {

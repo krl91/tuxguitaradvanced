@@ -50,3 +50,21 @@ T054/T062 (2026-11-01): Phase 7 gate, mvn -o -e clean verify -P native-modules: 
   The macOS 27 tools' strip left a mis-aligned string pool in proc-macro libraries (rustc could not load thiserror_impl): the release
   profile does not strip. The new silence test showed the resampler's one-block target ran dry (108 callbacks in 4000): the target is
   now two blocks as a callback starts.
+
+T028 (2026-11-01): US1 gate, mvn -o -e clean verify -P native-modules: BUILD SUCCESS
+  audio-engine 417 (397 + Biquad 3, Oversampler 2, Amp 4, Cabinet 3, NoiseGate 4, NativeMonitorDevice 3, MonitorEngineLateInput 1),
+  practice 1408 with 12 skipped (1401 + AmpSoundSettings 4, AmpTexts 2, DatasetRecognitionIdentity 1: the practice module excludes only
+  swt-gui, so this benchmark-tagged test runs in its gate, about 200 s, and skips when the datasets are absent), cargo test 7.
+  swt-gui-tests: practice 62 (52 + AmpWindowSwtTest 10). git diff on the test folders: additions only.
+  Seen red: the fx tests and NativeMonitorDeviceTest at compile time (classes missing); BiquadTest's ramp and AmpTest's tone knobs failed
+  on the first drafts and found two bugs (the coefficients were ramped only in process(), never in tick(), so the amp's tone knobs did
+  nothing; gliding the coefficients made a low-pass jump in a few samples: the filter now glides its frequency, Q and gain); AmpTextsTest
+  before the texts; AmpWindowSwtTest under a one-run mutation of the placement (restored); MonitorEngineLateInputTest (10 writes for 2).
+T061: the dataset outcomes sound off and with the four ready-made sounds playing real IDMT recordings beside them: outcomes.csv 943
+  lines, report.txt 64, guitarset-chords-outcomes.csv 301, technique-report.txt 29, owner-chords.txt 46, the same lines (compared sorted:
+  the benchmarks analyse in parallel and their row order changes from one run to the next, with or without the sound).
+T063: native probe, built-in microphone and speakers (44.1 kHz): first run 54.4 / 79.3 / 83.3 ms at 64 / 128 / 256 frames, the delay
+  growing on late reads (each wrote a block of silence); fixed in MonitorEngine (a late read writes nothing once the input has started);
+  second run 54.3 / 60.6 / 71.4 ms, spreads within 3 ms. The estimate now counts 4 blocks (the ring's two): medians within 1.1 / 0.1 /
+  −0.7 ms of it. Known: the engine adds one processing block on top of the device's estimate (an existing MonitorEngineTest fixes that
+  formula), so the window shows about 3 ms more than measured at 128 frames.

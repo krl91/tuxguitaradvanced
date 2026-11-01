@@ -85,6 +85,21 @@ final class PaletteGuard {
 		}
 	}
 
+	/** The run's framed note and the next one (not while paused), on the screen; empty when no run is going on (spec 022, FR-020: the amp window avoids them). */
+	List<UIRectangle> runBoxes() {
+		List<UIRectangle> result = new java.util.ArrayList<UIRectangle>();
+		if( this.current == null ) {
+			return result;
+		}
+		PaletteDodge.Box area = this.boxes.area();
+		for( PaletteDodge.Box box : new PaletteDodge.Box[] { this.boxes.of(this.current, area), (this.paused ? null : this.boxes.of(next(), area)) } ) {
+			if( box != null ) {
+				result.add(new UIRectangle((float) box.x(), (float) box.y(), (float) box.width(), (float) box.height()));
+			}
+		}
+		return result;
+	}
+
 	private PracticeEvent next() {
 		if( this.events == null ) {
 			return null;

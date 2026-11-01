@@ -50,6 +50,10 @@ public class PracticePalette {
 
 		/** The learner closed the palette window: practice stops. */
 		void closed();
+
+		/** The amp button: opens the Amp and effects window (spec 022, FR-020). */
+		default void openAmp() {
+		}
 	}
 
 	private static final String[] NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
@@ -120,7 +124,9 @@ public class PracticePalette {
 		this.resumeButton = button(uiFactory, buttons, buttonsLayout, 2, "practice.resume", () -> this.controller.post(PracticeCommand.RESUME));
 		this.restartButton = button(uiFactory, buttons, buttonsLayout, 3, "practice.restart", () -> this.controller.post(PracticeCommand.RESTART));
 		UIButton stopButton = button(uiFactory, buttons, buttonsLayout, 4, "practice.stop", () -> this.controller.stop());
-		listenKeys(this.window, buttons, this.skipButton, this.resumeButton, this.restartButton, stopButton,
+		UIButton ampButton = button(uiFactory, buttons, buttonsLayout, 5, "practice.amp.open", () -> this.controller.openAmp());
+		ampButton.setToolTipText(TuxGuitar.getProperty("practice.amp.open.tip"));
+		listenKeys(this.window, buttons, this.skipButton, this.resumeButton, this.restartButton, stopButton, ampButton,
 				this.detectedLabel, this.statusLabel, this.techniqueLabel, this.outcomeLabel, this.passageLabel, this.inputLabel);
 
 		this.window.addDisposeListener(new UIDisposeListener() {

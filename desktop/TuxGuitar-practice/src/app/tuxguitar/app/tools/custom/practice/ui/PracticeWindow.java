@@ -33,6 +33,7 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidate;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
+import app.tuxguitar.app.tools.custom.practice.session.AmpSoundStore;
 import app.tuxguitar.app.tools.custom.practice.session.ArcadeChoices;
 import app.tuxguitar.app.tools.custom.practice.session.AttackCandidates;
 import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
@@ -208,6 +209,11 @@ public class PracticeWindow {
 	private boolean disposing;
 	private static final int ARCADE_RESTART_TRIES = 100;
 	private static final long ARCADE_RESTART_RETRY_MILLIS = 50L;
+	private static final AmpWindow.Texts AMP_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
+	/** The amp sound and its window (spec 022), made when the window opens and closed with it. */
+	private AmpSound ampSound;
+	private AmpWindow ampWindow;
+	private long ampInputRevision = -1;
 	private static final ArcadeTexts ARCADE_TEXTS = (key, arguments) -> arguments.length == 0 ? TuxGuitar.getProperty(key) : TuxGuitar.getProperty(key, arguments);
 
 	public PracticeWindow(TGContext context, PracticePlugin plugin) {
@@ -232,6 +238,10 @@ public class PracticeWindow {
 
 			public void closed() {
 				PracticeWindow.this.post(PracticeCommand.STOP);
+			}
+
+			public void openAmp() {
+				PracticeWindow.this.openAmp();
 			}
 		}, PracticeParameters.of(RecognitionSettingsStore.getInstance(context).get()).tolerance());
 		this.paletteGuard = new PaletteGuard(context, this.palette, () -> this.host.mainWindow());
@@ -314,14 +324,18 @@ public class PracticeWindow {
 		buttons.setLayout(buttonsLayout);
 		windowLayout.set(buttons, 3, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_FILL, true, false);
 		// Start and Close are always in view, whatever the tab
-		this.startButton = button(uiFactory, buttons, buttonsLayout, 1, "practice.start", () -> startSession());
-		UIButton closeButton = button(uiFactory, buttons, buttonsLayout, 2, "close", () -> close());
+		UIButton ampButton = button(uiFactory, buttons, buttonsLayout, 1, AmpTexts.OPEN, () -> openAmp());
+		ampButton.setToolTipText(TuxGuitar.getProperty(AmpTexts.OPEN + ".tip"));
+		this.startButton = button(uiFactory, buttons, buttonsLayout, 2, "practice.start", () -> startSession());
+		UIButton closeButton = button(uiFactory, buttons, buttonsLayout, 3, "close", () -> close());
 		buttonsLayout.set(closeButton, UITableLayout.MARGIN_RIGHT, 0f);
-		listenKeys(buttons, closeButton, this.startButton);
+		listenKeys(buttons, closeButton, this.startButton, ampButton);
 
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
 				PracticeWindow.this.disposing = true;
+				PracticeWindow.this.ampWindow.close();
+				PracticeWindow.this.ampSound.close();
 				PracticeWindow.this.startFlow.cancelPending();
 				teardownSession();
 				PracticeWindow.this.followPanel.dispose();
@@ -354,6 +368,7 @@ public class PracticeWindow {
 		RecognitionSettingsStore.getInstance(this.context).addListener(this.settingsListener);
 		this.engine.acquire(CONSUMER_ID);
 		this.assessment = this.engine.getSelection().snapshot().getAssessment();
+		createAmp(uiFactory, uiParent);
 
 		this.windowShown = false;
 		showPreparation();
@@ -410,6 +425,34 @@ public class PracticeWindow {
 	public void close() {
 		if( this.isOpen() ) {
 			this.window.dispose();
+		}
+	}
+
+	// ---------------------------------------------------------------- the amp sound (spec 022)
+
+	/** One amp sound per opening of the window: it starts now when it is on (FR-001); its window is owned by the main window. */
+	private void createAmp(UIFactory uiFactory, UIWindow mainWindow) {
+		AmpSoundStore store = AmpSoundStore.of(this.context);
+		this.ampSound = new AmpSound(this.context, store, () -> this.engine.getSelection().snapshot().getInput(), AMP_TEXTS);
+		this.ampWindow = new AmpWindow(uiFactory, mainWindow, AMP_TEXTS, store, this.ampSound, () -> this.paletteGuard.runBoxes(),
+				() -> isOpen() && this.windowShown && !this.hiddenByArcade ? this.window.getBounds() : null, Screens::contains);
+		this.ampSound.setView(new AmpSound.View() {
+			public void soundChanged() {
+				PracticeWindow.this.ampWindow.soundChanged();
+			}
+
+			public void message(String text) {
+				PracticeWindow.this.ampWindow.message(text);
+			}
+		});
+		this.ampInputRevision = this.engine.getSelection().snapshot().getInputRevision();
+		this.ampSound.windowOpened();
+	}
+
+	/** The Amp and effects button, here or on the palette (FR-020). */
+	private void openAmp() {
+		if( isOpen() ) {
+			this.ampWindow.open();
 		}
 	}
 
@@ -666,6 +709,10 @@ public class PracticeWindow {
 		this.assessment = snapshot.getAssessment();
 		if( !isOpen() ) {
 			return;
+		}
+		if( snapshot.getInputRevision() != this.ampInputRevision ) {
+			this.ampInputRevision = snapshot.getInputRevision();
+			this.ampSound.inputChanged();
 		}
 		this.palette.setInput(this.assessment);
 		this.levelPanel.setAssessment(this.assessment);
