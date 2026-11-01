@@ -105,6 +105,17 @@ public class PracticeWindow {
 	private static final String CONSUMER_ID = "practice";
 	private static final String[] NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
+	/** The texts of the Advanced tab. */
+	private static final FireSettingsPanel.Messages FIRE_MESSAGES = new FireSettingsPanel.Messages() {
+		public String get(String key) {
+			return TuxGuitar.getProperty(key);
+		}
+
+		public String get(String key, String[] arguments) {
+			return TuxGuitar.getProperty(key, arguments);
+		}
+	};
+
 	private final TGContext context;
 	private final PracticeHost host;
 	private final PracticeTunerContext shared;
@@ -168,6 +179,10 @@ public class PracticeWindow {
 	private AnalysisService.Listener frameListener;
 	// ---- the tempo-following mode (spec 002 T096-T099): a run beside the wait-mode session, never together with it
 	private FollowPanel followPanel;
+	/** The Advanced tab: the settings of both fires and their previews (spec 019 FR-014). */
+	private FireSettingsPanel fireSettings;
+	private UITabItem advancedTab;
+	private UITabFolder folder;
 	private PracticeHost.RunEnvironment followAdapter;
 	private FollowStarter.Plan followPlan;
 	private AnalysisService.Listener followFrameListener;
@@ -306,6 +321,7 @@ public class PracticeWindow {
 				PracticeWindow.this.startFlow.cancelPending();
 				teardownSession();
 				PracticeWindow.this.followPanel.dispose();
+				PracticeWindow.this.fireSettings.dispose();
 				PracticeWindow.this.inputSelector.dispose();
 				PracticeWindow.this.levelPanel.disconnect();
 				PracticeWindow.this.engine.getSelection().removeListener(PracticeWindow.this.selectionListener);
@@ -361,6 +377,14 @@ public class PracticeWindow {
 		} else {
 			// back from a hidden state (the Arcade run): shown, recomposed and painted again
 			WindowRevival.revive(this.window, this.preparation, this.followPanel::refresh, this::refit);
+		}
+		updateFirePreviews();
+	}
+
+	/** The previews of the Advanced tab move only while that tab is selected and the window is shown (FR-020). */
+	private void updateFirePreviews() {
+		if( this.fireSettings != null ) {
+			this.fireSettings.setShown(isOpen() && this.windowShown && !this.hiddenByArcade && this.folder.getSelectedTab() == this.advancedTab);
 		}
 	}
 
@@ -443,10 +467,18 @@ public class PracticeWindow {
 		UIPanel passagePanel = tab(uiFactory, folder, "practice.tab.passages", passageLayout);
 		createPassageSettings(uiFactory, passagePanel, passageLayout);
 
+		// ---- tab 5: the settings of both fires (spec 019 FR-014). It scrolls and asks for no height of its own, so it is not one of the refitted tabs
+		this.advancedTab = folder.createTab();
+		this.advancedTab.setText(TuxGuitar.getProperty("practice.tab.advanced"));
+		this.fireSettings = new FireSettingsPanel(uiFactory, this.window, this.advancedTab, FIRE_MESSAGES, FireTuningStore.of(this.context),
+				() -> ScoreFire.ticker(this.context), System::nanoTime, !ReducedMotion.requested());
+		this.folder = folder;
+
 		// a tab that was hidden is measured only once it is shown (its controls count as invisible before): the window is refitted when the learner changes tab
 		folder.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
 				refit();
+				updateFirePreviews();
 			}
 		});
 
@@ -916,6 +948,7 @@ public class PracticeWindow {
 			this.arcadeWindow.open();
 			setVisible(this.window, false);
 			this.hiddenByArcade = true;
+			updateFirePreviews();
 			this.host.windowStateChanged();
 		}
 	}

@@ -213,20 +213,20 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 **Independent test**: `FireTextsTest` and `FireSettingsPanelSwtTest` are green; manually, move a setting and see the preview follow, then restart and check the value is kept.
 
-- [ ] T033 [P] [US4] Create `TST/ui/FireTextsTest.java` (FR-018, SC-009): for every `FireParameter` key in its groups, and for the fixed keys (`practice.tab.advanced`, `practice.fire.group.arcade`, `practice.fire.group.score`, `practice.fire.defaults`, `practice.fire.defaults.tip`, `practice.fire.preview.sparks`, `practice.fire.preview.growth`, `practice.fire.score.setting` and their `.tip`), a non-empty value exists in `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`.
-- [ ] T034 [P] [US4] (FR-016, FR-019) Create `TST/ui/FireExtremesTest.java` (SC-011): for each parameter at its minimum and at its maximum, the others at their defaults, both groups:
+- [X] T033 [P] [US4] Create `TST/ui/FireTextsTest.java` (FR-018, SC-009): for every `FireParameter` key in its groups, and for the fixed keys (`practice.tab.advanced`, `practice.fire.group.arcade`, `practice.fire.group.score`, `practice.fire.defaults`, `practice.fire.defaults.tip`, `practice.fire.preview.sparks`, `practice.fire.preview.growth`, `practice.fire.score.setting` and their `.tip`), a non-empty value exists in `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`.
+- [X] T034 [P] [US4] (FR-016, FR-019) Create `TST/ui/FireExtremesTest.java` (SC-011): for each parameter at its minimum and at its maximum, the others at their defaults, both groups:
   - the score scene (1280×800, guard boxes at the bottom) and the Arcade flame items (reference viewport, text boxes) have no item above 12 % opacity within 4 px of a box;
   - the item count is at most `(384 columns × rows) + 1000`;
   - the scripted Wait and Follow runs of T021, replayed with the score tuning at that extreme, give the same verdicts, streak and summary as at the defaults (SC-011, "the verdicts are unchanged");
   - nothing throws.
   It may pass at once after T012; it is then seen red by a deliberate mutation (the guard's `faded` bypassed for one run, not committed), and the mutation is named in the commit message.
-- [ ] T035 [P] [US4] (FR-020) Create `TST/ui/FirePreviewTest.java` (pure part of `FirePreview`):
+- [X] T035 [P] [US4] (FR-020) Create `TST/ui/FirePreviewTest.java` (pure part of `FirePreview`):
   - a changed tuning is used at the next frame;
   - *Sparks* adds one burst at the slider's streak;
   - the growth slider maps to `share = streak / growth.full` for the score and to the share of the maximum for Arcade;
   - with motion off, the clock does not move and no burst is drawn;
   - `setShown(false)` stops the ticks.
-- [ ] T036 [P] [US4] Create `TST/ui/FireSettingsPanelSwtTest.java` (swt-gui-tests):
+- [X] T036 [P] [US4] Create `TST/ui/FireSettingsPanelSwtTest.java` (swt-gui-tests):
   - the panel builds two groups with one row per parameter of each group;
   - with an empty store, each row shows its group's default, and with a stored value it shows that value (US4 scenario 1);
   - each label and control has a tooltip that contains the parameter's text, its unit and its default as shown (US4 scenario 2, FR-018);
@@ -234,20 +234,28 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - *Default values* puts every row of the group back to its default and calls `reset`, leaving the other group untouched;
   - hiding the panel stops the preview timer;
   - a value changed while a run is going (a fake run holding the tuning it read at its start) leaves that run's tuning unchanged, and the next `load` gives the new value (FR-019, Edge Case "A setting changed during a run").
-- [ ] T037 [US4] (FR-020) Create `PR/ui/FirePreview.java`:
+- [X] T037 [US4] (FR-020) Create `PR/ui/FirePreview.java`:
   - a `UICanvas` of about 360×120 painted by `UiPainterRenderer` from `ScoreFireScene` (score) or from the flame items of an empty Arcade picture (Arcade) through a public facade in `ARCADE/view` (`ScoreFireScene.arcadePreview(viewport, tier, flames)`);
   - its own `FlameLevel(tuning)`, clock, bursts and `QualityController(8_000_000L)`;
   - 30 frames per second only while shown and with motion.
   Make T035 pass.
-- [ ] T038 [US4] (FR-014, FR-015, FR-018) Create `PR/ui/FireSettingsPanel.java` per contracts/advanced-tab.md:
+- [X] T038 [US4] (FR-014, FR-015, FR-018) Create `PR/ui/FireSettingsPanel.java` per contracts/advanced-tab.md:
   - a scroll panel with two groups; each group has the preview, *Sparks*, the growth slider and *Default values*, then the sections (Look, Flames, Motion, Embers, Growth, Sparks, Colours);
   - number and integer rows: label, `createHorizontalScale` mapped onto `[min, max]` (1000 steps for numbers, exact steps for integers), value label with unit;
   - colour rows: swatch button and `createColorChooser`;
   - tooltips from `tooltipKey()` + unit + "default: X";
   - changes go through `FireTuning.of` (clamped), are saved through `FireTuningStore` and refresh the preview at once.
   Make T036 pass.
-- [ ] T039 [US4] (FR-014, FR-019) Add the tab `practice.tab.advanced` after *Passages* in `PR/ui/PracticeWindow.java` with `tab(uiFactory, folder, "practice.tab.advanced", layout)`, holding a `FireSettingsPanel`. The preview is shown only when this tab is selected and the window is visible (tab selection listener and window close). Arcade and score runs read the stored tunings at their start (T015, T027).
-- [ ] T040 [US4] Write every label and tooltip in `LANG/messages.properties` (EN), `messages_fr.properties` (FR) and `messages_es.properties` (ES): each tooltip says what the value changes in plain words. Make T033 pass; make T034 pass and check that T008 is still green, fixing code only. Gate and commit the phase.
+- [X] T039 [US4] (FR-014, FR-019) Add the tab `practice.tab.advanced` after *Passages* in `PR/ui/PracticeWindow.java` with `tab(uiFactory, folder, "practice.tab.advanced", layout)`, holding a `FireSettingsPanel`. The preview is shown only when this tab is selected and the window is visible (tab selection listener and window close). Arcade and score runs read the stored tunings at their start (T015, T027).
+- [X] T040 [US4] Write every label and tooltip in `LANG/messages.properties` (EN), `messages_fr.properties` (FR) and `messages_es.properties` (ES): each tooltip says what the value changes in plain words. Make T033 pass; make T034 pass and check that T008 is still green, fixing code only. Gate and commit the phase.
+
+**Implementation notes (Phase 5, as built):**
+- Red first: `FirePreviewTest` and `FireSettingsPanelSwtTest` did not compile before `FirePreview` and `FireSettingsPanel`; `FireTextsTest` failed on the missing texts until T040. `FireExtremesTest` passed at once and was seen red with the guard's `faded` bypassed for one run (not committed).
+- The judging at the extremes (T034, third point) is in the new `TST/session/FireExtremesVerdictsTest.java`: the harness of `ScoreFireVerdictsTest` (whose session snapshots are package-private) with the tuning as a parameter; T021's file is left as it is.
+- `FireTuningStore.save(tuning, parameter)` (additive) writes the one value a move changes: `save(tuning)` writes the whole group, each write saving the configuration file.
+- The fixed texts also hold `practice.fire.tooltip.unit`, `practice.fire.tooltip.default` and `practice.fire.colour.choose`, with the section titles and the units: 129 keys per language.
+- The Advanced tab is not one of the refitted tabs: it scrolls and asks for no height, so the window keeps its size. The previews move only while the tab is selected and the window is shown (`updateFirePreviews`). The preview's motion uses `!ReducedMotion.requested()` until T043.
+- Gate: practice suite 1394 tests, 0 failures, 12 skipped (1382 + 12 new); `FireSettingsPanelSwtTest` 5/5 under `swt-gui-tests`.
 
 ## Phase 6: User Story 3 — My choice kept, and the same everywhere (Priority: P3)
 

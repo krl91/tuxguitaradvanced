@@ -72,6 +72,16 @@ public final class FireTuningStore {
 		return all;
 	}
 
+	/**
+	 * Keeps one value of a group, written when it differs from its default and cleared when it is back at it: what one move of the Advanced tab changes,
+	 * so that a move writes one value and not the whole group.
+	 *
+	 * @return false when it could not be written; never throws
+	 */
+	public boolean save(FireTuning tuning, FireParameter parameter) {
+		return write(key(tuning.group(), parameter), tuning.isDefault(parameter) ? "" : format(parameter, tuning.value(parameter)));
+	}
+
 	/** Clears every value of a group: it is back to its defaults; the other group is not touched. */
 	public boolean reset(FireTuning.Group group) {
 		boolean all = true;
