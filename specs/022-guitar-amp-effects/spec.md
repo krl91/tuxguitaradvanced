@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-01
 
-**Status**: Draft, owner's answers integrated (2026-11-01)
+**Status**: Clarified (2026-11-01)
 
 **Input**: User description: "spec 022 : dans les modes de pratique, l'app doit restituer le son joué par le joueur à la guitare, traité par un DSP d'effets réglables (écho, saturation, distorsion, compresseur, autres…) : l'app agit comme des pédales d'effet et un ampli, comme dans Rocksmith. Référence possible : Rocksmith 2014 installé sur la machine du propriétaire."
 
@@ -18,11 +18,17 @@
 - Q: Which pedals in this spec? → A: **A first set**: compressor, overdrive, distortion, echo, reverb, chorus and noise gate, plus the amp (clean, crunch, high gain) and its cabinet. Other pedals (fuzz, flanger, phaser, tremolo, wah, octave, equalizer, pitch shifter…) come in a later spec.
 - Q: Does the sound follow the score? → A: **Per score**: the last sound chosen for a score is remembered and comes back when that score is practised again; the learner can always change it.
 
+### Session 2026-11-01 (/speckit-clarify)
+
+- Q: If the delay from the string to the sound cannot reach 20 ms on the owner's Mac with the Rocksmith cable, what happens? → A: **20 ms stays the target; up to 30 ms the feature ships with the delay shown; above 30 ms it does not ship until improved.**
+- Q: Where and in what form does the learner set the amp and the pedals? → A: **In a separate window, *Amp and effects***, opened by a button of the practice window and of the practice palette, usable during a run; the chain is shown as plain controls (a row per pedal with its switch and sliders), not as drawn pedals.
+- Q: How is "the same score" recognised to give it back its sound? → A: **By the title and the artist written in the score** (by the file name when both are empty): the sound follows the score when it is moved or renamed, and two copies of the same song share it.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - I hear my guitar through an amp while I practise (Priority: P1)
 
-The learner plugs the guitar into the computer (an instrument cable such as the Rocksmith cable, or an audio interface), opens the practice window and turns on *Amp sound*. While practising, they hear their own guitar from the computer's speakers or headphones, shaped by a virtual amp (clean, crunch or lead), at the same time as the score plays in *Follow the tempo* and Arcade. Recognition and judging work exactly as before.
+The learner plugs the guitar into the computer (an instrument cable such as the Rocksmith cable, or an audio interface), opens the practice window, then the *Amp and effects* window, and turns on *Amp sound*. While practising, they hear their own guitar from the computer's speakers or headphones, shaped by a virtual amp (clean, crunch or lead), at the same time as the score plays in *Follow the tempo* and Arcade. Recognition and judging work exactly as before.
 
 **Why this priority**: today a guitar plugged into the computer with a cable is silent: the learner hears nothing, or must add a real amp. Hearing the guitar is the base on which every effect is built.
 
@@ -99,6 +105,7 @@ The sound is off until the learner turns it on. With the computer's built-in mic
 - **The score's playback in Follow and Arcade**: the guitar sound is mixed with it, never replaces it; the guitar never slows or shifts the score's timing.
 - **The tuner and the calibration**: the sound does not change what they measure.
 - **Two outputs** (score through the system's synthesizer, guitar through an audio interface): both are allowed; the learner picks the guitar's output.
+- **Two different songs with the same title and artist, or a score with neither**: they share the remembered sound (title and artist), or fall back to the file name; the learner can always change it.
 - **A value typed out of range**: brought back into the range, never an error.
 
 ## Requirements *(mandatory)*
@@ -113,7 +120,7 @@ The sound is off until the learner turns it on. With the computer's built-in mic
 - **FR-006** (live changes): Any change (a pedal added, removed, moved, switched, a knob moved, a sound picked) MUST be heard within 0.1 second, without a click, a gap or a jump in level.
 - **FR-007** (mix): The learner MUST be able to set the guitar's volume and, in Follow and Arcade, its balance with the score's playback; the score's timing MUST NOT change.
 - **FR-008** (sounds): The learner MUST be able to save the chain as a named sound, rename and delete it, pick it before a run, and restore a ready-made sound; the application MUST ship at least four ready-made sounds (clean, crunch, lead, clean with echo).
-- **FR-019** (sound per score): The last sound chosen for a score MUST be remembered for that score and chosen again when it is practised, across restarts; a score never practised, or whose remembered sound was deleted, MUST start with the last sound used.
+- **FR-019** (sound per score): The last sound chosen for a score MUST be remembered for that score, a score being recognised by its title and artist (by its file name when both are empty), so that moving or renaming the file keeps it and chosen again when it is practised, across restarts; a score never practised, or whose remembered sound was deleted, MUST start with the last sound used.
 - **FR-009** (kept): The on/off choice, the output, the volumes, the current chain and the saved sounds MUST survive a restart.
 - **FR-010** (safe level): The output MUST be limited so that no knob combination makes it louder than a fixed safe ceiling; turning the sound on MUST start quietly and rise in about half a second.
 - **FR-011** (silence): With the guitar not played, the noise heard MUST stay below a quiet level (a noise gate is available and on in the ready-made high-gain sounds).
@@ -121,6 +128,7 @@ The sound is off until the learner turns it on. With the computer's built-in mic
 - **FR-013** (devices): Losing the output, a denied permission or an unsupported format MUST stop the sound with a clear message, never crash or hang the application, and the practice MUST go on without the sound.
 - **FR-014** (cost): When the computer cannot process the chain within the delay, the sound MUST get simpler or mute with a message rather than crackle; it MUST NOT slow the recognition, the score's display or the score's playback.
 - **FR-015** (parity): The feature MUST be the same on macOS, Linux and Windows (owner's standing rule); the delay reached on each system MUST be reported, Linux and Windows by testers.
+- **FR-020** (the *Amp and effects* window): The amp, the pedals, the choice of the sound, the volumes, the output and the measured delay MUST be set in a separate window, *Amp and effects*, opened by a button of the practice window and by a button of the practice palette, and usable while a run goes (the run goes on). It shows the chain in its order, a row per element with its switch and its knobs as sliders with their values. It MUST NOT cover the framed note or the next note when opened during a run (it opens beside the score or where the learner last put it), and it closes with the practice window.
 - **FR-016** (tooltips and languages): Every pedal, knob, amp setting and message MUST have a label and a tooltip in English, French and Spanish saying what it changes, its unit and its default.
 - **FR-017** (documentation): The practice guides in the three languages MUST describe the sound, the chain, the sounds, the delay, headphones and feedback, and that the sound never changes the judging.
 - **FR-018** (original): The amp, the pedals and the ready-made sounds MUST be the project's own: no name, picture, preset or recorded sound taken from Rocksmith or from a pedal or amp maker.
@@ -131,14 +139,15 @@ The sound is off until the learner turns it on. With the computer's built-in mic
 - **Chain**: the ordered pedals before the amp, the amp with its cabinet, the pedals after it; each element has a kind, an on/off state and its knob values.
 - **Pedal**: a kind (compressor, overdrive, echo…), its knobs (each with a name, a unit, a range and a default) and its state.
 - **Sound**: a named, saved chain; ready-made (restorable) or the learner's own.
-- **Sound per score**: the score and the name of the sound last chosen for it.
+- **Sound per score**: the score's title and artist (or its file name when both are empty) and the name of the sound last chosen for it.
+- ***Amp and effects* window**: its place on the screen, kept between sessions.
 - **Measured delay**: the delay between the input and the output on the current devices, shown to the learner.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: On the owner's Mac with an instrument cable (Rocksmith cable), the delay from a string struck to its sound heard is at most 20 ms, measured by a loopback test, and the owner says it feels like playing through an amp.
+- **SC-001**: On the owner's Mac with an instrument cable (Rocksmith cable), the delay from a string struck to its sound heard is measured by a loopback test: the target is at most 20 ms; the feature may ship up to 30 ms, with the delay shown to the learner; above 30 ms it MUST NOT ship. The owner says it feels like playing through an amp.
 - **SC-002**: The same recorded runs (Wait, Follow, Arcade) give identical verdicts, timings, scores and summaries with the sound off and on, whatever the chain.
 - **SC-003**: Every change of a knob, a switch or a sound is heard within 0.1 second, and a recording of the output while moving every knob end to end shows no click, gap or level jump above a fixed limit.
 - **SC-004**: With every knob at its loudest, the output stays under the safe ceiling; turning the sound on reaches the set level after about half a second.
@@ -154,5 +163,5 @@ The sound is off until the learner turns it on. With the computer's built-in mic
 - The sound is heard through the computer's output that the learner picks; it can be the same device as the score's playback or another one.
 - The sound keeps playing between runs while the practice window is open, so the learner can warm up and try sounds (owner's answer).
 - The amp and pedals are built from deterministic, explainable signal processing (constitution VIII), not from recorded impulse responses of commercial gear or from machine learning.
-- The delay target of 20 ms is for the owner's Mac with an instrument cable; Bluetooth headphones add their own delay and are out of the target (the application says so).
+- The delay target of 20 ms (ceiling 30 ms for shipping) is for the owner's Mac with an instrument cable; Bluetooth headphones add their own delay and are out of the target (the application says so).
 - Out of scope: recording the processed sound to a file, a looper, sharing sounds online, a sound for the bass different from the guitar's (same chain), MIDI control of the pedals, effects on the score's own playback, the pedals of the later set (fuzz, flanger, phaser, tremolo, wah, octave, equalizer, pitch shifter), the sound outside the practice window.
