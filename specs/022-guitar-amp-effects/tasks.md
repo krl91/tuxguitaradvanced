@@ -144,12 +144,12 @@
 - [ ] T021 [P] [US1] Create `AE/monitor/fx/Biquad.java` (RBJ cookbook forms, coefficient ramps) and `fx/Oversampler.java` (polyphase half-band, 2× and 4×). Make T015 pass.
 - [ ] T022 [US1] Create `AE/monitor/fx/Amp.java` (research R4: input gain, stages by character, tone stack, presence, master), `fx/Cabinet.java` and `fx/NoiseGate.java`. Make T016 and T017 pass.
 - [ ] T023 [US1] Create `AE/monitor/JavaSoundMonitorDevice.java`: a `SourceDataLine` on the named output mixer (default when empty), 48 kHz, 16-bit stereo, the line buffer chosen by T003; `write` blocks for at most one block; errors are wrapped in `MonitorDeviceException`. Make T018 pass.
-- [ ] T024 [US1] Create `PR/ui/AmpWindow.java` and `PR/ui/AmpChainRows.java` with the top block and the amp and cabinet rows only (pedal rows come in US2), owned by the main window. Add an *Amp and effects…* button in `PR/ui/PracticeWindow.java` and an amp button in `PR/ui/PracticePalette.java` (both open the same window). Place it per contracts/amp-window.md: its kept bounds (`window.bounds`), else away from the framed and the next note using the boxes of `PR/ui/PaletteGuard.java`/`ScoreGuardBoxes`, else centred over the practice window, without taking the focus; keep its bounds when it closes. Show the delay as an estimate (FR-002, research R8). Keep one `MonitorEngine` per practice window:
+- [ ] T024 [US1] First create `PR/ui/AmpTexts.java` with the text keys of US1 (the list T020 reads), then create `PR/ui/AmpWindow.java` and `PR/ui/AmpChainRows.java` with the top block and the amp and cabinet rows only (pedal rows come in US2), owned by the main window. Add an *Amp and effects…* button in `PR/ui/PracticeWindow.java` and an amp button in `PR/ui/PracticePalette.java` (both open the same window). Place it per contracts/amp-window.md: its kept bounds (`window.bounds`), else away from the framed and the next note using the boxes of `PR/ui/PaletteGuard.java`/`ScoreGuardBoxes`, else centred over the practice window, without taking the focus; keep its bounds when it closes. Show the delay as an estimate (FR-002, research R8). Keep one `MonitorEngine` per practice window:
   - it starts when *Amp sound* is on and the window opens, and stops when the practice window closes (FR-001);
   - `CaptureService.setMonitor` is called while it is ON;
   - *Score volume* reads and writes `MidiPlayer.getVolume()`/`setVolume(int)`.
   Make T019 pass.
-- [ ] T025 [US1] Create `PR/ui/AmpTexts.java` with the keys of US1, and add the labels and tooltips of US1 (switch, output, volumes, delay, amp knobs, cabinet) to `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`: what each changes, its unit and its default (FR-016). Make T020 pass.
+- [ ] T025 [US1] Add the labels and tooltips of US1 (switch, output, volumes, delay, amp knobs, cabinet) to `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`: what each changes, its unit and its default (FR-016). Make T020 pass.
 - [ ] T026 [US1] Gate and commit. Relaunch the app for a smoke check: guitar on the built-in microphone with headphones, *Clean* heard.
 - [ ] T027 [HUMAN] [US1] **Non-blocking: the implementation goes on with US2 without waiting; the owner does it whenever convenient, and it is confirmed at T056.** Listen by ear with the Rocksmith cable and headphones, at T003's setting: does it feel like playing through an amp (SC-001)? The probe measured the built-in microphone, not the cable. The answer is noted in `baseline.txt` and confirmed at the final gate.
 
@@ -260,7 +260,7 @@
 
 ## Phase 7: Conditional — native duplex device (only if T003 decided it)
 
-- [ ] T051 Only if T003 found no Java Sound setting within 30 ms:
+- [ ] T051 **If needed, done right after T003 and before T023** (the device of US1). Only if T003 found no Java Sound setting within 30 ms:
   - write a short addendum to `research.md` naming the native API per system (CoreAudio, ALSA or JACK, WASAPI) and its module under `desktop/build-scripts/native-modules/`;
   - add `NativeMonitorDevice` behind `MonitorDevice`, with its own probe run;
   - wire the modules into the three build scripts and the release workflow.
@@ -299,6 +299,7 @@
 - US1: T015, T016, T017, T018, T019 and T020 together, then T021 alongside the window work.
 - US2: T028, T029, T030, T031, T032 and T033 together, then T034 and T035 together.
 - US3: T039, T040 and T041 together.
+- US4: T045, T046 and T047 together.
 
 ## Implementation strategy
 
