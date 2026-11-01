@@ -44,7 +44,7 @@ The owner then repeats the same probe with the Rocksmith cable, using a short ca
   - The ring buffer receives the same samples in the same order. Only the size of each write changes.
   - The analysis reads by hops, independently of the write size.
   - `CaptureClock` gets more, smaller stamps. It already estimates the clock from many reads, so it becomes more precise, not less.
-- A test feeds the same recorded input with the sound off and on (any chain) and checks identical hops, verdicts and summaries (SC-002).
+- A test feeds the same recorded input with the sound off and on (any chain) and checks identical analysis frames (pitch, level, onset), hence identical verdicts and summaries (SC-002).
 
 The monitor gets the raw input **before** the front end. The front end's gain and high-pass are for the analysis, not for the sound. The sound has its own input level (the amp's input gain).
 
@@ -83,7 +83,7 @@ All the effects are written in plain Java in the audio engine, with no new libra
 | Output stage (always on, not a pedal) | guitar volume, start ramp of 0.5 s, safety limiter at −1 dBFS (a look-ahead-free peak limiter) and a hard clamp at 0 dBFS | — |
 
 - **Oversampling** uses polyphase half-band filters (fixed coefficients), only in the clipping stages.
-- **Cost budget:** the full chain of R4, at 48 kHz, in under 25 % of the block time on the owner's Mac. It is measured by a benchmark test. Above that, FR-014's simplification first drops the reverb, then the chorus, then the oversampling factor, with a message.
+- **Cost budget:** the full chain of R4, at 48 kHz, in under 25 % of the block time on the owner's Mac. It is measured by a benchmark test. Above that, FR-014's simplification first drops the reverb, then the chorus, then the oversampling factor, then keeps the amp alone (every pedal bypassed), with a message each time, and mutes if that is still too much (spec edge case).
 
 ## R5 — Feedback guard (FR-012, SC-005)
 

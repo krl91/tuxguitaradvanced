@@ -38,7 +38,7 @@ final class MonitorEngine {
 - **The output thread** runs, in order: queue, chain (before, amp, cabinet, after), output stage (volume, fade, limiter, clamp), then writes to the device.
 - **The safe ceiling (FR-010):** no output sample exceeds 0 dBFS after the clamp, and the limiter holds peaks at −1 dBFS.
 - **The feedback guard** (research R5) watches the output and moves to `MUTED_FEEDBACK`.
-- **Overload:** when processing a block takes more than 50 % of the block time for 20 blocks in a row, the chain is lightened (reverb off, then chorus off, then oversampling 2×, then 1×), with a message each time. If it is still over, the state becomes `MUTED_OVERLOAD`.
+- **Overload:** when processing a block takes more than 50 % of the block time for 20 blocks in a row, the chain is lightened (reverb off, then chorus off, then oversampling 2×, then 1×, then the amp alone with the cabinet: every pedal bypassed), with a message each time. If it is still over, the state becomes `MUTED_OVERLOAD`.
 
 ## `MonitorDevice` (the only place that touches the hardware)
 

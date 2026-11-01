@@ -245,7 +245,8 @@
   - the sound list shows ready-made sounds then own sounds;
   - picking one sends its chain at once;
   - a change shows "(changed)";
-  - *Save as…*, *Rename…*, *Delete* and *Restore* are enabled only when they apply.
+  - *Save as…*, *Rename…*, *Delete* and *Restore* are enabled only when they apply;
+  - with a sound remembered for score A and another for score B, opening the practice window on A then on B gives each its remembered sound before any run (FR-019, US3/AC4).
 
 ### Implementation
 
@@ -253,8 +254,7 @@
 - [ ] T046 [US3] Add the sound list and its buttons to `PR/ui/AmpWindow.java`. In `PR/ui/PracticeWindow.java`:
   - when the practice window shows its preparation (`showPreparation`, which reads the score in front through `host.song()`), and so whenever the score in front has changed, set the current sound to `soundFor(ScoreKey.of(song.getName(), song.getArtist(), scoreName()))`;
   - when the learner picks a sound, call `remember`;
-  - a test in `TST/ui/AmpSoundListSwtTest.java` (T044) opens the window on score A then on score B and checks each gets its remembered sound before any run.
-  Keys go in `PR/ui/AmpTexts.java`, labels and tooltips in the three `LANG` files. Make T044 and T021 pass.
+  Keys go in `PR/ui/AmpTexts.java`, labels and tooltips in the three `LANG` files. Make T044 (including its score A and score B case) and T021 pass.
 - [ ] T047 [US3] Gate and commit.
 
 ## Phase 6: User Story 4 - Safe by default (Priority: P2)
@@ -269,7 +269,7 @@
   - a synthetic howl (a 2.3 kHz sine rising 6 dB per 100 ms over guitar-like noise) fed through the engine mutes the output within 0.5 s of crossing the rule, state MUTED_FEEDBACK;
   - the four ready-made sounds played on the recorded guitar fixtures (including long sustained notes and the echo's tails) never trigger it;
   - turning the sound on again restarts it.
-- [ ] T049 [P] [US4] Create `AET/monitor/OverloadTest.java` (FR-014). A fake clock makes each block take 60 % of the block time. After 20 blocks the reverb goes off with a message, then the chorus, then the oversampling drops to 2× and 1×, then the state is MUTED_OVERLOAD. The capture's `deliver` is never slowed (it returns within a fixed time).
+- [ ] T049 [P] [US4] Create `AET/monitor/OverloadTest.java` (FR-014). A fake clock makes each block take 60 % of the block time. After 20 blocks the reverb goes off with a message, then the chorus, then the oversampling drops to 2× and 1×, then only the amp and cabinet are kept (every pedal bypassed), each step with a message, then the state is MUTED_OVERLOAD. The capture's `deliver` is never slowed (it returns within a fixed time).
 - [ ] T050 [P] [US4] Create `TST/ui/AmpSafetySwtTest.java`. It checks:
   - with the built-in microphone as input, turning the sound on shows the warning, and the sound starts only after *Turn on anyway*;
   - the message line shows the feedback, overload, device-lost and input-clipping messages from engine events (the clipping message gives the advice of the gain control);

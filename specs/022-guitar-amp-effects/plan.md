@@ -136,7 +136,7 @@ docs/PRACTICE*.md, specs/test-sheets/F12-ampli-effets.md
    - Record the counts.
    - Write `MonitorLatencyProbeTest` (benchmark) and the report.
    - **Decision gate:** Java Sound, or the native branch. The owner's listening with the cable comes after US1, without blocking the next phases.
-2. **Foundations:**
+2. **Foundations** (including the output stage with the safe ceiling, SC-004):
    - `Effect`, `Knob`, `PedalSettings`, `AmpSettings`, `ChainSettings` (text, validation);
    - `BlockQueue`, `OutputStage`, `MonitorEngine` on a fake device;
    - `CaptureService.setMonitor`;
@@ -149,10 +149,10 @@ docs/PRACTICE*.md, specs/test-sheets/F12-ampli-effets.md
    - started and stopped with the practice window; the score volume through `MidiPlayer`.
 4. **US2, the pedals** (P1): `Compressor`, `Overdrive`, `Distortion`, `Chorus`, `Echo`, `Reverb`; rows, add, remove, reorder; smooth changes (SC-003); the cost benchmark.
 5. **US3, the sounds** (P2): the sounds part of `AmpSoundStore`, ready-made sounds, save, rename, delete, restore, `ScoreKey`, the sound per score when the practice window opens on a score (FR-019).
-6. **US4, safety** (P2): off by default, the microphone warning, `FeedbackGuard` (SC-005), device loss (FR-013), overload lightening (FR-014), the safe ceiling (SC-004).
+6. **US4, safety** (P2): off by default, the microphone warning, `FeedbackGuard` (SC-005), device loss (FR-013), overload lightening (FR-014). The safe ceiling (SC-004) is already in the output stage from the foundations.
 7. **Conditional — the native duplex device**, only if Phase 1 decided it (one module per system, built by CI).
 8. **Closing:**
-   - EN/FR/ES texts and the three guides;
+   - the three guides (the EN/FR/ES labels and tooltips are added with each phase);
    - sheet F12 (with Linux and Windows rows);
    - full gate and SWT run;
    - **[HUMAN] gate:** the owner plays through the four sounds in Wait, Follow and Arcade (SC-001, SC-006);

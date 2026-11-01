@@ -30,7 +30,7 @@
 
 - **Live changes:** every change goes to `MonitorEngine.setChain` at once (FR-006).
   - It changes the current sound in memory, and the sound list shows "(changed)".
-  - *Save as…* or *Save* keeps it. When the window closes with changes, they are kept as the current sound, so nothing is lost silently.
+  - *Save as…* keeps it (under a new name, or under the name of the learner's own sound to replace it). When the window closes with changes, they are kept as the current sound, so nothing is lost silently.
 - **The sound per score (FR-019):**
   - when the practice window opens on a score, and whenever the score in front of it changes, the current sound becomes `soundFor(ScoreKey)`;
   - when the learner picks a sound while a score is open, `remember(ScoreKey, name)` is called.
