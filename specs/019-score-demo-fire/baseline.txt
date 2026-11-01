@@ -56,3 +56,10 @@ tests/demo-arcade-morceau.tg, window 1280x800 (score canvas 1057x587), 100 frame
 Result: the medians are below 4 ms, the 95th percentiles are slightly above it in both modes. Reported to the owner before going on (T029).
 Limit, stated: the runs were started by the probe, not through the practice window (starting a Wait or Follow run needs clicks in the window,
 not automated); the smoke check of Wait with Full through the practice window is left to the owner (T048).
+
+T046 (2026-11-01), after phases 4 to 6, from 9732ea2d4 plus the polish files:
+  mvn -o -e clean verify -P native-modules: BUILD SUCCESS; tests per module 73, 1, 1, 10 (1 skipped), 2, 378, 24, 9, 1401 (12 skipped), 0 failures.
+  practice: 1371 at the start of phase 4 (after spec 021) -> 1401 (+11 phase 4, +12 phase 5, +7 phase 6).
+  swt-gui-tests (phase 6 gate, same code): 50 tests, 0 failures (45 + FireSettingsPanelSwtTest 5).
+  git diff --name-status 955d7a051 HEAD on the test folders: 24 additions (23 of spec 019, ArcadeDarkBackgroundSwtTest of spec 021), no change, no deletion.
+  specs/003-arcade-mode/benchmark/ restored after each build.

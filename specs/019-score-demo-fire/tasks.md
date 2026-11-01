@@ -286,7 +286,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 ## Phase 7: Polish & cross-cutting concerns
 
 - [ ] T044 [P] Describe the score fire, its Mode tab setting, the Advanced tab, the previews and "the fire never changes the judging" in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md` (FR-012). Add a screenshot of the score fire and of the Advanced tab in `docs/images/` (taken on the built app).
-- [ ] T045 [P] (FR-011) Write the manual sheet `specs/test-sheets/F11-feu-partition.md`:
+- [X] T045 [P] (FR-011) Write the manual sheet `specs/test-sheets/F11-feu-partition.md`:
   - Wait and Follow at Full and at Discreet;
   - a mistake makes it fall, a pause holds it;
   - the guard near the framed note at the bottom;
@@ -294,13 +294,18 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - the system's Reduce motion;
   - a section for Linux and Windows testers.
   Add it to `specs/test-sheets/README.md`.
-- [ ] T046 Full gate: `mvn -o -e clean verify -P native-modules` from `BUILD` and the `swt-gui-tests` run. Record the counts in `specs/019-score-demo-fire/baseline.txt` (expected: 1324 + the new tests, 0 failures) and restore `specs/003-arcade-mode/benchmark/`. Check `git diff` on `TST` shows only new files.
-- [ ] T047 Write `specs/019-score-demo-fire/final-report.md`:
+- [X] T046 Full gate: `mvn -o -e clean verify -P native-modules` from `BUILD` and the `swt-gui-tests` run. Record the counts in `specs/019-score-demo-fire/baseline.txt` (expected: 1324 + the new tests, 0 failures) and restore `specs/003-arcade-mode/benchmark/`. Check `git diff` on `TST` shows only new files.
+- [X] T047 Write `specs/019-score-demo-fire/final-report.md`:
   - what was built and the R2 decision;
   - the tests added;
   - what is unverified (the real Linux and Windows commands of R7, judged by testers).
   Update the 019 row of `specs/STATUS.md` and the memory `pending-score-fire-spec`. Commit.
 - [ ] T048 [HUMAN] (FR-011) The owner's gate on the relaunched app, per sheet F11 (SC-001, SC-006): the score fire looks like Arcade's, grows and falls, the scrolling stays smooth, and the Advanced tab works. Values to tune are noted, changed and re-tried.
+
+**Implementation notes (Phase 7, as built):**
+- T044 is left open: the three guides describe the score fire, its Mode tab choice, the Advanced tab, the previews, Reduce motion on the three systems and "the fire never changes the judging", but the two screenshots in `docs/images/` are not taken (they need the built app driven by hand, and the owner's open TuxGuitar is not touched). They can be taken during T048.
+- T046: gate green with the counts in `baseline.txt`; the test folders have additions only.
+- T047: `final-report.md`; STATUS and the memory updated.
 
 ## Dependencies & execution order
 
