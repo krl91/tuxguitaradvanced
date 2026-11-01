@@ -188,7 +188,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 **Independent test**: `ScoreSparksTest` is green; a replay throws exactly one burst per right note.
 
-- [ ] T030 [P] [US2] (FR-006, FR-009) Create `TST/arcade/view/ScoreSparksTest.java` on `ScoreFireScene` with `SCORE_DEFAULTS`:
+- [X] T030 [P] [US2] (FR-006, FR-009) Create `TST/arcade/view/ScoreSparksTest.java` on `ScoreFireScene` with `SCORE_DEFAULTS`:
   - one burst at clock t gives spark items whose lowest row is the bottom of the fire (`sparks.start` 0) at age 0, and that rise with age;
   - no spark at age ≥ 1 s;
   - the count is 20 at streak 0 and 50 at streak 12 and above, × 0.6 discreet;
@@ -197,8 +197,15 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - during a pause (the fire clock held), two pictures taken 0.5 s of wall time apart have the same sparks at the same places (Edge Case "Pause");
   - none above 12 % within 4 px of a guard box.
   It will likely pass at once, because `sparks.start` exists since T012 and `ScoreFireScene` since T022. It is then seen red by a deliberate mutation (`sparks.start` forced to 1 for one run, not committed), and the mutation is named in the commit message.
-- [ ] T031 [P] [US2] Create `TST/ui/ScoreBurstsTest.java`: on a scripted Wait run of 10 right notes, 2 wrong and 1 skip, and on a Follow run of 12 results, the number of bursts equals the number of right notes, and is 0 with OFF (SC-005). `ScoreFire` drops bursts older than `sparks.life`.
-- [ ] T032 [US2] (FR-006) Feed the bursts of `ScoreStreak` into the `FlameState` of `ScoreFire` (stamped with the fire clock) in `PR/ui/ScoreFire.java`; drop expired bursts; keep the timer ticking while sparks live. Make T030 and T031 pass. Gate and commit the phase.
+- [X] T031 [P] [US2] Create `TST/ui/ScoreBurstsTest.java`: on a scripted Wait run of 10 right notes, 2 wrong and 1 skip, and on a Follow run of 12 results, the number of bursts equals the number of right notes, and is 0 with OFF (SC-005). `ScoreFire` drops bursts older than `sparks.life`.
+- [X] T032 [US2] (FR-006) Feed the bursts of `ScoreStreak` into the `FlameState` of `ScoreFire` (stamped with the fire clock) in `PR/ui/ScoreFire.java`; drop expired bursts; keep the timer ticking while sparks live. Make T030 and T031 pass. Gate and commit the phase.
+
+**Implementation notes (Phase 4, as built):**
+- T025 already fed, stamped and dropped the bursts, and kept the timer going while they live; T032 only opened `ScoreFire.flames()` to the package, so that `ScoreBurstsTest` reads the live bursts. `ScoreBurstsTest` was red at first (it did not compile), then green.
+- T030 passed at once; it was seen red by forcing the score default of `sparks.start` to 1 for one run (not committed): `aBurstStartsAtTheBottomOfTheFireAndRises` failed (779 expected, 709 read).
+- The "Pause" case is checked in both: the scene depends on the fire clock only (`ScoreSparksTest`), and `ScoreFire` holds that clock and its bursts through a pause (`ScoreBurstsTest`).
+- A burst's streak is at least 1 (`FlameState.Burst`), so a burst shows 22 sparks at streak 1; the count of 20 at streak 0 is checked on `FlameDrawing.sparkCount`.
+- Gate: practice suite 1382 tests, 0 failures, 12 skipped (1371 + 11 new).
 
 ## Phase 5: User Story 4 — The Advanced tab (Priority: P2)
 

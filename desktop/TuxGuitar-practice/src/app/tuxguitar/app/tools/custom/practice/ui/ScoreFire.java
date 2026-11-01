@@ -247,7 +247,8 @@ public final class ScoreFire {
 		paint(event.getPainter(), bounds.getWidth(), bounds.getHeight());
 	}
 
-	private FlameState flames() {
+	/** What the next picture draws: the setting, the level, the fire clock and the live bursts of sparks (spec 019 FR-006); null when off. */
+	FlameState flames() {
 		if (this.setting == FlameSetting.OFF || this.level == null) {
 			return null;
 		}
