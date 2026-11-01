@@ -74,7 +74,7 @@ The learner saves a chain as a named *sound* ("Clean", "Crunch", "Lead with echo
 2. **Given** saved sounds, **When** the learner picks one, **Then** it is heard at once.
 3. **Given** a ready-made sound changed by the learner, **When** they choose to restore it, **Then** it sounds as shipped.
 4. **Given** the learner picked *Lead* for score A and *Clean* for score B, **When** they practise A again, even after a restart, **Then** *Lead* is chosen; with B, *Clean*.
-5. **Given** a score never practised, **When** its practice starts, **Then** the last sound used is chosen.
+5. **Given** a score never practised, **When** the practice window opens on it, **Then** the last sound used is chosen.
 6. **Given** the sound remembered for a score was deleted, **When** that score is practised, **Then** the last sound used is chosen and nothing fails.
 
 ---

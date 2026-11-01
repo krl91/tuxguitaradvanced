@@ -151,7 +151,7 @@
   Make T019 pass.
 - [ ] T025 [US1] Create `PR/ui/AmpTexts.java` with the keys of US1, and add the labels and tooltips of US1 (switch, output, volumes, delay, amp knobs, cabinet) to `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`: what each changes, its unit and its default (FR-016). Make T020 pass.
 - [ ] T026 [US1] Gate and commit. Relaunch the app for a smoke check: guitar on the built-in microphone with headphones, *Clean* heard.
-- [ ] T027 [HUMAN] [US1] Listen by ear with the Rocksmith cable and headphones, at T003's setting: does it feel like playing through an amp (SC-001)? The probe measured the built-in microphone, not the cable. The answer is noted in `baseline.txt` and confirmed at the final gate.
+- [ ] T027 [HUMAN] [US1] **Non-blocking: the implementation goes on with US2 without waiting; the owner does it whenever convenient, and it is confirmed at T056.** Listen by ear with the Rocksmith cable and headphones, at T003's setting: does it feel like playing through an amp (SC-001)? The probe measured the built-in microphone, not the cable. The answer is noted in `baseline.txt` and confirmed at the final gate.
 
 **Checkpoint**: the MVP. The guitar is heard through an amp while practising.
 

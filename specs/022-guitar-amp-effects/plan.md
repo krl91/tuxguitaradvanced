@@ -113,11 +113,11 @@ desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
     ├── FeedbackGuard.java
     ├── MonitorEngine.java, MonitorState.java, MonitorStats.java
     └── MonitorDevice.java, JavaSoundMonitorDevice.java
-desktop/TuxGuitar-audio-engine/src/test/java/.../monitor/   (new tests; probe and cost tagged benchmark)
+desktop/TuxGuitar-audio-engine/src/test/java/.../monitor/   (new tests; probe, cost and 10-minute endurance tagged benchmark)
 
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── session/AmpSoundStore.java, Sound.java, ScoreKey.java, AmpSoundSettings.java   (new)
-├── ui/AmpWindow.java, AmpChainRows.java                                          (new)
+├── ui/AmpWindow.java, AmpChainRows.java, AmpTexts.java (the text keys)          (new)
 ├── ui/PracticeWindow.java       (button, start and stop with the window, the sound per score at run start)
 └── ui/PracticePalette.java      (amp button)
 desktop/TuxGuitar-practice/test/...                                               (new tests)

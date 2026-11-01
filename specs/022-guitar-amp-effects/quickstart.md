@@ -25,7 +25,10 @@ The suites cover:
 - the chain text, `ChainSettings` validation, `ScoreKey`, `AmpSoundStore` (sounds, restore, sound per score, deleted sound);
 - `MonitorEngine` on a fake device: queue never blocks, dropped and silent blocks counted, fade in and out, feedback guard on a synthetic howl (muted within 0.5 s), overload lightening;
 - **recognition untouched (SC-002):** the same recorded inputs, sound off and on with the four ready-made sounds, give identical hops, verdicts and summaries;
+- every text key of the window has its label and tooltip in English, French and Spanish (`AmpTextsTest`);
 - `swt-gui-tests`: the *Amp and effects* window, its rows, tooltips and placement away from the framed note.
+
+Benchmark reports (excluded by default, run like §1 with `-Dtest=ChainCostBenchmarkTest` or `-Dtest=MonitorEnduranceBenchmarkTest`): the cost of the full chain per block (goal under 25 %) and 10 minutes without dropped or silent blocks.
 
 After each build, restore `specs/003-arcade-mode/benchmark/`.
 

@@ -111,7 +111,7 @@ With the built-in microphone chosen as input, turning the sound on shows the hea
 ## R7 — The *Amp and effects* window (FR-020)
 
 - It is a `UIWindow` of the toolkit, built like the other practice windows (`PreRunWindow`, `CalibrationWindow`), owned by the main window.
-- Its first block holds *Amp sound* on/off, the sound list (pick, save as, rename, delete, restore), the output device, the guitar volume, the score volume and the measured delay.
+- Its first block holds *Amp sound* on/off, the sound list (pick, save as, rename, delete, restore), the output device, the guitar volume, the score volume and the estimated delay (R8).
 - Below come the chain rows: pedals before the amp, the amp, the cabinet, then the pedals after it. Each row has a switch, sliders with values and tooltips, and up and down buttons to reorder the pedals inside their section. An *Add pedal* list offers the kinds not yet in the chain.
 - The window is opened by a button of the practice window and by a button of the palette (`PracticePalette`).
   - During a run it opens at its last place, or else beside the score away from the framed note. It uses the boxes of `PaletteDodge`/`ScoreGuardBoxes` (specs 017 and 019) to choose a side.
