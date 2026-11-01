@@ -36,9 +36,48 @@ The owner then repeats the same probe with the Rocksmith cable, using a short ca
 - PortAudio through JNI: a new native dependency on three systems, kept as the fallback of the fallback.
 - Delaying the decision to the implementation: the constitution (VI) asks for the delay to be verified, not assumed.
 
+**Measured (T003, 2026-11-01, the owner's MacBook Pro, Java 21, built-in microphone and speakers, both running at 44.1 kHz behind 48 kHz lines):**
+- Java Sound hands the microphone over in bursts of 512 device frames (557 to 558 frames at 48 kHz, every 11.6 ms), and the output line is drained in bursts of the same size, whatever buffer is asked (measured apart, by polling `available()`).
+- Run 1 (one loop, no drop): 64 × 2 gave a median of 37.6 ms and a minimum of 37.3 ms, then the delay grew by itself up to 298 ms (95th percentile 221 ms): a line buffer smaller than one output burst is not emptied at the input's pace. Stopped after this row.
+- Run 2 (the input backlog capped at 1024 frames plus four blocks, `benchmark/latency-probe.md`): every one of the nine settings has a median between 101 and 126 ms; only 256 × 3 and 256 × 4 (line buffers of 768 and 1024 frames, larger than a burst) ran without dropping, at 107.8 and 104.2 ms, and they had 1 and 3 underruns.
+- Run 3 (the input capped at one burst and one block): 64 × 2 still gave a median of 86.3 ms; stopped after this row at the owner's request (the clicks are audible). The output line alone keeps about 55 to 60 ms.
+- No Java Sound setting reaches 30 ms.
+- Native pre-check (owner's choice, 2026-11-01): a throwaway CoreAudio program (two AUHAL units, the default input and output at their own 44.1 kHz, IO buffer of 64, 128 or 256 frames, 20 clicks timed by host time) gave medians of 50.9, 52.3 and 53.0 ms. The devices themselves declare it: the built-in microphone's stream latency is 1328 frames (30 ms, its voice processing) plus a safety offset of 50, the speakers 65 + 639 frames plus 74 (17.6 ms); with two 64-frame buffers that is 51.8 ms, as measured.
+- Rust pre-check (owner's request, same day): the same probe written in Rust with `cpal` 0.15.3 gave 48.7, 50.1 and 53.0 ms at 64, 128 and 256 frames, the same as C: a native path adds almost nothing to what the devices declare.
+- USB microphone (owner's Samson Q2U, declared input 74 + 74 frames at 48 kHz = 3.1 ms; its headphone output 2.1 ms), same Rust program, the Mac's speakers as output: 23.3, 24.8 and 27.7 ms at 64, 128 and 256 frames (95th percentile equal to the median): again the devices' declared latencies plus both buffers. With headphones on the Q2U's own output instead of the speakers (17.6 ms), about 8 ms is expected.
+- **So the built-in microphone with the built-in speakers cannot reach 30 ms through any programming interface: about 49 ms is in the hardware. Java Sound adds about 35 ms more (86 ms against 51 ms at 64 frames). The 30 ms gate has to be judged on the setup the learner plays with (the Rocksmith cable or another instrument input, with headphones); the decision is taken with the owner.** Whatever device is used, the engine's queue must hold at least one input burst plus one block (`QUEUE_BLOCKS` × `BLOCK_FRAMES` = 512 frames is smaller than a 557-frame burst and would drop part of every burst).
+
+## R1 addendum — The native device (T054, owner's decisions of 2026-11-01, to validate before coding)
+
+**Owner's decisions:** the native device is written in **Rust with `cpal`**, one code for the three systems; it opens **its own input**, separate from the recognition's capture. The owner assumes the Rocksmith cable behaves like the built-in microphone did (a native path close to the devices' own delay); the cable is tested later.
+
+**Checked before writing this (throwaway programs in the session's scratchpad, nothing in the product):**
+- `cpal` 0.15.3 on the owner's Mac: 48.7 ms at 64 frames, the devices' own 49 ms (R1 "Measured").
+- While a Java Sound `TargetDataLine` held the built-in microphone (as `CaptureService` does), the Rust program opened the same microphone and measured 48.5 ms, and the Java capture kept getting its bursts every 11.6 ms with no gap: two clients of one input work on macOS (CoreAudio shares inputs). This lifts the objection of R2's first alternative, which was about a second Java Sound line.
+
+**Decision:**
+1. **Module.** A Rust crate `desktop/build-scripts/native-modules/tuxguitar-monitor-native/` (`Cargo.toml` with `Cargo.lock` committed; `cpal` 0.15.3 for CoreAudio, ALSA and WASAPI; `jni` 0.21 for the bridge; licences Apache-2.0/MIT, compatible with LGPL). Its `pom.xml` runs `cargo build --release --target <triple>` through `maven-antrun-plugin`, as `tuxguitar-audiounit-macos/pom.xml` runs `make`, and it is listed in the `native-modules` profile of the three SWT build scripts (macOS, Linux, Windows). The library is copied next to the other native libraries of each build and loaded the way the AudioUnit plugin loads its own.
+2. **What the native side does, and only that.** It opens the input (the practice input's device, matched by name, else the system default; the practice input's channel, else the first) and the output (the chosen output, else the default), with a fixed buffer of `BLOCK_FRAMES`, and moves samples between the devices' callbacks and two lock-free single-producer, single-consumer rings. No effect runs in Rust: the chain stays the plain Java of R4 (constitution VIII, the tests of US1 to US4 unchanged).
+   - **Each device runs at its current rate, never changed.** Read in `cpal` 0.15.3's CoreAudio code: asking a device for another rate changes the device's nominal rate (a system setting). So each stream is opened at its device's current rate, the chain runs at the input's rate, and a small adaptive resampler in the crate maps it to the output's rate; its ratio is nudged by the output ring's fill, which also absorbs the slow drift between two devices' clocks (two devices at the same nominal rate still drift), so the delay does not creep over an hour (SC-006).
+   - **The estimated delay** uses the latencies the devices declare where the system gives them (CoreAudio, as measured above), plus both buffers and the resampler's ring; elsewhere, the buffers only. It is shown as an estimate (FR-002, R8).
+3. **Java side.** `MonitorDevice` becomes duplex: `open(inputName, inputChannel, outputName, blockFrames)` gives an `Opened` with `int read(float[] in, int n)` (waits for at most one block time; returns the frames read, 0 on a gap, counted as silence), `write(left, right, n)`, `sampleRate()` and `estimatedLatencyFrames()` (the devices' declared latencies plus both buffers, R8). `NativeMonitorDevice` implements it over JNI. The output thread of R3 loops read → chain → output stage → write. If the native library cannot be loaded, the sound fails with a clear message (FR-013); there is no Java Sound fallback, since it would be about 35 ms slower than the devices.
+4. **The capture is not touched.** `CaptureService` stays exactly as it is: no `setMonitor`, no change of read size. FR-003 holds by construction. The identity test (T009) is kept: the analysis frames are identical with the sound running on a fake duplex device. **Owner's request (2026-11-01): the note and chord recognition is also validated on the recorded datasets** already used by the benchmark reports (`~/tuxguitar-datasets`, never committed: GuitarSet, IDMT-SMT-GUITAR_V2; the practice module's `dataset/` benchmarks such as `DatasetBenchmarkTest`, `GuitarSetChordBenchmarkTest`, `TechniqueDatasetBenchmarkTest`, `OwnerChordsBenchmarkTest`). They run twice, sound off and with a `MonitorEngine` running each ready-made chain on a fake duplex device fed with the same recording in the same process, and their outcome files in `target/dataset-benchmark` must be identical line for line. It is benchmark-tagged (excluded by default, like the reports), run at the gate of US1 and at the final gate, and its result goes in the final report.
+5. **Block size.** `BLOCK_FRAMES = 128` (2.9 ms at 44.1 kHz): 1.4 ms slower than 64 in the pre-check, with more margin for the Java thread. The native rings hold at most two blocks of input waiting; beyond that the oldest is dropped and counted (R3).
+6. **Builds and CI.** macOS on `macos-15` (aarch64-apple-darwin); Linux on `ubuntu-24.04` (x86_64-unknown-linux-gnu, with `libasound2-dev`); Windows cross-compiled on Linux as today (x86_64-pc-windows-gnu with the Mingw-w64 already installed). The workflows install a pinned Rust toolchain and the targets. Local builds need `rustup` (present on the owner's Mac: Rust 1.93).
+7. **Its own probe run.** A benchmark-tagged `NativeMonitorProbeTest` measures the round trip through `NativeMonitorDevice` with the same clicks as T002, on the built-in microphone; the cable is measured later by the owner.
+
+**What changes in the other documents (once validated):** R2, R3 and R9 here; `plan.md` (structure and phases); `contracts/monitor-engine.md` (`MonitorDevice` duplex, no `offer` from the capture, the `CaptureService` change removed); `tasks.md` (T008 and T013 not needed, T009 on the duplex fake device, a dataset identity task (sound off and on, outcome files identical), T018 and T024 replaced by the native device's tasks, T054 detailed); `quickstart.md` §1.
+
+**Alternatives considered:**
+- C, one module per system: three codes, no new toolchain (not chosen by the owner).
+- One native input that also feeds the recognition: more of the capture touched, FR-003 then rests on the identity test only (not chosen).
+- Rust with `cpal` for the output only: the input would still come in Java Sound bursts of 11.6 ms.
+
 ## R2 — Where does the guitar's signal come from without disturbing the recognition?
 
-**Decision:** one capture, two consumers.
+**Superseded on 2026-11-01 by the R1 addendum** (the owner chose a separate native input): the native device opens the input itself, beside the recognition's capture, and `CaptureService` is not touched, so FR-003 holds by construction whether the sound is on or off. The identity checks remain (the recorded inputs, T009, and the datasets). The text below is the first decision, kept for the record; its Java Sound bursts of 11.6 ms are what ruled it out.
+
+**First decision (not used):** one capture, two consumers.
 - When the sound is **off**, `CaptureService` runs exactly as today: same read size and same code path. The new code is not called, so FR-003 holds by construction.
 - When the sound is **on**, the capture reads small blocks (the size chosen by R1). For each block, it writes the same samples to `SampleRingBuffer` as today, and also hands a copy to the `MonitorPath` (lock-free, single producer and single consumer).
   - The ring buffer receives the same samples in the same order. Only the size of each write changes.
@@ -55,8 +94,8 @@ The monitor gets the raw input **before** the front end. The front end's gain an
 ## R3 — Processing thread and output
 
 **Decision:**
-- A dedicated output thread (`TGThreadPriority.HIGH`) takes the blocks from the single-producer, single-consumer queue, runs the chain and writes them to a `SourceDataLine` on the chosen output mixer. The probe's output line buffer is the smallest that gave no underrun in R1.
-- The capture thread never waits for the output. When the queue is full (the output is late), the oldest block is dropped and counted, rather than letting the delay grow. When it is empty, silence is written and counted.
+- A dedicated thread (`TGThreadPriority.HIGH`) reads one block from the native device's input ring, runs the chain and writes it to the native output ring (R1 addendum). The device's buffer is `BLOCK_FRAMES` frames.
+- The device's callbacks never wait for Java. When the input ring holds more than two blocks (Java is late), the oldest block is dropped and counted, rather than letting the delay grow. When the output ring is empty at a callback, silence is played and counted.
 - Every buffer is allocated when the sound starts. Nothing is allocated, locked or logged in the loop (constitution VI).
 - The parameters are published as an immutable `ChainSettings` snapshot through an `AtomicReference`. The thread reads it once per block, and each knob ramps to its new value over the block (FR-006: no click).
 - The mono guitar signal is written to both channels of a stereo output. The echo, the chorus and the reverb may widen it.
@@ -125,5 +164,4 @@ The window shows the estimated delay: input block + output line buffer + process
 ## R9 — Parity and CI (FR-015)
 
 - The pure DSP and the queue are plain Java and run in every build's tests.
-- The Java Sound path is the same on the three systems.
-- If R1 forces native modules, each system gets its own, and the CI builds each one. Linux and Windows delays are reported by testers, through the release notes and the test sheet (SC-009).
+- R1 forced the native device: one Rust crate with `cpal` (CoreAudio, ALSA, WASAPI) is built by the three build scripts and by the CI on each system's job (Windows cross-compiled on Linux as today). Linux and Windows delays are reported by testers, through the release notes and the test sheet (SC-009).

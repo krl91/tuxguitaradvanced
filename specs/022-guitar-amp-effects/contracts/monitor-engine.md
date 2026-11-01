@@ -25,17 +25,16 @@ final class MonitorEngine {
     MonitorEngine(MonitorDevice device, Clock clock);
     void setChain(ChainSettings chain);              // any thread; atomic snapshot (research R3)
     void setGuitarVolume(double zeroToOne);
-    void start(String outputName);                   // OFF → STARTING; fails to FAILED with a reason, never throws
+    void start(String inputName, int inputChannel, String outputName); // OFF → STARTING; fails to FAILED with a reason, never throws
     void stop();                                     // → STOPPING → OFF
-    void offer(float[] block, int n);                // called by the capture thread; never blocks
     MonitorState state();
     MonitorStats stats();                            // delays, counters (data-model)
     void addListener(Listener l);                    // state changes and messages, delivered on the caller's executor
 }
 ```
 
-- **`offer`** copies at most one block into the single-producer, single-consumer queue. When the queue is full, the oldest block is dropped and counted. It never waits.
-- **The output thread** runs, in order: queue, chain (before, amp, cabinet, after), output stage (volume, fade, limiter, clamp), then writes to the device.
+- **The input** comes from the device itself (R1 addendum), never from `CaptureService`. A block read at or above −0.1 dBFS is counted as clipped, and told at most once per second.
+- **The thread** runs, in order: device input, chain (before, amp, cabinet, after), output stage (volume, fade, limiter, clamp), then writes to the device.
 - **The safe ceiling (FR-010):** no output sample exceeds 0 dBFS after the clamp, and the limiter holds peaks at −1 dBFS.
 - **The feedback guard** (research R5) watches the output and moves to `MUTED_FEEDBACK`.
 - **Overload:** when processing a block takes more than 50 % of the block time for 20 blocks in a row, the chain is lightened (reverb off, then chorus off, then oversampling 2×, then 1×, then the amp alone with the cabinet: every pedal bypassed), with a message each time. If it is still over, the state becomes `MUTED_OVERLOAD`.
@@ -44,22 +43,20 @@ final class MonitorEngine {
 
 ```java
 interface MonitorDevice {
-    Opened open(String outputName, float sampleRate, int blockFrames) throws MonitorDeviceException;
+    Opened open(String inputName, int inputChannel, String outputName, int blockFrames) throws MonitorDeviceException;   // "" = the system's default; channel -1 = the first
     interface Opened extends AutoCloseable {
-        void write(float[] left, float[] right, int n);   // blocks for at most one block time
-        int estimatedLatencyFrames();
+        float sampleRate();                                // the input device's current rate (the chain's rate; the output is resampled in the crate)
+        int read(float[] in, int n);                       // waits for at most one block time; frames read, 0 on a gap (counted as silence)
+        void write(float[] left, float[] right, int n);    // never blocks longer than one block time
+        int estimatedLatencyFrames();                      // the devices' declared latencies plus both buffers (R8)
+        long droppedBlocks();                              // input blocks dropped because Java was late (more than two waiting)
     }
 }
 ```
 
-- `JavaSoundMonitorDevice` is a `SourceDataLine`, 16-bit stereo.
-- A native implementation is added only if research R1 requires it.
-- Tests use a fake device that records the output and can be made late or lost.
+- `NativeMonitorDevice` is the only implementation (R1 addendum): JNI over the Rust crate `tuxguitar-monitor-native` (`cpal`), with two lock-free single-producer, single-consumer rings between the devices' callbacks and Java. If the library cannot be loaded, `open` throws `MonitorDeviceException` with a clear reason (FR-013); there is no Java Sound fallback.
+- Tests use a fake duplex device that is fed an input, records the output, and can be made late, lost or refused.
 
-## `CaptureService` change (research R2, additive)
+## `CaptureService`
 
-- `setMonitor(MonitorEngine monitor)`:
-  - **null** (the default): the capture is exactly as today.
-  - **non-null:** each block read is also offered to the monitor, and the read size is the monitor's block size (R1).
-  - **Changing it while the capture runs** takes effect at the next read, without reopening the input line or resetting the ring buffer.
-- The samples written to `SampleRingBuffer` are the same in both cases.
+Not touched (R1 addendum): the sound has its own input, so the recognition's capture is exactly as today whether the sound is on or off (FR-003).

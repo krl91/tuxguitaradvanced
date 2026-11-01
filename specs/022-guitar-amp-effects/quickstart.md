@@ -13,6 +13,19 @@ mvn test -pl ../../TuxGuitar-audio-engine -am -Dgroups=benchmark -DexcludedGroup
 - **Setup:** speakers on, built-in microphone, a quiet room.
 - **Report:** `specs/022-guitar-amp-effects/benchmark/latency-probe.md`. It gives the round-trip median and 95th percentile for each block size, and the underruns over 60 s.
 - **Expected:** a block size whose median is at most 20 ms (target), or at most 30 ms (shipping ceiling). Otherwise the native branch is planned (research R1).
+- **Result (2026-11-01):** no Java Sound setting within 30 ms; the native device was chosen (R1 "Measured" and addendum).
+
+### 1b. The native device's probe (Phase 7)
+
+```sh
+cd BUILD
+mvn test -P native-modules -pl ../../TuxGuitar-audio-engine -am -Dgroups=benchmark -DexcludedGroups= \
+    -Dtest=NativeMonitorProbeTest -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+- **Setup:** as §1 (speakers, a microphone near them; `-Dprobe.input=<part of the name>` picks another input than the default without changing the system's settings).
+- **Report:** `specs/022-guitar-amp-effects/benchmark/native-probe.md`: for each block size, the median and 95th percentile of the round trip, the devices' declared latencies and the dropped and silent blocks.
+- **Expected:** a median within 3 ms of the devices' declared latencies plus both buffers (the built-in microphone and speakers declare about 49 ms by themselves).
 
 ## 2. Automated checks (every phase)
 
@@ -25,11 +38,22 @@ The suites cover:
 - the chain text, `ChainSettings` validation, `ReadyMadeChains`, `ScoreKey`, `AmpSoundStore` (settings kept, sounds, restore, sound per score, deleted sound);
 - every ready-made sound below −60 dBFS at the output with a −70 dBFS noise as input (FR-011);
 - `MonitorEngine` on a fake device: queue never blocks, dropped and silent blocks counted, fade in and out, feedback guard on a synthetic howl (muted within 0.5 s), overload lightening;
-- **recognition untouched (SC-002):** the same recorded inputs, sound off and on with the four ready-made sounds, give identical analysis frames (pitch, level, onset) frame by frame, hence identical verdicts and summaries;
+- **recognition untouched (SC-002):** `CaptureService` is not touched; the same recorded inputs, sound off and on (the four ready-made sounds on a fake duplex device), give identical analysis frames (pitch, level, onset) frame by frame, hence identical verdicts and summaries;
+- the native device's rings (`cargo test`, run by the native module's build);
 - every text key of the window has its label and tooltip in English, French and Spanish (`AmpTextsTest`);
 - `swt-gui-tests`: the *Amp and effects* window, its rows, tooltips and placement away from the framed note.
 
 Benchmark reports (excluded by default, run like §1 with `-Dtest=ChainCostBenchmarkTest` or `-Dtest=MonitorEnduranceBenchmarkTest`): the cost of the full chain per block (goal under 25 %) and 10 minutes without dropped or silent blocks.
+
+The datasets' identity (excluded by default, at the gate of US1 and the final gate): the practice module's dataset benchmarks run sound off and sound on, and their outcome files must be identical line for line:
+
+```sh
+cd BUILD
+mvn test -pl ../../TuxGuitar-practice -am -Dgroups=benchmark -DexcludedGroups= \
+    -Dtest=DatasetRecognitionIdentityTest -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+It needs `~/tuxguitar-datasets` (or `-Dtuxguitar.datasets=<dir>`): GuitarSet and IDMT-SMT-GUITAR_V2, never committed.
 
 After each build, restore `specs/003-arcade-mode/benchmark/`.
 

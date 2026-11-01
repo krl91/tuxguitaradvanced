@@ -24,24 +24,26 @@
 
 ## Phase 1: Setup (baseline and the delay probe, research R1)
 
-- [ ] T001 Write `specs/022-guitar-amp-effects/baseline.txt`:
+- [X] T001 Write `specs/022-guitar-amp-effects/baseline.txt`:
   - the commit;
   - the counts of the full gate (expected: practice 1401 with 12 skipped, audio-engine 378, the other modules as in `specs/019-score-demo-fire/baseline.txt`);
   - `swt-gui-tests` 50;
   - the list of existing tests that must stay unchanged and green, especially every test under `AET/input/` and `AET/analysis/`, `FrontEndTest`, `AudioEngineTest` and the practice verdict tests.
-- [ ] T002 Create `AET/monitor/MonitorLatencyProbeTest.java`, `@Tag("benchmark")`. It is excluded by default and only measures.
+- [X] T002 Create `AET/monitor/MonitorLatencyProbeTest.java`, `@Tag("benchmark")`. It is excluded by default and only measures.
   - For blocks of 64, 128 and 256 frames at 48 kHz, and line buffers of 2, 3 and 4 blocks, it opens a `SourceDataLine` (default output) and a `TargetDataLine` (built-in microphone).
   - It plays a 1 ms click 20 times, 500 ms apart, finds each click in the capture by threshold, and reports the round-trip median and 95th percentile.
   - It runs 60 s of pass-through per setting and counts underruns (the `available()` of the output reaching the full buffer) and short reads.
   - It writes `specs/022-guitar-amp-effects/benchmark/latency-probe.md`.
+  - Done: run 1 showed the delay growing by itself; the clicks were then spaced 3 s over the whole minute and the input backlog capped as a queue would (research R1 "Measured").
   - It never fails on the numbers: it fails only if no line can be opened, with the reason.
-- [ ] T003 Run T002 on the owner's Mac (`quickstart.md` §1) and record the report.
+- [X] T003 Run T002 on the owner's Mac (`quickstart.md` §1) and record the report.
   - **Decision gate (research R1):**
     - Java Sound if a setting has a median of at most 30 ms with no underrun over 60 s; it is the smallest such setting, and its block size becomes `MonitorEngine.BLOCK_FRAMES`;
     - otherwise the native branch (Phase 7) is required.
   - Write the decision and the chosen block size and line buffer in `research.md` R1 ("Measured") and in `baseline.txt`.
+  - **Decided on 2026-11-01: no Java Sound setting within 30 ms (37 ms at best, 86 to 126 ms with a capped backlog) → the native branch, in Rust with `cpal`, with its own input; `BLOCK_FRAMES = 128` (research R1 "Measured" and addendum, owner's decisions).**
 
-**Checkpoint**: block size and device path decided.
+**Checkpoint**: block size and device path decided (native device, 128 frames).
 
 ## Phase 2: Foundational (blocks every story)
 
@@ -49,67 +51,69 @@
 
 ### Tests first (each seen red: it fails to compile before its class exists)
 
-- [ ] T004 [P] Create `AET/monitor/ChainSettingsTest.java` (data-model "ChainSettings", "EffectKind"). It checks:
+- [X] T004 [P] Create `AET/monitor/ChainSettingsTest.java` (data-model "ChainSettings", "EffectKind"). It checks:
   - every `EffectKind` has the knobs, ranges, units and defaults of the data-model table;
   - `PedalSettings.with` clamps a value outside the range into it;
   - a chain with a kind twice, or an *after* kind in *before*, is refused (`IllegalArgumentException`);
   - `toText()` then `parse()` gives an equal chain for the four chains of `ReadyMadeChains`, which match the data-model table;
   - malformed texts (`""`, `"amp:loud"`, `"echo:on,abc"`, an unknown kind) give `Optional.empty()`;
   - `equals` and `hashCode` work by value.
-- [ ] T005 [P] Create `AET/monitor/BlockQueueTest.java`:
+- [X] T005 **Not needed (R1 addendum): the rings between the devices and Java are in the native crate, tested by `cargo test` (T054).** First text, kept for the record: create `AET/monitor/BlockQueueTest.java`:
   - one producer and one consumer pass 10 000 blocks in order;
   - `offer` never blocks: on a full queue it drops the oldest and counts it;
   - `poll` on an empty queue returns false and counts a silent block;
   - offering 1000 blocks allocates nothing (all buffers made at construction; checked with a fixed pool).
-- [ ] T006 [P] Create `AET/monitor/OutputStageTest.java` (FR-010, SC-004). It checks:
+- [X] T006 [P] Create `AET/monitor/OutputStageTest.java` (FR-010, SC-004). It checks:
   - a full-scale square wave with every gain at its maximum never gives a sample above 1.0 after the clamp, and peaks are held at −1 dBFS ± 0.1 dB by the limiter;
   - after `start`, the level rises from silence to the set level in 0.5 s ± 0.05 s with no step;
   - `stop` fades to silence in 20 ms ± 2 ms;
   - a volume change ramps within one block.
-- [ ] T007 [P] Create `AET/monitor/MonitorEngineTest.java` on a fake `MonitorDevice` that records what is written and can be made late, lost or refused (contracts/monitor-engine.md). It checks:
+- [X] T007 [P] Create `AET/monitor/MonitorEngineTest.java` on a fake duplex `MonitorDevice` that is fed an input, records what is written and can be made late, lost or refused (contracts/monitor-engine.md, R1 addendum). It checks:
   - the state transitions OFF → STARTING → ON → STOPPING → OFF;
   - an empty chain passes the input through the output stage (stereo, both channels equal);
   - `setChain` from another thread is picked up at the next block;
   - a device that refuses to open gives FAILED with its reason, and `start` never throws;
   - a device lost while ON gives FAILED and a listener message;
   - after FAILED, `start` with an output again gives STARTING then ON (spec edge case "the output device changes or disappears");
-  - `stats()` counts dropped and silent blocks;
+  - `stats()` counts the device's dropped blocks and the silent blocks (a read with no input);
   - an input block with a sample at or above −0.1 dBFS counts a clipped input block and notifies the listener once per second at most (spec edge case "the input level is too high").
-- [ ] T008 [P] Create `AET/input/CaptureDeliveryTest.java` (FR-003, SC-002, research R2). Through a new package-private `CaptureService.deliver(float[] samples, int frames)` (the code after the conversion, moved unchanged), it checks:
+- [X] T008 **Not needed (R1 addendum): `CaptureService` is not touched.** First text, kept for the record: create `AET/input/CaptureDeliveryTest.java` (FR-003, SC-002, research R2). Through a new package-private `CaptureService.deliver(float[] samples, int frames)` (the code after the conversion, moved unchanged), it checks:
   - delivering the same 10 s recording in blocks of 1024 with no monitor, and in blocks of `MonitorEngine.BLOCK_FRAMES` with a monitor set, gives an identical `SampleRingBuffer` content and written count;
   - the monitor received every sample, in order;
   - with no monitor, `deliver` calls nothing of the monitor;
   - setting and clearing the monitor between two deliveries (the capture running) takes effect at the next block, and the ring buffer content and written count stay identical to a run without any switch.
-- [ ] T009 [P] Create `AET/monitor/RecognitionUntouchedTest.java` (SC-002). It runs the engine of `FakeAudioInput.newEngine` on the recorded fixtures of `desktop/TuxGuitar-audio-engine/src/test/resources/benchmark/builtin-mic/standard/` listed in `manifest.csv` (loaded through `BenchmarkFixtures`, every file whose `fixture_role` is `reference`, plus `01_none_silence.wav`) twice: once as today, and once through `CaptureService.deliver` with a monitor running each ready-made chain on a fake device. It checks identical analysis frames (pitch, level, onset) frame by frame.
-  - It is seen red with a deliberate one-run mutation: the monitor's processed block is written back into the ring buffer. That mutation is never committed.
+- [X] T009 [P] Create `AET/monitor/RecognitionUntouchedTest.java` (SC-002). It runs the engine of `FakeAudioInput.newEngine` on the recorded fixtures of `desktop/TuxGuitar-audio-engine/src/test/resources/benchmark/builtin-mic/standard/` listed in `manifest.csv` (loaded through `BenchmarkFixtures`, every file whose `fixture_role` is `reference`, plus `01_none_silence.wav`) twice: once as today, and once while a `MonitorEngine` runs each ready-made chain on a fake duplex device fed with the same recording, in the same process. It checks identical analysis frames (pitch, level, onset) frame by frame.
+  - It is seen red with a deliberate one-run mutation: the engine's processed output is fed to the analysis instead of the recording. That mutation is never committed.
 
 ### Implementation
 
-- [ ] T010 Create `AE/monitor/EffectKind.java`, `Knob.java`, `PedalSettings.java`, `AmpSettings.java` and `ChainSettings.java` per data-model:
+- [X] T010 Create `AE/monitor/EffectKind.java`, `Knob.java`, `PedalSettings.java`, `AmpSettings.java` and `ChainSettings.java` per data-model:
   - knobs with key, range, unit and default;
   - `AmpSettings.character` is "`CLEAN`, `CRUNCH` or `HIGH_GAIN`" and its knobs go "from 0 to 10";
   - "Each kind appears at most once in a chain";
   - the text format of research R6;
   - `ReadyMadeChains.java`, the single home of the four ready-made chains of data-model (Clean, Crunch, Lead, Clean echo), used by the engine tests and later by `PR/session/Sound` and `AmpSoundStore`.
   Make T004 pass.
-- [ ] T011 Create `AE/monitor/Effect.java` (contracts/monitor-engine.md), `BlockQueue.java` (preallocated ring of float blocks, single producer and single consumer, drop-oldest) and `fx/OutputStage.java` (volume ramp, 0.5 s fade in, 20 ms fade out, peak limiter at −1 dBFS, clamp at 0 dBFS). Make T005 and T006 pass.
-- [ ] T012 Create `AE/monitor/MonitorDevice.java`, `MonitorState.java`, `MonitorStats.java`, `Chain.java` (runs before, amp, cabinet and after; an empty slot is a pass-through) and `MonitorEngine.java`:
-  - an output thread through `TGThreadManager` at `TGThreadPriority.HIGH`;
+- [X] T011 Create `AE/monitor/Effect.java` (contracts/monitor-engine.md) and `fx/OutputStage.java` (volume ramp, 0.5 s fade in, 20 ms fade out, peak limiter at −1 dBFS, clamp at 0 dBFS). Make T006 pass. (No `BlockQueue`: T005 not needed.)
+- [X] T012 Create `AE/monitor/MonitorDevice.java`, `MonitorState.java`, `MonitorStats.java`, `Chain.java` (runs before, amp, cabinet and after; an empty slot is a pass-through) and `MonitorEngine.java`:
+  - a thread through `TGThreadManager` at `TGThreadPriority.HIGH` that loops: read one block from the device, chain, output stage, write;
   - `ChainSettings` in an `AtomicReference`;
   - no allocation in the loop;
   - listeners notified through an executor given by the caller;
   - `MonitorStats` counts clipped input blocks.
-  `BLOCK_FRAMES` is the value decided by T003. Make T007 pass.
-- [ ] T013 In `AE/input/CaptureService.java`, additive only:
+  `BLOCK_FRAMES = 128`, decided by T003. Make T007 pass.
+- [X] T013 **Not needed (R1 addendum): `CaptureService` is not touched; T009 passes without it.** First text, kept for the record: in `AE/input/CaptureService.java`, additive only:
   - move the code after `PcmSampleConverter.convert` into `deliver(float[] selected, int frameCount)` without changing it;
   - add `setMonitor(MonitorEngine)`;
   - when a monitor is set, read `BLOCK_FRAMES` frames per read and offer each block to it after the ring buffer write;
   - when none is set, read `FRAMES_PER_READ` as today;
   - a change of the monitor while the capture runs takes effect at the next read, without reopening the line or resetting the ring buffer (contracts/monitor-engine.md).
-  Make T008 and T009 pass. Every existing test of `AET/input/` and `AET/analysis/` stays green and unchanged.
-- [ ] T014 Gate and commit Phase 2.
+  Make T008 and T009 pass. Every existing test of `AET/input/` and `AET/analysis/` stays green and unchanged. (T009 is made to pass by T012.)
+- [X] T014 Gate and commit Phase 2.
 
-**Checkpoint**: an engine that passes the input to a fake output, with the recognition proven untouched.
+**Checkpoint**: an engine that passes the input of a fake duplex device to its output, with the recognition proven untouched.
+
+Then Phase 7 (the native device) comes before US1's device task T024.
 
 ## Phase 3: User Story 1 - I hear my guitar through an amp (Priority: P1) 🎯 MVP
 
@@ -131,7 +135,7 @@
   - determinism: two runs give identical samples;
   - the cabinet's response is down at least 12 dB at 40 Hz and at 10 kHz compared with 1 kHz; switched off, it is a pass-through.
 - [ ] T017 [P] [US1] Create `AET/monitor/fx/NoiseGateTest.java` (FR-011): a −70 dBFS noise is attenuated by at least 40 dB with the threshold at −60 dB; a −20 dBFS note passes within 1 ms; the release follows its knob ± 10 %; no click when it closes (no step above the signal's own change); with a −70 dBFS noise as input, the gate at −55 dB in front of the amp at HIGH_GAIN 7/6/6/6/6 with the cabinet on gives less than −60 dBFS at the output at the default guitar volume (FR-011).
-- [ ] T018 [P] [US1] Create `AET/monitor/JavaSoundMonitorDeviceTest.java`: the conversion of float stereo blocks to 16-bit little-endian frames (rounding, clamp) and the estimated delay from the format and the buffer. It runs without hardware, through the package-private conversion and estimate methods.
+- [ ] T018 [P] [US1] Create `AET/monitor/NativeMonitorDeviceTest.java` (R1 addendum). Without hardware it checks: the estimated delay from the devices' declared latencies and both buffers (package-private estimate method); when the native library cannot be loaded, `open` throws `MonitorDeviceException` with a reason naming the library (FR-013), and the engine goes to FAILED with that reason.
 - [ ] T019 [P] [US1] Create `TST/ui/AmpWindowSwtTest.java` (swt-gui-tests, contracts/amp-window.md). It checks:
   - the window shows the *Amp sound* switch (off on a fresh store), the output list, *Guitar volume*, *Score volume*, the delay line and the amp row with its character and five sliders;
   - moving a slider calls `setChain` with the clamped value;
@@ -148,22 +152,24 @@
   - a malformed stored current chain falls back to Clean.
 - [ ] T021 [P] [US1] Create `TST/ui/AmpTextsTest.java` (FR-016, SC-008), like `FireTextsTest`: for every key of a list `PR/ui/AmpTexts.KEYS` (each control, knob, element and message of the window; the list grows with each phase), the three `LANG` files have a non-empty label and a tooltip key `<key>.tip`, and every tooltip of a knob names its unit and its default. Seen red before the keys of US1 exist; each later phase adds its keys to the list and to the three files in the same task.
 
+- [ ] T061 [P] [US1] Create `TST/dataset/DatasetRecognitionIdentityTest.java` (`@Tag("benchmark")`, owner's request of 2026-11-01, quickstart §2): it runs the dataset benchmarks of `TST/dataset/` that write outcome files (`DatasetBenchmarkTest`, `GuitarSetChordBenchmarkTest`, `TechniqueDatasetBenchmarkTest`, `OwnerChordsBenchmarkTest`, through their existing entry points, unchanged) twice, sound off and with a `MonitorEngine` running each ready-made chain on a fake duplex device fed with the same recordings in the same process, and checks the outcome files of `target/dataset-benchmark` are identical line for line. It needs `~/tuxguitar-datasets` (or `-Dtuxguitar.datasets`) and is skipped with a message when the data are absent. Run at T028 and T058; its result goes in the final report.
+
 ### Implementation
 
 - [ ] T022 [P] [US1] Create `AE/monitor/fx/Biquad.java` (RBJ cookbook forms, coefficient ramps) and `fx/Oversampler.java` (polyphase half-band, 2× and 4×). Make T015 pass.
 - [ ] T023 [US1] Create `AE/monitor/fx/Amp.java` (research R4: input gain, stages by character, tone stack, presence, master), `fx/Cabinet.java` and `fx/NoiseGate.java`. Make T016 and T017 pass.
-- [ ] T024 [US1] Create `AE/monitor/JavaSoundMonitorDevice.java`: a `SourceDataLine` on the named output mixer (default when empty), 48 kHz, 16-bit stereo, the line buffer chosen by T003; `write` blocks for at most one block; errors are wrapped in `MonitorDeviceException`. Make T018 pass.
+- [ ] T024 [US1] Create `AE/monitor/NativeMonitorDevice.java` over the crate of T054 (JNI): `open(inputName, inputChannel, outputName, BLOCK_FRAMES)` ("" = the system's default, channel −1 = the first), `read` waits for at most one block time, `write` never blocks longer, the native errors are wrapped in `MonitorDeviceException`, and the library is loaded the way the AudioUnit plugin loads its own. Make T018 pass.
 - [ ] T025 [US1] Create `PR/session/AmpSoundSettings.java` and the settings part of `PR/session/AmpSoundStore.java` (contracts/amp-window.md: `of(TGContext)` over the module `tuxguitar-practice-amp`, `settings()`, `save()`, `currentChain()`, `saveCurrentChain()`; the keys `enabled`, `output`, `guitar.volume`, `chain.current` and `window.bounds` of data-model). The named sounds and the sound per score come in US3. Make T020 pass.
 - [ ] T026 [US1] First create `PR/ui/AmpTexts.java` with the text keys of US1 (the list T021 reads), then create `PR/ui/AmpWindow.java` and `PR/ui/AmpChainRows.java` with the top block and the amp and cabinet rows only (pedal rows come in US2), owned by the main window. Add an *Amp and effects…* button in `PR/ui/PracticeWindow.java` and an amp button in `PR/ui/PracticePalette.java` (both open the same window). Place it per contracts/amp-window.md: its kept bounds (`window.bounds`), else away from the framed and the next note using the boxes of `PR/ui/PaletteGuard.java`/`ScoreGuardBoxes`, else centred over the practice window, without taking the focus; keep its bounds when it closes. Show the delay as an estimate (FR-002, research R8). Keep one `MonitorEngine` per practice window:
   - it starts when *Amp sound* is on and the window opens, and stops when the practice window closes (FR-001);
-  - `CaptureService.setMonitor` is called while it is ON;
+  - it opens the practice input (the device of `CurrentInputSelection`, by name) and the chosen output through `NativeMonitorDevice`; `CaptureService` is not touched;
   - the switch, the output, *Guitar volume*, the amp settings and the bounds are read from and written to `AmpSoundStore` (T025); every change of the chain is kept with `saveCurrentChain`;
   - *Score volume* reads and writes `MidiPlayer.getVolume()`/`setVolume(int)`;
   - the window closes with the practice window.
   Make T019 pass.
 - [ ] T027 [US1] Add the labels and tooltips of US1 (switch, output, volumes, delay, amp knobs, cabinet) to `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`: what each changes, its unit and its default (FR-016); the delay's tooltip says that Bluetooth headphones add their own delay (research R8). Make T021 pass.
-- [ ] T028 [US1] Gate and commit. Relaunch the app for a smoke check: guitar on the built-in microphone with headphones, *Clean* heard.
-- [ ] T029 [HUMAN] [US1] **Non-blocking: the implementation goes on with US2 without waiting; the owner does it whenever convenient, and it is confirmed at T060.** Listen by ear with the Rocksmith cable and headphones, at T003's setting: does it feel like playing through an amp (SC-001)? The probe measured the built-in microphone, not the cable. The answer is noted in `baseline.txt` and confirmed at the final gate.
+- [ ] T028 [US1] Gate (with T061 run once) and commit. Relaunch the app for a smoke check: the owner's USB microphone (or the built-in one, about 49 ms by itself) with headphones, *Clean* heard.
+- [ ] T029 [HUMAN] [US1] **Non-blocking: the implementation goes on with US2 without waiting; the owner does it whenever convenient, and it is confirmed at T060.** Listen by ear with the Rocksmith cable and headphones, at `BLOCK_FRAMES` = 128: does it feel like playing through an amp (SC-001)? The probes measured the built-in and a USB microphone, not the cable. The answer is noted in `baseline.txt` and confirmed at the final gate.
 
 **Checkpoint**: the MVP. The guitar is heard through an amp while practising.
 
@@ -281,20 +287,23 @@
 - [ ] T052 [US4] Add the warning dialog and the message line (feedback, overload, device lost, input clipping) to `PR/ui/AmpWindow.java`, with the input kind from `CurrentInputSelection` (built-in microphone versus other inputs) and the messages in `PR/ui/AmpTexts.java` and the three `LANG` files. Make T050 and T021 pass.
 - [ ] T053 [US4] Gate and commit.
 
-## Phase 7: Conditional — native duplex device (only if T003 decided it)
+## Phase 7: The native duplex device (required by T003; done right after T014, before T024)
 
-- [ ] T054 **If needed, done right after T003 and before T024** (the device of US1). Only if T003 found no Java Sound setting within 30 ms:
-  - write a short addendum to `research.md` naming the native API per system (CoreAudio, ALSA or JACK, WASAPI) and its module under `desktop/build-scripts/native-modules/`;
-  - add `NativeMonitorDevice` behind `MonitorDevice`, with its own probe run;
-  - wire the modules into the three build scripts and the release workflow.
-  This is planned with the owner before coding (a new native module per system). If T003 chose Java Sound, mark this task "not needed" with T003's numbers.
+- [ ] T054 Create the crate `desktop/build-scripts/native-modules/tuxguitar-monitor-native/` (research R1 addendum, planned with the owner on 2026-11-01):
+  - `Cargo.toml` (`cpal` 0.15.3, `jni` 0.21, `crate-type = ["cdylib"]`) and `Cargo.lock` committed;
+  - `src/lib.rs`: open the input (matched by name, else the default; the given channel, else the first) and the output (likewise), each at its device's current rate (never changed), with a fixed buffer of the given frames; an adaptive resampler from the input's rate to the output's, nudged by the output ring's fill (rate difference and clock drift); two lock-free single-producer, single-consumer rings between the callbacks and Java; at most two input blocks waiting (the oldest dropped and counted), silence played and counted when the output ring is empty; the devices' declared latencies reported; no effect in Rust;
+  - `cargo test` for the rings (order, drop-oldest, silence counted, no allocation after open) and the resampler (a sine through 48 to 44.1 kHz keeps its frequency within 0.1 %, the ring's fill stays bounded over a simulated hour with a 100 ppm clock difference);
+  - `pom.xml` running `cargo test` then `cargo build --release --target <triple>` through `maven-antrun-plugin`, as `tuxguitar-audiounit-macos/pom.xml` runs `make`;
+  - listed in the `native-modules` profile of `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`, `tuxguitar-linux-swt` (and its `-deb`) and `tuxguitar-windows-swt-x86_64`, the library copied next to the other native libraries of each build.
+- [ ] T062 Install a pinned Rust toolchain and its targets in `.github/workflows/macos-maven.yml`, `ubuntu-maven.yml` and `release.yml` (aarch64-apple-darwin on `macos-15`; x86_64-unknown-linux-gnu with `libasound2-dev` on `ubuntu-24.04`; x86_64-pc-windows-gnu cross-compiled on Linux with the Mingw-w64 already installed), and check each package contains the library (as the workflows check the other native files).
+- [ ] T063 Create `AET/monitor/NativeMonitorProbeTest.java` (`@Tag("benchmark")`, quickstart §1b): the round trip through `NativeMonitorDevice` at 64, 128 and 256 frames with 20 clicks per setting, the input chosen by `-Dprobe.input` (else the default), reported with the devices' declared latencies and the dropped and silent blocks in `specs/022-guitar-amp-effects/benchmark/native-probe.md`. Run it on the owner's Mac (built-in microphone; the USB microphone if plugged in) and check each median is within 3 ms of the declared latencies plus both buffers.
 
 ## Phase 8: Polish & cross-cutting concerns
 
 - [ ] T055 [P] Describe the sound, the *Amp and effects* window, the chain, the sounds and the sound per score, the delay, headphones and feedback, and "the sound never changes the judging" in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md` (FR-017), with a screenshot of the window in `docs/images/features/` (taken on the built app).
 - [ ] T056 [P] Write the manual sheet `specs/test-sheets/F12-ampli-effets.md` (quickstart §3, plus rows for Linux and Windows testers: the delay shown, steps 2 to 5, a howl) and add it to `specs/test-sheets/README.md`.
 - [ ] T057 [P] Draft the release notes of the next version in `docs/release-notes/` (FR-015, SC-009, quickstart §4): the sound, the window, the sounds, headphones and feedback, the delay reached on the owner's Mac, and the call to Linux and Windows testers to report the delay shown and a howl through sheet F12. The version number is chosen at release time, and nothing is released before T060.
-- [ ] T058 Full gate: `mvn -o -e clean verify -P native-modules` and `swt-gui-tests`. Record the counts in `baseline.txt` and check the test folders show additions only.
+- [ ] T058 Full gate: `mvn -o -e clean verify -P native-modules`, `swt-gui-tests` and T061 (the datasets' identity). Record the counts in `baseline.txt` and check the test folders show additions only.
 - [ ] T059 Write `specs/022-guitar-amp-effects/final-report.md`:
   - what was built, the R1 decision with its numbers, the tests added, the cost measured;
   - where each algorithm and each ready-made sound comes from (the project's own; public structures such as the Schroeder–Moorer reverb named, rewritten), confirming FR-018;
@@ -312,15 +321,16 @@
 
 ## Dependencies & execution order
 
-- Phase 1 (T003's decision) → Phase 2 → US1 (Phase 3, MVP) → US2 → US3 → US4 → Phase 8.
+- Phase 1 (T003's decision) → Phase 2 → Phase 7 (the native device) → US1 (Phase 3, MVP) → US2 → US3 → US4 → Phase 8.
 - US3 and US4 depend on the window of US1, but not on each other.
-- Phase 7 runs only if T003 asks for it, and then it comes before US1's device task T024.
+- T003 required Phase 7; it comes before US1's device task T024. T062 can run alongside US1.
 - Inside a phase, tests come first and are seen red; [P] tasks touch different files.
 
 ## Parallel examples
 
-- Phase 2: T004, T005, T006, T007, T008 and T009 together.
-- US1: T015, T016, T017, T018, T019, T020 and T021 together, then T022 and T025 alongside the window work.
+- Phase 2: T004, T006, T007 and T009 together.
+- Phase 7: T062 and T063 once T054 is done.
+- US1: T015, T016, T017, T018, T019, T020, T021 and T061 together, then T022 and T025 alongside the window work.
 - US2: T030, T031, T032, T033, T034, T035 and T036 together, then T037 and T038 together.
 - US3: T042, T043 and T044 together.
 - US4: T048, T049 and T050 together.
@@ -328,7 +338,7 @@
 
 ## Implementation strategy
 
-- **MVP = Phase 1 + Phase 2 + US1**: the guitar heard through an amp, with the delay measured and the recognition proven untouched.
+- **MVP = Phase 1 + Phase 2 + Phase 7 + US1**: the guitar heard through an amp, with the delay measured and the recognition proven untouched (recorded inputs and datasets).
 - Then the pedals (US2), the sounds (US3) and safety (US4), each one gated and committed.
 - **No release** before the owner's gate T060.
 - **Not before US4 is done:** the sound is off by default from US1 on, and the safe ceiling is in the output stage from Phase 2. The microphone warning and the feedback guard come in US4, so before that phase the owner tries it with headphones only (said in the US1 smoke check).
