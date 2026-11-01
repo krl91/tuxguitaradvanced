@@ -1,6 +1,6 @@
 # Final report: spec 019, the demo fire on the score and the Advanced tab
 
-Date: 2026-11-01. Status: every task done but T044's screenshots and T050 (the release notes, at the next release). The owner's gate T048 passed on 2026-11-01 (sheet F11, "ça me semble bon", no value to tune).
+Date: 2026-11-01. Status: every task done but T050 (the release notes, at the next release). The owner's gate T048 passed on 2026-11-01 (sheet F11, "ça me semble bon", no value to tune).
 
 ## What was built
 
@@ -46,5 +46,5 @@ The medians are below the plan's 4 ms goal; the 95th percentiles are slightly ab
 ## Not verified
 
 - **The real Linux and Windows commands of R7** (`gsettings`, `kreadconfig6`/`kreadconfig5`, the PowerShell line) have only been run against a fake system. Other Linux desktops (Cinnamon, XFCE, …) are not read. Testers' feedback is asked in sheet F11 and must be asked in the release notes.
-- **The screenshots of T044** (the score fire and the Advanced tab in `docs/images/`) were not taken. They need the built app driven by hand, and the owner's open TuxGuitar is not touched. They can be taken during T048.
+- **The screenshots of T044** were taken on a throwaway build fed with a scripted streak (no audio, no real run), so the score-fire picture has no palette or red frame.
 - **Everything seen on screen**: judged by the owner at gate T048 on macOS (2026-11-01, overall answer "ça me semble bon"); Linux and Windows only through the testers.

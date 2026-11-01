@@ -43,7 +43,11 @@ In **Wait** and **Follow the tempo**, the palette moves aside on its own: when t
 
 **Score fire** (Mode tab, *Score fire*): in **Wait** and **Follow the tempo**, a fire like Arcade's stage flames can burn at the bottom of the visible score. It **grows with your right notes in a row** (full height after 16 by default, at most a third of the score area) and **falls back at a mistake** (within a second); a pause holds it still, and each right note throws a burst of sparks. It never covers the framed note, the next note or the palette: near them it fades to almost nothing. **Off** (default), **Discreet** or **Full**; kept from one session to the next and read when a run starts. Decoration only: **it never changes the judging**, the verdicts, the timings or the summary. On a slow computer it simplifies itself, then disappears, so that the score keeps scrolling smoothly.
 
+<img src="images/features/practice-score-fire.png" width="640" alt="The score fire during a streak of right notes">
+
 **Advanced tab**: two groups, *Arcade fire* and *Score fire*, hold every value that shapes each fire (opacity, size of the pixels, height at the corners and in the middle, flicker, sway, embers, growth, sparks, colours). Each group has an animated **preview** that follows every change at once, a **Sparks** button, a **Growth** slider (the streak for the score fire, the share of the maximum score for Arcade) and **Default values**. Every setting has a tooltip that says what it changes, its unit and its default. A value is kept at once and used at the next run of its mode; a run going on is not changed. Whatever the values, the fire never covers what you have to read, and the judging does not change.
+
+<img src="images/features/practice-advanced-tab.png" width="430" alt="The Advanced tab: the Arcade fire group with its live preview">
 
 Both fires, and the previews, stand still and throw no spark when the system asks to reduce motion: *Reduce motion* on macOS, *animations* off on GNOME or an animation speed of 0 on KDE (Linux), *Show animations in Windows* off (Windows). Other Linux desktops are not read. The Linux and Windows readings have not been tried on a real machine yet: please tell us in an [issue](https://github.com/krl91/tuxguitaradvanced/issues) whether it works for you.
 

@@ -285,7 +285,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 
 ## Phase 7: Polish & cross-cutting concerns
 
-- [ ] T044 [P] Describe the score fire, its Mode tab setting, the Advanced tab, the previews and "the fire never changes the judging" in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md` (FR-012). Add a screenshot of the score fire and of the Advanced tab in `docs/images/` (taken on the built app).
+- [X] T044 [P] Describe the score fire, its Mode tab setting, the Advanced tab, the previews and "the fire never changes the judging" in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md` (FR-012). Add a screenshot of the score fire and of the Advanced tab in `docs/images/` (taken on the built app).
 - [X] T045 [P] (FR-011) Write the manual sheet `specs/test-sheets/F11-feu-partition.md`:
   - Wait and Follow at Full and at Discreet;
   - a mistake makes it fall, a pause holds it;
@@ -338,3 +338,4 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 - T049: the owner chose on 2026-11-01 to accept the measured times (95th percentile 4.4 ms in Wait, 4.0 ms in Follow); recorded in `final-report.md` ("Measured"). No code changed.
 - T050 stays open until the next release that carries spec 019 is prepared.
 - T048: on 2026-11-01 the owner tried the built app (development build of 11:16, after the last code change) with sheet F11 and answered "ça me semble bon": gate passed, no value to tune. The answer was overall: on the sheet, step 1 is marked OK and the other steps are left blank; no step was reported KO. T044's screenshots were not taken during the gate.
+- T044 (closed 2026-11-01, after the owner chose a throwaway build): the two screenshots `docs/images/features/practice-score-fire.png` and `practice-advanced-tab.png` were taken with `screencapture` on a separate, never committed build (a git worktree in the scratchpad, removed afterwards). Its only change: when started with `TGA_SHOTS`, it started the score fire at Full with the score defaults and fed it a scripted streak of right notes (one every 0.4 s, up to 14), or opened the practice window on the Advanced tab. No audio and no real run: the score-fire picture shows the fire at the bottom of `tests/demo-arcade-morceau.tg` without the palette or the red frame of a run. Both images are in the three guides.
