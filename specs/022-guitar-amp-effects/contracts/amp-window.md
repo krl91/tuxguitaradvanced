@@ -24,7 +24,7 @@
    - **Cabinet:** switch.
    - **After the amp:** rows as before.
    - An *Add pedal…* drop-down lists the kinds not yet in the chain and puts each one in its own section.
-3. **A message line** for feedback, overload, a lost device or the microphone warning.
+3. **A message line** for feedback, overload, a lost device, input clipping (with the gain advice) or the microphone warning.
 
 ## Behaviour
 
@@ -45,7 +45,8 @@ final class AmpSoundStore {
     static AmpSoundStore of(TGContext context);              // module "tuxguitar-practice-amp"
     AmpSoundSettings settings();  void save(AmpSoundSettings s);
     List<Sound> sounds();                                    // ready-made first, then own, by name
-    Sound current();  void setCurrent(String name);
+    ChainSettings currentChain();  void saveCurrentChain(ChainSettings chain);   // "chain.current", the settings part (US1)
+    Sound current();  void setCurrent(String name);                           // also sets the current chain
     void saveAs(String name, ChainSettings chain);  void rename(String from, String to);  void delete(String name);
     void restore(String readyMadeName);
     Sound soundFor(Optional<ScoreKey> key);                  // remembered, else last, else "Clean"

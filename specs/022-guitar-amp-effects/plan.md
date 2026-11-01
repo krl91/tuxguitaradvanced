@@ -80,7 +80,7 @@ No new library.
 | IX. Cross-platform | **Pass.** Java Sound on all three; any native fallback isolated behind `MonitorDevice`, one module per system. Linux and Windows reported as untested until testers answer. |
 | X. No unrelated refactoring | **Pass.** `CaptureService` gets one additive setter; nothing else moves. |
 | XI. Build and test integrity | **Pass.** Full gate each phase; only new tests. |
-| XII. Truthful reporting | **Pass.** The delay is shown as estimated or measured; the probe report is committed; the owner judges the feel (SC-001). |
+| XII. Truthful reporting | **Pass.** The delay is shown to the learner as an estimate; the end-to-end delay is measured by the probe, whose report report is committed; the owner judges the feel (SC-001). |
 | XIII. Honest guitar-audio semantics | **Pass.** The sound is a rendering of the mono input; it claims nothing about what was played and never feeds the judging. |
 | XIV. Learner-centred feedback | **Pass.** The messages say what happened and what to do (headphones, a lost device, too much processing). |
 
@@ -106,7 +106,7 @@ desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
 ├── input/CaptureService.java               (+ setMonitor, additive)
 └── monitor/                                (new)
     ├── Effect.java, EffectKind.java, Knob.java
-    ├── PedalSettings.java, AmpSettings.java, ChainSettings.java
+    ├── PedalSettings.java, AmpSettings.java, ChainSettings.java, ReadyMadeChains.java (the four ready-made chains)
     ├── fx/NoiseGate, Compressor, Overdrive, Distortion, Amp, Cabinet, Chorus, Echo, Reverb, OutputStage, Oversampler, Biquad
     ├── Chain.java                          (runs the elements, lightening on overload)
     ├── BlockQueue.java                     (single producer, single consumer)
@@ -118,7 +118,7 @@ desktop/TuxGuitar-audio-engine/src/test/java/.../monitor/   (new tests; probe, c
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── session/AmpSoundStore.java, Sound.java, ScoreKey.java, AmpSoundSettings.java   (new)
 ├── ui/AmpWindow.java, AmpChainRows.java, AmpTexts.java (the text keys)          (new)
-├── ui/PracticeWindow.java       (button, start and stop with the window, the sound per score at run start)
+├── ui/PracticeWindow.java       (button, start and stop with the window, the sound per score when the practice window opens on a score)
 └── ui/PracticePalette.java      (amp button)
 desktop/TuxGuitar-practice/test/...                                               (new tests)
 desktop/TuxGuitar-practice/share/lang/messages*.properties   (EN/FR/ES labels and tooltips, beside the practice texts)
@@ -135,7 +135,7 @@ docs/PRACTICE*.md, specs/test-sheets/F12-ampli-effets.md
 1. **Baseline and probe (R1).**
    - Record the counts.
    - Write `MonitorLatencyProbeTest` (benchmark) and the report.
-   - **Decision gate:** Java Sound, or the native branch. The owner listens by ear with the cable.
+   - **Decision gate:** Java Sound, or the native branch. The owner's listening with the cable comes after US1, without blocking the next phases.
 2. **Foundations:**
    - `Effect`, `Knob`, `PedalSettings`, `AmpSettings`, `ChainSettings` (text, validation);
    - `BlockQueue`, `OutputStage`, `MonitorEngine` on a fake device;
@@ -144,10 +144,11 @@ docs/PRACTICE*.md, specs/test-sheets/F12-ampli-effets.md
 3. **US1, the amp** (P1):
    - `Biquad`, `Oversampler`, `Amp`, `Cabinet`, `NoiseGate`;
    - `JavaSoundMonitorDevice`;
+   - the settings part of `AmpSoundStore` (switch, output, guitar volume, current chain, window bounds), so that US1 and US2 survive a restart;
    - the minimal *Amp and effects* window (switch, output, volumes, delay, amp row);
    - started and stopped with the practice window; the score volume through `MidiPlayer`.
 4. **US2, the pedals** (P1): `Compressor`, `Overdrive`, `Distortion`, `Chorus`, `Echo`, `Reverb`; rows, add, remove, reorder; smooth changes (SC-003); the cost benchmark.
-5. **US3, the sounds** (P2): `AmpSoundStore`, ready-made sounds, save, rename, delete, restore, `ScoreKey`, the sound per score at run start.
+5. **US3, the sounds** (P2): the sounds part of `AmpSoundStore`, ready-made sounds, save, rename, delete, restore, `ScoreKey`, the sound per score when the practice window opens on a score (FR-019).
 6. **US4, safety** (P2): off by default, the microphone warning, `FeedbackGuard` (SC-005), device loss (FR-013), overload lightening (FR-014), the safe ceiling (SC-004).
 7. **Conditional — the native duplex device**, only if Phase 1 decided it (one module per system, built by CI).
 8. **Closing:**

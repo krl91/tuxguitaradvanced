@@ -38,7 +38,7 @@
 
 Rules:
 - **Validation:** kinds are unique across both lists, and each kind is in its own section.
-- **`toText()` / `parse(String)`:** the compact text of research R6 (`gate:on,-60,150|amp:crunch,5,5,5,5,6|cab:on|echo:on,380,3,5,4`). Parsing malformed text returns `Optional.empty()`, so the caller falls back to the ready-made sound.
+- **`toText()` / `parse(String)`:** the compact text of research R6 (`gate:on,-60,150|amp:crunch,5,5,5,5,6|cab:on|echo:on,380,3,5,30`). Parsing malformed text returns `Optional.empty()`, so the caller falls back to the ready-made sound.
 - **`equals` and `hashCode`:** by value.
 
 ## `Sound`
@@ -56,7 +56,7 @@ Rules:
 | Lead | gate −55; compressor 4/10/5; amp high gain 7/6/6/6/6; cabinet on; echo 380 ms/3/5/25 % |
 | Clean echo | compressor 5/10/5; amp clean 3/5/5/6/6; cabinet on; chorus 0.8/4/40 %; echo 450 ms/4/4/35 %; reverb 4/5/20 % |
 
-The values are a starting point, tuned at the owner's gate. A ready-made sound can be changed and then restored (US3/AC3).
+The chains live in one place, AE `monitor/ReadyMadeChains`, used by the engine tests and by `Sound`. The values are a starting point, tuned at the owner's gate and by the silence test of FR-011. A ready-made sound can be changed and then restored (US3/AC3).
 
 ## `AmpSoundSettings` (PR `session/AmpSoundStore`)
 
@@ -66,6 +66,7 @@ The values are a starting point, tuned at the owner's gate. A ready-made sound c
 | `output` | the system's default output | `output` (mixer name) |
 | `guitarVolume` | 0.7 (from 0 to 1) | `guitar.volume` |
 | `currentSound` | "Clean" | `sound.current` |
+| `currentChain` (the chain in use, with the learner's unsaved changes) | the Clean chain | `chain.current` |
 | `lastSound` | "Clean" | `sound.last` |
 | own sounds | none | `sound.<n>.name`, `sound.<n>.chain` |
 | changed ready-made sounds | none | `ready.<name>.chain` (removed by *Restore*) |
@@ -95,7 +96,7 @@ ON ──over budget──▶ ON with a lighter chain (message) ──still over
 
 ### Counters shown in the diagnostic
 
-`droppedBlocks` (the output was late), `silentBlocks` (the input was late), `overBudgetBlocks`, `howls`, and the estimated delay in ms (FR-002).
+`droppedBlocks` (the output was late), `silentBlocks` (the input was late), `overBudgetBlocks`, `howls`, `clippedInputBlocks` (a sample at or above −0.1 dBFS), and the estimated delay in ms (FR-002).
 
 ## Relationships
 

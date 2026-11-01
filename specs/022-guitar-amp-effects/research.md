@@ -97,7 +97,7 @@ With the built-in microphone chosen as input, turning the sound on shows the hea
 ## R6 — Sounds, the sound per score, and storage
 
 - **Sounds** are stored with `TGConfigManager` in a new module `tuxguitar-practice-amp`:
-  - `sound.<n>.name` and `sound.<n>.chain`, the chain being a compact text such as `gate:on,-60,150|amp:crunch,5,5,5,5,6|cab:on|echo:on,380,3,5,4`;
+  - `sound.<n>.name` and `sound.<n>.chain`, the chain being a compact text such as `gate:on,-60,150|amp:crunch,5,5,5,5,6|cab:on|echo:on,380,3,5,30`;
   - `sound.current`, `enabled`, `output`, `guitar.volume`, `window.bounds` (the score volume is TuxGuitar's own, not stored here).
   - Ready-made sounds have fixed names and can be restored.
   - Text keeps the existing settings mechanism (no new file format); a malformed entry falls back to the ready-made sound and is logged once.

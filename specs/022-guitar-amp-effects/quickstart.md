@@ -22,7 +22,8 @@ cd BUILD && mvn -o -e clean verify -P native-modules
 
 The suites cover:
 - the pure effects on synthetic signals (sines, impulses, steps, silence): determinism, ranges, no NaN, tails, smooth knob changes, safe ceiling;
-- the chain text, `ChainSettings` validation, `ScoreKey`, `AmpSoundStore` (sounds, restore, sound per score, deleted sound);
+- the chain text, `ChainSettings` validation, `ReadyMadeChains`, `ScoreKey`, `AmpSoundStore` (settings kept, sounds, restore, sound per score, deleted sound);
+- every ready-made sound below −60 dBFS at the output with a −70 dBFS noise as input (FR-011);
 - `MonitorEngine` on a fake device: queue never blocks, dropped and silent blocks counted, fade in and out, feedback guard on a synthetic howl (muted within 0.5 s), overload lightening;
 - **recognition untouched (SC-002):** the same recorded inputs, sound off and on with the four ready-made sounds, give identical hops, verdicts and summaries;
 - every text key of the window has its label and tooltip in English, French and Spanish (`AmpTextsTest`);
@@ -36,7 +37,7 @@ After each build, restore `specs/003-arcade-mode/benchmark/`.
 
 1. Plug the guitar with the Rocksmith cable and wear headphones. Open a score, then the practice window, then *Amp and effects…*.
 2. Turn on *Amp sound*: it rises in about half a second, and the guitar is heard through *Clean*. Read the delay line.
-3. Pick *Crunch*, *Lead* and *Clean echo*, and move each knob while playing: no click, and the change is heard at once.
+3. Pick *Crunch*, *Lead* and *Clean echo*, and move each knob while playing: no click, and the change is heard at once. Add, remove and move a pedal, and switch sounds while playing: no click either.
 4. Add and remove pedals, and reorder them within their section.
 5. Start Wait, Follow and Arcade runs: the guitar is heard with the score, and the verdicts behave as usual. Set *Guitar volume* and *Score volume*.
 6. Pick *Lead* for this score, open another score and pick *Clean*, restart the application, and reopen both: each one gets its own sound back.
