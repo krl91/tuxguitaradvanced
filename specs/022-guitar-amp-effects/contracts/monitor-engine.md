@@ -61,4 +61,5 @@ interface MonitorDevice {
 - `setMonitor(MonitorEngine monitor)`:
   - **null** (the default): the capture is exactly as today.
   - **non-null:** each block read is also offered to the monitor, and the read size is the monitor's block size (R1).
+  - **Changing it while the capture runs** takes effect at the next read, without reopening the input line or resetting the ring buffer.
 - The samples written to `SampleRingBuffer` are the same in both cases.

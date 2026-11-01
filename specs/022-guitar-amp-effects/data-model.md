@@ -95,10 +95,10 @@ ON ──over budget──▶ ON with a lighter chain (message) ──still over
 
 ### Counters shown in the diagnostic
 
-`droppedBlocks` (the output was late), `silentBlocks` (the input was late), `overBudgetBlocks`, `howls`, and the estimated and the measured delay in ms.
+`droppedBlocks` (the output was late), `silentBlocks` (the input was late), `overBudgetBlocks`, `howls`, and the estimated delay in ms (FR-002).
 
 ## Relationships
 
 - `AmpSoundStore` holds the sounds and picks the `ChainSettings` handed to `MonitorEngine.setChain`.
-- `PracticeWindow` starts and stops `MonitorEngine` with the practice window (FR-001). When a practice starts, it asks `AmpSoundStore.soundFor(ScoreKey)`, and when the learner picks a sound, it calls `remember(ScoreKey, name)`.
+- `PracticeWindow` starts and stops `MonitorEngine` with the practice window (FR-001). When the practice window opens on a score, and whenever the score in front of it changes, it asks `AmpSoundStore.soundFor(ScoreKey)`, and when the learner picks a sound, it calls `remember(ScoreKey, name)`.
 - `CaptureService` hands blocks to `MonitorEngine` only while it is ON (research R2).

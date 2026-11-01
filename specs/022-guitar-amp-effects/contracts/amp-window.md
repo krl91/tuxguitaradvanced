@@ -17,7 +17,7 @@
    - output device;
    - *Guitar volume*;
    - *Score volume* (TuxGuitar's volume);
-   - the delay line, e.g. "Delay: about 14 ms (measured 16 ms)".
+   - the delay line, e.g. "Delay: about 14 ms (estimate)".
 2. **The chain, in order:**
    - **Before the amp:** one row per pedal: switch, name, sliders with values, up, down, remove.
    - **Amp:** character (clean, crunch, high gain), gain, bass, middle, treble, volume.
@@ -32,7 +32,7 @@
   - It changes the current sound in memory, and the sound list shows "(changed)".
   - *Save as…* or *Save* keeps it. When the window closes with changes, they are kept as the current sound, so nothing is lost silently.
 - **The sound per score (FR-019):**
-  - when a practice starts on a score, the current sound becomes `soundFor(ScoreKey)`;
+  - when the practice window opens on a score, and whenever the score in front of it changes, the current sound becomes `soundFor(ScoreKey)`;
   - when the learner picks a sound while a score is open, `remember(ScoreKey, name)` is called.
 - **The microphone warning:** turning the sound on with the built-in microphone as input shows the warning (FR-012). The sound starts only after *Turn on anyway*.
 - **Tooltips:** every control has a tooltip in English, French and Spanish: what it changes, its unit and its default (FR-016).

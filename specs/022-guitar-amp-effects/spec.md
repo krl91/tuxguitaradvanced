@@ -39,7 +39,7 @@ The learner plugs the guitar into the computer (an instrument cable such as the 
 1. **Given** a guitar on an instrument input and *Amp sound* on, **When** the learner plays a note, **Then** it is heard from the chosen output within the delay of SC-001, shaped by the chosen amp.
 2. **Given** *Amp sound* on, **When** a Wait, Follow or Arcade run goes, **Then** the verdicts, timings and score are exactly the same as with the sound off (the sound heard never feeds the recognition).
 3. **Given** Follow or Arcade plays the score, **When** the guitar sounds too, **Then** both are heard together, and the learner can set the guitar's volume against the score's.
-4. **Given** *Amp sound* on, **When** the learner stops playing, **Then** nothing is heard but silence (no hum or hiss louder than the limit of FR-011).
+4. **Given** *Amp sound* on, **When** the learner stops playing, **Then** nothing is heard but silence (no hum or hiss above −60 dBFS at the output, FR-011).
 
 ---
 
@@ -62,7 +62,7 @@ Before and after the amp, the learner adds effect pedals from a list (a compress
 
 ### User Story 3 - Sounds I can save and pick per song (Priority: P2)
 
-The learner saves a chain as a named *sound* ("Clean", "Crunch", "Lead with echo"…), finds a few ready-made sounds, and picks one before a run. The last sound chosen for a score is remembered and comes back when that score is practised again, as Rocksmith keeps a tone per song; a score never practised starts with the last sound used.
+The learner saves a chain as a named *sound* ("Clean", "Crunch", "Lead with echo"…), finds a few ready-made sounds, and picks one before a run. The last sound chosen for a score is remembered and comes back as soon as the practice window is open on that score again (before any run, for warming up), as Rocksmith keeps a tone per song; a score never practised starts with the last sound used.
 
 **Why this priority**: saving a sound avoids setting the knobs again each time; it is comfort on top of US1 and US2.
 
@@ -81,7 +81,7 @@ The learner saves a chain as a named *sound* ("Clean", "Crunch", "Lead with echo
 
 ### User Story 4 - Safe by default (Priority: P2)
 
-The sound is off until the learner turns it on. With the computer's built-in microphone, or when the output and the input are the same room's speaker and microphone, the application warns about howling (feedback) and suggests headphones; a sudden loud howl is cut at once.
+The sound is off until the learner turns it on. With the computer's built-in microphone as input, the application warns about howling (feedback) and suggests headphones; a howl, whatever the input, is cut at once.
 
 **Why this priority**: a loud feedback loop can hurt the ears and the speakers; an unexpected sound at start-up surprises.
 
@@ -113,17 +113,17 @@ The sound is off until the learner turns it on. With the computer's built-in mic
 ### Functional Requirements
 
 - **FR-001** (sound of the guitar): When *Amp sound* is on, the guitar's signal from the practice input MUST be played on the chosen output, processed by the learner's chain, whenever the practice window is open: during Wait, Follow and Arcade runs and between them; closing the practice window MUST stop it. Outside the practice window, nothing is played.
-- **FR-002** (delay): The delay between a string being struck and the sound heard MUST stay within SC-001 on the owner's computer with an instrument input; the delay actually measured MUST be shown to the learner in the settings.
+- **FR-002** (delay): The delay between a string being struck and the sound heard MUST stay within SC-001 on the owner's computer with an instrument input; the delay estimated from the devices in use (input block, output buffer and processing) MUST be shown to the learner in the *Amp and effects* window, named as an estimate; the delay measured end to end is a development check (SC-001), not shown in the application.
 - **FR-003** (recognition untouched): The processed sound MUST NOT feed the recognition, the tuner, the calibration or the input meter; verdicts, timings, scores and recorded runs MUST be identical with the sound on and off.
 - **FR-004** (amp): The chain MUST contain one amp with at least a clean, a crunch and a high-gain character, with gain, bass, middle, treble and volume knobs, and a speaker cabinet that can be switched off (for learners using a real amp or a cabinet simulator).
 - **FR-005** (pedals): The learner MUST be able to place pedals before and after the amp, chosen from this first set: compressor, overdrive, distortion, echo, reverb, chorus and noise gate (each kind at most once in the chain); each pedal MUST have an on/off switch and a few knobs with plain names, units and defaults.
 - **FR-006** (live changes): Any change (a pedal added, removed, moved, switched, a knob moved, a sound picked) MUST be heard within 0.1 second, without a click, a gap or a jump in level.
 - **FR-007** (mix): The learner MUST be able to set the guitar's volume and, in Follow and Arcade, its balance with the score's playback; the score's timing MUST NOT change.
 - **FR-008** (sounds): The learner MUST be able to save the chain as a named sound, rename and delete it, pick it before a run, and restore a ready-made sound; the application MUST ship at least four ready-made sounds (clean, crunch, lead, clean with echo).
-- **FR-019** (sound per score): The last sound chosen for a score MUST be remembered for that score, a score being recognised by its title and artist (by its file name when both are empty), so that moving or renaming the file keeps it and chosen again when it is practised, across restarts; a score never practised, or whose remembered sound was deleted, MUST start with the last sound used.
+- **FR-019** (sound per score): The last sound chosen for a score MUST be remembered for that score, a score being recognised by its title and artist (by its file name when both are empty), so that moving or renaming the file keeps it, and chosen again whenever the practice window opens on that score or the score in front of it changes, across restarts; a score never practised, or whose remembered sound was deleted, MUST start with the last sound used.
 - **FR-009** (kept): The on/off choice, the output, the volumes, the current chain and the saved sounds MUST survive a restart.
 - **FR-010** (safe level): The output MUST be limited so that no knob combination makes it louder than a fixed safe ceiling; turning the sound on MUST start quietly and rise in about half a second.
-- **FR-011** (silence): With the guitar not played, the noise heard MUST stay below a quiet level (a noise gate is available and on in the ready-made high-gain sounds).
+- **FR-011** (silence): With the guitar not played, the noise at the output MUST stay below −60 dBFS with the guitar's volume at its default, for every ready-made sound (a noise gate is available and on in the ready-made high-gain sounds).
 - **FR-012** (feedback): The sound MUST be off by default; with the built-in microphone, turning it on MUST show a warning about feedback and the advice to use headphones; a feedback howl MUST be detected and muted with a message (SC-005).
 - **FR-013** (devices): Losing the output, a denied permission or an unsupported format MUST stop the sound with a clear message, never crash or hang the application, and the practice MUST go on without the sound.
 - **FR-014** (cost): When the computer cannot process the chain within the delay, the sound MUST get simpler or mute with a message rather than crackle; it MUST NOT slow the recognition, the score's display or the score's playback.
@@ -141,7 +141,7 @@ The sound is off until the learner turns it on. With the computer's built-in mic
 - **Sound**: a named, saved chain; ready-made (restorable) or the learner's own.
 - **Sound per score**: the score's title and artist (or its file name when both are empty) and the name of the sound last chosen for it.
 - ***Amp and effects* window**: its place on the screen, kept between sessions.
-- **Measured delay**: the delay between the input and the output on the current devices, shown to the learner.
+- **Estimated delay**: the delay between the input and the output on the current devices, computed from their formats and buffers, shown to the learner as an estimate.
 
 ## Success Criteria *(mandatory)*
 

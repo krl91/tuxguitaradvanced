@@ -98,7 +98,7 @@ With the built-in microphone chosen as input, turning the sound on shows the hea
 
 - **Sounds** are stored with `TGConfigManager` in a new module `tuxguitar-practice-amp`:
   - `sound.<n>.name` and `sound.<n>.chain`, the chain being a compact text such as `gate:on,-60,150|amp:crunch,5,5,5,5,6|cab:on|echo:on,380,3,5,4`;
-  - `sound.current`, `enabled`, `output`, `guitar.volume`, `score.volume`, `window.bounds`.
+  - `sound.current`, `enabled`, `output`, `guitar.volume`, `window.bounds` (the score volume is TuxGuitar's own, not stored here).
   - Ready-made sounds have fixed names and can be restored.
   - Text keeps the existing settings mechanism (no new file format); a malformed entry falls back to the ready-made sound and is logged once.
 - **Sound per score**, by title and artist (owner's answer):
@@ -120,7 +120,7 @@ With the built-in microphone chosen as input, turning the sound on shows the hea
 
 ## R8 — Delay shown (FR-002)
 
-The window shows the estimated delay: input block + output line buffer + processing block, from the line formats. When the R1 probe has been run on this machine, it shows the probe's measured round trip too. Bluetooth outputs are named in the tooltip as adding their own delay.
+The window shows the estimated delay: input block + output line buffer + processing block, from the line formats. It is named as an estimate. The end-to-end delay measured by the R1 probe is a development check (SC-001) and is not shown in the application (FR-002). Bluetooth outputs are named in the tooltip as adding their own delay.
 
 ## R9 — Parity and CI (FR-015)
 
