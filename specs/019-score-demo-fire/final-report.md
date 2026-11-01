@@ -1,6 +1,6 @@
 # Final report: spec 019, the demo fire on the score and the Advanced tab
 
-Date: 2026-11-01. Status: every task done but T050 (the release notes, at the next release). The owner's gate T048 passed on 2026-11-01 (sheet F11, "ça me semble bon", no value to tune).
+Date: 2026-11-01. Status: every task done (50/50); released in v0.8.0-beta.5 (2026-11-01). The owner's gate T048 passed on 2026-11-01 (sheet F11, "ça me semble bon", no value to tune).
 
 ## What was built
 
