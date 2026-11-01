@@ -300,7 +300,7 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
   - the tests added;
   - what is unverified (the real Linux and Windows commands of R7, judged by testers).
   Update the 019 row of `specs/STATUS.md` and the memory `pending-score-fire-spec`. Commit.
-- [ ] T048 [HUMAN] (FR-011) The owner's gate on the relaunched app, per sheet F11 (SC-001, SC-006): the score fire looks like Arcade's, grows and falls, the scrolling stays smooth, and the Advanced tab works. Values to tune are noted, changed and re-tried.
+- [X] T048 [HUMAN] (FR-011) The owner's gate on the relaunched app, per sheet F11 (SC-001, SC-006): the score fire looks like Arcade's, grows and falls, the scrolling stays smooth, and the Advanced tab works. Values to tune are noted, changed and re-tried.
 
 **Implementation notes (Phase 7, as built):**
 - T044 is left open: the three guides describe the score fire, its Mode tab choice, the Advanced tab, the previews, Reduce motion on the three systems and "the fire never changes the judging", but the two screenshots in `docs/images/` are not taken (they need the built app driven by hand, and the owner's open TuxGuitar is not touched). They can be taken during T048.
@@ -337,3 +337,4 @@ Commands as in `quickstart.md` (JDK 21; restore `specs/003-arcade-mode/benchmark
 **Implementation notes (Phase 8, as built):**
 - T049: the owner chose on 2026-11-01 to accept the measured times (95th percentile 4.4 ms in Wait, 4.0 ms in Follow); recorded in `final-report.md` ("Measured"). No code changed.
 - T050 stays open until the next release that carries spec 019 is prepared.
+- T048: on 2026-11-01 the owner tried the built app (development build of 11:16, after the last code change) with sheet F11 and answered "ça me semble bon": gate passed, no value to tune. The answer was overall: on the sheet, step 1 is marked OK and the other steps are left blank; no step was reported KO. T044's screenshots were not taken during the gate.

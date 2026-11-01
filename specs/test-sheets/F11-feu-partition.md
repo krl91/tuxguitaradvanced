@@ -17,7 +17,7 @@
 
 | # | Fais | Attendu | OK / KO | Ce que j'ai vu |
 |---|---|---|---|---|
-| 1 | Onglet **Mode** : regarde le choix **Feu sur la partition**. | Il vaut **Éteint** la première fois. Son infobulle dit que c'est de la décoration, sans effet sur le jugement. | | |
+| 1 | Onglet **Mode** : regarde le choix **Feu sur la partition**. | Il vaut **Éteint** la première fois. Son infobulle dit que c'est de la décoration, sans effet sur le jugement. |ok | |
 | 2 | Choisis **Plein**, lance **Attendre la note correcte** et joue une dizaine de notes justes d'affilée. | Un feu en gros pixels, comme celui d'Arcade, **grandit** au bas de la partition à chaque note juste, plus haut aux coins qu'au milieu, sans dépasser environ un tiers de la zone de la partition. Chaque note juste lance une **gerbe d'étincelles** qui monte et s'éteint en une seconde environ. | | |
 | 3 | Joue une **fausse note**. | Le feu **retombe** aux braises en une seconde environ (SC-002). | | |
 | 4 | Fais **Pause** pendant que le feu est haut, attends quelques secondes, puis **Reprendre**. | Pendant la pause, le feu et les étincelles restent **figés** ; il repart à la reprise. | | |
