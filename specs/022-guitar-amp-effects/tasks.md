@@ -289,13 +289,13 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 
 ## Phase 7: The native duplex device (required by T003; done right after T014, before T024)
 
-- [ ] T054 Create the crate `desktop/build-scripts/native-modules/tuxguitar-monitor-native/` (research R1 addendum, planned with the owner on 2026-11-01):
+- [X] T054 Create the crate `desktop/build-scripts/native-modules/tuxguitar-monitor-native/` (research R1 addendum, planned with the owner on 2026-11-01):
   - `Cargo.toml` (`cpal` 0.15.3, `jni` 0.21, `crate-type = ["cdylib"]`) and `Cargo.lock` committed;
   - `src/lib.rs`: open the input (matched by name, else the default; the given channel, else the first) and the output (likewise), each at its device's current rate (never changed), with a fixed buffer of the given frames; an adaptive resampler from the input's rate to the output's, nudged by the output ring's fill (rate difference and clock drift); two lock-free single-producer, single-consumer rings between the callbacks and Java; at most two input blocks waiting (the oldest dropped and counted), silence played and counted when the output ring is empty; the devices' declared latencies reported; no effect in Rust;
   - `cargo test` for the rings (order, drop-oldest, silence counted, no allocation after open) and the resampler (a sine through 48 to 44.1 kHz keeps its frequency within 0.1 %, the ring's fill stays bounded over a simulated hour with a 100 ppm clock difference);
   - `pom.xml` running `cargo test` then `cargo build --release --target <triple>` through `maven-antrun-plugin`, as `tuxguitar-audiounit-macos/pom.xml` runs `make`;
   - listed in the `native-modules` profile of `desktop/build-scripts/tuxguitar-macosx-swt-cocoa`, `tuxguitar-linux-swt` (and its `-deb`) and `tuxguitar-windows-swt-x86_64`, the library copied next to the other native libraries of each build.
-- [ ] T062 Install a pinned Rust toolchain and its targets in `.github/workflows/macos-maven.yml`, `ubuntu-maven.yml` and `release.yml` (aarch64-apple-darwin on `macos-15`; x86_64-unknown-linux-gnu with `libasound2-dev` on `ubuntu-24.04`; x86_64-pc-windows-gnu cross-compiled on Linux with the Mingw-w64 already installed), and check each package contains the library (as the workflows check the other native files).
+- [X] T062 Install a pinned Rust toolchain and its targets in `ubuntu-maven.yml` and `release.yml` (`macos-maven.yml` builds without `-P native-modules`, so it needs none; the toolchain is in `.github/actions/install-rust`, Rust 1.93.0) (aarch64-apple-darwin on `macos-15`; x86_64-unknown-linux-gnu with `libasound2-dev` on `ubuntu-24.04`; x86_64-pc-windows-gnu cross-compiled on Linux with the Mingw-w64 already installed), and check each package contains the library (as the workflows check the other native files).
 - [ ] T063 Create `AET/monitor/NativeMonitorProbeTest.java` (`@Tag("benchmark")`, quickstart §1b): the round trip through `NativeMonitorDevice` at 64, 128 and 256 frames with 20 clicks per setting, the input chosen by `-Dprobe.input` (else the default), reported with the devices' declared latencies and the dropped and silent blocks in `specs/022-guitar-amp-effects/benchmark/native-probe.md`. Run it on the owner's Mac (built-in microphone; the USB microphone if plugged in) and check each median is within 3 ms of the declared latencies plus both buffers.
 
 ## Phase 8: Polish & cross-cutting concerns
@@ -329,7 +329,7 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 ## Parallel examples
 
 - Phase 2: T004, T006, T007 and T009 together.
-- Phase 7: T062 and T063 once T054 is done.
+- Phase 7: T062 once T054 is done; T063 needs `NativeMonitorDevice`, so it runs right after US1's T024.
 - US1: T015, T016, T017, T018, T019, T020, T021 and T061 together, then T022 and T025 alongside the window work.
 - US2: T030, T031, T032, T033, T034, T035 and T036 together, then T037 and T038 together.
 - US3: T042, T043 and T044 together.

@@ -1,0 +1,23 @@
+[package]
+name = "tuxguitar-monitor-native"
+version = "0.1.0"
+edition = "2021"
+license = "LGPL-2.1-or-later"
+description = "The duplex audio device of TuxGuitar's amp sound (spec 022): the guitar's input and the output, through cpal"
+publish = false
+
+[lib]
+name = "tuxguitar_monitor_native"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cpal = "=0.15.3"
+jni = "=0.21.1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+coreaudio-sys = { version = "=0.2.18", default-features = false, features = ["core_audio"] }
+
+[profile.release]
+opt-level = 3
+# The strip of the macOS 27 tools leaves a mis-aligned string pool in the proc-macro libraries, which rustc then cannot load.
+strip = "none"

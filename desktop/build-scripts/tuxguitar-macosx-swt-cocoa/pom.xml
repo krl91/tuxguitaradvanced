@@ -534,6 +534,8 @@
 			</activation>
 			<modules>
 				<module>../native-modules/tuxguitar-audiounit-macos</module>
+				<!-- the amp sound's duplex device (spec 022) -->
+				<module>../native-modules/tuxguitar-monitor-native</module>
 			</modules>
 
 			<build>
@@ -551,6 +553,9 @@
 										<!-- PLUGIN FILES -->
 										<copy todir="${project.build.directory}/${project.finalName}/">
 											<fileset dir="../native-modules/tuxguitar-audiounit-macos/target/build" />
+										</copy>
+										<copy todir="${project.build.directory}/${project.finalName}/">
+											<fileset dir="../native-modules/tuxguitar-monitor-native/target/build" />
 										</copy>
 										<!-- /PLUGINS FILES -->
 									</target>

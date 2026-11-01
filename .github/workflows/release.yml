@@ -135,6 +135,10 @@ jobs:
           misc/test-stamp-macos-plist.sh
           misc/test-relocate-macos-payload.sh
           misc/test-verify-macos-bundle.sh
+      - name: Install Rust (the amp sound's device, spec 022)
+        uses: ./.github/actions/install-rust
+        with:
+          target: aarch64-apple-darwin
       # spec 015: the release identity goes into the build-info file and the Info.plist (before the launcher is signed)
       - name: Build
         run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests "-Drelease.version=$RELEASE_VERSION" "-Drelease.commit=$RELEASE_COMMIT"
@@ -173,6 +177,8 @@ jobs:
         run: misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" macos
       - name: Verify the version and the commit in the package
         run: misc/verify-version.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" macos "$RELEASE_VERSION" "$RELEASE_COMMIT"
+      - name: Verify the amp sound's device is in the package (spec 022)
+        run: unzip -l "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-macos-arm64.zip" | grep -q 'Contents/Resources/tuxguitar/lib/libtuxguitar_monitor_native.dylib'
       - name: Attach the package to the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -201,6 +207,10 @@ jobs:
         uses: ./.github/actions/install-swt
         with:
           platform: linux
+      - name: Install Rust (the amp sound's device, spec 022)
+        uses: ./.github/actions/install-rust
+        with:
+          target: x86_64-unknown-linux-gnu
       # the Debian variant builds the tuxguitar-linux-swt bundle first, then wraps it in a .deb of the architecture of the runner (amd64)
       - name: Build
         run: cd desktop/build-scripts/tuxguitar-linux-swt-deb && mvn -B --no-transfer-progress -e clean verify -P native-modules -DskipTests "-Drelease.version=$RELEASE_VERSION" "-Drelease.debversion=$RELEASE_DEBVERSION" "-Drelease.commit=$RELEASE_COMMIT"
@@ -220,6 +230,10 @@ jobs:
         run: |
           misc/verify-version.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" linux "$RELEASE_VERSION" "$RELEASE_COMMIT"
           misc/verify-version.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb" linux "$RELEASE_VERSION" "$RELEASE_COMMIT"
+      - name: Verify the amp sound's device is in the packages (spec 022)
+        run: |
+          tar -tzf "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-x86_64.tar.gz" | grep -q 'lib/libtuxguitar_monitor_native.so$'
+          dpkg -c "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-linux-amd64.deb" | grep -q 'lib/libtuxguitar_monitor_native.so$'
       - name: Attach the packages to the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -248,6 +262,10 @@ jobs:
         uses: ./.github/actions/install-swt
         with:
           platform: windows
+      - name: Install Rust (the amp sound's device, spec 022)
+        uses: ./.github/actions/install-rust
+        with:
+          target: x86_64-pc-windows-gnu
       - name: Build
         run: cd desktop/build-scripts/tuxguitar-windows-swt-x86_64 && mvn -B --no-transfer-progress -e clean verify -P native-modules -P -platform-linux -P platform-windows -DskipTests "-Drelease.version=$RELEASE_VERSION" "-Drelease.numeric=$RELEASE_NUMERIC" "-Drelease.commit=$RELEASE_COMMIT"
       - name: Package
@@ -259,6 +277,8 @@ jobs:
         run: misc/verify-branding.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" windows
       - name: Verify the version and the commit in the package (the version resource of the exe included)
         run: misc/verify-version.sh "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" windows "$RELEASE_VERSION" "$RELEASE_COMMIT"
+      - name: Verify the amp sound's device is in the package (spec 022)
+        run: unzip -l "$GITHUB_WORKSPACE/TuxGuitarAdvanced-${RELEASE_TAG}-windows-x86_64.zip" | grep -q 'lib/tuxguitar_monitor_native.dll'
       - name: Attach the package to the release
         env:
           GH_TOKEN: ${{ github.token }}

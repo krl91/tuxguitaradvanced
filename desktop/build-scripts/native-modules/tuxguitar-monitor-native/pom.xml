@@ -1,0 +1,130 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<!-- The duplex audio device of the amp sound (spec 022, research R1 addendum): one Rust crate with cpal for the three systems.
+	     cargo tests the rings and the resampler, then builds the library for the platform's target; the library is copied to lib/,
+	     where the application loads it with System.loadLibrary("tuxguitar_monitor_native"). -->
+
+	<parent>
+		<artifactId>tuxguitar-pom</artifactId>
+		<groupId>app.tuxguitar</groupId>
+		<version>9.99-SNAPSHOT</version>
+		<relativePath>../../../</relativePath>
+	</parent>
+
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>tuxguitar-monitor-native</artifactId>
+	<packaging>pom</packaging>
+	<name>${project.artifactId}</name>
+
+	<properties>
+		<monitor.native.cargo>cargo</monitor.native.cargo>
+		<monitor.native.target>aarch64-apple-darwin</monitor.native.target>
+		<monitor.native.file>libtuxguitar_monitor_native.dylib</monitor.native.file>
+		<monitor.native.destination>Contents/MacOS/lib</monitor.native.destination>
+		<!-- "test" where the library runs on the build machine; "build" when it is cross-compiled (Windows on Linux) -->
+		<monitor.native.check>test</monitor.native.check>
+		<monitor.native.linker>cc</monitor.native.linker>
+	</properties>
+
+	<profiles>
+		<profile>
+			<id>platform-macos-cocoa</id>
+			<activation>
+				<os>
+					<family>unix</family>
+					<name>mac os x</name>
+				</os>
+			</activation>
+		</profile>
+		<profile>
+			<id>platform-linux</id>
+			<activation>
+				<os>
+					<family>unix</family>
+					<name>linux</name>
+				</os>
+			</activation>
+			<properties>
+				<monitor.native.target>x86_64-unknown-linux-gnu</monitor.native.target>
+				<monitor.native.file>libtuxguitar_monitor_native.so</monitor.native.file>
+				<monitor.native.destination>lib</monitor.native.destination>
+			</properties>
+		</profile>
+		<profile>
+			<id>platform-windows</id>
+			<activation>
+				<os>
+					<family>windows</family>
+				</os>
+			</activation>
+			<properties>
+				<monitor.native.target>x86_64-pc-windows-gnu</monitor.native.target>
+				<monitor.native.file>tuxguitar_monitor_native.dll</monitor.native.file>
+				<monitor.native.destination>lib</monitor.native.destination>
+				<monitor.native.check>build</monitor.native.check>
+				<monitor.native.linker>x86_64-w64-mingw32-gcc</monitor.native.linker>
+			</properties>
+		</profile>
+	</profiles>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>compile-native</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target name="compile-native">
+								<exec dir="${basedir}" executable="${monitor.native.cargo}" failonerror="true">
+									<env key="MACOSX_DEPLOYMENT_TARGET" value="${macos.minimumVersion}" />
+									<env key="CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER" value="${monitor.native.linker}" />
+									<arg value="${monitor.native.check}" />
+									<arg value="--release" />
+									<arg value="--locked" />
+									<arg value="--lib" />
+									<arg value="--target" />
+									<arg value="${monitor.native.target}" />
+								</exec>
+								<exec dir="${basedir}" executable="${monitor.native.cargo}" failonerror="true">
+									<env key="MACOSX_DEPLOYMENT_TARGET" value="${macos.minimumVersion}" />
+									<env key="CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER" value="${monitor.native.linker}" />
+									<arg value="build" />
+									<arg value="--release" />
+									<arg value="--locked" />
+									<arg value="--lib" />
+									<arg value="--target" />
+									<arg value="${monitor.native.target}" />
+								</exec>
+							</target>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>native-module-copy</id>
+						<phase>package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target name="copy-files">
+								<mkdir dir="${project.build.directory}/build/${monitor.native.destination}" />
+								<copy todir="${project.build.directory}/build/${monitor.native.destination}">
+									<fileset file="${basedir}/target/${monitor.native.target}/release/${monitor.native.file}" />
+								</copy>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

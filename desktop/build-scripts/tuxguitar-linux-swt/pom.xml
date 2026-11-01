@@ -422,6 +422,8 @@
 			</activation>
 			<modules>
 				<module>../native-modules/tuxguitar-alsa-linux</module>
+				<!-- the amp sound's duplex device (spec 022) -->
+				<module>../native-modules/tuxguitar-monitor-native</module>
 				<module>../native-modules/tuxguitar-jack-linux</module>
 				<module>../native-modules/tuxguitar-fluidsynth-linux</module>
 				<module>../native-modules/tuxguitar-synth-lv2-linux</module>
@@ -442,6 +444,9 @@
 										<!-- PLUGIN FILES -->
 										<copy todir="${project.build.directory}/${project.finalName}/">
 											<fileset dir="../native-modules/tuxguitar-alsa-linux/target/build" />
+										</copy>
+										<copy todir="${project.build.directory}/${project.finalName}/">
+											<fileset dir="../native-modules/tuxguitar-monitor-native/target/build" />
 										</copy>
 										<copy todir="${project.build.directory}/${project.finalName}/">
 											<fileset dir="../native-modules/tuxguitar-jack-linux/target/build" />

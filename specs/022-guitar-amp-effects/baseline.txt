@@ -41,3 +41,12 @@ T014 (2026-11-01): Phase 2 gate, mvn -o -e clean verify -P native-modules: BUILD
   audio-engine rerun alone after the input channel was added to the device: 397, 0 failures. No window changed: no SWT run.
   RecognitionUntouchedTest seen red under a one-run mutation (the engine's output fed to the analysis: the silence with Clean gave
   559 frames instead of 555), then restored. git diff --name-status on the test folders: additions only. CaptureService not touched.
+
+T054/T062 (2026-11-01): Phase 7 gate, mvn -o -e clean verify -P native-modules: BUILD SUCCESS, the same Java counts as T014
+  (audio-engine 397, practice 1401 with 12 skipped), and the crate's cargo test run by Maven: 7 passed (rings: order, drop-oldest at
+  most two blocks waiting, full ring; resampler: 1000 Hz within 1 Hz from 48 to 44.1 kHz, fill bounded over an hour at 100 ppm, a dry
+  ring plays silence and is counted; no allocation after the ring and resampler are made). The library is packaged at
+  Contents/Resources/tuxguitar/lib/libtuxguitar_monitor_native.dylib, beside the AudioUnit one.
+  The macOS 27 tools' strip left a mis-aligned string pool in proc-macro libraries (rustc could not load thiserror_impl): the release
+  profile does not strip. The new silence test showed the resampler's one-block target ran dry (108 callbacks in 4000): the target is
+  now two blocks as a callback starts.

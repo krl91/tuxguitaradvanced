@@ -33,6 +33,10 @@ jobs:
       uses: ./.github/actions/install-swt
       with:
         platform: linux
+    - name: Install Rust (the amp sound's device, spec 022)
+      uses: ./.github/actions/install-rust
+      with:
+        target: x86_64-unknown-linux-gnu
     - name: Build with Maven
       run: cd desktop/build-scripts/tuxguitar-linux-swt-deb && mvn -B --no-transfer-progress -e clean verify -P native-modules
     - uses: actions/upload-artifact@v7

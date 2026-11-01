@@ -1,0 +1,23 @@
+name: Install Rust
+description: >
+  A pinned Rust toolchain and the target of the package, for the amp sound's duplex device (spec 022, research R1 addendum: the crate
+  desktop/build-scripts/native-modules/tuxguitar-monitor-native, built by the native-modules profile).
+
+inputs:
+  target:
+    description: 'aarch64-apple-darwin (macOS), x86_64-unknown-linux-gnu (Linux) or x86_64-pc-windows-gnu (Windows, cross-compiled on Linux with Mingw-w64)'
+    required: true
+  version:
+    description: 'Rust toolchain version'
+    default: '1.93.0'
+
+runs:
+  using: composite
+  steps:
+    - name: Install the toolchain and the target
+      shell: bash
+      run: |
+        rustup toolchain install "${{ inputs.version }}" --profile minimal --target "${{ inputs.target }}"
+        rustup default "${{ inputs.version }}"
+        rustc --version
+        cargo --version
