@@ -354,3 +354,10 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 - Then the pedals (US2), the sounds (US3) and safety (US4), each one gated and committed.
 - **No release** before the owner's gate T060.
 - **Not before US4 is done:** the sound is off by default from US1 on, and the safe ceiling is in the output stage from Phase 2. The microphone warning and the feedback guard come in US4, so before that phase the owner tries it with headphones only (said in the US1 smoke check).
+
+## Phase 9: Convergence
+
+- [X] T069 Show the headphones warning also when the sound would start on its own with the built-in microphone as input: when the practice window opens with *Amp sound* on (`AmpSound.windowOpened`) and when the practice input changes to it while the sound plays (`AmpSound.inputChanged`); the sound starts only after *Turn on anyway*, else the switch is off. A new SWT test first, per FR-012 (partial)
+- [X] T070 Make *Rename* carry the sound over for every score that remembered the old name (e.g. a name kept with each `score.<key>`, or the store resolving renamed names), so those scores do not fall back to the last sound; a new `AmpSoundStoreTest` case first, per FR-019 (partial)
+- [X] T071 Log once per key, in `AmpSoundStore`, a stored value that cannot be read (a malformed chain, an unknown current or last sound) before falling back, per plan: research R6 (partial)
+- [X] T072 Measure the engine's whole processing per block (the chain, the output stage and the feedback guard) in a new benchmark beside `ChainCostBenchmarkTest`, record it in `benchmark/chain-cost.md` against the 25 % goal, per plan: research R4 cost budget (partial)

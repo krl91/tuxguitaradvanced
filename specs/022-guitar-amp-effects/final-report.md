@@ -1,6 +1,6 @@
 # Spec 022 — final report: the guitar heard through an amp and pedals
 
-Date: 2026-11-02. Branch `feature/interactive-practice`. Tasks: 64 of 68 done. The 4 left need the owner or the built application: T028 (its smoke check), T029 and T060 (the owner's gate, sheet F12), and T055 (its text is written; the window's screenshot waits for the built application).
+Date: 2026-11-02. Branch `feature/interactive-practice`. Tasks: 68 of 72 done (T069-T072 added by /speckit-converge and done). The 4 left need the owner or the built application: T028 (its smoke check), T029 and T060 (the owner's gate, sheet F12), and T055 (its text is written; the window's screenshot waits for the built application).
 
 ## What was built
 
@@ -19,7 +19,7 @@ Date: 2026-11-02. Branch `feature/interactive-practice`. Tasks: 64 of 68 done. T
   - built-in microphone and speakers: 60.6 ms, mostly the microphone's own hardware (49 ms by itself).
   - The Rocksmith cable with headphones is not measured yet (T029/T060).
 - **Endurance:** 10 minutes of the heaviest chain on a normal thread dropped 20 to 30 blocks (OS scheduling). With the real-time thread: 0 dropped blocks, worst gap between two reads 1.1 ms, heap −0.07 MB (SC-006 on macOS).
-- **Cost:** the full chain (every pedal, high gain at 4×, cabinet) takes 4.3 % of a 128-frame block at 48 kHz (99th percentile 4.5 %), well under the 25 % goal. The feedback guard (one 2048-point FFT every 10 ms) is not included in that measure.
+- **Cost:** the full chain (every pedal, high gain at 4×, cabinet) takes 4.3 % of a 128-frame block at 48 kHz (99th percentile 4.5 %), well under the 25 % goal. With the output stage and the feedback guard (T072, benchmark/engine-cost.md): 4.7 % (99th percentile 5.9 %), the guard alone 0.3 %.
 
 ## Tests added
 

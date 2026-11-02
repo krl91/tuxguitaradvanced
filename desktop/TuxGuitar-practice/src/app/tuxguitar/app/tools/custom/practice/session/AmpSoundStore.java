@@ -3,8 +3,11 @@ package app.tuxguitar.app.tools.custom.practice.session;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import app.tuxguitar.audio.engine.monitor.ChainSettings;
 import app.tuxguitar.audio.engine.monitor.ReadyMadeChains;
@@ -14,7 +17,7 @@ import app.tuxguitar.util.configuration.TGConfigManager;
 /**
  * What the amp window keeps from one launch to the next (spec 022, contracts/amp-window.md, data-model "AmpSoundSettings", FR-009), in a
  * configuration module of its own, like the Arcade choices: the settings and the current chain (US1), the named sounds and the sound per
- * score (US3). A missing or unreadable value gives the default: never an error.
+ * score (US3). A missing or unreadable value gives the default, never an error; an unreadable one is logged once per key (research R6).
  */
 public final class AmpSoundStore {
 
@@ -33,10 +36,20 @@ public final class AmpSoundStore {
 		EMPTY, TOO_LONG, READY_MADE, TAKEN
 	}
 
+	static final String RENAMED = "renamed.";
+	private static final int RENAMES = 16;
+
 	private final ArcadeChoices.Persistence persistence;
+	private final Consumer<String> log;
+	private final Set<String> logged = new HashSet<String>();
 
 	public AmpSoundStore(ArcadeChoices.Persistence persistence) {
+		this(persistence, System.err::println);
+	}
+
+	AmpSoundStore(ArcadeChoices.Persistence persistence, Consumer<String> log) {
 		this.persistence = persistence;
+		this.log = log;
 	}
 
 	/** The store kept in the configuration of the application. */
@@ -72,8 +85,7 @@ public final class AmpSoundStore {
 
 	/** The chain in use, with the learner's unsaved changes; Clean when none was kept or it cannot be read. */
 	public ChainSettings currentChain() {
-		String text = read(CURRENT_CHAIN);
-		return (text == null ? ReadyMadeChains.CLEAN : ChainSettings.parse(text).orElse(ReadyMadeChains.CLEAN));
+		return chain(CURRENT_CHAIN, ReadyMadeChains.CLEAN);
 	}
 
 	/** Keeps the chain in use; while a ready-made sound is current, its changes are kept on it (owner's answer of 2026-11-02). */
@@ -117,7 +129,7 @@ public final class AmpSoundStore {
 
 	/** The sound picked last, Clean when none was or it is gone. */
 	public Sound current() {
-		Sound sound = sound(read(CURRENT_SOUND));
+		Sound sound = named(CURRENT_SOUND);
 		return (sound != null ? sound : sound("Clean"));
 	}
 
@@ -162,6 +174,10 @@ public final class AmpSoundStore {
 		int index = indexOf(own, name.trim());
 		Sound sound = new Sound(name.trim(), chain, false, false);
 		if (index < 0) {
+			// a name used again on purpose: the scores that remembered it get this sound, not the one renamed away from it
+			write(renamedKey(name), "");
+		}
+		if (index < 0) {
 			own.add(sound);
 		} else {
 			own.set(index, sound);
@@ -182,6 +198,11 @@ public final class AmpSoundStore {
 		boolean current = own.get(index).name().equalsIgnoreCase(String.valueOf(read(CURRENT_SOUND)));
 		own.set(index, new Sound(to.trim(), own.get(index).chain(), false, false));
 		writeOwn(own, own.size());
+		if (!from.trim().equalsIgnoreCase(to.trim())) {
+			// the scores that remembered the old name follow the sound
+			write(renamedKey(from), to.trim());
+			write(renamedKey(to), "");
+		}
 		if (current) {
 			write(CURRENT_SOUND, to.trim());
 		}
@@ -214,9 +235,9 @@ public final class AmpSoundStore {
 
 	/** The sound remembered for that score, else the last sound used, else Clean. */
 	public Sound soundFor(Optional<ScoreKey> key) {
-		Sound sound = (key.isPresent() ? sound(read(scoreKey(key.get()))) : null);
+		Sound sound = (key.isPresent() ? sound(followRenames(read(scoreKey(key.get())))) : null);
 		if (sound == null) {
-			sound = sound(read(LAST_SOUND));
+			sound = named(LAST_SOUND);
 		}
 		return (sound != null ? sound : sound("Clean"));
 	}
@@ -230,9 +251,49 @@ public final class AmpSoundStore {
 	}
 
 	private Sound readyMade(ReadyMadeChains.Named named) {
-		String text = read(readyKey(named.name()));
-		ChainSettings chain = (text == null ? named.chain() : ChainSettings.parse(text).orElse(named.chain()));
+		ChainSettings chain = chain(readyKey(named.name()), named.chain());
 		return new Sound(named.name(), chain, true, !chain.equals(named.chain()));
+	}
+
+	/** The chain kept under that key, else the fallback; a chain that cannot be read is logged once. */
+	private ChainSettings chain(String key, ChainSettings fallback) {
+		String text = read(key);
+		if (text == null) {
+			return fallback;
+		}
+		Optional<ChainSettings> chain = ChainSettings.parse(text);
+		if (!chain.isPresent()) {
+			unreadable(key, text);
+		}
+		return chain.orElse(fallback);
+	}
+
+	/** The sound named under that key (the current or the last one), followed through renames; a name of no sound is logged once. */
+	private Sound named(String key) {
+		String name = read(key);
+		Sound sound = sound(followRenames(name));
+		if (name != null && sound == null) {
+			unreadable(key, name);
+		}
+		return sound;
+	}
+
+	private String followRenames(String name) {
+		String current = name;
+		for (int i = 0; current != null && i < RENAMES; i++) {
+			String next = read(renamedKey(current));
+			if (next == null || next.equalsIgnoreCase(current)) {
+				break;
+			}
+			current = next;
+		}
+		return current;
+	}
+
+	private void unreadable(String key, String value) {
+		if (this.logged.add(key)) {
+			this.log.accept("TuxGuitar amp sound: the setting " + key + " cannot be read (" + value + "), the default is used");
+		}
 	}
 
 	private List<Sound> ownSounds() {
@@ -242,10 +303,8 @@ public final class AmpSoundStore {
 			if (name == null) {
 				return own;
 			}
-			String text = read(ownKey(n, "chain"));
 			ChainSettings fallback = ReadyMadeChains.named(name);
-			fallback = (fallback != null ? fallback : ReadyMadeChains.CLEAN);
-			own.add(new Sound(name, text == null ? fallback : ChainSettings.parse(text).orElse(fallback), false, false));
+			own.add(new Sound(name, chain(ownKey(n, "chain"), fallback != null ? fallback : ReadyMadeChains.CLEAN), false, false));
 		}
 	}
 
@@ -269,6 +328,10 @@ public final class AmpSoundStore {
 
 	private static String ownKey(int n, String part) {
 		return "sound." + n + "." + part;
+	}
+
+	private static String renamedKey(String name) {
+		return RENAMED + name.trim().toLowerCase();
 	}
 
 	private static String readyKey(String name) {

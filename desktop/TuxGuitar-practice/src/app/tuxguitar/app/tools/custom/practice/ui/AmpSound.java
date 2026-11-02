@@ -28,6 +28,9 @@ final class AmpSound implements AmpWindow.Sound {
 		void stateChanged(MonitorState state, String reason);
 
 		void notice(MonitorNotice notice);
+
+		/** The sound would start on its own with the built-in microphone: the window warns first (FR-012). */
+		void warnBeforeStart();
 	}
 
 	private final TGContext context;
@@ -67,7 +70,7 @@ final class AmpSound implements AmpWindow.Sound {
 	/** The practice window opened: the sound starts when it is on. */
 	void windowOpened() {
 		if (this.store.settings().enabled()) {
-			start();
+			startOrWarn();
 		}
 	}
 
@@ -76,6 +79,15 @@ final class AmpSound implements AmpWindow.Sound {
 		MonitorState state = this.engine.state();
 		if (state == MonitorState.ON || state == MonitorState.STARTING) {
 			this.engine.stop();
+			startOrWarn();
+		}
+	}
+
+	/** Starts the sound, unless the input is the built-in microphone: then the window warns, and Turn on anyway starts it. */
+	private void startOrWarn() {
+		if (builtInMicrophone() && this.view != null) {
+			this.view.warnBeforeStart();
+		} else {
 			start();
 		}
 	}

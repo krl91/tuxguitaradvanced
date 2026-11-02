@@ -403,7 +403,11 @@ final class AmpWindow {
 		text.setText(this.texts.get(AmpTexts.WARNING_TEXT));
 		layout.set(text, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		layout.set(text, UITableLayout.PACKED_WIDTH, 360f);
-		this.warningCancel = warningButton(layout, 1, AmpTexts.WARNING_CANCEL, () -> this.warning.dispose());
+		this.warningCancel = warningButton(layout, 1, AmpTexts.WARNING_CANCEL, () -> {
+			this.warning.dispose();
+			setSwitch(false);
+			this.store.save(this.store.settings().withEnabled(false));
+		});
 		this.turnOnAnyway = warningButton(layout, 2, AmpTexts.TURN_ON_ANYWAY, () -> {
 			this.warning.dispose();
 			turn(true);
@@ -426,6 +430,16 @@ final class AmpWindow {
 		});
 		layout.set(button, 2, column, column == 1 ? UITableLayout.ALIGN_RIGHT : UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
 		return button;
+	}
+
+	/**
+	 * The sound would start on its own with the built-in microphone as input: the practice window opened with the sound on, or the input changed to it while
+	 * it played (FR-012). The window opens with the switch off and the warning; the sound starts only after Turn on anyway.
+	 */
+	void warnBeforeStart() {
+		open();
+		setSwitch(false);
+		warn();
 	}
 
 	/**

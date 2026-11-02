@@ -447,6 +447,10 @@ public class PracticeWindow {
 			public void notice(MonitorNotice notice) {
 				PracticeWindow.this.ampWindow.notice(notice);
 			}
+
+			public void warnBeforeStart() {
+				PracticeWindow.this.ampWindow.warnBeforeStart();
+			}
 		});
 		this.ampInputRevision = this.engine.getSelection().snapshot().getInputRevision();
 		this.ampSound.windowOpened();
