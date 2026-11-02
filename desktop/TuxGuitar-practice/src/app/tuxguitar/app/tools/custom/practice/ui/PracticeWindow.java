@@ -64,6 +64,8 @@ import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
+import app.tuxguitar.audio.engine.monitor.MonitorNotice;
+import app.tuxguitar.audio.engine.monitor.MonitorState;
 import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
@@ -438,12 +440,12 @@ public class PracticeWindow {
 		this.ampWindow = new AmpWindow(uiFactory, mainWindow, AMP_TEXTS, store, this.ampSound, () -> this.paletteGuard.runBoxes(),
 				() -> isOpen() && this.windowShown && !this.hiddenByArcade ? this.window.getBounds() : null, Screens::contains);
 		this.ampSound.setView(new AmpSound.View() {
-			public void soundChanged() {
-				PracticeWindow.this.ampWindow.soundChanged();
+			public void stateChanged(MonitorState state, String reason) {
+				PracticeWindow.this.ampWindow.stateChanged(state, reason);
 			}
 
-			public void message(String text) {
-				PracticeWindow.this.ampWindow.message(text);
+			public void notice(MonitorNotice notice) {
+				PracticeWindow.this.ampWindow.notice(notice);
 			}
 		});
 		this.ampInputRevision = this.engine.getSelection().snapshot().getInputRevision();

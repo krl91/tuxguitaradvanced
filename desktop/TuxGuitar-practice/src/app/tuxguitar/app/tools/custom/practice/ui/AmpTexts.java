@@ -7,6 +7,7 @@ import java.util.List;
 
 import app.tuxguitar.audio.engine.monitor.EffectKind;
 import app.tuxguitar.audio.engine.monitor.Knob;
+import app.tuxguitar.audio.engine.monitor.MonitorNotice;
 
 /**
  * The texts of the Amp and effects window (spec 022, FR-016): {@link #KEYS} are the controls, each with a tooltip {@code <key>.tip}; {@link #PLAIN} are the
@@ -65,6 +66,8 @@ final class AmpTexts {
 	static final String RENAME = P + "rename";
 	static final String DELETE = P + "delete";
 	static final String RESTORE = P + "restore";
+	static final String TURN_ON_ANYWAY = P + "warning.turn-on";
+	static final String WARNING_CANCEL = P + "warning.cancel";
 
 	static final String TITLE = P + "title";
 	static final String AMP = P + "amp";
@@ -86,17 +89,28 @@ final class AmpTexts {
 	static final String CHANGED = P + "changed";
 	static final String NAME_READY_MADE = P + "name.ready-made";
 	static final String NAME_TOO_LONG = P + "name.too-long";
+	static final String WARNING_TITLE = P + "warning.title";
+	static final String WARNING_TEXT = P + "warning.text";
+	static final String FEEDBACK = P + "feedback";
+	static final String OVERLOAD = P + "overload";
+	static final String DEVICE_LOST = P + "device-lost";
+	static final String LIGHTER_REVERB_OFF = P + "lighter.reverb-off";
+	static final String LIGHTER_CHORUS_OFF = P + "lighter.chorus-off";
+	static final String LIGHTER_OVERSAMPLING_2X = P + "lighter.oversampling-2x";
+	static final String LIGHTER_OVERSAMPLING_1X = P + "lighter.oversampling-1x";
+	static final String LIGHTER_AMP_ALONE = P + "lighter.amp-alone";
 
 	static final List<String> KEYS;
 
 	static final List<String> PLAIN = Collections.unmodifiableList(Arrays.asList(TITLE, AMP, OUTPUT_DEFAULT, DELAY_VALUE, DELAY_UNKNOWN, CLEAN, CRUNCH, HIGH_GAIN,
-			UNIT_SCALE, UNIT_PERCENT, FAILED, CLIPPING, BEFORE, AFTER, UNIT_DB, UNIT_MS, UNIT_HZ, CHANGED, NAME_READY_MADE, NAME_TOO_LONG));
+			UNIT_SCALE, UNIT_PERCENT, FAILED, CLIPPING, BEFORE, AFTER, UNIT_DB, UNIT_MS, UNIT_HZ, CHANGED, NAME_READY_MADE, NAME_TOO_LONG, WARNING_TITLE, WARNING_TEXT, FEEDBACK, OVERLOAD, DEVICE_LOST, LIGHTER_REVERB_OFF, LIGHTER_CHORUS_OFF,
+			LIGHTER_OVERSAMPLING_2X, LIGHTER_OVERSAMPLING_1X, LIGHTER_AMP_ALONE));
 
 	static final List<KnobText> KNOBS;
 
 	static {
 		List<String> keys = new ArrayList<String>(Arrays.asList(OPEN, ENABLED, OUTPUT, GUITAR_VOLUME, SCORE_VOLUME, DELAY, CHARACTER, GAIN, BASS, MIDDLE, TREBLE,
-				VOLUME, CABINET, ADD_PEDAL, PEDAL_UP, PEDAL_DOWN, PEDAL_REMOVE, SOUND, SOUND_NAME, SAVE_AS, RENAME, DELETE, RESTORE));
+				VOLUME, CABINET, ADD_PEDAL, PEDAL_UP, PEDAL_DOWN, PEDAL_REMOVE, SOUND, SOUND_NAME, SAVE_AS, RENAME, DELETE, RESTORE, TURN_ON_ANYWAY, WARNING_CANCEL));
 		List<KnobText> knobs = new ArrayList<KnobText>(Arrays.asList(new KnobText(GUITAR_VOLUME, UNIT_PERCENT, "70"), new KnobText(SCORE_VOLUME, UNIT_SCALE, "10"),
 				new KnobText(GAIN, UNIT_SCALE, "3"), new KnobText(BASS, UNIT_SCALE, "5"), new KnobText(MIDDLE, UNIT_SCALE, "5"), new KnobText(TREBLE, UNIT_SCALE, "6"),
 				new KnobText(VOLUME, UNIT_SCALE, "6")));
@@ -122,6 +136,24 @@ final class AmpTexts {
 	/** The key of a pedal's knob, e.g. {@code practice.amp.pedal.echo.time}. */
 	static String knob(EffectKind kind, Knob knob) {
 		return pedal(kind) + "." + knob.key();
+	}
+
+	/** The message of an engine's notice. */
+	static String notice(MonitorNotice notice) {
+		switch (notice) {
+		case INPUT_CLIPPING:
+			return CLIPPING;
+		case LIGHTER_REVERB_OFF:
+			return LIGHTER_REVERB_OFF;
+		case LIGHTER_CHORUS_OFF:
+			return LIGHTER_CHORUS_OFF;
+		case LIGHTER_OVERSAMPLING_2X:
+			return LIGHTER_OVERSAMPLING_2X;
+		case LIGHTER_OVERSAMPLING_1X:
+			return LIGHTER_OVERSAMPLING_1X;
+		default:
+			return LIGHTER_AMP_ALONE;
+		}
 	}
 
 	static String unitKey(Knob knob) {

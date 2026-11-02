@@ -27,6 +27,10 @@ public final class MonitorEngine {
 	public static final int BLOCK_FRAMES = 128;
 	private static final double CLIPPING_LEVEL = Math.pow(10, -0.1 / 20);
 	private static final long NOTICE_INTERVAL_NANOS = 1_000_000_000L;
+	/** Blocks in a row over half the block time before the chain is made lighter (contracts/monitor-engine.md "Overload"). */
+	private static final int OVERLOAD_BLOCKS = 20;
+	private static final MonitorNotice[] LIGHTER = { MonitorNotice.LIGHTER_REVERB_OFF, MonitorNotice.LIGHTER_CHORUS_OFF,
+			MonitorNotice.LIGHTER_OVERSAMPLING_2X, MonitorNotice.LIGHTER_OVERSAMPLING_1X, MonitorNotice.LIGHTER_AMP_ALONE };
 
 	public interface Listener {
 
@@ -126,7 +130,10 @@ public final class MonitorEngine {
 		}
 	}
 
-	/** Fades out in 20 ms, closes the output, then {@link MonitorState#OFF}. */
+	/**
+	 * Fades out in 20 ms, closes the output, then {@link MonitorState#OFF}. A howl (the feedback guard) or a computer that cannot keep up even with the
+	 * lightest chain fades out the same way, then gives {@link MonitorState#MUTED_FEEDBACK} or {@link MonitorState#MUTED_OVERLOAD} until the next start.
+	 */
 	public synchronized void stop() {
 		MonitorState current = this.state.get();
 		if( current == MonitorState.STARTING || current == MonitorState.ON ) {
@@ -174,6 +181,7 @@ public final class MonitorEngine {
 	private void run(long worker, String inputName, int inputChannel, String outputName) {
 		MonitorDevice.Opened opened = null;
 		boolean failed = false;
+		MonitorState muting = null;
 		try {
 			opened = this.device.open(inputName, inputChannel, outputName, this.blockFrames);
 			float rate = opened.sampleRate();
@@ -183,12 +191,15 @@ public final class MonitorEngine {
 			float[] right = new float[this.blockFrames];
 			Chain elements = new Chain();
 			elements.prepare(rate, this.blockFrames);
+			FeedbackGuard guard = new FeedbackGuard(rate, this.blockFrames);
 			OutputStage stage = new OutputStage(rate, this.blockFrames);
 			stage.setVolume(this.guitarVolume);
 			stage.start();
 			long blockNanos = Math.round(this.blockFrames * 1_000_000_000.0 / rate);
 			boolean stopping = false;
 			boolean inputStarted = false;
+			int slowBlocks = 0;
+			int lightening = 0;
 			while( current(worker) ) {
 				if( this.stopRequested && !stopping ) {
 					stopping = true;
@@ -222,8 +233,29 @@ public final class MonitorEngine {
 				elements.process(block, this.blockFrames);
 				stage.setVolume(this.guitarVolume);
 				stage.process(block, this.blockFrames);
+				// watched once faded in: the half-second fade in raises every note, which the rising rule would take for a howl
+				if( !stopping && stage.isFadedIn() && guard.process(block, this.blockFrames) ) {
+					this.howls.incrementAndGet();
+					muting = MonitorState.MUTED_FEEDBACK;
+					stopping = true;
+					stage.stop();
+				}
 				if( this.clock.getAsLong() - began > blockNanos / 2 ) {
 					this.overBudgetBlocks.incrementAndGet();
+					slowBlocks++;
+				} else {
+					slowBlocks = 0;
+				}
+				if( slowBlocks >= OVERLOAD_BLOCKS && !stopping ) {
+					slowBlocks = 0;
+					if( lightening < LIGHTER.length ) {
+						elements.lighten(++lightening);
+						tell(LIGHTER[lightening - 1]);
+					} else {
+						muting = MonitorState.MUTED_OVERLOAD;
+						stopping = true;
+						stage.stop();
+					}
 				}
 				System.arraycopy(block, 0, right, 0, this.blockFrames);
 				opened.write(block, right, this.blockFrames);
@@ -247,7 +279,10 @@ public final class MonitorEngine {
 			this.deviceLatencyFrames = -1;
 			if( !failed ) {
 				synchronized (this) {
-					if( current(worker) && this.state.get() == MonitorState.STOPPING ) {
+					MonitorState now = this.state.get();
+					if( current(worker) && muting != null && (now == MonitorState.STARTING || now == MonitorState.ON) ) {
+						changeState(muting, null);
+					} else if( current(worker) && now == MonitorState.STOPPING ) {
 						changeState(MonitorState.OFF, null);
 					}
 				}

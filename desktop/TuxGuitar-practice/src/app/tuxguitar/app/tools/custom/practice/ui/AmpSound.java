@@ -25,9 +25,9 @@ final class AmpSound implements AmpWindow.Sound {
 
 	/** What the amp window shows of the engine (UI thread). */
 	interface View {
-		void soundChanged();
+		void stateChanged(MonitorState state, String reason);
 
-		void message(String text);
+		void notice(MonitorNotice notice);
 	}
 
 	private final TGContext context;
@@ -47,19 +47,14 @@ final class AmpSound implements AmpWindow.Sound {
 		this.engine.setGuitarVolume(store.settings().guitarVolume());
 		this.engine.addListener(new MonitorEngine.Listener() {
 			public void stateChanged(MonitorState state, String reason) {
-				if (state == MonitorState.FAILED) {
-					show(AmpSound.this.texts.get(AmpTexts.FAILED, reason == null ? "" : reason));
-				} else if (state == MonitorState.STARTING) {
-					show("");
-				}
 				if (AmpSound.this.view != null) {
-					AmpSound.this.view.soundChanged();
+					AmpSound.this.view.stateChanged(state, reason);
 				}
 			}
 
 			public void notice(MonitorNotice notice) {
-				if (notice == MonitorNotice.INPUT_CLIPPING) {
-					show(AmpSound.this.texts.get(AmpTexts.CLIPPING));
+				if (AmpSound.this.view != null) {
+					AmpSound.this.view.notice(notice);
 				}
 			}
 		});
@@ -67,12 +62,6 @@ final class AmpSound implements AmpWindow.Sound {
 
 	void setView(View value) {
 		this.view = value;
-	}
-
-	private void show(String text) {
-		if (this.view != null) {
-			this.view.message(text);
-		}
 	}
 
 	/** The practice window opened: the sound starts when it is on. */
@@ -144,5 +133,10 @@ final class AmpSound implements AmpWindow.Sound {
 
 	public void setScoreVolume(int volume) {
 		MidiPlayer.getInstance(this.context).setVolume(volume);
+	}
+
+	public boolean builtInMicrophone() {
+		AudioInputDescriptor descriptor = this.input.get();
+		return descriptor != null && descriptor.getKind() == AudioInputDescriptor.Kind.BUILT_IN_MICROPHONE;
 	}
 }

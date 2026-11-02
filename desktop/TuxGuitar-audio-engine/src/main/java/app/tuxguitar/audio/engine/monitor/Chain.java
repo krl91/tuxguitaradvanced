@@ -16,7 +16,8 @@ import app.tuxguitar.audio.engine.monitor.fx.Pedals;
  * <li>a change of order among the pedals that sound dips the chain's output for 10 ms (down in 5 ms, the new order, up in 5 ms), as the amp does
  * for a change of character: one instance per kind cannot run the old and the new order side by side.</li>
  * </ul>
- * The first settings, and the first after a dry chain, apply at once.
+ * The first settings, and the first after a dry chain, apply at once. When the computer cannot keep up, the engine makes the chain lighter step by step
+ * ({@link #lighten}): the reverb off, the chorus off, the amp's oversampling at 2× then 1×, then every pedal bypassed; new settings keep it.
  */
 final class Chain {
 
@@ -37,6 +38,7 @@ final class Chain {
 	private boolean dipping;
 	private ChainSettings settings;
 	private boolean first = true;
+	private int lightening;
 
 	/** The order of one section, and the order waiting for the bottom of a dip. Arrays made once. */
 	private static final class Section {
@@ -74,11 +76,11 @@ final class Chain {
 		}
 		for( EffectKind kind : KINDS ) {
 			PedalSettings pedal = value.pedal(kind);
-			this.target[kind.ordinal()] = pedal != null && pedal.enabled() ? 1.0 : 0.0;
 			if( pedal != null ) {
 				this.pedals[kind.ordinal()].set(pedal);
 			}
 		}
+		targets(value);
 		this.amp.set(value.amp());
 		this.cabinet.setEnabled(value.amp().cabinet());
 		next(this.before, value.before());
@@ -95,6 +97,36 @@ final class Chain {
 		} else {
 			this.dipping = true;
 		}
+	}
+
+	/** Each pedal's switch, unless the lightening has turned it off. */
+	private void targets(ChainSettings value) {
+		for( EffectKind kind : KINDS ) {
+			PedalSettings pedal = value.pedal(kind);
+			this.target[kind.ordinal()] = pedal != null && pedal.enabled() && !lightenedOff(kind) ? 1.0 : 0.0;
+		}
+	}
+
+	private boolean lightenedOff(EffectKind kind) {
+		return this.lightening >= 5 || (this.lightening >= 1 && kind == EffectKind.REVERB) || (this.lightening >= 2 && kind == EffectKind.CHORUS);
+	}
+
+	/** From 0 (the whole chain) to 5 (the amp and the cabinet alone); the pedals turned off crossfade out. Output thread only. */
+	void lighten(int level) {
+		this.lightening = level;
+		this.amp.setOversampling(level >= 4 ? 1 : level >= 3 ? 2 : 4);
+		if( this.settings != null ) {
+			targets(this.settings);
+		}
+	}
+
+	/** Whether a pedal is to sound: its switch on and not turned off by the lightening (for the tests). */
+	boolean wanted(EffectKind kind) {
+		return this.target[kind.ordinal()] == 1.0;
+	}
+
+	int oversampling() {
+		return this.amp.oversampling();
 	}
 
 	private static void next(Section section, List<PedalSettings> pedals) {

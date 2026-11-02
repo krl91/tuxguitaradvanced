@@ -55,6 +55,10 @@ public final class Amp implements Effect {
 		this.oversampling = factor >= 4 ? 4 : factor >= 2 ? 2 : 1;
 	}
 
+	public int oversampling() {
+		return this.oversampling;
+	}
+
 	public void set(AmpSettings value) {
 		apply(value, this.first);
 	}

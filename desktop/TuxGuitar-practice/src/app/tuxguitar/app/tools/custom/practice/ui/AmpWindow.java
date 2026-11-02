@@ -9,6 +9,8 @@ import app.tuxguitar.app.tools.custom.practice.session.AmpSoundSettings;
 import app.tuxguitar.app.tools.custom.practice.session.AmpSoundStore;
 import app.tuxguitar.app.tools.custom.practice.session.ScoreKey;
 import app.tuxguitar.audio.engine.monitor.ChainSettings;
+import app.tuxguitar.audio.engine.monitor.MonitorNotice;
+import app.tuxguitar.audio.engine.monitor.MonitorState;
 import app.tuxguitar.audio.engine.monitor.ReadyMadeChains;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UIDisposeEvent;
@@ -61,6 +63,11 @@ final class AmpWindow {
 		int scoreVolume();
 
 		void setScoreVolume(int volume);
+
+		/** Whether the practice input is the computer's built-in microphone: turning the sound on warns first (FR-012). */
+		default boolean builtInMicrophone() {
+			return false;
+		}
 	}
 
 	private static final float MARGIN = 24f;
@@ -93,6 +100,10 @@ final class AmpWindow {
 	private AmpChainRows rows;
 	private boolean updating;
 	private boolean nameMessage;
+	private UIWindow warning;
+	private UIButton turnOnAnyway;
+	private UIButton warningCancel;
+	private MonitorState lastState = MonitorState.OFF;
 
 	/**
 	 * @param guards the boxes on the screen of the run's framed and next notes; empty when no run is going on
@@ -140,8 +151,12 @@ final class AmpWindow {
 			public void onSelect(UISelectionEvent event) {
 				if (!AmpWindow.this.updating) {
 					boolean on = AmpWindow.this.enabled.isSelected();
-					AmpWindow.this.store.save(AmpWindow.this.store.settings().withEnabled(on));
-					AmpWindow.this.sound.setEnabled(on);
+					if (on && AmpWindow.this.sound.builtInMicrophone()) {
+						setSwitch(false);
+						warn();
+					} else {
+						turn(on);
+					}
 				}
 			}
 		});
@@ -359,6 +374,92 @@ final class AmpWindow {
 		}
 	}
 
+	private void turn(boolean on) {
+		setSwitch(on);
+		this.store.save(this.store.settings().withEnabled(on));
+		this.sound.setEnabled(on);
+	}
+
+	private void setSwitch(boolean on) {
+		this.updating = true;
+		try {
+			this.enabled.setSelected(on);
+		} finally {
+			this.updating = false;
+		}
+	}
+
+	/** The headphones warning before the sound starts with the built-in microphone (FR-012): the sound starts only after Turn on anyway. */
+	private void warn() {
+		if (this.warning != null && !this.warning.isDisposed()) {
+			this.warning.moveToTop();
+			return;
+		}
+		this.warning = this.factory.createWindow(this.window, true, false);
+		this.warning.setText(this.texts.get(AmpTexts.WARNING_TITLE));
+		UITableLayout layout = new UITableLayout();
+		this.warning.setLayout(layout);
+		UILabel text = this.factory.createLabel(this.warning);
+		text.setText(this.texts.get(AmpTexts.WARNING_TEXT));
+		layout.set(text, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		layout.set(text, UITableLayout.PACKED_WIDTH, 360f);
+		this.warningCancel = warningButton(layout, 1, AmpTexts.WARNING_CANCEL, () -> this.warning.dispose());
+		this.turnOnAnyway = warningButton(layout, 2, AmpTexts.TURN_ON_ANYWAY, () -> {
+			this.warning.dispose();
+			turn(true);
+		});
+		this.warning.pack();
+		UIRectangle over = this.window.getBounds();
+		UIRectangle size = this.warning.getBounds();
+		this.warning.setBounds(new UIRectangle(over.getX() + (over.getWidth() - size.getWidth()) / 2f, over.getY() + 40f, size.getWidth(), size.getHeight()));
+		this.warning.open();
+	}
+
+	private UIButton warningButton(UITableLayout layout, int column, String key, Runnable action) {
+		UIButton button = this.factory.createButton(this.warning);
+		button.setText(this.texts.get(key));
+		button.setToolTipText(this.texts.get(key + ".tip"));
+		button.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				action.run();
+			}
+		});
+		layout.set(button, 2, column, column == 1 ? UITableLayout.ALIGN_RIGHT : UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false);
+		return button;
+	}
+
+	/**
+	 * The engine's state changed (UI thread). A howl, an overload or a lost device stops the sound with a message and turns the switch off, so the learner
+	 * turns it on again; a device refused at the start says why.
+	 */
+	void stateChanged(MonitorState state, String reason) {
+		MonitorState before = this.lastState;
+		this.lastState = state;
+		String text = null;
+		if (state == MonitorState.MUTED_FEEDBACK) {
+			text = this.texts.get(AmpTexts.FEEDBACK);
+		} else if (state == MonitorState.MUTED_OVERLOAD) {
+			text = this.texts.get(AmpTexts.OVERLOAD);
+		} else if (state == MonitorState.FAILED) {
+			text = this.texts.get(before == MonitorState.ON ? AmpTexts.DEVICE_LOST : AmpTexts.FAILED, reason == null ? "" : reason);
+		} else if (state == MonitorState.STARTING) {
+			message("");
+		}
+		if (text != null) {
+			this.store.save(this.store.settings().withEnabled(false));
+			if (isOpen()) {
+				setSwitch(false);
+			}
+			message(text);
+		}
+		soundChanged();
+	}
+
+	/** A notice of the engine: input clipping, or the chain made lighter (UI thread). */
+	void notice(MonitorNotice notice) {
+		message(this.texts.get(AmpTexts.notice(notice)));
+	}
+
 	/** The pedals' rows changed: the window takes its new size, its top left corner where it is. */
 	private void relayout() {
 		if (isOpen()) {
@@ -477,6 +578,22 @@ final class AmpWindow {
 
 	UIScale getScoreVolume() {
 		return this.scoreVolume;
+	}
+
+	UILabel getMessage() {
+		return this.message;
+	}
+
+	UIWindow getWarning() {
+		return this.warning;
+	}
+
+	UIButton getTurnOnAnyway() {
+		return this.turnOnAnyway;
+	}
+
+	UIButton getWarningCancel() {
+		return this.warningCancel;
 	}
 
 	UILabel getDelay() {

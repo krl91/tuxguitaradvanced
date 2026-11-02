@@ -109,3 +109,16 @@ T042-T047 US3 (2026-11-02, owner's answer: the changes of a ready-made sound are
   The sound list and the name field have no tooltip in the toolkit (UIDropDownSelect, UITextField): their labels carry it, as the output's.
   T047 gate, mvn -e clean verify -P native-modules: BUILD SUCCESS, audio-engine 433, practice 1420 (12 skipped), cargo 9;
   swt-gui-tests practice 71. git diff on the test folders: additions only. Ubuntu CI run 41508924416 (real-time thread on Linux): success.
+T048-T053 US4 (2026-11-02):
+  Seen red: FeedbackGuardTest and OverloadTest at compile time (FeedbackGuard, Chain.lighten/wanted/oversampling missing); AmpSafetySwtTest
+  at compile time (the warning, getMessage, stateChanged and notice missing). OverloadTest green at the first run (notices at 20, 40, 60, 80,
+  100 slow blocks, then MUTED_OVERLOAD; the input's hand-over under 5 ms).
+  FeedbackGuardTest, three tries: (1) the lowest bins indexed below 0 (the range now starts at bin 5); (2) the open B3 through Clean was
+  taken for a howl because the half-second fade in raises every note: the guard watches once faded in; (3) the same string blooms after its
+  attack, rising 10 dB in 350 ms: the rising rule needs 15 dB over 300 ms (the recorded guitars through the four sounds rise at most
+  11.9 dB, the test's howl 18 dB). A howl rising slower is caught when it stays above -12 dBFS for 300 ms. Muted within 0.5 s of the
+  howl's start.
+  RealFft (audio engine, fork module) made public for the guard: the only change to existing code outside spec 022's files.
+  The guard's cost (one 2048-point FFT every 10 ms on the engine's thread) is not in benchmark/chain-cost.md (the chain alone).
+  T053 gate, mvn -e clean verify -P native-modules: BUILD SUCCESS, audio-engine 438, practice 1420 (12 skipped), cargo 9;
+  swt-gui-tests practice 75. git diff on the test folders: additions only.

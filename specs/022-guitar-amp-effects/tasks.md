@@ -275,21 +275,21 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 
 ### Tests first
 
-- [ ] T048 [P] [US4] Create `AET/monitor/FeedbackGuardTest.java` (FR-012, SC-005, research R5). It checks:
+- [X] T048 [P] [US4] Create `AET/monitor/FeedbackGuardTest.java` (FR-012, SC-005, research R5). It checks:
   - a synthetic howl (a 2.3 kHz sine rising 6 dB per 100 ms over guitar-like noise) fed through the engine mutes the output within 0.5 s of crossing the rule, state MUTED_FEEDBACK;
   - the four ready-made sounds played on the recorded guitar fixtures (including long sustained notes and the echo's tails) never trigger it;
   - turning the sound on again restarts it.
-- [ ] T049 [P] [US4] Create `AET/monitor/OverloadTest.java` (FR-014). A fake clock makes each block take 60 % of the block time. After 20 blocks the reverb goes off with a message, then the chorus, then the oversampling drops to 2× and 1×, then only the amp and cabinet are kept (every pedal bypassed), each step with a message, then the state is MUTED_OVERLOAD. The capture's `deliver` is never slowed (it returns within a fixed time).
-- [ ] T050 [P] [US4] Create `TST/ui/AmpSafetySwtTest.java`. It checks:
+- [X] T049 [P] [US4] Create `AET/monitor/OverloadTest.java` (FR-014). A fake clock makes each block take 60 % of the block time. After 20 blocks the reverb goes off with a message, then the chorus, then the oversampling drops to 2× and 1×, then only the amp and cabinet are kept (every pedal bypassed), each step with a message, then the state is MUTED_OVERLOAD. The capture's `deliver` is never slowed (it returns within a fixed time).
+- [X] T050 [P] [US4] Create `TST/ui/AmpSafetySwtTest.java`. It checks:
   - with the built-in microphone as input, turning the sound on shows the warning, and the sound starts only after *Turn on anyway*;
   - the message line shows the feedback, overload, device-lost and input-clipping messages from engine events (the clipping message gives the advice of the gain control);
   - a fresh store opens with the switch off.
 
 ### Implementation
 
-- [ ] T051 [US4] Create `AE/monitor/FeedbackGuard.java` (the existing `RealFft` every 10 ms, research R5), and add the overload lightening to `AE/monitor/Chain.java` and `MonitorEngine.java`. Make T048 and T049 pass.
-- [ ] T052 [US4] Add the warning dialog and the message line (feedback, overload, device lost, input clipping) to `PR/ui/AmpWindow.java`, with the input kind from `CurrentInputSelection` (built-in microphone versus other inputs) and the messages in `PR/ui/AmpTexts.java` and the three `LANG` files. Make T050 and T021 pass.
-- [ ] T053 [US4] Gate and commit.
+- [X] T051 [US4] Create `AE/monitor/FeedbackGuard.java` (the existing `RealFft` every 10 ms, research R5), and add the overload lightening to `AE/monitor/Chain.java` and `MonitorEngine.java`. Make T048 and T049 pass.
+- [X] T052 [US4] Add the warning dialog and the message line (feedback, overload, device lost, input clipping) to `PR/ui/AmpWindow.java`, with the input kind from `CurrentInputSelection` (built-in microphone versus other inputs) and the messages in `PR/ui/AmpTexts.java` and the three `LANG` files. Make T050 and T021 pass.
+- [X] T053 [US4] Gate and commit.
 
 ## Phase 7: The native duplex device (required by T003; done right after T014, before T024)
 

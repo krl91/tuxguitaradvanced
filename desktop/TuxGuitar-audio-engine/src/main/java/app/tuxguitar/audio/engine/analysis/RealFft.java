@@ -4,7 +4,7 @@ package app.tuxguitar.audio.engine.analysis;
  * In-place radix-2 FFT with preallocated tables, used for magnitude spectra. Deterministic; no
  * allocation after construction. Not thread-safe: one instance per analysis thread.
  */
-final class RealFft {
+public final class RealFft {
 
 	private final int size;
 	private final int[] bitReversed;
@@ -13,7 +13,7 @@ final class RealFft {
 	private final double[] re;
 	private final double[] im;
 
-	RealFft(int size) {
+	public RealFft(int size) {
 		if (size < 2 || Integer.bitCount(size) != 1) {
 			throw new IllegalArgumentException("FFT size must be a power of two: " + size);
 		}
@@ -33,7 +33,7 @@ final class RealFft {
 		this.im = new double[size];
 	}
 
-	int size() {
+	public int size() {
 		return this.size;
 	}
 
@@ -41,7 +41,7 @@ final class RealFft {
 	 * Writes the magnitudes of bins 0…size/2 of {@code input} into {@code magnitudes}
 	 * (length ≥ size/2 + 1), scaled by {@code scale}.
 	 */
-	void magnitudes(double[] input, double[] magnitudes, double scale) {
+	public void magnitudes(double[] input, double[] magnitudes, double scale) {
 		for (int i = 0; i < this.size; i++) {
 			this.re[this.bitReversed[i]] = input[i];
 			this.im[this.bitReversed[i]] = 0.0;
