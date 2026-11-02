@@ -34,6 +34,7 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeTrackSelection;
 import app.tuxguitar.app.tools.custom.practice.model.TrackTuning;
 import app.tuxguitar.app.tools.custom.practice.session.AmpSoundStore;
+import app.tuxguitar.app.tools.custom.practice.session.ScoreKey;
 import app.tuxguitar.app.tools.custom.practice.session.ArcadeChoices;
 import app.tuxguitar.app.tools.custom.practice.session.AttackCandidates;
 import app.tuxguitar.app.tools.custom.practice.session.AudioRoute;
@@ -617,6 +618,10 @@ public class PracticeWindow {
 
 	private void showPreparation() {
 		this.song = this.host.song();
+		if( this.ampWindow != null && this.song != null ) {
+			// the score in front gets its remembered amp sound before any run (spec 022 FR-019)
+			this.ampWindow.scoreChanged(ScoreKey.of(this.song.getName(), this.song.getArtist(), scoreName()));
+		}
 		TGTrack caretTrack = this.host.caret().track();
 		boolean arcade = FollowSettings.getInstance(this.context).isArcade();
 		java.util.List<PracticeTrackCandidate> candidateList;

@@ -24,6 +24,10 @@
 - Q: Where and in what form does the learner set the amp and the pedals? → A: **In a separate window, *Amp and effects***, opened by a button of the practice window and of the practice palette, usable during a run; the chain is shown as plain controls (a row per pedal with its switch and sliders), not as drawn pedals.
 - Q: How is "the same score" recognised to give it back its sound? → A: **By the title and the artist written in the score** (by the file name when both are empty): the sound follows the score when it is moved or renamed, and two copies of the same song share it.
 
+### Session 2026-11-02
+
+- Q: When the learner turns the knobs of a ready-made sound, what becomes of the settings? → A: They are kept on that sound (across a switch to another sound and a restart); it shows as "(changed)" and *Restore* brings it back as shipped. The changes of one's own sound stay "(changed)" until *Save as…*, and are dropped when another sound is picked.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - I hear my guitar through an amp while I practise (Priority: P1)
@@ -72,7 +76,7 @@ The learner saves a chain as a named *sound* ("Clean", "Crunch", "Lead with echo
 
 1. **Given** a chain, **When** the learner saves it under a name, **Then** it is listed with the ready-made sounds and survives a restart.
 2. **Given** saved sounds, **When** the learner picks one, **Then** it is heard at once.
-3. **Given** a ready-made sound changed by the learner, **When** they choose to restore it, **Then** it sounds as shipped.
+3. **Given** a ready-made sound changed by the learner (its changes are kept on it, and it shows as changed), **When** they choose to restore it, **Then** it sounds as shipped.
 4. **Given** the learner picked *Lead* for score A and *Clean* for score B, **When** they practise A again, even after a restart, **Then** *Lead* is chosen; with B, *Clean*.
 5. **Given** a score never practised, **When** the practice window opens on it, **Then** the last sound used is chosen.
 6. **Given** the sound remembered for a score was deleted, **When** that score is practised, **Then** the last sound used is chosen and nothing fails.

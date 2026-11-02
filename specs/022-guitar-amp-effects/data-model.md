@@ -56,7 +56,7 @@ Rules:
 | Lead | gate −55; compressor 4/10/5; amp high gain 7/6/6/6/6; cabinet on; echo 380 ms/3/5/25 % |
 | Clean echo | compressor 5/10/5; amp clean 3/5/5/6/6; cabinet on; chorus 0.8/4/40 %; echo 450 ms/4/4/35 %; reverb 4/5/20 % |
 
-The chains live in one place, AE `monitor/ReadyMadeChains`, used by the engine tests and by `Sound`. The values are a starting point, tuned at the owner's gate and by the silence test of FR-011. A ready-made sound can be changed and then restored (US3/AC3).
+The chains live in one place, AE `monitor/ReadyMadeChains`, used by the engine tests and by `Sound`. The values are a starting point, tuned at the owner's gate and by the silence test of FR-011. A ready-made sound can be changed and then restored (US3/AC3): its changes are kept on it and it shows as "(changed)" until *Restore*. The changes of one's own sound stay in `chain.current`, shown as "(changed)", until *Save as…*; picking another sound drops them.
 
 ## `AmpSoundSettings` (PR `session/AmpSoundStore`)
 
@@ -69,7 +69,7 @@ The chains live in one place, AE `monitor/ReadyMadeChains`, used by the engine t
 | `currentChain` (the chain in use, with the learner's unsaved changes) | the Clean chain | `chain.current` |
 | `lastSound` | "Clean" | `sound.last` |
 | own sounds | none | `sound.<n>.name`, `sound.<n>.chain` |
-| changed ready-made sounds | none | `ready.<name>.chain` (removed by *Restore*) |
+| changed ready-made sounds | none | `ready.<name>.chain`: written with every change while that ready-made sound is current (owner's answer of 2026-11-02), removed by *Restore* |
 | sound per score | none | `score.<hash>` → sound name |
 | window bounds | none (placed by R7) | `window.bounds` |
 

@@ -59,6 +59,12 @@ final class AmpTexts {
 	static final String PEDAL_UP = P + "pedal.up";
 	static final String PEDAL_DOWN = P + "pedal.down";
 	static final String PEDAL_REMOVE = P + "pedal.remove";
+	static final String SOUND = P + "sound";
+	static final String SOUND_NAME = P + "sound-name";
+	static final String SAVE_AS = P + "save-as";
+	static final String RENAME = P + "rename";
+	static final String DELETE = P + "delete";
+	static final String RESTORE = P + "restore";
 
 	static final String TITLE = P + "title";
 	static final String AMP = P + "amp";
@@ -77,17 +83,20 @@ final class AmpTexts {
 	static final String UNIT_DB = P + "unit.db";
 	static final String UNIT_MS = P + "unit.ms";
 	static final String UNIT_HZ = P + "unit.hz";
+	static final String CHANGED = P + "changed";
+	static final String NAME_READY_MADE = P + "name.ready-made";
+	static final String NAME_TOO_LONG = P + "name.too-long";
 
 	static final List<String> KEYS;
 
 	static final List<String> PLAIN = Collections.unmodifiableList(Arrays.asList(TITLE, AMP, OUTPUT_DEFAULT, DELAY_VALUE, DELAY_UNKNOWN, CLEAN, CRUNCH, HIGH_GAIN,
-			UNIT_SCALE, UNIT_PERCENT, FAILED, CLIPPING, BEFORE, AFTER, UNIT_DB, UNIT_MS, UNIT_HZ));
+			UNIT_SCALE, UNIT_PERCENT, FAILED, CLIPPING, BEFORE, AFTER, UNIT_DB, UNIT_MS, UNIT_HZ, CHANGED, NAME_READY_MADE, NAME_TOO_LONG));
 
 	static final List<KnobText> KNOBS;
 
 	static {
 		List<String> keys = new ArrayList<String>(Arrays.asList(OPEN, ENABLED, OUTPUT, GUITAR_VOLUME, SCORE_VOLUME, DELAY, CHARACTER, GAIN, BASS, MIDDLE, TREBLE,
-				VOLUME, CABINET, ADD_PEDAL, PEDAL_UP, PEDAL_DOWN, PEDAL_REMOVE));
+				VOLUME, CABINET, ADD_PEDAL, PEDAL_UP, PEDAL_DOWN, PEDAL_REMOVE, SOUND, SOUND_NAME, SAVE_AS, RENAME, DELETE, RESTORE));
 		List<KnobText> knobs = new ArrayList<KnobText>(Arrays.asList(new KnobText(GUITAR_VOLUME, UNIT_PERCENT, "70"), new KnobText(SCORE_VOLUME, UNIT_SCALE, "10"),
 				new KnobText(GAIN, UNIT_SCALE, "3"), new KnobText(BASS, UNIT_SCALE, "5"), new KnobText(MIDDLE, UNIT_SCALE, "5"), new KnobText(TREBLE, UNIT_SCALE, "6"),
 				new KnobText(VOLUME, UNIT_SCALE, "6")));

@@ -13,7 +13,7 @@
 
 1. **Top block:**
    - *Amp sound* switch (off by default);
-   - a sound list, with *Save as…*, *Rename…*, *Delete* (own sounds only) and *Restore* (changed ready-made sounds only);
+   - a sound list, a name field, and *Save as* and *Rename* (with the name typed), *Delete* (own sounds only) and *Restore* (changed ready-made sounds only);
    - output device;
    - *Guitar volume*;
    - *Score volume* (TuxGuitar's volume);
@@ -29,7 +29,7 @@
 ## Behaviour
 
 - **Live changes:** every change goes to `MonitorEngine.setChain` at once (FR-006).
-  - It changes the current sound in memory, and the sound list shows "(changed)".
+  - It changes the current sound in memory, and the sound list shows "(changed)". On a ready-made sound the change is also kept on that sound (`ready.<name>.chain`), so it stays changed after picking another sound or a restart, until *Restore* (owner's answer of 2026-11-02); on one's own sound it stays in `chain.current` until *Save as…*.
   - *Save as…* keeps it (under a new name, or under the name of the learner's own sound to replace it). When the window closes with changes, they are kept as the current sound, so nothing is lost silently.
 - **The sound per score (FR-019):**
   - when the practice window opens on a score, and whenever the score in front of it changes, the current sound becomes `soundFor(ScoreKey)`;

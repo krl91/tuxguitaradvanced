@@ -101,3 +101,11 @@ T064-T068 (2026-11-02, owner's decision: a real-time audio thread, research R3 a
   (benchmark/native-probe-usb.md). At 128 frames 32.5 ms, above the owner's 30 ms ceiling with the built-in speakers.
   T068 gate, mvn -o -e clean verify -P native-modules: BUILD SUCCESS, audio-engine 433, practice 1408 (12 skipped), cargo 9;
   swt-gui-tests practice 67. git diff on the test folders: additions only.
+T042-T047 US3 (2026-11-02, owner's answer: the changes of a ready-made sound are kept on it until Restore):
+  Seen red: ScoreKeyTest and AmpSoundStoreTest at compile time (ScoreKey, Sound and the store's sounds missing); AmpSoundListSwtTest at
+  compile time against the committed AmpWindow and PracticeWindow (restored for the run, then the new versions put back). Then green at
+  the first run: ScoreKey 3, AmpSoundStore 9, AmpSoundSettings 4 (T020 unchanged), AmpSoundListSwt 4.
+  The names are typed in a field beside the list (Save as, Rename) rather than in a dialog: no new dialog, and the SWT test drives it.
+  The sound list and the name field have no tooltip in the toolkit (UIDropDownSelect, UITextField): their labels carry it, as the output's.
+  T047 gate, mvn -e clean verify -P native-modules: BUILD SUCCESS, audio-engine 433, practice 1420 (12 skipped), cargo 9;
+  swt-gui-tests practice 71. git diff on the test folders: additions only. Ubuntu CI run 41508924416 (real-time thread on Linux): success.

@@ -1,30 +1,37 @@
 package app.tuxguitar.app.tools.custom.practice.ui;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import app.tuxguitar.app.tools.custom.practice.session.AmpSoundSettings;
 import app.tuxguitar.app.tools.custom.practice.session.AmpSoundStore;
+import app.tuxguitar.app.tools.custom.practice.session.ScoreKey;
 import app.tuxguitar.audio.engine.monitor.ChainSettings;
+import app.tuxguitar.audio.engine.monitor.ReadyMadeChains;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UIDisposeEvent;
 import app.tuxguitar.ui.event.UIDisposeListener;
+import app.tuxguitar.ui.event.UIModifyEvent;
+import app.tuxguitar.ui.event.UIModifyListener;
 import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.resource.UIRectangle;
+import app.tuxguitar.ui.widget.UIButton;
 import app.tuxguitar.ui.widget.UIDropDownSelect;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
 import app.tuxguitar.ui.widget.UIScale;
 import app.tuxguitar.ui.widget.UISelectItem;
+import app.tuxguitar.ui.widget.UITextField;
 import app.tuxguitar.ui.widget.UIToggleButton;
 import app.tuxguitar.ui.widget.UIWindow;
 
 /**
- * The Amp and effects window (spec 022, contracts/amp-window.md): the top block (the switch, the output, the two volumes, the delay), the amp and cabinet
- * rows, and a message line. One window: a second open brings it forward. It is owned by the main window, placed at its kept bounds when they are on a screen,
+ * The Amp and effects window (spec 022, contracts/amp-window.md): the top block (the switch, the sounds, the output, the two volumes, the delay), the
+ * chain's rows, and a message line. The sound of the score in front is picked when the score changes, and the learner's pick is remembered for it (FR-019). One window: a second open brings it forward. It is owned by the main window, placed at its kept bounds when they are on a screen,
  * else away from the run's notes, else over the practice window; its bounds are kept when it closes, also when its owner closes it.
  */
 final class AmpWindow {
@@ -69,6 +76,14 @@ final class AmpWindow {
 	private final Predicate<UIRectangle> onScreen;
 	private UIWindow window;
 	private UIToggleButton enabled;
+	private UILabel soundsLabel;
+	private UIDropDownSelect<String> sounds;
+	private UITextField soundName;
+	private UIButton saveAs;
+	private UIButton rename;
+	private UIButton delete;
+	private UIButton restore;
+	private Optional<ScoreKey> score = Optional.empty();
 	private UILabel outputsLabel;
 	private UIDropDownSelect<String> outputs;
 	private UIScale guitarVolume;
@@ -77,6 +92,7 @@ final class AmpWindow {
 	private UILabel message;
 	private AmpChainRows rows;
 	private boolean updating;
+	private boolean nameMessage;
 
 	/**
 	 * @param guards the boxes on the screen of the run's framed and next notes; empty when no run is going on
@@ -131,7 +147,9 @@ final class AmpWindow {
 		});
 		topLayout.set(this.enabled, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false, 1, 3);
 
-		this.outputsLabel = label(top, topLayout, 2, AmpTexts.OUTPUT);
+		createSounds(top, topLayout, 2);
+
+		this.outputsLabel = label(top, topLayout, 3, AmpTexts.OUTPUT);
 		this.outputs = this.factory.createDropDownSelect(top);
 		for (String name : this.sound.outputs()) {
 			this.outputs.addItem(new UISelectItem<String>(name.isEmpty() ? this.texts.get(AmpTexts.OUTPUT_DEFAULT) : name, name));
@@ -149,10 +167,10 @@ final class AmpWindow {
 				}
 			}
 		});
-		topLayout.set(this.outputs, 2, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		topLayout.set(this.outputs, 3, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 
-		label(top, topLayout, 3, AmpTexts.GUITAR_VOLUME);
-		this.guitarVolume = scale(top, topLayout, 3, AmpTexts.GUITAR_VOLUME, VOLUME_POSITIONS, (int) Math.round(settings.guitarVolume() * VOLUME_POSITIONS));
+		label(top, topLayout, 4, AmpTexts.GUITAR_VOLUME);
+		this.guitarVolume = scale(top, topLayout, 4, AmpTexts.GUITAR_VOLUME, VOLUME_POSITIONS, (int) Math.round(settings.guitarVolume() * VOLUME_POSITIONS));
 		this.guitarVolume.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
 				if (!AmpWindow.this.updating) {
@@ -163,8 +181,8 @@ final class AmpWindow {
 			}
 		});
 
-		label(top, topLayout, 4, AmpTexts.SCORE_VOLUME);
-		this.scoreVolume = scale(top, topLayout, 4, AmpTexts.SCORE_VOLUME, 10, this.sound.scoreVolume());
+		label(top, topLayout, 5, AmpTexts.SCORE_VOLUME);
+		this.scoreVolume = scale(top, topLayout, 5, AmpTexts.SCORE_VOLUME, 10, this.sound.scoreVolume());
 		this.scoreVolume.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
 				if (!AmpWindow.this.updating) {
@@ -175,11 +193,12 @@ final class AmpWindow {
 
 		this.delay = this.factory.createLabel(top);
 		this.delay.setToolTipText(this.texts.get(AmpTexts.DELAY + ".tip"));
-		topLayout.set(this.delay, 5, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
+		topLayout.set(this.delay, 6, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
 
 		this.rows = new AmpChainRows(this.factory, this.window, layout, 2, this.texts, this.store.currentChain(), chain -> {
 			this.store.saveCurrentChain(chain);
 			this.sound.setChain(chain);
+			showSounds();
 		}, this::relayout);
 
 		this.message = this.factory.createLabel(this.window);
@@ -192,9 +211,152 @@ final class AmpWindow {
 			}
 		});
 		showDelay();
+		showSounds();
 		this.window.pack();
 		this.window.setBounds(placement(settings.windowBounds()));
 		this.window.open();
+	}
+
+	/** The sound list, a name field and the buttons that apply to the current sound (contracts/amp-window.md "Layout"). */
+	private void createSounds(UIPanel top, UITableLayout topLayout, int row) {
+		this.soundsLabel = label(top, topLayout, row, AmpTexts.SOUND);
+		UIPanel panel = this.factory.createPanel(top, false);
+		UITableLayout layout = new UITableLayout(0f);
+		panel.setLayout(layout);
+		topLayout.set(panel, row, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		this.sounds = this.factory.createDropDownSelect(panel);
+		this.sounds.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				String name = AmpWindow.this.sounds.getSelectedValue();
+				if (!AmpWindow.this.updating && name != null) {
+					pick(name);
+				}
+			}
+		});
+		layout.set(this.sounds, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 4);
+		UILabel nameLabel = this.factory.createLabel(panel);
+		nameLabel.setText(this.texts.get(AmpTexts.SOUND_NAME));
+		nameLabel.setToolTipText(this.texts.get(AmpTexts.SOUND_NAME + ".tip"));
+		layout.set(nameLabel, 2, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		this.soundName = this.factory.createTextField(panel);
+		this.soundName.addModifyListener(new UIModifyListener() {
+			public void onModify(UIModifyEvent event) {
+				showButtons();
+			}
+		});
+		layout.set(this.soundName, 2, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
+		layout.set(this.soundName, UITableLayout.PACKED_WIDTH, 200f);
+		this.saveAs = button(panel, layout, 1, AmpTexts.SAVE_AS, () -> {
+			String name = this.soundName.getText().trim();
+			this.store.saveAs(name, this.rows.chain());
+			this.store.setCurrent(name);
+			this.store.remember(this.score, this.store.current().name());
+			this.soundName.setText("");
+			showSounds();
+		});
+		this.rename = button(panel, layout, 2, AmpTexts.RENAME, () -> {
+			String name = this.soundName.getText().trim();
+			this.store.rename(this.store.current().name(), name);
+			this.store.remember(this.score, name);
+			this.soundName.setText("");
+			showSounds();
+		});
+		this.delete = button(panel, layout, 3, AmpTexts.DELETE, () -> {
+			this.store.delete(this.store.current().name());
+			use(ReadyMadeChains.all().get(0).name());
+		});
+		this.restore = button(panel, layout, 4, AmpTexts.RESTORE, () -> {
+			this.store.restore(this.store.current().name());
+			ChainSettings chain = this.store.currentChain();
+			this.rows.show(chain);
+			this.sound.setChain(chain);
+			showSounds();
+		});
+	}
+
+	private UIButton button(UIPanel panel, UITableLayout layout, int column, String key, Runnable action) {
+		UIButton button = this.factory.createButton(panel);
+		button.setText(this.texts.get(key));
+		button.setToolTipText(this.texts.get(key + ".tip"));
+		button.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				action.run();
+			}
+		});
+		layout.set(button, 3, column, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, false, false);
+		return button;
+	}
+
+	/** The learner picked a sound: its chain is heard at once, and it is remembered for the score in front. */
+	private void pick(String name) {
+		use(name);
+		this.store.remember(this.score, this.store.current().name());
+	}
+
+	/** Makes a sound the current one: the store, the engine, and the rows and list when the window is open. */
+	private void use(String name) {
+		this.store.setCurrent(name);
+		ChainSettings chain = this.store.currentChain();
+		this.sound.setChain(chain);
+		if (isOpen()) {
+			this.rows.show(chain);
+			showSounds();
+		}
+	}
+
+	/**
+	 * The score in front changed (or the practice window opened on it): its remembered sound, else the last one, becomes current before any run. When it is
+	 * already the current sound, its unsaved changes are kept.
+	 */
+	void scoreChanged(Optional<ScoreKey> key) {
+		this.score = key;
+		String name = this.store.soundFor(key).name();
+		if (!name.equals(this.store.current().name())) {
+			use(name);
+		}
+	}
+
+	/** The list from the store, the current sound selected and marked "(changed)" when it is. */
+	private void showSounds() {
+		if (!isOpen()) {
+			return;
+		}
+		app.tuxguitar.app.tools.custom.practice.session.Sound currentSound = this.store.current();
+		boolean currentChanged = this.store.currentChanged();
+		this.updating = true;
+		try {
+			this.sounds.removeItems();
+			for (app.tuxguitar.app.tools.custom.practice.session.Sound sound : this.store.sounds()) {
+				boolean changed = sound.changed() || (sound.name().equals(currentSound.name()) && currentChanged);
+				this.sounds.addItem(new UISelectItem<String>(changed ? sound.name() + " " + this.texts.get(AmpTexts.CHANGED) : sound.name(), sound.name()));
+			}
+			this.sounds.setSelectedValue(currentSound.name());
+		} finally {
+			this.updating = false;
+		}
+		showButtons();
+	}
+
+	/** Save as, Rename, Delete and Restore enabled only when they apply; a refused name says why on the message line. */
+	private void showButtons() {
+		if (!isOpen()) {
+			return;
+		}
+		app.tuxguitar.app.tools.custom.practice.session.Sound current = this.store.current();
+		String name = this.soundName.getText();
+		AmpSoundStore.NameProblem problem = this.store.nameProblem(name, null);
+		this.saveAs.setEnabled(problem == null || problem == AmpSoundStore.NameProblem.TAKEN);
+		this.rename.setEnabled(!current.readyMade() && this.store.nameProblem(name, current.name()) == null);
+		this.delete.setEnabled(!current.readyMade());
+		this.restore.setEnabled(current.readyMade() && current.changed());
+		String refused = problem == AmpSoundStore.NameProblem.READY_MADE ? AmpTexts.NAME_READY_MADE : problem == AmpSoundStore.NameProblem.TOO_LONG ? AmpTexts.NAME_TOO_LONG : null;
+		if (refused != null) {
+			message(this.texts.get(refused, Integer.toString(AmpSoundStore.NAME_LENGTH)));
+			this.nameMessage = true;
+		} else if (this.nameMessage) {
+			message("");
+			this.nameMessage = false;
+		}
 	}
 
 	/** The pedals' rows changed: the window takes its new size, its top left corner where it is. */
@@ -319,6 +481,34 @@ final class AmpWindow {
 
 	UILabel getDelay() {
 		return this.delay;
+	}
+
+	UILabel getSoundsLabel() {
+		return this.soundsLabel;
+	}
+
+	UIDropDownSelect<String> getSounds() {
+		return this.sounds;
+	}
+
+	UITextField getSoundName() {
+		return this.soundName;
+	}
+
+	UIButton getSaveAs() {
+		return this.saveAs;
+	}
+
+	UIButton getRename() {
+		return this.rename;
+	}
+
+	UIButton getDelete() {
+		return this.delete;
+	}
+
+	UIButton getRestore() {
+		return this.restore;
 	}
 
 	AmpChainRows getRows() {

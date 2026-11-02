@@ -235,12 +235,12 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 
 ### Tests first
 
-- [ ] T042 [P] [US3] Create `TST/session/ScoreKeyTest.java` (FR-019, data-model "ScoreKey"). It checks:
+- [X] T042 [P] [US3] Create `TST/session/ScoreKeyTest.java` (FR-019, data-model "ScoreKey"). It checks:
   - title and artist are lower-cased, trimmed and joined; the key is the 16-character hex SHA-256 prefix, and no title text appears in it;
   - the file name is used when both are empty; no key when all three are empty;
   - the same title and artist in two files give the same key;
   - renaming or moving the file keeps the key.
-- [ ] T043 [P] [US3] Create `TST/session/AmpSoundStoreTest.java` with an in-memory `ArcadeChoices.Persistence` (the settings part is covered by T020). It checks:
+- [X] T043 [P] [US3] Create `TST/session/AmpSoundStoreTest.java` with an in-memory `ArcadeChoices.Persistence` (the settings part is covered by T020). It checks:
   - a fresh store gives current "Clean" and the four ready-made sounds in the order of data-model, their chains equal to `ReadyMadeChains`;
   - `saveAs` keeps a sound across a new store over the same persistence;
   - names are "trimmed, from 1 to 40 characters, and unique regardless of case"; a clash with a ready-made name is refused;
@@ -251,7 +251,7 @@ Then Phase 7 (the native device) comes before US1's device task T024.
   - a deleted remembered sound gives `last` (US3/AC6);
   - a malformed stored chain falls back to the ready-made sound of that name, or to Clean;
   - picking a sound sets `chain.current` to its chain, and a changed current chain kept at closing shows the sound as "(changed)" in a new store.
-- [ ] T044 [P] [US3] Create `TST/ui/AmpSoundListSwtTest.java`. It checks:
+- [X] T044 [P] [US3] Create `TST/ui/AmpSoundListSwtTest.java`. It checks:
   - the sound list shows ready-made sounds then own sounds;
   - picking one sends its chain at once;
   - a change shows "(changed)";
@@ -260,12 +260,12 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 
 ### Implementation
 
-- [ ] T045 [US3] Create `PR/session/ScoreKey.java` and `Sound.java` (the ready-made ones from `ReadyMadeChains`), and add the sounds part to `PR/session/AmpSoundStore.java` (contracts/amp-window.md; the `sound.*`, `ready.*` and `score.*` keys of data-model). Make T042 and T043 pass; T020 stays green.
-- [ ] T046 [US3] Add the sound list and its buttons to `PR/ui/AmpWindow.java`. In `PR/ui/PracticeWindow.java`:
+- [X] T045 [US3] Create `PR/session/ScoreKey.java` and `Sound.java` (the ready-made ones from `ReadyMadeChains`), and add the sounds part to `PR/session/AmpSoundStore.java` (contracts/amp-window.md; the `sound.*`, `ready.*` and `score.*` keys of data-model). Make T042 and T043 pass; T020 stays green.
+- [X] T046 [US3] Add the sound list and its buttons to `PR/ui/AmpWindow.java`. In `PR/ui/PracticeWindow.java`:
   - when the practice window shows its preparation (`showPreparation`, which reads the score in front through `host.song()`), and so whenever the score in front has changed, set the current sound to `soundFor(ScoreKey.of(song.getName(), song.getArtist(), scoreName()))`;
   - when the learner picks a sound, call `remember`;
   Keys go in `PR/ui/AmpTexts.java`, labels and tooltips in the three `LANG` files. Make T044 (including its score A and score B case) and T021 pass.
-- [ ] T047 [US3] Gate and commit.
+- [X] T047 [US3] Gate and commit.
 
 ## Phase 6: User Story 4 - Safe by default (Priority: P2)
 
