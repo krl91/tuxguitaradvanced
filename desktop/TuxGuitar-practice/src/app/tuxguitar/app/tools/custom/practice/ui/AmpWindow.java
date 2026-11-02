@@ -180,10 +180,10 @@ final class AmpWindow {
 		this.rows = new AmpChainRows(this.factory, this.window, layout, 2, this.texts, this.store.currentChain(), chain -> {
 			this.store.saveCurrentChain(chain);
 			this.sound.setChain(chain);
-		});
+		}, this::relayout);
 
 		this.message = this.factory.createLabel(this.window);
-		layout.set(this.message, 4, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.message, 2 + AmpChainRows.ROWS, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
@@ -195,6 +195,16 @@ final class AmpWindow {
 		this.window.pack();
 		this.window.setBounds(placement(settings.windowBounds()));
 		this.window.open();
+	}
+
+	/** The pedals' rows changed: the window takes its new size, its top left corner where it is. */
+	private void relayout() {
+		if (isOpen()) {
+			UIRectangle bounds = this.window.getBounds();
+			this.window.pack();
+			UIRectangle packed = this.window.getBounds();
+			this.window.setBounds(new UIRectangle(bounds.getX(), bounds.getY(), packed.getWidth(), packed.getHeight()));
+		}
 	}
 
 	private UILabel label(UIPanel parent, UITableLayout layout, int row, String key) {

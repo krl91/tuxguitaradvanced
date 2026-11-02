@@ -40,6 +40,11 @@ public final class Cabinet implements Effect {
 		}
 	}
 
+	/** True while switching on or off is still crossfading. */
+	public boolean changing() {
+		return this.mix != (this.enabled ? 1.0 : 0.0);
+	}
+
 	@Override
 	public void process(float[] in, float[] out, int n) {
 		this.started = true;

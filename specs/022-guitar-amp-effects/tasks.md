@@ -181,29 +181,32 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 
 ### Tests first
 
-- [ ] T030 [P] [US2] Create `AET/monitor/fx/CompressorTest.java`, `OverdriveTest.java` and `DistortionTest.java`:
+- [X] T030 [P] [US2] Create `AET/monitor/fx/CompressorTest.java`, `OverdriveTest.java` and `DistortionTest.java`:
   - the compressor reduces a 20 dB step by at least `sustain`-dependent amounts and makes up its level;
   - the overdrive and distortion harmonic contents grow with drive and gain;
   - `tone` moves the 3 kHz content by at least 6 dB;
   - `level` 0 to 10 spans at least 30 dB;
   - finite and deterministic.
-- [ ] T031 [P] [US2] Create `AET/monitor/fx/ChorusTest.java`, `EchoTest.java` and `ReverbTest.java`:
+  - *Done as one file, `AET/monitor/fx/DrivePedalsTest.java`, with the same checks.*
+- [X] T031 [P] [US2] Create `AET/monitor/fx/ChorusTest.java`, `EchoTest.java` and `ReverbTest.java`:
   - the echo of an impulse repeats at `time` ± 1 sample, each repeat lower by the `repeats` factor, darker with a lower `tone`;
   - its tail continues after the input stops (US2/AC2), and a 1.5 s time is allowed;
   - the chorus delay stays within 7–20 ms;
   - the reverb tail's decay time grows with `size`;
   - `mix` 0 is dry;
   - every one is finite after 60 s of white noise at full scale.
-- [ ] T032 [P] [US2] Create `AET/monitor/SmoothChangesTest.java` (FR-006, SC-003). A sine runs through the chain while:
+  - *Done as one file, `AET/monitor/fx/SpacePedalsTest.java`, with the same checks.*
+- [X] T032 [P] [US2] Create `AET/monitor/SmoothChangesTest.java` (FR-006, SC-003). A sine runs through the chain while:
   - every knob of every kind jumps from its minimum to its maximum;
   - each pedal is switched on and off;
   - a pedal is added, removed and moved within its section;
   - the chain changes from each ready-made chain to each other one (a sound picked).
   In every case the largest sample-to-sample step stays under 1.5× the largest step of the same run with no change, and the change is fully applied within 0.1 s.
-- [ ] T033 [P] [US2] Create `AET/monitor/ReadyMadeSilenceTest.java` (FR-011, US1/AC4): each of the four chains of `ReadyMadeChains`, fed with a −70 dBFS noise, through the output stage at the default guitar volume (0.7), gives less than −60 dBFS RMS at the output after 1 s.
-- [ ] T034 [P] [US2] Create `AET/monitor/ChainCostBenchmarkTest.java` (`@Tag("benchmark")`): the full chain of research R4 (every kind on, high gain, 4× oversampling) over 60 s of signal at `BLOCK_FRAMES`. It reports the mean and the 99th percentile of the processing time per block as a share of the block time. Goal: under 25 %; recorded in `baseline.txt`.
-- [ ] T035 [P] [US2] Create `AET/monitor/MonitorEnduranceBenchmarkTest.java` (`@Tag("benchmark")`, SC-006): the full chain of T034 on a fake device paced by the real clock for 10 minutes; it reports dropped and silent blocks (goal: 0) and the heap growth after a one-minute warm-up (goal: under 1 MB); recorded in `baseline.txt`.
-- [ ] T036 [P] [US2] Extend the window test with a new file, `TST/ui/AmpPedalRowsSwtTest.java`. It checks:
+- [X] T033 [P] [US2] Create `AET/monitor/ReadyMadeSilenceTest.java` (FR-011, US1/AC4): each of the four chains of `ReadyMadeChains`, fed with a −70 dBFS noise, through the output stage at the default guitar volume (0.7), gives less than −60 dBFS RMS at the output after 1 s.
+- [X] T034 [P] [US2] Create `AET/monitor/ChainCostBenchmarkTest.java` (`@Tag("benchmark")`): the full chain of research R4 (every kind on, high gain, 4× oversampling) over 60 s of signal at `BLOCK_FRAMES`. It reports the mean and the 99th percentile of the processing time per block as a share of the block time. Goal: under 25 %; recorded in `baseline.txt`.
+- [X] T035 [P] [US2] Create `AET/monitor/MonitorEnduranceBenchmarkTest.java` (`@Tag("benchmark")`, SC-006): the full chain of T034 on a fake device paced by the real clock for 10 minutes; it reports dropped and silent blocks (goal: 0) and the heap growth after a one-minute warm-up (goal: under 1 MB); recorded in `baseline.txt`.
+  - *Result (2026-11-02): the goal is not met: 20 to 30 dropped blocks in 10 minutes on the owner's Mac, heap growth none. The chain allocates nothing (ChainAllocationTest) and no collection runs during the measure (GC log); the remaining drops are the system scheduling the Java thread more than two blocks late. See `baseline.txt` T035; the fix (a real-time audio thread) is the owner's decision.*
+- [X] T036 [P] [US2] Extend the window test with a new file, `TST/ui/AmpPedalRowsSwtTest.java`. It checks:
   - *Add pedal…* lists only kinds not in the chain and places each in its own section;
   - up and down move a pedal only within its section;
   - remove takes it out;
@@ -213,15 +216,16 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 
 ### Implementation
 
-- [ ] T037 [P] [US2] Create `AE/monitor/fx/Compressor.java`, `Overdrive.java` (2× oversampled) and `Distortion.java` (4× oversampled). Make T030 pass.
-- [ ] T038 [P] [US2] Create `AE/monitor/fx/Chorus.java`, `Echo.java` (preallocated 1.5 s line, interpolated reads, low-pass in the loop) and `Reverb.java` (8 combs and 4 all-passes, rewritten from the public Schroeder–Moorer structure). Make T031 pass.
-- [ ] T039 [US2] Wire the pedals into `AE/monitor/Chain.java`:
+- [X] T037 [P] [US2] Create `AE/monitor/fx/Compressor.java`, `Overdrive.java` (2× oversampled) and `Distortion.java` (4× oversampled). Make T030 pass.
+- [X] T038 [P] [US2] Create `AE/monitor/fx/Chorus.java`, `Echo.java` (preallocated 1.5 s line, interpolated reads, low-pass in the loop) and `Reverb.java` (8 combs and 4 all-passes, rewritten from the public Schroeder–Moorer structure). Make T031 pass.
+- [X] T039 [US2] Wire the pedals into `AE/monitor/Chain.java`:
   - one preallocated instance per kind, so a change never allocates in the loop;
   - a 10 ms crossfade bypass and knob ramps;
   - a structural change (a pedal added, removed or moved, or a new chain) crossfades from the old order to the new one over 10 ms.
+  - *As built:* a pedal added or removed crossfades with its dry signal over 10 ms (it fades out where it was). A change of order among the pedals that sound dips the chain's output for 10 ms (down in 5 ms, the new order, up in 5 ms), as the amp does for a change of character: with one instance per kind, the old and the new order cannot run side by side. After a reset, the chorus keeps the dry signal until its line is full, and the echo and reverb fade their input in over 10 ms, so a delay pedal switched on mid-note does not click when its delayed signal arrives. T032 checks all of it.
   Make T032 and T033 pass; if a ready-made chain fails T033, retune it in `ReadyMadeChains` and in the data-model table (for example a noise gate in *Clean echo*). Run T034 and T035 and record them.
-- [ ] T040 [US2] Add the pedal rows to `PR/ui/AmpChainRows.java` (add, remove, up, down, switch, sliders with values), and their keys in `PR/ui/AmpTexts.java` with their labels and tooltips in the three `LANG` files. Make T036 and T021 pass.
-- [ ] T041 [US2] Gate and commit.
+- [X] T040 [US2] Add the pedal rows to `PR/ui/AmpChainRows.java` (add, remove, up, down, switch, sliders with values), and their keys in `PR/ui/AmpTexts.java` with their labels and tooltips in the three `LANG` files. Make T036 and T021 pass.
+- [X] T041 [US2] Gate and commit.
 
 ## Phase 5: User Story 3 - Sounds I can save, and the sound of each score (Priority: P2)
 

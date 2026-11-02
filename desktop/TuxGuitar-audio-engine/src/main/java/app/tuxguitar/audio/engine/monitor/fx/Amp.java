@@ -154,6 +154,11 @@ public final class Amp implements Effect {
 		this.outputGain = this.targetOutputGain;
 	}
 
+	/** True while a change of character is still being made. */
+	public boolean changing() {
+		return this.pendingCharacter != null || this.change < 1.0;
+	}
+
 	/** The level around a change of character: down to silence in 5 ms, the switch, back up in 5 ms. */
 	private double dip() {
 		if( this.pendingCharacter != null ) {

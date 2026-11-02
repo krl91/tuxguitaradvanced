@@ -68,3 +68,24 @@ T063: native probe, built-in microphone and speakers (44.1 kHz): first run 54.4 
   second run 54.3 / 60.6 / 71.4 ms, spreads within 3 ms. The estimate now counts 4 blocks (the ring's two): medians within 1.1 / 0.1 /
   −0.7 ms of it. Known: the engine adds one processing block on top of the device's estimate (an existing MonitorEngineTest fixes that
   formula), so the window shows about 3 ms more than measured at 128 frames.
+
+T041 (2026-11-02): US2 gate, mvn -o -e clean verify -P native-modules: BUILD SUCCESS
+  audio-engine 433 (417 + DrivePedals 4, SpacePedals 6, SmoothChanges 4, ReadyMadeSilence 1, ChainAllocation 1), practice 1408 with 12
+  skipped (as in US1; DatasetRecognitionIdentity runs in it), swt-gui-tests: practice 67 (62 + AmpPedalRowsSwtTest 5). AmpTextsTest
+  (unchanged) now checks the 62 pedal texts in each language through the lists of AmpTexts. git diff on the test folders: additions only.
+  Seen red: DrivePedalsTest, SpacePedalsTest and SmoothChangesTest at compile time (Pedals, Chorus and Chain.changing missing);
+  SmoothChangesTest then failed on Clean to Clean echo and Crunch to Clean echo (a step of 0.027 against 0.006): a chorus switched on
+  starts with an empty line, so its delayed signal arrived at once 7 to 20 ms later, after the 10 ms crossfade. Fixed: after a reset the
+  chorus keeps the dry signal until its line is full, the echo and reverb fade their input in over 10 ms. AmpPedalRowsSwtTest was not run
+  before the rows existed (it could not compile then).
+  ReadyMadeSilence passed for the four sounds without retuning (no gate needed in Clean echo).
+T034: chain cost, every pedal on, high-gain amp at 4x, cabinet, 48 kHz, 128 frames, 60 s after 60 s warm-up: mean 4.3 %, 99th
+  percentile 4.5 % of the block (goal under 25 %). benchmark/chain-cost.md.
+T035: endurance, the full chain of T034 on a device paced by the clock: goal NOT met.
+  10 min: 20 dropped blocks (the test's own System.gc() calls fell inside the counted span: fixed, they now come before it), then 30;
+  4 min: 3; 2 min: 0. Heap growth -0.07 MB every time; silent reads 0. Over-budget blocks (processing above half a block) 75 in 10 min.
+  The chain allocates nothing (ChainAllocationTest, 20 s with settings changed every second) and a GC and safepoint log of a 2-minute run
+  shows no collection during the measure and safepoints under 0.4 ms; the worst gap between two reads was 18 ms. The drops are the
+  system scheduling the Java thread (normal priority) more than two blocks (5.3 ms) late. The same holds for the native device, whose
+  Java thread reads the input ring. The usual remedy is a real-time audio thread (macOS time-constraint policy or the device's
+  workgroup, Windows MMCSS "Pro Audio", Linux SCHED_FIFO through rtkit) set from the native library: a design change left to the owner.
