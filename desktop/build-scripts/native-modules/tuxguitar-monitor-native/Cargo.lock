@@ -707,6 +707,8 @@ dependencies = [
  "coreaudio-sys",
  "cpal",
  "jni",
+ "libc",
+ "mach2",
 ]
 
 [[package]]

@@ -5,6 +5,7 @@
 pub mod device;
 mod jni_bridge;
 mod latency;
+pub mod realtime;
 pub mod resampler;
 pub mod ring;
 #[cfg(test)]

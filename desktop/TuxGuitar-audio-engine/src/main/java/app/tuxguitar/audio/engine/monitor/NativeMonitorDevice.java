@@ -9,6 +9,8 @@ import java.util.function.Supplier;
  */
 public final class NativeMonitorDevice implements MonitorDevice {
 
+	private static volatile String lastRealtime;
+
 	private final Supplier<String> loader;
 
 	public NativeMonitorDevice() {
@@ -30,6 +32,20 @@ public final class NativeMonitorDevice implements MonitorDevice {
 		return inputDeclared + Math.round(output) + 4 * blockFrames;
 	}
 
+	/** The result of the last promotion of the engine's thread (research R3 addendum), or null before the first opening. */
+	public static String lastRealtime() {
+		return lastRealtime;
+	}
+
+	/** Keeps the result and writes it once to the standard error each time it changes (it is not a failure: the sound plays either way). */
+	private static void realtime(String result) {
+		String previous = lastRealtime;
+		lastRealtime = result;
+		if (result != null && !result.equals(previous)) {
+			System.err.println("TuxGuitar amp sound: " + result);
+		}
+	}
+
 	@Override
 	public Opened open(String inputName, int inputChannel, String outputName, int blockFrames) throws MonitorDeviceException {
 		String failure = this.loader.get();
@@ -41,6 +57,7 @@ public final class NativeMonitorDevice implements MonitorDevice {
 			throw new MonitorDeviceException("the sound's device could not be opened");
 		}
 		float inputRate = NativeMonitorLibrary.sampleRate(handle);
+		realtime(NativeMonitorLibrary.promoteThread(blockFrames, inputRate));
 		int latency = estimate(NativeMonitorLibrary.inputLatency(handle), NativeMonitorLibrary.outputLatency(handle), inputRate,
 				NativeMonitorLibrary.outputRate(handle), blockFrames);
 		return new Opened() {

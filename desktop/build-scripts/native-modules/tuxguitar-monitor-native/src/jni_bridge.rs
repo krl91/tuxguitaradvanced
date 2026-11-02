@@ -155,3 +155,18 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_monitor_NativeMonitorLibr
         drop(unsafe { Box::from_raw(handle as *mut Duplex) });
     }
 }
+
+/// Promotes the calling thread (research R3 addendum); the policy taken or why not, as text starting with "real-time: " or "not real-time: ".
+#[no_mangle]
+pub extern "system" fn Java_app_tuxguitar_audio_engine_monitor_NativeMonitorLibrary_promoteThread<'local>(
+    env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    block: jint,
+    rate: jfloat,
+) -> jni::sys::jstring {
+    let text = match crate::realtime::promote_current_thread(block.max(0) as usize, rate) {
+        Ok(policy) => format!("real-time: {}", policy),
+        Err(reason) => format!("not real-time: {}", reason),
+    };
+    env.new_string(text).map(|s| s.into_raw()).unwrap_or(std::ptr::null_mut())
+}

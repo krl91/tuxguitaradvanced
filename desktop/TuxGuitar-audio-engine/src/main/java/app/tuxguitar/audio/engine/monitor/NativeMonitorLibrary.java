@@ -45,4 +45,10 @@ final class NativeMonitorLibrary {
 	static native void write(long handle, float[] left, float[] right, int frames) throws MonitorDeviceException;
 
 	static native void close(long handle);
+
+	/**
+	 * Gives the calling thread the scheduling of an audio thread (research R3 addendum): the Mach time constraint on macOS, MMCSS on Windows,
+	 * SCHED_FIFO on Linux when the user may. Tied to no device. Returns "real-time: <policy>" or "not real-time: <reason>".
+	 */
+	static native String promoteThread(int blockFrames, float sampleRate);
 }

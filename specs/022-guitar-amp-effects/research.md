@@ -104,6 +104,16 @@ The monitor gets the raw input **before** the front end. The front end's gain an
 - Processing in the capture thread: the output's blocking write would delay the capture, and so the recognition.
 - One thread per effect: needless.
 
+**Addendum (2026-11-02, owner's decision after T035):** the endurance run (T035) dropped 20 to 30 blocks in 10 minutes. The chain allocates nothing and no collection ran during the measure; the system was scheduling the normal-priority Java thread more than two blocks late (worst gap between two reads 18 ms). So the processing thread becomes a **real-time audio thread**, set by the native library on the calling thread when the device opens (the engine opens the device on its own thread, so `MonitorEngine` does not change):
+- **macOS:** the Mach time-constraint policy (`thread_policy_set`, `THREAD_TIME_CONSTRAINT_POLICY`), period one block, computation half a block (asked a quarter, the kernel kept half), constraint one block, preemptible: what CoreAudio's own I/O threads use.
+- **Windows:** MMCSS, `AvSetMmThreadCharacteristicsW("Pro Audio")` from `avrt.dll` (no rights needed).
+- **Linux:** `SCHED_FIFO` at a middle priority through `pthread_setschedparam`, which works when the user may (the `rtprio` limit, often given to the `audio` group); else the thread stays as it is, and the result says so.
+- No new crate: `mach2` 0.4.3 (macOS) and `libc` 0.2.191 (Linux), already in the lock file through `cpal`, have the calls; `avrt` is declared by hand (Windows).
+- The result (the policy taken, or why not) is kept by the device (`NativeMonitorDevice.lastRealtime()`) and written once to the standard error each time it changes; a refusal is not a failure, the sound plays as before.
+- The endurance benchmark (T035) promotes its own thread the same way through the library, so it measures what the app runs.
+
+Alternatives considered: a deeper input ring (more blocks waiting before a drop) only hides the late wake-ups and lets the delay grow for a moment after each; joining the device's audio workgroup (macOS 11+, `os_workgroup`) needs the device's own handle from cpal, which 0.15.3 does not give; rtkit over D-Bus on Linux adds a D-Bus client crate.
+
 ## R4 — The effects (constitution VIII: deterministic, explainable)
 
 All the effects are written in plain Java in the audio engine, with no new library and no recorded sound of commercial gear (FR-018). Each one is a pure class `process(float[] in, float[] out, int n)` with its own state, tested on synthetic signals.

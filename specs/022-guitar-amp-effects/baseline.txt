@@ -89,3 +89,15 @@ T035: endurance, the full chain of T034 on a device paced by the clock: goal NOT
   system scheduling the Java thread (normal priority) more than two blocks (5.3 ms) late. The same holds for the native device, whose
   Java thread reads the input ring. The usual remedy is a real-time audio thread (macOS time-constraint policy or the device's
   workgroup, Windows MMCSS "Pro Audio", Linux SCHED_FIFO through rtkit) set from the native library: a design change left to the owner.
+T064-T068 (2026-11-02, owner's decision: a real-time audio thread, research R3 addendum):
+  cargo test 9 (7 + realtime 2). Seen red: the crate test at compile time (stub returning an error), then the read-back failed: asked a
+  computation of a quarter of a block, the kernel kept half (32000 ticks for 16000), so half is asked. macOS uses mach2 0.4.3, Linux libc
+  0.2.191 (both already in the lock file through cpal); Windows declares avrt by hand. Linux and Windows compiled by CI only (only the
+  aarch64-apple-darwin target is installed here).
+  T066 RealtimeEnduranceBenchmarkTest, 10 min: "real-time: time constraint, period 2.67 ms", 0 dropped blocks, 0 silent reads,
+  0 over-budget blocks, heap -0.07 MB, worst time between two reads 1.1 ms (18 ms on the normal thread). SC-006 met on macOS.
+  T067 native probe through the owner's Samson Q2U (USB, 48 kHz) to the built-in speakers (44.1 kHz), real-time thread on:
+  26.4 / 32.5 / 43.5 ms at 64 / 128 / 256 frames, estimates within 0.4 / 1.1 / 1.4 ms, spreads under 1.3 ms
+  (benchmark/native-probe-usb.md). At 128 frames 32.5 ms, above the owner's 30 ms ceiling with the built-in speakers.
+  T068 gate, mvn -o -e clean verify -P native-modules: BUILD SUCCESS, audio-engine 433, practice 1408 (12 skipped), cargo 9;
+  swt-gui-tests practice 67. git diff on the test folders: additions only.

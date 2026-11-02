@@ -14,7 +14,7 @@ Today the audio engine only listens. `CaptureService` reads the practice input i
 2. **The sound's own input (R2).**
    - The native device opens the practice input itself, beside the recognition's capture, and the output.
    - `CaptureService` is not touched: the recognition sees exactly what it sees today (FR-003, SC-002), checked on the recorded inputs and on the datasets.
-3. **A real-time thread (R3)** reads the native input, runs the chain and writes to the chosen output. It never allocates, locks or logs, the knobs ramp inside each block, and the output stage fades, limits and clamps (FR-006, FR-010).
+3. **A real-time thread (R3)** reads the native input, runs the chain and writes to the chosen output. Since 2026-11-02 the native library gives it a real-time policy when the device opens (R3 addendum: Mach time constraint on macOS, MMCSS on Windows, SCHED_FIFO on Linux when allowed). It never allocates, locks or logs, the knobs ramp inside each block, and the output stage fades, limits and clamps (FR-006, FR-010).
 4. **The effects (R4).** A noise gate, compressor, overdrive, distortion, amp (clean, crunch, high gain, with a 3-band tone stack), cabinet curve, chorus, echo and reverb. All are plain deterministic Java, the project's own, and tested on synthetic signals.
 5. **The practice side.**
    - The *Amp and effects* window, opened from the practice window and the palette (R7).
