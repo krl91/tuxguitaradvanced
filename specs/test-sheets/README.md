@@ -24,6 +24,7 @@ Ces fiches regroupent **tout ce qui reste à tester par une personne** dans les 
 | [F09](F09-mvp-acceptation.md) | 001 MVP, recette | T049, T054, T062, T069, T072, T075, T096, T097, T082 | guitare + micro intégré + Rocksmith | 60-90 min (en plusieurs fois) | Le plus long ; une partie du comportement a évolué depuis (signalé dans la fiche) |
 | [F10](F10-palette-ecartee.md) | 017 la palette s'écarte de la partition | T021 | guitare (+ Rocksmith) | 15 min | Sans focus, sans allers-retours |
 | [F11](F11-feu-partition.md) | 019 le feu sur la partition et l'onglet Avancé | T048 | guitare (+ Rocksmith) | 25 min | Porte de la spec 019, avant la prochaine version |
+| [F12](F12-ampli-effets.md) | 022 la guitare par un ampli et des pédales | T060, T029 | guitare + Rocksmith + casque filaire (+ micro intégré) | 30 min (+ 1 h de pratique) | Porte de la spec 022, avant la prochaine version |
 
 ## Ce qui reste ouvert mais n'est pas une fiche pour toi seul
 

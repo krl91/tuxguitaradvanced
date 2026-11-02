@@ -312,11 +312,11 @@ Then Phase 7 (the native device) comes before US1's device task T024.
 
 ## Phase 8: Polish & cross-cutting concerns
 
-- [ ] T055 [P] Describe the sound, the *Amp and effects* window, the chain, the sounds and the sound per score, the delay, headphones and feedback, and "the sound never changes the judging" in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md` (FR-017), with a screenshot of the window in `docs/images/features/` (taken on the built app).
-- [ ] T056 [P] Write the manual sheet `specs/test-sheets/F12-ampli-effets.md` (quickstart §3, plus rows for Linux and Windows testers: the delay shown, steps 2 to 5, a howl) and add it to `specs/test-sheets/README.md`.
-- [ ] T057 [P] Draft the release notes of the next version in `docs/release-notes/` (FR-015, SC-009, quickstart §4): the sound, the window, the sounds, headphones and feedback, the delay reached on the owner's Mac, and the call to Linux and Windows testers to report the delay shown and a howl through sheet F12. The version number is chosen at release time, and nothing is released before T060.
-- [ ] T058 Full gate: `mvn -o -e clean verify -P native-modules`, `swt-gui-tests` and T061 (the datasets' identity). Record the counts in `baseline.txt` and check the test folders show additions only.
-- [ ] T059 Write `specs/022-guitar-amp-effects/final-report.md`:
+- [ ] T055 [P] (text done 2026-11-02; the screenshot waits for the built application at T060) Describe the sound, the *Amp and effects* window, the chain, the sounds and the sound per score, the delay, headphones and feedback, and "the sound never changes the judging" in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md` (FR-017), with a screenshot of the window in `docs/images/features/` (taken on the built app).
+- [X] T056 [P] Write the manual sheet `specs/test-sheets/F12-ampli-effets.md` (quickstart §3, plus rows for Linux and Windows testers: the delay shown, steps 2 to 5, a howl) and add it to `specs/test-sheets/README.md`.
+- [X] T057 [P] Draft the release notes of the next version in `docs/release-notes/` (FR-015, SC-009, quickstart §4): the sound, the window, the sounds, headphones and feedback, the delay reached on the owner's Mac, and the call to Linux and Windows testers to report the delay shown and a howl through sheet F12. The version number is chosen at release time, and nothing is released before T060.
+- [X] T058 Full gate: `mvn -o -e clean verify -P native-modules`, `swt-gui-tests` and T061 (the datasets' identity). Record the counts in `baseline.txt` and check the test folders show additions only.
+- [X] T059 Write `specs/022-guitar-amp-effects/final-report.md`:
   - what was built, the R1 decision with its numbers, the tests added, the cost measured;
   - where each algorithm and each ready-made sound comes from (the project's own; public structures such as the Schroeder–Moorer reverb named, rewritten), confirming FR-018;
   - what is unverified (the delay with the cable until T060, Linux and Windows).

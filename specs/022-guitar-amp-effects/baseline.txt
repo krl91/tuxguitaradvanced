@@ -122,3 +122,12 @@ T048-T053 US4 (2026-11-02):
   The guard's cost (one 2048-point FFT every 10 ms on the engine's thread) is not in benchmark/chain-cost.md (the chain alone).
   T053 gate, mvn -e clean verify -P native-modules: BUILD SUCCESS, audio-engine 438, practice 1420 (12 skipped), cargo 9;
   swt-gui-tests practice 75. git diff on the test folders: additions only.
+T055-T059 Polish (2026-11-02):
+  T055 the section "Hearing your guitar through an amp and pedals" in docs/PRACTICE.md, -FR and -ES (labels as in the language files); the
+  bullet "not offered" of the Alpha list now points to it. The screenshot of the window is not taken: it needs the built application
+  launched beside the owner's open TuxGuitar; left for the owner's session (T060), T055 stays open.
+  T056 sheet specs/test-sheets/F12-ampli-effets.md (15 steps, rows X1 to X4 for Linux and Windows), listed in the README.
+  T057 draft docs/release-notes/next-amp-and-effects.md (version chosen at release, counts of T058 and the owner's gate to fill).
+  T058 mvn -o -e clean verify -P native-modules: BUILD SUCCESS, audio-engine 438, practice 1420 (12 skipped), cargo 9; swt-gui-tests
+  practice 75; T061 DatasetRecognitionIdentityTest (196 s, datasets present): outcomes.csv 943, report.txt 64,
+  guitarset-chords-outcomes.csv 301, technique-report.txt 29, owner-chords.txt 46, all identical. Test folders: additions only.
