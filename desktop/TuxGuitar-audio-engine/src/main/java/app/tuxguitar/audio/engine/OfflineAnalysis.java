@@ -13,6 +13,9 @@ import app.tuxguitar.audio.engine.analysis.PitchEstimate;
 import app.tuxguitar.audio.engine.analysis.PitchEstimator;
 import app.tuxguitar.audio.engine.analysis.PolyphonicAnalyzer;
 import app.tuxguitar.audio.engine.analysis.SpectrumFrame;
+import app.tuxguitar.audio.engine.nativeengine.FrameRecords;
+import app.tuxguitar.audio.engine.nativeengine.NativeParameters;
+import app.tuxguitar.audio.engine.nativeengine.NativeRecognitionLibrary;
 import app.tuxguitar.audio.engine.settings.PitchEngineCatalog;
 import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionSettings;
@@ -46,6 +49,9 @@ public final class OfflineAnalysis {
 	 */
 	public static List<AnalysisFrame> analyze(float[] mono, int sampleRate, RecognitionSettings settings, boolean spectrum, int[] attackCandidates,
 			app.tuxguitar.audio.engine.analysis.HopListener hops) {
+		if( PitchEngineCatalog.resolveKind(settings) == PitchEngineCatalog.Kind.NATIVE ) {
+			return analyzeNative(mono, sampleRate, settings, spectrum, attackCandidates, hops);
+		}
 		LevelAnalyzer levels = AudioEngine.levelAnalyzer(settings);
 		ArticulationDetector articulation = AudioEngine.articulationDetector(settings);
 		PitchEstimator estimator = PitchEngineCatalog.resolve(settings.get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate);
@@ -86,6 +92,27 @@ public final class OfflineAnalysis {
 			SpectrumFrame frameSpectrum = (polyphonic != null ? polyphonic.analyze() : null);
 			frames.add(new AnalysisFrame(processed * 1_000_000_000L / sampleRate, level.getRmsDbfs(), level.getPeakDbfs(), level.getClippedRatio(), level.getLevelState(),
 					pitch.isPitched() ? pitch.getF0Hz() : Double.NaN, pitch.getProbability(), onset, frameSpectrum, null, null, evidence));
+		}
+		return frames;
+	}
+
+	/** The native engine (spec 023, contract §3): the whole recording in one call, read back record by record; the listener gets the same hops. */
+	private static List<AnalysisFrame> analyzeNative(float[] mono, int sampleRate, RecognitionSettings settings, boolean spectrum, int[] attackCandidates,
+			app.tuxguitar.audio.engine.analysis.HopListener hops) {
+		if( hops != null ) {
+			hops.configure(sampleRate);
+			float[] hop = new float[HOP];
+			for( int offset = 0 ; offset + HOP <= mono.length ; offset += HOP ) {
+				System.arraycopy(mono, offset, hop, 0, HOP);
+				hops.hop(hop, 0, HOP);
+			}
+		}
+		float[] records = NativeRecognitionLibrary.analyze(mono, sampleRate, NativeParameters.of(settings), spectrum, attackCandidates, null, null, null);
+		List<AnalysisFrame> frames = new ArrayList<AnalysisFrame>();
+		int offset = 0;
+		while( offset < records.length ) {
+			frames.add(FrameRecords.read(records, offset));
+			offset += FrameRecords.length(records, offset);
 		}
 		return frames;
 	}

@@ -46,7 +46,51 @@ public final class NativeRecognitionLibrary {
 	/** Idempotent. */
 	public static native void close(long handle);
 
-	/** Offline: the records of the whole recording, window 2048 and hop 256, no front end; deterministic. */
-	public static native float[] analyze(float[] mono, int rate, float[] parameters, boolean spectrum, int[] attackCandidates, int[] chordRequired,
-			int[] chordTolerated);
+	/** The strum clip measure's reading: verdict ordinal, clipped share, mean level in dBFS (NaN before a verdict). */
+	public static native float[] strumClip(long handle);
+
+	/** Starts a new strum clip check. */
+	public static native void resetStrumClip(long handle);
+
+	/** The dropped blocks, then the median and 99th percentile of one hop's analysis cost in nanoseconds since open. */
+	public static native float[] stats(long handle);
+
+	/**
+	 * Offline: the records of the whole recording, window 2048 and hop 256, no front end; deterministic. {@code expectedPitches} (null or empty: none)
+	 * adds the target evidence, for the parity tests; {@code chordRequired} null: no chord evidence.
+	 */
+	public static native float[] analyze(float[] mono, int rate, float[] parameters, boolean spectrum, int[] attackCandidates, int[] expectedPitches,
+			int[] chordRequired, int[] chordTolerated);
+
+	/** Test only: the hops of {@code mono} (hop 256) after the native front end set from {@code parameters}. */
+	public static native float[] frontEnd(float[] mono, int rate, float[] parameters);
+
+	/** Test only: the final reading of the native strum clip measure fed {@code mono} hop by hop (hop 256), as {@link #strumClip}. */
+	public static native float[] strumClipOffline(float[] mono, int rate, float[] parameters);
+
+	/*
+	 * The analysis of a stream captured by Java, hop by hop (amendment of 2026-11-03, owner, during T039): with the native engine, a Java capture (the
+	 * test inputs, or the Java capture when the native one cannot open) is analysed by the same native stages as the offline analysis, so the two give
+	 * the same frames. No front end (Java applies it before the hop), no timestamps (Java dates the frames).
+	 */
+
+	/** A per-hop analysis at {@code rate} with these parameters ({@link NativeParameters}); closed by {@link #closeAnalysis}. */
+	public static native long openAnalysis(int rate, float[] parameters) throws NativeRecognitionException;
+
+	/** Spectrum on or off; switched on, it starts from an empty history (as {@code AnalysisService}). */
+	public static native void setAnalysisSpectrum(long handle, boolean on);
+
+	/** The attack candidates (null or empty: off); each call starts the attack analysis afresh. */
+	public static native void setAnalysisAttackCandidates(long handle, int[] pitches);
+
+	/** The expected pitches of the target evidence (null or empty: none). */
+	public static native void setAnalysisExpectedPitches(long handle, int[] midi);
+
+	/** One hop of 256 samples: the length of the record written into {@code record}, 0 while the window is not full, -1 when it does not fit. */
+	public static native int analyzeHop(long handle, float[] hop, float[] record);
+
+	/** Forgets the window and every history (a gap in the input). */
+	public static native void resetAnalysis(long handle);
+
+	public static native void closeAnalysis(long handle);
 }

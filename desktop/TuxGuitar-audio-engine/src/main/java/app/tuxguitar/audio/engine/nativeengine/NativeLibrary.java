@@ -13,7 +13,7 @@ public final class NativeLibrary {
 
 	/**
 	 * A folder of the crate's builds, given to the tests only ({@code -Dtuxguitar.native.library.dir}): the library is taken from
-	 * {@code <folder>/<target>/release/} or {@code <folder>/release/} when found there. Empty or unset: {@code java.library.path}, as in the application.
+	 * the newest of {@code <folder>/<target>/release/} and {@code <folder>/release/}. Empty or unset: {@code java.library.path}, as in the application.
 	 */
 	public static final String DIRECTORY_PROPERTY = "tuxguitar.native.library.dir";
 
@@ -26,18 +26,18 @@ public final class NativeLibrary {
 		}
 		String file = System.mapLibraryName(NAME);
 		java.io.File root = new java.io.File(directory.trim());
+		java.io.File newest = null;
 		java.io.File[] targets = root.listFiles(java.io.File::isDirectory);
 		if (targets != null) {
-			java.util.Arrays.sort(targets);
 			for (java.io.File target : targets) {
-				java.io.File candidate = new java.io.File(new java.io.File(target, "release"), file);
-				if (candidate.isFile()) {
-					return candidate;
+				for (java.io.File candidate : new java.io.File[] { new java.io.File(new java.io.File(target, "release"), file), new java.io.File(target, file) }) {
+					if (candidate.isFile() && (newest == null || candidate.lastModified() > newest.lastModified())) {
+						newest = candidate;
+					}
 				}
 			}
 		}
-		java.io.File host = new java.io.File(new java.io.File(root, "release"), file);
-		return host.isFile() ? host : null;
+		return newest;
 	}
 
 	/** Loads the library once; null when it is there, else the reason it could not be loaded. */

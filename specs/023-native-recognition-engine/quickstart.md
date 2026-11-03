@@ -31,13 +31,14 @@ Expected: every stage's parity within the tolerances of research R3.
 ## 3. Datasets, both engines
 
 ```sh
+LIB=$PWD/../native-modules/tuxguitar-monitor-native/target   # after cargo build --release --locked there
 for e in java native; do
-  mvn test -pl ../../TuxGuitar-practice -am -Dgroups=benchmark -DexcludedGroups= -Dtuxguitar.recognition.engine=$e \
+  mvn test -pl ../../TuxGuitar-practice -am -Dtuxguitar.recognition.engine=$e -Dtuxguitar.native.library.dir=$LIB \
     -Dtest='DatasetBenchmarkTest,GuitarSetChordBenchmarkTest,TechniqueDatasetBenchmarkTest,OwnerChordsBenchmarkTest,BassRecognitionBenchmarkTest' \
     -Dsurefire.failIfNoSpecifiedTests=false
-  # copy target/dataset-benchmark/ into benchmark/after-$e/
+  # copy target/dataset-benchmark/ and specs/003-arcade-mode/benchmark/bass-recognition-2026-10-08.txt into benchmark/after-$e/
 done
-mvn test -pl ../../TuxGuitar-practice -am -Dgroups=benchmark -DexcludedGroups= -Dtest=EngineComparisonReportTest -Dsurefire.failIfNoSpecifiedTests=false
+mvn test -pl ../../TuxGuitar-practice -am -Dtest=EngineComparisonReportTest -Dsurefire.failIfNoSpecifiedTests=false
 ```
 
 Expected: `benchmark/comparison.md` has every SC-001 line at "pass", and SC-004 reported as reached or not.
@@ -47,6 +48,9 @@ Expected: `benchmark/comparison.md` has every SC-001 line at "pass", and SC-004 
 ```sh
 mvn -e clean verify -P native-modules                                    # Automatic → native
 mvn test -pl ../../TuxGuitar-audio-engine,../../TuxGuitar-practice,../../TuxGuitar-tuner-next -am -Dtuxguitar.recognition.engine=java
+# until T064 (Automatic = Java), the second pass is the native one:
+mvn test -pl ../../TuxGuitar-audio-engine,../../TuxGuitar-practice,../../TuxGuitar-tuner-next -am -Dtuxguitar.recognition.engine=native \
+  -Dtuxguitar.native.library.dir=$PWD/../native-modules/tuxguitar-monitor-native/target
 ```
 
 Expected: both green, with no committed test changed.

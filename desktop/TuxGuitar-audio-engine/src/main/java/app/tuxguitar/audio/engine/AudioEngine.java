@@ -100,6 +100,11 @@ public final class AudioEngine {
 		this.analysisService = new AnalysisService(context, this.ringBuffer, levelAnalyzer, articulationDetector,
 				estimatorFactory.apply(INITIAL_SAMPLE_RATE), INITIAL_SAMPLE_RATE,
 				TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE, TarsosFastYinEstimator.DEFAULT_HOP_SIZE);
+		PitchEstimator initial = estimatorFactory.apply(INITIAL_SAMPLE_RATE);
+		float[] nativeParameters = nativeParameters(initial, levelAnalyzer, articulationDetector);
+		if( nativeParameters != null ) {
+			this.analysisService.reconfigure(INITIAL_SAMPLE_RATE, initial, 0L, levelAnalyzer, articulationDetector, nativeParameters);
+		}
 		this.captureService = new CaptureService(context, catalog, selection, this.ringBuffer);
 		this.captureService.setFormatListener(format -> {
 			formatNegotiated(format);
@@ -314,14 +319,34 @@ public final class AudioEngine {
 
 	void rebuildAnalysis(int sampleRate) {
 		this.lastSampleRate = sampleRate;
+		PitchEstimator estimator = this.estimatorFactory.apply(sampleRate);
 		if( this.settingsStore == null ) {
-			this.analysisService.reconfigure(sampleRate, this.estimatorFactory.apply(sampleRate),
-					this.ringBuffer.getWrittenSampleCount());
+			LevelAnalyzer levels = this.analysisService.getRequestedLevelAnalyzer();
+			ArticulationDetector articulation = this.analysisService.getRequestedArticulationDetector();
+			this.analysisService.reconfigure(sampleRate, estimator, this.ringBuffer.getWrittenSampleCount(), levels, articulation,
+					nativeParameters(estimator, levels, articulation));
 			return;
 		}
 		RecognitionSettings settings = this.settingsStore.get();
-		this.analysisService.reconfigure(sampleRate, this.estimatorFactory.apply(sampleRate),
-				this.ringBuffer.getWrittenSampleCount(), levelAnalyzer(settings), articulationDetector(settings));
+		LevelAnalyzer levels = levelAnalyzer(settings);
+		ArticulationDetector articulation = articulationDetector(settings);
+		this.analysisService.reconfigure(sampleRate, estimator, this.ringBuffer.getWrittenSampleCount(), levels, articulation,
+				nativeParameters(estimator, levels, articulation));
+	}
+
+	/**
+	 * The parameters of the native per-hop analysis when the native engine is the one these settings run and the estimator is the catalog's Java one it
+	 * stands for (spec 023); null otherwise (the Java stages, and any other estimator, such as a test's).
+	 */
+	private float[] nativeParameters(PitchEstimator estimator, LevelAnalyzer levels, ArticulationDetector articulation) {
+		if( !(estimator instanceof TarsosFastYinEstimator) ) {
+			return null;
+		}
+		RecognitionSettings settings = (this.settingsStore != null ? this.settingsStore.get() : RecognitionSettings.defaults());
+		if( PitchEngineCatalog.resolveKind(settings) != PitchEngineCatalog.Kind.NATIVE ) {
+			return null;
+		}
+		return app.tuxguitar.audio.engine.nativeengine.NativeParameters.of(levels, articulation);
 	}
 
 	/**

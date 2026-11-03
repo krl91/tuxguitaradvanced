@@ -23,12 +23,21 @@ Loading:
 | `float[] strumClip(long h)` / `void resetStrumClip(long h)` | any | The reading of the native strum clip measure (verdict, clipped share, RMS dBFS), and its restart. It replaces a Java `StrumClipMeter` on the native backend (research R2). |
 | `float[] stats(long h)` | any | The dropped blocks, and the median and 99th percentile of one hop's analysis cost in nanoseconds since open (research R9). |
 | `float[] frontEnd(float[] mono, int rate, float[] parameters)` | any | Test only: the hops after the native front end, for the parity test (offline `analyze` has no front end, as today). |
-| `float[] analyze(float[] mono, int rate, float[] parameters, boolean spectrum, int[] attackCandidates, int[] chordRequired, int[] chordTolerated)` | any | Offline: the records of the whole recording. Deterministic. The window is 2048 and the hop 256, as `OfflineAnalysis`. |
+| `float[] analyze(float[] mono, int rate, float[] parameters, boolean spectrum, int[] attackCandidates, int[] expectedPitches, int[] chordRequired, int[] chordTolerated)` | any | Offline: the records of the whole recording. Deterministic. The window is 2048 and the hop 256, as `OfflineAnalysis`. `expectedPitches` (null or empty = none) adds the target evidence, for the parity test only: `OfflineAnalysis` passes null, as it has no target evidence today. |
+| `float[] strumClipOffline(float[] mono, int rate, float[] parameters)` | any | Test only: the native strum clip measure fed the recording hop by hop (hop 256), giving its final reading (verdict, clipped share, RMS dBFS), for the parity test. |
+| `long openAnalysis(int rate, float[] parameters)` | the Java analysis thread | Per-hop analysis of a stream captured by Java: the offline stages fed one hop at a time, no front end, no timestamps (Java dates the frames). Throws `NativeRecognitionException` on bad parameters or rate. |
+| `void setAnalysisSpectrum(long h, boolean on)` / `void setAnalysisAttackCandidates(long h, int[] pitches)` / `void setAnalysisExpectedPitches(long h, int[] midi)` | the Java analysis thread | As the requests of `AnalysisService`: the spectrum starts afresh when switched on, each candidates call restarts the attack analysis. |
+| `int analyzeHop(long h, float[] hop, float[] record)` | the Java analysis thread | One hop of 256 samples: the record's length, 0 while the window is not full, −1 when it does not fit. No allocation. |
+| `void resetAnalysis(long h)` / `void closeAnalysis(long h)` | the Java analysis thread | A gap in the input: the window and every history forgotten. Close frees the handle, once. |
 
 Real time:
 - In the cpal callback: copy the block and its arrival into a ring; no allocation, no lock and no system call apart from the clock read.
 - In the analysis thread's loop: no allocation and no lock.
 - The waits are on the Java side only: `nextFrames` and `nextHops`.
+
+Amendment (owner, 2026-11-03, during T015): `analyze` takes the expected pitches and `strumClipOffline` is added, so the target evidence (T022) and the strum clip measure (T024) are compared with Java on the owner's recordings offline.
+
+Amendment (owner, 2026-11-03, during T039): the per-hop analysis (`openAnalysis` … `closeAnalysis`) is added. With the native engine, `AnalysisService` runs it in place of its Java stages when the estimator is the catalog's FastYin (the test inputs, or a Java capture), so a Java capture analysed live gives the frames of `OfflineAnalysis` bit for bit, as `LiveEngineEquivalenceTest` requires in the native pass. The native YIN gives its f0 and confidence as floats, as the Java estimator does.
 
 ## 2. Java seam: `AE/backend/RecognitionBackend`
 

@@ -1,8 +1,19 @@
 //! The native recognition's analysis (spec 023): the stages of the audio engine's Java analysis, ported so they give the same frames, and
 //! the packed record that carries a frame to Java. Every stage is built once and then never allocates.
 
+pub mod articulation;
+pub mod attack;
+pub mod chord;
+pub mod comb;
 pub mod fft;
 pub mod frame;
+pub mod front_end;
+pub mod level;
+pub mod pipeline;
+pub mod polyphonic;
+pub mod strum_clip;
+pub mod target;
+pub mod yin;
 
 /// The settings sent by Java's `NativeParameters` as a `float[]`, at these indices.
 pub const LEVEL_TOO_LOW: usize = 0;
@@ -56,6 +67,31 @@ pub struct Parameters {
 }
 
 impl Parameters {
+    /// The values `NativeParameters.of(RecognitionSettings.defaults())` sends.
+    pub fn defaults() -> Parameters {
+        let mut values = [0f32; LENGTH];
+        values[LEVEL_TOO_LOW] = -40.0;
+        values[LEVEL_TOO_HIGH] = -6.0;
+        values[LEVEL_CLIP_SAMPLE] = 0.99;
+        values[LEVEL_CLIP_RATIO] = 0.10;
+        values[ONSET_FLUX_FACTOR] = 1.5;
+        values[ONSET_FLUX_OFFSET] = 5.0;
+        values[ONSET_MIN_LEVEL] = -50.0;
+        values[ONSET_REFRACTORY] = 12.0;
+        values[ONSET_GATE] = 4.5;
+        values[ONSET_PRE_FIRST] = 19.0;
+        values[ONSET_PRE_LAST] = 2.0;
+        values[ONSET_POST_FIRST] = 4.0;
+        values[ONSET_POST_LAST] = 13.0;
+        values[FRONT_GAIN] = 1.0;
+        values[STRUM_ARM_FLOOR] = -40.0;
+        values[STRUM_CLIP_SAMPLE] = 0.99;
+        values[STRUM_WEAK] = -40.0;
+        values[STRUM_LOUD] = -6.0;
+        values[YIN_THRESHOLD] = 0.20;
+        Parameters::from_slice(&values).unwrap()
+    }
+
     /// The values at their indices, or None when the array is too short.
     pub fn from_slice(values: &[f32]) -> Option<Parameters> {
         if values.len() < LENGTH {

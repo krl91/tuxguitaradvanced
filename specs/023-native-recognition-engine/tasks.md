@@ -78,42 +78,42 @@
 
 **Independent test**: the parity tests within R3's tolerances, then the dataset benchmarks with `-Dtuxguitar.recognition.engine=native` against `benchmark/before/`.
 
-- [ ] T015 [US1] Declare in `AE/nativeengine/NativeRecognitionLibrary.java` and stub in `CRATE/src/jni_recognition.rs` the three entries of contract §1 added at analysis: `frontEnd` (parity test only), `strumClip`/`resetStrumClip` and `stats`. Nothing else is added to the contract during the implementation without the owner.
+- [X] T015 [US1] Declare in `AE/nativeengine/NativeRecognitionLibrary.java` and stub in `CRATE/src/jni_recognition.rs` the three entries of contract §1 added at analysis: `frontEnd` (parity test only), `strumClip`/`resetStrumClip` and `stats`. Nothing else is added to the contract during the implementation without the owner.
 
 ### Tests first (Rust tests in each module, and one Java parity test per stage)
 
 Parity recordings: the audio-engine test resources already used by `LiveEngineEquivalenceTest`, plus `~/tuxguitar-datasets` (IDMT, GuitarSet, the owner's chords) when present, skipped by assumption otherwise as the dataset tests do. Shared helper: `AET/nativeengine/ParityRecordings.java`.
 
-- [ ] T016 [P] [US1] Create `AET/nativeengine/FrontEndParityTest.java` and the Rust tests of `CRATE/src/analysis/front_end.rs`: gain, high-pass, noise gate and spectral subtraction, hop by hop, within 1e-4 relative of `AE/frontend/FrontEnd`, with the default profile and a profile with every stage on.
-- [ ] T017 [P] [US1] Create `AET/nativeengine/LevelParityTest.java` and the Rust tests of `level.rs`: `rmsDbfs`, `peakDbfs` within 0.01 dB, `clippedRatio` within 1e-4, the same `levelState` on every frame.
-- [ ] T018 [P] [US1] Create `AET/nativeengine/PitchParityTest.java` and the Rust tests of `yin.rs` (difference function by FFT, cumulative mean normalised difference, absolute threshold, parabolic interpolation, from the paper): within 1 cent of `TarsosFastYinEstimator` when both are pitched; the same pitched/unpitched decision on ≥ 99.9 % of the frames; the same confidence within 1e-4. Synthetic tests for guitar and bass ranges and every tuning of the practice (lowest string of each tuning, 5-string bass B0), at 44.1, 48, 88.2 and 96 kHz.
-- [ ] T019 [P] [US1] Create `AET/nativeengine/OnsetParityTest.java` and the Rust tests of `articulation.rs`: the same onset hops as `ArticulationDetector`, in normal (`DECISION_DELAY_HOPS = 13`) and fast (8) mode.
-- [ ] T020 [P] [US1] Create `AET/nativeengine/SpectrumParityTest.java` and the Rust tests of `polyphonic.rs` (`PolyphonicAnalyzer`, `HarmonicComb`, `NnlsSolver`): band dB, salience, candidates and peaks within 1e-4 relative, the same candidate set on every frame.
-- [ ] T021 [P] [US1] Create `AET/nativeengine/AttackEvidenceParityTest.java` and the Rust tests of `attack.rs`: every `AttackEvidence` field within 1e-4 relative, for the candidate sets used by the practice's chord and note judges.
-- [ ] T022 [P] [US1] Create `AET/nativeengine/TargetEvidenceParityTest.java` and the Rust tests of `target.rs`: the hypotheses (midi, score) within 1e-4 and the same window in ms as `ExpectedPitchVerifier`.
-- [ ] T023 [P] [US1] Create `AET/nativeengine/ChordEvidenceParityTest.java` and the Rust tests of `chord.rs`: for the chords of the owner's set and GuitarSet, every field of `ChordEvidence.evaluate(spectrum, required, tolerated)` (pitches with salience, independent salience, harmonic-of-lower, mean and unique amplitude, unique partials, residual candidates) within 1e-4 relative.
-- [ ] T024 [P] [US1] Create `AET/nativeengine/StrumClipParityTest.java` and the Rust tests of `strum_clip.rs`: the same verdict, clipped share and mean level as `StrumClipMeter` on the parity recordings and on a synthetic clipped strum.
-- [ ] T025 [P] [US1] Extend the allocation check with a new Rust test in `CRATE/src/no_allocation.rs`'s test module: one second of hops through every stage (spectrum on, candidates set, pitches and chord expected) allocates nothing after warm-up.
-- [ ] T026 [P] [US1] Create `AET/OfflineAnalysisEngineDispatchTest.java` (contract §3): with `-Dtuxguitar.recognition.engine=java` (or `fastyin`) the frames are identical, field by field, to today's loop; with `native` they come from `NativeRecognitionLibrary.analyze`; a `HopListener` gets the same hops in both; `native` with the library missing gives Java and one log line; the existing signatures are unchanged.
+- [X] T016 [P] [US1] Create `AET/nativeengine/FrontEndParityTest.java` and the Rust tests of `CRATE/src/analysis/front_end.rs`: gain, high-pass, noise gate and spectral subtraction, hop by hop, within 1e-4 relative of `AE/frontend/FrontEnd`, with the default profile and a profile with every stage on.
+- [X] T017 [P] [US1] Create `AET/nativeengine/LevelParityTest.java` and the Rust tests of `level.rs`: `rmsDbfs`, `peakDbfs` within 0.01 dB, `clippedRatio` within 1e-4, the same `levelState` on every frame.
+- [X] T018 [P] [US1] Create `AET/nativeengine/PitchParityTest.java` and the Rust tests of `yin.rs` (difference function by FFT, cumulative mean normalised difference, absolute threshold, parabolic interpolation, from the paper): within 1 cent of `TarsosFastYinEstimator` when both are pitched; the same pitched/unpitched decision on ≥ 99.9 % of the frames; the same confidence within 1e-4. Synthetic tests for guitar and bass ranges and every tuning of the practice (lowest string of each tuning, 5-string bass B0), at 44.1, 48, 88.2 and 96 kHz.
+- [X] T019 [P] [US1] Create `AET/nativeengine/OnsetParityTest.java` and the Rust tests of `articulation.rs`: the same onset hops as `ArticulationDetector`, in normal (`DECISION_DELAY_HOPS = 13`) and fast (8) mode.
+- [X] T020 [P] [US1] Create `AET/nativeengine/SpectrumParityTest.java` and the Rust tests of `polyphonic.rs` (`PolyphonicAnalyzer`, `HarmonicComb`, `NnlsSolver`): band dB, salience, candidates and peaks within 1e-4 relative, the same candidate set on every frame.
+- [X] T021 [P] [US1] Create `AET/nativeengine/AttackEvidenceParityTest.java` and the Rust tests of `attack.rs`: every `AttackEvidence` field within 1e-4 relative, for the candidate sets used by the practice's chord and note judges.
+- [X] T022 [P] [US1] Create `AET/nativeengine/TargetEvidenceParityTest.java` and the Rust tests of `target.rs`: the hypotheses (midi, score) within 1e-4 and the same window in ms as `ExpectedPitchVerifier`.
+- [X] T023 [P] [US1] Create `AET/nativeengine/ChordEvidenceParityTest.java` and the Rust tests of `chord.rs`: for the chords of the owner's set and GuitarSet, every field of `ChordEvidence.evaluate(spectrum, required, tolerated)` (pitches with salience, independent salience, harmonic-of-lower, mean and unique amplitude, unique partials, residual candidates) within 1e-4 relative.
+- [X] T024 [P] [US1] Create `AET/nativeengine/StrumClipParityTest.java` and the Rust tests of `strum_clip.rs`: the same verdict, clipped share and mean level as `StrumClipMeter` on the parity recordings and on a synthetic clipped strum.
+- [X] T025 [P] [US1] Extend the allocation check with a new Rust test in `CRATE/src/no_allocation.rs`'s test module: one second of hops through every stage (spectrum on, candidates set, pitches and chord expected) allocates nothing after warm-up.
+- [X] T026 [P] [US1] Create `AET/OfflineAnalysisEngineDispatchTest.java` (contract §3): with `-Dtuxguitar.recognition.engine=java` (or `fastyin`) the frames are identical, field by field, to today's loop; with `native` they come from `NativeRecognitionLibrary.analyze`; a `HopListener` gets the same hops in both; `native` with the library missing gives Java and one log line; the existing signatures are unchanged.
 
 ### Implementation (in this order: each stage feeds the next)
 
-- [ ] T027 [US1] Write `CRATE/src/analysis/front_end.rs` and the `frontEnd` JNI entry in `jni_recognition.rs` (T016 green).
-- [ ] T028 [US1] Write `level.rs` (T017 green).
-- [ ] T029 [US1] Write `yin.rs` from the paper, with the threshold and window of the current setting (T018 green). Write in its header the paper reference and that TarsosDSP was not used.
-- [ ] T030 [US1] Write `articulation.rs` (T019 green).
-- [ ] T031 [US1] Write `polyphonic.rs` (T020 green).
-- [ ] T032 [US1] Write `attack.rs` and `target.rs` (T021, T022 green).
-- [ ] T033 [US1] Write `chord.rs` (T023 green).
-- [ ] T034 [US1] Write `strum_clip.rs` (T024 green).
-- [ ] T035 [US1] Write the offline pipeline and `analyze(...)` in `jni_recognition.rs`: the stages in the order of `AE/OfflineAnalysis` (window 2048, hop 256), deterministic, records through `frame.rs`; T025 green.
-- [ ] T036 [US1] Make `AE/OfflineAnalysis.analyze` dispatch on `PitchEngineCatalog.resolveKind` (contract §3): NATIVE → `NativeRecognitionLibrary.analyze` then `FrameRecords`; JAVA → today's loop unchanged (T026 green).
+- [X] T027 [US1] Write `CRATE/src/analysis/front_end.rs` and the `frontEnd` JNI entry in `jni_recognition.rs` (T016 green).
+- [X] T028 [US1] Write `level.rs` (T017 green).
+- [X] T029 [US1] Write `yin.rs` from the paper, with the threshold and window of the current setting (T018 green). Write in its header the paper reference and that TarsosDSP was not used.
+- [X] T030 [US1] Write `articulation.rs` (T019 green).
+- [X] T031 [US1] Write `polyphonic.rs` (T020 green).
+- [X] T032 [US1] Write `attack.rs` and `target.rs` (T021, T022 green).
+- [X] T033 [US1] Write `chord.rs` (T023 green).
+- [X] T034 [US1] Write `strum_clip.rs` (T024 green).
+- [X] T035 [US1] Write the offline pipeline and `analyze(...)` in `jni_recognition.rs`: the stages in the order of `AE/OfflineAnalysis` (window 2048, hop 256), deterministic, records through `frame.rs`; T025 green.
+- [X] T036 [US1] Make `AE/OfflineAnalysis.analyze` dispatch on `PitchEngineCatalog.resolveKind` (contract §3): NATIVE → `NativeRecognitionLibrary.analyze` then `FrameRecords`; JAVA → today's loop unchanged (T026 green).
 
 ### Dataset gate (SC-001, FR-002, FR-007, FR-013)
 
-- [ ] T037 [US1] Create `TST/dataset/EngineComparisonReportTest.java`, `@Tag("benchmark")`: it reads `SPEC/benchmark/before/`, `after-java/` and `after-native/` and writes `SPEC/benchmark/comparison.md` with every SC-001 line (before, Java after, native after, pass/fail), the 942 tests' OK→KO list, the SC-002 offline delay lines and the SC-004 lines ("reached" / "not reached"). It fails on any SC-001 line lower with the native engine, on any SC-002 offline line not met (native GuitarSet chord delay median > 103 ms summed or > 149 ms microphone, or higher than the Java engine's on the same run), on any OK→KO, and if a Java outcome file differs from `before/` (FR-007); the files compared are `outcomes.csv` and `guitarset-chords-outcomes.csv` of `target/dataset-benchmark/`, copied into each folder. Seen red: `after-*` missing.
-- [ ] T038 [US1] Run the five dataset benchmarks with `-Dtuxguitar.recognition.engine=java` and then `native` (quickstart §3), copy each `target/dataset-benchmark/` into `SPEC/benchmark/after-java/` and `after-native/`, run T037. Any failing line: bug protocol on the native stage concerned (a test reproducing the difference first, at most 3 attempts), then report.
-- [ ] T039 [US1] Run the full gate twice: as is (Automatic = Java) and with `-Dtuxguitar.recognition.engine=native`. Every committed test must pass both ways, unchanged.
+- [X] T037 [US1] Create `TST/dataset/EngineComparisonReportTest.java`, `@Tag("benchmark")`: it reads `SPEC/benchmark/before/`, `after-java/` and `after-native/` and writes `SPEC/benchmark/comparison.md` with every SC-001 line (before, Java after, native after, pass/fail), the 942 tests' OK→KO list, the SC-002 offline delay lines and the SC-004 lines ("reached" / "not reached"). It fails on any SC-001 line lower with the native engine, on any SC-002 offline line not met (native GuitarSet chord delay median > 103 ms summed or > 149 ms microphone, or higher than the Java engine's on the same run), on any OK→KO, and if a Java outcome file differs from `before/` (FR-007); the files compared are `outcomes.csv` and `guitarset-chords-outcomes.csv` of `target/dataset-benchmark/`, copied into each folder. Seen red: `after-*` missing.
+- [X] T038 [US1] Run the five dataset benchmarks with `-Dtuxguitar.recognition.engine=java` and then `native` (quickstart §3), copy each `target/dataset-benchmark/` into `SPEC/benchmark/after-java/` and `after-native/`, run T037. Any failing line: bug protocol on the native stage concerned (a test reproducing the difference first, at most 3 attempts), then report.
+- [X] T039 [US1] Run the full gate twice: as is (Automatic = Java) and with `-Dtuxguitar.recognition.engine=native`. Every committed test must pass both ways, unchanged.
 
 **Checkpoint**: the native analysis matches Java on every recording and every dataset; commit.
 

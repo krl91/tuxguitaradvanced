@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import app.tuxguitar.audio.engine.frontend.FrontEnd;
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
+import app.tuxguitar.audio.engine.nativeengine.FrameRecords;
+import app.tuxguitar.audio.engine.nativeengine.NativeRecognitionLibrary;
 import app.tuxguitar.audio.engine.recognition.ExpectedPitchVerifier;
 import app.tuxguitar.audio.engine.recognition.TargetEvidence;
 import app.tuxguitar.thread.TGThreadManager;
@@ -33,9 +35,12 @@ public final class AnalysisService {
 		private final long discardUntil;
 		private final LevelAnalyzer levelAnalyzer;
 		private final ArticulationDetector articulationDetector;
+		/** Null: the Java stages; else the parameters of the native per-hop analysis that replaces them (spec 023, amendment of 2026-11-03). */
+		private final float[] nativeParameters;
 
 		private Configuration(int sampleRate, PitchEstimator pitchEstimator, long discardUntil,
-				LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector) {
+				LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector, float[] nativeParameters) {
+			this.nativeParameters = nativeParameters;
 			this.sampleRate = sampleRate;
 			this.pitchEstimator = pitchEstimator;
 			this.discardUntil = discardUntil;
@@ -84,6 +89,11 @@ public final class AnalysisService {
 	private int verifierRate;
 	private boolean running;
 	private boolean workerAlive;
+	/** The native per-hop analysis of the current configuration, 0 when the Java stages run; used by the worker only. */
+	private long nativeHandle;
+	private boolean nativeSpectrum;
+	private int[] nativeCandidates;
+	private int[] nativeExpected;
 
 	public AnalysisService(TGContext context, SampleRingBuffer ringBuffer, LevelAnalyzer levelAnalyzer,
 			PitchEstimator pitchEstimator, int sampleRate, int windowSize, int hopSize) {
@@ -102,7 +112,7 @@ public final class AnalysisService {
 		this.requestedArticulationDetector = articulationDetector;
 		this.windowSize = windowSize;
 		this.hopSize = hopSize;
-		this.configuration = new Configuration(sampleRate, pitchEstimator, 0L, levelAnalyzer, articulationDetector);
+		this.configuration = new Configuration(sampleRate, pitchEstimator, 0L, levelAnalyzer, articulationDetector, null);
 		this.pendingConfiguration = new AtomicReference<Configuration>();
 		this.listeners = new CopyOnWriteArrayList<Listener>();
 	}
@@ -175,6 +185,16 @@ public final class AnalysisService {
 	 */
 	public void reconfigure(int sampleRate, PitchEstimator pitchEstimator, long discardUntil,
 			LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector) {
+		reconfigure(sampleRate, pitchEstimator, discardUntil, levelAnalyzer, articulationDetector, null);
+	}
+
+	/**
+	 * Like the other overloads; {@code nativeParameters} not null makes the native per-hop analysis replace the Java stages (level, pitch, onset, spectrum,
+	 * attack and target evidence) with these parameters (spec 023): the front end and the hop listeners stay in Java. If the native analysis cannot open,
+	 * the Java stages run.
+	 */
+	public void reconfigure(int sampleRate, PitchEstimator pitchEstimator, long discardUntil,
+			LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector, float[] nativeParameters) {
 		if (sampleRate <= 0) {
 			throw new IllegalArgumentException("invalid sample rate");
 		}
@@ -184,7 +204,8 @@ public final class AnalysisService {
 		synchronized (this.reconfigureLock) {
 			this.requestedLevelAnalyzer = levelAnalyzer;
 			this.requestedArticulationDetector = articulationDetector;
-			this.pendingConfiguration.set(new Configuration(sampleRate, pitchEstimator, discardUntil, levelAnalyzer, articulationDetector));
+			this.pendingConfiguration.set(new Configuration(sampleRate, pitchEstimator, discardUntil, levelAnalyzer, articulationDetector,
+					nativeParameters != null ? nativeParameters.clone() : null));
 		}
 	}
 
@@ -243,6 +264,16 @@ public final class AnalysisService {
 	}
 
 	private void run() {
+		try {
+			openNative();
+			loop();
+		} finally {
+			closeNative();
+		}
+	}
+
+	private void loop() {
+		float[] record = new float[FrameRecords.CAPACITY];
 		float[] window = new float[this.windowSize];
 		float[] hop = new float[this.hopSize];
 		int windowFill = 0;
@@ -262,6 +293,8 @@ public final class AnalysisService {
 				this.configuration.articulationDetector.reset();
 				this.polyphonicAnalyzer = null;
 				this.attackAnalyzer = null;
+				closeNative();
+				openNative();
 				this.frontEnd.configure(this.configuration.sampleRate, this.hopSize);
 				for (HopEntry entry : this.hopListeners) {
 					entry.needsConfigure = true;
@@ -279,6 +312,9 @@ public final class AnalysisService {
 					this.polyphonicAnalyzer.reset();
 				}
 				this.attackAnalyzer = null;
+				if (this.nativeHandle != 0) {
+					NativeRecognitionLibrary.resetAnalysis(this.nativeHandle);
+				}
 				windowFill = 0;
 				hopFill = 0;
 			}
@@ -305,6 +341,14 @@ public final class AnalysisService {
 			}
 			processedSamples += this.hopSize;
 			hopFill = 0;
+			if (this.nativeHandle != 0) {
+				AnalysisFrame frame = analyzeNative(hop, record, baseNanos + processedSamples * 1_000_000_000L / this.configuration.sampleRate,
+						this.ringBuffer.getReadSampleCount());
+				if (frame != null) {
+					publish(frame);
+				}
+				continue;
+			}
 			pushSpectrum(hop);
 			AttackEvidence attack = pushAttack(hop);
 			if (windowFill == this.windowSize) {
@@ -312,6 +356,56 @@ public final class AnalysisService {
 				publish(analyze(window, timestampNanos, attack, this.ringBuffer.getReadSampleCount()));
 			}
 		}
+	}
+
+	private void openNative() {
+		float[] parameters = this.configuration.nativeParameters;
+		if (parameters == null) {
+			return;
+		}
+		try {
+			this.nativeHandle = NativeRecognitionLibrary.openAnalysis(this.configuration.sampleRate, parameters);
+		} catch (RuntimeException | LinkageError | app.tuxguitar.audio.engine.nativeengine.NativeRecognitionException exception) {
+			// the Java stages run instead
+			this.nativeHandle = 0;
+			return;
+		}
+		this.nativeSpectrum = false;
+		this.nativeCandidates = null;
+		this.nativeExpected = null;
+	}
+
+	private void closeNative() {
+		if (this.nativeHandle != 0) {
+			NativeRecognitionLibrary.closeAnalysis(this.nativeHandle);
+			this.nativeHandle = 0;
+		}
+	}
+
+	/** One hop through the native analysis, the requests passed on when they changed (as the Java stages read them); the frame dated by Java, or null. */
+	private AnalysisFrame analyzeNative(float[] hop, float[] record, long timestampNanos, long captureSampleEnd) {
+		boolean spectrum = this.spectrumEnabled;
+		if (spectrum != this.nativeSpectrum) {
+			NativeRecognitionLibrary.setAnalysisSpectrum(this.nativeHandle, spectrum);
+			this.nativeSpectrum = spectrum;
+		}
+		int[] candidates = this.attackCandidates;
+		if (candidates != this.nativeCandidates) {
+			NativeRecognitionLibrary.setAnalysisAttackCandidates(this.nativeHandle, candidates);
+			this.nativeCandidates = candidates;
+		}
+		int[] expected = this.expectedPitches;
+		if (expected != this.nativeExpected) {
+			NativeRecognitionLibrary.setAnalysisExpectedPitches(this.nativeHandle, expected);
+			this.nativeExpected = expected;
+		}
+		int length = NativeRecognitionLibrary.analyzeHop(this.nativeHandle, hop, record);
+		if (length <= 0) {
+			return null;
+		}
+		AnalysisFrame f = FrameRecords.read(record, 0);
+		return new AnalysisFrame(timestampNanos, f.getRmsDbfs(), f.getPeakDbfs(), f.getClippedRatio(), f.getLevelState(), f.getF0Hz(), f.getConfidence(),
+				f.isOnset(), f.getSpectrum(), f.getTargetEvidence(), null, f.getAttackEvidence(), captureSampleEnd, f.getChordEvidence());
 	}
 
 	/** One hop to every hop listener, each told the sample rate first when it has not been yet; a listener that throws is skipped (the analysis goes on). */

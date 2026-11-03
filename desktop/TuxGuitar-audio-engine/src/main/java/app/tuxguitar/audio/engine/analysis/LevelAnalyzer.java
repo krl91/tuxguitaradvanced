@@ -35,6 +35,16 @@ public final class LevelAnalyzer {
 		return this.tooHighRmsDbfs;
 	}
 
+	/** A sample at or above this absolute value is clipped. */
+	public double getClippedSampleLevel() {
+		return this.clippedSampleLevel;
+	}
+
+	/** Above this share of clipped samples a frame is CLIPPING. */
+	public double getClippingRatioThreshold() {
+		return this.clippingRatioThreshold;
+	}
+
 	public LevelMeasurement analyze(float[] samples) {
 		return analyze(samples, 0, samples.length);
 	}

@@ -2,6 +2,7 @@ package app.tuxguitar.audio.engine.nativeengine;
 
 import app.tuxguitar.audio.engine.AudioEngine;
 import app.tuxguitar.audio.engine.analysis.ArticulationDetector;
+import app.tuxguitar.audio.engine.analysis.LevelAnalyzer;
 import app.tuxguitar.audio.engine.analysis.StrumClipMeter;
 import app.tuxguitar.audio.engine.frontend.InputGain;
 import app.tuxguitar.audio.engine.settings.RecognitionParameters;
@@ -82,6 +83,28 @@ public final class NativeParameters {
 		p[STRUM_WEAK] = (float) strum.weakDbfs;
 		p[STRUM_LOUD] = (float) strum.loudDbfs;
 		p[YIN_THRESHOLD] = (float) DEFAULT_YIN_THRESHOLD;
+		return p;
+	}
+
+	/** The values the analysis stages read, taken from the analysers the live analysis was given; the front end neutral, the strum meter's defaults. */
+	public static float[] of(LevelAnalyzer levels, ArticulationDetector articulation) {
+		float[] p = of(RecognitionSettings.defaults());
+		p[LEVEL_TOO_LOW] = (float) levels.getTooLowRmsDbfs();
+		p[LEVEL_TOO_HIGH] = (float) levels.getTooHighRmsDbfs();
+		p[LEVEL_CLIP_SAMPLE] = (float) levels.getClippedSampleLevel();
+		p[LEVEL_CLIP_RATIO] = (float) levels.getClippingRatioThreshold();
+		p[ONSET_FLUX_FACTOR] = (float) articulation.getFluxMedianFactor();
+		p[ONSET_FLUX_OFFSET] = (float) articulation.getFluxOffset();
+		p[ONSET_MIN_LEVEL] = (float) articulation.getMinLevelDb();
+		p[ONSET_REFRACTORY] = articulation.getRefractoryHops();
+		p[ONSET_GATE] = (float) articulation.getGateDb();
+		p[ONSET_PRE_FIRST] = articulation.getPreFirst();
+		p[ONSET_PRE_LAST] = articulation.getPreLast();
+		p[ONSET_POST_FIRST] = articulation.getPostFirst();
+		p[ONSET_POST_LAST] = articulation.getDecisionDelayHops();
+		p[FRONT_GAIN] = (float) InputGain.NEUTRAL;
+		p[FRONT_NOISE_REDUCTION] = 0f;
+		p[FRONT_SUBTRACTION] = 0f;
 		return p;
 	}
 

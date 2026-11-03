@@ -111,6 +111,31 @@ public final class ArticulationDetector {
 		return this.minLevelDb;
 	}
 
+	public double getFluxMedianFactor() {
+		return this.fluxMedianFactor;
+	}
+
+	public double getFluxOffset() {
+		return this.fluxOffset;
+	}
+
+	public int getRefractoryHops() {
+		return this.refractoryHops;
+	}
+
+	/** The gate windows: the level before the attack over hops {@code preFirst} to {@code preLast} before it, after it over {@code postFirst} to {@code postLast}. */
+	public int getPreFirst() {
+		return this.preFirst;
+	}
+
+	public int getPreLast() {
+		return this.preLast;
+	}
+
+	public int getPostFirst() {
+		return this.postFirst;
+	}
+
 	/** Forgets all history, e.g. after a gap in the input. */
 	public void reset() {
 		this.hop = 0;

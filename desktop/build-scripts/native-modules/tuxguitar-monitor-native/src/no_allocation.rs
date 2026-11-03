@@ -64,3 +64,24 @@ fn the_analysis_ffts_never_allocate_after_they_are_made() {
     }
     assert_eq!(allocations() - before, 0);
 }
+
+#[test]
+fn one_second_of_hops_through_every_stage_allocates_nothing_after_warm_up() {
+    use crate::analysis::pipeline::{Pipeline, Request};
+    use crate::analysis::Parameters;
+    let rate = 48000;
+    let parameters = Parameters::defaults();
+    let mut pipeline = Pipeline::new(rate, parameters);
+    let candidates = [40, 45, 47, 52, 56, 59, 64];
+    pipeline.set_request(Request { spectrum: true, attack_candidates: &candidates, expected_pitches: &[45, 52], chord_required: &[40, 47, 52, 56, 59, 64], chord_tolerated: &[45] });
+    let mut records = vec![0f32; crate::analysis::frame::CAPACITY];
+    let hop: Vec<f32> = (0..256).map(|i| (0.2 * (2.0 * std::f64::consts::PI * 110.0 * i as f64 / rate as f64).sin()) as f32).collect();
+    for _ in 0..40 {
+        pipeline.hop(&hop, -1, 0, &mut records);
+    }
+    let before = allocations();
+    for _ in 0..rate / 256 {
+        pipeline.hop(&hop, -1, 0, &mut records);
+    }
+    assert_eq!(allocations() - before, 0);
+}
