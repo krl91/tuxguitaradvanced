@@ -84,8 +84,10 @@ public final class RecognitionParameters {
 	public static final Number FOLLOW_PLAY_TIME = new Number(PREFIX + "follow.play-time", Section.PASSAGES, "ms", 600, 100, 1200, true);
 
 	// ---------------------------------------------------------------- engine
+	/** Its list shows Automatic only; a hand-made {@code native} or {@code fastyin} is kept, and the menu lists the engines itself (spec 023). */
 	public static final Choice ENGINE_PITCH = new Choice(PREFIX + "engine.pitch", Section.ENGINE,
-			PitchEngineCatalog.AUTOMATIC, PitchEngineCatalog.AUTOMATIC);
+			PitchEngineCatalog.AUTOMATIC, java.util.Arrays.asList(PitchEngineCatalog.AUTOMATIC, PitchEngineCatalog.NATIVE, PitchEngineCatalog.FASTYIN),
+			PitchEngineCatalog.AUTOMATIC);
 
 	// ---------------------------------------------------------------- advanced (raw DSP)
 	public static final Number LEVEL_CLIP_SAMPLE = new Number(PREFIX + "advanced.level.clip-sample", Section.ADVANCED, "%", 0.99, 0.90, 1.00, false, 100.0);

@@ -204,11 +204,11 @@ final class RecognitionSettingsPanel {
 		} else {
 			final RecognitionParameter.Choice choice = (RecognitionParameter.Choice) parameter;
 			final UIDropDownSelect<String> select = this.factory.createDropDownSelect(panel);
-			for( String option : choice.getOptions() ) {
+			for( String option : menuOptions(choice) ) {
 				select.addItem(new UISelectItem<String>(optionText(choice, option), option));
 			}
-			// a single real option is shown, not a simulated choice (e.g. one pitch engine)
-			select.setEnabled(choice.getOptions().size() > 1);
+			// a single real option is shown, not a simulated choice
+			select.setEnabled(menuOptions(choice).size() > 1);
 			select.addSelectionListener(new UISelectionListener() {
 				public void onSelect(UISelectionEvent event) {
 					String selected = select.getSelectedValue();
@@ -280,7 +280,7 @@ final class RecognitionSettingsPanel {
 			if( !value.equals(select.getSelectedValue()) ) {
 				select.setSelectedValue((String) value);
 			}
-			text = (choice.getOptions().size() > 1 ? valueText(parameter, "") : this.messages.get("recognition.single-option"));
+			text = (menuOptions(choice).size() > 1 ? valueText(parameter, "") : this.messages.get("recognition.single-option"));
 		}
 		this.valueLabels.get(parameter).setText(text);
 	}
@@ -310,9 +310,25 @@ final class RecognitionSettingsPanel {
 		return optionName(choice, choice.getDefault());
 	}
 
+	/** The options of the list: for the engine, Automatic then the engines that can run here (spec 023: the native one only when its library loads). */
+	static List<String> menuOptions(RecognitionParameter.Choice choice) {
+		if( choice != RecognitionParameters.ENGINE_PITCH ) {
+			return choice.getOptions();
+		}
+		List<String> options = new ArrayList<String>();
+		options.add(PitchEngineCatalog.AUTOMATIC);
+		for( PitchEngineCatalog.Engine engine : PitchEngineCatalog.getRecognitionEngines() ) {
+			options.add(engine.getId());
+		}
+		return options;
+	}
+
 	private String optionName(RecognitionParameter.Choice choice, String option) {
 		if( choice == RecognitionParameters.ENGINE_PITCH && PitchEngineCatalog.AUTOMATIC.equals(option) ) {
-			return this.messages.get(RecognitionControls.optionKey(choice, option), new String[] { PitchEngineCatalog.getRecommended().getName() });
+			// "Automatic (Native)" or "Automatic (Java)": the engine it stands for, by the start of its own name ("Native (Rust)")
+			String engine = this.messages.get(RecognitionControls.optionKey(choice, PitchEngineCatalog.getRecommendedRecognitionEngine().getId()));
+			int bracket = engine.indexOf(" (");
+			return this.messages.get(RecognitionControls.optionKey(choice, option), new String[] { bracket > 0 ? engine.substring(0, bracket) : engine });
 		}
 		return this.messages.get(RecognitionControls.optionKey(choice, option));
 	}
@@ -329,7 +345,8 @@ final class RecognitionSettingsPanel {
 
 	/** Effect and trade-off (translated), then range and recommended value from the parameter itself. */
 	String tooltip(RecognitionParameter parameter) {
-		String tip = this.messages.get(RecognitionControls.tipKey(parameter));
+		// the engine's tip tells each engine (spec 023); the old one is kept for older versions' files
+		String tip = this.messages.get(parameter == RecognitionParameters.ENGINE_PITCH ? RecognitionParameters.ENGINE_PITCH.getKey() + ".tip.v2" : RecognitionControls.tipKey(parameter));
 		if( parameter instanceof RecognitionParameter.Number ) {
 			RecognitionParameter.Number number = (RecognitionParameter.Number) parameter;
 			return tip + "\n" + this.messages.get("recognition.tip.range", new String[] {

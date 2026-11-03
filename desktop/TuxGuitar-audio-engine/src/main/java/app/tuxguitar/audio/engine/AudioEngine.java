@@ -2,6 +2,10 @@ package app.tuxguitar.audio.engine;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 
 import javax.sound.sampled.AudioFormat;
@@ -20,6 +24,7 @@ import app.tuxguitar.audio.engine.backend.JavaBackend;
 import app.tuxguitar.audio.engine.backend.NativeBackend;
 import app.tuxguitar.audio.engine.backend.RecognitionBackend;
 import app.tuxguitar.audio.engine.backend.RecognitionBackendFactory;
+import app.tuxguitar.audio.engine.backend.RecognitionEngineNotice;
 import app.tuxguitar.audio.engine.frontend.FrontEnd;
 import app.tuxguitar.audio.engine.frontend.GainSuggester;
 import app.tuxguitar.audio.engine.frontend.GainSuggestion;
@@ -67,6 +72,8 @@ public final class AudioEngine {
 	public static final double DEFAULT_CLIPPING_RATIO = 0.10;
 
 	private static final int INITIAL_SAMPLE_RATE = 48000;
+	/** How long a run waits for the native input to open before it starts on Java (spec 023, FR-006, SC-003). */
+	static final long NATIVE_OPEN_TIMEOUT_MILLIS = 1500L;
 
 	private final SampleRingBuffer ringBuffer;
 	private final CurrentInputSelection selection;
@@ -102,6 +109,7 @@ public final class AudioEngine {
 	private volatile RecognitionBackend activeBackend;
 	/** Guards the choice of the backend and the moves of what the consumers set. */
 	private final Object backendLock = new Object();
+	private final List<RecognitionEngineNotice.Listener> noticeListeners = new CopyOnWriteArrayList<RecognitionEngineNotice.Listener>();
 	private final List<AnalysisService.Listener> subscribers = new CopyOnWriteArrayList<AnalysisService.Listener>();
 	private final List<HopListener> hopListeners = new CopyOnWriteArrayList<HopListener>();
 	private final List<CaptureService.Listener> captureListeners = new CopyOnWriteArrayList<CaptureService.Listener>();
@@ -186,11 +194,20 @@ public final class AudioEngine {
 	 * was not checked yet (FR-038).
 	 */
 	public void acquire(String consumerId) {
+		NativeRecognitionException fallback = null;
 		synchronized (this.backendLock) {
 			if( this.activeBackend.getConsumerCount() == 0 ) {
-				chooseBackend();
+				fallback = chooseBackend();
 			}
-			this.activeBackend.acquire(consumerId);
+			if( fallback != null && fallback.getReason() == NativeRecognitionException.Reason.PERMISSION_DENIED ) {
+				this.nativeBackend.holdRefused(consumerId, fallback);
+				fallback = null;
+			} else {
+				this.activeBackend.acquire(consumerId);
+			}
+		}
+		if( fallback != null ) {
+			tell(new RecognitionEngineNotice(fallback.getReason(), fallback.getDetail()));
 		}
 		CurrentInputSelection.Snapshot snapshot = this.selection.snapshot();
 		if( snapshot.getInput() != null && snapshot.getAssessment().getStatus() == InputAssessment.Status.UNCHECKED ) {
@@ -211,19 +228,101 @@ public final class AudioEngine {
 	/**
 	 * The backend of the run that starts (no consumer holds the capture): the native engine when the settings resolve to it and it opens the input, else
 	 * the Java chain. A changed choice therefore applies from the next run, never during one (FR-004).
+	 *
+	 * @return why the native engine that was asked for does not run this run, or null: the Java chain then runs it (FR-006), except for a refused
+	 *         permission, which leaves the native backend chosen with no stream (no fallback: the Java capture would be refused too)
 	 */
-	private void chooseBackend() {
-		if( this.backendFactory == null || this.backendFactory.resolveKind(currentSettings()) != PitchEngineCatalog.Kind.NATIVE ) {
+	private NativeRecognitionException chooseBackend() {
+		if( this.backendFactory == null ) {
 			switchTo(this.javaBackend);
-			return;
+			return null;
+		}
+		RecognitionSettings settings = currentSettings();
+		if( this.backendFactory.resolveKind(settings) != PitchEngineCatalog.Kind.NATIVE ) {
+			switchTo(this.javaBackend);
+			String missing = this.backendFactory.nativeLibraryFailure(settings);
+			return (missing != null ? new NativeRecognitionException(NativeRecognitionException.Reason.LIBRARY_MISSING, missing) : null);
 		}
 		NativeBackend chosen = nativeBackend();
 		switchTo(chosen);
 		try {
-			chosen.open();
+			openWithin(chosen, NATIVE_OPEN_TIMEOUT_MILLIS);
+			return null;
 		} catch (NativeRecognitionException exception) {
+			if( exception.getReason() == NativeRecognitionException.Reason.PERMISSION_DENIED ) {
+				return exception;
+			}
 			System.err.println("TuxGuitar recognition: the native engine could not open the input (" + exception.getMessage() + "); the Java engine is used.");
 			switchTo(this.javaBackend);
+			return exception;
+		}
+	}
+
+	/**
+	 * Opens the native input on a thread of its own and waits at most {@code millis}: an open that never returns is abandoned (a stream failure), and
+	 * what it opens later is closed at once (FR-006, SC-003: the run starts within 2 s).
+	 */
+	private static void openWithin(NativeBackend backend, long millis) throws NativeRecognitionException {
+		final int pending = 0, finished = 1, abandoned = 2;
+		AtomicInteger state = new AtomicInteger(pending);
+		AtomicReference<NativeRecognitionException> failure = new AtomicReference<NativeRecognitionException>();
+		CountDownLatch done = new CountDownLatch(1);
+		Thread opener = new Thread(() -> {
+			try {
+				backend.openFor(() -> state.compareAndSet(pending, finished));
+			} catch (NativeRecognitionException exception) {
+				failure.set(exception);
+			} catch (RuntimeException exception) {
+				failure.set(new NativeRecognitionException(NativeRecognitionException.Reason.STREAM_FAILED, String.valueOf(exception)));
+			} finally {
+				state.compareAndSet(pending, finished);
+				done.countDown();
+			}
+		}, "tuxguitar-native-open");
+		opener.setDaemon(true);
+		opener.start();
+		boolean interrupted = false;
+		try {
+			done.await(millis, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException exception) {
+			interrupted = true;
+		}
+		if( state.compareAndSet(pending, abandoned) ) {
+			if( interrupted ) {
+				Thread.currentThread().interrupt();
+			}
+			throw new NativeRecognitionException(NativeRecognitionException.Reason.STREAM_FAILED, "the input did not answer within " + millis + " ms");
+		}
+		// finished: the opener is only counting down
+		try {
+			done.await();
+		} catch (InterruptedException exception) {
+			interrupted = true;
+		}
+		if( interrupted ) {
+			Thread.currentThread().interrupt();
+		}
+		if( failure.get() != null ) {
+			throw failure.get();
+		}
+	}
+
+	/** Who is told when a run that asked for the native engine runs on Java (spec 023, FR-006). */
+	public void addRecognitionEngineNoticeListener(RecognitionEngineNotice.Listener listener) {
+		this.noticeListeners.add(listener);
+	}
+
+	public void removeRecognitionEngineNoticeListener(RecognitionEngineNotice.Listener listener) {
+		this.noticeListeners.remove(listener);
+	}
+
+	private void tell(RecognitionEngineNotice notice) {
+		for( RecognitionEngineNotice.Listener listener : this.noticeListeners ) {
+			try {
+				listener.recognitionEngineNotice(notice);
+			} catch (RuntimeException exception) {
+				exception.printStackTrace();
+			}
 		}
 	}
 

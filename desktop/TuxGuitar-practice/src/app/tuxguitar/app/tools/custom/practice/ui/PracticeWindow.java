@@ -60,6 +60,7 @@ import app.tuxguitar.app.tools.custom.practice.session.SessionEvents;
 import app.tuxguitar.app.tools.custom.practice.session.SessionLoop;
 import app.tuxguitar.app.view.util.TGDialogUtil;
 import app.tuxguitar.audio.engine.AudioEngine;
+import app.tuxguitar.audio.engine.backend.RecognitionEngineNotice;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
@@ -159,6 +160,8 @@ public class PracticeWindow {
 	private TGSong song;
 	private InputAssessment assessment = InputAssessment.UNCHECKED;
 	private CurrentInputSelection.Listener selectionListener;
+	private RecognitionEngineNoticeView engineNotice;
+	private RecognitionEngineNotice.Listener engineNoticeListener;
 	private SessionLoop<PracticeSnapshot> loop;
 	private PracticeSession session;
 	private SessionEvents events;
@@ -321,6 +324,9 @@ public class PracticeWindow {
 		// the preparation is in tabs, so that the window is not taller than a screen: the track, the input, the mode, the repeated passages
 		this.preparation = createPreparation(uiFactory);
 		windowLayout.set(this.preparation, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 520f, null, null);
+		// a run that asked for the native engine and runs on Java says so here, once per reason (spec 023, FR-006); empty otherwise
+		this.engineNotice = new RecognitionEngineNoticeView(uiFactory, this.window, windowLayout, 2, TuxGuitar::getProperty,
+				RecognitionEngineNoticeView.Session.of(this.context), () -> refit());
 
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel buttons = uiFactory.createPanel(this.window, false);
@@ -347,6 +353,7 @@ public class PracticeWindow {
 				PracticeWindow.this.levelPanel.disconnect();
 				PracticeWindow.this.engine.getSelection().removeListener(PracticeWindow.this.selectionListener);
 				PracticeWindow.this.engine.release(CONSUMER_ID);
+				PracticeWindow.this.engine.removeRecognitionEngineNoticeListener(PracticeWindow.this.engineNoticeListener);
 				PracticeWindow.this.shared.removeListener(PracticeWindow.this.sharedListener);
 				PracticeWindow.this.shared.setPracticeTrack(null);
 				RecognitionSettingsStore.getInstance(PracticeWindow.this.context).removeListener(PracticeWindow.this.settingsListener);
@@ -369,6 +376,12 @@ public class PracticeWindow {
 			}
 		});
 		RecognitionSettingsStore.getInstance(this.context).addListener(this.settingsListener);
+		this.engineNoticeListener = notice -> this.host.later("tuxguitar-engine-notice", 0L, () -> {
+			if( isOpen() ) {
+				this.engineNotice.show(notice);
+			}
+		});
+		this.engine.addRecognitionEngineNoticeListener(this.engineNoticeListener);
 		this.engine.acquire(CONSUMER_ID);
 		this.assessment = this.engine.getSelection().snapshot().getAssessment();
 		createAmp(uiFactory, uiParent);

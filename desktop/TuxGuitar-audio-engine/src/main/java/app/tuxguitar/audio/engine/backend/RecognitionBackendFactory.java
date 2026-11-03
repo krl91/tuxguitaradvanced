@@ -22,6 +22,11 @@ public interface RecognitionBackendFactory {
 		return PitchEngineCatalog.resolveKind(settings);
 	}
 
+	/** Why the native engine these settings ask for cannot run (its library does not load), or null: the run then tells it with a notice. */
+	default String nativeLibraryFailure(RecognitionSettings settings) {
+		return PitchEngineCatalog.nativeLibraryFailure(settings);
+	}
+
 	/** A native backend on the practice input; {@code parameters} gives the values of {@code configure} at each open. */
 	default NativeBackend createNative(TGContext context, CurrentInputSelection selection, Supplier<float[]> parameters) {
 		return new NativeBackend(context, selection, NativeRecognitionLibrary.Api.JNI, parameters);

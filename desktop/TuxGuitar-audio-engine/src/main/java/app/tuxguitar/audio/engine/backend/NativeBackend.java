@@ -129,6 +129,24 @@ public final class NativeBackend implements RecognitionBackend {
 		fire(CaptureService.EventType.STARTED, null);
 	}
 
+	/**
+	 * Opens as {@link #open()}, then asks {@code stillWanted} under the same lock: when the caller gave up waiting meanwhile, what was opened is closed at
+	 * once, before another run can see it (spec 023, FR-006: an open that never returns is abandoned).
+	 */
+	public synchronized void openFor(java.util.function.BooleanSupplier stillWanted) throws NativeRecognitionException {
+		open();
+		if( !stillWanted.getAsBoolean() ) {
+			close();
+		}
+	}
+
+	/** The input refused the microphone: the consumer holds this backend with no stream, and its listeners get the capture error, as the Java capture's. */
+	public synchronized void holdRefused(String consumerId, NativeRecognitionException refusal) {
+		if( this.consumers.add(consumerId) ) {
+			fire(CaptureService.EventType.CAPTURE_ERROR, refusal);
+		}
+	}
+
 	/** Stops the stream and the threads (within {@value #JOIN_MILLIS} ms). Idempotent. */
 	public synchronized void close() {
 		long opened = this.handle;

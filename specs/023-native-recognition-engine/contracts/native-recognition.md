@@ -72,6 +72,15 @@ Choice and fallback:
 - On a failed native open, `AudioEngine` opens the `JavaBackend` and sends one `RecognitionEngineNotice(reason)`.
 - PERMISSION_DENIED is the exception: no fallback is tried, and today's microphone-permission event reaches the practice.
 
+### Fallback and notice (T065, as built)
+
+- `AudioEngine.acquire` chooses the backend when no consumer holds the capture. When the settings resolve to native, it opens the native input on a thread of its own (`tuxguitar-native-open`) and waits at most 1.5 s (`NATIVE_OPEN_TIMEOUT_MILLIS`).
+  - Success: the native backend runs the run.
+  - LIBRARY_MISSING, DEVICE_NOT_FOUND, FORMAT_UNSUPPORTED, STREAM_FAILED, or no answer within 1.5 s (a STREAM_FAILED): the Java backend runs the run, and one `RecognitionEngineNotice(reason, detail)` goes to the `addRecognitionEngineNoticeListener` listeners, after the lock, on the acquiring thread.
+  - An open abandoned after 1.5 s that returns later is closed at once, under the native backend's lock (`NativeBackend.openFor`), before another run can see it.
+  - PERMISSION_DENIED: no fallback and no notice. The native backend stays chosen with no stream; the consumer holds it (`NativeBackend.holdRefused`) and its capture listeners get `CAPTURE_ERROR`, as with the Java capture.
+- When the settings ask for native (a hand-made `native`, or Automatic with the property set to `native`) and the library does not load, `resolveKind` gives Java and `RecognitionBackendFactory.nativeLibraryFailure(settings)` gives the reason: the run sends a LIBRARY_MISSING notice. Automatic alone is Java without the library, with no notice.
+
 ## 3. `OfflineAnalysis.analyze` (existing signatures, unchanged)
 
 - It resolves the engine from `settings.get(ENGINE_PITCH)`, then the system property `tuxguitar.recognition.engine` (`java` or `native`), which overrides *Automatic* only.
@@ -95,3 +104,13 @@ Choice and fallback:
   - `recognition.engine.pitch.option.fastyin`;
   - `recognition.engine.pitch.tip.v2`;
   - `recognition.engine.notice.<reason>`, for the four reasons that fall back: LIBRARY_MISSING, DEVICE_NOT_FOUND, FORMAT_UNSUPPORTED, STREAM_FAILED.
+
+As built (T064, T066, T067):
+
+- `RecognitionParameters.ENGINE_PITCH.getOptions()` stays `[automatic]` (the committed `RecognitionSettingsStoreTest` checks it); the choice also accepts `native` and `fastyin` as stored values, so a hand-made choice is kept. The panel's list comes from `RecognitionSettingsPanel.menuOptions`: Automatic, then the ids of `PitchEngineCatalog.getRecognitionEngines()`.
+- Automatic's text is `recognition.engine.pitch.option.automatic` with the start of the recommended engine's option text, before its bracket: *Automatic (Native)* / *Automatique (Natif)* / *Automático (Nativo)*, or *Automatic (Java)*.
+- The engine's tip is `recognition.engine.pitch.tip.v2` (it tells each engine); the old `recognition.engine.pitch.tip` is kept.
+- The notice keys are `recognition.engine.notice.library-missing`, `.device-not-found`, `.format-unsupported` and `.stream-failed` (`RecognitionEngineNotices.key`); each text says the practice goes on with Java.
+- The practice window shows the notice in a line above its buttons (`RecognitionEngineNoticeView`), once per reason per session (`RecognitionEngineNoticeView.Session`, one per application context), on the user-interface thread through `host.later`; it gets the engine through `host.engine()`, so `PracticeHost` does not grow. Nothing opens over the window.
+- The committed `PitchEngineKindTest` was changed with the owner's approval (2026-11-03): only its Automatic assertions, which follow `recommendedRecognitionEngine` instead of `getRecommended()`.
+

@@ -24,16 +24,16 @@ public class PitchEngineKindTest {
 	public void eachStoredChoiceHasItsKind() {
 		Assertions.assertEquals(Kind.JAVA, resolve(PitchEngineCatalog.FASTYIN, null));
 		Assertions.assertEquals(Kind.NATIVE, resolve(PitchEngineCatalog.NATIVE, null));
-		Assertions.assertEquals(PitchEngineCatalog.getRecommended().kind(), resolve(PitchEngineCatalog.AUTOMATIC, null));
-		Assertions.assertEquals(PitchEngineCatalog.getRecommended().kind(), resolve("something-else", null));
-		Assertions.assertEquals(PitchEngineCatalog.getRecommended().kind(), resolve(null, null));
+		Assertions.assertEquals(PitchEngineCatalog.recommendedRecognitionEngine(LOADED).kind(), resolve(PitchEngineCatalog.AUTOMATIC, null));
+		Assertions.assertEquals(PitchEngineCatalog.recommendedRecognitionEngine(LOADED).kind(), resolve("something-else", null));
+		Assertions.assertEquals(PitchEngineCatalog.recommendedRecognitionEngine(LOADED).kind(), resolve(null, null));
 		Assertions.assertTrue(this.lines.isEmpty());
 	}
 
 	@Test
 	public void theEnginesKnowTheirKind() {
 		Assertions.assertEquals(Kind.JAVA, PitchEngineCatalog.resolve(PitchEngineCatalog.FASTYIN).kind());
-		Assertions.assertEquals(Kind.JAVA, PitchEngineCatalog.getRecommended().kind(), "Automatic still means Java in this phase");
+		Assertions.assertEquals(Kind.JAVA, PitchEngineCatalog.getRecommended().kind(), "the recommended Java pitch estimator");
 	}
 
 	@Test
@@ -47,7 +47,7 @@ public class PitchEngineKindTest {
 
 	@Test
 	public void anEmptyOrBlankPropertyCountsAsUnset() {
-		Kind recommended = PitchEngineCatalog.getRecommended().kind();
+		Kind recommended = PitchEngineCatalog.recommendedRecognitionEngine(LOADED).kind();
 		Assertions.assertEquals(recommended, resolve(PitchEngineCatalog.AUTOMATIC, ""));
 		Assertions.assertEquals(recommended, resolve(PitchEngineCatalog.AUTOMATIC, "   "));
 		Assertions.assertEquals(recommended, resolve(PitchEngineCatalog.AUTOMATIC, "unknown"));

@@ -236,12 +236,19 @@ public abstract class RecognitionParameter {
 	/** One of a fixed list of identifiers. */
 	public static final class Choice extends RecognitionParameter {
 		private final List<String> options;
+		private final List<String> accepted;
 		private final String defaultValue;
 
 		Choice(String key, Section section, String defaultValue, String... options) {
+			this(key, section, defaultValue, Arrays.asList(options), options);
+		}
+
+		/** A choice that also keeps stored values its list does not show (the engines of the menu, spec 023: the menu lists them itself). */
+		Choice(String key, Section section, String defaultValue, List<String> accepted, String... options) {
 			super(key, section, "");
 			this.options = Collections.unmodifiableList(Arrays.asList(options));
-			if( !this.options.contains(defaultValue) ) {
+			this.accepted = Collections.unmodifiableList(new java.util.ArrayList<String>(accepted));
+			if( !this.options.contains(defaultValue) || !this.accepted.containsAll(this.options) ) {
 				throw new IllegalArgumentException(key + ": default not an option");
 			}
 			this.defaultValue = defaultValue;
@@ -263,7 +270,7 @@ public abstract class RecognitionParameter {
 
 		@Override
 		public Parsed validate(Object value) {
-			if( value instanceof String && this.options.contains(value) ) {
+			if( value instanceof String && this.accepted.contains(value) ) {
 				return new Parsed(value, Repair.NONE);
 			}
 			return new Parsed(this.defaultValue, Repair.DEFAULTED);
