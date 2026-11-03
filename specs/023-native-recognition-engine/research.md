@@ -213,10 +213,10 @@ The hop listeners work on samples:
 - At 120 Hz a frame lasts 8.33 ms, and the ticks every 8.33 ms then equal the frame. The javadoc's own analysis says this can halve the rate.
 
 **Decision.**
-- **Measure first, change if needed:**
+- **Measure first, then follow the display:**
   - `ArcadeRefreshRateBenchmarkTest` runs Arcade for 10 minutes on the owner's Mac (ProMotion), with the native engine live on the built-in microphone, and reports the share of frames painted on time at the display's rate.
   - The display rate is read through the toolkit, or else measured from the paint intervals.
-  - If fewer than 99 % of the frames are on time at 120 Hz, the frame and tick periods are derived from the measured display rate (tick = half a display frame), and `QualityController`'s budget follows it.
+  - The frame and tick periods are always derived from the display rate (tick = half a display frame), with today's 60 Hz values when no rate is known, and `QualityController`'s budget follows it; the benchmark is run before and after.
 - **The recognition never holds a frame.**
   - The Arcade's frame source reads the latest verdicts that the recognition thread has published, through a volatile snapshot; the paint never waits on the recognition.
   - A test checks that the frame source does not block while `nextFrames` is waiting.
@@ -241,7 +241,7 @@ The hop listeners work on samples:
 **Decision.**
 - The cpal callback only copies into the ring.
 - The analysis thread allocates nothing in its loop, checked by the `no_allocation.rs` counting allocator, extended to the analysis stages.
-- Its cost per hop is measured by `NativeAnalysisCostBenchmarkTest`: the median and 99th percentile of one hop's analysis, spectrum on and attack candidates on, against the hop time (5.3 ms). The target is under 10 % of a hop at the 99th percentile on the owner's Mac.
+- Its cost per hop is measured by `NativeRecognitionEnduranceBenchmarkTest` (from the native `stats`): the median and 99th percentile of one hop's analysis, spectrum on and attack candidates on, against the hop time (5.3 ms at 48 kHz). The target is under 10 % of a hop (0.53 ms) at the 99th percentile on the owner's Mac.
 - The Java frame thread does what the analysis thread's publish does today: the listeners.
 - A 10-minute live run without a dropped block (SC-005) reuses the endurance pattern of spec 022 (`RealtimeEnduranceBenchmarkTest`).
 

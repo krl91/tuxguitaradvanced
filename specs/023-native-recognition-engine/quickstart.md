@@ -56,10 +56,9 @@ Expected: both green, with no committed test changed.
 Each item below plays audible tones, so warn the owner first.
 
 - `RecognitionDelayProbeTest` with `-Dtuxguitar.recognition.engine=native`: the median at least 20 ms below Java's, and the 90th percentile not higher (SC-002).
-- `DualEngineCableProbeTest`, with the owner playing 20 notes through the Rocksmith cable (both engines listen at once): the native frame at least 20 ms ahead of the Java frame at the median (SC-002, cable).
-- `NativeRecognitionEnduranceBenchmarkTest`: 10 minutes, 0 dropped blocks (SC-005).
+- `DualEngineCableProbeTest`, with the owner playing 20 notes through the Rocksmith cable (both engines listen at once): the native frame at least 20 ms ahead of the Java frame at the median, and the native 90th percentile not higher than Java's (SC-002, cable).
+- `NativeRecognitionEnduranceBenchmarkTest`: 10 minutes, 0 dropped blocks (SC-005), and one hop's analysis under 10 % of a hop (0.53 ms at 48 kHz) at the 99th percentile (`cost.md`).
 - `ArcadeRefreshRateBenchmarkTest`: ≥ 99 % of the frames on time at 120 Hz, and no frame waiting on the recognition (SC-006).
-- `NativeAnalysisCostBenchmarkTest`: one hop's analysis under 10 % of a hop at the 99th percentile.
 - The dataset identity with the amp sound on and off, with the native engine (FR-010).
 
 ## 6. In the application (sheet F13, owner)
