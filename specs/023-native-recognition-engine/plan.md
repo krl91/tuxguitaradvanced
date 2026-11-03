@@ -11,7 +11,7 @@ Today every sample the practice hears goes through Java:
 - `AnalysisService` then runs the front end, level, FastYin pitch, onset, polyphonic spectrum and attack and target evidence on a Java thread, and the practice computes the chord evidence from the spectrum on the frame thread;
 - it publishes `AnalysisFrame`s to the practice, the techniques and the tuner (research R2).
 
-The plan moves **everything that reads samples** into the native crate of spec 022 (Rust). The capture runs in blocks of 128 frames, each dated at its callback. The analysis is a faithful port of the fork's Java analysers, with YIN written from the paper. The native engine hands Java the **same frames**, so the practice rules, the techniques and the tuner work unchanged.
+The plan moves **everything that reads samples** into the native crate of spec 022 (Rust). The capture runs in blocks of 128 frames, each dated at its callback. The analysis is a faithful port of the fork's Java analysers, with YIN written from the paper. The native engine hands Java the **same frames**, so the practice rules, the techniques and the tuner work unchanged. The standalone tuner follows the selected engine too, since it reads its frames through `AudioEngine`.
 
 1. **Measure first (R1).** A live probe measures the Java engine's delay from a tone to its frame on the owner's Mac. That is SC-002's baseline, and the Java dataset figures are copied as "before" (R8).
 2. **Faithful native analysis (R3), offline first.** Every stage is ported with a parity test against the Java stage on recordings. `OfflineAnalysis` dispatches on the engine of the settings, so every dataset benchmark and replay can run either engine (R8).
