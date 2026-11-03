@@ -192,13 +192,13 @@ The hop listeners work on samples:
 **Facts.**
 - Spec 022's research R1 addendum found that, on macOS, two clients of one input work: the Java capture and the Rust device opened the built-in microphone together without gaps.
 - The amp has its own native duplex stream (`NativeMonitorDevice`).
-- `RecognitionUntouchedTest` and T061 check that the recognition is identical with the sound on and off.
+- `RecognitionUntouchedTest` and spec 022's T061 check that the recognition is identical with the sound on and off.
 
 **Decision.**
 - **Two native input streams on the same device.** One is the recognition's (input only), the other the amp's (duplex), as today with Java plus native. Each runs at the device's current rate, never changed.
   - On Linux, cpal's default host is ALSA through the "default" device. That is PipeWire or PulseAudio on current desktops, which share inputs.
   - On Windows, WASAPI's shared mode shares them.
-- FR-010 holds by construction, since the streams do not touch each other. The dataset identity of T061 is run again with the native engine (sound on and off).
+- FR-010 holds by construction, since the streams do not touch each other. The dataset identity of spec 022's T061 is run again with the native engine (sound on and off).
 - **Risk:** a raw ALSA `hw:` device on Linux opens only once. In that case the second open fails with a message: the amp's, since the recognition opens first when a run starts. This is reported to the Linux testers in sheet F13 and in the release notes.
 
 **Alternatives considered.** One shared native input feeding both: the 022 engine would change, and the owner chose separate inputs in 022. It is kept as a fallback if the testers find a system that does not share.
