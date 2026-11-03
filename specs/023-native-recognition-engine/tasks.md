@@ -31,19 +31,19 @@
 
 ## Phase 1: Setup (measure first, research R1 and R8)
 
-- [ ] T001 Write `SPEC/baseline.txt`:
+- [X] T001 Write `SPEC/baseline.txt`:
   - the current commit (HEAD) and the counts of the full gate, run now (expected as in `specs/022-guitar-amp-effects/baseline.txt` after its convergence), plus `swt-gui-tests`;
   - the list of existing tests that must stay unchanged and green, especially every test under `AET/analysis/`, `AET/frontend/`, `AET/recognition/`, `AET/input/`, `AET/settings/`, `AudioEngineTest`, `LiveEngineEquivalenceTest`, `AET/monitor/RecognitionUntouchedTest`, the practice verdict tests and the dataset benchmarks.
-- [ ] T002 Copy the Java dataset reports into `SPEC/benchmark/before/`:
+- [X] T002 Copy the Java dataset reports into `SPEC/benchmark/before/`:
   - from `desktop/TuxGuitar-practice/target/dataset-benchmark/` if it holds the run of commit 0ffd99c89;
   - otherwise run `DatasetBenchmarkTest`, `GuitarSetChordBenchmarkTest`, `TechniqueDatasetBenchmarkTest`, `OwnerChordsBenchmarkTest` and `BassRecognitionBenchmarkTest` now (quickstart §3 command, no engine property) and copy them, writing in `SPEC/benchmark/before/README.md` that no analysis code changed between 0ffd99c89 and the run's commit (`git diff --stat 0ffd99c89 -- desktop/TuxGuitar-audio-engine desktop/TuxGuitar-practice/src`).
   - Check that each SC-001 figure of the spec is found in these files; write any difference in the README and stop and report if one is lower.
-- [ ] T003 Create `TST/benchmark/RecognitionDelayProbeTest.java`, `@Tag("benchmark")`, excluded by default; it only measures (research R1):
+- [X] T003 Create `TST/benchmark/RecognitionDelayProbeTest.java`, `@Tag("benchmark")`, excluded by default; it only measures (research R1):
   - it plays, through the default output (Java Sound), 20 short plucked tones (A2, D3, G3, B3, E4 in turn, 120 ms, 1.5 s apart) and runs the live `AudioEngine` on the built-in microphone, then on the USB microphone when one is listed;
   - for each tone, it measures from the tone's first sample (the output line's frame position, as spec 022's `MonitorLatencyProbeTest`) to (a) the first `AnalysisFrame` pitched within ±50 cents of the tone and (b) the first onset frame after the tone, both in the frames' `timestampNanos` base corrected by `CaptureClock`;
   - it writes, per engine (from `-Dtuxguitar.recognition.engine`, `java` by default) and per input, the tones played, the tones found, the median and 90th percentile of (a) and (b), appending a dated section to `SPEC/benchmark/recognition-delay.md`;
   - it fails only if no line or device can be opened, with the reason.
-- [ ] T004 Warn the owner (audible tones), then run T003 with `-Dtuxguitar.recognition.engine=java` (quickstart §1). Record the Java median and 90th percentile per input in `recognition-delay.md` and `baseline.txt`: this is SC-002's baseline.
+- [X] T004 Warn the owner (audible tones), then run T003 with `-Dtuxguitar.recognition.engine=java` (quickstart §1). Record the Java median and 90th percentile per input in `recognition-delay.md` and `baseline.txt`: this is SC-002's baseline.
 
 **Checkpoint**: Java figures known, offline and live.
 

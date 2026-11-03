@@ -1,0 +1,43 @@
+Baseline of spec 023 (T001), 2026-11-03, starting commit 7ec9b903068f106539b43a0a9e1bfc38a1216152 (7ec9b9030)
+
+T001. The full gate before any code, JDK 21 (Temurin 21.0.13), from desktop/build-scripts/tuxguitar-macosx-swt-cocoa:
+mvn -o -e clean verify -P native-modules: BUILD SUCCESS
+  TuxGuitar-lib 73, editor-utils 1, compat 1, gtp 10 (1 skipped), midi 2, audio-engine 438, tuner-next 24, synth-gervill 9,
+  TuxGuitar-practice 1425 (0 failures, 0 errors, 12 skipped)
+  crate tuxguitar-monitor-native (cargo test --release, run by the native-modules profile): 9 passed
+  (the same counts as specs/022-guitar-amp-effects after its convergence)
+mvn -o test -P swt-gui-tests -pl ../../TuxGuitar-practice -am: BUILD SUCCESS, practice SWT tests 77 (0 failures)
+specs/003-arcade-mode/benchmark/ restored after each build (only its timings change).
+
+Existing tests that must stay unchanged and green (git diff --name-status on the test folders shows additions only):
+  desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/analysis/:
+    AnalysisServiceTest, ArticulationDetectorTest, AttackAnalyzerTest, HopListenerTest, InputAssessorStatsTest, InputAssessorTest,
+    LevelAnalyzerTest, NnlsSolverTest, PolyphonicAnalyzerTest, StrumClipMeterTest, TarsosFastYinEstimatorTest
+  desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/frontend/:
+    FrontEndTest, GainScaleTest, GainSuggesterTest, HighPassTest, InputGainTest, NoiseGateTest, SpectralSubtractorTest
+  desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/recognition/:
+    ExpectedPitchVerifierTest, TargetEvidenceTest
+  desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/input/:
+    CaptureClockTest, DeinterleaveTest, InputDeviceCatalogTest, PcmSampleConverterTest, SampleRingBufferTest
+  desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/:
+    RecognitionSettingsStoreProfileTest, RecognitionSettingsStoreTest (lines 158-161: one engine, fastyin recommended), RecognitionSettingsTest
+  desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/:
+    AudioEngineTest, AudioEngineFrontEndTest, AudioEngineNegotiatedFormatTest, AudioEngineSettingsTest, LiveEngineEquivalenceTest,
+    FakeAudioInput, monitor/RecognitionUntouchedTest, and every other test of the module (benchmark/, calibration/, monitor/, pitch/,
+    session/, technique/)
+  desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ (the verdicts):
+    every test, among them FeedbackTest, FireExtremesVerdictsTest, RemovedSoundsTimingTest, ScoreFireVerdictsTest, TechniqueJudgeTest,
+    TimingContextTest, TimingToleranceTest, TimingWindowParityTest
+  desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/dataset/ (the dataset benchmarks):
+    DatasetBenchmarkTest, GuitarSetChordBenchmarkTest, TechniqueDatasetBenchmarkTest, OwnerChordsBenchmarkTest, FastPassageBenchmarkTest,
+    NoteSpacingBenchmarkTest, WeakInputBenchmarkTest, DatasetRecognitionIdentityTest, StrumClipDatasetTest, SyntheticChordGuardTest and the
+    helpers beside them
+  and every other existing test of the practice and tuner-next modules.
+  Count at this commit: 464 files tracked under the three modules' test folders (git ls-files).
+
+T004 (2026-11-03 12:47): live recognition delay, Java engine (RecognitionDelayProbeTest, -Dtuxguitar.recognition.engine=java), SC-002's baseline.
+  Built-in microphone and speakers of the owner's MacBook Pro; no USB microphone was listed, so only one input was measured.
+  20 / 20 tones found by pitch and by onset; 0 dropped samples.
+  Pitch:  received median 141.7 ms, p90 155.5 ms; dated (CaptureClock) median 119.5 ms, p90 125.3 ms.
+  Onset:  received median 176.5 ms, p90 183.4 ms; dated (CaptureClock) median 144.5 ms, p90 148.8 ms.
+  Full section: benchmark/recognition-delay.md.
