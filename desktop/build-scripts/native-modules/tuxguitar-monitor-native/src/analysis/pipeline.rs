@@ -129,12 +129,31 @@ impl Pipeline {
         self.expected_chord = chord;
     }
 
+    /// The live analysis's way to change the attack candidates without allocating: the analyser and its evidence, made by the caller, are
+    /// swapped with the current ones, which the caller frees.
+    pub fn swap_attack(&mut self, analyzer: &mut Option<AttackAnalyzer>, evidence: &mut Attack) {
+        std::mem::swap(&mut self.attack, analyzer);
+        std::mem::swap(&mut self.attack_out, evidence);
+        self.attack_ready = false;
+    }
+
+    /// As `swap_attack`, for the expected chord.
+    pub fn swap_expected_chord(&mut self, chord: &mut Option<ExpectedChord>) {
+        std::mem::swap(&mut self.expected_chord, chord);
+    }
+
     fn polyphonic_needed(&self) -> bool {
         self.spectrum_on || self.expected_chord.is_some()
     }
 
     /// One hop of `HOP` samples: a record is written into `out` once the window is full.
     pub fn hop(&mut self, hop: &[f32], capture_sample_end: i64, arrival_nanos: i64, out: &mut [f32]) -> HopResult {
+        let timestamp = (self.processed + hop.len().min(HOP) as i64) * 1_000_000_000 / self.rate as i64;
+        self.hop_dated(hop, timestamp, capture_sample_end, arrival_nanos, out)
+    }
+
+    /// As `hop`, the frame dated `timestamp_nanos` by the caller (the live analysis counts the dropped samples in it, as `AnalysisService`).
+    pub fn hop_dated(&mut self, hop: &[f32], timestamp_nanos: i64, capture_sample_end: i64, arrival_nanos: i64, out: &mut [f32]) -> HopResult {
         let n = hop.len().min(HOP);
         self.window.copy_within(n.., 0);
         self.window[WINDOW - n..].copy_from_slice(&hop[..n]);
@@ -165,7 +184,7 @@ impl Pipeline {
         }
 
         let mut w = Writer::new(out);
-        w.set_long(frame::TIMESTAMP_NANOS, self.processed * 1_000_000_000 / self.rate as i64);
+        w.set_long(frame::TIMESTAMP_NANOS, timestamp_nanos);
         w.set_long(frame::CAPTURE_SAMPLE_END, capture_sample_end);
         w.set_long(frame::ARRIVAL_NANOS, arrival_nanos);
         w.set_double(frame::RMS_DBFS, level.rms_dbfs);
@@ -266,10 +285,10 @@ impl Pipeline {
         self.processed = 0;
         self.articulation.reset();
         self.polyphonic.reset();
-        if let Some(attack) = self.attack.as_ref() {
-            let candidates = attack.pitches().to_vec();
-            self.set_attack_candidates(&candidates);
+        if let Some(attack) = self.attack.as_mut() {
+            attack.reset();
         }
+        self.attack_ready = false;
     }
 }
 
@@ -310,4 +329,71 @@ pub fn analyze(mono: &[f32], rate: i32, p: Parameters, request: Request) -> Vec<
         offset += HOP;
     }
     records
+}
+
+#[cfg(test)]
+mod cost {
+    use super::*;
+    use std::time::Instant;
+
+    fn hop_cost_micros(spectrum: bool, attack: &[i32], rate: i32) -> f64 {
+        let samples: Vec<f32> = (0..rate as usize * 4).map(|i| (0.2 * (2.0 * std::f64::consts::PI * 110.0 * i as f64 / rate as f64).sin()) as f32).collect();
+        hop_cost_micros_of(&samples, spectrum, attack, rate)
+    }
+
+    /// Room noise, as a microphone hears it between notes: a few thousandths of full scale, deterministic.
+    fn noise(rate: i32) -> Vec<f32> {
+        let mut state = 0x2545F4914F6CDD1Du64;
+        (0..rate as usize * 4)
+            .map(|_| {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                ((state >> 11) as f64 / (1u64 << 53) as f64 * 2.0 - 1.0) as f32 * 0.003
+            })
+            .collect()
+    }
+
+    fn hop_cost_micros_of(samples: &[f32], spectrum: bool, attack: &[i32], rate: i32) -> f64 {
+        let p = Parameters::defaults();
+        let mut pipeline = Pipeline::new(rate, p);
+        pipeline.set_request(Request { spectrum, attack_candidates: attack, expected_pitches: &[], chord_required: &[], chord_tolerated: &[] });
+        let mut out = vec![0f32; frame::CAPACITY];
+        let hops: Vec<&[f32]> = samples.chunks_exact(HOP).collect();
+        for h in &hops[..40] {
+            pipeline.hop(h, -1, 0, &mut out);
+        }
+        let mut costs: Vec<f64> = hops[40..]
+            .iter()
+            .map(|h| {
+                let t = Instant::now();
+                pipeline.hop(h, -1, 0, &mut out);
+                t.elapsed().as_nanos() as f64 / 1000.0
+            })
+            .collect();
+        costs.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        costs[(costs.len() as f64 * 0.99) as usize]
+    }
+
+    /// The live engine's budget (research R9): the 99th percentile of one hop's analysis under 10 % of a hop, spectrum on and candidates set (T057).
+    #[test]
+    #[ignore = "timing: run with --ignored on an idle machine"]
+    fn one_hop_costs_under_a_tenth_of_a_hop() {
+        let rate = 44100;
+        let candidates = [40, 45, 47, 50, 52, 55, 57, 59, 64];
+        let limit = HOP as f64 * 1e6 / rate as f64 / 10.0;
+        let base = hop_cost_micros(false, &[], rate);
+        let spectrum = hop_cost_micros(true, &[], rate);
+        let attack = hop_cost_micros(false, &candidates, rate);
+        let all = hop_cost_micros(true, &candidates, rate);
+        println!("p99 µs: level+yin+onset {base:.0}, +spectrum {spectrum:.0}, +attack {attack:.0}, all {all:.0}");
+        let quiet = noise(rate);
+        let n_base = hop_cost_micros_of(&quiet, false, &[], rate);
+        let n_spectrum = hop_cost_micros_of(&quiet, true, &[], rate);
+        let n_attack = hop_cost_micros_of(&quiet, false, &candidates, rate);
+        let n_all = hop_cost_micros_of(&quiet, true, &candidates, rate);
+        println!("noise p99 µs: level+yin+onset {n_base:.0}, +spectrum {n_spectrum:.0}, +attack {n_attack:.0}, all {n_all:.0}");
+        assert!(n_all < limit, "noise: 99th percentile {n_all:.0} µs, limit {limit:.0} µs");
+        assert!(all < limit, "99th percentile {all:.0} µs, limit {limit:.0} µs");
+    }
 }

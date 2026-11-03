@@ -61,6 +61,16 @@ impl Ring {
         count
     }
 
+    /// Consumer side: the sample `offset` places after the oldest one, without popping it; None when fewer wait.
+    pub fn peek(&self, offset: usize) -> Option<f32> {
+        let read = self.read.load(Ordering::Relaxed);
+        let written = self.written.load(Ordering::Acquire);
+        if offset >= written.wrapping_sub(read) {
+            return None;
+        }
+        Some(unsafe { *self.buffer[(read.wrapping_add(offset)) & self.mask].get() })
+    }
+
     /// Consumer side: drops up to `count` of the oldest samples; returns how many.
     pub fn skip(&self, count: usize) -> usize {
         let read = self.read.load(Ordering::Relaxed);

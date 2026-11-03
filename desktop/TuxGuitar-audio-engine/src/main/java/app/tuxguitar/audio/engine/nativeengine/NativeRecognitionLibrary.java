@@ -10,6 +10,80 @@ public final class NativeRecognitionLibrary {
 	private NativeRecognitionLibrary() {
 	}
 
+	/**
+	 * The live entries as an object (contract §1), so that the native backend can run on a fake in the tests (T042). The default methods call the JNI
+	 * ones; {@link #JNI} is that implementation. Its {@code open} loads the library first and fails with LIBRARY_MISSING when it cannot.
+	 */
+	public interface Api {
+
+		Api JNI = new Api() {
+		};
+
+		default long open(String inputName, int inputChannel, int blockFrames, long javaNanosAtOpen, float[] parameters) throws NativeRecognitionException {
+			String failure = load();
+			if( failure != null ) {
+				throw new NativeRecognitionException(NativeRecognitionException.Reason.LIBRARY_MISSING, failure);
+			}
+			return NativeRecognitionLibrary.open(inputName, inputChannel, blockFrames, javaNanosAtOpen, parameters);
+		}
+
+		default float sampleRate(long handle) {
+			return NativeRecognitionLibrary.sampleRate(handle);
+		}
+
+		default void configure(long handle, float[] parameters) {
+			NativeRecognitionLibrary.configure(handle, parameters);
+		}
+
+		default void setSpectrumEnabled(long handle, boolean on) {
+			NativeRecognitionLibrary.setSpectrumEnabled(handle, on);
+		}
+
+		default void setExpectedPitches(long handle, int[] midi) {
+			NativeRecognitionLibrary.setExpectedPitches(handle, midi);
+		}
+
+		default void setExpectedChord(long handle, int[] required, int[] tolerated) {
+			NativeRecognitionLibrary.setExpectedChord(handle, required, tolerated);
+		}
+
+		default void setAttackCandidates(long handle, int[] pitches) {
+			NativeRecognitionLibrary.setAttackCandidates(handle, pitches);
+		}
+
+		default int nextFrames(long handle, float[] records, int timeoutMillis) {
+			return NativeRecognitionLibrary.nextFrames(handle, records, timeoutMillis);
+		}
+
+		default int nextHops(long handle, float[] hops, int timeoutMillis) {
+			return NativeRecognitionLibrary.nextHops(handle, hops, timeoutMillis);
+		}
+
+		default void setHopsEnabled(long handle, boolean on) {
+			NativeRecognitionLibrary.setHopsEnabled(handle, on);
+		}
+
+		default long droppedBlocks(long handle) {
+			return NativeRecognitionLibrary.droppedBlocks(handle);
+		}
+
+		default void close(long handle) {
+			NativeRecognitionLibrary.close(handle);
+		}
+
+		default float[] strumClip(long handle) {
+			return NativeRecognitionLibrary.strumClip(handle);
+		}
+
+		default void resetStrumClip(long handle) {
+			NativeRecognitionLibrary.resetStrumClip(handle);
+		}
+
+		default float[] stats(long handle) {
+			return NativeRecognitionLibrary.stats(handle);
+		}
+	}
+
 	/** Loads the library once; null when it is there, else the reason it could not be loaded. */
 	public static String load() {
 		return NativeLibrary.load();

@@ -1,166 +1,315 @@
 //! The Java side's entry points of the native recognition (spec 023, contract §1): the static native methods of
 //! `app.tuxguitar.audio.engine.nativeengine.NativeRecognitionLibrary`. Errors become `NativeRecognitionException`s whose message is
-//! "REASON: detail". The live entries answer "not implemented" until the live recognition is written (US1, phase 4).
+//! "REASON: detail".
 
 use jni::objects::{JClass, JFloatArray, JIntArray, JString};
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use crate::analysis::front_end::{FrontEnd, FrontEndSettings};
+use crate::analysis::front_end::FrontEnd;
 use crate::analysis::pipeline::{self, HopResult, Pipeline, Request};
-use crate::analysis::strum_clip::{StrumClip, StrumParameters, StrumShared};
+use crate::analysis::chord::ExpectedChord;
+use crate::analysis::strum_clip::{self, StrumClip, StrumShared};
 use crate::analysis::Parameters;
+use crate::workgroup::Workgroup;
+use crate::capture::{Capture, CaptureShared};
+use crate::recognition::{self, front_of, strum_of, AttackSlot, Config, Requests, Shared, Worker, HOP_BLOCK};
+use std::sync::{Arc, Mutex};
+use std::thread::JoinHandle;
+use std::time::{Duration, Instant};
 
 const EXCEPTION: &str = "app/tuxguitar/audio/engine/nativeengine/NativeRecognitionException";
-const NOT_IMPLEMENTED: &str = "STREAM_FAILED: the native recognition is not written yet";
+/// The capture's ring: 1024 blocks of 128 frames, more than a second at 96 kHz before a block is dropped.
+const CAPTURE_BLOCKS: usize = 1024;
 
 fn fail(env: &mut JNIEnv, message: &str) {
     let _ = env.throw_new(EXCEPTION, message);
+}
+
+/// A live recognition. The handle Java holds is the address of a boxed `LiveHandle`: its `Live` is taken at close (the stream stopped, the
+/// thread joined), the small box itself stays, so a late or repeated call on a closed handle finds nothing instead of freed memory.
+struct LiveHandle {
+    live: Mutex<Option<Live>>,
+    frames_scratch: Mutex<Vec<f32>>,
+    hops_scratch: Mutex<Vec<f32>>,
+}
+
+struct Live {
+    shared: Arc<Shared>,
+    capture: Capture,
+    thread: Option<JoinHandle<()>>,
+    parameters: Parameters,
+    requests: Requests,
+}
+
+fn live_handle<'a>(handle: jlong) -> Option<&'a LiveHandle> {
+    if handle == 0 {
+        return None;
+    }
+    // SAFETY: a non-zero handle is a box made by open, never freed
+    Some(unsafe { &*(handle as *const LiveHandle) })
+}
+
+/// Runs `f` on the open recognition of `handle`, under its lock (Java's threads only: the analysis thread never takes it).
+fn with_live<T>(handle: jlong, f: impl FnOnce(&mut Live) -> T) -> Option<T> {
+    let handle = live_handle(handle)?;
+    let mut live = handle.live.lock().unwrap_or_else(|e| e.into_inner());
+    live.as_mut().map(f)
+}
+
+fn shared_of(handle: jlong) -> Option<Arc<Shared>> {
+    with_live(handle, |live| live.shared.clone())
+}
+
+fn parameters_of(env: &mut JNIEnv, parameters: &JFloatArray) -> Option<Parameters> {
+    floats(env, parameters).and_then(|p| Parameters::from_slice(&p))
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_open<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _input: JString<'local>,
-    _channel: jint,
+    input: JString<'local>,
+    channel: jint,
     _block: jint,
-    _java_nanos_at_open: jlong,
-    _parameters: JFloatArray<'local>,
+    java_nanos_at_open: jlong,
+    parameters: JFloatArray<'local>,
 ) -> jlong {
-    fail(&mut env, NOT_IMPLEMENTED);
-    0
+    let name: String = if input.is_null() { String::new() } else { env.get_string(&input).map(|s| s.into()).unwrap_or_default() };
+    let Some(parameters) = parameters_of(&mut env, &parameters) else {
+        fail(&mut env, "STREAM_FAILED: the parameters are missing or too short");
+        return 0;
+    };
+    // the blocks are always of 128 frames (capture::BLOCK), two to a hop, whatever the system's callback size
+    let capture_shared = Arc::new(CaptureShared::new(CAPTURE_BLOCKS));
+    let origin = Instant::now();
+    let capture = match Capture::open(&name, channel, capture_shared.clone(), origin) {
+        Ok(capture) => capture,
+        Err((reason, detail)) => {
+            fail(&mut env, &format!("{}: {}", reason.name(), detail));
+            return 0;
+        }
+    };
+    let rate = capture.sample_rate() as i32;
+    let shared = Arc::new(Shared::new(capture_shared, rate, java_nanos_at_open));
+    let worker = Worker::new(shared.clone(), parameters, front_of(&parameters), strum_of(&parameters));
+    let thread = recognition::start_in(worker, Workgroup::of_device(capture.name()));
+    let live = Live { shared, capture, thread: Some(thread), parameters, requests: Requests::default() };
+    let handle = LiveHandle { live: Mutex::new(Some(live)), frames_scratch: Mutex::new(Vec::new()), hops_scratch: Mutex::new(Vec::new()) };
+    Box::into_raw(Box::new(handle)) as jlong
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_sampleRate<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
+    handle: jlong,
 ) -> jfloat {
-    0.0
+    with_live(handle, |live| live.capture.sample_rate()).unwrap_or(0.0)
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_configure<'local>(
-    _env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
-    _parameters: JFloatArray<'local>,
+    handle: jlong,
+    parameters: JFloatArray<'local>,
 ) {
+    let Some(parameters) = parameters_of(&mut env, &parameters) else {
+        return;
+    };
+    with_live(handle, |live| {
+        // the new pipeline is built here, on Java's thread, with the requests made so far: the loop only swaps it in
+        let pipeline = if recognition::analysis_changed(&live.parameters, &parameters) { Some(recognition::pipeline_for(live.shared.rate, parameters, &live.requests)) } else { None };
+        live.parameters = parameters;
+        live.shared.config.post(Box::new(Config { pipeline, front: front_of(&parameters), strum: strum_of(&parameters) }));
+    });
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_setSpectrumEnabled<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
-    _on: jboolean,
+    handle: jlong,
+    on: jboolean,
 ) {
+    with_live(handle, |live| {
+        live.requests.spectrum = on != 0;
+        live.shared.set_spectrum(on != 0);
+    });
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_setExpectedPitches<'local>(
-    _env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
-    _midi: JIntArray<'local>,
+    handle: jlong,
+    midi: JIntArray<'local>,
 ) {
+    let midi = ints(&mut env, &midi);
+    with_live(handle, |live| {
+        live.requests.expected = midi.clone();
+        live.shared.expected.post(Box::new(midi));
+    });
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_setExpectedChord<'local>(
-    _env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
-    _required: JIntArray<'local>,
-    _tolerated: JIntArray<'local>,
+    handle: jlong,
+    required: JIntArray<'local>,
+    tolerated: JIntArray<'local>,
 ) {
+    let chord = if required.is_null() { None } else { Some((ints(&mut env, &required), ints(&mut env, &tolerated))) };
+    with_live(handle, |live| {
+        let expected = chord.as_ref().map(|(r, t)| ExpectedChord::new(r, t));
+        live.requests.chord = chord;
+        live.shared.chord.post(Box::new(expected));
+    });
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_setAttackCandidates<'local>(
-    _env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
-    _pitches: JIntArray<'local>,
+    handle: jlong,
+    pitches: JIntArray<'local>,
 ) {
+    let pitches = ints(&mut env, &pitches);
+    with_live(handle, |live| {
+        live.shared.attack.post(Box::new(AttackSlot::of(live.shared.rate, &pitches)));
+        live.requests.attack = pitches;
+    });
+}
+
+/// A wait of Java's frame or hop thread: into a scratch buffer as long as the Java array, then copied into it.
+fn wait_into(
+    env: &mut JNIEnv,
+    handle: jlong,
+    array: &JFloatArray,
+    timeout_millis: jint,
+    scratch: impl FnOnce(&LiveHandle) -> &Mutex<Vec<f32>>,
+    wait: impl FnOnce(&Shared, &mut [f32], Duration) -> (i32, usize),
+) -> jint {
+    let Some(live) = live_handle(handle) else {
+        return -2;
+    };
+    let Some(shared) = shared_of(handle) else {
+        return -2;
+    };
+    let length = env.get_array_length(array).unwrap_or(0).max(0) as usize;
+    let mut buffer = scratch(live).lock().unwrap_or_else(|e| e.into_inner());
+    buffer.resize(length, 0.0);
+    let (result, floats) = wait(&shared, &mut buffer, Duration::from_millis(timeout_millis.max(0) as u64));
+    if result > 0 && env.set_float_array_region(array, 0, &buffer[..floats]).is_err() {
+        return -1;
+    }
+    result
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_nextFrames<'local>(
-    _env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
-    _records: JFloatArray<'local>,
-    _timeout_millis: jint,
+    handle: jlong,
+    records: JFloatArray<'local>,
+    timeout_millis: jint,
 ) -> jint {
-    -1
+    wait_into(&mut env, handle, &records, timeout_millis, |h| &h.frames_scratch, |shared, out, timeout| {
+        let count = shared.next_frames(out, timeout);
+        let mut floats = 0;
+        for _ in 0..count.max(0) {
+            floats += out[floats] as usize;
+        }
+        (count, floats)
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_nextHops<'local>(
-    _env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
-    _hops: JFloatArray<'local>,
-    _timeout_millis: jint,
+    handle: jlong,
+    hops: JFloatArray<'local>,
+    timeout_millis: jint,
 ) -> jint {
-    -1
+    wait_into(&mut env, handle, &hops, timeout_millis, |h| &h.hops_scratch, |shared, out, timeout| {
+        let count = shared.next_hops(out, timeout);
+        (count, count.max(0) as usize * HOP_BLOCK)
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_setHopsEnabled<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
-    _on: jboolean,
+    handle: jlong,
+    on: jboolean,
 ) {
+    with_live(handle, |live| live.shared.set_hops_enabled(on != 0));
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_droppedBlocks<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
+    handle: jlong,
 ) -> jlong {
-    0
+    with_live(handle, |live| live.shared.dropped_blocks() as jlong).unwrap_or(0)
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_close<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
+    handle: jlong,
 ) {
+    let Some(handle) = live_handle(handle) else {
+        return;
+    };
+    let taken = handle.live.lock().unwrap_or_else(|e| e.into_inner()).take();
+    if let Some(mut live) = taken {
+        // the waits return −2 at once, the loop ends at its next iteration, then the stream stops; the rings go with the last reader
+        live.shared.close();
+        if let Some(thread) = live.thread.take() {
+            let _ = thread.join();
+        }
+        drop(live);
+    }
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_strumClip<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
+    handle: jlong,
 ) -> jfloatArray {
-    fail(&mut env, NOT_IMPLEMENTED);
-    std::ptr::null_mut()
+    let reading = with_live(handle, |live| live.shared.strum.snapshot()).unwrap_or(strum_clip::NONE);
+    float_array(&mut env, &[reading.verdict as f32, reading.clipped_share as f32, reading.rms_dbfs as f32])
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_resetStrumClip<'local>(
     _env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
+    handle: jlong,
 ) {
+    with_live(handle, |live| live.shared.strum.reset());
 }
 
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_stats<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
-    _handle: jlong,
+    handle: jlong,
 ) -> jfloatArray {
-    fail(&mut env, NOT_IMPLEMENTED);
-    std::ptr::null_mut()
+    let stats = with_live(handle, |live| {
+        let (median, p99) = live.shared.costs.percentiles();
+        [live.shared.dropped_blocks() as f32, median as f32, p99 as f32]
+    })
+    .unwrap_or([0.0, 0.0, 0.0]);
+    float_array(&mut env, &stats)
 }
 
 fn floats(env: &mut JNIEnv, array: &JFloatArray) -> Option<Vec<f32>> {
@@ -251,7 +400,7 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
         return std::ptr::null_mut();
     };
     let mut front = FrontEnd::new(rate as f64, pipeline::HOP);
-    front.set(FrontEndSettings { gain: parameters.front_gain, noise_reduction: parameters.front_noise_reduction, subtraction: parameters.front_subtraction });
+    front.set(front_of(&parameters));
     let hops = samples.len() / pipeline::HOP;
     let mut out = samples[..hops * pipeline::HOP].to_vec();
     for hop in out.chunks_exact_mut(pipeline::HOP) {
@@ -272,17 +421,13 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
         return std::ptr::null_mut();
     };
     let shared = StrumShared::default();
-    let mut meter = StrumClip::new(strum_parameters(&parameters));
+    let mut meter = StrumClip::new(strum_of(&parameters));
     meter.configure(rate, &shared);
     for hop in samples.chunks_exact(pipeline::HOP) {
         meter.hop(hop, &shared);
     }
     let reading = shared.snapshot();
     float_array(&mut env, &[reading.verdict as f32, reading.clipped_share as f32, reading.rms_dbfs as f32])
-}
-
-fn strum_parameters(p: &Parameters) -> StrumParameters {
-    StrumParameters { arm_floor_dbfs: p.strum_arm_floor_dbfs, clip_sample: p.strum_clip_sample, weak_dbfs: p.strum_weak_dbfs, loud_dbfs: p.strum_loud_dbfs }
 }
 
 /// A per-hop analysis of a stream captured by Java (amendment of 2026-11-03): the offline pipeline fed one hop at a time. Its buffers are made at open,

@@ -85,3 +85,64 @@ fn one_second_of_hops_through_every_stage_allocates_nothing_after_warm_up() {
     }
     assert_eq!(allocations() - before, 0);
 }
+
+#[test]
+fn the_live_recognition_loop_allocates_nothing_even_when_java_changes_its_requests() {
+    use crate::analysis::chord::ExpectedChord;
+    use crate::analysis::Parameters;
+    use crate::capture::{CaptureShared, BLOCK};
+    use crate::recognition::{front_of, pipeline_for, strum_of, AttackSlot, Config, Requests, Shared, Step, Worker};
+    use std::sync::Arc;
+    let rate = 48000;
+    let p = Parameters::defaults();
+    let shared = Arc::new(Shared::new(Arc::new(CaptureShared::new(64)), rate, 0));
+    let mut worker = Worker::new(shared.clone(), p, front_of(&p), strum_of(&p));
+    shared.set_spectrum(true);
+    shared.set_hops_enabled(true);
+    let block: Vec<f32> = (0..BLOCK).map(|i| (0.2 * (2.0 * std::f64::consts::PI * 110.0 * i as f64 / rate as f64).sin()) as f32).collect();
+    let block: [f32; BLOCK] = block.try_into().unwrap();
+    let mut out = vec![0f32; 1 << 18];
+    let drain = |shared: &Shared, out: &mut [f32]| {
+        shared.next_frames(out, std::time::Duration::ZERO);
+        shared.next_hops(out, std::time::Duration::ZERO);
+    };
+    for _ in 0..80 {
+        shared.capture.blocks.push(&block, 0);
+        while worker.step() == Step::Block {}
+        drain(&shared, &mut out);
+    }
+    // what Java hands over is built before counting, on this thread; posting it and the loop's taking it must not allocate
+    let mut changes: Vec<(Box<Config>, Box<AttackSlot>, Box<Vec<i32>>, Box<Option<ExpectedChord>>)> = (0..4)
+        .map(|k| {
+            let requests = Requests { spectrum: true, attack: vec![40, 45 + k], expected: vec![45], chord: Some((vec![40, 47, 52], vec![45])) };
+            (
+                Box::new(Config { pipeline: if k % 2 == 0 { Some(pipeline_for(rate, p, &requests)) } else { None }, front: front_of(&p), strum: strum_of(&p) }),
+                Box::new(AttackSlot::of(rate, &requests.attack)),
+                Box::new(vec![45, 52]),
+                Box::new(Some(ExpectedChord::new(&[40, 47, 52], &[45]))),
+            )
+        })
+        .collect();
+    changes.reserve(0);
+    let before = allocations();
+    for round in 0..400 {
+        if round % 100 == 50 {
+            let (config, attack, expected, chord) = changes.pop().unwrap();
+            shared.config.post(config);
+            shared.attack.post(attack);
+            shared.expected.post(expected);
+            shared.chord.post(chord);
+        }
+        if round == 300 {
+            // a gap: more blocks than the ring holds, the analysis restarts
+            for _ in 0..80 {
+                shared.capture.blocks.push(&block, 0);
+            }
+        }
+        shared.capture.blocks.push(&block, 0);
+        while worker.step() == Step::Block {}
+        drain(&shared, &mut out);
+    }
+    assert_eq!(allocations() - before, 0);
+    assert!(shared.dropped_blocks() > 0);
+}

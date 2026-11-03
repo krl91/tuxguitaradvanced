@@ -3,12 +3,15 @@
 //! runs here: the chain is the Java of the audio engine.
 
 pub mod analysis;
+pub mod capture;
 pub mod device;
 mod jni_bridge;
 mod jni_recognition;
 mod latency;
 pub mod realtime;
+pub mod recognition;
 pub mod resampler;
 pub mod ring;
+pub mod workgroup;
 #[cfg(test)]
 mod no_allocation;

@@ -47,6 +47,8 @@
 					     (the dataset benchmarks of this module, also tagged benchmark, stay in the default run) -->
 					<excludes>
 						<exclude>**/benchmark/RecognitionDelayProbeTest.java</exclude>
+						<!-- spec 023 T055: waits up to two minutes for the owner's notes on the cable; run it with -Dtest=DualEngineCableProbeTest -->
+						<exclude>**/benchmark/DualEngineCableProbeTest.java</exclude>
 					</excludes>
 					<systemPropertyVariables>
 						<tuxguitar.recognition.engine>${tuxguitar.recognition.engine}</tuxguitar.recognition.engine>

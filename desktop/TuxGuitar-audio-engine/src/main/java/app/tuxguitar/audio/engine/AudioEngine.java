@@ -1,6 +1,7 @@
 package app.tuxguitar.audio.engine;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.IntFunction;
 
 import javax.sound.sampled.AudioFormat;
@@ -11,8 +12,15 @@ import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.InputAssessor;
 import app.tuxguitar.audio.engine.analysis.LevelCheckStats;
 import app.tuxguitar.audio.engine.analysis.LevelAnalyzer;
+import app.tuxguitar.audio.engine.analysis.HopListener;
 import app.tuxguitar.audio.engine.analysis.PitchEstimator;
+import app.tuxguitar.audio.engine.analysis.StrumClipMeter;
 import app.tuxguitar.audio.engine.analysis.TarsosFastYinEstimator;
+import app.tuxguitar.audio.engine.backend.JavaBackend;
+import app.tuxguitar.audio.engine.backend.NativeBackend;
+import app.tuxguitar.audio.engine.backend.RecognitionBackend;
+import app.tuxguitar.audio.engine.backend.RecognitionBackendFactory;
+import app.tuxguitar.audio.engine.frontend.FrontEnd;
 import app.tuxguitar.audio.engine.frontend.GainSuggester;
 import app.tuxguitar.audio.engine.frontend.GainSuggestion;
 import app.tuxguitar.audio.engine.frontend.InputWarning;
@@ -22,6 +30,8 @@ import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.input.InputDeviceCatalog;
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
+import app.tuxguitar.audio.engine.nativeengine.NativeParameters;
+import app.tuxguitar.audio.engine.nativeengine.NativeRecognitionException;
 import app.tuxguitar.audio.engine.settings.PitchEngineCatalog;
 import app.tuxguitar.audio.engine.settings.RecognitionParameter;
 import app.tuxguitar.audio.engine.settings.RecognitionParameters;
@@ -40,6 +50,10 @@ import app.tuxguitar.util.singleton.TGSingletonUtil;
  * subscribed. Each time capture opens an input, analysis is rebuilt for the sample rate
  * actually negotiated (no resampling). Consumers are expected to subscribe while they hold
  * capture: capture without analysis fills the ring buffer and then drops new samples.</p>
+ *
+ * <p>The capture and the analysis of a run are those of a {@link RecognitionBackend} (spec 023): the Java chain, or the native engine when the engine
+ * that the settings resolve to is the native one. The backend is chosen when the first consumer acquires; what the consumers set (listeners, requests,
+ * front end) is kept here and given to the backend that runs.</p>
  */
 public final class AudioEngine {
 
@@ -80,6 +94,23 @@ public final class AudioEngine {
 
 	private volatile Negotiated negotiated;
 
+	private final TGContext context;
+	private final JavaBackend javaBackend;
+	/** Null for the engines of the package constructors (tests): they keep the Java backend. */
+	private final RecognitionBackendFactory backendFactory;
+	private NativeBackend nativeBackend;
+	private volatile RecognitionBackend activeBackend;
+	/** Guards the choice of the backend and the moves of what the consumers set. */
+	private final Object backendLock = new Object();
+	private final List<AnalysisService.Listener> subscribers = new CopyOnWriteArrayList<AnalysisService.Listener>();
+	private final List<HopListener> hopListeners = new CopyOnWriteArrayList<HopListener>();
+	private final List<CaptureService.Listener> captureListeners = new CopyOnWriteArrayList<CaptureService.Listener>();
+	private volatile boolean spectrumEnabled;
+	private volatile int[] expectedPitches;
+	private volatile int[] chordRequired;
+	private volatile int[] chordTolerated;
+	private volatile int[] attackCandidates;
+
 	AudioEngine(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection,
 			int ringBufferCapacity, LevelAnalyzer levelAnalyzer, IntFunction<PitchEstimator> estimatorFactory) {
 		this(context, catalog, selection, ringBufferCapacity, levelAnalyzer, new ArticulationDetector(), estimatorFactory, null);
@@ -92,6 +123,15 @@ public final class AudioEngine {
 	AudioEngine(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection,
 			int ringBufferCapacity, LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector,
 			IntFunction<PitchEstimator> estimatorFactory, RecognitionSettingsStore settingsStore) {
+		this(context, catalog, selection, ringBufferCapacity, levelAnalyzer, articulationDetector, estimatorFactory, settingsStore, null);
+	}
+
+	/** @param backendFactory how the backend of a run is chosen, or null to keep the Java backend (spec 023) */
+	AudioEngine(TGContext context, InputDeviceCatalog catalog, CurrentInputSelection selection,
+			int ringBufferCapacity, LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector,
+			IntFunction<PitchEstimator> estimatorFactory, RecognitionSettingsStore settingsStore, RecognitionBackendFactory backendFactory) {
+		this.context = context;
+		this.backendFactory = backendFactory;
 		this.settingsStore = settingsStore;
 		this.ringBuffer = new SampleRingBuffer(ringBufferCapacity);
 		this.selection = selection;
@@ -110,11 +150,13 @@ public final class AudioEngine {
 			formatNegotiated(format);
 			rebuildAnalysis(Math.round(format.getSampleRate()));
 		});
+		this.javaBackend = new JavaBackend(this.captureService, this.analysisService, this.ringBuffer);
+		this.activeBackend = this.javaBackend;
 		this.assessor = new InputAssessor(new InputAssessor.Parameters(), this::levelCheckCompleted);
 		this.checkedInputRevision = selection.snapshot().getInputRevision();
 		this.gainInputRevision = this.checkedInputRevision;
 		this.selection.addListener(this::selectionChanged);
-		this.captureService.addListener(this::captureEvent);
+		addCaptureListener(this::captureEvent);
 		if( settingsStore != null ) {
 			settingsStore.addListener(this::settingsChanged);
 			applyFrontEndSettings(settingsStore.get());
@@ -131,7 +173,7 @@ public final class AudioEngine {
 						CurrentInputSelection.getInstance(singletonContext), DEFAULT_RING_BUFFER_CAPACITY,
 						levelAnalyzer(settings), articulationDetector(settings),
 						sampleRate -> PitchEngineCatalog.resolve(store.get().get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate),
-						store);
+						store, RecognitionBackendFactory.PRODUCTION);
 				// the profile of the selected device is laid over the settings, for every reader, whether or not a window is open (spec 013)
 				app.tuxguitar.audio.engine.calibration.ProfileActivator.attach(singletonContext, engine);
 				return engine;
@@ -144,7 +186,12 @@ public final class AudioEngine {
 	 * was not checked yet (FR-038).
 	 */
 	public void acquire(String consumerId) {
-		this.captureService.acquire(consumerId);
+		synchronized (this.backendLock) {
+			if( this.activeBackend.getConsumerCount() == 0 ) {
+				chooseBackend();
+			}
+			this.activeBackend.acquire(consumerId);
+		}
 		CurrentInputSelection.Snapshot snapshot = this.selection.snapshot();
 		if( snapshot.getInput() != null && snapshot.getAssessment().getStatus() == InputAssessment.Status.UNCHECKED ) {
 			runLevelCheck();
@@ -153,7 +200,109 @@ public final class AudioEngine {
 
 	/** Stops capture when the last consumer releases it. */
 	public void release(String consumerId) {
-		this.captureService.release(consumerId);
+		RecognitionBackend backend;
+		synchronized (this.backendLock) {
+			backend = this.activeBackend;
+		}
+		// outside the lock: closing waits for the frame thread, whose listeners may subscribe or unsubscribe
+		backend.release(consumerId);
+	}
+
+	/**
+	 * The backend of the run that starts (no consumer holds the capture): the native engine when the settings resolve to it and it opens the input, else
+	 * the Java chain. A changed choice therefore applies from the next run, never during one (FR-004).
+	 */
+	private void chooseBackend() {
+		if( this.backendFactory == null || this.backendFactory.resolveKind(currentSettings()) != PitchEngineCatalog.Kind.NATIVE ) {
+			switchTo(this.javaBackend);
+			return;
+		}
+		NativeBackend chosen = nativeBackend();
+		switchTo(chosen);
+		try {
+			chosen.open();
+		} catch (NativeRecognitionException exception) {
+			System.err.println("TuxGuitar recognition: the native engine could not open the input (" + exception.getMessage() + "); the Java engine is used.");
+			switchTo(this.javaBackend);
+		}
+	}
+
+	private NativeBackend nativeBackend() {
+		if( this.nativeBackend == null ) {
+			this.nativeBackend = this.backendFactory.createNative(this.context, this.selection, this::liveNativeParameters);
+			this.nativeBackend.setFormatListener(format -> {
+				formatNegotiated(format);
+				this.lastSampleRate = Math.round(format.getSampleRate());
+			});
+		}
+		return this.nativeBackend;
+	}
+
+	/** Moves what the consumers set from the backend that ran to this one. */
+	private void switchTo(RecognitionBackend next) {
+		RecognitionBackend previous = this.activeBackend;
+		if( previous == next ) {
+			return;
+		}
+		for( AnalysisService.Listener listener : this.subscribers ) {
+			previous.unsubscribe(listener);
+			next.subscribe(listener);
+		}
+		for( HopListener listener : this.hopListeners ) {
+			previous.removeHopListener(listener);
+			next.addHopListener(listener);
+		}
+		for( CaptureService.Listener listener : this.captureListeners ) {
+			previous.removeCaptureListener(listener);
+			next.addCaptureListener(listener);
+		}
+		next.setSpectrumEnabled(this.spectrumEnabled);
+		next.setExpectedPitches(this.expectedPitches);
+		next.setExpectedChord(this.chordRequired, this.chordTolerated);
+		next.setAttackCandidates(this.attackCandidates);
+		this.activeBackend = next;
+	}
+
+	private RecognitionSettings currentSettings() {
+		return (this.settingsStore != null ? this.settingsStore.get() : RecognitionSettings.defaults());
+	}
+
+	/** The values of the native engine now: the settings and the live front end (the gain is in memory only). */
+	private float[] liveNativeParameters() {
+		FrontEnd frontEnd = this.analysisService.getFrontEnd();
+		return NativeParameters.of(currentSettings(), frontEnd.getGain().getMultiplier(), frontEnd.isNoiseReduction(), frontEnd.isSubtraction());
+	}
+
+	/** The front end or the settings changed: the native engine of a run gets its new values (the Java analysis reads its own). */
+	private void pushNativeParameters() {
+		RecognitionBackend backend = this.activeBackend;
+		if( backend != null && backend.engineKind() == PitchEngineCatalog.Kind.NATIVE ) {
+			backend.configure(liveNativeParameters());
+		}
+	}
+
+	/** The backend of the current or last run; diagnostics and tests only. */
+	RecognitionBackend getActiveBackend() {
+		return this.activeBackend;
+	}
+
+	/** The consumers of the Java capture; tests only. */
+	int getJavaCaptureConsumerCount() {
+		return this.captureService.getConsumerCount();
+	}
+
+	/** The native strum clip measure's reading for the pre-run check, or null when the Java chain runs (its hop listener meter is used then). */
+	public StrumClipMeter.Reading nativeStrumReading() {
+		RecognitionBackend backend = this.activeBackend;
+		return (backend instanceof NativeBackend ? ((NativeBackend) backend).strumReading() : null);
+	}
+
+	/** Starts a new native strum clip check; nothing when the Java chain runs. */
+	public void resetNativeStrumReading() {
+		RecognitionBackend backend = this.activeBackend;
+		if( backend instanceof NativeBackend ) {
+			((NativeBackend) backend).resetStrumReading();
+		}
 	}
 
 	/**
@@ -163,11 +312,14 @@ public final class AudioEngine {
 	 */
 	public void runLevelCheck() {
 		this.assessor.runLevelCheck();
-		this.analysisService.subscribe(this.assessor);
+		subscribe(this.assessor);
 	}
 
 	public void subscribe(AnalysisService.Listener listener) {
-		this.analysisService.subscribe(listener);
+		synchronized (this.backendLock) {
+			this.subscribers.add(listener);
+			this.activeBackend.subscribe(listener);
+		}
 	}
 
 	/**
@@ -175,38 +327,74 @@ public final class AudioEngine {
 	 * the tuner does not need it. Single-note analysis is unaffected.
 	 */
 	public void setSpectrumEnabled(boolean enabled) {
-		this.analysisService.setSpectrumEnabled(enabled);
+		synchronized (this.backendLock) {
+			this.spectrumEnabled = enabled;
+			this.activeBackend.setSpectrumEnabled(enabled);
+		}
 	}
 
 	/** The pitches expected now: frames then carry {@link app.tuxguitar.audio.engine.recognition.TargetEvidence} for them (null: none). */
 	public void setExpectedPitches(int[] midi) {
-		this.analysisService.setExpectedPitches(midi);
+		synchronized (this.backendLock) {
+			this.expectedPitches = (midi == null || midi.length == 0 ? null : midi.clone());
+			this.activeBackend.setExpectedPitches(this.expectedPitches);
+		}
+	}
+
+	/**
+	 * The chord expected now (null required: none). With the native engine the frames then carry its {@link app.tuxguitar.audio.engine.analysis.ChordEvidence};
+	 * with the Java chain the matcher computes it from the spectrum, as before (spec 023, contract §4).
+	 */
+	public void setExpectedChord(int[] required, int[] tolerated) {
+		synchronized (this.backendLock) {
+			this.chordRequired = (required == null ? null : required.clone());
+			this.chordTolerated = (required == null ? null : (tolerated == null ? new int[0] : tolerated.clone()));
+			this.activeBackend.setExpectedChord(this.chordRequired, this.chordTolerated);
+		}
 	}
 
 	/** The pitches the attack analysis explains the sound with (null: off); frames then carry {@link app.tuxguitar.audio.engine.analysis.AttackEvidence}. */
 	public void setAttackCandidates(int[] pitches) {
-		this.analysisService.setAttackCandidates(pitches);
+		synchronized (this.backendLock) {
+			this.attackCandidates = (pitches == null || pitches.length == 0 ? null : pitches.clone());
+			this.activeBackend.setAttackCandidates(this.attackCandidates);
+		}
 	}
 
 	/** Every hop of the signal the analysis sees, with its configure (spec 010): see {@link AnalysisService#addHopListener}. */
 	public void addHopListener(app.tuxguitar.audio.engine.analysis.HopListener listener) {
-		this.analysisService.addHopListener(listener);
+		synchronized (this.backendLock) {
+			this.hopListeners.add(listener);
+			this.activeBackend.addHopListener(listener);
+		}
 	}
 
 	public void removeHopListener(app.tuxguitar.audio.engine.analysis.HopListener listener) {
-		this.analysisService.removeHopListener(listener);
+		synchronized (this.backendLock) {
+			this.hopListeners.remove(listener);
+			this.activeBackend.removeHopListener(listener);
+		}
 	}
 
 	public void unsubscribe(AnalysisService.Listener listener) {
-		this.analysisService.unsubscribe(listener);
+		synchronized (this.backendLock) {
+			this.subscribers.remove(listener);
+			this.activeBackend.unsubscribe(listener);
+		}
 	}
 
 	public void addCaptureListener(CaptureService.Listener listener) {
-		this.captureService.addListener(listener);
+		synchronized (this.backendLock) {
+			this.captureListeners.add(listener);
+			this.activeBackend.addCaptureListener(listener);
+		}
 	}
 
 	public void removeCaptureListener(CaptureService.Listener listener) {
-		this.captureService.removeListener(listener);
+		synchronized (this.backendLock) {
+			this.captureListeners.remove(listener);
+			this.activeBackend.removeCaptureListener(listener);
+		}
 	}
 
 	/**
@@ -266,7 +454,7 @@ public final class AudioEngine {
 	/** Diagnostic for tests and measurements only; never shown to the learner. */
 	/** The clock that dates the samples of the capture on the wall clock (spec 002 T093). */
 	public app.tuxguitar.audio.engine.input.CaptureClock getCaptureClock() {
-		return this.captureService.getCaptureClock();
+		return this.activeBackend.clock();
 	}
 
 	/**
@@ -281,7 +469,8 @@ public final class AudioEngine {
 	}
 
 	public long getDroppedSampleCount() {
-		return this.ringBuffer.getDroppedSampleCount();
+		NativeBackend nativeCapture = this.nativeBackend;
+		return this.ringBuffer.getDroppedSampleCount() + (nativeCapture != null ? nativeCapture.getDroppedSampleCount() : 0L);
 	}
 
 	SampleRingBuffer getRingBuffer() {
@@ -289,7 +478,7 @@ public final class AudioEngine {
 	}
 
 	private void levelCheckCompleted(InputAssessment assessment) {
-		this.analysisService.unsubscribe(this.assessor);
+		unsubscribe(this.assessor);
 		this.selection.updateAssessment(assessment);
 	}
 
@@ -305,7 +494,7 @@ public final class AudioEngine {
 		syncGainWithInput();
 		// Without capture no frames arrive; acquire() starts the check then (no cancel here: a
 		// late notification must not cancel a check that acquire() already started).
-		if( snapshot.getInput() != null && this.captureService.getConsumerCount() > 0 ) {
+		if( snapshot.getInput() != null && this.activeBackend.getConsumerCount() > 0 ) {
 			runLevelCheck();
 		}
 	}
@@ -358,6 +547,7 @@ public final class AudioEngine {
 		if( engineValuesDiffer(previous, current) ) {
 			rebuildAnalysis(this.lastSampleRate);
 		}
+		pushNativeParameters();
 	}
 
 	/** The saved noise-reduction choice reaches the front end at once; it needs no restart of the analysis. */
@@ -383,18 +573,22 @@ public final class AudioEngine {
 		if( revision != this.gainInputRevision ) {
 			this.analysisService.getFrontEnd().getGain().resetToNeutral();
 			this.gainInputRevision = revision;
+			pushNativeParameters();
 		}
 	}
 
 	/** Sets the gain (limited to the allowed range) and returns the value that was set. The level meter and the recognition follow at once. */
 	public double setInputGain(double multiplier) {
 		syncGainWithInput();
-		return this.analysisService.getFrontEnd().getGain().setMultiplier(multiplier);
+		double set = this.analysisService.getFrontEnd().getGain().setMultiplier(multiplier);
+		pushNativeParameters();
+		return set;
 	}
 
 	public synchronized void resetInputGain() {
 		this.analysisService.getFrontEnd().getGain().resetToNeutral();
 		this.gainInputRevision = this.selection.snapshot().getInputRevision();
+		pushNativeParameters();
 	}
 
 	/** Whether the saved setting asks for the noise gate. */

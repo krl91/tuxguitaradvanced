@@ -229,6 +229,16 @@ impl AttackAnalyzer {
         &self.pitches
     }
 
+    /// Forgets every hop, as a new analyser for the same pitches would start (a gap in the input); allocates nothing.
+    pub fn reset(&mut self) {
+        self.history.iter_mut().for_each(|s| *s = 0.0);
+        self.history_position = 0;
+        self.hops = 0;
+        for slot in self.ring.iter_mut() {
+            slot.iter_mut().for_each(|v| *v = 0.0);
+        }
+    }
+
     pub fn push(&mut self, samples: &[f32]) {
         let n = self.history.len();
         for s in samples {
@@ -330,6 +340,35 @@ fn gram(templates: &[Vec<f64>]) -> Vec<Vec<f64>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_reset_analyser_gives_what_a_new_one_gives() {
+        let rate = 48000.0;
+        let f = |i: usize| (0.3 * (2.0 * std::f64::consts::PI * 110.0 * i as f64 / rate).sin()) as f32;
+        let mut used = AttackAnalyzer::new(AttackParameters::defaults(), rate, &[45, 52, 57]);
+        let mut evidence = used.new_evidence();
+        let noise: Vec<f32> = (0..256 * 40).map(|i| f(i * 7 + 3) * 0.5).collect();
+        for hop in noise.chunks(256) {
+            used.push(hop);
+            used.analyze(&mut evidence);
+        }
+        used.reset();
+        let mut fresh = AttackAnalyzer::new(AttackParameters::defaults(), rate, &[45, 52, 57]);
+        let mut fresh_evidence = fresh.new_evidence();
+        let tone: Vec<f32> = (0..256 * 40).map(f).collect();
+        for hop in tone.chunks(256) {
+            used.push(hop);
+            fresh.push(hop);
+            let a = used.analyze(&mut evidence);
+            let b = fresh.analyze(&mut fresh_evidence);
+            assert_eq!(a, b);
+            if a {
+                assert_eq!(evidence.amplitudes, fresh_evidence.amplitudes);
+                assert_eq!(evidence.growth, fresh_evidence.growth);
+                assert_eq!(evidence.attack_strength.to_bits(), fresh_evidence.attack_strength.to_bits());
+            }
+        }
+    }
 
     #[test]
     fn a_new_note_over_a_ringing_one_is_the_one_explained() {

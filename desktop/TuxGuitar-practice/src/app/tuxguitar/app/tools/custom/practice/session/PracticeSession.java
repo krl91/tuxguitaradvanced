@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
@@ -87,6 +88,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private double earlyMargin = Double.POSITIVE_INFINITY;
 	private long earlyStabilityNanos;
 	private Consumer<int[]> expectedPitchSink;
+	private BiConsumer<int[], int[]> expectedChordSink;
 	/** Attack-difference acceptance (spec 004); null: the f0 and chord rules judge. */
 	private PolyphonicAcceptance polyphonic;
 	private static final long NEIGHBOUR_VETO_NANOS = 120L * 1_000_000L;
@@ -262,11 +264,24 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		publishExpectedPitches();
 	}
 
+	/**
+	 * Receives the chord expected now (required and tolerated pitches; null required when none) on every event change, from the session thread; the
+	 * practice window passes it to the audio engine, whose native engine then adds its evidence to the frames (spec 023, contract §4).
+	 */
+	public void setExpectedChordSink(BiConsumer<int[], int[]> sink) {
+		this.expectedChordSink = sink;
+		publishExpectedPitches();
+	}
+
 	private void publishExpectedPitches() {
+		PracticeEvent event = currentEvent();
+		if( this.expectedChordSink != null ) {
+			boolean chord = this.state == State.RUNNING && event != null && event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD;
+			this.expectedChordSink.accept(chord ? event.getRequiredPitches() : null, chord ? event.getToleratedPitches() : null);
+		}
 		if( this.expectedPitchSink == null ) {
 			return;
 		}
-		PracticeEvent event = currentEvent();
 		this.expectedPitchSink.accept(this.state == State.RUNNING && event != null ? expectedPitchesOf(event) : null);
 	}
 
@@ -704,7 +719,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 					: (frame.getLevelState() == AnalysisFrame.LevelState.CLIPPING ? ChordFeedback.UNCERTAIN : ChordFeedback.WAITING));
 			return;
 		}
-		ChordMatcher.Result result = this.chordMatcher.check(spectrum, event.getRequiredPitches(), event.getToleratedPitches());
+		ChordMatcher.Result result = this.chordMatcher.check(frame, event.getRequiredPitches(), event.getToleratedPitches());
 		this.chordRun = (result.isComplete() ? this.chordRun + 1 : 0);
 		if( !this.articulationArmed ) {
 			this.chordFeedback = (result.isComplete() ? new ChordFeedback(ChordFeedback.Kind.STRUM_AGAIN, new int[0], result.getUnverifiable())

@@ -44,17 +44,22 @@ Amendment (owner, 2026-11-03, during T039): the per-hop analysis (`openAnalysis`
 These are the operations `AudioEngine` calls today on `CaptureService` and `AnalysisService`:
 
 ```text
-open(selection snapshot)             // throws RecognitionBackendException(reason) for NativeBackend
-close()
+engineKind()                         // JAVA or NATIVE, for the diagnostics and the tests
+acquire(consumerId) / release(consumerId) / getConsumerCount()
 subscribe(AnalysisService.Listener) / unsubscribe
 addHopListener(HopListener) / removeHopListener
 addCaptureListener(CaptureService.Listener) / remove
 setSpectrumEnabled(boolean)
 setExpectedPitches(int[]) / setExpectedChord(int[], int[]) / setAttackCandidates(int[])
-applySettings(RecognitionSettings)  // front end, level, articulation
+configure(float[] NativeParameters)  // front end, level, articulation, strum; ignored by JavaBackend
 CaptureClock clock()
-engineKind()                         // JAVA or NATIVE, for the diagnostics and the tests
+getDroppedSampleCount()
 ```
+
+As written during T049–T051: the backends keep `CaptureService`'s acquire/release by consumer rather than a single `open`/`close`, so the Java
+chain is used unchanged. `NativeBackend.open()` (throws `NativeRecognitionException`) is called by `AudioEngine` when it chooses the native
+engine, and `close()` is idempotent. `RecognitionBackendFactory` (`resolveKind`, `createNative`) is the "backend factory" of the package
+constructors. The native backend's capture events are `CaptureService.Event`s, made with the added factory `CaptureService.Event.of`.
 
 Frames are delivered:
 - on one thread per backend, never the UI thread;

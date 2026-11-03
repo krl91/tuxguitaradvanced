@@ -40,7 +40,9 @@ final class EnginePreRunSource implements PreRunSource {
 
 	@Override
 	public StrumClipMeter.Reading reading() {
-		return this.meter.snapshot();
+		// the native engine measures the strum itself (spec 023, research R2); the Java chain feeds this meter
+		StrumClipMeter.Reading reading = this.engine.nativeStrumReading();
+		return reading != null ? reading : this.meter.snapshot();
 	}
 
 	@Override
@@ -57,6 +59,7 @@ final class EnginePreRunSource implements PreRunSource {
 	@Override
 	public void reset() {
 		this.meter.reset();
+		this.engine.resetNativeStrumReading();
 	}
 
 	@Override

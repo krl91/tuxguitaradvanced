@@ -1,8 +1,10 @@
 package app.tuxguitar.app.tools.custom.practice.session;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.ChordEvidence;
 import app.tuxguitar.audio.engine.analysis.SpectrumFrame;
 
@@ -88,7 +90,37 @@ public final class ChordMatcher {
 	}
 
 	public Result check(SpectrumFrame spectrum, int[] required, int[] tolerated) {
-		ChordEvidence evidence = ChordEvidence.evaluate(spectrum, required, tolerated);
+		return judge(ChordEvidence.evaluate(spectrum, required, tolerated));
+	}
+
+	/**
+	 * The check of one frame: with the native engine the frame carries the evidence of the expected chord, which is used when it is that of the chord
+	 * matched (the same distinct pitches); otherwise it is computed from the frame's spectrum, as with the Java engine (spec 023, contract §4). The
+	 * rule that follows is the same.
+	 */
+	public Result check(AnalysisFrame frame, int[] required, int[] tolerated) {
+		ChordEvidence carried = frame.getChordEvidence();
+		if( carried != null && isFor(carried, required) ) {
+			return judge(carried);
+		}
+		return check(frame.getSpectrum(), required, tolerated);
+	}
+
+	private static boolean isFor(ChordEvidence evidence, int[] required) {
+		int[] distinct = Arrays.stream(required).distinct().sorted().toArray();
+		List<ChordEvidence.Pitch> pitches = evidence.getPitches();
+		if( pitches.size() != distinct.length ) {
+			return false;
+		}
+		for( int i = 0; i < distinct.length; i++ ) {
+			if( pitches.get(i).getMidi() != distinct[i] ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private Result judge(ChordEvidence evidence) {
 		List<Integer> heard = new ArrayList<Integer>();
 		List<Integer> missing = new ArrayList<Integer>();
 		List<Integer> unverifiable = new ArrayList<Integer>();

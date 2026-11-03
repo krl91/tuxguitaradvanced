@@ -834,6 +834,7 @@ public class PracticeWindow {
 		// notes and chords are also judged from what each attack adds to the sound (spec 004): works over strings that keep ringing
 		this.session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
 		this.engine.setAttackCandidates(AttackCandidates.of(sequence));
+		this.session.setExpectedChordSink(this.engine::setExpectedChord);
 		if( PracticeParameters.EARLY_STABILITY_ENABLED ) {
 			this.session.setEarlyStability(PracticeParameters.EARLY_STABILITY_MARGIN, PracticeParameters.EARLY_STABILITY_NANOS);
 			this.session.setExpectedPitchSink(this.engine::setExpectedPitches);
@@ -1386,6 +1387,7 @@ public class PracticeWindow {
 			this.engine.unsubscribe(this.frameListener);
 			this.engine.setSpectrumEnabled(false);
 			this.engine.setExpectedPitches(null);
+			this.engine.setExpectedChord(null, null);
 			this.engine.setAttackCandidates(null);
 			this.events.disconnect();
 			this.loop.stop();

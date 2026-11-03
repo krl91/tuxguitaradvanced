@@ -35,6 +35,11 @@ public final class CaptureService {
 			this.cause = cause;
 		}
 
+		/** An event of another capture than this one (the native backend's, spec 023), for the same listeners. */
+		public static Event of(EventType type, AudioFormat format, Exception cause) {
+			return new Event(type, format, cause);
+		}
+
 		public EventType getType() {
 			return this.type;
 		}
