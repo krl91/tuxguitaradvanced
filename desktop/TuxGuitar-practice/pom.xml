@@ -40,6 +40,19 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<!-- JUnit 5 and the group filters need surefire 3 (older Maven releases default to 2.12.4) -->
 				<version>3.2.5</version>
+				<configuration>
+					<!-- spec 023: -Dtuxguitar.recognition.engine=java|native runs the tests with that engine (empty: the stored choice);
+					     -Dtuxguitar.native.library.dir=<the crate's target folder> lets them load the native library (empty: not loaded) -->
+					<!-- spec 023: the live delay probe plays tones through the speakers; it runs only when named with -Dtest=RecognitionDelayProbeTest
+					     (the dataset benchmarks of this module, also tagged benchmark, stay in the default run) -->
+					<excludes>
+						<exclude>**/benchmark/RecognitionDelayProbeTest.java</exclude>
+					</excludes>
+					<systemPropertyVariables>
+						<tuxguitar.recognition.engine>${tuxguitar.recognition.engine}</tuxguitar.recognition.engine>
+						<tuxguitar.native.library.dir>${tuxguitar.native.library.dir}</tuxguitar.native.library.dir>
+					</systemPropertyVariables>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -56,6 +69,8 @@
 		<!-- the native SWT test of the Configuration page runs only with -P swt-gui-tests,
 		     in a macOS graphical session (it needs the WindowServer) -->
 		<excludedGroups>swt-gui</excludedGroups>
+		<tuxguitar.recognition.engine></tuxguitar.recognition.engine>
+		<tuxguitar.native.library.dir></tuxguitar.native.library.dir>
 	</properties>
 
 	<dependencies>

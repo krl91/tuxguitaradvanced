@@ -2,8 +2,10 @@
 //! through `cpal` (CoreAudio, ALSA, WASAPI) and moves samples between their callbacks and Java through two lock-free rings. No effect
 //! runs here: the chain is the Java of the audio engine.
 
+pub mod analysis;
 pub mod device;
 mod jni_bridge;
+mod jni_recognition;
 mod latency;
 pub mod realtime;
 pub mod resampler;

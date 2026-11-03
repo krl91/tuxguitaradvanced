@@ -13,6 +13,8 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 cpal = "=0.15.3"
 jni = "=0.21.1"
+# the FFTs of the native recognition (spec 023, research R3), MIT or Apache-2.0
+rustfft = "=6.2.0"
 
 [target.'cfg(unix)'.dependencies]
 # already in the lock file through cpal: the real-time thread's calls (research R3 addendum)

@@ -52,6 +52,16 @@ public final class AttackEvidence {
 		this.attackStrength = attackStrength;
 	}
 
+	/** The positive spectral growth per bin of {@link #getBinHz()}, or null when it was not measured; the array itself (not to be modified). */
+	public double[] getGrowth() {
+		return this.growth;
+	}
+
+	/** The width of one bin of {@link #getGrowth()}, in Hz (0 without growth). */
+	public double getBinHz() {
+		return this.binHz;
+	}
+
 	/** The candidate pitches, ascending; the same array for every frame of an analyzer (not to be modified). */
 	public int[] getPitches() {
 		return this.pitches;

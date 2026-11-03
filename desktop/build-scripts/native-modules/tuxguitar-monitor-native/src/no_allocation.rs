@@ -47,3 +47,20 @@ fn the_ring_and_the_resampler_never_allocate_after_they_are_made() {
     }
     assert_eq!(allocations() - before, 0);
 }
+
+#[test]
+fn the_analysis_ffts_never_allocate_after_they_are_made() {
+    use crate::analysis::fft::RealFft;
+    use rustfft::num_complex::Complex;
+    let mut fft = RealFft::new(8192);
+    let input = vec![0.25f64; 8192];
+    let mut magnitudes = vec![0f64; 8192 / 2 + 1];
+    let mut spectrum = vec![Complex::new(0.0, 0.0); 8192];
+    let before = allocations();
+    for _ in 0..20 {
+        fft.magnitudes(&input, &mut magnitudes, 1.0);
+        fft.forward(&mut spectrum);
+        fft.inverse(&mut spectrum);
+    }
+    assert_eq!(allocations() - before, 0);
+}

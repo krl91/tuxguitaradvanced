@@ -31,6 +31,7 @@ public final class AnalysisFrame {
 	private final TechniqueFeatures techniqueFeatures;
 	private final AttackEvidence attackEvidence;
 	private final long captureSampleEnd;
+	private final ChordEvidence chordEvidence;
 
 	/**
 	 * @param timestampNanos capture time of the hop end
@@ -69,6 +70,14 @@ public final class AnalysisFrame {
 	/** @param captureSampleEnd the index in the capture stream of the last sample of this hop (see {@code CaptureClock}), or {@link #NO_CAPTURE_SAMPLE} */
 	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum,
 			TargetEvidence targetEvidence, TechniqueFeatures techniqueFeatures, AttackEvidence attackEvidence, long captureSampleEnd) {
+		this(timestampNanos, rmsDbfs, peakDbfs, clippedRatio, levelState, f0Hz, confidence, onset, spectrum, targetEvidence, techniqueFeatures, attackEvidence,
+				captureSampleEnd, null);
+	}
+
+	/** @param chordEvidence the evidence for the expected chord computed with this hop's spectrum, or null when none was asked (spec 023) */
+	public AnalysisFrame(long timestampNanos, double rmsDbfs, double peakDbfs, double clippedRatio, LevelState levelState, double f0Hz, double confidence, boolean onset, SpectrumFrame spectrum,
+			TargetEvidence targetEvidence, TechniqueFeatures techniqueFeatures, AttackEvidence attackEvidence, long captureSampleEnd, ChordEvidence chordEvidence) {
+		this.chordEvidence = chordEvidence;
 		this.captureSampleEnd = captureSampleEnd;
 		this.attackEvidence = attackEvidence;
 		this.timestampNanos = timestampNanos;
@@ -88,6 +97,11 @@ public final class AnalysisFrame {
 	/** The index in the capture stream of the last sample of this hop, to be dated by the capture clock; {@link #NO_CAPTURE_SAMPLE} when unknown (offline analysis, tests). */
 	public long getCaptureSampleEnd() {
 		return this.captureSampleEnd;
+	}
+
+	/** The evidence for the expected chord in this hop's spectrum; null unless an engine computed it (the native engine while a chord is expected, spec 023). */
+	public ChordEvidence getChordEvidence() {
+		return this.chordEvidence;
 	}
 
 	public AttackEvidence getAttackEvidence() {

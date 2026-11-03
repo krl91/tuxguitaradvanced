@@ -112,6 +112,20 @@ public final class ChordEvidence {
 		this.residual = Collections.unmodifiableList(residual);
 	}
 
+	/** Evidence computed elsewhere than by {@link #evaluate} (the native engine, spec 023), from its pitches and residual. */
+	public static ChordEvidence of(List<Pitch> pitches, List<PitchCandidate> residual) {
+		return new ChordEvidence(new ArrayList<Pitch>(pitches), new ArrayList<PitchCandidate>(residual));
+	}
+
+	/** One expected pitch's evidence computed elsewhere than by {@link #evaluate} (the native engine, spec 023). */
+	public static Pitch pitch(int midi, double salience, double independentSalience, boolean harmonicOfLower, double meanAmplitude, double uniqueAmplitude,
+			int uniquePartials, double uniquePresentFraction, int uniqueClearPartials) {
+		Pitch pitch = new Pitch(midi, salience, independentSalience, harmonicOfLower, meanAmplitude, uniqueAmplitude, uniquePartials);
+		pitch.uniquePresentFraction = uniquePresentFraction;
+		pitch.uniqueClearPartials = uniqueClearPartials;
+		return pitch;
+	}
+
 	/** Evidence per distinct expected pitch, ascending. */
 	public List<Pitch> getPitches() {
 		return this.pitches;

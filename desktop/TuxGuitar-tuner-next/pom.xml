@@ -35,9 +35,22 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<!-- JUnit 5 and the group filters need surefire 3 (older Maven releases default to 2.12.4) -->
 				<version>3.2.5</version>
+				<configuration>
+					<!-- spec 023: -Dtuxguitar.recognition.engine=java|native runs the tests with that engine (empty: the stored choice);
+					     -Dtuxguitar.native.library.dir=<the crate's target folder> lets them load the native library (empty: not loaded) -->
+					<systemPropertyVariables>
+						<tuxguitar.recognition.engine>${tuxguitar.recognition.engine}</tuxguitar.recognition.engine>
+						<tuxguitar.native.library.dir>${tuxguitar.native.library.dir}</tuxguitar.native.library.dir>
+					</systemPropertyVariables>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+
+	<properties>
+		<tuxguitar.recognition.engine></tuxguitar.recognition.engine>
+		<tuxguitar.native.library.dir></tuxguitar.native.library.dir>
+	</properties>
 
 	<dependencies>
 		<dependency>

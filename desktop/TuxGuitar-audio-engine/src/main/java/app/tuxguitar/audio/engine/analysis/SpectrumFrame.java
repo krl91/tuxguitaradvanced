@@ -51,12 +51,48 @@ public final class SpectrumFrame {
 		return this.candidates;
 	}
 
-	PolyphonicAnalyzer.Parameters getParameters() {
+	/** The parameters of the analyser that made this frame. */
+	public PolyphonicAnalyzer.Parameters getParameters() {
 		return this.parameters;
 	}
 
-	double getBinHz() {
+	/** The width of one bin of the peaks, in Hz. */
+	public double getBinHz() {
 		return this.binHz;
+	}
+
+	/** The lowest pitch of the band levels. */
+	public int getMinBandMidi() {
+		return this.minBandMidi;
+	}
+
+	/** The number of band levels. */
+	public int getBandCount() {
+		return this.bandDb.length;
+	}
+
+	/** The lowest pitch of the saliences. */
+	public int getMinSalienceMidi() {
+		return this.minSalienceMidi;
+	}
+
+	/** The number of saliences. */
+	public int getSalienceCount() {
+		return this.salience.length;
+	}
+
+	/** One bin of the floor-removed magnitude spectrum. */
+	public float getPeak(int k) {
+		return this.peaks[k];
+	}
+
+	/**
+	 * A frame made elsewhere than by a {@link PolyphonicAnalyzer} of this process (the native engine, spec 023), with the default parameters; the
+	 * arrays are kept, not copied.
+	 */
+	public static SpectrumFrame of(double binHz, int minBandMidi, float[] bandDb, int minSalienceMidi, float[] salience, List<PitchCandidate> candidates,
+			float[] peaks) {
+		return new SpectrumFrame(PolyphonicAnalyzer.Parameters.defaults(), binHz, minBandMidi, bandDb, minSalienceMidi, salience, candidates, peaks);
 	}
 
 	/** Copies the floor-removed magnitude spectrum into {@code target} (length ≥ {@link #getPeakLength()}). */
@@ -66,7 +102,7 @@ public final class SpectrumFrame {
 		}
 	}
 
-	int getPeakLength() {
+	public int getPeakLength() {
 		return this.peaks.length;
 	}
 }

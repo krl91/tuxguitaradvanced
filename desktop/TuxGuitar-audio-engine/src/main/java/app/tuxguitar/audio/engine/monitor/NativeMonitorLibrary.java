@@ -7,25 +7,14 @@ package app.tuxguitar.audio.engine.monitor;
  */
 final class NativeMonitorLibrary {
 
-	static final String NAME = "tuxguitar_monitor_native";
-
-	private static volatile String loadFailure;
-	private static volatile boolean loaded;
+	static final String NAME = app.tuxguitar.audio.engine.nativeengine.NativeLibrary.NAME;
 
 	private NativeMonitorLibrary() {
 	}
 
-	/** Loads the library once; null when it is there, else the reason it could not be loaded. */
-	static synchronized String load() {
-		if (!loaded && loadFailure == null) {
-			try {
-				System.loadLibrary(NAME);
-				loaded = true;
-			} catch (UnsatisfiedLinkError | SecurityException error) {
-				loadFailure = String.valueOf(error.getMessage());
-			}
-		}
-		return loaded ? null : loadFailure;
+	/** Loads the library once, shared with the native recognition (spec 023); null when it is there, else the reason it could not be loaded. */
+	static String load() {
+		return app.tuxguitar.audio.engine.nativeengine.NativeLibrary.load();
 	}
 
 	static native long open(String inputName, int inputChannel, String outputName, int blockFrames) throws MonitorDeviceException;

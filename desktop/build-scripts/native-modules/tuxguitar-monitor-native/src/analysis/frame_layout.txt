@@ -1,0 +1,31 @@
+# The frame record (spec 023, data-model "Frame record"): one record per analysis window, in a float[] (Java) or [f32] (Rust).
+# A long or a double takes two slots: the high then the low 32 bits, as raw float bits. An int or a count is a float value.
+# The header's slots, read by frame.rs's tests (Rust) and FrameRecordsTest (Java); each side's constants must equal these.
+# name offset
+LENGTH 0
+TIMESTAMP_NANOS 1
+CAPTURE_SAMPLE_END 3
+ARRIVAL_NANOS 5
+RMS_DBFS 7
+PEAK_DBFS 9
+CLIPPED_RATIO 11
+LEVEL_STATE 13
+F0_HZ 14
+CONFIDENCE 16
+ONSET 18
+PARTS 19
+HEADER 20
+# PARTS is a bit set of the optional parts that follow the header, in this order:
+PART_SPECTRUM 1
+PART_TARGET 2
+PART_ATTACK 4
+PART_CHORD 8
+# spectrum: binHz(d), minBandMidi, bandCount, bandDb[bandCount], minSalienceMidi, salienceCount, salience[salienceCount],
+#   candidateCount, candidateCount x (midi, salience(d), relativeSalience(d), levelDb(d)), peakCount, peaks[peakCount]
+# target: windowMillis(d), count, count x (midi, score(d))
+# attack: count, pitches[count], amplitudes[count](d), attackStrength(d), binHz(d), growthCount (-1: none), growth[growthCount](d)
+# chord: count, count x (midi, salience(d), independentSalience(d), harmonicOfLower, meanAmplitude(d), uniqueAmplitude(d),
+#   uniquePartials, uniquePresentFraction(d), uniqueClearPartials), residualCount, residualCount x (midi, salience(d),
+#   relativeSalience(d), levelDb(d))
+# The largest record fits in this many floats:
+CAPACITY 4096
