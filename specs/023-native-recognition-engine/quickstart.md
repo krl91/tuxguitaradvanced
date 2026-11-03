@@ -56,6 +56,7 @@ Expected: both green, with no committed test changed.
 Each item below plays audible tones, so warn the owner first.
 
 - `RecognitionDelayProbeTest` with `-Dtuxguitar.recognition.engine=native`: the median at least 20 ms below Java's, and the 90th percentile not higher (SC-002).
+- `DualEngineCableProbeTest`, with the owner playing 20 notes through the Rocksmith cable (both engines listen at once): the native frame at least 20 ms ahead of the Java frame at the median (SC-002, cable).
 - `NativeRecognitionEnduranceBenchmarkTest`: 10 minutes, 0 dropped blocks (SC-005).
 - `ArcadeRefreshRateBenchmarkTest`: ≥ 99 % of the frames on time at 120 Hz, and no frame waiting on the recognition (SC-006).
 - `NativeAnalysisCostBenchmarkTest`: one hop's analysis under 10 % of a hop at the 99th percentile.
@@ -63,7 +64,7 @@ Each item below plays audible tones, so warn the owner first.
 
 ## 6. In the application (sheet F13, owner)
 
-1. *Recognition settings → Recognition engine*: it shows *Automatic (Native)*, *Native (Rust)* and *Java (FastYin)*, with tips. Choose each, restart, and check that the choice is kept.
+1. *Recognition settings → Pitch detection engine*: it shows *Automatic (Native)*, *Native (Rust)* and *Java (FastYin)*, with tips. Choose each, restart, and check that the choice is kept.
 2. Wait, Follow and Arcade with the Rocksmith cable, on the native engine: the verdicts are felt as quicker than on Java.
 3. Rename the native library in the `.app`, then start a run: a notice says the native engine is unavailable, the run works on Java, and it starts within 2 s.
 4. Turn the amp sound on: the recognition is unchanged.

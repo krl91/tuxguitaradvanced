@@ -30,6 +30,7 @@ The 20 ms target of SC-002 has to come from these. R1's measurement is what prov
   - the first `AnalysisFrame` with that pitch (`pitched` and within ±50 cents);
   - the onset flag.
 - It runs 20 tones per input. The result is a median, a 90th percentile and the share of tones found, in `benchmark/recognition-delay.md`.
+- **The Rocksmith cable** cannot hear the speakers, so its gain is measured another way: `DualEngineCableProbeTest` runs both engines at once on the cable (two clients of one input, R6), the owner plays 20 notes, and the probe takes, for each note, the gap between the Java frame and the native frame of the same onset, in the same `System.nanoTime` base. Its median is SC-002's figure for the cable.
 - The Java figures of this probe are the baseline of SC-002. The probe's tones are audible, so the owner is warned before each run, which is kept short.
 - **Offline**, the delay of the GuitarSet chord benchmark (median 103 ms summed, 149 ms microphone) is kept as the dataset-side figure. It depends only on the analysis, so both engines are expected to give the same figure there. SC-002's offline line is therefore "not higher". The live line carries the gain.
 
@@ -169,7 +170,7 @@ The hop listeners work on samples:
 - **Catalog:**
   - The catalog gets a second engine, `NATIVE = "native"` ("Native (Rust)").
   - `fastyin` stays the Java engine's identifier, so a hand-made Java choice stored before the update is kept (clarification 3). Its display name becomes "Java (FastYin)".
-  - `getRecommended()` is the native engine when `NativeRecognitionLibrary.load()` succeeds, else the Java engine. So *Automatic* follows FR-005, and the setting's text shows which engine it stands for: "Automatic (Native)" or "Automatic (Java)".
+  - `getEngines()`, `getRecommended()` and `resolve()` stay as they are: they list the Java pitch estimators, and the committed `RecognitionSettingsStoreTest` (lines 158–161) checks one engine, `fastyin` recommended and `resolve(AUTOMATIC)` equal to it. A new list, `getRecognitionEngines()`, holds the engines of the menu, and `getRecommendedRecognitionEngine()` is the native engine when `NativeRecognitionLibrary.load()` succeeds, else the Java engine. So *Automatic* follows FR-005, and the setting's text shows which engine it stands for: "Automatic (Native)" or "Automatic (Java)".
   - The engine no longer only makes a `PitchEstimator`: it has a `kind()`, JAVA or NATIVE, read by `AudioEngine` and `OfflineAnalysis`.
 - **`AudioEngine`:**
   - It gets a small `RecognitionBackend` seam with two implementations:
@@ -182,7 +183,9 @@ The hop listeners work on samples:
   - sends one `RecognitionEngineNotice(reason)` to its listeners. The practice window shows it once per reason, in three languages.
 
   The run starts as it does today (SC-003: within 2 s).
-- **Texts:** the setting's name becomes "Recognition engine", and its tip says what each engine does. These are new keys in the three files: the old texts are kept and new keys added only for the new options and the notice.
+- **Permission denied** is the exception: the Java capture would be refused too, so no fallback is tried. The practice shows today's microphone-permission message, and no notice is sent.
+- **Only `AudioEngine.getInstance`** (the application) chooses between the backends. The package constructors used by `AudioEngineTest` and the other committed tests keep the Java backend unless a backend factory is passed to them, so their fake inputs are never bypassed.
+- **Texts:** the setting keeps its name, *Pitch detection engine* (`recognition.engine.pitch.name`, FR-004), and a new tip (`recognition.engine.pitch.tip.v2`) says what each engine does. These are new keys in the three files: the old texts are kept and new keys added only for the new options and the notice.
 
 ## R6 — The amp sound (spec 022) and the native recognition on one input
 

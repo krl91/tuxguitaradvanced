@@ -25,13 +25,16 @@
 | `kind()` | JAVA | NATIVE |
 | `create(sampleRate)` | `TarsosFastYinEstimator` | not used for the analysis; returns the Java estimator, for callers that only need a `PitchEstimator` |
 
-- `getEngines()` lists the native engine first when it loads, then Java. When the native library does not load, only Java is listed.
-- `getRecommended()` gives the first one listed.
+- `getEngines()`, `getRecommended()` and `resolve()` are unchanged: one Java engine, `fastyin`, recommended (checked by the committed `RecognitionSettingsStoreTest`, lines 158–161).
+- New: `getRecognitionEngines()` lists the engines of the menu, the native engine first when it loads, then Java; only Java when the native library does not load.
+- New: `getRecommendedRecognitionEngine()` gives the first one listed; *Automatic* stands for it.
+- New: `resolveKind(settings)` gives JAVA or NATIVE from the setting, the system property `tuxguitar.recognition.engine` (which overrides *Automatic* only) and whether the library loads.
 
 ## Backend (`AE/backend/RecognitionBackend`)
 
-- **States:** CLOSED → OPENING → RUNNING → CLOSED, or OPENING → FAILED(reason) → the Java backend is opened instead.
+- **States:** CLOSED → OPENING → RUNNING → CLOSED, or OPENING → FAILED(reason) → the Java backend is opened instead, except for PERMISSION_DENIED (no fallback, today's permission message).
 - The backend is chosen when the first consumer acquires, from the setting (resolved).
+- Only `AudioEngine.getInstance` chooses between the backends. The package constructors used by the tests keep the Java backend unless a backend factory is passed to them.
 - It holds what the consumers set, and re-applies it to a backend that opens later:
   - the subscribers;
   - the hop listeners;
@@ -48,6 +51,7 @@
 | `detail` | String | the native text, for the log only |
 
 - It is sent once per run in which the native engine was requested but the Java engine is used.
+- PERMISSION_DENIED never sends it: the Java capture would be refused too, so no fallback is tried, and the practice shows today's microphone-permission message.
 - The practice window shows it once per reason per session (texts in three languages).
 
 ## Frame record (native → Java)

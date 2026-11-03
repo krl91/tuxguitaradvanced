@@ -20,6 +20,9 @@ Loading:
 | `void setHopsEnabled(long h, boolean on)` | any | |
 | `long droppedBlocks(long h)` | any | Input blocks dropped because the analysis was late. Counted, never silent. |
 | `void close(long h)` | caller | Stops the stream and the thread, and frees everything. Idempotent. |
+| `float[] strumClip(long h)` / `void resetStrumClip(long h)` | any | The reading of the native strum clip measure (verdict, clipped share, RMS dBFS), and its restart. It replaces a Java `StrumClipMeter` on the native backend (research R2). |
+| `float[] stats(long h)` | any | The dropped blocks, and the median and 99th percentile of one hop's analysis cost in nanoseconds since open (research R9). |
+| `float[] frontEnd(float[] mono, int rate, float[] parameters)` | any | Test only: the hops after the native front end, for the parity test (offline `analyze` has no front end, as today). |
 | `float[] analyze(float[] mono, int rate, float[] parameters, boolean spectrum, int[] attackCandidates, int[] chordRequired, int[] chordTolerated)` | any | Offline: the records of the whole recording. Deterministic. The window is 2048 and the hop 256, as `OfflineAnalysis`. |
 
 Real time:
@@ -50,6 +53,11 @@ Frames are delivered:
 
 `JavaBackend` wraps today's `CaptureService` and `AnalysisService` without changing their code. Its `setExpectedChord` is a no-op, because `ChordMatcher` computes the evidence itself.
 
+Choice and fallback:
+- Only `AudioEngine.getInstance` chooses between the backends. The package constructors used by the tests keep the Java backend unless a backend factory is passed to them.
+- On a failed native open, `AudioEngine` opens the `JavaBackend` and sends one `RecognitionEngineNotice(reason)`.
+- PERMISSION_DENIED is the exception: no fallback is tried, and today's microphone-permission event reaches the practice.
+
 ## 3. `OfflineAnalysis.analyze` (existing signatures, unchanged)
 
 - It resolves the engine from `settings.get(ENGINE_PITCH)`, then the system property `tuxguitar.recognition.engine` (`java` or `native`), which overrides *Automatic* only.
@@ -65,10 +73,11 @@ Frames are delivered:
 
 ## 5. Settings panel (practice)
 
+- The setting keeps its name, *Pitch detection engine* (`recognition.engine.pitch.name`).
 - The choice `recognition.engine.pitch` lists *Automatic (Native)* or *Automatic (Java)*, then *Native (Rust)* when it loads, then *Java (FastYin)*.
 - Each option has a tip in English, French and Spanish.
 - New keys:
   - `recognition.engine.pitch.option.native`;
   - `recognition.engine.pitch.option.fastyin`;
   - `recognition.engine.pitch.tip.v2`;
-  - `recognition.engine.notice.<reason>` (five reasons).
+  - `recognition.engine.notice.<reason>`, for the four reasons that fall back: LIBRARY_MISSING, DEVICE_NOT_FOUND, FORMAT_UNSUPPORTED, STREAM_FAILED.

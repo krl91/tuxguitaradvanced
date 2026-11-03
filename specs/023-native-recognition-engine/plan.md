@@ -43,7 +43,7 @@ The plan moves **everything that reads samples** into the native crate of spec 0
 - `cargo test` for the crate's stages and rings, with no allocation in the loops.
 - `@Tag("benchmark")` tests, run on the owner's Mac:
   - the datasets, for each engine;
-  - the live probe;
+  - the live probes: speakers to microphone, and both engines at once on the Rocksmith cable (R1);
   - the cost;
   - the endurance run;
   - Arcade at the display's rate.
@@ -133,7 +133,8 @@ desktop/build-scripts/native-modules/tuxguitar-monitor-native/
         ├── target.rs             # ExpectedPitchVerifier → TargetEvidence
         ├── chord.rs              # ChordEvidence.evaluate for the expected chord (R2)
         ├── strum_clip.rs         # StrumClipMeter's measure
-        └── frame.rs              # the packed frame record (contract)
+        ├── frame.rs              # the packed frame record (contract)
+        └── frame_layout.txt      # the record's field offsets, read by frame.rs's tests and by FrameRecordsTest
 
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
 ├── AudioEngine.java              # uses RecognitionBackend; engine chosen at acquire; fallback notice
