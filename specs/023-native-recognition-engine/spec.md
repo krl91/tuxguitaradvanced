@@ -19,6 +19,7 @@
 - Q: Which engine is used by default, after the update and on a new installation? → A: *Automatic*, which uses the native engine when it starts, else the Java engine with a message; a Java engine chosen by hand before the update is kept.
 - Q: Must the native engine cover everything the Java recognition covers today (bass, lowered tunings, techniques such as bends, slides and harmonics)? → A: Yes, everything, as the Java engine: every current measure, including the bass and technique benchmarks, must be matched.
 - Q: Which frame rate must Arcade hold while the native engine recognises live? → A: The screen's refresh rate (60 frames a second on a 60 Hz screen, 120 on the owner's ProMotion MacBook): 99 % of the frames on time, no frame held by the recognition, the current limits of the Arcade benchmarks kept.
+- Q: Offline, on the recordings of the datasets, must the native engine's delay be lower than the Java engine's, or only not higher? → A: Only not higher: offline ≤ 103 ms (summed) and ≤ 149 ms (microphone) and not higher than the Java engine's on the same run; the gain of at least 20 ms is required live, where the capture is.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -87,7 +88,7 @@ Beyond keeping the quality, chords are where the recognition is weakest today; t
 
 - **FR-001** (native path): With the native engine, the practice input MUST be captured and analysed outside Java (pitch of single notes, onsets, chord evidence, the same information the Java path gives today), for everything the Java engine covers: guitar and bass, every tuning the practice supports, and the techniques it recognises (bends, slides, harmonics and the others); only the results MUST reach the application, which keeps the rules (accepted, early, late, wrong) and the scores unchanged.
 - **FR-002** (same quality): On the datasets (`~/tuxguitar-datasets`: IDMT, GuitarSet, the owner's chords, the technique and effect sets), every measure listed in SC-001 MUST be at least as good with the native engine as the Java engine's figure measured before the change.
-- **FR-003** (less delay): The delay from the strike to the verdict MUST be lower with the native engine than with the Java engine, measured live on the owner's Mac and offline on the datasets (SC-002).
+- **FR-003** (less delay): The delay from the strike to the verdict MUST be lower with the native engine than with the Java engine, measured live on the owner's Mac; offline on the datasets it MUST NOT be higher (SC-002).
 - **FR-004** (choice in the menu): The existing *Pitch detection engine* setting MUST offer *Automatic*, the native engine and the Java engine, with tips in English, French and Spanish; the choice MUST survive a restart and apply from the next run.
 - **FR-005** (Automatic, the default): *Automatic* MUST be the default, after the update and on a new installation; it MUST use the native engine when it can start, else the Java engine; the setting MUST show which engine *Automatic* stands for. A Java engine chosen by hand before the update MUST be kept.
 - **FR-006** (fallback): When the native engine cannot start (library, device, permission, format), the application MUST say why once, recognise with the Java engine, and never crash or hang.
@@ -125,7 +126,7 @@ Baseline = the Java engine on 2026-11-02 (`desktop/TuxGuitar-practice/target/dat
   - The 942 dataset tests: no test OK with Java becomes KO with the native engine.
   - The technique benchmark and the bass benchmark (spec 003): every line at least its Java figure.
 - **SC-002** (delay): with the native engine,
-  - offline, the GuitarSet chord delay median is ≤ 103 ms (summed) and ≤ 149 ms (microphone), and lower than the Java engine's on the same run;
+  - offline, the GuitarSet chord delay median is ≤ 103 ms (summed) and ≤ 149 ms (microphone), and not higher than the Java engine's on the same run;
   - live on the owner's Mac (Rocksmith cable and built-in microphone), the median delay from the strike to the verdict is at least 20 ms lower than the Java engine's, and its 90th percentile is not higher.
 - **SC-003** (fallback): with the native library removed, a run starts with the Java engine and a message within 2 seconds, on the three systems.
 - **SC-004** (chords better, US3, native engine; aimed at, not blocking): owner's chords ≥ 34/42 accepted and ≤ 6/42 neighbours wrongly accepted; GuitarSet complete chords ≥ 40/56 summed and ≥ 30/56 microphone; chord a whole tone higher refused ≥ 85 % (Audio-Effects); all with SC-001 still met.
