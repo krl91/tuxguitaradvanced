@@ -57,7 +57,7 @@ The plan moves **everything that reads samples** into the native crate of spec 0
 - **SC-006:**
   - Arcade has 99 % of its frames on time at the display's rate (120 on the owner's Mac);
   - no frame waits on the recognition;
-  - the native analysis of one hop stays under 10 % of a hop (5.3 ms) at the 99th percentile.
+  - the native analysis of one hop stays under 10 % of a hop (0.53 ms at 48 kHz, a hop of 256 samples being 5.3 ms) at the 99th percentile.
 
 **Constraints**:
 - SC-001: every dataset line is at least Java's.
@@ -79,7 +79,7 @@ The plan moves **everything that reads samples** into the native crate of spec 0
 | I. Preserve compatibility | **Pass.** Additive. The Java engine stays and is selectable. The settings file gains one value, and `fastyin` keeps its meaning. No song format is touched. |
 | II. Extend before modifying core | **Pass.** No change in `common/` or `desktop/TuxGuitar`. All changes are in the fork's modules (`TuxGuitar-audio-engine`, `TuxGuitar-practice`) and the fork's crate. |
 | III. Evidence-based | **Pass.** Every decision cites inspected files (research R1–R10). |
-| IV. Spec-driven | **Pass.** The spec is clarified (5 answers, 2026-11-03). This plan comes before any code. |
+| IV. Spec-driven | **Pass.** The spec is clarified (6 answers, 2026-11-03). This plan comes before any code. |
 | V. Incremental delivery | **Pass.** The phases are: measure, offline parity, live backend, menu, Arcade, chords, report. Each one builds and is tested on its own, and the Java engine stays the working path until the native one passes its gates. |
 | VI. Real-time audio | **Pass by design.** The callback copies only. The analysis thread has no allocation or lock, which is tested. The Java frame thread is the same as today's publish. Delays are stated (SC-002). Device loss and permission problems degrade into a notice and a fall back to Java. |
 | VII. Separable, testable audio logic | **Pass.** Each native stage is a pure function over buffers, tested by `cargo test` and by Java parity tests offline. Only `capture.rs` touches hardware. |
@@ -156,10 +156,10 @@ desktop/TuxGuitar-practice/
 ├── src/.../ui/RecognitionSettingsPanel.java   # options and Automatic's name (existing panel)
 ├── src/.../ui/PracticeWindow.java             # shows the fallback notice once
 ├── src/.../session/ChordMatcher.java          # uses the frame's ChordEvidence when present (R2)
-├── src/.../arcade/ui/ArcadeCanvas.java         # frame period from the display when measured below 99 % (R7)
+├── src/.../arcade/ui/ArcadeCanvas.java         # frame and tick periods derived from the display's rate, 60 Hz when unknown (R7)
 ├── share/lang/messages{,_fr,_es}.properties    # new keys
 └── test/...                                    # comparison report, live probe, Arcade refresh, SWT menu
-.github/workflows/*.yml                         # macOS job: the suite once more with -Dtuxguitar.recognition.engine=java
+.github/workflows/*.yml                         # macOS job: audio-engine, practice and tuner-next tests once more with -Dtuxguitar.recognition.engine=java
 specs/test-sheets/F13-moteur-natif.md
 ```
 

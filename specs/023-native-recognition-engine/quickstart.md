@@ -46,7 +46,7 @@ Expected: `benchmark/comparison.md` has every SC-001 line at "pass", and SC-004 
 
 ```sh
 mvn -e clean verify -P native-modules                                    # Automatic → native
-mvn test -pl ../../TuxGuitar-practice -am -Dtuxguitar.recognition.engine=java
+mvn test -pl ../../TuxGuitar-audio-engine,../../TuxGuitar-practice,../../TuxGuitar-tuner-next -am -Dtuxguitar.recognition.engine=java
 ```
 
 Expected: both green, with no committed test changed.
