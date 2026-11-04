@@ -25,6 +25,7 @@ Ces fiches regroupent **tout ce qui reste à tester par une personne** dans les 
 | [F10](F10-palette-ecartee.md) | 017 la palette s'écarte de la partition | T021 | guitare (+ Rocksmith) | 15 min | Sans focus, sans allers-retours |
 | [F11](F11-feu-partition.md) | 019 le feu sur la partition et l'onglet Avancé | T048 | guitare (+ Rocksmith) | 25 min | Porte de la spec 019, avant la prochaine version |
 | [F12](F12-ampli-effets.md) | 022 la guitare par un ampli et des pédales | T060, T029 | guitare + Rocksmith + casque filaire (+ micro intégré) | 30 min (+ 1 h de pratique) | Porte de la spec 022, avant la prochaine version |
+| [F13](F13-moteur-natif.md) | 023 le moteur de reconnaissance natif (Rust) | T087 (confirme T056) | guitare + Rocksmith + casque filaire | 30 min | Porte de la spec 023 ; avec des lignes pour les testeurs Linux et Windows |
 
 ## Ce qui reste ouvert mais n'est pas une fiche pour toi seul
 

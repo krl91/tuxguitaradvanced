@@ -189,10 +189,10 @@ Parity recordings: the audio-engine test resources already used by `LiveEngineEq
 
 ### Implementation
 
-- [ ] T072 [US1] Run T070 on the owner's Mac (silent) before any change; record it.
-- [ ] T073 [US1] In every case, derive the frame and tick periods and `QualityController`'s budget from the display rate in `PR/arcade/ui/ArcadeCanvas.java`, with today's 60 Hz values when no rate is known (T069 green). Then run T070 again; if T072 was under 99 % and T070 still is, find where the frames go late with a reproducing measurement, at most 3 attempts, then report. Write the before and after figures in `arcade-refresh.md`.
+- [X] T072 [US1] Run T070 on the owner's Mac (silent) before any change; record it.
+- [X] T073 [US1] In every case, derive the frame and tick periods and `QualityController`'s budget from the display rate in `PR/arcade/ui/ArcadeCanvas.java`, with today's 60 Hz values when no rate is known (T069 green). Then run T070 again; if T072 was under 99 % and T070 still is, find where the frames go late with a reproducing measurement, at most 3 attempts, then report. Write the before and after figures in `arcade-refresh.md`.
 - [X] T074 [US1] Make the frame source read a volatile snapshot of the verdicts (T068 green), if it does not already.
-- [ ] T075 [US1] Run spec 003's Arcade benchmarks (`ArcadeRenderBenchmarkTest` and the stress run) unchanged: within their current limits (SC-006). Warn the owner, then run T071 with both engines: the hit shown sooner with the native engine, at the median and the 90th percentile.
+- [X] T075 [US1] Run spec 003's Arcade benchmarks (`ArcadeRenderBenchmarkTest` and the stress run) unchanged: within their current limits (SC-006). Warn the owner, then run T071 with both engines: the hit shown sooner with the native engine, at the median and the 90th percentile.
 
 **Checkpoint**: Arcade in real time; commit.
 
@@ -212,12 +212,12 @@ Parity recordings: the audio-engine test resources already used by `LiveEngineEq
 
 ## Phase 8: Polish & cross-cutting concerns
 
-- [ ] T081 [P] In `.github/workflows/macos-maven.yml`, add a second test pass of `TuxGuitar-audio-engine`, `TuxGuitar-practice` and `TuxGuitar-tuner-next` with `-Dtuxguitar.recognition.engine=java`; check that `ubuntu-maven.yml` and the Windows build of `release.yml` build the crate with `rustfft` (no edit expected; edit only if a build step needs it). Do not run the Release workflow.
-- [ ] T082 [P] Write the manual sheet `specs/test-sheets/F13-moteur-natif.md` (quickstart §6, plus rows for Linux and Windows testers: the engine shown by *Automatic*, the felt delay, the fallback with the library renamed, the amp on together with the recognition, a raw ALSA `hw:` device) and add it to `specs/test-sheets/README.md`.
-- [ ] T083 [P] Describe the recognition engine (Automatic, Native, Java, the notice, "the same judging, sooner") in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md`.
-- [ ] T084 [P] Draft the release notes of the next TuxGuitarAdvanced version in `docs/release-notes/`: the native engine on macOS, Linux and Windows, the delay gained on the owner's Mac, the chords figures, Arcade at 120 Hz, and the call to Linux and Windows testers through sheet F13 (delay felt, fallback, amp together). The version is chosen at release time; nothing is released before T087.
-- [ ] T085 Full gate: `cargo test --release`, `mvn -o -e clean verify -P native-modules` (Automatic = native), the same tests with `-Dtuxguitar.recognition.engine=java`, `swt-gui-tests`; record the counts in `baseline.txt`; the test folders show additions only.
-- [ ] T086 Write `SPEC/final-report.md`: each SC (001 to 006) and FR with its figure and status, the parity tolerances reached per stage, the chord experiments kept and dropped, the risks left (ALSA `hw:`), and what waits for the owner and the testers.
+- [X] T081 [P] In `.github/workflows/macos-maven.yml`, add a second test pass of `TuxGuitar-audio-engine`, `TuxGuitar-practice` and `TuxGuitar-tuner-next` with `-Dtuxguitar.recognition.engine=java`; check that `ubuntu-maven.yml` and the Windows build of `release.yml` build the crate with `rustfft` (no edit expected; edit only if a build step needs it). Do not run the Release workflow.
+- [X] T082 [P] Write the manual sheet `specs/test-sheets/F13-moteur-natif.md` (quickstart §6, plus rows for Linux and Windows testers: the engine shown by *Automatic*, the felt delay, the fallback with the library renamed, the amp on together with the recognition, a raw ALSA `hw:` device) and add it to `specs/test-sheets/README.md`.
+- [X] T083 [P] Describe the recognition engine (Automatic, Native, Java, the notice, "the same judging, sooner") in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md`.
+- [X] T084 [P] Draft the release notes of the next TuxGuitarAdvanced version in `docs/release-notes/`: the native engine on macOS, Linux and Windows, the delay gained on the owner's Mac, the chords figures, Arcade at 120 Hz, and the call to Linux and Windows testers through sheet F13 (delay felt, fallback, amp together). The version is chosen at release time; nothing is released before T087.
+- [X] T085 Full gate: `cargo test --release`, `mvn -o -e clean verify -P native-modules` (Automatic = native), the same tests with `-Dtuxguitar.recognition.engine=java`, `swt-gui-tests`; record the counts in `baseline.txt`; the test folders show additions only.
+- [X] T086 Write `SPEC/final-report.md`: each SC (001 to 006) and FR with its figure and status, the parity tolerances reached per stage, the chord experiments kept and dropped, the risks left (ALSA `hw:`), and what waits for the owner and the testers.
 - [ ] T087 [HUMAN] The owner's gate on the relaunched app, per sheet F13, with the Rocksmith cable and headphones: the engine choice and its restart, Wait, Follow and Arcade felt quicker than with Java, the fallback with the library renamed (within 2 s), the amp sound on with the recognition unchanged. The cable delay measured with the owner at T056 (both engines at once) is confirmed here, and the owner's answer (felt quicker or not) is written in `final-report.md`.
 
 ## Dependencies & execution order

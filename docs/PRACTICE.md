@@ -161,6 +161,16 @@ Every setting has a recommended value and a *Restore* button. The ones you may w
 | Pick attack sensitivity | How strong a sudden rise of the sound counts as a new attack. |
 | Chord settings | How strictly the notes of a chord are checked and how long a strum may take. |
 
+### The recognition engine
+
+*Recognition engine › Pitch detection engine* chooses how the notes and chords you play are found:
+
+- **Native (Rust)**: the analysis runs in the application's native library, which reads the input itself. It judges exactly as the Java engine does, only sooner: on the owner's Mac a verdict came about 20 ms earlier on the built-in microphone and about 27 ms earlier with a USB microphone.
+- **Java (FastYin)**: the analysis of the earlier versions.
+- **Automatic** (the default): the native engine wherever its library loads, otherwise Java. The option shows which one it uses, for example *Automatic (Native)*.
+
+A change applies from the next session. If the native engine cannot start (library missing, input not found, format it cannot read, an input that does not answer), a notice line in the practice window says so and the practice goes on with the Java engine, without stopping. A refused microphone permission is not hidden this way: it is reported as before.
+
 ## The tuner
 
 <img src="images/features/tuner.png" width="380" alt="The guided tuner">

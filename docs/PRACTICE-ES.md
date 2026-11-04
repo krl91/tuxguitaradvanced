@@ -162,6 +162,16 @@ Cada ajuste tiene un valor recomendado y un botón *Restablecer*. Los que quizá
 | Sensibilidad al ataque de la púa | Cuán fuerte debe ser una subida repentina del sonido para contar como un nuevo ataque. |
 | Ajustes de acordes | Con qué rigor se comprueban las notas de un acorde y cuánto puede durar un rasgueo. |
 
+### El motor de reconocimiento
+
+*Motor de reconocimiento › Motor de detección de altura* elige cómo se encuentran las notas y los acordes que tocas:
+
+- **Nativo (Rust)**: el análisis se hace en la biblioteca nativa de la aplicación, que lee ella misma la entrada. Juzga exactamente como el motor Java, solo que antes: en el Mac del propietario un veredicto llegó unos 20 ms antes con el micrófono integrado y unos 27 ms antes con un micrófono USB.
+- **Java (FastYin)**: el análisis de las versiones anteriores.
+- **Automático** (por defecto): el motor nativo dondequiera que su biblioteca se cargue; si no, Java. La opción muestra cuál usa, por ejemplo *Automático (Nativo)*.
+
+Un cambio se aplica a partir de la siguiente sesión. Si el motor nativo no puede arrancar (biblioteca ausente, entrada no encontrada, formato que no sabe leer, una entrada que no responde), una línea de aviso lo dice en la ventana de práctica y la práctica sigue con el motor Java, sin detenerse. Un permiso de micrófono denegado no se oculta así: se informa como antes.
+
 ## El afinador
 
 <img src="images/features/tuner.png" width="380" alt="El afinador guiado">

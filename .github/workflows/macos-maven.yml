@@ -32,6 +32,9 @@ jobs:
     # no -T: this aggregator copies the jars of its modules, which must be built before it (a parallel build fails)
     - name: Build with Maven
       run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e clean verify
+    # spec 023 (T081): the recognition tests once more with the Java engine named, whatever Automatic picks
+    - name: Recognition tests with the Java engine
+      run: cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -B --no-transfer-progress -e test -pl ../../TuxGuitar-audio-engine,../../TuxGuitar-practice,../../TuxGuitar-tuner-next -am -Dtuxguitar.recognition.engine=java
     - name: Rename app depending of arch
       run: |
         TUX_ARCH=$(uname -m | sed 's/arm64/aarch64/')

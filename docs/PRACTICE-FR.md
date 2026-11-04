@@ -161,6 +161,16 @@ Chaque réglage a une valeur recommandée et un bouton *Restaurer*. Ceux que vou
 | Sensibilité à l'attaque | Quelle hausse soudaine du son compte comme une nouvelle attaque. |
 | Réglages des accords | Avec quelle rigueur les notes d'un accord sont vérifiées et combien de temps peut durer un grattage. |
 
+### Le moteur de reconnaissance
+
+*Moteur de reconnaissance › Moteur de détection de hauteur* choisit comment les notes et les accords joués sont trouvés :
+
+- **Natif (Rust)** : l'analyse se fait dans la bibliothèque native de l'application, qui lit elle-même l'entrée. Elle juge exactement comme le moteur Java, mais plus tôt : sur le Mac du propriétaire, un verdict arrive environ 20 ms plus tôt au micro intégré et environ 27 ms plus tôt avec un micro USB.
+- **Java (FastYin)** : l'analyse des versions précédentes.
+- **Automatique** (par défaut) : le moteur natif partout où sa bibliothèque se charge, sinon Java. L'option affiche celui qu'elle utilise, par exemple *Automatique (Natif)*.
+
+Un changement s'applique à partir de la prochaine séance. Si le moteur natif ne peut pas démarrer (bibliothèque absente, entrée introuvable, format qu'il ne sait pas lire, entrée qui ne répond pas), une ligne d'avis le dit dans la fenêtre de pratique et la pratique continue avec le moteur Java, sans s'arrêter. Une permission du micro refusée n'est pas masquée ainsi : elle est signalée comme avant.
+
 ## L'accordeur
 
 <img src="images/features/tuner.png" width="380" alt="L'accordeur guidé">

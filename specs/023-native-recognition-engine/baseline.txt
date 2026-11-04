@@ -41,3 +41,11 @@ T004 (2026-11-03 12:47): live recognition delay, Java engine (RecognitionDelayPr
   Pitch:  received median 141.7 ms, p90 155.5 ms; dated (CaptureClock) median 119.5 ms, p90 125.3 ms.
   Onset:  received median 176.5 ms, p90 183.4 ms; dated (CaptureClock) median 144.5 ms, p90 148.8 ms.
   Full section: benchmark/recognition-delay.md.
+
+T085 (2026-11-04 23:05 to 23:45): the full gate after phases 6 and 8.
+  cargo test --release --locked: 51 passed, 0 failed, 4 ignored.
+  mvn -o -e clean verify -P native-modules (Automatic): audio-engine 497 (1 skipped), tuner-next 24, practice 1437 (12 skipped), 0 failures.
+  The three modules with the native library (Automatic = native): audio-engine 515, tuner-next 24, practice 1437 (12 skipped), 0 failures.
+  The same with -Dtuxguitar.recognition.engine=java: audio-engine 515, tuner-next 24, practice 1437 (12 skipped), 0 failures.
+  -P swt-gui-tests: practice 79, 0 failures.
+  Test folders: 503 files tracked under the three modules' test folders (464 at T001): additions only, except one line of ArcadeLiveHarness (the tone guard of T071), changed with the owner's approval of 2026-11-04.
