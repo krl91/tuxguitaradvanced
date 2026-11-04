@@ -139,6 +139,11 @@ public final class ArcadeWindow {
 		return this.window;
 	}
 
+	/** Watches the frames of the canvas, for the measurements (spec 023, T070, T071); null for none. */
+	public void setFrameObserver(ArcadeCanvas.FrameObserver observer) {
+		this.canvas.setObserver(observer);
+	}
+
 	/** The button Pause / Resume: pauses a run that goes on and resumes a run that is paused. */
 	void pausePressed() {
 		if (this.paused) {
@@ -176,5 +181,10 @@ public final class ArcadeWindow {
 	/** The cost of the quality controller is read from the source of the canvas by the caller; this is the controller a source is built with. */
 	public static QualityController newQuality() {
 		return new QualityController(ArcadeCanvas.FRAME_NANOS);
+	}
+
+	/** The controller of a source painted at this period: its budget is one frame. */
+	public static QualityController newQuality(FramePeriod period) {
+		return period.quality();
 	}
 }

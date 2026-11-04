@@ -38,6 +38,11 @@ public final class QualityController {
 		return this.tier;
 	}
 
+	/** The time of a frame this controller measures against. */
+	public long budgetNanos() {
+		return this.budgetNanos;
+	}
+
 	/** How many times the tier changed, for the diagnostics. */
 	public int changes() {
 		return this.changes;

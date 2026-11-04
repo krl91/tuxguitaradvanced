@@ -182,16 +182,16 @@ Parity recordings: the audio-engine test resources already used by `LiveEngineEq
 
 ### Tests first
 
-- [ ] T068 [P] [US1] Create `TST/arcade/ArcadeFrameSourceNoWaitTest.java`: while the recognition thread is blocked in `nextFrames` (fake library), Arcade's frame source returns each frame within 1 ms, reading the latest published verdicts.
-- [ ] T069 [P] [US1] Create `TST/arcade/ArcadeFramePeriodTest.java`: for a display rate of 60 and of 120 Hz, the frame period is 1/rate, the tick is half of it and `QualityController`'s budget follows; with no rate known, today's 60 Hz values.
-- [ ] T070 [P] [US1] Create `TST/benchmark/ArcadeRefreshRateBenchmarkTest.java`, `@Tag("benchmark")`: 10 minutes of Arcade on a demo score with the native engine live on the built-in microphone; it reads the display rate through the toolkit or measures it from the paint intervals, and writes the share of frames on time, the frames held and the paint 95th percentile to `SPEC/benchmark/arcade-refresh.md`; fails under 99 % on time or with any frame held. FR-011: the run is repeated with the Java engine, and the song's position drift against the wall clock at the end and the paint 95th percentile must be no worse with the native engine.
-- [ ] T071 [P] [US1] Create `TST/benchmark/ArcadeHitDelayProbeTest.java`, `@Tag("benchmark")`: T003's tones played into an Arcade run; it measures from the tone to the hit painted (`ArcadeCanvas`'s `FrameObserver`), per engine, and appends it to `recognition-delay.md`; it fails if the native median exceeds T054's native median plus one display frame (FR-015), or if the native median or 90th percentile is higher than the Java engine's (SC-006).
+- [X] T068 [P] [US1] Create `TST/arcade/ArcadeFrameSourceNoWaitTest.java`: while the recognition thread is blocked in `nextFrames` (fake library), Arcade's frame source returns each frame within 1 ms, reading the latest published verdicts.
+- [X] T069 [P] [US1] Create `TST/arcade/ArcadeFramePeriodTest.java`: for a display rate of 60 and of 120 Hz, the frame period is 1/rate, the tick is half of it and `QualityController`'s budget follows; with no rate known, today's 60 Hz values.
+- [X] T070 [P] [US1] Create `TST/benchmark/ArcadeRefreshRateBenchmarkTest.java`, `@Tag("benchmark")`: 10 minutes of Arcade on a demo score with the native engine live on the built-in microphone; it reads the display rate through the toolkit or measures it from the paint intervals, and writes the share of frames on time, the frames held and the paint 95th percentile to `SPEC/benchmark/arcade-refresh.md`; fails under 99 % on time or with any frame held. FR-011: the run is repeated with the Java engine, and the song's position drift against the wall clock at the end and the paint 95th percentile must be no worse with the native engine.
+- [X] T071 [P] [US1] Create `TST/benchmark/ArcadeHitDelayProbeTest.java`, `@Tag("benchmark")`: T003's tones played into an Arcade run; it measures from the tone to the hit painted (`ArcadeCanvas`'s `FrameObserver`), per engine, and appends it to `recognition-delay.md`; it fails if the native median exceeds T054's native median plus one display frame (FR-015), or if the native median or 90th percentile is higher than the Java engine's (SC-006).
 
 ### Implementation
 
 - [ ] T072 [US1] Run T070 on the owner's Mac (silent) before any change; record it.
 - [ ] T073 [US1] In every case, derive the frame and tick periods and `QualityController`'s budget from the display rate in `PR/arcade/ui/ArcadeCanvas.java`, with today's 60 Hz values when no rate is known (T069 green). Then run T070 again; if T072 was under 99 % and T070 still is, find where the frames go late with a reproducing measurement, at most 3 attempts, then report. Write the before and after figures in `arcade-refresh.md`.
-- [ ] T074 [US1] Make the frame source read a volatile snapshot of the verdicts (T068 green), if it does not already.
+- [X] T074 [US1] Make the frame source read a volatile snapshot of the verdicts (T068 green), if it does not already.
 - [ ] T075 [US1] Run spec 003's Arcade benchmarks (`ArcadeRenderBenchmarkTest` and the stress run) unchanged: within their current limits (SC-006). Warn the owner, then run T071 with both engines: the hit shown sooner with the native engine, at the median and the 90th percentile.
 
 **Checkpoint**: Arcade in real time; commit.
