@@ -8,6 +8,8 @@ use super::polyphonic::{Candidate, PolyphonicParameters, Spectrum};
 pub const PARTIAL_PRESENCE_RATIO: f64 = 0.05;
 pub const MAX_PITCHES: usize = 16;
 pub const MAX_RESIDUAL: usize = 3;
+/// The chord a whole tone away explains the partials this many times better than the expected one, so the expected one is not heard.
+pub const NEIGHBOUR_MARGIN: f64 = 1.5;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ChordPitch {
@@ -79,6 +81,50 @@ impl ChordEvaluator {
         self.bin_hz
     }
 
+    /// The harmonic sum of the expected pitches against that of the same chord a whole tone lower and higher. The chord a whole tone
+    /// away shares a partial of each pitch with the expected one (the ninth of the lower note is the eighth of the higher), which is enough for the unique
+    /// partials when a distortion gives every partial; its harmonic sum tells it, as its fundamentals and low partials are the ones that sound (spec 023,
+    /// experiment A, `benchmark/chord-experiments.md`).
+    fn a_whole_tone_away_explains_better(&self, distinct: &[i32], length: usize) -> bool {
+        let own: f64 = distinct.iter().map(|&midi| self.comb.salience(&self.peaks, length, midi, 0)).sum();
+        for shift in [-2, 2] {
+            if distinct.iter().any(|&midi| midi + shift < self.p.min_candidate_midi || midi + shift > self.p.max_candidate_midi) {
+                continue;
+            }
+            let neighbour: f64 = distinct.iter().map(|&midi| self.comb.salience(&self.peaks, length, midi + shift, 0)).sum();
+            if neighbour > NEIGHBOUR_MARGIN * own {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// A low string through a microphone gives little of its fundamental, while its second and third partials sound. The pitch is heard when its
+    /// fundamental is under the presence ratio and both those partials are above it, neither of them a partial of another pitch that sounds (expected
+    /// or tolerated; spec 023, experiment C).
+    fn heard_by_its_second_and_third_partials(&self, sounding: &[i32], midi: i32, length: usize, strongest_partial: f64) -> bool {
+        if strongest_partial <= 0.0 {
+            return false;
+        }
+        let f0 = self.comb.frequency_of(midi);
+        let ratio = self.comb.tolerance_ratio();
+        let present = |h: f64| self.comb.peak_around(&self.peaks, length, f0 * h, ratio) >= PARTIAL_PRESENCE_RATIO * strongest_partial;
+        if present(1.0) || !present(2.0) || !present(3.0) {
+            return false;
+        }
+        for h in [2.0, 3.0] {
+            let f = f0 * h;
+            for &other in sounding.iter().filter(|&&other| other != midi) {
+                let g = self.comb.frequency_of(other);
+                let k = super::comb::java_round(f / g);
+                if k >= 1 && (1200.0 * (f / (k as f64 * g)).ln() / 2.0f64.ln()).abs() <= self.p.harmonic_tolerance_cents {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
     pub fn evaluate(&mut self, frame: &Spectrum, chord: &ExpectedChord, out: &mut ChordEvidence) {
         let length = frame.peak_count;
         for k in 0..length {
@@ -127,6 +173,21 @@ impl ChordEvaluator {
             }
             out.pitches[i].unique_present_fraction = if n > 0 { clear as f64 / n as f64 } else { 0.0 };
             out.pitches[i].unique_clear_partials = clear;
+        }
+
+        for i in 0..out.pitch_count {
+            if self.heard_by_its_second_and_third_partials(sounding, out.pitches[i].midi, length, strongest_partial) {
+                let pitch = &mut out.pitches[i];
+                pitch.unique_clear_partials = pitch.unique_clear_partials.max(2);
+                pitch.unique_present_fraction = pitch.unique_present_fraction.max(1.0 / 3.0);
+            }
+        }
+
+        if self.a_whole_tone_away_explains_better(distinct, length) {
+            for pitch in out.pitches[..out.pitch_count].iter_mut() {
+                pitch.unique_present_fraction = 0.0;
+                pitch.unique_clear_partials = 0;
+            }
         }
 
         self.working[..length].copy_from_slice(&self.peaks[..length]);
@@ -214,5 +275,112 @@ mod tests {
         let missing = evidence.pitches[3];
         assert_eq!(missing.midi, 59);
         assert!(missing.unique_present_fraction < 0.5, "B3 does not sound: {missing:?}");
+    }
+
+    /// A chord through a distortion: eight partials decaying as 1/h, then a soft clip of gain `drive`, which adds the products of a real distortion.
+    fn distorted_spectrum_of(pitches: &[i32], drive: f64) -> (PolyphonicParameters, Spectrum) {
+        let rate = 48000.0;
+        let p = PolyphonicParameters::defaults();
+        let mut analyzer = PolyphonicAnalyzer::new(p, rate);
+        let samples: Vec<f32> = (0..8192)
+            .map(|i| {
+                let t = i as f64 / rate;
+                let mut v = 0.0;
+                for &m in pitches {
+                    for h in 1..=8 {
+                        v += 0.05 / h as f64 * (2.0 * std::f64::consts::PI * frequency(m) * h as f64 * t).sin();
+                    }
+                }
+                (0.5 * (drive * v).tanh() / drive.tanh()) as f32
+            })
+            .collect();
+        analyzer.push(&samples);
+        let mut out = Spectrum::new(&p);
+        analyzer.analyze(&mut out);
+        (p, out)
+    }
+
+    /// The rule of ChordMatcher: a verifiable pitch (two unique partials) is missing unless two of them, and a third of them, clearly sound.
+    fn missing(evidence: &ChordEvidence) -> usize {
+        evidence.pitches[..evidence.pitch_count]
+            .iter()
+            .filter(|p| p.unique_partials >= 2 && !(p.unique_clear_partials >= 2 && p.unique_present_fraction >= 1.0 / 3.0))
+            .count()
+    }
+
+    /// Spec 023, experiment A: a chord played a whole tone lower than the one expected is not evidence of the expected one, while the chord played is. A
+    /// distorted G power chord is the case that fails without it: the ninth partial of each note is the eighth of the note a whole tone higher (9/8 is
+    /// 2.04 semitones), and the distortion gives that chord every partial it needs.
+    #[test]
+    fn a_chord_a_whole_tone_lower_than_expected_is_not_its_evidence() {
+        for (played, label, drive) in [(vec![43, 50, 55], "G power chord", 16.0), (vec![45, 52, 57, 61, 64], "A major", 16.0),
+            (vec![48, 52, 55], "C major", 1.0)] {
+            let (p, frame) = distorted_spectrum_of(&played, drive);
+            let mut evaluator = ChordEvaluator::new(p, frame.bin_hz);
+            let mut evidence = ChordEvidence::default();
+            evaluator.evaluate(&frame, &ExpectedChord::new(&played, &[]), &mut evidence);
+            assert_eq!(missing(&evidence), 0, "{label} (drive {drive}) played and expected: no pitch missing");
+            let higher: Vec<i32> = played.iter().map(|m| m + 2).collect();
+            evaluator.evaluate(&frame, &ExpectedChord::new(&higher, &[]), &mut evidence);
+            assert!(missing(&evidence) > 0, "{label} (drive {drive}) played, a whole tone higher expected: a pitch missing");
+        }
+    }
+
+    /// A spectrum of the given pitches, each with its own partial amplitudes (index 0 is the fundamental).
+    fn spectrum_with_partials(notes: &[(i32, &[f64])]) -> (PolyphonicParameters, Spectrum) {
+        let rate = 48000.0;
+        let p = PolyphonicParameters::defaults();
+        let mut analyzer = PolyphonicAnalyzer::new(p, rate);
+        let samples: Vec<f32> = (0..8192)
+            .map(|i| {
+                let t = i as f64 / rate;
+                let mut v = 0.0;
+                for &(m, partials) in notes {
+                    for (k, &a) in partials.iter().enumerate() {
+                        v += a * (2.0 * std::f64::consts::PI * frequency(m) * (k + 1) as f64 * t).sin();
+                    }
+                }
+                v as f32
+            })
+            .collect();
+        analyzer.push(&samples);
+        let mut out = Spectrum::new(&p);
+        analyzer.analyze(&mut out);
+        (p, out)
+    }
+
+    /// A low string through a microphone gives little of its fundamental and of its high partials, but its second and third partials
+    /// sound. With a loud treble note in the chord, they are the only ones above the presence ratio: the low pitch is heard.
+    #[test]
+    fn a_low_string_with_a_weak_fundamental_is_heard_by_its_second_and_third_partials() {
+        let low: &[f64] = &[0.002, 0.08, 0.06, 0.002, 0.002, 0.002, 0.002, 0.002];
+        let high: &[f64] = &[0.5, 0.15, 0.08, 0.04];
+        let (p, frame) = spectrum_with_partials(&[(40, low), (55, high)]);
+        let mut evaluator = ChordEvaluator::new(p, frame.bin_hz);
+        let mut evidence = ChordEvidence::default();
+        evaluator.evaluate(&frame, &ExpectedChord::new(&[40, 55], &[]), &mut evidence);
+        assert_eq!(missing(&evidence), 0, "E2 is heard: {:?}", &evidence.pitches[..evidence.pitch_count]);
+    }
+
+    /// Spec 023, experiment C: a second partial that a lower expected pitch explains is not evidence of the pitch above it.
+    #[test]
+    fn partials_a_lower_expected_pitch_explains_are_not_evidence() {
+        let low: &[f64] = &[0.5, 0.2, 0.12, 0.08, 0.05, 0.03];
+        let (p, frame) = spectrum_with_partials(&[(40, low)]);
+        let mut evaluator = ChordEvaluator::new(p, frame.bin_hz);
+        let mut evidence = ChordEvidence::default();
+        evaluator.evaluate(&frame, &ExpectedChord::new(&[40, 47], &[]), &mut evidence);
+        assert_eq!(missing(&evidence), 1, "B2 is not played: {:?}", &evidence.pitches[..evidence.pitch_count]);
+    }
+
+    /// Spec 023, experiment C: the second and third partials of a missing low string that other expected strings play (E3 and B3 for E2 in E major) are
+    /// not evidence of it.
+    #[test]
+    fn partials_another_expected_pitch_plays_are_not_evidence() {
+        let (p, frame) = spectrum_of(&[47, 52, 56, 59, 64]);
+        let mut evaluator = ChordEvaluator::new(p, frame.bin_hz);
+        let mut evidence = ChordEvidence::default();
+        evaluator.evaluate(&frame, &ExpectedChord::new(&[40, 47, 52, 56, 59, 64], &[]), &mut evidence);
+        assert!(missing(&evidence) >= 1, "E2 is not played: {:?}", &evidence.pitches[..evidence.pitch_count]);
     }
 }

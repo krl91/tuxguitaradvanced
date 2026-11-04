@@ -21,6 +21,12 @@ public final class ChordEvidence {
 	 */
 	public static final double PARTIAL_PRESENCE_RATIO = 0.05;
 
+	/**
+	 * The chord a whole tone lower or higher explains the partials this many times better (harmonic sum) than the expected one: the expected one is not
+	 * heard (spec 023, experiment A, {@code benchmark/chord-experiments.md}).
+	 */
+	public static final double NEIGHBOUR_MARGIN = 1.5;
+
 	/** Evidence for one expected pitch. */
 	public static final class Pitch {
 		private final int midi;
@@ -187,6 +193,19 @@ public final class ChordEvidence {
 			pitch.uniquePresentFraction = (uniquePeaks.length > 0 ? (double) clear / uniquePeaks.length : 0.0);
 			pitch.uniqueClearPartials = clear;
 		}
+		for (int i = 0; i < pitches.size(); i++) {
+			if (heardBySecondAndThirdPartials(comb, parameters, peaks, length, sounding, pitches.get(i).getMidi(), strongestPartial)) {
+				Pitch pitch = pitches.get(i);
+				pitch.uniqueClearPartials = Math.max(pitch.uniqueClearPartials, 2);
+				pitch.uniquePresentFraction = Math.max(pitch.uniquePresentFraction, 1.0 / 3.0);
+			}
+		}
+		if (aWholeToneAwayExplainsBetter(comb, parameters, peaks, length, distinct)) {
+			for (Pitch pitch : pitches) {
+				pitch.uniquePresentFraction = 0.0;
+				pitch.uniqueClearPartials = 0;
+			}
+		}
 
 		System.arraycopy(peaks, 0, working, 0, length);
 		boolean[] excluded = new boolean[128];
@@ -227,5 +246,66 @@ public final class ChordEvidence {
 			comb.suppress(working, length, best);
 		}
 		return new ChordEvidence(pitches, residual);
+	}
+
+	/**
+	 * A low string through a microphone gives little of its fundamental, while its second and third partials sound: the pitch is heard when its fundamental
+	 * is under the presence ratio and both those partials are above it, neither of them a partial of another pitch that sounds, expected or tolerated (spec
+	 * 023, experiment C).
+	 */
+	private static boolean heardBySecondAndThirdPartials(HarmonicComb comb, PolyphonicAnalyzer.Parameters parameters, double[] peaks, int length, int[] sounding,
+			int midi, double strongestPartial) {
+		if (strongestPartial <= 0.0) {
+			return false;
+		}
+		double f0 = HarmonicComb.frequency(midi);
+		double threshold = PARTIAL_PRESENCE_RATIO * strongestPartial;
+		if (comb.peakAround(peaks, length, f0, comb.toleranceRatio()) >= threshold || comb.peakAround(peaks, length, f0 * 2.0, comb.toleranceRatio()) < threshold
+				|| comb.peakAround(peaks, length, f0 * 3.0, comb.toleranceRatio()) < threshold) {
+			return false;
+		}
+		for (double h : new double[] { 2.0, 3.0 }) {
+			double f = f0 * h;
+			for (int other : sounding) {
+				if (other == midi) {
+					continue;
+				}
+				double g = HarmonicComb.frequency(other);
+				long k = Math.round(f / g);
+				if (k >= 1 && Math.abs(1200.0 * Math.log(f / (k * g)) / Math.log(2.0)) <= parameters.harmonicToleranceCents) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The harmonic sum of the expected pitches against that of the same chord a whole tone lower and higher. The chord a whole tone away shares a partial of
+	 * each pitch with the expected one (the ninth of the lower note is the eighth of the higher), which is enough for the unique partials when a distortion
+	 * gives every partial; its harmonic sum tells it, as its fundamentals and low partials are the ones that sound (spec 023, experiment A).
+	 */
+	private static boolean aWholeToneAwayExplainsBetter(HarmonicComb comb, PolyphonicAnalyzer.Parameters parameters, double[] peaks, int length, int[] distinct) {
+		double own = 0.0;
+		for (int midi : distinct) {
+			own += comb.salience(peaks, length, midi, 0);
+		}
+		for (int shift : new int[] { -2, 2 }) {
+			boolean inRange = true;
+			for (int midi : distinct) {
+				inRange &= (midi + shift >= parameters.minCandidateMidi && midi + shift <= parameters.maxCandidateMidi);
+			}
+			if (!inRange) {
+				continue;
+			}
+			double neighbour = 0.0;
+			for (int midi : distinct) {
+				neighbour += comb.salience(peaks, length, midi + shift, 0);
+			}
+			if (neighbour > NEIGHBOUR_MARGIN * own) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

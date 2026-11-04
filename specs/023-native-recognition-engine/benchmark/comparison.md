@@ -10,9 +10,9 @@ Result: every line passes.
 | IDMT-SMT-Audio-Effects mono / recognised when played (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Audio-Effects mono / wrong note +1 semitone(s) refused (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Audio-Effects mono / wrong note +2 semitone(s) refused (% OK) | 100 | 100 | 100 | pass |
-| IDMT-SMT-Audio-Effects poly / chord a whole tone higher refused (% OK) | 66.7 | 66.7 | 66.7 | pass |
+| IDMT-SMT-Audio-Effects poly / chord a whole tone higher refused (% OK) | 66.7 | 100 | 100 | pass |
 | IDMT-SMT-Audio-Effects poly / incomplete chord refused (one more note expected) (% OK) | 97.2 | 97.2 | 97.2 | pass |
-| IDMT-SMT-Audio-Effects poly / recognised when played (% OK) | 95.5 | 95.5 | 95.5 | pass |
+| IDMT-SMT-Audio-Effects poly / recognised when played (% OK) | 95.5 | 97 | 97 | pass |
 | IDMT-SMT-Guitar / chord a whole tone higher refused (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Guitar / incomplete chord refused (one more note expected) (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Guitar / legato (simulated hammer-on or pull-off): second note recognised (% OK) | 100 | 100 | 100 | pass |
@@ -23,22 +23,22 @@ Result: every line passes.
 | IDMT-SMT-Guitar / wrong note -1 semitone(s) refused (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Guitar / wrong note -2 semitone(s) refused (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Guitar / wrong second note refused while the first still rings (% OK) | 100 | 100 | 100 | pass |
-| Chorus / chorus (% OK) | 90.4 | 90.4 | 90.4 | pass |
-| Distortion / distortion (% OK) | 86.5 | 86.5 | 86.5 | pass |
-| EQ / amplifier simulation (% OK) | 90.4 | 90.4 | 90.4 | pass |
-| FeedbackDelay / feedback delay (% OK) | 92.3 | 92.3 | 92.3 | pass |
+| Chorus / chorus (% OK) | 90.4 | 100 | 100 | pass |
+| Distortion / distortion (% OK) | 86.5 | 96.2 | 96.2 | pass |
+| EQ / amplifier simulation (% OK) | 90.4 | 98.1 | 98.1 | pass |
+| FeedbackDelay / feedback delay (% OK) | 92.3 | 100 | 100 | pass |
 | Fender Strat Clean Neck SC (% OK) | 98.5 | 98.5 | 98.5 | pass |
 | Fender Strat Clean Neck SC Chords (% OK) | 95 | 95 | 95 | pass |
-| Flanger / flanger (% OK) | 92.3 | 92.3 | 92.3 | pass |
+| Flanger / flanger (% OK) | 92.3 | 100 | 100 | pass |
 | Ibanez Power Strat Clean Bridge HU (% OK) | 100 | 100 | 100 | pass |
 | Ibanez Power Strat Clean Bridge HU Chords (% OK) | 100 | 100 | 100 | pass |
 | Ibanez Power Strat Clean Bridge+Neck SC (% OK) | 100 | 100 | 100 | pass |
 | Ibanez Power Strat Clean Neck HU (% OK) | 100 | 100 | 100 | pass |
-| NoFX / no effect (% OK) | 98.1 | 98.1 | 98.1 | pass |
+| NoFX / no effect (% OK) | 98.1 | 100 | 100 | pass |
 | IDMT-SMT-Audio-Effects mono / single note (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Audio-Effects poly / major seventh (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Audio-Effects poly / major third (% OK) | 100 | 100 | 100 | pass |
-| IDMT-SMT-Audio-Effects poly / major triad (% OK) | 66.7 | 66.7 | 66.7 | pass |
+| IDMT-SMT-Audio-Effects poly / major triad (% OK) | 66.7 | 83.3 | 83.3 | pass |
 | IDMT-SMT-Audio-Effects poly / minor seventh (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Audio-Effects poly / minor third (% OK) | 100 | 100 | 100 | pass |
 | IDMT-SMT-Audio-Effects poly / minor triad (% OK) | 100 | 100 | 100 | pass |
@@ -89,7 +89,7 @@ None.
 
 | File | Java after |
 |---|---|
-| outcomes.csv | identical |
+| outcomes.csv | 23 lines KO before, OK on both engines (US3, both engines) |
 | guitarset-chords-outcomes.csv | identical |
 
 ## SC-004: chord targets of the native engine (aimed at, not blocking)
@@ -100,4 +100,4 @@ None.
 | Owner's neighbours wrongly accepted ≤ 6/42 | 13 | not reached |
 | GuitarSet complete chords ≥ 40/56 summed | 33 | not reached |
 | GuitarSet complete chords ≥ 30/56 microphone | 23 | not reached |
-| Chord a whole tone higher refused ≥ 85 % (Audio-Effects) | 66.7 | not reached |
+| Chord a whole tone higher refused ≥ 85 % (Audio-Effects) | 100 | reached |

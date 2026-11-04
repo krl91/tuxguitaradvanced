@@ -25,7 +25,8 @@ import org.junit.jupiter.api.Test;
  * pass or fail), the tests OK with Java and KO with the native engine, the offline delay lines of SC-002 and the SC-004 targets (reached or not).
  *
  * <p>It fails on any SC-001 line lower with the native engine than before, on any SC-002 offline line not met, on any test OK with Java and KO with the
- * native engine, and when a Java outcome file differs from {@code before/} (FR-007). Run after quickstart §3, with {@code -Dgroups=benchmark
+ * native engine, and when a Java outcome file differs from {@code before/} (FR-007) other than by lines KO before and OK on both engines (a US3 improvement
+ * applied to both engines). Run after quickstart §3, with {@code -Dgroups=benchmark
  * -DexcludedGroups=}.</p>
  */
 @Tag("benchmark")
@@ -34,6 +35,9 @@ public class EngineComparisonReportTest {
 	private static final Path BENCHMARK = Paths.get("../../specs/023-native-recognition-engine/benchmark");
 	private static final String BASS = "bass-recognition-2026-10-08.txt";
 	private static final String[] OUTCOMES = { "outcomes.csv", "guitarset-chords-outcomes.csv" };
+	/** For each file of {@link #OUTCOMES}: the test (group 1), its status (group 2, the good one first in {@link #GOOD}) and the rest of the line. */
+	private static final Pattern[] STATUS = { Pattern.compile("^(.*),(OK|KO|NOT_RUN),"), Pattern.compile("^([^,]*,[^,]*,[^,]*,[^,]*,\"[^\"]*\",[^,]*),(true|false),") };
+	private static final String[] GOOD = { "OK", "true" };
 
 	private static final Pattern COUNTS = Pattern.compile("^\\s+(.+?)\\s+OK\\s+(\\d+)\\s+KO\\s+(\\d+)\\s+\\(");
 	private static final Pattern GUITARSET = Pattern.compile("^\\s+(complete chord, [^\\n]+?)\\s+accepted (\\d+) / (\\d+) .*?delay median (\\d+) ms");
@@ -143,13 +147,19 @@ public class EngineComparisonReportTest {
 			}
 		}
 
-		// FR-007: the Java engine's outcome files unchanged
+		// FR-007: the Java engine's outcome files unchanged, except for a US3 improvement applied to both engines (approved by the owner on 2026-11-03): every
+		// line that differs from before/ goes from KO to OK, and both engines give the same lines
 		List<String> identity = new ArrayList<String>();
-		for( String file : OUTCOMES ) {
-			boolean same = sortedLines(before.resolve(file)).equals(sortedLines(java.resolve(file)));
-			identity.add("| " + file + " | " + (same ? "identical" : "DIFFERENT") + " |");
-			if( !same ) {
-				failures.add("FR-007 the Java engine's " + file + " differs from before/");
+		for( int f = 0 ; f < OUTCOMES.length ; f ++ ) {
+			String file = OUTCOMES[f];
+			List<String> javaLines = sortedLines(java.resolve(file));
+			boolean same = sortedLines(before.resolve(file)).equals(javaLines);
+			int improved = (same ? 0 : onlyKoToOk(sortedLines(before.resolve(file)), javaLines, STATUS[f]));
+			boolean bothEngines = javaLines.equals(sortedLines(nativeAfter.resolve(file)));
+			boolean pass = same || (improved > 0 && bothEngines);
+			identity.add("| " + file + " | " + (same ? "identical" : (pass ? improved + " lines KO before, OK on both engines (US3, both engines)" : "DIFFERENT")) + " |");
+			if( !pass ) {
+				failures.add("FR-007 the Java engine's " + file + " differs from before/" + (improved > 0 ? " (the native engine's lines differ from the Java engine's)" : ""));
 			}
 		}
 
@@ -312,6 +322,43 @@ public class EngineComparisonReportTest {
 			}
 		}
 		return outcomes;
+	}
+
+	/**
+	 * The number of lines of {@code before} that are KO there and OK in {@code after} for the same test, when every other line is the same; 0 when a line
+	 * differs in any other way (FR-007, a US3 improvement).
+	 */
+	private static int onlyKoToOk(List<String> before, List<String> after, Pattern status) {
+		List<String> removed = new ArrayList<String>(before);
+		List<String> added = new ArrayList<String>(after);
+		for( String line : after ) {
+			if( removed.remove(line) ) {
+				added.remove(line);
+			}
+		}
+		if( removed.size() != added.size() ) {
+			return 0;
+		}
+		String good = (status == STATUS[0] ? GOOD[0] : GOOD[1]);
+		for( String line : removed ) {
+			Matcher m = status.matcher(line);
+			if( !m.find() || m.group(2).equals(good) ) {
+				return 0;
+			}
+			String improvedLine = null;
+			for( String candidate : added ) {
+				Matcher c = status.matcher(candidate);
+				if( c.find() && c.group(1).equals(m.group(1)) && c.group(2).equals(good) ) {
+					improvedLine = candidate;
+					break;
+				}
+			}
+			if( improvedLine == null ) {
+				return 0;
+			}
+			added.remove(improvedLine);
+		}
+		return removed.size();
 	}
 
 	private static List<String> sortedLines(Path file) throws IOException {

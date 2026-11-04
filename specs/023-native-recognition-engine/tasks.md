@@ -202,11 +202,11 @@ Parity recordings: the audio-engine test resources already used by `LiveEngineEq
 
 **Protocol for each experiment**: a Rust test of the new behaviour first; the experiment behind a native parameter (off = parity); the chord benchmarks and the comparison (T037) run with it on; kept only if every SC-001 line holds and at least one SC-004 line moves toward its target; recorded in `SPEC/benchmark/chord-experiments.md` (what, why, figures, kept or dropped). Deterministic methods only (constitution VIII). A change to a shared Java rule (`PolyphonicAcceptance`, `ChordMatcher`'s rule) is measured on both engines and recorded (FR-007).
 
-- [ ] T076 [US3] Create `SPEC/benchmark/chord-experiments.md` with the protocol above and the starting figures (from `comparison.md`): owner's chords 26/42 and 13/42, GuitarSet 33/56 and 23/56, a whole tone higher 66.7 %.
-- [ ] T077 [US3] Experiment A, the neighbour shifted by a whole tone (`CRATE/src/analysis/chord.rs`): refuse when the shifted chord explains the spectrum's partials better than the expected one by a margin; Rust test on synthetic chords first.
-- [ ] T078 [US3] Experiment B, the strum spread (`attack.rs`, `chord.rs`): accumulate the chord evidence over the hops of one strum (the string attacks spread over up to 80 ms) instead of the single best frame, for the microphone input; Rust test first.
-- [ ] T079 [US3] Experiment C, the missing partials of low strings (`polyphonic.rs`, `chord.rs`): accept a required pitch whose fundamental is weak when its second and third partials are present and not explained by a lower required pitch; Rust test first.
-- [ ] T080 [US3] Keep the experiments that passed (their parameter on by default in the native engine), run both engines on every dataset once more, regenerate `after-native/`, `after-java/` and `comparison.md`, and write for each SC-004 target whether it was reached.
+- [X] T076 [US3] Create `SPEC/benchmark/chord-experiments.md` with the protocol above and the starting figures (from `comparison.md`): owner's chords 26/42 and 13/42, GuitarSet 33/56 and 23/56, a whole tone higher 66.7 %.
+- [X] T077 [US3] Experiment A, the neighbour shifted by a whole tone (`CRATE/src/analysis/chord.rs`): refuse when the shifted chord explains the spectrum's partials better than the expected one by a margin; Rust test on synthetic chords first.
+- [X] T078 [US3] Experiment B, the strum spread (`attack.rs`, `chord.rs`): accumulate the chord evidence over the hops of one strum (the string attacks spread over up to 80 ms) instead of the single best frame, for the microphone input; Rust test first.
+- [X] T079 [US3] Experiment C, the missing partials of low strings (`polyphonic.rs`, `chord.rs`): accept a required pitch whose fundamental is weak when its second and third partials are present and not explained by a lower required pitch; Rust test first.
+- [X] T080 [US3] Keep the experiments that passed (their parameter on by default in the native engine), run both engines on every dataset once more, regenerate `after-native/`, `after-java/` and `comparison.md`, and write for each SC-004 target whether it was reached.
 
 **Checkpoint**: chords measured and improved where possible; commit.
 

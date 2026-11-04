@@ -49,8 +49,26 @@ public final class OfflineAnalysis {
 	 */
 	public static List<AnalysisFrame> analyze(float[] mono, int sampleRate, RecognitionSettings settings, boolean spectrum, int[] attackCandidates,
 			app.tuxguitar.audio.engine.analysis.HopListener hops) {
+		return analyze(mono, sampleRate, settings, spectrum, attackCandidates, hops, null, null);
+	}
+
+	/**
+	 * Like the other overloads, with the chord a judge expects (spec 023, US3): the native engine then carries its evidence for that chord in every frame, as
+	 * it does live once the expected chord is set, so a chord check reads the native evidence offline too; the Java engine has no such evidence and ignores
+	 * it (its chord check reads the spectrum).
+	 *
+	 * @param chordRequired the required pitches of the expected chord, or null for none
+	 * @param chordTolerated the pitches it tolerates, or null for none
+	 */
+	public static List<AnalysisFrame> analyze(float[] mono, int sampleRate, RecognitionSettings settings, boolean spectrum, int[] attackCandidates,
+			int[] chordRequired, int[] chordTolerated) {
+		return analyze(mono, sampleRate, settings, spectrum, attackCandidates, null, chordRequired, chordTolerated);
+	}
+
+	private static List<AnalysisFrame> analyze(float[] mono, int sampleRate, RecognitionSettings settings, boolean spectrum, int[] attackCandidates,
+			app.tuxguitar.audio.engine.analysis.HopListener hops, int[] chordRequired, int[] chordTolerated) {
 		if( PitchEngineCatalog.resolveKind(settings) == PitchEngineCatalog.Kind.NATIVE ) {
-			return analyzeNative(mono, sampleRate, settings, spectrum, attackCandidates, hops);
+			return analyzeNative(mono, sampleRate, settings, spectrum, attackCandidates, hops, chordRequired, chordTolerated);
 		}
 		LevelAnalyzer levels = AudioEngine.levelAnalyzer(settings);
 		ArticulationDetector articulation = AudioEngine.articulationDetector(settings);
@@ -98,7 +116,7 @@ public final class OfflineAnalysis {
 
 	/** The native engine (spec 023, contract §3): the whole recording in one call, read back record by record; the listener gets the same hops. */
 	private static List<AnalysisFrame> analyzeNative(float[] mono, int sampleRate, RecognitionSettings settings, boolean spectrum, int[] attackCandidates,
-			app.tuxguitar.audio.engine.analysis.HopListener hops) {
+			app.tuxguitar.audio.engine.analysis.HopListener hops, int[] chordRequired, int[] chordTolerated) {
 		if( hops != null ) {
 			hops.configure(sampleRate);
 			float[] hop = new float[HOP];
@@ -107,7 +125,7 @@ public final class OfflineAnalysis {
 				hops.hop(hop, 0, HOP);
 			}
 		}
-		float[] records = NativeRecognitionLibrary.analyze(mono, sampleRate, NativeParameters.of(settings), spectrum, attackCandidates, null, null, null);
+		float[] records = NativeRecognitionLibrary.analyze(mono, sampleRate, NativeParameters.of(settings), spectrum, attackCandidates, null, chordRequired, chordTolerated);
 		List<AnalysisFrame> frames = new ArrayList<AnalysisFrame>();
 		int offset = 0;
 		while( offset < records.length ) {
