@@ -64,3 +64,18 @@
 |---|---|---|---|---|---|---|---|
 | Micro MacBook Pro | 20 / 20 | 120.2 / 126.3 | 119.8 / 125.6 | 20 / 20 | 151.3 / 153.9 | 150.8 / 153.3 | 0 |
 | Samson Q2U Microphone — Input 1 | 20 / 20 | 90.1 / 94.5 | 89.6 / 94.2 | 20 / 20 | 120.2 / 123.8 | 120.0 / 123.5 | 0 |
+
+## 2026-11-04 21:59, Arcade hit delay (T071)
+
+- 20 plucked tones at the written times of a 20-note passage (40 quarters a minute), the real Arcade window, the live engine on Micro MacBook Pro. From the tone's first sample at the output to the end of the first paint showing the hit.
+- Display: toolkit 120 Hz, measured 120.0 Hz (a frame is 8.33 ms).
+
+| Engine | Notice | Hits shown | Hit painted median / p90 (ms) | Ended |
+|---|---|---|---|---|
+| java | none | 19 / 19 | 233.0 / 255.2 | PLAYER_STOPPED |
+| native | none | 19 / 19 | 204.0 / 211.9 | PLAYER_STOPPED |
+
+- FR-015: native median 204.0 ms, limit 128.5 ms (T054's 120.2 ms plus one frame).
+- SC-006: native 204.0 / 211.9 ms against Java 233.0 / 255.2 ms (median / p90).
+- Reading (2026-11-04, owner's decision to investigate): SC-006 is reached, the hit is shown 29 ms sooner with the native engine at the median and 43 ms sooner at the 90th percentile. FR-015's limit as written is not: the harness judges with the default settings, under which a single note is matched only after its pitch has held for the note confirmation time (`note.stability`, 107 ms by default, the same for both engines; Arcade's own *Fun* leniency lowers it to 75 ms in the application, the harness does not apply it). The hit is therefore the pitch found (about 97 ms with the native engine here), plus 107 ms of confirmation, plus at most one frame (8.3 ms). Without the confirmation the native engine is near 97 ms, under the 128.5 ms of T054 plus one frame: the limit of T071 was taken from T054's pitch frame and left the confirmation time out. Not a fault of the engine; the test is unchanged.
+- The first run of T071 (20:38, its section not kept) showed no hit: the harness's tone thread left out every tone, its guard compared the tone's time with now instead of with the time its block is heard (the output line's buffer puts every block about 190 ms ahead on macOS). Fixed in `ArcadeLiveHarness` with the owner's approval of 2026-11-04 (the one change to a committed test file).

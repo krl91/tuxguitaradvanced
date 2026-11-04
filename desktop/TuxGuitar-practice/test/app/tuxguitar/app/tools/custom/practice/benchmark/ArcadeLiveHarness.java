@@ -493,8 +493,9 @@ final class ArcadeLiveHarness {
 					long blockWall = lastWall + (long) ((frame - lastPosition) / OUT_RATE * 1e9);
 					while( zeroWall != Long.MIN_VALUE && next < this.tones.size() ) {
 						long target = zeroWall + this.timeline.targetNanos(this.tones.get(next).eventIndex);
-						if( target < now + 200_000_000L ) {
-							// too close to place: left out
+						if( target < blockWall ) {
+							// already past when this block is heard: left out (compared with the block's own time, not now: the line's buffer puts every block
+							// some 190 ms ahead of now on macOS, so a margin from now left every tone out)
 							next++;
 							continue;
 						}

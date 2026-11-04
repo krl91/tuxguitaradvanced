@@ -24,6 +24,7 @@ import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSceneLabels;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeSession;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeTexts;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.ArcadeWindow;
+import app.tuxguitar.app.tools.custom.practice.arcade.ui.FramePeriod;
 import app.tuxguitar.app.tools.custom.practice.arcade.ui.SystemReducedMotion;
 import app.tuxguitar.app.tools.custom.practice.model.ArcadeTrackCandidates;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
@@ -1006,7 +1007,7 @@ public class PracticeWindow {
 		final ArcadeController controller = this.arcadeController;
 		endRun.attach(controller);
 		this.arcadeWindow = new ArcadeWindow(this.host.factory(), this.host.mainWindow(),
-				session.frameSource(this.followAdapter.player().clock(), ArcadeWindow.newQuality(), () -> plan.percent()),
+				session.frameSource(this.followAdapter.player().clock(), ArcadeWindow.newQuality(FramePeriod.ofDisplay()), () -> plan.percent()),
 				task -> TGSynchronizer.getInstance(this.context).executeLater(task), ARCADE_TEXTS, new ArcadeWindow.Actions() {
 					public void pause() {
 						controller.pause();

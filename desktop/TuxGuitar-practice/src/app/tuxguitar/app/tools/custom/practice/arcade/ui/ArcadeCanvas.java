@@ -38,7 +38,7 @@ public final class ArcadeCanvas {
 		void painted(long startNanos, long endNanos, long allocatedBytes);
 	}
 
-	/** The target of a frame in nanoseconds: sixty a second. */
+	/** The target of a frame in nanoseconds when the display's rate is not known: sixty a second (see {@link FramePeriod}). */
 	public static final long FRAME_NANOS = 16_666_667L;
 	/**
 	 * The timer ticks twice as often as a frame lasts. The system paints in step with the display: a request made just after one display cycle is painted
@@ -53,6 +53,7 @@ public final class ArcadeCanvas {
 	private final PainterRenderer renderer;
 	private final FrameScheduler scheduler;
 	private final LongSupplier wall;
+	private final FramePeriod period;
 	private ScheduledExecutorService timer;
 	private volatile boolean disposed;
 	private long lastFrameCost;
@@ -66,6 +67,8 @@ public final class ArcadeCanvas {
 	public ArcadeCanvas(UIFactory factory, UIContainer parent, ArcadeFrameSource source, UiThread ui, LongSupplier wall, String fontName, boolean forceFallback) {
 		this.source = source;
 		this.wall = wall;
+		// spec 023 FR-015 (T073): the frames follow the display's rate (120 Hz on a ProMotion screen), 60 Hz when it is not known; read here, on the UI thread
+		this.period = FramePeriod.ofDisplay();
 		this.renderer = new GuardedRenderer(new UiPainterRenderer(factory, fontName), UiPainterRenderer.fallback(factory, fontName), forceFallback);
 		this.canvas = factory.createCanvas(parent, false);
 		// spec 021 FR-001: the scene is mostly translucent (the neck at 10 %), so what lies under it must be the design's own dark background, the one of the
@@ -81,6 +84,11 @@ public final class ArcadeCanvas {
 				paint(event);
 			}
 		});
+	}
+
+	/** The periods the frames are asked at: those of the display when its rate is known, else 60 Hz. */
+	public FramePeriod period() {
+		return this.period;
 	}
 
 	public UICanvas getControl() {
@@ -103,7 +111,7 @@ public final class ArcadeCanvas {
 			if (watcher != null) {
 				watcher.tick(System.nanoTime(), requested);
 			}
-		}, TICK_NANOS, TICK_NANOS, TimeUnit.NANOSECONDS);
+		}, this.period.tickNanos(), this.period.tickNanos(), TimeUnit.NANOSECONDS);
 	}
 
 	public synchronized void stop() {
