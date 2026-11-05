@@ -24,7 +24,7 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Write `SPEC/baseline.txt`: HEAD, the counts of the full gate and of `swt-gui-tests` run now, and the list of committed tests that read the files this spec changes (`GreyedStartExplainedTest`, `QuickStartTest`, `WindowFitTest`, `PracticeWindowStartPathSourceTest`, `PreRunWindowTest`, `FollowPanelSwtTest`, `AmpWindowSwtTest`, `AmpSafetySwtTest`, `AmpAutoStartWarningSwtTest`, `AmpSoundListSwtTest`, `AmpPedalRowsSwtTest`), with the four of the owner's exception marked.
+- [X] T001 Write `SPEC/baseline.txt`: HEAD, the counts of the full gate and of `swt-gui-tests` run now, and the list of committed tests that read the files this spec changes (`GreyedStartExplainedTest`, `QuickStartTest`, `WindowFitTest`, `PracticeWindowStartPathSourceTest`, `PreRunWindowTest`, `FollowPanelSwtTest`, `AmpWindowSwtTest`, `AmpSafetySwtTest`, `AmpAutoStartWarningSwtTest`, `AmpSoundListSwtTest`, `AmpPedalRowsSwtTest`), with the four of the owner's exception marked.
 
 ## Phase 2: Foundational
 

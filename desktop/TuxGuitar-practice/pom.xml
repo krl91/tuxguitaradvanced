@@ -49,6 +49,8 @@
 						<exclude>**/benchmark/RecognitionDelayProbeTest.java</exclude>
 						<!-- spec 023 T055: waits up to two minutes for the owner's notes on the cable; run it with -Dtest=DualEngineCableProbeTest -->
 						<exclude>**/benchmark/DualEngineCableProbeTest.java</exclude>
+						<!-- spec 023 T056: the same, dated by the verdict's arrival; run it with -Dtest=DualEngineCableArrivalProbeTest -->
+						<exclude>**/benchmark/DualEngineCableArrivalProbeTest.java</exclude>
 						<!-- spec 023 T070 and T071: 20 minutes of Arcade on the microphone, and tones through the speakers; run them with -P swt-gui-tests -Dtest=... -->
 						<exclude>**/benchmark/ArcadeRefreshRateBenchmarkTest.java</exclude>
 						<exclude>**/benchmark/ArcadeHitDelayProbeTest.java</exclude>

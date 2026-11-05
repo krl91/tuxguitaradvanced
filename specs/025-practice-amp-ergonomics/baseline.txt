@@ -1,0 +1,15 @@
+Spec 025 baseline (T001), 2026-11-05, HEAD 9109b37e5 (+ the practice pom's exclusion of DualEngineCableArrivalProbeTest, see below)
+
+Full gate, mvn -o -e clean verify -P native-modules (macOS, JDK 21):
+  common modules: 73, 1, 1, 10 (1 skipped), 2
+  TuxGuitar-audio-engine: 497 (1 skipped)
+  TuxGuitar-tuner-next: 24
+  TuxGuitar-practice: 1438, 1 failure: DualEngineCableArrivalProbeTest (spec 023, added 2026-11-05) ran in the default build because the
+    practice pom did not exclude it as it excludes DualEngineCableProbeTest; exclusion added (no test changed); rerun: 1437, 0 failures, 12 skipped
+swt-gui-tests (-P swt-gui-tests -pl TuxGuitar-practice -am): 79, 0 failures
+
+Committed tests that read the files this spec changes (must stay unchanged and green):
+  GreyedStartExplainedTest, QuickStartTest, WindowFitTest, PracticeWindowStartPathSourceTest, PreRunWindowTest, FollowPanelSwtTest,
+  AmpPedalRowsSwtTest, AudioEngineTest, AudioEngineBackendTest, InputAssessorTest, InputAssessorStatsTest
+  Owner's exception of 2026-11-05 (research R6, only the lines reaching the old switch, Name field and sound buttons):
+  * AmpWindowSwtTest  * AmpSafetySwtTest  * AmpAutoStartWarningSwtTest  * AmpSoundListSwtTest
