@@ -27,8 +27,10 @@ for e in java native; do
 done
 ```
 
+Run it a second time without `-Dtuxguitar.owner.chords` for the first two series.
+
 Expected: `benchmark/probe.md`, the sweep of research R6, with both engines.
-- At least one configuration gives 25/25 right and 0/408 clearly wrong on both engines, and at least 8 and 18 on the first two series.
+- At least one configuration gives 25/25 right and 0/408 clearly wrong on both engines and with both arming references (Wait's and Follow's), and at least 8 and 18 on the first two series.
 - Otherwise the work stops and reports to the owner.
 
 ## 3. The rule and *Normal* (US1)

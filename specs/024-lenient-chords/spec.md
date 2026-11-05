@@ -8,7 +8,7 @@
 
 **Input**: User description: "spec 024 : les accords du propriétaire joués au câble Rocksmith doivent être acceptés au moins à 90 % (26/42 = 62 % à la fin de la spec 023), sans que les accords voisins acceptés à tort augmentent au-delà d'une limite à fixer (13/42 aujourd'hui) ; l'acceptation des accords doit être plus tolérante par défaut, et cette tolérance réglable dans les paramètres de pratique ; mesuré sur les jeux de données (~/tuxguitar-datasets : accords du propriétaire, GuitarSet, IDMT) avant et après, avec les deux moteurs (natif et Java), sans régression sur les notes seules et les fausses notes ; le plan commence par un diagnostic des 16 accords refusés du propriétaire (specs/023-native-recognition-engine/benchmark/chord-experiments.md)."
 
-**Where it comes from**: spec 023 left chords as the weak point. At its end (2026-11-05, `specs/023-native-recognition-engine/final-report.md`, SC-004), with both engines giving the same figures:
+**Where it comes from**: spec 023 left chords as the weak point. At its end (2026-11-05, `specs/023-native-recognition-engine/final-report.md`, SC-004), with both engines giving the same figures (the first two series of the owner; since the clarifications of 2026-11-05 the reference is the owner's third series, Key Entities):
 
 | Line | End of spec 023 |
 |---|---|
@@ -34,21 +34,24 @@ Its experiment B showed the trade-off this spec must handle: a looser rule raise
 - Q: Must the external parameters cover every internal value of both engines now, or only the chord values this spec adds or tunes? → A: Only the chord and strum values this spec adds or tunes become external parameters in spec 024, and the documentation of the engines is written for everything that exists, listing the constants still fixed in the code; a dedicated spec 026 makes every other constant an external parameter (owner, 2026-11-05).
 - Q: Which recordings of the owner are the reference for the targets of this spec? → A: The third series, `owner-chords-3` (25 takes of 8 chords chosen by the owner: Am, C, G, Em, D, A, Bm, Dm, through the Rocksmith adapter, names confirmed by the owner), in place of the first two series (42 takes), which the owner listened to and judged bad, with a contact problem (owner, 2026-11-05: "pars sur cela à la place des autres").
 - Q: What becomes of the first two series (42 takes), judged bad? → A: A guard only: at least 8 and 18 of their takes accepted with the default settings, the minimum the committed `OwnerChordsBenchmarkTest` already holds; they are no target, some of their right chords are known to stay refused and 100 % is never expected on them, whereas the reference series must reach 100 % (owner, 2026-11-05).
+- Q: Which expert chord settings does choosing a level set? → A: The chord rule, its match threshold and the values the measured sweep moves between levels; the strum window and the chord evidence are not level values (the strum window stays the learner's; the chord evidence belongs to the per-string rule) (recommended answer, applied on the owner's instruction "corrige tout", 2026-11-05).
+- Q: How are strings that cannot be told apart (the same note twice, an octave of a lower string) treated now? → A: The default chord check judges the chord by its note names, the octave not counted, so such strings need no separate check and another voicing of the same names is never counted wrong; with the per-string rule, kept as an expert option, they are treated as before (recommended answer, applied on the owner's instruction "corrige tout", 2026-11-05).
+- Q: Do chords on a bass track keep rules of their own? → A: No: the code has no chord rule of its own for a bass, so chords on any track are judged by the same chord check and level; the bass figures (single notes) stay a guard (recommended answer, applied on the owner's instruction "corrige tout", 2026-11-05).
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The chords I play are accepted (Priority: P1)
 
-The owner plays the chords of a score through the Rocksmith cable, in Wait, Follow or Arcade. A chord played correctly is always accepted, where today about 6 in 10 are; a chord that is not the one written is refused as often as that allows, and a clearly wrong chord is always refused.
+The owner plays the chords of a score through the Rocksmith cable, in Wait, Follow or Arcade. A chord played correctly is always accepted, where today 17 of the 25 takes of the reference series are; a chord that is not the one written is refused as often as that allows, and a clearly wrong chord is always refused.
 
-**Why this priority**: a learner whose right chords are refused 4 times in 10 stops trusting the practice; it is the main complaint left after spec 023.
+**Why this priority**: a learner whose right chords are refused about 3 times in 10 (8 of 25 on the reference series) stops trusting the practice; it is the main complaint left after spec 023.
 
 **Independent Test**: run the owner's reference series (Key Entities) through the judgement with the default settings and count the chords accepted, the clearly wrong chords accepted and the other really different chords accepted, with each engine.
 
 **Acceptance Scenarios**:
 
 1. **Given** the 25 takes of the owner's reference series and the default settings, **When** each is judged against its own chord, **Then** all 25 are accepted, with each engine.
-2. **Given** each recording judged against the chord of every other take that is clearly wrong for it (Key Entities), **When** they are counted, **Then** none is accepted; the other really different chords accepted are counted and as few as possible; the same chord in another voicing is reported apart.
+2. **Given** each take of the reference series judged against the chord of every other take that is clearly wrong for it (Key Entities), **When** they are counted, **Then** none is accepted; the other really different chords accepted are counted and as few as possible; the same chord in another voicing is reported apart.
 3. **Given** a chord played a whole tone higher than written (IDMT-SMT-Audio-Effects), **When** it is judged, **Then** it is still refused at least 85 % of the time.
 4. **Given** single notes and wrong single notes of every dataset, **When** they are judged, **Then** none of their figures is worse than at the end of spec 023.
 
@@ -60,23 +63,23 @@ A learner whose guitar, cable or playing does not suit the default can make the 
 
 **Why this priority**: one default cannot fit every guitar and input; the owner asked for the setting explicitly, but the default of story 1 already gives the main gain.
 
-**Independent Test**: choose each level in the practice settings, judge the owner's chords with it, and check that a more lenient level accepts at least as many right chords and a stricter level wrongly accepts at most as many really different chords as the default.
+**Independent Test**: choose each level in the practice settings, judge the reference series with it, and check that a more lenient level accepts at least as many right chords and a stricter level wrongly accepts at most as many really different chords as the default.
 
 **Acceptance Scenarios**:
 
 1. **Given** the *Mode* tab of the practice window, **When** the learner opens it, **Then** a chord leniency setting is shown next to the choice of Wait / Follow / Arcade, with three levels *Strict*, *Normal*, *Lenient*, each with a tip saying what it accepts and what it risks.
 2. **Given** a more lenient level, **When** the same chords are judged, **Then** at least as many right chords are accepted as with the default.
 3. **Given** the *Strict* level, **When** the same chords are judged, **Then** at most as many really different chords are wrongly accepted as with *Normal*, and fewer when any setting allows it; *Strict* may refuse some right chords, and its tip says so.
-7. **Given** a level is chosen, **When** the learner opens the expert chord settings (Recognition settings), **Then** they show the level's values; **When** one of them is changed by hand, **Then** the level shows *Custom*.
-4. **Given** a chosen level, **When** the application is closed and opened again, **Then** the level is kept.
-5. **Given** a level changed during a run, **When** the next chord is judged, **Then** the new level applies from the next run at the latest, and never makes the run stop.
-6. **Given** a learner who has never touched the setting, **When** they practise, **Then** the default level is used, which is more lenient than the behaviour of spec 023.
+4. **Given** a level is chosen, **When** the learner opens the expert chord settings (Recognition settings), **Then** they show the level's values; **When** one of them is changed by hand, **Then** the level shows *Custom*.
+5. **Given** a chosen level, **When** the application is closed and opened again, **Then** the level is kept.
+6. **Given** a level changed during a run, **When** the next chord is judged, **Then** the new level applies from the next run at the latest, and never makes the run stop.
+7. **Given** a learner who has never touched the setting, **When** they practise, **Then** the default level is used, which is more lenient than the behaviour of spec 023.
 
 ---
 
 ### User Story 3 - The cause of each refused chord is known (Priority: P3)
 
-Before any rule changes, the 16 chords of the owner refused at the end of spec 023 are examined one by one, and the cause of each refusal is recorded (which string was not heard, which evidence was missing, which path refused it), so that the change aims at the real causes.
+Before any rule changes, the 16 chords of the owner refused at the end of spec 023 (the first two series) are examined one by one, and the cause of each refusal is recorded (which string was not heard, which evidence was missing, which path refused it), so that the change aims at the real causes.
 
 **Why this priority**: it does not change what the learner sees, but every later choice depends on it; experiment B of spec 023 failed for lack of it.
 
@@ -91,11 +94,11 @@ Before any rule changes, the 16 chords of the owner refused at the end of spec 0
 
 ### Edge Cases
 
-- A chord with strings that cannot be told apart (the same note twice, or an octave of a lower string): the leniency does not make such strings count as heard or missing differently than today.
+- A chord with strings that cannot be told apart (the same note twice, or an octave of a lower string): the default chord check judges note names, the octave not counted, so these strings need no separate check and another voicing of the same names is never counted wrong; with the per-string rule (expert option) they are treated as before.
 - A strum slow enough to sound like an arpeggio: the leniency applies to the chord as a whole, the strum window is unchanged unless the learner changes it.
 - A level input too low or saturating: the leniency does not hide an input problem; the input warnings stay.
-- A bass track: chords on a bass keep their own rules; the setting is shown and applies only where chords are checked.
-- The expert chord settings that exist today (chord evidence, strum window, required strings): they keep working; the new leniency setting and them must not contradict each other in a way the learner cannot understand.
+- A bass track: chords on a bass are judged by the same chord check and level as on a guitar (no chord rule of its own exists); the bass figures (single notes) are a guard.
+- The expert chord settings that exist today (chord evidence, strum window, the chord rule, formerly "Strings required"): they keep working; the new leniency setting and them must not contradict each other in a way the learner cannot understand.
 - A song practised with a leniency level, then the default changed by an update: a level chosen by the learner is kept; only a learner who never chose one gets the new default.
 
 ## Requirements *(mandatory)*
@@ -114,7 +117,7 @@ Before any rule changes, the 16 chords of the owner refused at the end of spec 0
 - **FR-009**: The leniency MUST apply the same way with both engines and in every mode that checks chords (Wait, Follow, Arcade).
 - **FR-010**: Before any rule changes, the 16 refused chords of the owner and the 13 neighbouring chords wrongly accepted MUST be examined, and the cause of each refusal or acceptance recorded in a report.
 - **FR-011**: Every figure of this spec MUST be measured before and after, for each engine, on the datasets in `~/tuxguitar-datasets` and the owner's recordings, and kept in the spec's benchmark reports.
-- **FR-012**: Choosing a level MUST set the expert chord settings (Recognition settings: chord evidence, strum window, and any chord value this spec adds) to that level's values; changing one of them by hand MUST make the level show *Custom*, and choosing a level again MUST restore its values. Their tips MUST say so.
+- **FR-012**: Choosing a level MUST set the level's expert chord settings (Recognition settings: the chord rule, its match threshold, and any value the measured sweep moves between levels) to that level's values, and MUST NOT change the strum window or the chord evidence; changing one of them by hand MUST make the level show *Custom*, and choosing a level again MUST restore its values. Their tips MUST say so.
 - **FR-013**: Every engine value this spec adds or tunes (for the chord check and the strum) MUST be an external parameter of both engines, read at run time from the recognition settings, so that changing it never needs a rebuild of the application or of the native library; both engines MUST read the same value.
 - **FR-014**: The engines MUST be documented in one place (the constants still fixed in the code listed as such, for spec 026): how each one works (the analysis of a frame, the attack evidence, the chord evidence, the decision in the practice session), their interface (what the application gives them and what they return, including the native interface), and every parameter (name, meaning, unit, default, bounds, where it is set).
 
@@ -133,9 +136,9 @@ Before any rule changes, the 16 chords of the owner refused at the end of spec 0
 - **SC-001**: All 25 takes of the owner's reference series through the Rocksmith cable are accepted with the default settings (100 %; 17 today), with each engine.
 - **SC-002**: With *Normal*, no clearly wrong chord is accepted on the reference series (408 such judgements), with each engine (or, under the fallback, the FR-003 lines hold); the really different chords wrongly accepted are as few as the settings that accept every right chord allow; *Strict* accepts at most as many.
 - **SC-003**: The first two series keep at least 8 and 18 takes accepted. No single-note or wrong-note figure of any dataset is worse than at the end of spec 023; the chord a whole tone higher stays refused at least 85 % of the time; GuitarSet complete chords are not worse.
-- **SC-004**: Each leniency level orders as promised on the owner's chords: the more lenient, the more right chords accepted; the stricter, the fewer really different chords wrongly accepted.
+- **SC-004**: Each leniency level orders as promised on the reference series: the more lenient, the more right chords accepted; the stricter, the fewer really different chords wrongly accepted.
 - **SC-005**: The owner, playing chords of a score through the cable in Wait, Follow and Arcade with the default, judges that right chords are accepted and wrong ones refused (gate on a test sheet).
-- **SC-006**: The diagnostic gives a recorded cause for each of the 16 refused chords and the 13 wrong acceptances.
+- **SC-006**: The diagnostic gives a recorded cause for each of the 16 refused chords and the 13 wrong acceptances of the first two series (done, `benchmark/diagnostic.md`).
 
 ## Assumptions
 

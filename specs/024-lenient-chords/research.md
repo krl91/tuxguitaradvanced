@@ -10,6 +10,7 @@ A chord is accepted on either of two paths of `PracticeSession` (`TuxGuitar-prac
 
 - **The attack path** (`PolyphonicAcceptance.offer`): the expected pitches must explain `minShare` (0.30) of what the attack added, the strongest must reach `minPeakRatio` (0.7), every separable pitch `minBalance` (0.10), for `hops` (6) hops in a row. Clipping removes the evidence. Its parameters are `PolyphonicAcceptance.Parameters.defaults()`, not settings.
 - **The chord check** (`onChordFrame`, lines 707–744): `ChordMatcher.check` reads `ChordEvidence` (per required pitch: unique partials, clear unique partials, clear fraction). Every verifiable pitch must be heard in `stableHops` (8) frames in a row, within `windowNanos` (600 ms) of the strum's arming (`armTransientNanos`). When the window ends first, the feedback lists the missing pitches (`ChordFeedback.Kind.INCOMPLETE`) and a new strum is needed.
+- **Follow and Arcade judge chords in their own loop.** `FollowSession` (lines 939–960), which Arcade runs through `ArcadeRun`, keeps for each detected onset (`PendingOnset`, created in `registerOnset`) the open events of its timing window as candidates. For each chord candidate and each usable frame it calls `ChordMatcher.check` and counts its own run (`onset.chordRun[c]`). It matches after `stableHops`, or records a wrong attempt when the frame's age since the onset (`seen.wall - onset.transient_`) passes `windowNanos`. It never goes through `PracticeSession.onChordFrame`. The calibration's `EventJudge` builds a `PracticeSession` (line 73).
 - **The values** come from `RecognitionSettings` through `PracticeParameters.chordParameters()`: `CHORD_MIN_PARTIALS` (2), `CHORD_EVIDENCE` (1/3), `CHORD_CONFIRM` (43 ms), `CHORD_WINDOW` (600 ms), declared in `TuxGuitar-audio-engine/src/main/java/.../settings/RecognitionParameters.java` (lines 67–98). `CHORD_COMPLETENESS` (`recognition.chord.completeness`, one option `all-verifiable`) is declared and read nowhere.
 - **Both engines feed the same Java decision.** The native engine writes the chord evidence into its frame record; with the Java engine `ChordEvidence.evaluate` computes it. `ChordEvidenceParityTest` holds them equal.
 
@@ -38,7 +39,7 @@ A chord is accepted on either of two paths of `PracticeSession` (`TuxGuitar-prac
 ## R3. The method: the chord's pitch-class profile matched against the expected chord
 
 **Decision.** A new chord rule, *profile*, replaces the per-string chord check as the default:
-1. **The profile.** For each frame after the strum's arming, the 12 pitch classes get the sum, over the octaves from the expected chord's lowest pitch to an upper bound, of the linear magnitude of the semitone band (`SpectrumFrame.getBandDb(midi)`, converted from dB). The frame profiles are summed from the arming on.
+1. **The profile.** For each frame after the strum's arming, the 12 pitch classes get the sum, over the pitches from one semitone below the expected chord's lowest pitch up to an upper bound, of the linear magnitude of the semitone band (`SpectrumFrame.getBandDb(midi)`, converted from dB). The frame profiles are summed from the arming on.
 2. **The template.** The expected chord's note names (required and tolerated pitches, the octave not counted), each weighted 1.
 3. **The match.** The cosine between the summed profile and the template. The chord is accepted when the match reaches the threshold for `stableHops` frames in a row, after a minimum accumulation time, within the strum window.
 4. **The feedback when refused.** The expected note names whose share of the profile is weakest are listed as missing, as the `INCOMPLETE` feedback does today (constitution XIV). Unverifiable pitches no longer apply to this rule (they are reported empty).
@@ -62,13 +63,18 @@ A chord is accepted on either of two paths of `PracticeSession` (`TuxGuitar-prac
 
 ## R4. Where the profile is computed: in Java, on the spectrum both engines already give
 
-**Decision.** The profile and the match are computed in the Java practice session from `AnalysisFrame.getSpectrum()`. No change to the native crate, to the frame record or to the JNI contract.
+**Decision.** The profile and the match are computed in Java from `AnalysisFrame.getSpectrum()`. No change to the native crate, to the frame record or to the JNI contract.
+- **One rule, two callers.** `ChordMatcher` decides from a `ChordProfile` the caller holds (`check(profile, spectrum, required, tolerated)` gives the same `Result` as today, complete or not, with the missing pitches).
+- `PracticeSession` (Wait) holds one profile, reset at each arming.
+- `FollowSession` (Follow and Arcade) holds one profile per chord candidate of a `PendingOnset`, made with it in `registerOnset` (once per onset, as its other per-candidate arrays are) and summed per frame without allocation.
+- So the rule is the same in every mode (FR-009), and the strum window keeps each mode's own reference: the arming in Wait, the onset in Follow and Arcade.
 
 **Rationale (source read).**
 - With chords in the score, `PracticeWindow` switches the spectrum on (`engine.setSpectrumEnabled(hasChords(...))`, lines 885, 1007, 1213).
 - The native engine then writes the spectrum part of every frame (`pipeline.rs`, `PART_SPECTRUM` when `spectrum_on`), with the semitone band levels from MIDI 24 to 112 (`polyphonic.rs`, `band_db`, the strongest peak around each semitone of an 8192-sample Hann FFT). `FrameRecords` reads it into a `SpectrumFrame` (lines 173–182).
 - The Java engine builds the same `SpectrumFrame` (`PolyphonicAnalyzer`, of which `polyphonic.rs` is the port; spec 023 parity tests).
 - So one Java rule judges both engines' spectra: FR-009 holds by construction, and nothing is added to the JNI contract (the owner's rule).
+- The calibration's `EventJudge` builds a `PracticeSession` (line 73), so the device calibration (spec 013) judges chords with the same rule; its committed tests are part of the gate.
 - **Cost:** about 50 bands per frame, a sum per pitch class and a cosine of 12 values; arrays allocated once per event, none per frame (constitution VI). It runs in the session's frame handling, not on the audio callback.
 
 **Alternative rejected.** Computing the profile in Rust and adding it to the frame record: a JNI change for no gain, since the bands are already there.
@@ -81,11 +87,17 @@ A chord is accepted on either of two paths of `PracticeSession` (`TuxGuitar-prac
 |---|---|---|---|---|---|
 | `recognition.chord.completeness` (existing) | the chord rule: `all-verifiable` (per string) or `profile` (new option) | choice | `profile` | — | chords |
 | `recognition.chord.profile.match` (new) | the minimum cosine between the chord's profile and the expected chord | % | from the sweep (R6), about 85 | 50–99 | chords |
-| `recognition.advanced.chord.profile.settle` (new) | the minimum time of profile summed before a judgement | ms | from the sweep | 0–500 | advanced |
-| `recognition.advanced.chord.profile.top` (new) | the highest pitch summed into the profile | MIDI | from the sweep, about 88 | 60–112 | advanced |
-| `recognition.advanced.chord.profile.weight` (new, only if the sweep keeps it) | the magnitude summed: linear or compressed (square root) | choice | from the sweep | — | advanced |
+| `recognition.chord.profile.settle` (new) | the minimum time of profile summed before a judgement | ms | from the sweep | 0–500 | chords |
+| `recognition.chord.profile.top` (new) | the highest pitch summed into the profile | MIDI | from the sweep, about 88 | 60–112 | chords |
+| `recognition.chord.detail.weight` (new, only if the sweep keeps it variable) | the magnitude summed: linear or compressed (square root) | choice | from the sweep | — | chord details (new section) |
 
 The existing `CHORD_CONFIRM` (frames in a row) and `CHORD_WINDOW` keep their meaning for the profile rule.
+
+**Where they sit in the Recognition settings window (source read).** The committed `RecognitionControlsTest.everySectionFitsWithoutScrolling` holds every section to `RecognitionControls.MAX_SECTION_ROWS` (8) rows, a section's rows being its parameters plus one (`RecognitionControls.rows`).
+- The advanced section already has 7 parameters, so it is full.
+- The chords section has 4 (`CHORD_EVIDENCE`, `CHORD_WINDOW`, `CHORD_COMPLETENESS`, `CHORD_FOREIGN`), so it takes the three new values `CHORD_PROFILE_MATCH`, `CHORD_PROFILE_SETTLE` and `CHORD_PROFILE_TOP`, reaching 8 rows.
+- If the sweep keeps the weight or the attack flag variable, they go in a new section, `Section.CHORD_DETAILS` ("Chord details"), with its texts in three languages. The committed tests iterate `Section.values()` generically (`RecognitionControlsTest`, `RecognitionSettingsPanelTest`, `RecognitionSettingsTest` line 68), so a section added with its texts and at least one parameter satisfies them.
+- **The values of the per-string rule** (`CHORD_EVIDENCE`, `CHORD_MIN_PARTIALS`) stay, and their tips say that they apply to the rule "Every string separately" only, so the expert settings do not contradict the level (spec edge case).
 
 - They reach the rule through `ChordMatcher.Parameters` (built by `PracticeParameters.chordParameters()`), read when a run starts, as today.
 - Changing one in the Recognition settings window or in the file takes effect at the next run, with no rebuild of the application or of the native library.
@@ -95,24 +107,25 @@ The existing `CHORD_CONFIRM` (frames in a row) and `CHORD_WINDOW` keep their mea
 ## R6. The sweep, the levels and the stop condition (FR-006, FR-007, SC-004)
 
 **Decision.**
-1. **A Java probe first, before any production change:** `OwnerChordsProfileProbeTest` (tag `dataset`, new) computes the profile exactly as R3 says, from the session's own `SpectrumFrame`s and arming, with each engine. It sweeps the threshold (0.70 to 0.95), the settle time, the upper bound, the weighting, and with or without the attack path. It reports, on the third series: right, voicings, one name off, clearly wrong; on the first two series: right accepted.
-2. **Stop condition (T-stop A).** If no configuration gives 25/25 right and 0 clearly wrong on both engines, the work stops and reports to the owner, with the fallback of the spec (Clarifications: no threshold per chord, the FR-003 lines kept, the rest refused as often as possible) proposed.
+1. **A Java probe first, before any production change:** `OwnerChordsProfileProbeTest` (tag `dataset`, new) computes the profile exactly as R3 says, from the session's own `SpectrumFrame`s and arming, with each engine. It sweeps the threshold (0.70 to 0.95), the settle time, the upper bound, the weighting, the confirmation (`CHORD_CONFIRM` at its default of 8 frames, and 4), and with or without the attack path. It reports, on the third series: right, voicings, one name off, clearly wrong; on the first two series: right accepted. It runs each configuration with both arming references: Wait's (the arming, `articulationLatencyNanos`) and Follow's (the onset, the age of each frame since it). A configuration qualifies only when both give the figures below.
+2. **Stop condition A.** If no configuration gives 25/25 right and 0 clearly wrong on both engines and both arming references, while keeping at least 8 and 18 accepted on the first two series, the work stops and reports to the owner, with the fallback of the spec (Clarifications: no threshold per chord, the FR-003 lines kept, the rest refused as often as possible) proposed.
 3. ***Normal*** is the configuration that, on both engines: accepts 25/25; accepts 0 clearly wrong; keeps at least 8 and 18 accepted on the first two series; passes the guards (R8); and, among those, accepts the fewest one-name-off chords (ties: the highest threshold, then the shortest settle time).
 4. ***Strict*** is *Normal* with a higher threshold, the highest that keeps 0 clearly wrong and at most *Normal*'s wrong acceptances, fewer when any setting allows; its tip says it may refuse some right chords.
 5. ***Lenient*** is *Normal* with a lower threshold, the lowest that still accepts 0 clearly wrong; it accepts at least as many right chords.
 6. The ordering of SC-004 is checked by a test on the recorded figures.
 
-**The attack path.** It accepted 6 one-name-off chords and 0 clearly wrong on the third series (`owner-chords-strum-hold-java.txt`). The probe measures the profile with and without it. If it adds wrong acceptances without adding right ones, a chord flag `recognition.advanced.chord.attack` (on/off, a level value) turns it off for chords. It stays on for single notes in every case.
+**The attack path.** It accepted 6 one-name-off chords and 0 clearly wrong on the third series (`owner-chords-strum-hold-java.txt`). The probe measures the profile with and without it. If it adds wrong acceptances without adding right ones, a chord flag `recognition.chord.detail.attack` (on/off, a level value, in the chord details section) turns it off for chords, in `PracticeSession` and in `FollowSession` alike (FR-009). It stays on for single notes in every case.
 
 ## R7. Settings, migration and the approved test exceptions
 
 **Decision.**
-- **A level is a set of values** of the chord settings: `CHORD_COMPLETENESS`, `CHORD_PROFILE_MATCH`, and the advanced profile values the sweep moves. The new pure class `ChordLeniency` (`TuxGuitar-audio-engine/src/main/java/.../settings/`) holds them.
+- **A level is a set of values** of the chord settings: `CHORD_COMPLETENESS`, `CHORD_PROFILE_MATCH`, and the other profile values the sweep moves between levels. The new pure class `ChordLeniency` (`TuxGuitar-audio-engine/src/main/java/.../settings/`) holds them.
 - **The level shown is derived, not stored:** the named level whose values the default layer of `RecognitionSettingsStore` holds, otherwise *Custom*. Choosing a level writes its values with `RecognitionSettingsStore.update`, so the expert panel shows them (FR-012).
 - ***Normal* is exactly the default values** (`RecognitionSettings.defaults()`): a fresh learner, "Restore defaults" and the committed benchmarks get *Normal*.
 - **Migration** (FR-008): `RecognitionSettings.fromStrings` reads an old file whose chord values are those of spec 023 (`all-verifiable`, `CHORD_EVIDENCE` 1/3, `CHORD_CONFIRM` 43 ms, no profile key) with *Normal*'s values, like the legacy tempo key already there (lines 96–101). A file changed by hand keeps its values and shows *Custom*. `VERSION` stays 1 (`RecognitionSettingsStoreTest.valuesSurviveARestart` pins it).
 - **`CHORD_EVIDENCE` and `CHORD_CONFIRM` defaults** stay as they are unless the sweep needs `CHORD_CONFIRM` to move; then only `RecognitionSettingsTest` lines 48 and 50 and `RecognitionControlsTest` lines 81–84 change (approved exception).
 - **`OwnerChordsBenchmarkTest`**: its count of wrong acceptances counts voicings; with the profile rule it may exceed `wrong.max`. Only the two `wrong.max` lines of `owner-chords-baseline.properties` change, to the new figures, with a comment (approved exception); `accepted.min` stays. The new counts are checked by a new test (R8).
+- **The expert name of `CHORD_COMPLETENESS`** becomes "Chord rule" ("Règle des accords", "Regla de acordes"), with the options "Note names over the strum" (`profile`) and "Every string separately" (`all-verifiable`). "Chord check" is the name of the level in the *Mode* tab only.
 - **Follow and Arcade** keep relaxing the chord values one way (`FollowLeniency`, `ArcadeLeniency`). They relax `CHORD_EVIDENCE` and `CHORD_CONFIRM`; they must also lower the profile threshold by the same rule only if the sweep shows a need, otherwise the profile threshold is not relaxed. A test checks that Follow and Arcade keep the chord rule and its threshold (FR-009).
 - **A device profile (spec 013)** may still overlay `CHORD_EVIDENCE` and `CHORD_CONFIRM`; the new values are not profile parameters.
 
@@ -122,11 +135,13 @@ The existing `CHORD_CONFIRM` (frames in a row) and `CHORD_WINDOW` keep their mea
 - `DatasetBenchmarkTest`, `TechniqueDatasetBenchmarkTest`: every single-note and wrong-note line not lower; Audio-Effects "chord a whole tone higher refused" at least 85 %;
 - `GuitarSetChordBenchmarkTest`: complete chords not lower (33 and 23 of 56), and its controls reported;
 - `OwnerChordsBenchmarkTest` on the first two series: at least 8 and 18 accepted;
-- `BassRecognitionBenchmarkTest`: unchanged. A bass chord goes through the same `ChordMatcher`; the profile starts at the chord's lowest expected pitch, so it covers the bass range. If the bass figures drop, the profile rule applies only to tracks with more than four strings and the reason is reported.
+- `BassRecognitionBenchmarkTest`: unchanged. It judges single bass notes only (`functional/BassRecognitionBenchmarkTest`), which the chord rule does not touch. A chord on a bass track is judged by the same rule as on a guitar (spec Clarifications: no bass rule of its own exists); the profile starts one semitone below the chord's lowest expected pitch, so it covers the bass range.
 - **New:** `OwnerChordsProfileTest` (tag `dataset`): on the third series with the defaults, 25/25 right and 0 clearly wrong, with each engine; voicings and one name off reported.
 - **New:** `ChordLeniencyComparisonTest` writes `benchmark/comparison.md` (before against after, both engines, each line pass or fail) and fails on any guard line lower.
 
 The "incomplete chord refused" lines (IDMT-SMT-Guitar 8 of 8, Audio-Effects poly 35 of 36) are reported; any drop is told to the owner.
+
+**Stop condition C.** If a guard line drops and no qualifying configuration of the probe avoids it, the work stops and reports to the owner.
 
 ## R9. The setting in the *Mode* tab (FR-005, FR-012)
 

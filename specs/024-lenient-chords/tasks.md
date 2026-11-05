@@ -103,7 +103,9 @@
   - settle: 0, 50, 100, 200 ms;
   - top: 76, 84, 88, 96;
   - weight: linear or square root;
-  - the attack path: with or without it (with it, the session's `PolyphonicAcceptance` run as in the strum hold probe).
+  - confirmation: `CHORD_CONFIRM` at 8 frames (its default) and 4;
+  - the attack path: with or without it (with it, the session's `PolyphonicAcceptance` run as in the strum hold probe);
+  - the arming reference: Wait's (the arming, `articulationLatencyNanos`) and Follow's (the onset, each frame's age since it, as `FollowSession`); a configuration qualifies only when both give the figures of T007.
 
   For each configuration it counts:
   - on the reference series: right, voicings, one name off and clearly wrong (data model "Judgement categories"), every take against every take's chord;
@@ -115,7 +117,7 @@
   - the two engines compared;
   - the margin: the weakest right match against the strongest clearly wrong one.
 
-  Then choose the values with the rule of research R6:
+  Then choose the values with the rule of research R6 (FR-006, FR-007):
   - *Normal*: among the qualifying configurations, the fewest one-name-off accepted; ties go to the highest threshold, then the shortest settle;
   - *Strict*: a higher threshold;
   - *Lenient*: a lower threshold;
@@ -154,36 +156,44 @@
   - when the window ends first, the verdict is wrong, the feedback is `INCOMPLETE` with the expected pitches of the weakest names, and unverifiable is empty;
   - a frame at an unusable level resets the run but not the sums;
   - single notes are unchanged;
-  - if T007 turns the attack path off for chords, it is off for chords only.
-- [ ] T012 [P] [US1] New test `AET/settings/ChordProfileSettingsTest.java`:
+  - if T007 turns the attack path off for chords, it is off for chords only;
+  - a clipping or too low frame still gives the input warning it gives today (the spec's edge case on input problems).
+- [ ] T012 [P] [US1] New unit test `PT/session/FollowSessionChordProfileTest.java`, which drives `FollowSession` with synthetic frames (Follow, and Arcade through the same session):
+  - a chord candidate is matched with the profile rule after `stableHops` complete frames inside `windowNanos` of its onset;
+  - two chord candidates of one onset have their own profiles;
+  - a new onset starts new profiles;
+  - when the window ends first, the wrong attempt carries the pitches of the weakest names;
+  - single-note candidates are unchanged;
+  - the attack path for chords as T007 decided.
+- [ ] T013 [P] [US1] New test `AET/settings/ChordProfileSettingsTest.java`:
   - the new parameters exist with the keys, units, defaults (T007's *Normal*) and bounds of data-model "Settings";
   - `CHORD_COMPLETENESS` has the options `all-verifiable` and `profile`, with the default `profile`;
   - the values round-trip through `RecognitionSettings.toStrings`/`fromStrings`;
   - none of them is a device-profile parameter (`ProfileParameters.LIST`).
-- [ ] T013 [P] [US1] New test `AET/settings/ChordProfileMigrationTest.java`:
+- [ ] T014 [P] [US1] New test `AET/settings/ChordProfileMigrationTest.java`:
   - a file with the spec 023 chord values and no profile key reads as *Normal*'s values;
   - a file with `CHORD_EVIDENCE` or `CHORD_CONFIRM` changed by hand keeps its values and `all-verifiable`;
   - a file with a profile key is read as it is;
   - `VERSION` is still "1".
-- [ ] T014 [P] [US1] New test `PT/session/ChordProfileParametersTest.java`:
+- [ ] T015 [P] [US1] New test `PT/session/ChordProfileParametersTest.java`:
   - `PracticeParameters.chordParameters()` passes the rule and the profile values from the settings;
   - `FollowLeniency` and `ArcadeLeniency` keep the rule and the profile threshold, unless T007 decided they relax it, then by their one-way rule (FR-009);
   - a value changed in the settings reaches the next run's `ChordMatcher` with no restart (FR-013).
-- [ ] T015 [P] [US1] New test `PT/dataset/OwnerChordsProfileTest.java` (tag `dataset`):
-  - with `RecognitionSettings.defaults()` on the reference series, 25 of 25 right accepted and 0 clearly wrong accepted;
+- [ ] T016 [P] [US1] New test `PT/dataset/OwnerChordsProfileTest.java` (tag `dataset`; FR-001, FR-002, SC-001, SC-002):
+  - with `RecognitionSettings.defaults()` on the reference series, judged as `DatasetJudge` does (the Wait session), 25 of 25 right accepted and 0 clearly wrong accepted (Follow and Arcade are measured by T006's Follow arming and covered by T012);
   - voicings and one name off reported (`target/dataset-benchmark/owner-chords-profile-<engine>.txt`);
   - skipped when the folder is absent.
-- [ ] T016 [US1] Compile and run T009–T015: they fail for the right reason (missing classes or values, or the old rule's figures). Record the red run in `SPEC/benchmark/red-us1.txt`.
+- [ ] T017 [US1] Compile and run T009–T016: they fail for the right reason (missing classes or values, or the old rule's figures). Record the red run in `SPEC/benchmark/red-us1.txt`.
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] New pure class `PR/session/ChordProfile.java` (data-model "Chord profile"):
+- [ ] T018 [US1] New pure class `PR/session/ChordProfile.java` (data-model "Chord profile"):
   - arrays made once;
   - `reset(expected, top, weight)`, `add(SpectrumFrame)`, `match()`, `weakest(n)`, `summedNanos`.
-- [ ] T018 [US1] `AE/settings/RecognitionParameters.java`: add the option `profile` (`COMPLETENESS_PROFILE`) to `CHORD_COMPLETENESS` with the default `profile`. Add `CHORD_PROFILE_MATCH` (chords section) and `CHORD_PROFILE_SETTLE` and `CHORD_PROFILE_TOP` (advanced section), plus `CHORD_PROFILE_WEIGHT` and `CHORD_ATTACK` only if T007 kept them, with T007's values. Register them in the lists of their sections.
-- [ ] T019 [US1] `AE/settings/RecognitionSettings.java` `fromStrings`: the migration of research R7, beside the legacy tempo key.
-- [ ] T020 [US1] `PR/session/ChordMatcher.java`: `Parameters` gains the rule and the profile values (a new constructor; the old one keeps `all-verifiable`), and the check by profile when the rule says so. `PR/session/PracticeParameters.java` `chordParameters()` passes them.
-- [ ] T021 [US1] `PR/session/PracticeSession.java` `onChordFrame`:
+- [ ] T019 [US1] `AE/settings/RecognitionParameters.java`: add the option `profile` (`COMPLETENESS_PROFILE`) to `CHORD_COMPLETENESS` with the default `profile`. Add `CHORD_PROFILE_MATCH`, `CHORD_PROFILE_SETTLE` and `CHORD_PROFILE_TOP` in the chords section (7 parameters, 8 rows: the advanced section is full, research R5), plus `CHORD_PROFILE_WEIGHT` and `CHORD_ATTACK` only if T007 kept them variable, in a new `Section.CHORD_DETAILS`, with T007's values. Register them in `RecognitionParameters.ALL`. The committed `RecognitionControlsTest.everySectionFitsWithoutScrolling` must stay green.
+- [ ] T020 [US1] `AE/settings/RecognitionSettings.java` `fromStrings`: the migration of research R7, beside the legacy tempo key.
+- [ ] T021 [US1] `PR/session/ChordMatcher.java`: `Parameters` gains the rule and the profile values (a new constructor; the old one keeps `all-verifiable`), and `check(ChordProfile, SpectrumFrame, required, tolerated)` decides by profile when the rule says so, by the per-string rule otherwise (contracts/chord-profile-rule.md). `PR/session/PracticeParameters.java` `chordParameters()` passes them.
+- [ ] T022 [US1] `PR/session/PracticeSession.java` `onChordFrame`:
   - the profile is reset at each arming and summed on each usable frame;
   - the decision follows contracts/chord-profile-rule.md;
   - the refusal feedback names the expected pitches of the weakest names;
@@ -191,13 +201,19 @@
   - nothing is allocated per frame.
 
   Also `FollowLeniency` and `ArcadeLeniency`, if T007 decided they relax the threshold.
-- [ ] T022 [US1] Strings for the new values and the new option, in `LANG/messages.properties`, `_fr` and `_es`: name, tip and option label of each value, shown by the existing Recognition settings window (`RecognitionControls`). The completeness name becomes "Chord check".
-- [ ] T023 [US1] Run T009–T015: all green, with both engines for T015.
-- [ ] T024 [US1] `PT/dataset/owner-chords-baseline.properties`: change only the two `wrong.max` lines to the counts `OwnerChordsBenchmarkTest` now gives on the first two series, with a comment that cites the approved exception. This is approved exception 1; `accepted.min` stays 8 and 18. Run `OwnerChordsBenchmarkTest` with each engine: green, at least 8 and 18 accepted (FR-003a).
-- [ ] T025 [US1] The guards after (research R8): run the five committed dataset benchmarks with each engine into `SPEC/benchmark/after-java/` and `after-native/`. Then write the new test `PT/dataset/ChordLeniencyComparisonTest.java` (tag `benchmark`): it reads `before-*` and `after-*`, writes `SPEC/benchmark/comparison.md` (each guard line, before and after, both engines, pass or fail) and fails on any guard line lower. Run it.
+- [ ] T023 [US1] `PR/session/FollowSession.java` (Follow and Arcade):
+  - one `ChordProfile` per chord candidate, made with the `PendingOnset` in `registerOnset`;
+  - summed on each usable frame and checked through `ChordMatcher.check(profile, …)` in the chord loop (lines 939–960);
+  - the wrong attempt carries the weakest names' pitches;
+  - the attack path for chords as T007 decided;
+  - nothing is allocated per frame.
+- [ ] T024 [US1] Strings for the new values and the new option, in `LANG/messages.properties`, `_fr` and `_es`: name, tip and option label of each value, shown by the existing Recognition settings window (`RecognitionControls`). The completeness name becomes "Chord rule" ("Règle des accords", "Regla de acordes"), with the options "Note names over the strum" and "Every string separately" (research R7); "Chord check" stays the name of the level in the *Mode* tab only. The tips of `CHORD_EVIDENCE` and `CHORD_MIN_PARTIALS` add that they apply to the rule "Every string separately" only. If `Section.CHORD_DETAILS` exists, its name and tip too.
+- [ ] T025 [US1] Run T009–T016: all green, with both engines for T016.
+- [ ] T026 [US1] `PT/dataset/owner-chords-baseline.properties`: change only the two `wrong.max` lines to the counts `OwnerChordsBenchmarkTest` now gives on the first two series, with a comment that cites the approved exception and says that this count includes voicings and is no longer a guard (the counts of the reference series are checked by T016). This is approved exception 1; `accepted.min` stays 8 and 18. Run `OwnerChordsBenchmarkTest` with each engine: green, at least 8 and 18 accepted (FR-003a).
+- [ ] T027 [US1] The guards after (research R8; FR-003, FR-004, FR-011, SC-003): run the five committed dataset benchmarks with each engine into `SPEC/benchmark/after-java/` and `after-native/`. Then write the new test `PT/dataset/ChordLeniencyComparisonTest.java` (tag `benchmark`): it reads `before-*` and `after-*`, writes `SPEC/benchmark/comparison.md` (each guard line, before and after, both engines, pass or fail) and fails on any guard line lower. Run it.
   - **Stop condition C** applies if a guard drops and no configuration of `probe.md` avoids it.
-  - A drop of the bass report applies research R8: the profile rule only on tracks with more than four strings, with a test added first.
-- [ ] T026 [US1] Gate; commit "impl(024): phase 4 (US1): the pitch-class profile chord rule as the default".
+  - The bass report judges single notes only and must stay unchanged (research R8); a change there is a bug of this phase, handled under the bug protocol.
+- [ ] T028 [US1] Gate; commit "impl(024): phase 4 (US1): the pitch-class profile chord rule as the default".
 
 ## Phase 5: User Story 2 - I set how strict the chord check is (P2)
 
@@ -207,62 +223,64 @@
 
 ### Tests for User Story 2 (first, seen red)
 
-- [ ] T027 [P] [US2] New test `AET/settings/ChordLeniencyTest.java`, for the invariants of data-model "Chord leniency level":
+- [ ] T029 [P] [US2] New test `AET/settings/ChordLeniencyTest.java`, for the invariants of data-model "Chord leniency level":
   - `of(defaults()) == NORMAL`;
   - `of(apply(L, s)) == L`;
   - `apply` changes no other value;
   - `CUSTOM` cannot be applied;
   - a value changed by hand gives `CUSTOM`.
-- [ ] T028 [P] [US2] New test `PT/dataset/ChordLeniencyLevelsTest.java` (tag `dataset`). On the reference series with each level's values, with each engine, it checks:
+- [ ] T030 [P] [US2] New test `PT/dataset/ChordLeniencyLevelsTest.java` (tag `dataset`; FR-007, SC-004). On the reference series with each level's values, with each engine, it checks:
   - every level accepts 0 clearly wrong;
   - *Lenient* accepts at least *Normal*'s right chords;
   - *Strict* accepts at most *Normal*'s wrong acceptances (SC-004).
 
   It writes `target/dataset-benchmark/chord-leniency-levels-<engine>.txt`.
-- [ ] T029 [P] [US2] New SWT test `PT/ui/ChordLeniencyPanelSwtTest.java` (`swt-gui-tests`):
+- [ ] T031 [P] [US2] New SWT test `PT/ui/ChordLeniencyPanelSwtTest.java` (`swt-gui-tests`):
   - the *Mode* tab shows "Chord check" after `FollowPanel`, with *Strict*, *Normal* and *Lenient*;
   - choosing a level writes its values into the store's default layer;
   - a value changed in the store shows *Custom* and its line;
   - choosing a level again removes *Custom*;
   - the control stays enabled during a run.
-- [ ] T030 [US2] Run T027–T029: red for the right reason. Record it in `SPEC/benchmark/red-us2.txt`.
+- [ ] T032 [US2] Run T029–T031: red for the right reason. Record it in `SPEC/benchmark/red-us2.txt`.
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] New pure class `AE/settings/ChordLeniency.java`, with the levels' values from T007.
-- [ ] T032 [US2] New `PR/ui/ChordLeniencyPanel.java` (contracts/chord-leniency.md): a label, a `UIDropDownSelect` and a wrapped line, listening to the store. Add it to the *Mode* tab in `PR/ui/PracticeWindow.java`, on the row after `FollowPanel`.
-- [ ] T033 [US2] Strings: `practice.chord-leniency`, `practice.chord-leniency.{strict,normal,lenient,custom}` and `….line`, in three languages; the French names are *Strict*, *Normal* and *Tolérant*. Also add to the `.tip` of the level's values in the Recognition settings window: "Choosing a chord check level in the practice window sets this value; changing it here makes the level Custom".
-- [ ] T034 [US2] Run T027–T029 with each engine for T028, and `-P swt-gui-tests` with the Mac session unlocked: green. Write `SPEC/benchmark/levels.md` from T028's reports.
-- [ ] T035 [US2] Gate with `swt-gui-tests`; commit "impl(024): phase 5 (US2): chord leniency levels in the Mode tab".
+- [ ] T033 [US2] New pure class `AE/settings/ChordLeniency.java`, with the levels' values from T007.
+- [ ] T034 [US2] New `PR/ui/ChordLeniencyPanel.java` (contracts/chord-leniency.md): a label, a `UIDropDownSelect` and a wrapped line, listening to the store. Add it to the *Mode* tab in `PR/ui/PracticeWindow.java`, on the row after `FollowPanel`.
+- [ ] T035 [US2] Strings: `practice.chord-leniency`, `practice.chord-leniency.{strict,normal,lenient,custom}` and `….line`, in three languages; the French names are *Strict*, *Normal* and *Tolérant*. Also add to the `.tip` of the level's values in the Recognition settings window: "Choosing a chord check level in the practice window sets this value; changing it here makes the level Custom".
+- [ ] T036 [US2] Run T029–T031 with each engine for T030, and `-P swt-gui-tests` with the Mac session unlocked: green. Write `SPEC/benchmark/levels.md` from T030's reports.
+- [ ] T037 [US2] Gate with `swt-gui-tests`; commit "impl(024): phase 5 (US2): chord leniency levels in the Mode tab".
 
 ## Phase 6: Polish & cross-cutting concerns
 
-- [ ] T036 [P] New `docs/architecture/recognition-engines.md` (FR-014, research R10), linked from `docs/architecture/README.md`. It covers:
+- [ ] T038 A new test `AET/settings/EngineDocumentationTest.java` checks that every key of `RecognitionParameters` appears in `docs/architecture/recognition-engines.md`, so the documentation stays complete (FR-014). Run it: red, since the document does not exist yet.
+- [ ] T039 New `docs/architecture/recognition-engines.md` (FR-014, research R10), linked from `docs/architecture/README.md`. It covers:
   1. how each engine works, from the frame to the session's decision;
   2. their interface: the frame record, `frame_layout.txt`, the JNI functions of `jni_recognition.rs`, `NativeParameters`;
   3. every parameter of `RecognitionParameters` and `NativeParameters`: key, meaning, unit, default, bounds, where it is set;
   4. the constants still fixed, by file, marked as spec 026's.
-- [ ] T037 [P] A new test `AET/settings/EngineDocumentationTest.java` checks that every key of `RecognitionParameters` appears in `docs/architecture/recognition-engines.md`, so the documentation stays complete (FR-014).
-- [ ] T038 [P] The practice guide in three languages: the *Chord check* levels, and what a refused chord's message means now.
-- [ ] T039 [P] New sheet `specs/test-sheets/F15-accords-tolerants.md` (SC-005): chords of a score through the cable in Wait, Follow and Arcade with *Normal*, then one chord with each level, then one threshold changed in Recognition settings and seen at the next run (FR-013).
-- [ ] T040 Draft the release notes (macOS, Linux and Windows alike).
-- [ ] T041 Full gate: `clean verify -P native-modules`, then `-P swt-gui-tests`, and the dataset tests of this spec with each engine.
-- [ ] T042 Write `SPEC/final-report.md` (each FR and SC with its figure and evidence, both engines, the stop conditions met or not) and update `specs/STATUS.md`. Commit "impl(024): phase 6: documentation, sheet F15, final report"; push both refs in one push.
-- [ ] T043 [HUMAN] The owner's gate: sheet F15 on the built application (SC-005).
+
+  Then run T038: green.
+- [ ] T040 [P] The practice guide in three languages: the *Chord check* levels, and what a refused chord's message means now.
+- [ ] T041 [P] New sheet `specs/test-sheets/F15-accords-tolerants.md` (SC-005): chords of a score through the cable in Wait, Follow and Arcade with *Normal*, then one chord with each level, then one threshold changed in Recognition settings and seen at the next run (FR-013).
+- [ ] T042 Draft the release notes (macOS, Linux and Windows alike).
+- [ ] T043 Full gate: `clean verify -P native-modules`, then `-P swt-gui-tests`, and the dataset tests of this spec with each engine.
+- [ ] T044 Write `SPEC/final-report.md` (each FR and SC with its figure and evidence, both engines, the stop conditions met or not) and update `specs/STATUS.md`. Commit "impl(024): phase 6: documentation, sheet F15, final report"; push both refs in one push.
+- [ ] T045 [HUMAN] The owner's gate: sheet F15 on the built application (SC-005).
 
 ## Dependencies & execution order
 
 - **Phases 1–2:** done.
 - **Phase 3** (probe) blocks everything after it: its values are *Normal*, *Strict* and *Lenient*. Stop condition A is checked at T007.
-- **Phase 4 (US1)** depends on T007. Its tests T009–T015 can be written in parallel ([P]); T016 runs them red; T017–T022 follow in order (same files); then T023–T026.
-- **Phase 5 (US2)** depends on phase 4 (the values and the rule). T027–T029 in parallel, then T030–T035.
-- **Phase 6:** T036–T039 in parallel after phase 5; then T040–T042; T043 last, by the owner.
+- **Phase 4 (US1)** depends on T007. Its tests T009–T016 can be written in parallel ([P]); T017 runs them red; T018–T024 follow in order (shared files); then T025–T028.
+- **Phase 5 (US2)** depends on phase 4 (the values and the rule). T029–T031 in parallel, then T032–T037.
+- **Phase 6:** T038 (red) then T039; T040 and T041 in parallel with them; then T042–T044; T045 last, by the owner.
 
 ## Parallel example (US1)
 
 ```text
-T009 ChordProfileTest   T010 ChordMatcherProfileTest   T011 PracticeSessionChordProfileTest
-T012 ChordProfileSettingsTest   T013 ChordProfileMigrationTest   T014 ChordProfileParametersTest   T015 OwnerChordsProfileTest
+T009 ChordProfileTest   T010 ChordMatcherProfileTest   T011 PracticeSessionChordProfileTest   T012 FollowSessionChordProfileTest
+T013 ChordProfileSettingsTest   T014 ChordProfileMigrationTest   T015 ChordProfileParametersTest   T016 OwnerChordsProfileTest
 ```
 
 ## Implementation strategy

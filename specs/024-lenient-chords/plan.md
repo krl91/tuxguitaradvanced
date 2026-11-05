@@ -14,15 +14,15 @@
 - **Every new value is an external parameter** of the recognition settings, read at run time (FR-013, R5). The engines get one document: how they work, their interface, every parameter, and the constants still fixed (FR-014, R10).
 - **The reference recordings are the owner's third series** (R2). The spec still counts the first two series (42 chords) and must be amended through `/speckit-clarify` before tasks.
 - **The levels** *Strict*, *Normal* and *Lenient* are sets of chord settings chosen by a measured sweep. *Normal* is the default values (R6, R7). The setting sits in the *Mode* tab (R9).
-- **Order:** a Java probe of the method on the session's own spectra first, with a stop condition. Then the rule, tests first. Then the levels and the setting. Then the documentation and the gate.
+- **Order:** a Java probe of the method on the sessions' own spectra first, with a stop condition. Then the rule in every mode, tests first. Then the levels and the setting. Then the documentation and the gate.
 
 ## Technical Context
 
 **Language/Version**: Java, release 11 for the fork modules (`TuxGuitar-audio-engine`, `TuxGuitar-practice`); JDK 21 locally. The native crate (Rust) is unchanged.
 
-**Primary Dependencies**: none new in the product. `PracticeSession`, `ChordMatcher`, `PolyphonicAcceptance`, `SpectrumFrame`, the settings (`RecognitionParameters`, `RecognitionSettings`, `RecognitionSettingsStore`) and TuxGuitar's UI toolkit. The offline tools (`misc/owner-chords-*.py`, librosa, Basic Pitch) are evidence only, never shipped.
+**Primary Dependencies**: none new in the product. `PracticeSession`, `FollowSession`, `ChordMatcher`, `PolyphonicAcceptance`, `SpectrumFrame`, the settings (`RecognitionParameters`, `RecognitionSettings`, `RecognitionSettingsStore`) and TuxGuitar's UI toolkit. The offline tools (`misc/owner-chords-*.py`, librosa, Basic Pitch) are evidence only, never shipped.
 
-**Storage**: the existing `tuxguitar-audio-recognition` settings file. One option is added to `recognition.chord.completeness`, and three or four new keys (R5). `VERSION` stays 1. Untouched spec 023 files are migrated on read (R7).
+**Storage**: the existing `tuxguitar-audio-recognition` settings file. One option is added to `recognition.chord.completeness`, and three to five new keys (R5). `VERSION` stays 1. Untouched spec 023 files are migrated on read (R7).
 
 **Testing**: JUnit 5.
 - Unit tests: the profile and its match (`ChordProfile`), `ChordMatcher` with the profile rule, the session rule and its feedback, `ChordLeniency`, the migration.
@@ -47,7 +47,7 @@
 - 25 takes, 625 judgements on the third series, and the 42 takes of the first two series as a guard;
 - five dataset benchmarks;
 - two new pure classes, one rule option, one panel;
-- three or four new settings;
+- three to five new settings;
 - about 20 strings in three languages;
 - one architecture document.
 
@@ -59,7 +59,7 @@
 | II. Extend before core | Changes are only in the fork modules `TuxGuitar-practice` and `TuxGuitar-audio-engine`. No core module, and no native change. |
 | III. Evidence | Every decision cites the source read (R0–R11). The method is chosen on measured figures (R1, R3), and measured again in Java before any rule changes (R6). |
 | IV. Spec-driven | The spec is clarified. One amendment is pending through `/speckit-clarify` (the reference series, R2), before tasks. |
-| V. Incremental | Five phases, each testable alone: probe, rule and *Normal*, levels and setting, documentation, gate. |
+| V. Incremental | Four phases left, each testable alone: probe, rule and *Normal*, levels and setting, polish (documentation and gate). |
 | VI. Real-time audio | Nothing on the audio threads. The profile is computed in the session's frame handling, with nothing allocated per frame. |
 | VII. Separable logic | `ChordProfile`, `ChordLeniency` and the migration are pure and unit-tested. |
 | VIII. Deterministic | A sum, a cosine and a threshold, no learned model. The method is the classic pitch-class profile (R3). |
@@ -71,7 +71,7 @@
 | XIV. Learner-centred | Each level says what it accepts and what it risks. A refusal names the missing note names. The input warnings stay. |
 | Texts | English, French and Spanish in the plugin's `share/lang` files. |
 
-**Gate:** passes, with one item to settle before tasks: the spec amendment on the reference series (IV). Re-checked after design: passes. Stop condition A (R6) goes to the owner instead of being decided here.
+**Gate:** passes. The spec was amended through `/speckit-clarify` (the reference series, the first two series a guard, the level's values, voicings, the bass). Re-checked after design: passes. Stop condition A (R6) goes to the owner instead of being decided here.
 
 ## Project Structure
 
@@ -94,7 +94,8 @@ specs/024-lenient-chords/
 
 ```text
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/settings/
-├── RecognitionParameters.java        + option "profile" of CHORD_COMPLETENESS (default), + CHORD_PROFILE_* values (R5)
+├── RecognitionParameter.java         + Section.CHORD_DETAILS, only if the sweep keeps more than three profile values (R5)
+├── RecognitionParameters.java        + option "profile" of CHORD_COMPLETENESS (default), + CHORD_PROFILE_* values in the chords section (R5)
 ├── RecognitionSettings.java          fromStrings: migration of untouched spec 023 chord values (R7)
 └── ChordLeniency.java                new: the levels, derived and applied (R7)
 
@@ -102,7 +103,8 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── session/ChordProfile.java         new, pure: the profile of a frame, its sum, the match, the weakest names (R3)
 ├── session/ChordMatcher.java         Parameters + rule and profile values; check by profile when the rule says so
 ├── session/PracticeParameters.java   chordParameters() passes the new values
-├── session/PracticeSession.java      onChordFrame: the profile summed from the arming, reset at each strum; the attack path for chords per R6
+├── session/PracticeSession.java      onChordFrame (Wait): one profile, reset at each arming, summed per usable frame; the attack path for chords per R6
+├── session/FollowSession.java        Follow and Arcade: one profile per chord candidate of a PendingOnset, summed per usable frame (R4)
 ├── ui/ChordLeniencyPanel.java        new: label, drop-down and the level's line (R9)
 └── ui/PracticeWindow.java            the panel in the Mode tab
 
@@ -111,15 +113,20 @@ desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties
 desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/
 ├── dataset/OwnerChordsProfileProbeTest.java    new (dataset): the sweep of R6, both engines
 ├── dataset/OwnerChordsProfileTest.java         new (dataset): 25/25 and 0 clearly wrong with the defaults
+├── dataset/ChordLeniencyLevelsTest.java        new (dataset): the levels' figures and order (SC-004)
 ├── dataset/ChordLeniencyComparisonTest.java    new (benchmark): before and after, both engines (R8)
 ├── session/ChordProfileTest.java               new (unit)
 ├── session/ChordMatcherProfileTest.java        new (unit)
+├── session/ChordProfileParametersTest.java     new (unit): the values reach the run, Follow and Arcade (FR-009, FR-013)
 ├── session/PracticeSessionChordProfileTest.java new (unit): arming, summing, the window, the feedback
+├── session/FollowSessionChordProfileTest.java new (unit): Follow and Arcade use the profile rule, per candidate
 └── ui/ChordLeniencyPanelSwtTest.java           new (swt-gui)
 
 desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/
+├── ChordProfileSettingsTest.java               new: keys, defaults, bounds, round trip
+├── ChordProfileMigrationTest.java              new: untouched spec 023 files read as Normal
 ├── ChordLeniencyTest.java                      new
-└── ChordLeniencyMigrationTest.java             new
+└── EngineDocumentationTest.java                new: every key documented (FR-014)
 
 docs/architecture/recognition-engines.md        new (FR-014, R10)
 specs/test-sheets/F15-accords-tolerants.md      the owner's gate
@@ -129,18 +136,20 @@ specs/test-sheets/F15-accords-tolerants.md      the owner's gate
 
 ## Phases
 
-1. **Done:** the figures before with both engines; the diagnostic (US3); the strum hold probe; the third series and its figures.
-2. **Probe (gate of the method):** `OwnerChordsProfileProbeTest` with both engines. The sweep is written to `benchmark/probe.md`. Stop condition A applies here (R6).
-3. **US1 (P1):** `ChordProfile` and the profile rule, tests first and seen red. Then *Normal* as the defaults, the migration, `OwnerChordsProfileTest`, the two `wrong.max` lines, and the guards after (R8).
-4. **US2 (P2):** `ChordLeniency`, *Strict* and *Lenient* from the sweep, the panel in the *Mode* tab, the expert tips, texts in three languages, the SWT test.
-5. **Polish:**
-   - `docs/architecture/recognition-engines.md` (FR-014);
-   - the practice guide in three languages;
-   - sheet F15;
-   - draft release notes;
-   - full gate;
-   - `final-report.md`;
-   - STATUS.md.
+The numbers are those of tasks.md.
+
+- **Phases 1–2, done:** the figures before with both engines; the diagnostic (US3). Since then, the strum hold probe and the third series with its figures (`benchmark/owner-chords-3/`).
+- **Phase 3, probe (gate of the method):** `OwnerChordsProfileProbeTest` with both engines and both arming references (Wait's and Follow's). The sweep is written to `benchmark/probe.md`. Stop condition A applies here (R6).
+- **Phase 4, US1 (P1):** `ChordProfile` and the profile rule in `ChordMatcher`, `PracticeSession` and `FollowSession`, tests first and seen red. Then *Normal* as the defaults, the migration, `OwnerChordsProfileTest`, the two `wrong.max` lines, and the guards after (R8, stop condition C).
+- **Phase 5, US2 (P2):** `ChordLeniency`, *Strict* and *Lenient* from the sweep, the panel in the *Mode* tab, the expert tips, texts in three languages, the SWT test.
+- **Phase 6, polish:**
+  - `docs/architecture/recognition-engines.md` (FR-014), after its test;
+  - the practice guide in three languages;
+  - sheet F15;
+  - draft release notes;
+  - full gate;
+  - `final-report.md`;
+  - STATUS.md.
 
 ## Complexity Tracking
 

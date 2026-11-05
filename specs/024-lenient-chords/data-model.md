@@ -28,11 +28,13 @@ Invariants, each tested:
   - a frame where only the expected names sound matches 1;
   - a chord sharing at most one name with a three-name template matches at most 1/√3 ≈ 0.58, under every threshold of R6.
 
-## The profile rule (in `ChordMatcher` and `PracticeSession.onChordFrame`)
+## The profile rule (in `ChordMatcher`, used by `PracticeSession` and `FollowSession`)
 
 When `CHORD_COMPLETENESS` is `profile`, a frame is complete when `match() ≥ CHORD_PROFILE_MATCH` and `summedNanos ≥ CHORD_PROFILE_SETTLE`.
 
-**The session decides as today:**
+**Who holds the profile:** `PracticeSession` holds one, reset at each arming (Wait). `FollowSession` holds one per chord candidate of each `PendingOnset`, made with the onset (Follow and Arcade).
+
+**Each session decides as today, on its own reference** (the arming in Wait, the onset in Follow and Arcade):
 - it accepts after `stableHops` complete frames in a row, within `windowNanos` of the arming;
 - when the window ends first, the strum is a confirmed wrong chord. The feedback is `INCOMPLETE`, with missing = `weakest(…)` mapped to the expected pitches of those names, and unverifiable empty;
 - a frame at a level that is not usable resets the run, as today. The profile keeps its sums.
@@ -45,11 +47,12 @@ When `CHORD_COMPLETENESS` is `all-verifiable`, the per-string rule of spec 023 a
 |---|---|---|---|---|---|
 | `CHORD_COMPLETENESS` (existing) | `recognition.chord.completeness` | choice: `all-verifiable`, `profile` | `profile` | — | chords |
 | `CHORD_PROFILE_MATCH` | `recognition.chord.profile.match` | % | from the sweep | 50–99 | chords |
-| `CHORD_PROFILE_SETTLE` | `recognition.advanced.chord.profile.settle` | ms | from the sweep | 0–500 | advanced |
-| `CHORD_PROFILE_TOP` | `recognition.advanced.chord.profile.top` | MIDI | from the sweep | 60–112 | advanced |
-| `CHORD_PROFILE_WEIGHT` (only if the sweep keeps it) | `recognition.advanced.chord.profile.weight` | choice: `linear`, `root` | from the sweep | — | advanced |
-| `CHORD_ATTACK` (only if the sweep turns it off) | `recognition.advanced.chord.attack` | on/off | from the sweep | — | advanced |
+| `CHORD_PROFILE_SETTLE` | `recognition.chord.profile.settle` | ms | from the sweep | 0–500 | chords |
+| `CHORD_PROFILE_TOP` | `recognition.chord.profile.top` | MIDI | from the sweep | 60–112 | chords |
+| `CHORD_PROFILE_WEIGHT` (only if the sweep keeps it variable) | `recognition.chord.detail.weight` | choice: `linear`, `root` | from the sweep | — | chord details (new) |
+| `CHORD_ATTACK` (only if the sweep turns it off) | `recognition.chord.detail.attack` | on/off | from the sweep | — | chord details (new) |
 
+- The chords section then holds 7 parameters, 8 rows, the most `RecognitionControls.MAX_SECTION_ROWS` allows (research R5).
 - None of these is a device-profile parameter (spec 013).
 - Follow and Arcade do not relax them unless the sweep shows a need (R7).
 
