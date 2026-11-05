@@ -72,4 +72,14 @@ Written on 2026-11-04 (T086), before the owner's gate T087. The figures come fro
 
 ## The owner's answer at T087
 
-(to be written at T087)
+On 2026-11-05, with the relaunched app, the Rocksmith cable and headphones (sheet F13):
+
+| Step | Result | The owner's remarks |
+|---|---|---|
+| 1, the engine choice | OK | |
+| 2, kept across a restart | OK | |
+| 3, Wait, native against Java | OK | **Bug**: *Practise this track* stayed greyed; the level became good only after unselecting and selecting the input again, then playing. What blocks the start is not told clearly enough: the window should guide the learner (a tip saying what blocks). |
+| 4, Follow and Arcade | OK | The practice window is taller than a standard screen: it must scroll so the start button can be reached. |
+| 5, the fallback in the app | OK, checked by Claude at the owner's request | On the built app's own jars and Java, with the library left out of `java.library.path` (as renamed): the menu shows Java only, *Automatic* runs Java, a hand-chosen native engine runs Java with its line in the log ("the native engine was asked but its library could not be loaded … the Java engine is used"), all within 9 ms; with the library, the menu shows native then Java and *Automatic* runs native. The notice in the window and the start within 2 s are `RecognitionFallbackTest`'s (green); not seen by eye. |
+| 6, the amp with the recognition | OK as a function | The *Amp and effects* window does not fit the screen (not every control is visible, even enlarged); the names are unclear (*Amp sound* should read as switching it on, *Baffle* is not understood): to be redesigned with tabs and clearer names. |
+| 7, felt quicker | **Yes** | |

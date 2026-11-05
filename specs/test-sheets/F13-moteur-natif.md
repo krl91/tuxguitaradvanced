@@ -20,7 +20,7 @@
 | 2 | Choisis *Java (FastYin)*, OK, ferme et relance l'application, rouvre la page. | Le choix est gardé. Refais-le avec *Natif (Rust)* puis *Automatique*. | | |
 | 3 | Moteur *Automatique* : *Attendre* sur `tests/basic_test.tg`, puis la même chose sur *Java (FastYin)*. | **Ton avis** : les verdicts arrivent-ils plus vite avec le moteur natif ? | | |
 | 4 | Même comparaison en *Suivre le tempo* et en *Arcade* sur `tests/demo-arcade-morceau.tg`. | Les notes et les accords sont jugés comme avec Java, mais plus tôt. Arcade reste fluide. | | |
-| 5 | Ferme l'application. Dans le Finder, clic droit sur l'application › *Afficher le contenu du paquet* › `Contents/MacOS/lib`, renomme `libtuxguitar_monitor_native.dylib` en `libtuxguitar_monitor_native.dylib.off`. Relance, lance *Attendre*. | Une ligne d'avis dit que le moteur natif n'a pas pu être chargé ; la pratique marche avec Java et **démarre en moins de 2 s**. **Remets ensuite le nom d'origine.** | | |
+| 5 | Ferme l'application. Dans le Finder, clic droit sur l'application › *Afficher le contenu du paquet* › `Contents/Resources/tuxguitar/lib`, renomme `libtuxguitar_monitor_native.dylib` en `libtuxguitar_monitor_native.dylib.off`. Relance, lance *Attendre*. | Une ligne d'avis dit que le moteur natif n'a pas pu être chargé ; la pratique marche avec Java et **démarre en moins de 2 s**. **Remets ensuite le nom d'origine.** | | |
 | 6 | Ouvre **Ampli et effets…**, active **Son d'ampli** et lance *Attendre* puis *Arcade*. | Le son d'ampli s'entend et la reconnaissance se comporte comme sans lui. | | |
 | 7 | **Ton avis final** : le moteur natif te semble-t-il plus rapide que Java ? | Ta réponse est écrite dans `final-report.md`. | | |
 
