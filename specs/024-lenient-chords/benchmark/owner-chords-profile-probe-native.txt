@@ -1,0 +1,185 @@
+Owner chords, pitch-class profile probe (spec 024, T006), engine native
+owner-chords-3: 25 right, 10 voicings, 138 one name off, 408 clearly wrong judgements
+owner-chords: 21 right, 0 voicings, 0 one name off, 0 clearly wrong judgements
+owner-chords-2: 21 right, 0 voicings, 0 one name off, 0 clearly wrong judgements
+Leak margin 0,05; guards from owner-chords-baseline.properties (accepted.min)
+
+Qualifying configurations (both arming references), the Normal rule's order: fewest one name off, then highest threshold, then shortest settle: 0
+
+None qualifies. The best by right chords (worst reference), then clearly wrong:
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,73: right 25, clearly wrong 0, one-off 59, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,74: right 25, clearly wrong 0, one-off 47, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,75: right 25, clearly wrong 0, one-off 31, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,76: right 25, clearly wrong 0, one-off 28, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,77: right 25, clearly wrong 0, one-off 19, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,78: right 25, clearly wrong 0, one-off 9, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,79: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,80: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,81: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 8, attack guarded, threshold 0,82: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,73: right 25, clearly wrong 0, one-off 59, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,74: right 25, clearly wrong 0, one-off 47, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,75: right 25, clearly wrong 0, one-off 31, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,76: right 25, clearly wrong 0, one-off 28, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,77: right 25, clearly wrong 0, one-off 19, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,78: right 25, clearly wrong 0, one-off 9, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,79: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,80: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,81: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,82: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,05, confirm 4, attack guarded, threshold 0,83: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,73: right 25, clearly wrong 0, one-off 59, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,74: right 25, clearly wrong 0, one-off 47, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,75: right 25, clearly wrong 0, one-off 31, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,76: right 25, clearly wrong 0, one-off 28, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,77: right 25, clearly wrong 0, one-off 19, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,78: right 25, clearly wrong 0, one-off 9, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,79: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,80: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,81: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 8, attack guarded, threshold 0,82: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,73: right 25, clearly wrong 0, one-off 59, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,74: right 25, clearly wrong 0, one-off 47, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,75: right 25, clearly wrong 0, one-off 31, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,76: right 25, clearly wrong 0, one-off 28, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,77: right 25, clearly wrong 0, one-off 19, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,78: right 25, clearly wrong 0, one-off 9, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,79: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,80: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+top 76, noise none, linear, settle 0 ms, share 0,10, confirm 4, attack guarded, threshold 0,81: right 25, clearly wrong 0, one-off 6, leak 0,607/0,606
+
+Right chords (top 88, no noise floor, linear):
+owner-chords-3/take01.wav  wait   [45, 52, 57, 60]       attempts 1, usable frames 101, best match 0,904, best second share 1,000, attack yes
+owner-chords-3/take01.wav  follow [45, 52, 57, 60]       attempts 1, usable frames 109, best match 0,901, best second share 0,999, attack yes
+owner-chords-3/take02.wav  wait   [40, 45, 52, 57, 60]   attempts 1, usable frames 101, best match 0,887, best second share 0,986, attack no
+owner-chords-3/take02.wav  follow [40, 45, 52, 57, 60]   attempts 1, usable frames 106, best match 0,886, best second share 0,999, attack no
+owner-chords-3/take03.wav  wait   [40, 45, 52, 57, 60]   attempts 1, usable frames 101, best match 0,882, best second share 0,997, attack no
+owner-chords-3/take03.wav  follow [40, 45, 52, 57, 60]   attempts 1, usable frames 109, best match 0,880, best second share 0,997, attack no
+owner-chords-3/take04.wav  wait   [40, 48, 52, 55, 60, 64] attempts 1, usable frames 101, best match 0,879, best second share 0,999, attack no
+owner-chords-3/take04.wav  follow [40, 48, 52, 55, 60, 64] attempts 1, usable frames 113, best match 0,874, best second share 1,000, attack no
+owner-chords-3/take05.wav  wait   [40, 48, 52, 55, 60, 64] attempts 1, usable frames 101, best match 0,874, best second share 0,902, attack yes
+owner-chords-3/take05.wav  follow [40, 48, 52, 55, 60, 64] attempts 1, usable frames 105, best match 0,873, best second share 0,900, attack yes
+owner-chords-3/take06.wav  wait   [40, 48, 52, 55, 60, 64] attempts 1, usable frames 101, best match 0,848, best second share 0,999, attack no
+owner-chords-3/take06.wav  follow [40, 48, 52, 55, 60, 64] attempts 1, usable frames 108, best match 0,846, best second share 1,000, attack no
+owner-chords-3/take07.wav  wait   [43, 47, 50, 55, 67]   attempts 1, usable frames 101, best match 0,859, best second share 0,999, attack yes
+owner-chords-3/take07.wav  follow [43, 47, 50, 55, 67]   attempts 1, usable frames 111, best match 0,857, best second share 1,000, attack yes
+owner-chords-3/take08.wav  wait   [43, 47, 50, 55, 67]   attempts 1, usable frames 101, best match 0,887, best second share 0,999, attack yes
+owner-chords-3/take08.wav  follow [43, 47, 50, 55, 67]   attempts 1, usable frames 109, best match 0,885, best second share 0,999, attack yes
+owner-chords-3/take09.wav  wait   [43, 47, 50, 55, 67]   attempts 1, usable frames 101, best match 0,865, best second share 0,996, attack yes
+owner-chords-3/take09.wav  follow [43, 47, 50, 55, 67]   attempts 1, usable frames 112, best match 0,863, best second share 0,992, attack yes
+owner-chords-3/take10.wav  wait   [43, 47, 50, 55]       attempts 0, usable frames 0, best match 0,000, best second share 0,000, attack yes
+owner-chords-3/take10.wav  follow [43, 47, 50, 55]       attempts 0, usable frames 0, best match 0,000, best second share 0,000, attack yes
+owner-chords-3/take11.wav  wait   [40, 47, 52, 55, 64]   attempts 0, usable frames 0, best match 0,000, best second share 0,000, attack yes
+owner-chords-3/take11.wav  follow [40, 47, 52, 55, 64]   attempts 0, usable frames 0, best match 0,000, best second share 0,000, attack yes
+owner-chords-3/take12.wav  wait   [40, 47, 52, 55, 64]   attempts 1, usable frames 101, best match 0,854, best second share 0,999, attack yes
+owner-chords-3/take12.wav  follow [40, 47, 52, 55, 64]   attempts 1, usable frames 110, best match 0,851, best second share 0,999, attack yes
+owner-chords-3/take13.wav  wait   [40, 47, 52, 55, 64]   attempts 1, usable frames 101, best match 0,875, best second share 0,997, attack yes
+owner-chords-3/take13.wav  follow [40, 47, 52, 55, 64]   attempts 1, usable frames 109, best match 0,874, best second share 0,994, attack yes
+owner-chords-3/take14.wav  wait   [45, 50, 57, 62, 66]   attempts 1, usable frames 101, best match 0,798, best second share 0,967, attack yes
+owner-chords-3/take14.wav  follow [45, 50, 57, 62, 66]   attempts 1, usable frames 108, best match 0,798, best second share 0,965, attack yes
+owner-chords-3/take15.wav  wait   [45, 50, 57, 62, 66]   attempts 1, usable frames 101, best match 0,793, best second share 0,990, attack yes
+owner-chords-3/take15.wav  follow [45, 50, 57, 62, 66]   attempts 1, usable frames 105, best match 0,793, best second share 0,990, attack yes
+owner-chords-3/take16.wav  wait   [45, 50, 57, 62, 66]   attempts 1, usable frames 101, best match 0,797, best second share 0,709, attack yes
+owner-chords-3/take16.wav  follow [45, 50, 57, 62, 66]   attempts 1, usable frames 107, best match 0,796, best second share 0,708, attack yes
+owner-chords-3/take17.wav  wait   [40, 45, 52, 57, 61]   attempts 1, usable frames 101, best match 0,882, best second share 0,950, attack yes
+owner-chords-3/take17.wav  follow [40, 45, 52, 57, 61]   attempts 1, usable frames 107, best match 0,880, best second share 0,945, attack yes
+owner-chords-3/take18.wav  wait   [40, 45, 52, 57, 61]   attempts 1, usable frames 101, best match 0,872, best second share 1,000, attack yes
+owner-chords-3/take18.wav  follow [40, 45, 52, 57, 61]   attempts 1, usable frames 108, best match 0,870, best second share 0,999, attack yes
+owner-chords-3/take19.wav  wait   [40, 45, 52, 57, 61]   attempts 1, usable frames 101, best match 0,892, best second share 0,924, attack no
+owner-chords-3/take19.wav  follow [40, 45, 52, 57, 61]   attempts 1, usable frames 109, best match 0,890, best second share 0,921, attack no
+owner-chords-3/take20.wav  wait   [47, 54, 59, 62]       attempts 1, usable frames 101, best match 0,881, best second share 0,996, attack yes
+owner-chords-3/take20.wav  follow [47, 54, 59, 62]       attempts 1, usable frames 108, best match 0,880, best second share 0,995, attack yes
+owner-chords-3/take21.wav  wait   [47, 54, 59, 62]       attempts 1, usable frames 101, best match 0,867, best second share 0,999, attack yes
+owner-chords-3/take21.wav  follow [47, 54, 59, 62]       attempts 1, usable frames 108, best match 0,866, best second share 0,999, attack yes
+owner-chords-3/take22.wav  wait   [47, 54, 59, 62]       attempts 1, usable frames 101, best match 0,867, best second share 0,995, attack yes
+owner-chords-3/take22.wav  follow [47, 54, 59, 62]       attempts 1, usable frames 111, best match 0,865, best second share 0,994, attack yes
+owner-chords-3/take23.wav  wait   [45, 50, 57, 62, 65]   attempts 1, usable frames 101, best match 0,892, best second share 0,931, attack no
+owner-chords-3/take23.wav  follow [45, 50, 57, 62, 65]   attempts 1, usable frames 109, best match 0,890, best second share 0,990, attack no
+owner-chords-3/take24.wav  wait   [45, 50, 57, 62, 65]   attempts 1, usable frames 101, best match 0,885, best second share 0,933, attack no
+owner-chords-3/take24.wav  follow [45, 50, 57, 62, 65]   attempts 1, usable frames 110, best match 0,883, best second share 0,989, attack no
+owner-chords-3/take25.wav  wait   [45, 50, 57, 62, 65]   attempts 1, usable frames 101, best match 0,889, best second share 0,999, attack no
+owner-chords-3/take25.wav  follow [45, 50, 57, 62, 65]   attempts 1, usable frames 108, best match 0,887, best second share 0,993, attack no
+owner-chords/take01.wav    wait   [47, 52, 56, 59, 64]   attempts 1, usable frames 97, best match 0,682, best second share 0,998, attack no
+owner-chords/take01.wav    follow [47, 52, 56, 59, 64]   attempts 1, usable frames 109, best match 0,680, best second share 1,000, attack no
+owner-chords/take02.wav    wait   [52, 56, 59]           attempts 1, usable frames 33, best match 0,734, best second share 0,894, attack no
+owner-chords/take02.wav    follow [52, 56, 59]           attempts 1, usable frames 35, best match 0,734, best second share 0,942, attack no
+owner-chords/take03.wav    wait   [52, 56, 59, 68]       attempts 2, usable frames 98, best match 0,718, best second share 0,991, attack no
+owner-chords/take03.wav    follow [52, 56, 59, 68]       attempts 2, usable frames 110, best match 0,717, best second share 0,992, attack no
+owner-chords/take04.wav    wait   [52, 56, 59, 68]       attempts 1, usable frames 100, best match 0,746, best second share 0,998, attack no
+owner-chords/take04.wav    follow [52, 56, 59, 68]       attempts 2, usable frames 217, best match 0,746, best second share 0,999, attack no
+owner-chords/take05.wav    wait   [52, 56, 59, 64, 68]   attempts 1, usable frames 101, best match 0,712, best second share 0,989, attack no
+owner-chords/take05.wav    follow [52, 56, 59, 64, 68]   attempts 2, usable frames 223, best match 0,718, best second share 0,992, attack no
+owner-chords/take06.wav    wait   [50, 57, 62, 66]       attempts 1, usable frames 82, best match 0,734, best second share 0,998, attack no
+owner-chords/take06.wav    follow [50, 57, 62, 66]       attempts 2, usable frames 187, best match 0,734, best second share 1,000, attack no
+owner-chords/take07.wav    wait   [50, 57, 62, 66]       attempts 1, usable frames 14, best match 0,479, best second share 0,600, attack no
+owner-chords/take07.wav    follow [50, 57, 62, 66]       attempts 3, usable frames 235, best match 0,756, best second share 0,999, attack no
+owner-chords/take08.wav    wait   [50, 57, 62, 66]       attempts 1, usable frames 101, best match 0,778, best second share 0,973, attack no
+owner-chords/take08.wav    follow [50, 57, 62, 66]       attempts 2, usable frames 218, best match 0,783, best second share 0,989, attack no
+owner-chords/take09.wav    wait   [43, 50, 55, 59, 67]   attempts 1, usable frames 90, best match 0,716, best second share 1,000, attack no
+owner-chords/take09.wav    follow [43, 50, 55, 59, 67]   attempts 2, usable frames 194, best match 0,716, best second share 1,000, attack no
+owner-chords/take10.wav    wait   [43, 50, 55, 59, 67]   attempts 1, usable frames 95, best match 0,727, best second share 0,939, attack yes
+owner-chords/take10.wav    follow [43, 50, 55, 59, 67]   attempts 2, usable frames 203, best match 0,728, best second share 0,969, attack yes
+owner-chords/take11.wav    wait   [43, 50, 55, 59, 67]   attempts 1, usable frames 47, best match 0,827, best second share 0,723, attack no
+owner-chords/take11.wav    follow [43, 50, 55, 59, 67]   attempts 3, usable frames 207, best match 0,829, best second share 0,725, attack no
+owner-chords/take12.wav    wait   [40, 52, 55, 60]       attempts 1, usable frames 100, best match 0,729, best second share 1,000, attack no
+owner-chords/take12.wav    follow [40, 52, 55, 60]       attempts 2, usable frames 224, best match 0,732, best second share 1,000, attack no
+owner-chords/take13.wav    wait   [52, 55, 60, 64, 67]   attempts 1, usable frames 87, best match 0,767, best second share 0,990, attack no
+owner-chords/take13.wav    follow [52, 55, 60, 64, 67]   attempts 2, usable frames 198, best match 0,767, best second share 0,990, attack no
+owner-chords/take14.wav    wait   [52, 55, 60]           attempts 1, usable frames 101, best match 0,740, best second share 0,994, attack no
+owner-chords/take14.wav    follow [52, 55, 60]           attempts 1, usable frames 109, best match 0,740, best second share 0,998, attack no
+owner-chords/take15.wav    wait   [50, 55, 62, 67]       attempts 1, usable frames 78, best match 0,817, best second share 1,000, attack yes
+owner-chords/take15.wav    follow [50, 55, 62, 67]       attempts 1, usable frames 87, best match 0,816, best second share 1,000, attack yes
+owner-chords/take16.wav    wait   [50, 55, 62, 67]       attempts 1, usable frames 47, best match 0,822, best second share 1,000, attack no
+owner-chords/take16.wav    follow [50, 55, 62, 67]       attempts 1, usable frames 57, best match 0,813, best second share 1,000, attack no
+owner-chords/take17.wav    wait   [43, 50, 55, 67]       attempts 1, usable frames 84, best match 0,727, best second share 1,000, attack yes
+owner-chords/take17.wav    follow [43, 50, 55, 67]       attempts 2, usable frames 191, best match 0,729, best second share 1,000, attack yes
+owner-chords/take18.wav    wait   [52, 57, 60]           attempts 1, usable frames 101, best match 0,783, best second share 0,992, attack yes
+owner-chords/take18.wav    follow [52, 57, 60]           attempts 2, usable frames 218, best match 0,783, best second share 0,994, attack yes
+owner-chords/take19.wav    wait   [41, 53, 57, 65]       attempts 1, usable frames 64, best match 0,724, best second share 1,000, attack no
+owner-chords/take19.wav    follow [41, 53, 57, 65]       attempts 2, usable frames 147, best match 0,726, best second share 1,000, attack no
+owner-chords/take20.wav    wait   [41, 53, 57, 65]       attempts 1, usable frames 65, best match 0,596, best second share 1,000, attack yes
+owner-chords/take20.wav    follow [41, 53, 57, 65]       attempts 3, usable frames 265, best match 0,618, best second share 1,000, attack yes
+owner-chords/take21.wav    wait   [50, 57, 62, 66]       attempts 1, usable frames 101, best match 0,710, best second share 0,995, attack no
+owner-chords/take21.wav    follow [50, 57, 62, 66]       attempts 1, usable frames 113, best match 0,710, best second share 0,997, attack no
+owner-chords-2/take01.wav  wait   [52, 56, 59, 64]       attempts 1, usable frames 101, best match 0,771, best second share 0,995, attack yes
+owner-chords-2/take01.wav  follow [52, 56, 59, 64]       attempts 1, usable frames 106, best match 0,770, best second share 0,996, attack yes
+owner-chords-2/take02.wav  wait   [40, 52, 56, 64]       attempts 1, usable frames 101, best match 0,575, best second share 1,000, attack yes
+owner-chords-2/take02.wav  follow [40, 52, 56, 64]       attempts 1, usable frames 111, best match 0,573, best second share 1,000, attack yes
+owner-chords-2/take03.wav  wait   [47, 52, 56, 59, 64]   attempts 1, usable frames 101, best match 0,708, best second share 1,000, attack yes
+owner-chords-2/take03.wav  follow [47, 52, 56, 59, 64]   attempts 1, usable frames 112, best match 0,705, best second share 1,000, attack yes
+owner-chords-2/take04.wav  wait   [40, 48, 52, 55, 60]   attempts 1, usable frames 101, best match 0,774, best second share 0,953, attack yes
+owner-chords-2/take04.wav  follow [40, 48, 52, 55, 60]   attempts 1, usable frames 108, best match 0,772, best second share 0,961, attack yes
+owner-chords-2/take05.wav  wait   [52, 55, 60]           attempts 1, usable frames 101, best match 0,797, best second share 0,992, attack no
+owner-chords-2/take05.wav  follow [52, 55, 60]           attempts 1, usable frames 109, best match 0,795, best second share 0,997, attack no
+owner-chords-2/take06.wav  wait   [52, 55, 60, 64]       attempts 1, usable frames 100, best match 0,814, best second share 0,993, attack yes
+owner-chords-2/take06.wav  follow [52, 55, 60, 64]       attempts 2, usable frames 213, best match 0,814, best second share 0,993, attack yes
+owner-chords-2/take07.wav  wait   [45, 50, 57, 62, 66]   attempts 1, usable frames 101, best match 0,722, best second share 0,900, attack yes
+owner-chords-2/take07.wav  follow [45, 50, 57, 62, 66]   attempts 1, usable frames 110, best match 0,719, best second share 0,897, attack yes
+owner-chords-2/take08.wav  wait   [50, 57, 62, 66]       attempts 1, usable frames 101, best match 0,782, best second share 0,951, attack yes
+owner-chords-2/take08.wav  follow [50, 57, 62, 66]       attempts 1, usable frames 113, best match 0,774, best second share 0,963, attack yes
+owner-chords-2/take09.wav  wait   [50, 57, 62, 66]       attempts 1, usable frames 101, best match 0,753, best second share 0,993, attack no
+owner-chords-2/take09.wav  follow [50, 57, 62, 66]       attempts 1, usable frames 109, best match 0,752, best second share 0,995, attack no
+owner-chords-2/take10.wav  wait   [50, 57, 62, 66]       attempts 1, usable frames 101, best match 0,717, best second share 1,000, attack yes
+owner-chords-2/take10.wav  follow [50, 57, 62, 66]       attempts 2, usable frames 218, best match 0,723, best second share 1,000, attack yes
+owner-chords-2/take11.wav  wait   [50, 57, 62, 66]       attempts 1, usable frames 101, best match 0,761, best second share 0,998, attack no
+owner-chords-2/take11.wav  follow [50, 57, 62, 66]       attempts 1, usable frames 113, best match 0,758, best second share 1,000, attack no
+owner-chords-2/take12.wav  wait   [50, 57, 62, 66]       attempts 1, usable frames 101, best match 0,785, best second share 0,971, attack no
+owner-chords-2/take12.wav  follow [50, 57, 62, 66]       attempts 1, usable frames 113, best match 0,778, best second share 0,968, attack no
+owner-chords-2/take13.wav  wait   [43, 55, 59, 67]       attempts 1, usable frames 101, best match 0,714, best second share 1,000, attack yes
+owner-chords-2/take13.wav  follow [43, 55, 59, 67]       attempts 1, usable frames 113, best match 0,712, best second share 1,000, attack yes
+owner-chords-2/take14.wav  wait   [43, 55, 59, 67]       attempts 1, usable frames 101, best match 0,747, best second share 1,000, attack yes
+owner-chords-2/take14.wav  follow [43, 55, 59, 67]       attempts 1, usable frames 113, best match 0,745, best second share 1,000, attack yes
+owner-chords-2/take15.wav  wait   [55, 59, 67]           attempts 1, usable frames 101, best match 0,650, best second share 1,000, attack yes
+owner-chords-2/take15.wav  follow [55, 59, 67]           attempts 1, usable frames 111, best match 0,648, best second share 1,000, attack yes
+owner-chords-2/take16.wav  wait   [43, 55, 59, 67]       attempts 1, usable frames 101, best match 0,772, best second share 1,000, attack yes
+owner-chords-2/take16.wav  follow [43, 55, 59, 67]       attempts 1, usable frames 110, best match 0,767, best second share 1,000, attack yes
+owner-chords-2/take17.wav  wait   [45, 52, 57, 61, 69]   attempts 1, usable frames 101, best match 0,855, best second share 1,000, attack yes
+owner-chords-2/take17.wav  follow [45, 52, 57, 61, 69]   attempts 1, usable frames 110, best match 0,853, best second share 0,999, attack yes
+owner-chords-2/take18.wav  wait   [45, 52, 57, 61, 69]   attempts 1, usable frames 101, best match 0,814, best second share 0,947, attack yes
+owner-chords-2/take18.wav  follow [45, 52, 57, 61, 69]   attempts 1, usable frames 107, best match 0,813, best second share 0,993, attack yes
+owner-chords-2/take19.wav  wait   [52, 57, 61, 64]       attempts 1, usable frames 101, best match 0,846, best second share 0,784, attack yes
+owner-chords-2/take19.wav  follow [52, 57, 61, 64]       attempts 1, usable frames 106, best match 0,845, best second share 0,826, attack yes
+owner-chords-2/take20.wav  wait   [52, 57, 59, 64]       attempts 1, usable frames 101, best match 0,847, best second share 0,778, attack yes
+owner-chords-2/take20.wav  follow [52, 57, 59, 64]       attempts 1, usable frames 110, best match 0,845, best second share 0,771, attack yes
+owner-chords-2/take21.wav  wait   [45, 52, 57, 69]       attempts 1, usable frames 101, best match 0,796, best second share 1,000, attack yes
+owner-chords-2/take21.wav  follow [45, 52, 57, 69]       attempts 1, usable frames 111, best match 0,794, best second share 1,000, attack yes

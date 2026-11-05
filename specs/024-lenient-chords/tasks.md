@@ -93,7 +93,7 @@
 
 **Independent Test**: quickstart §2. `SPEC/benchmark/probe.md` exists, and stop condition A is checked.
 
-- [ ] T006 New test `PT/dataset/OwnerChordsProfileProbeTest.java` (tag `dataset`). It reads the folders of `-Dtuxguitar.owner.chords` (default: the first two series), as `OwnerChordsStrumHoldProbeTest` does. For each take, it builds the frames with the engine of `-Dtuxguitar.recognition.engine`, with the spectrum on, and arms the strum as the session does (onset, `articulationLatencyNanos`, `CHORD_WINDOW`), as in `OwnerChordsStrumHoldProbeTest`. In the test, it computes the profile of data-model "Chord profile":
+- [X] T006 New test `PT/dataset/OwnerChordsProfileProbeTest.java` (tag `dataset`). It reads the folders of `-Dtuxguitar.owner.chords` (default: the first two series), as `OwnerChordsStrumHoldProbeTest` does. For each take, it builds the frames with the engine of `-Dtuxguitar.recognition.engine`, with the spectrum on, and arms the strum as the session does (onset, `articulationLatencyNanos`, `CHORD_WINDOW`), as in `OwnerChordsStrumHoldProbeTest`. In the test, it computes the profile of data-model "Chord profile":
   - the linear magnitude of `getBandDb(midi)` summed per note name, from the expected chord's lowest pitch minus one semitone up to `top`;
   - the bands more than `noise` dB under the frame's strongest summed band (the tolerated names' bands not counted) left out, when a noise floor is set;
   - the cosine with the expected names, and the count of weak names (under `names` × the strongest expected name's sum);
