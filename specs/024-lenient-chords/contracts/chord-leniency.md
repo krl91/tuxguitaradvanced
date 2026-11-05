@@ -19,7 +19,7 @@ Chord check  [ Normal       ▾ ]            ← ChordLeniencyPanel (new)
 
 - The chord settings keep their rows. The rows of the level's values show the level's values.
 - Their tips say: "Choosing a chord check level in the practice window sets this value; changing it here makes the level Custom." This is a text change of the existing `.tip` keys, in three languages.
-- **Restore** in the chord section gives the defaults of its values, which are *Normal*'s. The level values (the rule, the threshold, and any value the sweep moves between levels) sit in the chords section (research R5). If the sweep moves a chord details value between levels, *Normal* needs that section restored too, and its line under the drop-down says so while the level shows *Custom*.
+- **Restore** in the chord section gives the defaults of its values, which are *Normal*'s. The level values (the rule, the threshold and the attack path) all sit in the chords section (research R5), so its Restore gives *Normal*.
 
 ## The rule (both engines)
 
