@@ -108,7 +108,7 @@ Implement only the levers T004 kept, in the order of the refusals they recover. 
   - the option names in `LANG`;
   - `PR/session/PracticeParameters.java` `chordParameters()` passes them on.
 
-  The defaults are not changed yet. Test first in `PT/session/PracticeParametersChordCompletenessTest.java`, seen red, then green.
+  The defaults are not changed yet. Test first in `PT/session/PracticeParametersChordCompletenessTest.java`, seen red, then green. The same test also covers Follow and Arcade (analysis C1, FR-009): settings relaxed by `FollowLeniency.apply` and by `ArcadeLeniency` still carry the completeness and the flag into `chordParameters()`.
 - [ ] T011 [US1] New test `PT/dataset/ChordLeniencyBenchmarkTest.java` (tag `dataset`):
   - the judge of T003, with given settings;
   - it sweeps the kept levers' options and `CHORD_EVIDENCE` from 0.20 to 0.50 in steps of 0.05 (and `CHORD_CONFIRM` 30, 43 and 60 ms);
