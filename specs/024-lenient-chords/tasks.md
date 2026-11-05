@@ -95,13 +95,18 @@
 
 - [ ] T006 New test `PT/dataset/OwnerChordsProfileProbeTest.java` (tag `dataset`). It reads the folders of `-Dtuxguitar.owner.chords` (default: the first two series), as `OwnerChordsStrumHoldProbeTest` does. For each take, it builds the frames with the engine of `-Dtuxguitar.recognition.engine`, with the spectrum on, and arms the strum as the session does (onset, `articulationLatencyNanos`, `CHORD_WINDOW`), as in `OwnerChordsStrumHoldProbeTest`. In the test, it computes the profile of data-model "Chord profile":
   - the linear magnitude of `getBandDb(midi)` summed per note name, from the expected chord's lowest pitch minus one semitone up to `top`;
-  - the cosine with the expected names;
-  - complete after `settle` ms, accepted after `CHORD_CONFIRM` frames in a row within the window.
+  - the bands more than `noise` dB under the frame's strongest band left out, when a noise floor is set;
+  - the cosine with the expected names, and the count of weak names (under `names` × the strongest expected name's sum);
+  - complete when the match reaches the threshold, at most one name is weak, and `settle` ms have passed; accepted after `CHORD_CONFIRM` frames in a row within the window.
+
+  For speed, the frames and their bands are computed once per take and engine and reused by every configuration (about 40,000 configurations per arming reference); only the summing and the decision run per configuration, and the match is recorded per frame so that every threshold is read from one pass.
 
   It sweeps:
   - the threshold: 0.70 to 0.95 by 0.01;
   - settle: 0, 50, 100, 200 ms;
+  - the weak-name share: 0.05, 0.10, 0.20, 0.30;
   - top: 76, 84, 88, 96;
+  - the noise floor: none, 40 dB, 30 dB;
   - weight: linear or square root;
   - confirmation: `CHORD_CONFIRM` at 8 frames (its default) and 4;
   - the attack path: with or without it (with it, the session's `PolyphonicAcceptance` run as in the strum hold probe);
@@ -122,7 +127,9 @@
   - *Strict*: a higher threshold;
   - *Lenient*: a lower threshold;
   - whether the attack path stays for chords;
-  - whether the weight is kept as a setting.
+  - whether the weight and the noise floor are kept as settings (kept when the chosen value is not the plain one: linear, no floor).
+
+  *Normal*'s weak-name share must also refuse the synthetic clearly wrong four- and five-name chords of T009 (research R6).
 
   **Check stop condition A**: if no configuration qualifies, stop here and report to the owner with the best figures and the spec's fallback.
 - [ ] T008 Gate (the test files added only); commit "impl(024): phase 3: probe of the pitch-class profile".
@@ -140,6 +147,9 @@
   - an octave moved inside the range does not change the match;
   - two voicings with the same names match alike;
   - a chord sharing at most one name with a three-name template matches at most 1/√3;
+  - a chord holding only two names of a four-name template, or three of a five-name one, has two weak names (`weakNames() ≥ 2`) for every weak-name share of the sweep, whatever its match;
+  - a chord missing one name of four has one weak name;
+  - a band under the noise floor adds nothing;
   - `reset` empties the sums;
   - `weakest(n)` returns the expected names of lowest share;
   - an empty profile matches 0;
@@ -147,7 +157,8 @@
 
   Frames are built with `SpectrumFrame.of`.
 - [ ] T010 [P] [US1] New unit test `PT/session/ChordMatcherProfileTest.java`:
-  - with `CHORD_COMPLETENESS = profile`, a frame is complete when the match reaches the threshold after the settle time;
+  - with `CHORD_COMPLETENESS = profile`, a frame is complete when the match reaches the threshold, at most one expected name is weak, and the settle time has passed;
+  - a frame with two weak names is not complete even at a match of 1 on the other names (a four-name chord, two names silent, threshold 0.70);
   - with `all-verifiable`, `ChordMatcher` behaves exactly as before (the same `Result` on the same frames);
   - the old `ChordMatcher.Parameters` constructor keeps `all-verifiable`.
 - [ ] T011 [P] [US1] New unit test `PT/session/PracticeSessionChordProfileTest.java`, which drives `PracticeSession` with synthetic frames:
@@ -156,7 +167,7 @@
   - when the window ends first, the verdict is wrong, the feedback is `INCOMPLETE` with the expected pitches of the weakest names, and unverifiable is empty;
   - a frame at an unusable level resets the run but not the sums;
   - single notes are unchanged;
-  - if T007 turns the attack path off for chords, it is off for chords only;
+  - if T007 turns the attack path off for chords, it is off for chords only; if it stays on, it does not accept a chord whose profile has two weak names (research R6);
   - a clipping or too low frame still gives the input warning it gives today (the spec's edge case on input problems).
 - [ ] T012 [P] [US1] New unit test `PT/session/FollowSessionChordProfileTest.java`, which drives `FollowSession` with synthetic frames (Follow, and Arcade through the same session):
   - a chord candidate is matched with the profile rule after `stableHops` complete frames inside `windowNanos` of its onset;
@@ -164,9 +175,10 @@
   - a new onset starts new profiles;
   - when the window ends first, the wrong attempt carries the pitches of the weakest names;
   - single-note candidates are unchanged;
-  - the attack path for chords as T007 decided.
+  - the attack path for chords as T007 decided, and, if on, never accepting a chord whose profile has two weak names.
 - [ ] T013 [P] [US1] New test `AET/settings/ChordProfileSettingsTest.java`:
-  - the new parameters exist with the keys, units, defaults (T007's *Normal*) and bounds of data-model "Settings";
+  - the new parameters exist with the keys, units, defaults (T007's *Normal*), bounds and sections of data-model "Settings": `CHORD_PROFILE_MATCH`, `_SETTLE` and `_NAMES` in the chords section, `CHORD_PROFILE_TOP` (and the kept options) in the new chord details section;
+  - the chords section holds 7 parameters (its rows and the new section's texts are checked by the committed `RecognitionControlsTest` and `RecognitionSettingsPanelTest`, which iterate every section);
   - `CHORD_COMPLETENESS` has the options `all-verifiable` and `profile`, with the default `profile`;
   - the values round-trip through `RecognitionSettings.toStrings`/`fromStrings`;
   - none of them is a device-profile parameter (`ProfileParameters.LIST`).
@@ -189,15 +201,15 @@
 
 - [ ] T018 [US1] New pure class `PR/session/ChordProfile.java` (data-model "Chord profile"):
   - arrays made once;
-  - `reset(expected, top, weight)`, `add(SpectrumFrame)`, `match()`, `weakest(n)`, `summedNanos`.
-- [ ] T019 [US1] `AE/settings/RecognitionParameters.java`: add the option `profile` (`COMPLETENESS_PROFILE`) to `CHORD_COMPLETENESS` with the default `profile`. Add `CHORD_PROFILE_MATCH`, `CHORD_PROFILE_SETTLE` and `CHORD_PROFILE_TOP` in the chords section (7 parameters, 8 rows: the advanced section is full, research R5), plus `CHORD_PROFILE_WEIGHT` and `CHORD_ATTACK` only if T007 kept them variable, in a new `Section.CHORD_DETAILS`, with T007's values. Register them in `RecognitionParameters.ALL`. The committed `RecognitionControlsTest.everySectionFitsWithoutScrolling` must stay green.
+  - `reset(expected, top, weight, noise)`, `add(SpectrumFrame)`, `match()`, `weakNames(share)`, `weakest(n)`, `summedNanos`.
+- [ ] T019 [US1] `AE/settings/RecognitionParameters.java`: add the option `profile` (`COMPLETENESS_PROFILE`) to `CHORD_COMPLETENESS` with the default `profile`. Add `CHORD_PROFILE_MATCH`, `CHORD_PROFILE_SETTLE` and `CHORD_PROFILE_NAMES` in the chords section (7 parameters, 8 rows: the advanced section is full, research R5). Add a new `Section.CHORD_DETAILS` holding `CHORD_PROFILE_TOP`, plus `CHORD_PROFILE_NOISE`, `CHORD_PROFILE_WEIGHT` and `CHORD_ATTACK` only if T007 kept them. All with T007's values. Register them in `RecognitionParameters.ALL`. The committed `RecognitionControlsTest.everySectionFitsWithoutScrolling` must stay green.
 - [ ] T020 [US1] `AE/settings/RecognitionSettings.java` `fromStrings`: the migration of research R7, beside the legacy tempo key.
 - [ ] T021 [US1] `PR/session/ChordMatcher.java`: `Parameters` gains the rule and the profile values (a new constructor; the old one keeps `all-verifiable`), and `check(ChordProfile, SpectrumFrame, required, tolerated)` decides by profile when the rule says so, by the per-string rule otherwise (contracts/chord-profile-rule.md). `PR/session/PracticeParameters.java` `chordParameters()` passes them.
 - [ ] T022 [US1] `PR/session/PracticeSession.java` `onChordFrame`:
   - the profile is reset at each arming and summed on each usable frame;
   - the decision follows contracts/chord-profile-rule.md;
   - the refusal feedback names the expected pitches of the weakest names;
-  - the attack path for chords as T007 decided;
+  - the attack path for chords as T007 decided, with the weak-name guard of research R6 if it stays on;
   - nothing is allocated per frame.
 
   Also `FollowLeniency` and `ArcadeLeniency`, if T007 decided they relax the threshold.
@@ -205,9 +217,9 @@
   - one `ChordProfile` per chord candidate, made with the `PendingOnset` in `registerOnset`;
   - summed on each usable frame and checked through `ChordMatcher.check(profile, …)` in the chord loop (lines 939–960);
   - the wrong attempt carries the weakest names' pitches;
-  - the attack path for chords as T007 decided;
+  - the attack path for chords as T007 decided, with the weak-name guard of research R6 if it stays on;
   - nothing is allocated per frame.
-- [ ] T024 [US1] Strings for the new values and the new option, in `LANG/messages.properties`, `_fr` and `_es`: name, tip and option label of each value, shown by the existing Recognition settings window (`RecognitionControls`). The completeness name becomes "Chord rule" ("Règle des accords", "Regla de acordes"), with the options "Note names over the strum" and "Every string separately" (research R7); "Chord check" stays the name of the level in the *Mode* tab only. The tips of `CHORD_EVIDENCE` and `CHORD_MIN_PARTIALS` add that they apply to the rule "Every string separately" only. If `Section.CHORD_DETAILS` exists, its name and tip too.
+- [ ] T024 [US1] Strings for the new values and the new option, in `LANG/messages.properties`, `_fr` and `_es`: name, tip and option label of each value, shown by the existing Recognition settings window (`RecognitionControls`). The completeness name becomes "Chord rule" ("Règle des accords", "Regla de acordes"), with the options "Note names over the strum" and "Every string separately" (research R7); "Chord check" stays the name of the level in the *Mode* tab only. The tips of `CHORD_EVIDENCE` and `CHORD_MIN_PARTIALS` add that they apply to the rule "Every string separately" only. The name and tip of the new section `Section.CHORD_DETAILS` ("Chord details", "Détails des accords", "Detalles de acordes").
 - [ ] T025 [US1] Run T009–T016: all green, with both engines for T016.
 - [ ] T026 [US1] `PT/dataset/owner-chords-baseline.properties`: change only the two `wrong.max` lines to the counts `OwnerChordsBenchmarkTest` now gives on the first two series, with a comment that cites the approved exception and says that this count includes voicings and is no longer a guard (the counts of the reference series are checked by T016). This is approved exception 1; `accepted.min` stays 8 and 18. Run `OwnerChordsBenchmarkTest` with each engine: green, at least 8 and 18 accepted (FR-003a).
 - [ ] T027 [US1] The guards after (research R8; FR-003, FR-004, FR-011, SC-003): run the five committed dataset benchmarks with each engine into `SPEC/benchmark/after-java/` and `after-native/`. Then write the new test `PT/dataset/ChordLeniencyComparisonTest.java` (tag `benchmark`): it reads `before-*` and `after-*`, writes `SPEC/benchmark/comparison.md` (each guard line, before and after, both engines, pass or fail) and fails on any guard line lower. Run it.

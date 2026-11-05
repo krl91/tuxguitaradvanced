@@ -41,8 +41,10 @@ A chord is accepted on either of two paths of `PracticeSession` (`TuxGuitar-prac
 **Decision.** A new chord rule, *profile*, replaces the per-string chord check as the default:
 1. **The profile.** For each frame after the strum's arming, the 12 pitch classes get the sum, over the pitches from one semitone below the expected chord's lowest pitch up to an upper bound, of the linear magnitude of the semitone band (`SpectrumFrame.getBandDb(midi)`, converted from dB). The frame profiles are summed from the arming on.
 2. **The template.** The expected chord's note names (required and tolerated pitches, the octave not counted), each weighted 1.
-3. **The match.** The cosine between the summed profile and the template. The chord is accepted when the match reaches the threshold for `stableHops` frames in a row, after a minimum accumulation time, within the strum window.
-4. **The feedback when refused.** The expected note names whose share of the profile is weakest are listed as missing, as the `INCOMPLETE` feedback does today (constitution XIV). Unverifiable pitches no longer apply to this rule (they are reported empty).
+3. **The match.** The cosine between the summed profile and the template.
+4. **The names present.** Each expected name must hold at least a minimum share of the profile (`CHORD_PROFILE_NAME_FLOOR`, a fraction of the strongest expected name's sum). A name under it is weak. **Two weak names or more make the frame incomplete, whatever the match**, which is the spec's clearly wrong chord.
+5. **The decision.** A frame is complete when the match reaches its threshold, at most one expected name is weak, and the settle time has passed. The chord is accepted after `stableHops` complete frames in a row, within the strum window.
+6. **The feedback when refused.** The expected note names whose share of the profile is weakest are listed as missing, as the `INCOMPLETE` feedback does today (constitution XIV). Unverifiable pitches no longer apply to this rule (they are reported empty).
 
 **Rationale.**
 - **Measured.** The offline probe (`misc/owner-chords-chroma-probe.py`, librosa CQT chroma, first second after the strum, cosine) on the third series: at 0.85, 25/25 right, 0/138 one name off, 0/408 clearly wrong. The weakest right match is 0.851; the strongest clearly wrong one is 0.66 (`benchmark/owner-chords-3/chroma-probe.txt`).
@@ -50,9 +52,12 @@ A chord is accepted on either of two paths of `PracticeSession` (`TuxGuitar-prac
 - **It treats voicings alike** (the same names give the same template), as the spec asks (voicings reported apart, never counted), and it refuses a chord missing two names, whose template shares at most one name with the profile.
 - **Deterministic and explainable** (constitution VIII): a sum, a cosine and a threshold, no learned model. Pitch-class profiles matched against chord templates are the classic chord recognition method (Fujishima 1999, "Realtime chord recognition of musical sound").
 
+**Why the names present are checked, not only the match.** The cosine alone guarantees a refusal only for three-name chords. A played chord holding only two names of a four-name expected chord (a seventh) can reach a cosine of √(2/4) ≈ 0.71, and with five names √(3/5) ≈ 0.77, above the lower thresholds of the sweep. The reference series has only three-name chords, so it would not show it. Counting the weak names makes FR-002 hold for any chord size: two missing names are two weak names.
+
 **Risks, each measured before the rule changes (R6, a stop condition):**
 - the live window: the probe read 0.2–1.2 s after the strum, the strum window is 600 ms;
 - the semitone bands are not a CQT: `getBandDb` is the strongest peak within ±50 cents of an FFT of 8192 samples;
+- the bands are not floor-removed (`polyphonic.rs` takes `band_db` from the raw magnitudes, before `remove_floor`): the noise adds the same level to every name and, as a strum fades, draws every profile closer to every template. The probe sweeps a noise floor: a band more than `CHORD_PROFILE_NOISE` dB under the frame's strongest band is not summed;
 - the partials: the root's fifth harmonic is a major third, which may pull a minor chord towards major;
 - generalisation: 25 takes of one player and one guitar; GuitarSet and IDMT are the guards.
 
@@ -88,15 +93,17 @@ A chord is accepted on either of two paths of `PracticeSession` (`TuxGuitar-prac
 | `recognition.chord.completeness` (existing) | the chord rule: `all-verifiable` (per string) or `profile` (new option) | choice | `profile` | — | chords |
 | `recognition.chord.profile.match` (new) | the minimum cosine between the chord's profile and the expected chord | % | from the sweep (R6), about 85 | 50–99 | chords |
 | `recognition.chord.profile.settle` (new) | the minimum time of profile summed before a judgement | ms | from the sweep | 0–500 | chords |
-| `recognition.chord.profile.top` (new) | the highest pitch summed into the profile | MIDI | from the sweep, about 88 | 60–112 | chords |
-| `recognition.chord.detail.weight` (new, only if the sweep keeps it variable) | the magnitude summed: linear or compressed (square root) | choice | from the sweep | — | chord details (new section) |
+| `recognition.chord.profile.names` (new) | the minimum share of the strongest expected name that a name needs not to be weak; two weak names refuse the chord | % | from the sweep | 5–60 | chords |
+| `recognition.chord.detail.top` (new) | the highest pitch summed into the profile | MIDI | from the sweep, about 88 | 60–112 | chord details (new section) |
+| `recognition.chord.detail.noise` (new, only if the sweep keeps it) | a band more than this under the frame's strongest band is not summed | dB | from the sweep | 20–60 | chord details |
+| `recognition.chord.detail.weight` (new, only if the sweep keeps it variable) | the magnitude summed: linear or compressed (square root) | choice | from the sweep | — | chord details |
 
 The existing `CHORD_CONFIRM` (frames in a row) and `CHORD_WINDOW` keep their meaning for the profile rule.
 
 **Where they sit in the Recognition settings window (source read).** The committed `RecognitionControlsTest.everySectionFitsWithoutScrolling` holds every section to `RecognitionControls.MAX_SECTION_ROWS` (8) rows, a section's rows being its parameters plus one (`RecognitionControls.rows`).
 - The advanced section already has 7 parameters, so it is full.
-- The chords section has 4 (`CHORD_EVIDENCE`, `CHORD_WINDOW`, `CHORD_COMPLETENESS`, `CHORD_FOREIGN`), so it takes the three new values `CHORD_PROFILE_MATCH`, `CHORD_PROFILE_SETTLE` and `CHORD_PROFILE_TOP`, reaching 8 rows.
-- If the sweep keeps the weight or the attack flag variable, they go in a new section, `Section.CHORD_DETAILS` ("Chord details"), with its texts in three languages. The committed tests iterate `Section.values()` generically (`RecognitionControlsTest`, `RecognitionSettingsPanelTest`, `RecognitionSettingsTest` line 68), so a section added with its texts and at least one parameter satisfies them.
+- The chords section has 4 (`CHORD_EVIDENCE`, `CHORD_WINDOW`, `CHORD_COMPLETENESS`, `CHORD_FOREIGN`), so it takes the three values that decide: `CHORD_PROFILE_MATCH`, `CHORD_PROFILE_SETTLE` and `CHORD_PROFILE_NAMES`, reaching 7 parameters and 8 rows.
+- The values that shape the profile go in a new section, `Section.CHORD_DETAILS` ("Chord details"), with its texts in three languages: `CHORD_PROFILE_TOP` always, and `CHORD_PROFILE_NOISE`, `CHORD_PROFILE_WEIGHT` and `CHORD_ATTACK` if the sweep keeps them. The committed tests iterate `Section.values()` generically (`RecognitionControlsTest`, `RecognitionSettingsPanelTest`, `RecognitionSettingsTest` line 68), so a section added with its texts and at least one parameter satisfies them.
 - **The values of the per-string rule** (`CHORD_EVIDENCE`, `CHORD_MIN_PARTIALS`) stay, and their tips say that they apply to the rule "Every string separately" only, so the expert settings do not contradict the level (spec edge case).
 
 - They reach the rule through `ChordMatcher.Parameters` (built by `PracticeParameters.chordParameters()`), read when a run starts, as today.
@@ -107,14 +114,14 @@ The existing `CHORD_CONFIRM` (frames in a row) and `CHORD_WINDOW` keep their mea
 ## R6. The sweep, the levels and the stop condition (FR-006, FR-007, SC-004)
 
 **Decision.**
-1. **A Java probe first, before any production change:** `OwnerChordsProfileProbeTest` (tag `dataset`, new) computes the profile exactly as R3 says, from the session's own `SpectrumFrame`s and arming, with each engine. It sweeps the threshold (0.70 to 0.95), the settle time, the upper bound, the weighting, the confirmation (`CHORD_CONFIRM` at its default of 8 frames, and 4), and with or without the attack path. It reports, on the third series: right, voicings, one name off, clearly wrong; on the first two series: right accepted. It runs each configuration with both arming references: Wait's (the arming, `articulationLatencyNanos`) and Follow's (the onset, the age of each frame since it). A configuration qualifies only when both give the figures below.
+1. **A Java probe first, before any production change:** `OwnerChordsProfileProbeTest` (tag `dataset`, new) computes the profile exactly as R3 says, from the session's own `SpectrumFrame`s and arming, with each engine. It sweeps the threshold (0.70 to 0.95), the weak-name share, the settle time, the upper bound, the noise floor, the weighting, the confirmation (`CHORD_CONFIRM` at its default of 8 frames, and 4), and with or without the attack path. It reports, on the third series: right, voicings, one name off, clearly wrong; on the first two series: right accepted. It runs each configuration with both arming references: Wait's (the arming, `articulationLatencyNanos`) and Follow's (the onset, the age of each frame since it). A configuration qualifies only when both give the figures below.
 2. **Stop condition A.** If no configuration gives 25/25 right and 0 clearly wrong on both engines and both arming references, while keeping at least 8 and 18 accepted on the first two series, the work stops and reports to the owner, with the fallback of the spec (Clarifications: no threshold per chord, the FR-003 lines kept, the rest refused as often as possible) proposed.
-3. ***Normal*** is the configuration that, on both engines: accepts 25/25; accepts 0 clearly wrong; keeps at least 8 and 18 accepted on the first two series; passes the guards (R8); and, among those, accepts the fewest one-name-off chords (ties: the highest threshold, then the shortest settle time).
+3. ***Normal*** is the configuration that, on both engines: accepts 25/25; accepts 0 clearly wrong; refuses the synthetic clearly wrong four- and five-name chords of the unit tests (data model); keeps at least 8 and 18 accepted on the first two series; passes the guards (R8); and, among those, accepts the fewest one-name-off chords (ties: the highest threshold, then the shortest settle time).
 4. ***Strict*** is *Normal* with a higher threshold, the highest that keeps 0 clearly wrong and at most *Normal*'s wrong acceptances, fewer when any setting allows; its tip says it may refuse some right chords.
-5. ***Lenient*** is *Normal* with a lower threshold, the lowest that still accepts 0 clearly wrong; it accepts at least as many right chords.
+5. ***Lenient*** is *Normal* with a lower threshold, the lowest that still accepts 0 clearly wrong; it accepts at least as many right chords. The weak-name rule is the same in every level, so two missing names are refused at every level.
 6. The ordering of SC-004 is checked by a test on the recorded figures.
 
-**The attack path.** It accepted 6 one-name-off chords and 0 clearly wrong on the third series (`owner-chords-strum-hold-java.txt`). The probe measures the profile with and without it. If it adds wrong acceptances without adding right ones, a chord flag `recognition.chord.detail.attack` (on/off, a level value, in the chord details section) turns it off for chords, in `PracticeSession` and in `FollowSession` alike (FR-009). It stays on for single notes in every case.
+**The attack path.** It accepted 6 one-name-off chords and 0 clearly wrong on the third series (`owner-chords-strum-hold-java.txt`). The probe measures the profile with and without it. If it adds wrong acceptances without adding right ones, a chord flag `recognition.chord.detail.attack` (on/off, a level value, in the chord details section) turns it off for chords, in `PracticeSession` and in `FollowSession` alike (FR-009). It stays on for single notes in every case. **When it stays on for chords, it accepts a chord only if the profile summed so far has at most one weak name**, so that FR-002 holds whatever path accepts: the attack path judges strings, and the reference series, with only three-name chords, cannot show a four- or five-name chord accepted with two names missing.
 
 ## R7. Settings, migration and the approved test exceptions
 

@@ -22,7 +22,7 @@
 
 **Primary Dependencies**: none new in the product. `PracticeSession`, `FollowSession`, `ChordMatcher`, `PolyphonicAcceptance`, `SpectrumFrame`, the settings (`RecognitionParameters`, `RecognitionSettings`, `RecognitionSettingsStore`) and TuxGuitar's UI toolkit. The offline tools (`misc/owner-chords-*.py`, librosa, Basic Pitch) are evidence only, never shipped.
 
-**Storage**: the existing `tuxguitar-audio-recognition` settings file. One option is added to `recognition.chord.completeness`, and three to five new keys (R5). `VERSION` stays 1. Untouched spec 023 files are migrated on read (R7).
+**Storage**: the existing `tuxguitar-audio-recognition` settings file. One option is added to `recognition.chord.completeness`, and four to seven new keys (R5). `VERSION` stays 1. Untouched spec 023 files are migrated on read (R7).
 
 **Testing**: JUnit 5.
 - Unit tests: the profile and its match (`ChordProfile`), `ChordMatcher` with the profile rule, the session rule and its feedback, `ChordLeniency`, the migration.
@@ -47,7 +47,7 @@
 - 25 takes, 625 judgements on the third series, and the 42 takes of the first two series as a guard;
 - five dataset benchmarks;
 - two new pure classes, one rule option, one panel;
-- three to five new settings;
+- four to seven new settings, in the chords section and a new chord details section;
 - about 20 strings in three languages;
 - one architecture document.
 
@@ -94,8 +94,8 @@ specs/024-lenient-chords/
 
 ```text
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/settings/
-├── RecognitionParameter.java         + Section.CHORD_DETAILS, only if the sweep keeps more than three profile values (R5)
-├── RecognitionParameters.java        + option "profile" of CHORD_COMPLETENESS (default), + CHORD_PROFILE_* values in the chords section (R5)
+├── RecognitionParameter.java         + Section.CHORD_DETAILS, the values that shape the profile (R5)
+├── RecognitionParameters.java        + option "profile" of CHORD_COMPLETENESS (default), + CHORD_PROFILE_MATCH, _SETTLE, _NAMES in the chords section, CHORD_PROFILE_TOP (and the kept options) in the chord details section (R5)
 ├── RecognitionSettings.java          fromStrings: migration of untouched spec 023 chord values (R7)
 └── ChordLeniency.java                new: the levels, derived and applied (R7)
 
