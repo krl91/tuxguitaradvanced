@@ -19,6 +19,15 @@
 
 Its experiment B showed the trade-off this spec must handle: a looser rule raised the wrong acceptances as much as the right ones. The owner asked (2026-11-04) for chords more lenient by default and for the leniency to be set in the practice settings.
 
+## Clarifications
+
+### Session 2026-11-05
+
+- Q: With the default setting, how many of the owner's 42 neighbouring chords may be wrongly accepted at most? → A: No more than today: 13; the *Strict* level must do better than 13.
+- Q: How many chord leniency levels? → A: Three: *Strict*, *Normal* (the new default), *Lenient*.
+- Q: Where is the chord leniency setting? → A: In the *Mode* tab of the practice window, next to the choice of Wait / Follow / Arcade.
+- Q: How do the existing expert chord settings (chord evidence, strum window) relate to the levels? → A: Choosing a level sets the expert chord settings to its values; an expert chord setting changed by hand makes the level show *Custom*.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The chords I play are accepted (Priority: P1)
@@ -32,7 +41,7 @@ The owner plays the chords of a score through the Rocksmith cable, in Wait, Foll
 **Acceptance Scenarios**:
 
 1. **Given** the owner's 42 recorded chords and the default settings, **When** each is judged against its own chord, **Then** at least 38 are accepted, with each engine.
-2. **Given** the same recordings judged against their neighbouring chords, **When** they are counted, **Then** no more are wrongly accepted than the limit set for this spec (13 of 42 at most, see Assumptions).
+2. **Given** the same recordings judged against their neighbouring chords, **When** they are counted, **Then** at most 13 of 42 are wrongly accepted (no more than at the end of spec 023).
 3. **Given** a chord played a whole tone higher than written (IDMT-SMT-Audio-Effects), **When** it is judged, **Then** it is still refused at least 85 % of the time.
 4. **Given** single notes and wrong single notes of every dataset, **When** they are judged, **Then** none of their figures is worse than at the end of spec 023.
 
@@ -48,9 +57,10 @@ A learner whose guitar, cable or playing does not suit the default can make the 
 
 **Acceptance Scenarios**:
 
-1. **Given** the practice settings, **When** the learner opens them, **Then** a chord leniency setting is shown with a few named levels (for example *Strict*, *Normal*, *Lenient*), each with a tip saying what it accepts and what it risks.
+1. **Given** the *Mode* tab of the practice window, **When** the learner opens it, **Then** a chord leniency setting is shown next to the choice of Wait / Follow / Arcade, with three levels *Strict*, *Normal*, *Lenient*, each with a tip saying what it accepts and what it risks.
 2. **Given** a more lenient level, **When** the same chords are judged, **Then** at least as many right chords are accepted as with the default.
-3. **Given** a stricter level, **When** the same chords are judged, **Then** at most as many neighbouring chords are wrongly accepted as with the default.
+3. **Given** the *Strict* level, **When** the same chords are judged, **Then** fewer than 13 neighbouring chords are wrongly accepted, and at most as many as with *Normal*.
+7. **Given** a level is chosen, **When** the learner opens the expert chord settings (Recognition settings), **Then** they show the level's values; **When** one of them is changed by hand, **Then** the level shows *Custom*.
 4. **Given** a chosen level, **When** the application is closed and opened again, **Then** the level is kept.
 5. **Given** a level changed during a run, **When** the next chord is judged, **Then** the new level applies from the next run at the latest, and never makes the run stop.
 6. **Given** a learner who has never touched the setting, **When** they practise, **Then** the default level is used, which is more lenient than the behaviour of spec 023.
@@ -86,21 +96,21 @@ Before any rule changes, the 16 chords of the owner refused at the end of spec 0
 ### Functional Requirements
 
 - **FR-001**: With the default settings, at least 38 of the owner's 42 recorded chords MUST be accepted, with each engine (native and Java).
-- **FR-002**: With the default settings, the owner's neighbouring chords wrongly accepted MUST NOT exceed the limit of this spec (13 of 42 at most until `/speckit-clarify` sets it), with each engine.
+- **FR-002**: With the default settings, the owner's neighbouring chords wrongly accepted MUST NOT exceed 13 of 42 (no more than at the end of spec 023), with each engine; with *Strict* they MUST be fewer than 13.
 - **FR-003**: The single-note and wrong-note figures of every dataset (IDMT-SMT-Guitar, IDMT-SMT-Audio-Effects, GuitarSet, the owner's recordings) MUST NOT get worse than at the end of spec 023, with each engine; the chord a whole tone higher MUST stay refused at least 85 % of the time.
 - **FR-004**: The GuitarSet complete chord figures (summed and microphone) MUST NOT get worse than at the end of spec 023.
-- **FR-005**: The practice settings MUST offer a chord leniency setting with a few named levels, each with a tip in English, French and Spanish that says what it accepts and what it risks.
+- **FR-005**: The *Mode* tab of the practice window MUST offer a chord leniency setting next to the choice of Wait / Follow / Arcade, with three levels *Strict*, *Normal* (default) and *Lenient* (French *Strict*, *Normal*, *Tolérant*), each with a tip in English, French and Spanish that says what it accepts and what it risks.
 - **FR-006**: The default level MUST be more lenient than the behaviour at the end of spec 023, and MUST be the one that meets FR-001 and FR-002.
 - **FR-007**: A more lenient level MUST accept at least as many right chords as the default, and a stricter level MUST wrongly accept at most as many neighbouring chords, on the owner's recordings.
 - **FR-008**: The chosen level MUST be kept across restarts; a learner who never chose a level MUST get the default; a level chosen before an update MUST be kept.
 - **FR-009**: The leniency MUST apply the same way with both engines and in every mode that checks chords (Wait, Follow, Arcade).
 - **FR-010**: Before any rule changes, the 16 refused chords of the owner and the 13 neighbouring chords wrongly accepted MUST be examined, and the cause of each refusal or acceptance recorded in a report.
 - **FR-011**: Every figure of this spec MUST be measured before and after, for each engine, on the datasets in `~/tuxguitar-datasets` and the owner's recordings, and kept in the spec's benchmark reports.
-- **FR-012**: The expert chord settings that exist today MUST keep working, and their relation to the new leniency setting MUST be stated in their tips.
+- **FR-012**: Choosing a level MUST set the expert chord settings (Recognition settings: chord evidence, strum window, and any chord value this spec adds) to that level's values; changing one of them by hand MUST make the level show *Custom*, and choosing a level again MUST restore its values. Their tips MUST say so.
 
 ### Key Entities
 
-- **Chord leniency level**: a named level of the chord check (for example strict, normal, lenient); one is the default; the learner's choice is kept.
+- **Chord leniency level**: *Strict*, *Normal* (default) or *Lenient*, or *Custom* when an expert chord setting was changed by hand; each named level is a set of values of the expert chord settings; the learner's choice is kept.
 - **Chord diagnostic**: for each of the owner's refused chords and wrongly accepted neighbours, the cause found (the string or evidence concerned, the path that decided).
 
 ## Success Criteria *(mandatory)*
@@ -108,7 +118,7 @@ Before any rule changes, the 16 chords of the owner refused at the end of spec 0
 ### Measurable Outcomes
 
 - **SC-001**: At least 38 of the owner's 42 chords through the Rocksmith cable are accepted with the default settings (90 %; 26 today), with each engine.
-- **SC-002**: The owner's neighbouring chords wrongly accepted stay within the limit of this spec (13 of 42 at most until clarified), with each engine.
+- **SC-002**: The owner's neighbouring chords wrongly accepted are at most 13 of 42 with *Normal* and fewer than 13 with *Strict*, with each engine.
 - **SC-003**: No single-note or wrong-note figure of any dataset is worse than at the end of spec 023; the chord a whole tone higher stays refused at least 85 % of the time; GuitarSet complete chords are not worse.
 - **SC-004**: Each leniency level orders as promised on the owner's chords: the more lenient, the more right chords accepted; the stricter, the fewer neighbours wrongly accepted.
 - **SC-005**: The owner, playing chords of a score through the cable in Wait, Follow and Arcade with the default, judges that right chords are accepted and wrong ones refused (gate on a test sheet).
@@ -117,9 +127,7 @@ Before any rule changes, the 16 chords of the owner refused at the end of spec 0
 ## Assumptions
 
 - The owner's 42 chords and their neighbours are the recordings used in spec 023 (`OwnerChordsBenchmarkTest`); "accepted" and "wrongly accepted" are counted as there.
-- The limit on neighbouring chords wrongly accepted is provisionally "no more than today" (13 of 42); `/speckit-clarify` settles it with the owner, since more leniency tends to raise it (experiment B of spec 023).
-- The number and names of the leniency levels (for example three) are a proposal; `/speckit-clarify` may settle them.
-- The setting goes where the learner sets the practice (the practice window's settings), next to or replacing nothing of the expert chord settings, which stay.
+- The limit on neighbouring chords wrongly accepted (13), the three levels, the place of the setting and its link with the expert settings were settled with the owner (Clarifications, 2026-11-05).
 - Both engines keep giving the same judgements; a change of a shared rule is measured on both.
 - Linux and Windows get the same setting and the same rule (no line "only on macOS").
 - Chords played through a microphone are measured (GuitarSet microphone) but the 90 % target is for the cable, as the owner asked.

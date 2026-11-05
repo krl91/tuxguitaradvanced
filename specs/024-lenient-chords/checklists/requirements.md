@@ -31,5 +31,5 @@
 
 ## Notes
 
-- The limit on neighbouring chords wrongly accepted is provisional (no more than today, 13 of 42) and the leniency levels are a proposal: both are for `/speckit-clarify`, not markers, since the spec holds with the provisional values.
+- The limit on neighbouring chords wrongly accepted (13), the three levels, the setting's place and its link with the expert settings were settled by `/speckit-clarify` on 2026-11-05.
 - Dataset names and the engines (native, Java) are named because the owner's request measures by them; they are the scope of the measures, not a design.
