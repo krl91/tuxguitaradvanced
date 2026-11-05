@@ -1,0 +1,13 @@
+Chord rule by profile, weak names tolerated (spec 024, stop at T027, choice A), engine java
+
+variant (weak from / match)           total    0/0,79    4/0,79   99/0,79    0/0,85    4/0,85   99/0,75   99/0,70
+IDMT poly recognised                     66        58        56        56        53        53        59        60
+IDMT-SMT-Guitar chords recognised        16        16        14        14        16        14        14        14
+IDMT incomplete accepted (KO)            44        24        12         8        11         6         8         9
+owner-3 right accepted                   25        25        19        19        24        18        19        19
+owner-3 one name off accepted           138         6         6         6         6         6        15        21
+owner-3 clearly wrong accepted          408         0         0         0         0         0         0         0
+owner-chords own accepted                21         8         8         8         5         5        10        19
+owner-chords-2 own accepted              21        18        14        14        17        12        20        21
+
+weak from: the fewest names from which one weak name is tolerated (0 = always, the current rule; 99 = never)

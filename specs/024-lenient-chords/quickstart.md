@@ -41,7 +41,7 @@ Expected: `benchmark/probe.md`, the sweep of research R6, with both engines.
 ## 4. The guards (after)
 
 - Run the five committed dataset benchmarks with each engine into `benchmark/after-{java,native}/`, as for the figures before.
-- Then run `ChordLeniencyComparisonTest`, which writes `benchmark/comparison.md` and fails on any guard line lower (SC-003).
+- Then run `ChordLeniencyComparisonTest`, which writes `benchmark/comparison.md` and fails on any guard line lower, except the incomplete chords refused (floor 20 of 44) and the IDMT chords recognised (floor 85 %), allowed lower by SC-003.
 
 ## 5. The levels (US2)
 

@@ -38,7 +38,7 @@
 **Constraints**:
 - With *Normal* and both engines, 25/25 right and 0/408 clearly wrong on the third series.
 - At least 8 and 18 accepted on the first two series, the committed minimum.
-- No dataset guard line lower.
+- No dataset guard line lower, except the two the spec allows (SC-003, the owner's option B of 2026-11-05): the incomplete chords refused (at least 20 of 44, measured with the profile rule) and the IDMT chords recognised (at least the committed 85 %).
 - Committed tests change only under the approved exceptions (R7).
 - Nothing is added to the JNI contract.
 - Deterministic rules only (constitution VIII).

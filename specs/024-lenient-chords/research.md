@@ -153,9 +153,11 @@ The existing `CHORD_CONFIRM` (frames in a row) and `CHORD_WINDOW` keep their mea
 - `OwnerChordsBenchmarkTest` on the first two series: at least 8 and 18 accepted;
 - `BassRecognitionBenchmarkTest`: unchanged. It judges single bass notes only (`functional/BassRecognitionBenchmarkTest`), which the chord rule does not touch. A chord on a bass track is judged by the same rule as on a guitar (spec Clarifications: no bass rule of its own exists); the profile starts one semitone below the chord's lowest expected pitch, so it covers the bass range.
 - **New:** `OwnerChordsProfileTest` (tag `dataset`): on the third series with the defaults, 25/25 right and 0 clearly wrong, with each engine; voicings and one name off reported.
-- **New:** `ChordLeniencyComparisonTest` writes `benchmark/comparison.md` (before against after, both engines, each line pass or fail) and fails on any guard line lower.
+- **New:** `ChordLeniencyComparisonTest` writes `benchmark/comparison.md` (before against after, both engines, each line pass or fail) and fails on any guard line lower, except the two lines the spec allows lower (SC-003), which fail only under their floor.
 
-The "incomplete chord refused" lines (IDMT-SMT-Guitar 8 of 8, Audio-Effects poly 35 of 36) are reported; any drop is told to the owner.
+**The two lines allowed lower (the owner's option B, 2026-11-05, after the stop at T027).**
+- *Incomplete chord refused*: before, IDMT-SMT-Guitar 8 of 8 and Audio-Effects poly 35 of 36 (43 of 44); after, 20 of 44 with both engines. An incomplete chord misses one name of the expected chord, which the profile rule tolerates by design (one weak name). The floor of `DatasetBenchmarkTest` becomes 0.45 (approved exception, that line only). The probe of `benchmark/stop-t027/` showed that no variant (one weak name tolerated always, from four names or never; match 0.70 to 0.85) keeps 25/25 on the reference series while refusing 90 % of them: the strictest still accepts 8 of 44 and only 19 of 25 right chords, since 6 of the owner's 25 takes have a really weak name.
+- *IDMT chords recognised*: before 64, after 58 of 66 (Audio-Effects poly), at least the committed 85 %. The "minor triad" line falls from 6 to 0 of 6: one recording (G2 B♭2 D3, the first file of each effect), whose low semitone bands leak into their neighbours (match 0.73 at 200 ms, 0.80 at 1 s, threshold 0.79); the other 29 major and minor triads of the NoFX folder, G2 to A3, are accepted (`benchmark/stop-t027/idmt-triad-profile-*.txt`). A known limit of the low register, reported.
 
 **Stop condition C.** If a guard line drops and no qualifying configuration of the probe avoids it, the work stops and reports to the owner.
 
