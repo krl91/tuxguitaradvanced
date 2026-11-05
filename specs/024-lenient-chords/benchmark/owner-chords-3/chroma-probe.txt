@@ -1,0 +1,6 @@
+right scores min 0.851, median 0.924
+threshold 0.850: right 25/25, voicing 54/54, one-off 0/138, clearly-wrong 0/408
+threshold 0.850: right 25/25, voicing 54/54, one-off 0/138, clearly-wrong 0/408
+threshold 0.800: right 25/25, voicing 54/54, one-off 3/138, clearly-wrong 0/408
+threshold 0.750: right 25/25, voicing 54/54, one-off 45/138, clearly-wrong 0/408
+highest clearly wrong: [('take16.wav', [1, 4, 9], 0.66), ('take16.wav', [1, 4, 9], 0.66), ('take16.wav', [1, 4, 9], 0.66), ('take15.wav', [1, 4, 9], 0.616), ('take15.wav', [1, 4, 9], 0.616)]
