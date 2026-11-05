@@ -410,8 +410,17 @@ public final class AudioEngine {
 	 * Capture must be held by a consumer.
 	 */
 	public void runLevelCheck() {
+		// one check at a time: asked again while one listens, it would start over and subscribe the assessor twice (spec 025, FR-003, research R2)
+		if( this.assessor.isChecking() ) {
+			return;
+		}
 		this.assessor.runLevelCheck();
 		subscribe(this.assessor);
+	}
+
+	/** A level check is listening now (spec 025: the practice window says so, and starts no second one). */
+	public boolean isLevelCheckRunning() {
+		return this.assessor.isChecking();
 	}
 
 	public void subscribe(AnalysisService.Listener listener) {

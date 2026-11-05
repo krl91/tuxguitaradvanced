@@ -28,8 +28,8 @@
 
 ## Phase 2: Foundational
 
-- [ ] T002 [P] Test first, `AET/LevelCheckNotTwiceTest.java`: with a fake backend feeding pitched frames, two `runLevelCheck()` calls during one check give one assessment and each frame counted once (the stats' frame count equals the frames fed); seen red.
-- [ ] T003 Make T002 green in `AE/AudioEngine.java` (`runLevelCheck` returns at once while `assessor.isChecking()`; research R2); add `public boolean isLevelCheckRunning()`.
+- [X] T002 [P] Test first, `AET/LevelCheckNotTwiceTest.java`: with a fake backend feeding pitched frames, two `runLevelCheck()` calls during one check give one assessment and each frame counted once (the stats' frame count equals the frames fed); seen red.
+- [X] T003 Make T002 green in `AE/AudioEngine.java` (`runLevelCheck` returns at once while `assessor.isChecking()`; research R2); add `public boolean isLevelCheckRunning()`.
 
 ## Phase 3: User Story 1 - The start button is never stuck, and the window says what to do (P1)
 
