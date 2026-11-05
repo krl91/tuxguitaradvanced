@@ -5,8 +5,8 @@
 ```
 Mode   ( Wait | Follow | Arcade )          ← FollowPanel, unchanged
 Chord check  [ Normal       ▾ ]            ← ChordLeniencyPanel (new)
-  Accepts a chord when its strings are heard; a quiet string may be
-  missed. Recommended.                     ← the chosen level's line (wraps)
+  Accepts a chord when its notes are heard together over the strum,
+  whatever the voicing. Recommended.       ← the chosen level's line (wraps)
 ```
 
 - **The drop-down lists** *Strict*, *Normal*, *Lenient*. *Custom* is added at the end while the settings match no level, and is removed as soon as they match one.
@@ -23,6 +23,6 @@ Chord check  [ Normal       ▾ ]            ← ChordLeniencyPanel (new)
 
 ## The rule (both engines)
 
-- `ChordMatcher` reads `CHORD_COMPLETENESS` through `ChordMatcher.Parameters`, from a new constructor argument. The old constructor keeps `all-verifiable`.
-- `PracticeSession.onChordFrame` reads the L4 flag, if kept, through the same parameters.
+See [chord-profile-rule.md](chord-profile-rule.md).
+- A level writes `CHORD_COMPLETENESS`, `CHORD_PROFILE_MATCH` and any profile value the sweep moves between levels (data model).
 - No change to `ChordEvidence`, to the crate or to `NativeParameters`.

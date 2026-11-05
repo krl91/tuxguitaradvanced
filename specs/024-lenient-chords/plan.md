@@ -1,83 +1,77 @@
-# Implementation Plan: the owner's chords accepted at least 9 times in 10, with a chord leniency the learner can set
+# Implementation Plan: every chord the owner plays right is accepted, a clearly wrong chord refused, with a chord leniency the learner can set
 
-**Branch**: `feature/interactive-practice` | **Date**: 2026-11-05 | **Spec**: [spec.md](spec.md)
+**Branch**: `feature/interactive-practice` | **Date**: 2026-11-05 (version 2) | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/024-lenient-chords/spec.md`
 
+**Version 2** replaces the plan of 2026-11-05 (commit `13b3d6bd6`), after the diagnostic (phases 1–2, done), the owner's answers, and the owner's third series of chords.
+
 ## Summary
 
-The work starts with a diagnostic of the owner's 16 refused chords and 13 wrong acceptances (research R1).
-
-- **A counterfactual instrument.** For each take it records the evidence of both acceptance paths and which single relaxation would flip the outcome, with both engines.
-- **The committed report already points at two causes.**
-  - 13 of the 16 refusals are in the series recorded with the input saturated.
-  - 12 of the 13 wrong acceptances are the same chord in another voicing.
-
-The chord rule then gets only the levers the diagnostic justifies (R3). They are decisions in Java on evidence both engines already carry, so both engines judge the same way and the JNI contract is untouched:
-- L1, a chord one string short, as a new option of the existing "Strings required" setting;
-- L4, chord frames judged when clipped, as a new chord flag.
-
-The three levels *Strict*, *Normal* and *Lenient* are sets of chord settings:
-- *Normal* is exactly the default values. A fresh learner, "Restore defaults" and the committed benchmarks all get it.
-- The level is derived from the settings, so a change by hand shows *Custom* (R2).
-- A migration moves untouched spec 023 files to *Normal* (R6).
-- The setting sits in the *Mode* tab (R6).
-
-The levels are chosen by a measured sweep with a written rule (R4). The guards on every dataset are measured before and after, with both engines (R5). If no configuration meets 38 accepted and at most 13 wrong on both engines, the work stops and reports to the owner.
+- **The per-string chord check cannot reach the target.** On the first two series and on the owner's new third series, every setting of it either refuses right chords or accepts clearly wrong ones (research R1): 17/25 right today on the third series, 24/25 with one string short but 25 clearly wrong accepted.
+- **The new method:** the chord's *pitch-class profile*. The level of each note name (C, C#, … B, the octaves summed) is summed over the strum and compared with the expected chord's note names; the chord is accepted when they match enough (R3). Offline, on the third series, it accepts 25/25 right chords and 0 of 408 clearly wrong ones, with a wide margin.
+- **It runs in Java on the semitone bands both engines already give**, so both engines judge the same way and the native interface does not change (R4).
+- **Every new value is an external parameter** of the recognition settings, read at run time (FR-013, R5). The engines get one document: how they work, their interface, every parameter, and the constants still fixed (FR-014, R10).
+- **The reference recordings are the owner's third series** (R2). The spec still counts the first two series (42 chords) and must be amended through `/speckit-clarify` before tasks.
+- **The levels** *Strict*, *Normal* and *Lenient* are sets of chord settings chosen by a measured sweep. *Normal* is the default values (R6, R7). The setting sits in the *Mode* tab (R9).
+- **Order:** a Java probe of the method on the session's own spectra first, with a stop condition. Then the rule, tests first. Then the levels and the setting. Then the documentation and the gate.
 
 ## Technical Context
 
 **Language/Version**: Java, release 11 for the fork modules (`TuxGuitar-audio-engine`, `TuxGuitar-practice`); JDK 21 locally. The native crate (Rust) is unchanged.
 
-**Primary Dependencies**: none new. The practice session (`PracticeSession`, `ChordMatcher`, `PolyphonicAcceptance`), the settings (`RecognitionParameters`, `RecognitionSettings`, `RecognitionSettingsStore`) and TuxGuitar's UI toolkit (`UIDropDownSelect`, wrap label).
+**Primary Dependencies**: none new in the product. `PracticeSession`, `ChordMatcher`, `PolyphonicAcceptance`, `SpectrumFrame`, the settings (`RecognitionParameters`, `RecognitionSettings`, `RecognitionSettingsStore`) and TuxGuitar's UI toolkit. The offline tools (`misc/owner-chords-*.py`, librosa, Basic Pitch) are evidence only, never shipped.
 
-**Storage**: the existing `tuxguitar-audio-recognition` configuration file. One option is added to `recognition.chord.completeness`, and at most one new key (L4). `VERSION` stays 1. There is a migration of untouched old files on read.
+**Storage**: the existing `tuxguitar-audio-recognition` settings file. One option is added to `recognition.chord.completeness`, and three or four new keys (R5). `VERSION` stays 1. Untouched spec 023 files are migrated on read (R7).
 
 **Testing**: JUnit 5.
-- Unit tests: `ChordMatcher`, `ChordLeniency`, the migration and the session rule, in `TuxGuitar-practice/test` and `TuxGuitar-audio-engine/src/test/java`.
-- Dataset benchmarks, tagged `dataset`, run with `-Dtuxguitar.recognition.engine=java|native`.
+- Unit tests: the profile and its match (`ChordProfile`), `ChordMatcher` with the profile rule, the session rule and its feedback, `ChordLeniency`, the migration.
+- Dataset tests, tagged `dataset`, run with `-Dtuxguitar.recognition.engine=java|native` and `-Dtuxguitar.owner.chords=<folder>`: the probe, `OwnerChordsProfileTest`, and the committed benchmarks.
 - An SWT GUI test for the *Mode* tab control (`-P swt-gui-tests`).
 
 **Target Platform**: macOS (Apple Silicon) validated; Linux and Windows built by CI with the same code.
 
 **Project Type**: desktop application plugin (the practice module) and its audio engine module.
 
-**Performance Goals**: no new cost per frame beyond a few comparisons in `ChordMatcher.Result` and `onChordFrame`. Nothing runs on the audio callback.
+**Performance Goals**: per frame, about 50 band levels summed into 12 values and one cosine. Nothing is allocated per frame, and nothing runs on the audio callback.
 
 **Constraints**:
-- At least 38 of 42 accepted and at most 13 wrong, with *Normal* and both engines, and per series within the committed baseline.
+- With *Normal* and both engines, 25/25 right and 0/408 clearly wrong on the third series.
+- At least 8 and 18 accepted on the first two series, the committed minimum.
 - No dataset guard line lower.
-- Committed tests unchanged: R2 explains why *Normal* must equal the defaults, and that an exception would need the owner.
+- Committed tests change only under the approved exceptions (R7).
 - Nothing is added to the JNI contract.
 - Deterministic rules only (constitution VIII).
 
 **Scale/Scope**:
-- 42 takes and 42 controls;
+- 25 takes, 625 judgements on the third series, and the 42 takes of the first two series as a guard;
 - five dataset benchmarks;
-- one pure class, one panel, at most two settings touched;
-- about 15 strings in three languages.
+- two new pure classes, one rule option, one panel;
+- three or four new settings;
+- about 20 strings in three languages;
+- one architecture document.
 
 ## Constitution Check
 
 | Principle | How this plan meets it |
 |---|---|
-| I. Compatibility | TuxGuitar's own behaviour and formats are untouched. The recognition file keeps its format and version. Old files load: untouched ones get *Normal*, changed ones keep their values (R6, tests). |
-| II. Extend before core | Changes are only in the fork modules `TuxGuitar-practice` and `TuxGuitar-audio-engine`. No core module. |
-| III. Evidence | Every decision cites the source read (R0 to R6). The diagnostic gives the evidence for the levers before any rule changes (FR-010). |
-| IV. Spec-driven | Spec and clarifications are done; tasks come next. |
-| V. Incremental | Three phases, each testable alone: diagnostic (US3), rule and *Normal* (US1), levels and setting (US2). |
-| VI. Real-time audio | Nothing on the audio threads. The rule runs in the session's frame handling, as today. |
-| VII. Separable logic | `ChordLeniency`, the completeness rule of `ChordMatcher` and the migration are pure and unit-tested. |
-| VIII. Deterministic | Counting rules on existing evidence. No learned model. |
+| I. Compatibility | TuxGuitar's behaviour and formats are untouched. The recognition file keeps its format and version. Old files load: untouched ones get *Normal*, changed ones keep their values (R7, tests). |
+| II. Extend before core | Changes are only in the fork modules `TuxGuitar-practice` and `TuxGuitar-audio-engine`. No core module, and no native change. |
+| III. Evidence | Every decision cites the source read (R0–R11). The method is chosen on measured figures (R1, R3), and measured again in Java before any rule changes (R6). |
+| IV. Spec-driven | The spec is clarified. One amendment is pending through `/speckit-clarify` (the reference series, R2), before tasks. |
+| V. Incremental | Five phases, each testable alone: probe, rule and *Normal*, levels and setting, documentation, gate. |
+| VI. Real-time audio | Nothing on the audio threads. The profile is computed in the session's frame handling, with nothing allocated per frame. |
+| VII. Separable logic | `ChordProfile`, `ChordLeniency` and the migration are pure and unit-tested. |
+| VIII. Deterministic | A sum, a cosine and a threshold, no learned model. The method is the classic pitch-class profile (R3). |
 | IX. Cross-platform | No platform code. Validated on macOS; Linux and Windows are built by CI only, with no "only on macOS" line. |
-| X. No unrelated refactoring | `DatasetJudge` and the spec 023 benchmarks are left as they are. New instruments are new test classes. |
-| XI. Build and tests | Every phase ends with the full gate. No committed test is changed (R2). |
-| XII. Truthful reporting | Figures before and after, both engines, kept in `benchmark/`. The owner's gate is sheet F15. |
-| XIII. Honest semantics | Unverifiable strings (an octave, the same note) stay "not checked separately" whatever the level (edge case, a test). The report says that the voicing pairs cannot be told apart from audio. |
-| XIV. Learner-centred | Each level says what it accepts and what it risks. Clipping warnings stay. |
+| X. No unrelated refactoring | The per-string rule stays as an option (`all-verifiable`). `DatasetJudge` and the committed benchmarks are left as they are. New instruments are new test classes. |
+| XI. Build and tests | Every phase ends with the full gate. Committed tests change only under the exceptions the owner approved (R7). |
+| XII. Truthful reporting | Figures before and after, both engines, are kept in `benchmark/`. The owner's gate is sheet F15. A stop condition reports instead of lowering a target. |
+| XIII. Honest semantics | The report says that voicings cannot be told apart. A refused chord lists the note names its profile lacks, not strings it cannot know. |
+| XIV. Learner-centred | Each level says what it accepts and what it risks. A refusal names the missing note names. The input warnings stay. |
 | Texts | English, French and Spanish in the plugin's `share/lang` files. |
 
-Gate: passes. Re-checked after design: passes. The two stop conditions, a default that must move or evidence the engine lacks, go to the owner instead of being decided here.
+**Gate:** passes, with one item to settle before tasks: the spec amendment on the reference series (IV). Re-checked after design: passes. Stop condition A (R6) goes to the owner instead of being decided here.
 
 ## Project Structure
 
@@ -85,44 +79,49 @@ Gate: passes. Re-checked after design: passes. The two stop conditions, a defaul
 
 ```text
 specs/024-lenient-chords/
-├── plan.md
-├── research.md
+├── plan.md               (version 2)
+├── research.md           (version 2)
 ├── data-model.md
 ├── quickstart.md
 ├── contracts/
-│   └── chord-leniency.md
-├── benchmark/            (before-*, after-*, diagnostic.md, levels.md, comparison.md; written during implementation)
-└── tasks.md              (next: /speckit-tasks)
+│   ├── chord-leniency.md
+│   └── chord-profile-rule.md
+├── benchmark/            (before-*, diagnostic.md, owner-chords-3/ done; probe.md, levels.md, after-*, comparison.md to come)
+└── tasks.md              (to rebuild with /speckit-tasks: T001–T005 done)
 ```
 
 ### Source Code (repository root)
 
 ```text
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/settings/
-├── ChordLeniency.java                new: the levels, derived and applied (R2)
-├── RecognitionParameters.java        + option all-but-one of CHORD_COMPLETENESS, its default; + L4 flag if kept (R3)
-└── RecognitionSettings.java          fromStrings: migration of untouched spec 023 chord values (R6)
+├── RecognitionParameters.java        + option "profile" of CHORD_COMPLETENESS (default), + CHORD_PROFILE_* values (R5)
+├── RecognitionSettings.java          fromStrings: migration of untouched spec 023 chord values (R7)
+└── ChordLeniency.java                new: the levels, derived and applied (R7)
 
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
-├── session/ChordMatcher.java         Parameters + completeness; Result.isComplete with one string short (L1)
-├── session/PracticeParameters.java   chordParameters() passes the completeness (and the L4 flag)
-├── session/PracticeSession.java      onChordFrame judges a clipped frame when the flag says so (L4, only if kept)
-├── ui/ChordLeniencyPanel.java        new: label, drop-down and the level's line (R6)
+├── session/ChordProfile.java         new, pure: the profile of a frame, its sum, the match, the weakest names (R3)
+├── session/ChordMatcher.java         Parameters + rule and profile values; check by profile when the rule says so
+├── session/PracticeParameters.java   chordParameters() passes the new values
+├── session/PracticeSession.java      onChordFrame: the profile summed from the arming, reset at each strum; the attack path for chords per R6
+├── ui/ChordLeniencyPanel.java        new: label, drop-down and the level's line (R9)
 └── ui/PracticeWindow.java            the panel in the Mode tab
 
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties
 
 desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/
-├── dataset/OwnerChordsDiagnosticTest.java      new (dataset): the diagnostic (R1)
-├── dataset/ChordLeniencyBenchmarkTest.java     new (dataset): the sweep and the levels (R4)
-├── dataset/ChordLeniencyComparisonTest.java    new (benchmark): before and after, both engines (R5)
-├── session/ChordMatcherCompletenessTest.java   new (unit)
+├── dataset/OwnerChordsProfileProbeTest.java    new (dataset): the sweep of R6, both engines
+├── dataset/OwnerChordsProfileTest.java         new (dataset): 25/25 and 0 clearly wrong with the defaults
+├── dataset/ChordLeniencyComparisonTest.java    new (benchmark): before and after, both engines (R8)
+├── session/ChordProfileTest.java               new (unit)
+├── session/ChordMatcherProfileTest.java        new (unit)
+├── session/PracticeSessionChordProfileTest.java new (unit): arming, summing, the window, the feedback
 └── ui/ChordLeniencyPanelSwtTest.java           new (swt-gui)
 
 desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/
 ├── ChordLeniencyTest.java                      new
 └── ChordLeniencyMigrationTest.java             new
 
+docs/architecture/recognition-engines.md        new (FR-014, R10)
 specs/test-sheets/F15-accords-tolerants.md      the owner's gate
 ```
 
@@ -130,11 +129,12 @@ specs/test-sheets/F15-accords-tolerants.md      the owner's gate
 
 ## Phases
 
-1. **Before figures** (setup): the five dataset benchmarks with both engines at the spec 023 code.
-2. **US3 (P3, done first because everything depends on it)**: the diagnostic instrument and `diagnostic.md`. Gate: each of the 16 refusals and 13 wrong acceptances has a cause. A stop condition is checked here (R3).
-3. **US1 (P1)**: the levers kept, tests first. *Normal* is chosen by the sweep (R4) and made the default. The migration (R6). The guards after (R5). A stop condition is checked here (R4).
-4. **US2 (P2)**: `ChordLeniency`, *Strict* and *Lenient* from the sweep, the panel in the *Mode* tab, the expert tips, texts in three languages, the SWT test.
-5. **Polish**:
+1. **Done:** the figures before with both engines; the diagnostic (US3); the strum hold probe; the third series and its figures.
+2. **Probe (gate of the method):** `OwnerChordsProfileProbeTest` with both engines. The sweep is written to `benchmark/probe.md`. Stop condition A applies here (R6).
+3. **US1 (P1):** `ChordProfile` and the profile rule, tests first and seen red. Then *Normal* as the defaults, the migration, `OwnerChordsProfileTest`, the two `wrong.max` lines, and the guards after (R8).
+4. **US2 (P2):** `ChordLeniency`, *Strict* and *Lenient* from the sweep, the panel in the *Mode* tab, the expert tips, texts in three languages, the SWT test.
+5. **Polish:**
+   - `docs/architecture/recognition-engines.md` (FR-014);
    - the practice guide in three languages;
    - sheet F15;
    - draft release notes;
@@ -146,5 +146,6 @@ specs/test-sheets/F15-accords-tolerants.md      the owner's gate
 
 | Item | Why needed | Simpler alternative rejected because |
 |---|---|---|
-| The level derived from the values, not stored | Committed tests pin the defaults, the version and the round trip of the store (R2) | A stored level that overrides values breaks those tests and Follow's and Arcade's relaxation |
+| A second chord rule, kept beside the per-string one | The profile reaches the target where the per-string rule cannot (R1, R3); the old rule stays selectable (`all-verifiable`) for comparison and for a learner who prefers it | Deleting the per-string rule removes the committed tests' subject and the expert option |
+| The level derived from the values, not stored | Committed tests pin the version and the round trip of the store (R7) | A stored level that overrides values breaks those tests and Follow's and Arcade's relaxation |
 | Migration on read | Old files hold every value, so an untouched learner would keep spec 023's rule (FR-008) | Bumping `VERSION` breaks `valuesSurviveARestart` |
