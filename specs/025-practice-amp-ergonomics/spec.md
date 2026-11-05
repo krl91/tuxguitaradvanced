@@ -16,6 +16,16 @@
 
 A mock-up of both windows was shown to the owner and accepted as the example to follow (see Assumptions).
 
+## Clarifications
+
+### Session 2026-11-05
+
+- Q: How should the switch that makes the guitar heard through the amp be named (today *Amp sound*)? → A: A check box "Hear my guitar through the amp" (French "Entendre ma guitare dans l'ampli").
+- Q: How should the *Cabinet* (*Baffle*) control be renamed? → A: "Speaker simulation" (French "Simulation du haut-parleur"), with a tip saying it softens harsh highs and lows like the speaker of a real amp.
+- Q: How should the saved sounds' actions (rename, delete, restore) be shown? → A: A **Save…** button that asks for the name when needed, and a **⋯** button opening a menu with Rename…, Delete and Restore; the Name field leaves the window.
+- Q: What screen height must both windows fit entirely when they open? → A: 768 pixels.
+- Q: After a failed level check, in which cases does it start again by itself when the guitar is heard? → A: After "no signal" and after "input saturating"; an unplugged interface and a refused microphone access must be fixed first (**Check again** stays available).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The start button is never stuck, and the window says what to do (Priority: P1)
@@ -28,7 +38,7 @@ A learner opens the practice window with the guitar plugged in but does not play
 
 **Acceptance Scenarios**:
 
-1. **Given** the practice window is open and the level check ended on "no signal" because nothing was played, **When** the learner plays a few notes, **Then** the level is checked again by itself and the start button becomes available once the level is usable, without the input being chosen again.
+1. **Given** the practice window is open and the level check ended on "no signal" because nothing was played (or on "input saturating" and the gain was lowered), **When** the learner plays a few notes, **Then** the level is checked again by itself and the start button becomes available once the level is usable, without the input being chosen again.
 2. **Given** the start button is greyed, **When** the learner looks at the window, **Then** a line directly under the button, visible without hovering, names the cause and the action in plain words (for example "Play a few notes: the input has not heard your guitar yet").
 3. **Given** the start button is greyed because of the input level, **When** the learner presses **Check again**, **Then** a new level check starts and the line says that it is listening.
 4. **Given** the cause changes (no sound, level too low, input saturating, interface unplugged, microphone access refused), **When** the line is shown, **Then** it names that cause and its own action; it never shows a cause that no longer applies.
@@ -66,9 +76,9 @@ A learner opens *Amp and effects*: the switch that turns the amp sound on reads 
 1. **Given** the amp window opens, **When** the learner looks at it, **Then** its height is at most about 600 pixels and it is entirely on a screen 768 pixels high.
 2. **Given** the amp window, **When** the learner looks at the top, **Then** the on/off switch of the amp sound, the sound (preset) choice and the delay estimate are visible whatever tab is chosen.
 3. **Given** the tabs *Pedals before the amp*, *Amp*, *Effects after the amp* and *Output*, **When** the learner opens each, **Then** it holds only its own controls, and scrolling reaches all of them.
-4. **Given** the switch of the amp sound, **When** it is off and then on, **Then** its label and state read as a switch (for example a check box "Hear my guitar through the amp"), not as a button whose state must be guessed.
-5. **Given** the former *Cabinet* control, **When** the learner reads it, **Then** it is named after what it does (for example "Speaker simulation") and its tip explains it.
-6. **Given** the sound (preset) management (save as, rename, delete, restore), **When** the learner uses it, **Then** every action of today is still there and works as before, and the name field is asked only when it is needed.
+4. **Given** the switch of the amp sound, **When** it is off and then on, **Then** it is a check box "Hear my guitar through the amp" whose state reads at a glance.
+5. **Given** the former *Cabinet* control, **When** the learner reads it, **Then** it is named "Speaker simulation" and its tip explains it.
+6. **Given** the sound (preset) management, **When** the learner uses **Save…** or the **⋯** menu (Rename…, Delete, Restore), **Then** every action of today is still there and works as before, and the name is asked only when it is needed.
 7. **Given** a sound saved before this change, **When** the amp window opens, **Then** the sound, its pedals, their order and their settings are the same as before.
 
 ---
@@ -77,7 +87,8 @@ A learner opens *Amp and effects*: the switch that turns the amp sound on reads 
 
 - The level check is running when the learner presses **Check again**: one check runs, not two.
 - The guitar is heard while a practice run is going: the level check rules of the run are unchanged (no new check starts in the middle of a run by itself).
-- The level check ended on a cause the learner must fix outside the window (input saturating, interface unplugged, microphone access refused): playing again does not hide the cause; the line keeps naming it until it is fixed or a check passes.
+- The level check ended on input saturating: the learner lowers the gain and plays; a new check starts by itself and passes or names the cause again.
+- The level check ended on a cause the learner must fix outside the window (interface unplugged, microphone access refused): playing again does not start a check by itself; the line keeps naming the cause until it is fixed and **Check again** is pressed or a check passes.
 - The window is restored at a size saved before this change that is taller than the screen: it is brought back within the screen.
 - A very small window (shorter than the tabs, the bottom line and one row of controls): the bottom line and the start button keep priority over the tab content.
 - The texts are longer in French and Spanish: the line under the start button wraps; nothing is cut off.
@@ -88,7 +99,7 @@ A learner opens *Amp and effects*: the switch that turns the amp sound on reads 
 
 ### Functional Requirements
 
-- **FR-001**: When the input level check has ended on "no signal", the system MUST start a new check by itself as soon as the guitar is heard while the practice window is open and no run is going, without the input being chosen again.
+- **FR-001**: When the input level check has ended on "no signal" or "input saturating", the system MUST start a new check by itself as soon as the guitar is heard while the practice window is open and no run is going, without the input being chosen again. After "input lost" or "microphone access refused" it MUST NOT start again by itself; the line names the fix and **Check again** stays available.
 - **FR-002**: While the start button is greyed, the practice window MUST show, directly under it and without hovering, a line that names the cause and the learner's action, one wording per cause (no sound yet, level too low, input saturating, input lost or unplugged, microphone access refused, no track chosen, waiting for the guitar for a one-click start).
 - **FR-003**: When the cause is the input level, the line MUST offer a **Check again** action that starts a new level check and says it is listening; a second press during a check MUST NOT start a second one.
 - **FR-004**: The line MUST disappear as soon as the start button is available, and MUST follow the cause when it changes.
@@ -96,11 +107,12 @@ A learner opens *Amp and effects*: the switch that turns the amp sound on reads 
 - **FR-006**: The tab content of the practice window MUST scroll when it is taller than the space left; the start button and its line MUST stay visible at the bottom for every tab and every scroll position.
 - **FR-007**: The amp window MUST be organised in four tabs: pedals before the amp, the amp, effects after the amp, output (with the guitar and score volumes); the amp sound switch, the sound choice and the delay estimate MUST stay visible above the tabs.
 - **FR-008**: The amp window MUST open at most about 600 pixels high and fit a screen 768 pixels high; each tab MUST scroll when its content is taller than the space left.
-- **FR-009**: The amp sound switch MUST read as an on/off control with a label that says what it does (for example "Hear my guitar through the amp"); the *Cabinet* control MUST be renamed after what it does (for example "Speaker simulation") with a tip that explains it.
+- **FR-009**: The amp sound switch MUST be a check box labelled "Hear my guitar through the amp" (French "Entendre ma guitare dans l'ampli", Spanish equivalent); the *Cabinet* control MUST be renamed "Speaker simulation" (French "Simulation du haut-parleur") with a tip saying it softens harsh highs and lows like the speaker of a real amp.
 - **FR-010**: Every control and action of the amp window today (sounds and their management, output, volumes, pedals with move up, move down, remove and add, the amp settings, the cabinet, the effects after the amp) MUST remain available and behave as before; saved sounds and settings MUST load unchanged.
 - **FR-011**: Every new or renamed text MUST exist in English, French and Spanish, with a tip where the control's meaning is not obvious.
 - **FR-012**: The changes MUST use only kinds of controls that TuxGuitar's interface toolkit already offers (tabs, scrolling panels, toggle buttons, check boxes, tips) and MUST behave the same on macOS, Linux and Windows.
 - **FR-013**: The level check rules during a practice run, the recognition, the amp sound and the practice modes MUST be unchanged.
+- **FR-014**: The saved sounds' actions MUST be a **Save…** button that asks for the name when needed and a **⋯** button opening a menu with Rename…, Delete and Restore; the Name field MUST no longer be shown in the window.
 
 ### Key Entities
 
@@ -120,10 +132,10 @@ A learner opens *Amp and effects*: the switch that turns the amp sound on reads 
 
 ## Assumptions
 
-- The mock-up shown to the owner on 2026-11-05 is the example: the practice window keeps its tabs (Track, Input, Mode, Passages, Advanced) with a scrolling content and a fixed bottom area (the blocking line, **Check again**, the start button); the amp window has the switch, the sound choice with a **Save…** button and the other sound actions grouped, and the delay above four tabs.
-- "A standard screen" is taken as 768 pixels high (the smallest common laptop height); the owner's own screen is larger.
+- The mock-up shown to the owner on 2026-11-05 is the example: the practice window keeps its tabs (Track, Input, Mode, Passages, Advanced) with a scrolling content and a fixed bottom area (the blocking line, **Check again**, the start button); the amp window has the switch, the sound choice with **Save…** and **⋯**, and the delay above four tabs.
+- "A standard screen" is 768 pixels high (the smallest common laptop height; owner's choice, Clarifications 2026-11-05); the owner's own screen is larger.
 - On macOS a greyed button does not show its tip; this is why the cause is a visible line, not a tip.
-- The exact wordings (for example "Hear my guitar through the amp", "Speaker simulation", "Check again") are proposals; `/speckit-clarify` may settle them with the owner.
+- The wordings of the switch, the speaker simulation and the sounds' actions were settled with the owner (Clarifications, 2026-11-05); the other new texts follow the same plain style.
 - The cause of the stuck button was found in the source on 2026-11-05: the check is started again only when the input changes or has never been checked; it dates from spec 002 and is not a spec 023 regression.
 - The rest of TuxGuitar's windows are out of scope; only the practice window and the amp window change.
 - The JavaFX and Qt toolkits are not built in the packages; the layout is required for the SWT builds of macOS, Linux and Windows.
