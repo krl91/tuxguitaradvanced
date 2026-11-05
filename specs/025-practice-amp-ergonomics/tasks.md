@@ -50,12 +50,12 @@
 **Goal**: every tab scrolls inside a height that fits a 768-pixel screen; the bottom area always in view.
 **Independent Test**: `PracticeWindowFitsSwtTest`; quickstart §4 step 3.
 
-- [ ] T012 [P] [US2] Test first, `TUI/PracticeLayoutTest.java`: `tabHeight(tallest, usable, others)` = min(tallest, usable − others), never below the one-row minimum; usable taken as 768 when unknown or larger; seen red.
-- [ ] T013 [US2] `UI/PracticeLayout.java` (new); T012 green.
-- [ ] T014 [US2] `UI/Screens.java`: add `usableHeight(UIRectangle)` (the client area height of the screen holding the rectangle, by the same SWT reflection; 0 when unknown); test in `TUI/ScreensUsableHeightTest.java` for the unknown case.
-- [ ] T015 [US2] `UI/PracticeWindow.java`: each tab panel (Track, Input, Mode, Passages) inside a vertical `UIScrollBarPanel` as `FireSettingsPanel` does; `refit` sets the folder's packed height with `PracticeLayout.tabHeight` instead of the tallest tab + 48; kept bounds taller than the usable height brought within it. `WindowFitTest` unchanged and green.
-- [ ] T016 [US2] Test, `TUI/PracticeWindowFitsSwtTest.java` (`swt-gui-tests`): with the usable height forced to 768, the opened window is at most 768 high, the start button is visible on every tab, the Input tab's last control can be scrolled into view, a kept bounds of 1200 px high opens within 768.
-- [ ] T017 [US2] Gate; commit "impl(025): phase 4".
+- [X] T012 [P] [US2] Test first, `TUI/PracticeLayoutTest.java`: `tabHeight(tallest, usable, others)` = min(tallest, usable − others), never below the one-row minimum; usable taken as 768 when unknown or larger; seen red.
+- [X] T013 [US2] `UI/PracticeLayout.java` (new); T012 green.
+- [X] T014 [US2] `UI/Screens.java`: add `usableHeight(UIRectangle)` (the client area height of the screen holding the rectangle, by the same SWT reflection; 0 when unknown); test in `TUI/ScreensUsableHeightTest.java` for the unknown case.
+- [X] T015 [US2] `UI/PracticeWindow.java`: each tab panel (Track, Input, Mode, Passages) inside a vertical `UIScrollBarPanel` as `FireSettingsPanel` does; `refit` sets the folder's packed height with `PracticeLayout.tabHeight` instead of the tallest tab + 48; kept bounds taller than the usable height brought within it. `WindowFitTest` unchanged and green.
+- [X] T016 [US2] Test, `TUI/PracticeWindowFitsSwtTest.java` (`swt-gui-tests`): with the usable height forced to 768, the opened window is at most 768 high, the start button is visible on every tab, the Input tab's last control can be scrolled into view, a kept bounds of 1200 px high opens within 768. *Done on SWT with the real `PracticeLayout` and `WindowFit` in a window built and opened as the practice window is (the window itself needs the whole application and no test builds it): within 768 px, within a 600-pixel screen, an unknown screen taken as 768, the start button inside the window, the tall tab's last row scrolled into view. No kept-bounds case (see T015).*
+- [X] T017 [US2] Gate; commit "impl(025): phase 4". (practice 1465, 12 skipped; audio engine 498; tuner 24; swt-gui 82; only added test files)
 
 ## Phase 5: User Story 3 - The amp window fits the screen, in tabs, with clear names (P2)
 

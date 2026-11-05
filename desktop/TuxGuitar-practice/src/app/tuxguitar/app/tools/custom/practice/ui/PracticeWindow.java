@@ -83,6 +83,7 @@ import app.tuxguitar.ui.event.UIDisposeListener;
 import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
+import app.tuxguitar.ui.resource.UIRectangle;
 import app.tuxguitar.ui.widget.UIButton;
 import app.tuxguitar.ui.widget.UIControl;
 import app.tuxguitar.ui.widget.UIDropDownSelect;
@@ -578,7 +579,8 @@ public class PracticeWindow {
 	private UIPanel tab(UIFactory uiFactory, UITabFolder folder, String key, UITableLayout layout) {
 		UITabItem item = folder.createTab();
 		item.setText(TuxGuitar.getProperty(key));
-		UIPanel panel = uiFactory.createPanel(item, false);
+		// the tab scrolls when the window is lower than it: the window fits a 768-pixel screen (spec 025, FR-005)
+		UIPanel panel = PracticeLayout.scrollingTab(uiFactory, item);
 		panel.setLayout(layout);
 		tabPanels.add(panel);
 		return panel;
@@ -1507,19 +1509,10 @@ public class PracticeWindow {
 	/** Applies the packed/minimum size after a content or state change (all controls stay visible). */
 	private void refit() {
 		if( isOpen() ) {
-			// the folder asks for the height of its tallest tab, so that no tab needs the window to be resized by hand
-			// and the width of its widest one: the window is never too narrow for a tab that is not the one shown
-			float tallest = 0f;
-			float widest = 0f;
-			for( UIPanel tabPanel : this.tabPanels ) {
-				if( !tabPanel.isDisposed() ) {
-					tabPanel.computePackedSize(null, null);
-					tallest = Math.max(tallest, tabPanel.getPackedSize().getHeight());
-					widest = Math.max(widest, tabPanel.getPackedSize().getWidth());
-				}
-			}
-			((UITableLayout) this.window.getLayout()).set(this.preparation, UITableLayout.PACKED_HEIGHT, tallest + 48f);
-			((UITableLayout) this.window.getLayout()).set(this.preparation, UITableLayout.PACKED_WIDTH, widest + 24f);
+			// the folder is as wide as its widest tab and as high as its tallest one while the screen allows it, so that no tab needs the window to be
+			// resized by hand; a taller tab scrolls, and the window stays within the screen with its bottom area in view (spec 025, FR-005, FR-006)
+			UIRectangle where = this.windowShown ? this.window.getBounds() : this.host.mainWindow().getBounds();
+			PracticeLayout.sizeFolder(this.window, this.preparation, this.tabPanels, Screens.usableHeight(where));
 			WindowFit.refit(this.window, this.host.mainWindow().getBounds());
 		}
 	}
