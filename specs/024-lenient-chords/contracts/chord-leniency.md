@@ -13,7 +13,7 @@ Chord check  [ Normal       ▾ ]            ← ChordLeniencyPanel (new)
 - **Choosing *Custom* is not possible.** Choosing a named level writes its values (`ChordLeniency.apply`) into the store's default layer at once.
 - **The line under the drop-down** says what the level accepts and what it risks. For *Custom*, it says that the expert chord settings were changed by hand and that choosing a level restores its values.
 - **During a run:** the control stays enabled, the change applies from the next run, and the run never stops.
-- **Texts:** keys `practice.chord-leniency`, `practice.chord-leniency.{strict,normal,lenient,custom}` and `….line`, in `TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties`. The French level names are *Strict*, *Normal* and *Tolérant*.
+- **Texts:** keys `practice.chord-leniency`, `practice.chord-leniency.{strict,normal,lenient,custom}` and `….line`, in `TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties`. The level names: English *Strict*, *Normal*, *Lenient*, *Custom* (label *Chord check*); French *Strict*, *Normal*, *Tolérant*, *Personnalisé* (label *Vérification des accords*); Spanish *Estricto*, *Normal*, *Tolerante*, *Personalizado* (label *Comprobación de acordes*).
 
 ## In the Recognition settings window (expert)
 
