@@ -42,9 +42,14 @@ final class PracticeLayout {
 	 * area and the buttons), never below {@link #MIN_TAB_HEIGHT}; a usable height unknown (zero or less) or above the reference is taken as the reference.
 	 */
 	static float tabHeight(float tallest, float usable, float others) {
-		float screen = (usable <= 0f || usable > REFERENCE_HEIGHT) ? REFERENCE_HEIGHT : usable;
+		float screen = screen(usable);
 		float room = Math.max(MIN_TAB_HEIGHT, screen - others);
 		return Math.min(tallest, room);
+	}
+
+	/** The height every window must fit: the usable height, taken as the reference when it is unknown (zero or less) or larger. */
+	static float screen(float usable) {
+		return (usable <= 0f || usable > REFERENCE_HEIGHT) ? REFERENCE_HEIGHT : usable;
 	}
 
 	/**

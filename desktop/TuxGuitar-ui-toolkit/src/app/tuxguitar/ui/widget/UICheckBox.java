@@ -13,6 +13,10 @@ public interface UICheckBox extends UIControl {
 
 	void setImage(UIImage image);
 
+	String getToolTipText();
+
+	void setToolTipText(String text);
+
 	boolean isSelected();
 
 	void setSelected(boolean selected);

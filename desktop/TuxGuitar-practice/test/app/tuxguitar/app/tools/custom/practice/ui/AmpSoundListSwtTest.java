@@ -132,13 +132,18 @@ public class AmpSoundListSwtTest {
 		}
 
 		void type(String name) throws Exception {
-			this.amp.getSoundName().setText(name);
+			this.amp.getNamePrompt().getName().setText(name);
 			flush(this.display);
 		}
 
 		void press(UIButton button) throws Exception {
 			assertTrue(button.isEnabled(), "the button is enabled");
 			notifySelection(this.display, button.getClass().getMethod("getControl").invoke(button));
+		}
+
+		void press(app.tuxguitar.ui.menu.UIMenuActionItem item) throws Exception {
+			assertTrue(item.isEnabled(), "the menu item is enabled");
+			notifySelection(this.display, item.getClass().getMethod("getControl").invoke(item));
 		}
 	}
 
@@ -193,18 +198,18 @@ public class AmpSoundListSwtTest {
 			try {
 				harness.amp.open();
 				flush(display);
-				assertFalse(harness.amp.getSaveAs().isEnabled(), "no name typed");
+				harness.press(harness.amp.getSaveAs()); assertFalse(harness.amp.getNamePrompt().getOk().isEnabled(), "no name typed");
 				harness.type("lead");
-				assertFalse(harness.amp.getSaveAs().isEnabled(), "a ready-made name");
+				assertFalse(harness.amp.getNamePrompt().getOk().isEnabled(), "a ready-made name");
 				harness.type("Mine");
-				harness.press(harness.amp.getSaveAs());
+				harness.press(harness.amp.getNamePrompt().getOk());
 				assertEquals("Mine", harness.store.current().name());
 				assertEquals(Arrays.asList("Clean", "Crunch", "Lead", "Clean echo", "Mine"), harness.items());
 				assertEquals("Mine", harness.amp.getSounds().getSelectedValue());
 				assertTrue(harness.amp.getDelete().isEnabled());
-				assertFalse(harness.amp.getRename().isEnabled(), "no new name typed");
+				harness.press(harness.amp.getRename()); assertFalse(harness.amp.getNamePrompt().getOk().isEnabled(), "no new name typed");
 				harness.type("Yours");
-				harness.press(harness.amp.getRename());
+				harness.press(harness.amp.getNamePrompt().getOk());
 				assertEquals(Arrays.asList("Clean", "Crunch", "Lead", "Clean echo", "Yours"), harness.items());
 				harness.press(harness.amp.getDelete());
 				assertEquals(Arrays.asList("Clean", "Crunch", "Lead", "Clean echo"), harness.items());

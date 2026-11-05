@@ -53,10 +53,12 @@ final class AmpChainRows implements AmpPedalRow.Listener {
 	private final UIToggleButton cabinet;
 	private final UIFactory factory;
 	private final Runnable relayout;
-	private final UILegendPanel before;
+	private final UIContainer before;
 	private final UITableLayout beforeLayout;
-	private final UILegendPanel after;
+	private final UIContainer after;
 	private final UITableLayout afterLayout;
+	/** Told the section of a pedal just added, so that its tab is shown (spec 025); null in the one-column window. */
+	private final Consumer<EffectKind.Section> sectionShown;
 	private final UIDropDownSelect<EffectKind> addPedal;
 	private final List<EffectKind> offered = new ArrayList<EffectKind>();
 	private final Map<EffectKind, AmpPedalRow> pedals = new EnumMap<EffectKind, AmpPedalRow>(EffectKind.class);
@@ -64,26 +66,73 @@ final class AmpChainRows implements AmpPedalRow.Listener {
 	private boolean updating;
 	private boolean built;
 
+	/** Where a part of the rows goes: a container, its layout and the row in it. */
+	static final class Place {
+		final UIContainer parent;
+		final UITableLayout layout;
+		final int row;
+
+		Place(UIContainer parent, UITableLayout layout, int row) {
+			this.parent = parent;
+			this.layout = layout;
+			this.row = row;
+		}
+	}
+
 	/** @param relayout lays the window out again once the pedals' rows were rebuilt */
 	AmpChainRows(UIFactory factory, UIContainer parent, UITableLayout parentLayout, int row, AmpWindow.Texts texts, ChainSettings chain,
 			Consumer<ChainSettings> changed, Runnable relayout) {
+		this(factory, texts, chain, changed, relayout, null, true, new Place(parent, parentLayout, row), new Place(parent, parentLayout, row + 1),
+				new Place(parent, parentLayout, row + 2), new Place(parent, parentLayout, row + 3), new Place(parent, parentLayout, row + 4));
+	}
+
+	/**
+	 * The rows in the tabs of the amp window (spec 025, contracts/amp-window.md): the pedals before the amp in {@code before}, the amp and its speaker
+	 * simulation in {@code amp}, the pedals after it in {@code after}, each from the first row of its container, and Add a pedal at {@code add}.
+	 *
+	 * @param sectionShown told the section of a pedal just added, so that its tab is shown
+	 */
+	AmpChainRows(UIFactory factory, Place before, Place amp, Place after, Place add, AmpWindow.Texts texts, ChainSettings chain,
+			Consumer<ChainSettings> changed, Runnable relayout, Consumer<EffectKind.Section> sectionShown) {
+		this(factory, texts, chain, changed, relayout, sectionShown, false, before, amp, new Place(amp.parent, amp.layout, KNOBS.size() + 2), after, add);
+	}
+
+	/** @param legends the one-column window: each section in its titled frame at its place; else each section fills its container from its first row */
+	private AmpChainRows(UIFactory factory, AmpWindow.Texts texts, ChainSettings chain, Consumer<ChainSettings> changed, Runnable relayout,
+			Consumer<EffectKind.Section> sectionShown, boolean legends, Place beforePlace, Place ampPlace, Place cabinetPlace, Place afterPlace,
+			Place addPlace) {
 		this.texts = texts;
 		this.changed = changed;
 		this.chain = chain;
 		this.factory = factory;
 		this.relayout = relayout;
+		this.sectionShown = sectionShown;
 
-		this.before = factory.createLegendPanel(parent);
-		this.before.setText(texts.get(AmpTexts.BEFORE));
-		this.beforeLayout = new UITableLayout();
-		this.before.setLayout(this.beforeLayout);
-		parentLayout.set(this.before, row, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_TOP, true, false);
+		if (legends) {
+			UILegendPanel legend = factory.createLegendPanel(beforePlace.parent);
+			legend.setText(texts.get(AmpTexts.BEFORE));
+			this.before = legend;
+			this.beforeLayout = new UITableLayout();
+			legend.setLayout(this.beforeLayout);
+			beforePlace.layout.set(legend, beforePlace.row, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_TOP, true, false);
+		} else {
+			this.before = beforePlace.parent;
+			this.beforeLayout = beforePlace.layout;
+		}
 
-		UILegendPanel amp = factory.createLegendPanel(parent);
-		amp.setText(texts.get(AmpTexts.AMP));
-		UITableLayout layout = new UITableLayout();
-		amp.setLayout(layout);
-		parentLayout.set(amp, row + 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_TOP, true, false);
+		UIContainer amp;
+		UITableLayout layout;
+		if (legends) {
+			UILegendPanel legend = factory.createLegendPanel(ampPlace.parent);
+			legend.setText(texts.get(AmpTexts.AMP));
+			layout = new UITableLayout();
+			legend.setLayout(layout);
+			ampPlace.layout.set(legend, ampPlace.row, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_TOP, true, false);
+			amp = legend;
+		} else {
+			amp = ampPlace.parent;
+			layout = ampPlace.layout;
+		}
 
 		this.characterLabel = factory.createLabel(amp);
 		this.characterLabel.setText(texts.get(AmpTexts.CHARACTER));
@@ -134,7 +183,7 @@ final class AmpChainRows implements AmpPedalRow.Listener {
 			line++;
 		}
 
-		this.cabinet = factory.createToggleButton(parent);
+		this.cabinet = factory.createToggleButton(cabinetPlace.parent);
 		this.cabinet.setText(texts.get(AmpTexts.CABINET));
 		this.cabinet.setToolTipText(texts.get(AmpTexts.CABINET + ".tip"));
 		this.cabinet.addSelectionListener(new UISelectionListener() {
@@ -144,18 +193,24 @@ final class AmpChainRows implements AmpPedalRow.Listener {
 				}
 			}
 		});
-		parentLayout.set(this.cabinet, row + 2, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		cabinetPlace.layout.set(this.cabinet, cabinetPlace.row, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false, 1, legends ? 1 : 3);
 
-		this.after = factory.createLegendPanel(parent);
-		this.after.setText(texts.get(AmpTexts.AFTER));
-		this.afterLayout = new UITableLayout();
-		this.after.setLayout(this.afterLayout);
-		parentLayout.set(this.after, row + 3, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_TOP, true, false);
+		if (legends) {
+			UILegendPanel legend = factory.createLegendPanel(afterPlace.parent);
+			legend.setText(texts.get(AmpTexts.AFTER));
+			this.after = legend;
+			this.afterLayout = new UITableLayout();
+			legend.setLayout(this.afterLayout);
+			afterPlace.layout.set(legend, afterPlace.row, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_TOP, true, false);
+		} else {
+			this.after = afterPlace.parent;
+			this.afterLayout = afterPlace.layout;
+		}
 
-		UIPanel add = factory.createPanel(parent, false);
+		UIPanel add = factory.createPanel(addPlace.parent, false);
 		UITableLayout addLayout = new UITableLayout(0f);
 		add.setLayout(addLayout);
-		parentLayout.set(add, row + 4, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
+		addPlace.layout.set(add, addPlace.row, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		UILabel addLabel = factory.createLabel(add);
 		addLabel.setText(texts.get(AmpTexts.ADD_PEDAL));
 		addLabel.setToolTipText(texts.get(AmpTexts.ADD_PEDAL + ".tip"));
@@ -195,6 +250,9 @@ final class AmpChainRows implements AmpPedalRow.Listener {
 		List<PedalSettings> pedals = new ArrayList<PedalSettings>(section(this.chain, kind.section()));
 		pedals.add(PedalSettings.defaults(kind));
 		rebuild(withSection(this.chain, kind.section(), pedals));
+		if (this.sectionShown != null) {
+			this.sectionShown.accept(kind.section());
+		}
 	}
 
 	private void move(EffectKind kind, int by) {

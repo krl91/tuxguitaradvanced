@@ -1,5 +1,6 @@
 package app.tuxguitar.app.tools.custom.practice.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -15,25 +16,31 @@ import app.tuxguitar.audio.engine.monitor.ReadyMadeChains;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UIDisposeEvent;
 import app.tuxguitar.ui.event.UIDisposeListener;
-import app.tuxguitar.ui.event.UIModifyEvent;
-import app.tuxguitar.ui.event.UIModifyListener;
 import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
+import app.tuxguitar.audio.engine.monitor.EffectKind;
 import app.tuxguitar.ui.layout.UITableLayout;
+import app.tuxguitar.ui.menu.UIMenuActionItem;
+import app.tuxguitar.ui.menu.UIPopupMenu;
+import app.tuxguitar.ui.resource.UIPosition;
 import app.tuxguitar.ui.resource.UIRectangle;
 import app.tuxguitar.ui.widget.UIButton;
+import app.tuxguitar.ui.widget.UICheckBox;
+import app.tuxguitar.ui.widget.UIControl;
 import app.tuxguitar.ui.widget.UIDropDownSelect;
 import app.tuxguitar.ui.widget.UILabel;
 import app.tuxguitar.ui.widget.UIPanel;
 import app.tuxguitar.ui.widget.UIScale;
 import app.tuxguitar.ui.widget.UISelectItem;
-import app.tuxguitar.ui.widget.UITextField;
-import app.tuxguitar.ui.widget.UIToggleButton;
+import app.tuxguitar.ui.widget.UITabFolder;
+import app.tuxguitar.ui.widget.UITabItem;
 import app.tuxguitar.ui.widget.UIWindow;
 
 /**
- * The Amp and effects window (spec 022, contracts/amp-window.md): the top block (the switch, the sounds, the output, the two volumes, the delay), the
- * chain's rows, and a message line. The sound of the score in front is picked when the score changes, and the learner's pick is remembered for it (FR-019). One window: a second open brings it forward. It is owned by the main window, placed at its kept bounds when they are on a screen,
+ * The Amp and effects window (spec 022; laid out by spec 025, contracts/amp-window.md): above, the check box that turns the sound on, the delay, and the
+ * sounds with Save… and ⋯ (Rename…, Delete, Restore); four scrolling tabs (the pedals before the amp, the amp, the effects after it, the output and the
+ * volumes); under them Add a pedal and a message line. At its first opening it is at most {@link #FIRST_HEIGHT} pixels high, and it is never taller than
+ * the screen. The sound of the score in front is picked when the score changes, and the learner's pick is remembered for it (FR-019). One window: a second open brings it forward. It is owned by the main window, placed at its kept bounds when they are on a screen,
  * else away from the run's notes, else over the practice window; its bounds are kept when it closes, also when its owner closes it.
  */
 final class AmpWindow {
@@ -71,6 +78,10 @@ final class AmpWindow {
 	}
 
 	private static final float MARGIN = 24f;
+	/** The height of the window at its first opening (spec 025, FR-010). */
+	static final float FIRST_HEIGHT = 600f;
+	/** The tabs, in their order. */
+	private static final String[] TABS = { AmpTexts.TAB_BEFORE, AmpTexts.TAB_AMP, AmpTexts.TAB_AFTER, AmpTexts.TAB_OUTPUT };
 	private static final int VOLUME_POSITIONS = 100;
 
 	private final UIFactory factory;
@@ -82,14 +93,18 @@ final class AmpWindow {
 	private final Supplier<UIRectangle> practiceBounds;
 	private final Predicate<UIRectangle> onScreen;
 	private UIWindow window;
-	private UIToggleButton enabled;
+	private UICheckBox enabled;
 	private UILabel soundsLabel;
 	private UIDropDownSelect<String> sounds;
-	private UITextField soundName;
 	private UIButton saveAs;
-	private UIButton rename;
-	private UIButton delete;
-	private UIButton restore;
+	private UIButton more;
+	private UIPopupMenu menu;
+	private UIMenuActionItem rename;
+	private UIMenuActionItem delete;
+	private UIMenuActionItem restore;
+	private final AmpNamePrompt namePrompt;
+	private UITabFolder tabs;
+	private final List<UIPanel> tabPanels = new ArrayList<UIPanel>();
 	private Optional<ScoreKey> score = Optional.empty();
 	private UILabel outputsLabel;
 	private UIDropDownSelect<String> outputs;
@@ -99,7 +114,6 @@ final class AmpWindow {
 	private UILabel message;
 	private AmpChainRows rows;
 	private boolean updating;
-	private boolean nameMessage;
 	private UIWindow warning;
 	private UIButton turnOnAnyway;
 	private UIButton warningCancel;
@@ -120,6 +134,7 @@ final class AmpWindow {
 		this.guards = guards;
 		this.practiceBounds = practiceBounds;
 		this.onScreen = onScreen;
+		this.namePrompt = new AmpNamePrompt(factory, texts);
 	}
 
 	boolean isOpen() {
@@ -143,7 +158,7 @@ final class AmpWindow {
 		top.setLayout(topLayout);
 		layout.set(top, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_TOP, true, false);
 
-		this.enabled = this.factory.createToggleButton(top);
+		this.enabled = this.factory.createCheckBox(top);
 		this.enabled.setText(this.texts.get(AmpTexts.ENABLED));
 		this.enabled.setToolTipText(this.texts.get(AmpTexts.ENABLED + ".tip"));
 		this.enabled.setSelected(settings.enabled());
@@ -160,12 +175,34 @@ final class AmpWindow {
 				}
 			}
 		});
-		topLayout.set(this.enabled, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false, 1, 3);
+		topLayout.set(this.enabled, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
 
 		createSounds(top, topLayout, 2);
 
-		this.outputsLabel = label(top, topLayout, 3, AmpTexts.OUTPUT);
-		this.outputs = this.factory.createDropDownSelect(top);
+		// on its own line: beside the check box it would make the window too wide to open beside the run's notes
+		this.delay = this.factory.createLabel(top);
+		this.delay.setToolTipText(this.texts.get(AmpTexts.DELAY + ".tip"));
+		topLayout.set(this.delay, 3, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
+
+		// the four tabs, each scrolling when the window is lower than it (spec 025, FR-007, FR-010)
+		this.tabs = this.factory.createTabFolder(this.window, false);
+		layout.set(this.tabs, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true);
+		this.tabPanels.clear();
+		List<AmpChainRows.Place> places = new ArrayList<AmpChainRows.Place>();
+		for (String key : TABS) {
+			UITabItem item = this.tabs.createTab();
+			item.setText(this.texts.get(key));
+			UIPanel panel = PracticeLayout.scrollingTab(this.factory, item);
+			UITableLayout panelLayout = new UITableLayout();
+			panel.setLayout(panelLayout);
+			this.tabPanels.add(panel);
+			places.add(new AmpChainRows.Place(panel, panelLayout, 1));
+		}
+
+		UIPanel output = this.tabPanels.get(3);
+		UITableLayout outputLayout = (UITableLayout) output.getLayout();
+		this.outputsLabel = label(output, outputLayout, 1, AmpTexts.OUTPUT);
+		this.outputs = this.factory.createDropDownSelect(output);
 		for (String name : this.sound.outputs()) {
 			this.outputs.addItem(new UISelectItem<String>(name.isEmpty() ? this.texts.get(AmpTexts.OUTPUT_DEFAULT) : name, name));
 		}
@@ -182,10 +219,10 @@ final class AmpWindow {
 				}
 			}
 		});
-		topLayout.set(this.outputs, 3, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		outputLayout.set(this.outputs, 1, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 
-		label(top, topLayout, 4, AmpTexts.GUITAR_VOLUME);
-		this.guitarVolume = scale(top, topLayout, 4, AmpTexts.GUITAR_VOLUME, VOLUME_POSITIONS, (int) Math.round(settings.guitarVolume() * VOLUME_POSITIONS));
+		label(output, outputLayout, 2, AmpTexts.GUITAR_VOLUME);
+		this.guitarVolume = scale(output, outputLayout, 2, AmpTexts.GUITAR_VOLUME, VOLUME_POSITIONS, (int) Math.round(settings.guitarVolume() * VOLUME_POSITIONS));
 		this.guitarVolume.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
 				if (!AmpWindow.this.updating) {
@@ -196,8 +233,8 @@ final class AmpWindow {
 			}
 		});
 
-		label(top, topLayout, 5, AmpTexts.SCORE_VOLUME);
-		this.scoreVolume = scale(top, topLayout, 5, AmpTexts.SCORE_VOLUME, 10, this.sound.scoreVolume());
+		label(output, outputLayout, 3, AmpTexts.SCORE_VOLUME);
+		this.scoreVolume = scale(output, outputLayout, 3, AmpTexts.SCORE_VOLUME, 10, this.sound.scoreVolume());
 		this.scoreVolume.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
 				if (!AmpWindow.this.updating) {
@@ -206,18 +243,15 @@ final class AmpWindow {
 			}
 		});
 
-		this.delay = this.factory.createLabel(top);
-		this.delay.setToolTipText(this.texts.get(AmpTexts.DELAY + ".tip"));
-		topLayout.set(this.delay, 6, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
-
-		this.rows = new AmpChainRows(this.factory, this.window, layout, 2, this.texts, this.store.currentChain(), chain -> {
-			this.store.saveCurrentChain(chain);
-			this.sound.setChain(chain);
-			showSounds();
-		}, this::relayout);
+		this.rows = new AmpChainRows(this.factory, places.get(0), places.get(1), places.get(2), new AmpChainRows.Place(this.window, layout, 3), this.texts,
+				this.store.currentChain(), chain -> {
+					this.store.saveCurrentChain(chain);
+					this.sound.setChain(chain);
+					showSounds();
+				}, this::relayout, section -> this.tabs.setSelectedIndex(section == EffectKind.Section.BEFORE ? 0 : 2));
 
 		this.message = this.factory.createLabel(this.window);
-		layout.set(this.message, 2 + AmpChainRows.ROWS, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		layout.set(this.message, 4, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 
 		this.window.addDisposeListener(new UIDisposeListener() {
 			public void onDispose(UIDisposeEvent event) {
@@ -227,12 +261,15 @@ final class AmpWindow {
 		});
 		showDelay();
 		showSounds();
+		// at most 600 pixels high at the first opening; bounds kept from an earlier launch never taller than the screen holding them (spec 025, FR-010)
+		int[] kept = settings.windowBounds();
+		PracticeLayout.sizeFolder(this.window, this.tabs, this.tabPanels, kept == null ? FIRST_HEIGHT : Screens.usableHeight(this.owner.getBounds()));
 		this.window.pack();
-		this.window.setBounds(placement(settings.windowBounds()));
+		this.window.setBounds(withinScreen(placement(kept)));
 		this.window.open();
 	}
 
-	/** The sound list, a name field and the buttons that apply to the current sound (contracts/amp-window.md "Layout"). */
+	/** The sound list, Save… and ⋯ with Rename…, Delete and Restore (contracts/amp-window.md "Layout"); a name is asked in a small window. */
 	private void createSounds(UIPanel top, UITableLayout topLayout, int row) {
 		this.soundsLabel = label(top, topLayout, row, AmpTexts.SOUND);
 		UIPanel panel = this.factory.createPanel(top, false);
@@ -248,45 +285,63 @@ final class AmpWindow {
 				}
 			}
 		});
-		layout.set(this.sounds, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 4);
-		UILabel nameLabel = this.factory.createLabel(panel);
-		nameLabel.setText(this.texts.get(AmpTexts.SOUND_NAME));
-		nameLabel.setToolTipText(this.texts.get(AmpTexts.SOUND_NAME + ".tip"));
-		layout.set(nameLabel, 2, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
-		this.soundName = this.factory.createTextField(panel);
-		this.soundName.addModifyListener(new UIModifyListener() {
-			public void onModify(UIModifyEvent event) {
-				showButtons();
-			}
+		layout.set(this.sounds, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.saveAs = button(panel, layout, 2, AmpTexts.SAVE, () -> this.namePrompt.open(this.window, this.texts.get(AmpTexts.SAVE_TITLE), "",
+				name -> this.store.nameProblem(name, null), name -> {
+					AmpSoundStore.NameProblem problem = this.store.nameProblem(name, null);
+					return problem == null || problem == AmpSoundStore.NameProblem.TAKEN;
+				}, name -> {
+					this.store.saveAs(name, this.rows.chain());
+					this.store.setCurrent(name);
+					this.store.remember(this.score, this.store.current().name());
+					showSounds();
+				}));
+		this.more = button(panel, layout, 3, AmpTexts.MORE, () -> openMenu());
+		this.menu = this.factory.createPopupMenu(this.window);
+		this.rename = item(AmpTexts.RENAME, () -> {
+			String current = this.store.current().name();
+			this.namePrompt.open(this.window, this.texts.get(AmpTexts.RENAME_TITLE), current, name -> this.store.nameProblem(name, current),
+					name -> this.store.nameProblem(name, current) == null && !name.trim().equals(current), name -> {
+						this.store.rename(current, name);
+						this.store.remember(this.score, name);
+						showSounds();
+					});
 		});
-		layout.set(this.soundName, 2, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
-		layout.set(this.soundName, UITableLayout.PACKED_WIDTH, 200f);
-		this.saveAs = button(panel, layout, 1, AmpTexts.SAVE_AS, () -> {
-			String name = this.soundName.getText().trim();
-			this.store.saveAs(name, this.rows.chain());
-			this.store.setCurrent(name);
-			this.store.remember(this.score, this.store.current().name());
-			this.soundName.setText("");
-			showSounds();
-		});
-		this.rename = button(panel, layout, 2, AmpTexts.RENAME, () -> {
-			String name = this.soundName.getText().trim();
-			this.store.rename(this.store.current().name(), name);
-			this.store.remember(this.score, name);
-			this.soundName.setText("");
-			showSounds();
-		});
-		this.delete = button(panel, layout, 3, AmpTexts.DELETE, () -> {
+		this.delete = item(AmpTexts.DELETE, () -> {
 			this.store.delete(this.store.current().name());
 			use(ReadyMadeChains.all().get(0).name());
 		});
-		this.restore = button(panel, layout, 4, AmpTexts.RESTORE, () -> {
+		this.restore = item(AmpTexts.RESTORE, () -> {
 			this.store.restore(this.store.current().name());
 			ChainSettings chain = this.store.currentChain();
 			this.rows.show(chain);
 			this.sound.setChain(chain);
 			showSounds();
 		});
+	}
+
+	private UIMenuActionItem item(String key, Runnable action) {
+		UIMenuActionItem item = this.menu.createActionItem();
+		item.setText(this.texts.get(key));
+		item.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				action.run();
+			}
+		});
+		return item;
+	}
+
+	/** The ⋯ menu, under its button. */
+	private void openMenu() {
+		float x = 0f;
+		float y = 0f;
+		for (UIControl control = this.more; control != null && control != this.window; control = control.getParent()) {
+			x += control.getBounds().getX();
+			y += control.getBounds().getY();
+		}
+		UIRectangle window = this.window.getBounds();
+		float title = window.getHeight() - this.window.getChildArea().getHeight();
+		this.menu.open(new UIPosition(window.getX() + x, window.getY() + title + y + this.more.getBounds().getHeight()));
 	}
 
 	private UIButton button(UIPanel panel, UITableLayout layout, int column, String key, Runnable action) {
@@ -298,7 +353,7 @@ final class AmpWindow {
 				action.run();
 			}
 		});
-		layout.set(button, 3, column, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, false, false);
+		layout.set(button, 1, column, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, false, false);
 		return button;
 	}
 
@@ -352,26 +407,15 @@ final class AmpWindow {
 		showButtons();
 	}
 
-	/** Save as, Rename, Delete and Restore enabled only when they apply; a refused name says why on the message line. */
+	/** Rename…, Delete and Restore enabled only when they apply (spec 022's rules; the name rules are the prompt's). */
 	private void showButtons() {
 		if (!isOpen()) {
 			return;
 		}
 		app.tuxguitar.app.tools.custom.practice.session.Sound current = this.store.current();
-		String name = this.soundName.getText();
-		AmpSoundStore.NameProblem problem = this.store.nameProblem(name, null);
-		this.saveAs.setEnabled(problem == null || problem == AmpSoundStore.NameProblem.TAKEN);
-		this.rename.setEnabled(!current.readyMade() && this.store.nameProblem(name, current.name()) == null);
+		this.rename.setEnabled(!current.readyMade());
 		this.delete.setEnabled(!current.readyMade());
 		this.restore.setEnabled(current.readyMade() && current.changed());
-		String refused = problem == AmpSoundStore.NameProblem.READY_MADE ? AmpTexts.NAME_READY_MADE : problem == AmpSoundStore.NameProblem.TOO_LONG ? AmpTexts.NAME_TOO_LONG : null;
-		if (refused != null) {
-			message(this.texts.get(refused, Integer.toString(AmpSoundStore.NAME_LENGTH)));
-			this.nameMessage = true;
-		} else if (this.nameMessage) {
-			message("");
-			this.nameMessage = false;
-		}
 	}
 
 	private void turn(boolean on) {
@@ -474,14 +518,20 @@ final class AmpWindow {
 		message(this.texts.get(AmpTexts.notice(notice)));
 	}
 
-	/** The pedals' rows changed: the window takes its new size, its top left corner where it is. */
+	/** The pedals' rows changed: the tabs are laid out again, the window keeps its size (a tab taller than the window scrolls, spec 025). */
 	private void relayout() {
 		if (isOpen()) {
-			UIRectangle bounds = this.window.getBounds();
-			this.window.pack();
-			UIRectangle packed = this.window.getBounds();
-			this.window.setBounds(new UIRectangle(bounds.getX(), bounds.getY(), packed.getWidth(), packed.getHeight()));
+			for (UIPanel panel : this.tabPanels) {
+				panel.computePackedSize(null, null);
+			}
+			this.window.layout();
 		}
+	}
+
+	/** Bounds no taller than the screen holding them (768 pixels when it is not known). */
+	private static UIRectangle withinScreen(UIRectangle bounds) {
+		float screen = PracticeLayout.screen(Screens.usableHeight(bounds));
+		return bounds.getHeight() <= screen ? bounds : new UIRectangle(bounds.getX(), bounds.getY(), bounds.getWidth(), screen);
 	}
 
 	private UILabel label(UIPanel parent, UITableLayout layout, int row, String key) {
@@ -543,6 +593,7 @@ final class AmpWindow {
 	}
 
 	void close() {
+		this.namePrompt.close();
 		if (isOpen()) {
 			this.window.dispose();
 		}
@@ -574,7 +625,7 @@ final class AmpWindow {
 		return this.window;
 	}
 
-	UIToggleButton getSwitch() {
+	UICheckBox getSwitch() {
 		return this.enabled;
 	}
 
@@ -622,24 +673,32 @@ final class AmpWindow {
 		return this.sounds;
 	}
 
-	UITextField getSoundName() {
-		return this.soundName;
-	}
-
 	UIButton getSaveAs() {
 		return this.saveAs;
 	}
 
-	UIButton getRename() {
+	UIButton getMore() {
+		return this.more;
+	}
+
+	UIMenuActionItem getRename() {
 		return this.rename;
 	}
 
-	UIButton getDelete() {
+	UIMenuActionItem getDelete() {
 		return this.delete;
 	}
 
-	UIButton getRestore() {
+	UIMenuActionItem getRestore() {
 		return this.restore;
+	}
+
+	AmpNamePrompt getNamePrompt() {
+		return this.namePrompt;
+	}
+
+	UITabFolder getTabs() {
+		return this.tabs;
 	}
 
 	AmpChainRows getRows() {

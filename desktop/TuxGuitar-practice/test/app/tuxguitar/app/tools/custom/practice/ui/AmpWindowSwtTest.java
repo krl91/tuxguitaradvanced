@@ -363,7 +363,7 @@ public class AmpWindowSwtTest {
 		notifySelection(display, nativeScale);
 	}
 
-	private static void userToggles(Object display, UIToggleButton button, boolean selected) throws Exception {
+	private static void userToggles(Object display, Object button, boolean selected) throws Exception {
 		Object nativeButton = button.getClass().getMethod("getControl").invoke(button);
 		nativeButton.getClass().getMethod("setSelection", boolean.class).invoke(nativeButton, selected);
 		notifySelection(display, nativeButton);

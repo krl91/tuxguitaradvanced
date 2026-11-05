@@ -226,7 +226,7 @@ public class AmpSafetySwtTest {
 		notifySelection(display, button.getClass().getMethod("getControl").invoke(button));
 	}
 
-	private static void userToggles(Object display, UIToggleButton button, boolean selected) throws Exception {
+	private static void userToggles(Object display, Object button, boolean selected) throws Exception {
 		Object nativeButton = button.getClass().getMethod("getControl").invoke(button);
 		nativeButton.getClass().getMethod("setSelection", boolean.class).invoke(nativeButton, selected);
 		notifySelection(display, nativeButton);
