@@ -95,16 +95,16 @@
 
 - [ ] T006 New test `PT/dataset/OwnerChordsProfileProbeTest.java` (tag `dataset`). It reads the folders of `-Dtuxguitar.owner.chords` (default: the first two series), as `OwnerChordsStrumHoldProbeTest` does. For each take, it builds the frames with the engine of `-Dtuxguitar.recognition.engine`, with the spectrum on, and arms the strum as the session does (onset, `articulationLatencyNanos`, `CHORD_WINDOW`), as in `OwnerChordsStrumHoldProbeTest`. In the test, it computes the profile of data-model "Chord profile":
   - the linear magnitude of `getBandDb(midi)` summed per note name, from the expected chord's lowest pitch minus one semitone up to `top`;
-  - the bands more than `noise` dB under the frame's strongest band left out, when a noise floor is set;
+  - the bands more than `noise` dB under the frame's strongest summed band (the tolerated names' bands not counted) left out, when a noise floor is set;
   - the cosine with the expected names, and the count of weak names (under `names` × the strongest expected name's sum);
   - complete when the match reaches the threshold, at most one name is weak, and `settle` ms have passed; accepted after `CHORD_CONFIRM` frames in a row within the window.
 
-  For speed, the frames and their bands are computed once per take and engine and reused by every configuration (about 40,000 configurations per arming reference); only the summing and the decision run per configuration, and the match is recorded per frame so that every threshold is read from one pass.
+  For speed, the frames and their bands are computed once per take and engine and reused by every configuration (about 60,000 configurations per arming reference); only the summing and the decision run per configuration, and the match is recorded per frame so that every threshold is read from one pass.
 
   It sweeps:
   - the threshold: 0.70 to 0.95 by 0.01;
   - settle: 0, 50, 100, 200 ms;
-  - the weak-name share: 0.05, 0.10, 0.20, 0.30;
+  - the weak-name share: 0.05, 0.10, 0.20, 0.30, 0.40, 0.50;
   - top: 76, 84, 88, 96;
   - the noise floor: none, 40 dB, 30 dB;
   - weight: linear or square root;
@@ -120,7 +120,7 @@
 
   It writes `target/dataset-benchmark/owner-chords-profile-probe-<engine>.txt` and asserts nothing about the figures.
 - [ ] T007 Run T006 on the reference series and on the first two series, with each engine. Write `SPEC/benchmark/probe.md`, with:
-  - the configurations that give 25/25 right, 0 clearly wrong and at least 8 and 18 on the first two series, on both engines;
+  - the configurations that give 25/25 right, 0 clearly wrong, a weak-name share at least 0.05 above the leak, and at least 8 and 18 on the first two series, on both engines and both arming references;
   - the two engines compared;
   - the margin: the weakest right match against the strongest clearly wrong one;
   - the leak of T006, and *Normal*'s weak-name share with its margin above it.
@@ -132,9 +132,9 @@
   - whether the attack path stays for chords;
   - whether the weight and the noise floor are kept as settings (kept when the chosen value is not the plain one: linear, no floor).
 
-  *Normal*'s weak-name share must be above the leak (research R6): T006 also reports the highest share that a name not played reaches in the reference takes, and `probe.md` writes it with the margin. T009 uses it.
+  *Normal*'s weak-name share must be at least 0.05 above the leak (research R6): T006 also reports the highest share that a name not played reaches in the reference takes, and `probe.md` writes it with the margin. T009 uses it.
 
-  **Check stop condition A**: if no configuration qualifies, stop here and report to the owner with the best figures and the spec's fallback.
+  **Check stop condition A** (research R6, the leak criterion included): if no configuration qualifies, stop here and report to the owner with the best figures and the spec's fallback.
 - [ ] T008 Gate (the test files added only); commit "impl(024): phase 3: probe of the pitch-class profile".
 
 ## Phase 4: User Story 1 - The chords I play are accepted (P1) 🎯 MVP
@@ -281,7 +281,7 @@
 
   Then run T038: green.
 - [ ] T040 [P] The practice guide in three languages: the *Chord check* levels, and what a refused chord's message means now.
-- [ ] T041 [P] New sheet `specs/test-sheets/F15-accords-tolerants.md` (SC-005): chords of a score through the cable in Wait, Follow and Arcade with *Normal*, then one chord with each level, then one threshold changed in Recognition settings and seen at the next run (FR-013).
+- [ ] T041 [P] New sheet `specs/test-sheets/F15-accords-tolerants.md` (SC-005): chords of a score through the cable in Wait, Follow and Arcade with *Normal*, then one chord with each level, then one threshold changed in Recognition settings and seen at the next run (FR-013), and one chord played right after a held note (tied or let ring), accepted whether the held note still rings or has faded.
 - [ ] T042 Draft the release notes (macOS, Linux and Windows alike).
 - [ ] T043 Full gate: `clean verify -P native-modules`, then `-P swt-gui-tests`, and the dataset tests of this spec with each engine.
 - [ ] T044 Write `SPEC/final-report.md` (each FR and SC with its figure and evidence, both engines, the stop conditions met or not) and update `specs/STATUS.md`. Commit "impl(024): phase 6: documentation, sheet F15, final report"; push both refs in one push.

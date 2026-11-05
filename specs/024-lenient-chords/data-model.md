@@ -14,10 +14,10 @@ The pure class `ChordProfile` (`TuxGuitar-practice/src/.../practice/session/`) h
 | `template[12]` | The expected note names (the required names; "expected names" means these everywhere) | 1 for each name of the required pitches, 0 elsewhere |
 | `ignored[12]` | The tolerated names | true for each name of a tolerated pitch (still sounding from an earlier beat) that is not a required name: its bands are not summed, so it counts neither for nor against the chord |
 | `summedNanos` | The time summed since the arming | |
-| `noise` | The noise floor | A band more than `CHORD_PROFILE_NOISE` dB under the frame's strongest band is not summed (no floor when the setting is absent) |
+| `noise` | The noise floor | A band more than `CHORD_PROFILE_NOISE` dB under the frame's strongest summed band (the ignored names' bands not counted) is not summed (no floor when the setting is absent) |
 
 Operations:
-- `reset(required, tolerated, top, weight, noise)` at each arming: the sums go to 0, the template and the ignored names are set. Nothing is allocated; the arrays are made once per session.
+- `reset(required, tolerated, top, weight, noise)` at each arming: the sums go to 0, the template and the ignored names are set. Nothing is allocated per frame. `PracticeSession` (Wait) makes one profile per session; `FollowSession` (Follow, Arcade) makes one per chord candidate with each `PendingOnset`, per onset as `PendingOnset` and its `chordRun` already are (`FollowSession.java:334`, `:872`), never per frame.
 - `add(SpectrumFrame)` sums one frame.
 - `match()` returns the cosine of `sums` and `template`. It is 0 when `sums` is all 0.
 - `weakNames(share)` counts the required names whose sum is under `CHORD_PROFILE_NAMES` × the strongest expected name's sum.
