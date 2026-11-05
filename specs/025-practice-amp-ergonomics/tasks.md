@@ -76,8 +76,8 @@
 - [X] T026 [P] `docs/PRACTICE.md`, `docs/PRACTICE-FR.md`, `docs/PRACTICE-ES.md`: the line under the start button and Check again; the amp window's tabs and new names (screens described, no "only on macOS").
 - [X] T027 [P] `specs/test-sheets/F14-ergonomie.md` (quickstart §4) and its row in `specs/test-sheets/README.md`.
 - [X] T028 [P] `docs/release-notes/next-ergonomics.md`: draft notes (the known issues of 0.8.0-beta.7 fixed).
-- [ ] T029 Full gate (`clean verify -P native-modules`, `swt-gui-tests`), counts appended to `SPEC/baseline.txt`; the test diff since T001 shows added files and the four files of T023 only.
-- [ ] T030 `SPEC/final-report.md`: FR and SC status with evidence, the exception's lines, what waits for the owner.
+- [X] T029 Full gate (`clean verify -P native-modules`, `swt-gui-tests`), counts appended to `SPEC/baseline.txt`; the test diff since T001 shows added files and the four files of T023 only.
+- [X] T030 `SPEC/final-report.md`: FR and SC status with evidence, the exception's lines, what waits for the owner.
 - [ ] T031 [HUMAN] The owner's gate on the relaunched app, sheet F14 (SC-001, SC-003, SC-005).
 
 ## Dependencies

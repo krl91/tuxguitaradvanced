@@ -13,3 +13,11 @@ Committed tests that read the files this spec changes (must stay unchanged and g
   AmpPedalRowsSwtTest, AudioEngineTest, AudioEngineBackendTest, InputAssessorTest, InputAssessorStatsTest
   Owner's exception of 2026-11-05 (research R6, only the lines reaching the old switch, Name field and sound buttons):
   * AmpWindowSwtTest  * AmpSafetySwtTest  * AmpAutoStartWarningSwtTest  * AmpSoundListSwtTest
+
+Final gate (T029), 2026-11-05, on the code of phase 5 (37e302af6; phase 6 changed documentation only):
+  mvn -o -e clean verify -P native-modules: common modules 73, 1, 1, 10 (1 skipped), 2; audio engine 498 (1 skipped); tuner 24;
+    practice 1466 (12 skipped), 0 failures; the macOS application built
+  swt-gui-tests: 91, 0 failures (run with the session unlocked: with the screen locked, PracticeWindowFitsSwtTest fails because macOS
+    selects no tab of a folder and lays nothing out, seen on 2026-11-05 and gone once the owner unlocked the Mac)
+  Test diff since T001 (9109b37e5): added files, and AmpWindowSwtTest, AmpSafetySwtTest, AmpSoundListSwtTest with only the lines of
+    exception-lines.md; AmpAutoStartWarningSwtTest unchanged

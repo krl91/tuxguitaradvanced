@@ -1,0 +1,9 @@
+<!-- Draft (spec 025): the part of the next release's notes about the practice and amp windows. Merged into docs/release-notes/<tag>.md when the release is made. -->
+
+### ✨ The practice and amp windows fit your screen and say what to do
+
+* **The start button is never stuck.** When it is greyed, a line under it (above *Practise this track* and *Close*, on every tab) says why and what to do: no track chosen, the level not checked yet, no signal, a signal that saturates, an input lost, microphone access refused, or a check that is listening. For the input level's causes, **Check again** starts a new check. After *no signal* or *saturates*, the check also starts again by itself as soon as your guitar is heard (never during a run): choosing the input again is no longer needed. This fixes the known issue of 0.8.0-beta.7.
+* **The practice window fits a 768-pixel screen.** Each tab scrolls when it is taller than the window, and the start button stays in view. This fixes the known issue of 0.8.0-beta.7.
+* **The Amp and effects window, in tabs.** At the top, the check box **Hear my guitar through the amp** (it was *Amp sound*), the sound list with **Save…** and **⋯** (*Rename…*, *Delete*, *Restore*), and the delay. Below, four scrolling tabs: *Pedals before the amp*, *Amp* (with **Speaker simulation**, which was *Cabinet*), *Effects after the amp*, *Output*. *Add pedal* shows the tab of the pedal it adds. A sound's name is asked in a small window, with the same rules as before. The window is at most 600 pixels high at its first opening and never taller than the screen; your settings and sounds are kept.
+
+On Linux and Windows these windows use the same code but were not looked at: the sheet [F14](https://github.com/krl91/tuxguitaradvanced/blob/master/specs/test-sheets/F14-ergonomie.md), row **X1**, says what to check.
