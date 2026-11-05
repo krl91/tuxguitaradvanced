@@ -3,6 +3,7 @@ package app.tuxguitar.audio.engine.settings;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,6 +67,12 @@ public final class ChordLeniency {
 	}
 
 	/** The past sets, oldest first. Spec 023's chord values, before the profile rule existed, are Normal's. */
+	/** The levels a learner can choose, from the strictest. */
+	public static final List<Level> NAMED = Collections.unmodifiableList(Arrays.asList(Level.STRICT, Level.NORMAL, Level.LENIENT));
+
+	/** Lenient's chord match (T007: the right chords of the reference series keep a margin, no clearly wrong one comes near). */
+	private static final Double LENIENT_MATCH = Double.valueOf(0.70);
+
 	public static final List<PastSet> HISTORY = Collections.unmodifiableList(Arrays.asList(spec023()));
 
 	private ChordLeniency() {
@@ -80,15 +87,43 @@ public final class ChordLeniency {
 		return new PastSet(Level.NORMAL, values);
 	}
 
-	/** The settings with a level's values. Only Normal in this phase: the other levels come with the setting of the level (spec 024 phase 5). */
+	/** The level the settings hold: the named level whose values they all hold, otherwise {@link Level#CUSTOM}. */
+	public static Level of(RecognitionSettings settings) {
+		for( Level level : NAMED ) {
+			boolean holds = true;
+			for( Map.Entry<RecognitionParameter, Object> entry : values(level).entrySet() ) {
+				holds &= entry.getValue().equals(settings.getValue(entry.getKey()));
+			}
+			if( holds ) {
+				return level;
+			}
+		}
+		return Level.CUSTOM;
+	}
+
+	/** The settings with a level's values, every other value as it was. Custom has no values and cannot be applied. */
 	public static RecognitionSettings apply(Level level, RecognitionSettings settings) {
-		if( level != Level.NORMAL ) {
+		RecognitionSettings applied = settings;
+		for( Map.Entry<RecognitionParameter, Object> entry : values(level).entrySet() ) {
+			applied = applied.with(entry.getKey(), entry.getValue());
+		}
+		return applied;
+	}
+
+	/**
+	 * A level's values (data-model "Chord leniency level", research R6, the T007 figures): the rule, the match and the attack path. Normal's are the
+	 * defaults; Strict refuses the attack path, Lenient lowers the match.
+	 */
+	public static Map<RecognitionParameter, Object> values(Level level) {
+		if( level == null || level == Level.CUSTOM ) {
 			throw new IllegalArgumentException("no values for the level " + level);
 		}
 		RecognitionSettings defaults = RecognitionSettings.defaults();
-		return settings.with(RecognitionParameters.CHORD_COMPLETENESS, defaults.get(RecognitionParameters.CHORD_COMPLETENESS))
-				.with(RecognitionParameters.CHORD_PROFILE_MATCH, defaults.get(RecognitionParameters.CHORD_PROFILE_MATCH))
-				.with(RecognitionParameters.CHORD_ATTACK, defaults.get(RecognitionParameters.CHORD_ATTACK));
+		Map<RecognitionParameter, Object> values = new LinkedHashMap<RecognitionParameter, Object>();
+		values.put(RecognitionParameters.CHORD_COMPLETENESS, defaults.getValue(RecognitionParameters.CHORD_COMPLETENESS));
+		values.put(RecognitionParameters.CHORD_PROFILE_MATCH, level == Level.LENIENT ? LENIENT_MATCH : defaults.getValue(RecognitionParameters.CHORD_PROFILE_MATCH));
+		values.put(RecognitionParameters.CHORD_ATTACK, level == Level.STRICT ? Boolean.FALSE : defaults.getValue(RecognitionParameters.CHORD_ATTACK));
+		return Collections.unmodifiableMap(values);
 	}
 
 	/** The settings read from {@code stored}, with a level's current values when the file holds a past set of them; otherwise as they are. */

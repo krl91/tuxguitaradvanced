@@ -258,34 +258,36 @@
 
 ### Tests for User Story 2 (first, seen red)
 
-- [ ] T029 [P] [US2] New test `AET/settings/ChordLeniencyTest.java`, for the invariants of data-model "Chord leniency level":
+- [X] T029 [P] [US2] New test `AET/settings/ChordLeniencyTest.java`, for the invariants of data-model "Chord leniency level":
   - `of(defaults()) == NORMAL`;
   - `of(apply(L, s)) == L`;
   - `apply` changes no other value;
   - `CUSTOM` cannot be applied;
   - a value changed by hand gives `CUSTOM`.
-- [ ] T030 [P] [US2] New test `PT/dataset/ChordLeniencyLevelsTest.java` (tag `dataset`; FR-007, SC-004). On the reference series with each level's values, with each engine, it checks:
+- [X] T030 [P] [US2] New test `PT/dataset/ChordLeniencyLevelsTest.java` (tag `dataset`; FR-007, SC-004). On the reference series with each level's values, with each engine, it checks:
   - every level accepts 0 clearly wrong;
   - *Lenient* accepts at least *Normal*'s right chords;
   - *Strict* accepts at most *Normal*'s wrong acceptances (SC-004).
 
   It writes `target/dataset-benchmark/chord-leniency-levels-<engine>.txt`.
   It also reports, without asserting, the IDMT incomplete chords accepted by each level (expected one note more than played, as `DatasetBenchmarkTest` builds them, 44 cases), so the spec's edge case "*Strict* refuses it more often" is measured; T036 writes the figures in `levels.md`. If *Strict* does not refuse more of them than *Normal*, the edge case is corrected through `/speckit-clarify` (constitution XII).
-- [ ] T031 [P] [US2] New SWT test `PT/ui/ChordLeniencyPanelSwtTest.java` (`swt-gui-tests`):
+- [X] T031 [P] [US2] New SWT test `PT/ui/ChordLeniencyPanelSwtTest.java` (`swt-gui-tests`):
   - the *Mode* tab shows "Chord check" after `FollowPanel`, with *Strict*, *Normal* and *Lenient*;
   - choosing a level writes its values into the store's default layer;
   - a value changed in the store shows *Custom* and its line;
   - choosing a level again removes *Custom*;
   - the control stays enabled during a run.
-- [ ] T032 [US2] Run T029–T031: red for the right reason. Record it in `SPEC/benchmark/red-us2.txt`.
+- [X] T032 [US2] Run T029–T031: red for the right reason. Record it in `SPEC/benchmark/red-us2.txt`.
 
 ### Implementation for User Story 2
 
-- [ ] T033 [US2] `AE/settings/ChordLeniency.java` (made by T020 with the history): add the levels, their values from T007, `of`, `apply` and `values` (data-model "Chord leniency level").
-- [ ] T034 [US2] New `PR/ui/ChordLeniencyPanel.java` (contracts/chord-leniency.md): a label, a `UIDropDownSelect` and a wrapped line, listening to the store. Add it to the *Mode* tab in `PR/ui/PracticeWindow.java`, on the row after `FollowPanel`.
-- [ ] T035 [US2] Strings: `practice.chord-leniency`, `practice.chord-leniency.{strict,normal,lenient,custom}` and `….line`, in three languages; the French names are *Strict*, *Normal*, *Tolérant* and *Personnalisé* (label *Vérification des accords*), the Spanish *Estricto*, *Normal*, *Tolerante* and *Personalizado* (label *Comprobación de acordes*), the English *Strict*, *Normal*, *Lenient* and *Custom* (label *Chord check*), as the guide, sheet F15 and help pages use them. Also add to the `.tip` of the level's values in the Recognition settings window: "Choosing a chord check level in the practice window sets this value; changing it here makes the level Custom".
-- [ ] T036 [US2] Run T029–T031 with each engine for T030, and `-P swt-gui-tests` with the Mac session unlocked: green. Write `SPEC/benchmark/levels.md` from T030's reports.
-- [ ] T037 [US2] Gate with `swt-gui-tests`; commit "impl(024): phase 5 (US2): chord leniency levels in the Mode tab".
+- [X] T033 [US2] `AE/settings/ChordLeniency.java` (made by T020 with the history): add the levels, their values from T007, `of`, `apply` and `values` (data-model "Chord leniency level").
+- [X] T034 [US2] New `PR/ui/ChordLeniencyPanel.java` (contracts/chord-leniency.md): a label, a `UIDropDownSelect` and a wrapped line, listening to the store. Add it to the *Mode* tab in `PR/ui/PracticeWindow.java`, on the row after `FollowPanel`.
+- [X] T035 [US2] Strings: `practice.chord-leniency`, `practice.chord-leniency.{strict,normal,lenient,custom}` and `….line`, in three languages; the French names are *Strict*, *Normal*, *Tolérant* and *Personnalisé* (label *Vérification des accords*), the Spanish *Estricto*, *Normal*, *Tolerante* and *Personalizado* (label *Comprobación de acordes*), the English *Strict*, *Normal*, *Lenient* and *Custom* (label *Chord check*), as the guide, sheet F15 and help pages use them. Also add to the `.tip` of the level's values in the Recognition settings window: "Choosing a chord check level in the practice window sets this value; changing it here makes the level Custom".
+- [X] T036 [US2] Run T029–T031 with each engine for T030, and `-P swt-gui-tests` with the Mac session unlocked: green. Write `SPEC/benchmark/levels.md` from T030's reports.
+  *Done 2026-11-05 without the SWT run (Phase 5 note): T029 green (7 tests), T030 green with each engine, identical figures (`benchmark/levels.md`): 0 of 408 clearly wrong at every level, Strict 23, Normal 25, Lenient 25 of 25 right; one name off 0, 6 and 69 of 138. Incomplete chords of the datasets: Strict 24, Normal 24, Lenient 32 of 44 accepted, so the edge case "Strict refuses it more often" is not met: to be corrected through `/speckit-clarify` by the owner. `ChordLeniencyPanelSourceTest` green; `ChordLeniencyPanelSwtTest` waits for the owner.*
+- [X] T037 [US2] Gate with `swt-gui-tests`; commit "impl(024): phase 5 (US2): chord leniency levels in the Mode tab".
+  *Gate 2026-11-06 00:24 without `-P swt-gui-tests` (Phase 5 note): build success, 1,512 practice tests and 519 engine tests, 0 failures. The SWT run waits for the owner.*
 
 ## Phase 6: Polish & cross-cutting concerns
 

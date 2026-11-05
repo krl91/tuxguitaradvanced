@@ -1,0 +1,14 @@
+Chord check levels on the owner's reference series (spec 024, T030), engine native
+
+STRICT {recognition.chord.completeness=profile, recognition.chord.profile.match=0.79, recognition.chord.attack=false}
+    refused, own chord: take10.wav [43, 47, 50, 55]
+    refused, own chord: take11.wav [40, 47, 52, 55, 64]
+    23 of 25 right accepted; voicings 7 of 10, one name off 0 of 138, clearly wrong 0 of 408 accepted; incomplete chords of the datasets 24 of 44 accepted (reported only)
+
+NORMAL {recognition.chord.completeness=profile, recognition.chord.profile.match=0.79, recognition.chord.attack=true}
+    25 of 25 right accepted; voicings 10 of 10, one name off 6 of 138, clearly wrong 0 of 408 accepted; incomplete chords of the datasets 24 of 44 accepted (reported only)
+
+LENIENT {recognition.chord.completeness=profile, recognition.chord.profile.match=0.7, recognition.chord.attack=true}
+    25 of 25 right accepted; voicings 10 of 10, one name off 69 of 138, clearly wrong 0 of 408 accepted; incomplete chords of the datasets 32 of 44 accepted (reported only)
+
+Strict refuses more incomplete chords than Normal: NO (24 against 24 accepted)

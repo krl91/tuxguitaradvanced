@@ -1,0 +1,33 @@
+# Red run of phase 5 (T032), 2026-11-05
+
+## Part 1: TuxGuitar-audio-engine test (T029), before any production change
+
+Command: mvn -o test -pl ../../TuxGuitar-audio-engine -am -Dtest=ChordLeniencyTest -Dsurefire.failIfNoSpecifiedTests=false (macOS SWT build directory). Result: compilation fails, ChordLeniency.of and ChordLeniency.values are missing (the right reason).
+
+```
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordLeniencyTest.java:[35,57] cannot find symbol
+  symbol:   method of(app.tuxguitar.audio.engine.settings.RecognitionSettings)
+  location: class app.tuxguitar.audio.engine.settings.ChordLeniency
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordLeniencyTest.java:[40,73] cannot find symbol
+  symbol:   method values(app.tuxguitar.audio.engine.settings.ChordLeniency.Level)
+  location: class app.tuxguitar.audio.engine.settings.ChordLeniency
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordLeniencyTest.java:[44,73] cannot find symbol
+  symbol:   method values(app.tuxguitar.audio.engine.settings.ChordLeniency.Level)
+  location: class app.tuxguitar.audio.engine.settings.ChordLeniency
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordLeniencyTest.java:[48,74] cannot find symbol
+  symbol:   method values(app.tuxguitar.audio.engine.settings.ChordLeniency.Level)
+  location: class app.tuxguitar.audio.engine.settings.ChordLeniency
+```
+
+## Part 2: TuxGuitar-practice tests (T030, T031), after T033 only
+
+The engine side went green with T033: ChordLeniencyTest 7 tests, and the committed settings tests unchanged (78 tests, 0 failures). The practice tests do not compile: ChordLeniencyPanel is missing (the right reason; javac stops at the first errors). ChordLeniencyPanelSwtTest is red by this compilation, as the owner asked (tasks.md, Phase 5 note: its native run waits for the owner). ChordLeniencyPanelSourceTest (the place in the Mode tab, the names in three languages) is blocked by the same compilation; it is run once the panel exists, before the window and the strings change. T030 is a measurement on the datasets: it was written before T033 against ChordLeniency.values, then missing (Part 1); its assertions are judged in T036.
+
+Command: mvn -o test-compile -pl ../../TuxGuitar-practice -am
+
+```
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/ChordLeniencyPanelSwtTest.java:[62,25] cannot find symbol
+  symbol:   class ChordLeniencyPanel
+--
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/ChordLeniencyPanelSwtTest.java:[62,56] cannot find symbol
+```

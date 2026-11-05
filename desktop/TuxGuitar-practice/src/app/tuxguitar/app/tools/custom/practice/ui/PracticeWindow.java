@@ -194,6 +194,7 @@ public class PracticeWindow {
 	private AnalysisService.Listener frameListener;
 	// ---- the tempo-following mode (spec 002 T096-T099): a run beside the wait-mode session, never together with it
 	private FollowPanel followPanel;
+	private ChordLeniencyPanel chordLeniencyPanel;
 	/** The Advanced tab: the settings of both fires and their previews (spec 019 FR-014). */
 	private FireSettingsPanel fireSettings;
 	private UITabItem advancedTab;
@@ -362,6 +363,7 @@ public class PracticeWindow {
 				PracticeWindow.this.startFlow.cancelPending();
 				teardownSession();
 				PracticeWindow.this.followPanel.dispose();
+				PracticeWindow.this.chordLeniencyPanel.dispose();
 				PracticeWindow.this.fireSettings.dispose();
 				PracticeWindow.this.inputSelector.dispose();
 				PracticeWindow.this.levelPanel.disconnect();
@@ -547,8 +549,13 @@ public class PracticeWindow {
 		modeLayout.set(this.followPanel.getControl(), 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.followPanel.setContentListener(this::refit);
 		this.followPanel.setModeListener(this::modeChanged);
+		// how strict the chord check is, derived from the recognition settings; never disabled, a change applies from the next run (spec 024, FR-005)
+		this.chordLeniencyPanel = new ChordLeniencyPanel(uiFactory, modePanel, RecognitionSettingsStore.getInstance(this.context),
+				task -> TGSynchronizer.getInstance(this.context).executeLater(task));
+		modeLayout.set(this.chordLeniencyPanel.getControl(), 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
+		this.chordLeniencyPanel.setContentListener(this::refit);
 		// what recognition measured: said as measured, with no more precision (spec 004 T009, SC-003, FR-008)
-		this.delayLabel = label(uiFactory, modePanel, modeLayout, 2);
+		this.delayLabel = label(uiFactory, modePanel, modeLayout, 3);
 		this.delayLabel.setText(delayInfo());
 
 		// ---- tab 4: the repeated passages of the wait mode
