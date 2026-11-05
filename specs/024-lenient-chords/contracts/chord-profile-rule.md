@@ -24,7 +24,7 @@ The values come from the recognition settings through `ChordMatcher.Parameters`,
 2. **Each usable frame** adds its bands to the profile (linear magnitudes, no noise floor). A frame is complete when the match reaches `CHORD_PROFILE_MATCH`, at most one expected name is weak (`CHORD_PROFILE_NAMES`), and `CHORD_PROFILE_SETTLE` has passed. Two weak names refuse the frame whatever the match.
 3. **Acceptance:** `stableHops` complete frames in a row, within `CHORD_WINDOW` of the arming (Wait) or of the onset (Follow, Arcade).
 4. **Refusal:** the window ends first. In Wait, the feedback is `INCOMPLETE`, with the expected pitches whose names are weakest, and a new strum is needed. In Follow and Arcade, the wrong attempt carries the same missing pitches (`wrongAttempt`).
-5. **The attack path** (`PolyphonicAcceptance`, in `PracticeSession` and in `FollowSession`) accepts chords only while `CHORD_ATTACK` is on (on in *Normal* and *Lenient*, off in *Strict*), in every mode. While it is on with the profile rule, it accepts a chord only when the profile summed since the arming has at most one weak name; with no strum armed, the profile of the attack's own frame. Single notes are never affected.
+5. **The attack path** (`PolyphonicAcceptance`, in `PracticeSession` and in `FollowSession`) accepts chords only while `CHORD_ATTACK` is on (on in *Normal* and *Lenient*, off in *Strict*), in every mode. While it is on with the profile rule, it accepts a chord only when the profile summed since the arming has at most one weak name; with no strum armed, or when the armed profile summed nothing yet, the profile of the attack's own frame, and a frame with no spectrum does not stop the attack. Single notes are never affected.
 
 ## Guarantees
 
