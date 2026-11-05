@@ -136,7 +136,7 @@
   **Done** (`SPEC/benchmark/probe.md`): stop condition A was met with the leak criterion; the owner chose to drop it (choice 1). The values: *Normal* top 84, linear, no noise floor, settle 200 ms, share 0.40, `CHORD_CONFIRM` 8, attack path guarded, threshold 0.79; *Strict* the same with the attack path off; *Lenient* threshold 0.70. Follow and Arcade do not relax the threshold. Weight and noise floor are not settings.
 
   **Check stop condition A** (research R6): if no configuration qualifies, stop here and report to the owner with the best figures and the spec's fallback.
-- [ ] T008 Gate (the test files added only); commit "impl(024): phase 3: probe of the pitch-class profile".
+- [X] T008 Gate (the test files added only); commit "impl(024): phase 3: probe of the pitch-class profile".
 
 ## Phase 4: User Story 1 - The chords I play are accepted (P1) 🎯 MVP
 
