@@ -11,15 +11,16 @@ The pure class `ChordProfile` (`TuxGuitar-practice/src/.../practice/session/`) h
 | `sums[12]` | The summed level of each note name, C = 0 to B = 11 | For every frame since the arming, and every MIDI pitch from `low` to `top`: `sums[midi % 12] += weight(10^(bandDb/20))` |
 | `low` | The lowest pitch summed | The expected chord's lowest pitch, minus one semitone, kept at least `SpectrumFrame.getMinBandMidi()` |
 | `top` | The highest pitch summed | `CHORD_PROFILE_TOP` (R5) |
-| `template[12]` | The expected note names | 1 for each name of the required and tolerated pitches, 0 elsewhere |
+| `template[12]` | The expected note names (the required names; "expected names" means these everywhere) | 1 for each name of the required pitches, 0 elsewhere |
+| `ignored[12]` | The tolerated names | true for each name of a tolerated pitch (still sounding from an earlier beat) that is not a required name: its bands are not summed, so it counts neither for nor against the chord |
 | `summedNanos` | The time summed since the arming | |
 | `noise` | The noise floor | A band more than `CHORD_PROFILE_NOISE` dB under the frame's strongest band is not summed (no floor when the setting is absent) |
 
 Operations:
-- `reset(expected)` at each arming: the sums go to 0 and the template is set. Nothing is allocated; the arrays are made once per session.
+- `reset(required, tolerated, top, weight, noise)` at each arming: the sums go to 0, the template and the ignored names are set. Nothing is allocated; the arrays are made once per session.
 - `add(SpectrumFrame)` sums one frame.
 - `match()` returns the cosine of `sums` and `template`. It is 0 when `sums` is all 0.
-- `weakNames()` counts the expected names whose sum is under `CHORD_PROFILE_NAMES` × the strongest expected name's sum.
+- `weakNames(share)` counts the required names whose sum is under `CHORD_PROFILE_NAMES` × the strongest expected name's sum.
 - `weakest(n)` returns the expected names whose share of the profile is lowest, for the refusal feedback.
 
 Invariants, each tested:
@@ -31,7 +32,9 @@ Invariants, each tested:
   - a chord sharing at most one name with a three-name template matches at most 1/√3 ≈ 0.58, under every threshold of R6;
   - a chord holding only two names of a four-name template, or three of a five-name one, may match 0.71 or 0.77, but has two weak names, so it is never complete;
   - a chord missing one name of four has one weak name and is judged by its match alone;
-  - a band under the noise floor adds nothing.
+  - a band under the noise floor adds nothing;
+  - a tolerated name adds nothing: a right chord with a silent tolerated name matches as without it, and a ringing tolerated name does not lower the match;
+  - a missing name that holds the leak measured by the probe (T007: the highest share a name not played reaches in the reference takes) is still weak at *Normal*'s share.
 
 ## The profile rule (in `ChordMatcher`, used by `PracticeSession` and `FollowSession`)
 

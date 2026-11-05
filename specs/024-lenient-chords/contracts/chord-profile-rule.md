@@ -20,7 +20,7 @@ The values come from the recognition settings through `ChordMatcher.Parameters`,
 
 ## Behaviour
 
-1. **At each new strum** the profile is reset to the expected chord: at the arming in Wait (`PracticeSession`, `frame.isOnset()` while a chord is expected); with each new onset and for each of its chord candidates in Follow and Arcade (`FollowSession.registerOnset`).
+1. **At each new strum** the profile is reset to the expected chord (its template is the required names; the tolerated names, still sounding from an earlier beat, are left out of the profile): at the arming in Wait (`PracticeSession`, `frame.isOnset()` while a chord is expected); with each new onset and for each of its chord candidates in Follow and Arcade (`FollowSession.registerOnset`).
 2. **Each usable frame** adds its bands to the profile (the bands under the noise floor left out, if kept). A frame is complete when the match reaches `CHORD_PROFILE_MATCH`, at most one expected name is weak (`CHORD_PROFILE_NAMES`), and `CHORD_PROFILE_SETTLE` has passed. Two weak names refuse the frame whatever the match.
 3. **Acceptance:** `stableHops` complete frames in a row, within `CHORD_WINDOW` of the arming (Wait) or of the onset (Follow, Arcade).
 4. **Refusal:** the window ends first. In Wait, the feedback is `INCOMPLETE`, with the expected pitches whose names are weakest, and a new strum is needed. In Follow and Arcade, the wrong attempt carries the same missing pitches (`wrongAttempt`).
