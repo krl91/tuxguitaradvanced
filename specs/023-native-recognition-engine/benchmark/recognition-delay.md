@@ -79,3 +79,30 @@
 - SC-006: native 204.0 / 211.9 ms against Java 233.0 / 255.2 ms (median / p90).
 - Reading (2026-11-04, owner's decision to investigate): SC-006 is reached, the hit is shown 29 ms sooner with the native engine at the median and 43 ms sooner at the 90th percentile. FR-015's limit as written is not: the harness judges with the default settings, under which a single note is matched only after its pitch has held for the note confirmation time (`note.stability`, 107 ms by default, the same for both engines; Arcade's own *Fun* leniency lowers it to 75 ms in the application, the harness does not apply it). The hit is therefore the pitch found (about 97 ms with the native engine here), plus 107 ms of confirmation, plus at most one frame (8.3 ms). Without the confirmation the native engine is near 97 ms, under the 128.5 ms of T054 plus one frame: the limit of T071 was taken from T054's pitch frame and left the confirmation time out. Not a fault of the engine; the test is unchanged.
 - The first run of T071 (20:38, its section not kept) showed no hit: the harness's tone thread left out every tone, its guard compared the tone's time with now instead of with the time its block is heard (the output line's buffer puts every block about 190 ms ahead on macOS). Fixed in `ArcadeLiveHarness` with the owner's approval of 2026-11-04 (the one change to a committed test file).
+
+## Rocksmith cable, both engines at once (T055), 2026-11-05T12:39:40.252537
+
+Input: Rocksmith USB Guitar Adapter. Notes paired: 20 of 20.
+
+| Measure (ms) | Median / 90th percentile |
+|---|---|
+| Java pitched frame − native pitched frame | -1.0 / 4.4 |
+| Java onset to pitched | 0.0 / 0.0 |
+| Native onset to pitched | 0.0 / 0.0 |
+
+## Rocksmith cable, both engines at once, verdict arrival (T056), 2026-11-05T12:41:10.7585
+
+Input: Rocksmith USB Guitar Adapter. Notes paired: 20 of 20.
+
+| Measure (ms) | Median / 90th percentile |
+|---|---|
+| Java arrival − native arrival | 21.5 / 34.4 |
+| Java: pitched sound to arrival | 21.7 / 34.5 |
+| Native: pitched sound to arrival | 1.6 / 1.8 |
+
+Reading (2026-11-05, the owner playing the Rocksmith cable): the first section (T055's probe) dates each frame by its capture clock, the
+moment its sound was taken, so it compares the audio position of the two engines' frames, not when each verdict is delivered: both find
+the pitch on the onset frame itself, hence the level −1.0 ms. The second section (`DualEngineCableArrivalProbeTest`, added with the owner's
+approval) also dates each pitched frame by its arrival at the listener, as the microphone probes date the verdict: the native verdict arrives
+21.5 ms sooner at the median (34.4 ms at the 90th percentile), 1.6 / 1.8 ms after its sound against 21.7 / 34.5 ms with Java (the Java
+capture's reads come in bursts). SC-002 for the cable is reached: at least 20 ms ahead at the median, the native 90th percentile lower.

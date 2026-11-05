@@ -10,7 +10,7 @@ Written on 2026-11-04 (T086), before the owner's gate T087. The figures come fro
 | SC-002, offline | GuitarSet chord delay median ≤ 103 ms summed, ≤ 149 ms microphone, not above Java | 103 ms and 149 ms, the same as Java (`after-native/guitarset-chords-report.txt`) | **Reached** |
 | SC-002, live, built-in microphone | Median at least 20 ms lower than Java, p90 not higher | Java 138.5 to 144.5 ms, native 120.2 to 121.9 ms over three pairs of runs: 16.6 to 23.0 ms lower; p90 always lower (`recognition-delay.md`) | **Partly**: the gain is 20 ms or more in two pairs of three |
 | SC-002, live, USB microphone | (not in the target; measured) | Java 114.4 ms, native 86.5 to 90.1 ms: about 27 ms lower; p90 lower | Measured |
-| SC-002, live, Rocksmith cable | Same as the microphone | Not measured yet: T055 and T056 wait for the owner's session with the cable | **Waits for T056 / T087** |
+| SC-002, live, Rocksmith cable | Native at least 20 ms ahead at the median, p90 not higher | The owner's 20 notes, both engines at once (2026-11-05): the native verdict arrives 21.5 ms sooner at the median, 34.4 ms at p90; from the sound to the verdict 1.6 / 1.8 ms native, 21.7 / 34.5 ms Java (`recognition-delay.md`, `DualEngineCableArrivalProbeTest`; T055's probe, dated by the capture clock, compares the sound's moment and came out level) | **Reached** |
 | SC-003 | Fallback to Java with a message within 2 s, on the three systems | `RecognitionFallbackTest` (fake library, every reason, an open that never answers abandoned after 1.5 s): green. In the application: macOS at T087 (sheet F13 step 5); Linux and Windows by testers (F13 X3) | **Tested; the real-app checks wait for T087 and the testers** |
 | SC-004 (aimed at, not blocking) | Owner's chords ≥ 34/42 and neighbours ≤ 6/42; GuitarSet ≥ 40/56 summed, ≥ 30/56 microphone; whole tone higher refused ≥ 85 % | 26/42 and 13/42; 33/56 and 23/56; 100 % (66.7 % before) | **Whole tone reached; the four others not reached** (carried to spec 024) |
 | SC-005 | 10 minutes live without a dropped block; datasets identical with the amp on and off | 112,496 frames, 0 dropped (`endurance.md`); identical outcomes and frames with the amp on and off (`amp-identity.md`) | **Reached** |
@@ -24,7 +24,7 @@ Written on 2026-11-04 (T086), before the owner's gate T087. The figures come fro
 |---|---|
 | FR-001 native path | Done: capture, front end, level, pitch (YIN from the paper), spectrum, attacks, target and chord evidence in the crate; guitar, bass and every tuning covered by the parity tests. |
 | FR-002 same quality | Done: SC-001. |
-| FR-003 less delay | Done offline (equal) and live on both microphones (17 to 28 ms lower); the cable waits for T056. |
+| FR-003 less delay | Done offline (equal) and live: both microphones 17 to 28 ms lower, the Rocksmith cable 21.5 ms sooner. |
 | FR-004 choice in the menu | Done: *Automatic*, *Native (Rust)*, *Java (FastYin)*, tips in English, French and Spanish; kept across a restart (tests; F13 steps 1 and 2 at T087). |
 | FR-005 Automatic by default | Done: native where the library loads, else Java; the option shows which; a hand-chosen Java kept (`PitchEngineKindTest`, `RecognitionSettingsStoreTest`). |
 | FR-006 fallback | Done: one notice per reason, never a crash or a hang; no fallback for a refused permission (`RecognitionFallbackTest`). |
@@ -66,7 +66,6 @@ Written on 2026-11-04 (T086), before the owner's gate T087. The figures come fro
 
 ## What waits for the owner and the testers
 
-- **T055 / T056**: the Rocksmith cable session, with both engines at once.
 - **T087**: the owner's gate on sheet F13. The owner's answer (felt quicker or not) will be written here.
 - **Testers**: sheet F13, rows X1 to X5, on Linux and Windows.
 - **Spec 024**: the chords at 90 % on the cable, more lenient by default, with the setting in the practice window.

@@ -21,7 +21,7 @@ It completes the **native recognition engine** (spec 023) that 0.8.0-beta.6 brou
 ### ✨ What is new since 0.8.0-beta.6
 
 * **Arcade follows your screen's refresh rate.** The picture is asked for at the display's own rate (120 Hz on a ProMotion MacBook, 60 Hz when the rate cannot be read), so it no longer misses display cycles: on the author's Mac, 99.8 % of the frames now come on time instead of 96.8 to 98.9 %.
-* **The native engine, checked** with the Rocksmith cable by the author: the delay figures below. <!-- fill in from T056/T087 -->
+* **The native engine, checked** with the Rocksmith cable by the author: with both engines listening to the same notes, the native verdict comes about 22 ms sooner (up to 34 ms).
 
 ### 📏 Measured on the author's Mac
 
@@ -31,8 +31,8 @@ It completes the **native recognition engine** (spec 023) that 0.8.0-beta.6 brou
   |---|---|---|
   | Built-in microphone | 139 to 144 ms | about 122 ms |
   | USB microphone | 114 ms | 87 ms |
-  | Rocksmith cable | <!-- T056 --> | <!-- T056 --> |
 
+* **The Rocksmith cable**, both engines listening to the same 20 notes: the native verdict comes 21.5 ms sooner at the median (34.4 ms at the 90th percentile).
 * **Arcade at 120 Hz**, ten minutes of the stress score with the recognition live: 99.83 % of the frames on time with the native engine (99.81 % with Java), no frame held, no drift of the song.
 * **The hit shown in Arcade**, from a tone in the speakers to the hit on screen (median / 90th percentile): 204 / 212 ms with the native engine, 233 / 255 ms with Java. Most of it is the time a note must hold to be confirmed (107 ms by default), the same for both engines.
 * **Chords** (the same with both engines):
