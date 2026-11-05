@@ -32,6 +32,8 @@ Its experiment B showed the trade-off this spec must handle: a looser rule raise
 - Q: From what difference is a chord clearly wrong, so that it must always be refused? → A: When at least two note names (the octave not counted) of the expected chord are missing from the chord played; it is always refused (100 %); a chord that differs by one note name only is refused as often as possible, with no obligation. If no setting accepts every right chord while refusing every clearly wrong one, fall back to: no threshold per chord, the dataset lines of FR-003 kept, and the rest refused as often as possible; the fallback is said in the final report (owner, 2026-11-05).
 - Q: May the work change the engines, the committed owner-chords baseline and the chord defaults to reach every right chord? → A: Yes to all three (owner, 2026-11-05): (1) judging each string over the whole strum may be added to both engines (the native crate and the Java engine, identically); (2) the committed `owner-chords-baseline.properties` may stop failing on its old count of wrong acceptances (which counts voicings), its minimum of accepted chords kept, the new count being checked by a new test; (3) the chord defaults (chord evidence, confirmation) may change if needed, with only the lines of `RecognitionSettingsTest` and `RecognitionControlsTest` that pin them adapted. Constraint added by the owner: every engine must be set by external parameters, never needing a rebuild when a parameter changes, and the engines (how they work, their interface, their parameters) must be documented.
 - Q: Must the external parameters cover every internal value of both engines now, or only the chord values this spec adds or tunes? → A: Only the chord and strum values this spec adds or tunes become external parameters in spec 024, and the documentation of the engines is written for everything that exists, listing the constants still fixed in the code; a dedicated spec 026 makes every other constant an external parameter (owner, 2026-11-05).
+- Q: Which recordings of the owner are the reference for the targets of this spec? → A: The third series, `owner-chords-3` (25 takes of 8 chords chosen by the owner: Am, C, G, Em, D, A, Bm, Dm, through the Rocksmith adapter, names confirmed by the owner), in place of the first two series (42 takes), which the owner listened to and judged bad, with a contact problem (owner, 2026-11-05: "pars sur cela à la place des autres").
+- Q: What becomes of the first two series (42 takes), judged bad? → A: A guard only: at least 8 and 18 of their takes accepted with the default settings, the minimum the committed `OwnerChordsBenchmarkTest` already holds; they are no target, some of their right chords are known to stay refused and 100 % is never expected on them, whereas the reference series must reach 100 % (owner, 2026-11-05).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -41,11 +43,11 @@ The owner plays the chords of a score through the Rocksmith cable, in Wait, Foll
 
 **Why this priority**: a learner whose right chords are refused 4 times in 10 stops trusting the practice; it is the main complaint left after spec 023.
 
-**Independent Test**: run the owner's chord recordings through the judgement with the default settings and count the chords accepted, the clearly wrong chords accepted and the other really different chords accepted, with each engine.
+**Independent Test**: run the owner's reference series (Key Entities) through the judgement with the default settings and count the chords accepted, the clearly wrong chords accepted and the other really different chords accepted, with each engine.
 
 **Acceptance Scenarios**:
 
-1. **Given** the owner's 42 recorded chords and the default settings, **When** each is judged against its own chord, **Then** all 42 are accepted, with each engine.
+1. **Given** the 25 takes of the owner's reference series and the default settings, **When** each is judged against its own chord, **Then** all 25 are accepted, with each engine.
 2. **Given** each recording judged against the chord of every other take that is clearly wrong for it (Key Entities), **When** they are counted, **Then** none is accepted; the other really different chords accepted are counted and as few as possible; the same chord in another voicing is reported apart.
 3. **Given** a chord played a whole tone higher than written (IDMT-SMT-Audio-Effects), **When** it is judged, **Then** it is still refused at least 85 % of the time.
 4. **Given** single notes and wrong single notes of every dataset, **When** they are judged, **Then** none of their figures is worse than at the end of spec 023.
@@ -100,13 +102,14 @@ Before any rule changes, the 16 chords of the owner refused at the end of spec 0
 
 ### Functional Requirements
 
-- **FR-001**: With the default settings, all 42 of the owner's recorded chords MUST be accepted, with each engine (native and Java): a right chord is never refused.
-- **FR-002**: With the default settings, no clearly wrong chord (Key Entities) MUST be accepted: each of the owner's recordings is judged against the chord of every other take that is clearly wrong for it, with each engine. The other really different chords wrongly accepted are counted and reported; the same chord in another voicing is reported apart and not counted. If FR-001 and this cannot both be met, the fallback of the clarification applies (the FR-003 lines kept, the wrong chords refused as often as possible) and the final report says so.
+- **FR-001**: With the default settings, all 25 takes of the owner's reference series (Key Entities) MUST be accepted, with each engine (native and Java): a right chord is never refused.
+- **FR-002**: With the default settings, no clearly wrong chord (Key Entities) MUST be accepted: each take of the reference series is judged against the chord of every other take that is clearly wrong for it, with each engine. The other really different chords wrongly accepted are counted and reported; the same chord in another voicing is reported apart and not counted. If FR-001 and this cannot both be met, the fallback of the clarification applies (the FR-003 lines kept, the wrong chords refused as often as possible) and the final report says so.
 - **FR-003**: The single-note and wrong-note figures of every dataset (IDMT-SMT-Guitar, IDMT-SMT-Audio-Effects, GuitarSet, the owner's recordings) MUST NOT get worse than at the end of spec 023, with each engine; the chord a whole tone higher MUST stay refused at least 85 % of the time.
+- **FR-003a**: The first two series of the owner (`owner-chords`, `owner-chords-2`, 42 takes, judged bad by the owner) are a guard, not a target: with the default settings and each engine, at least 8 and 18 of their takes MUST stay accepted (the committed minimum of `owner-chords-baseline.properties`); some of their right chords may stay refused.
 - **FR-004**: The GuitarSet complete chord figures (summed and microphone) MUST NOT get worse than at the end of spec 023.
 - **FR-005**: The *Mode* tab of the practice window MUST offer a chord leniency setting next to the choice of Wait / Follow / Arcade, with three levels *Strict*, *Normal* (default) and *Lenient* (French *Strict*, *Normal*, *Tolérant*), each with a tip in English, French and Spanish that says what it accepts and what it risks.
 - **FR-006**: The default level MUST be more lenient than the behaviour at the end of spec 023; among the settings that meet FR-001, it MUST be the one that refuses the most wrong chords (wrong acceptances as defined in Key Entities), while meeting FR-002 and FR-003.
-- **FR-007**: A more lenient level MUST accept at least as many right chords as the default, and a stricter level MUST wrongly accept at most as many really different chords, on the owner's recordings.
+- **FR-007**: A more lenient level MUST accept at least as many right chords as the default, and a stricter level MUST wrongly accept at most as many really different chords, on the reference series.
 - **FR-008**: The chosen level MUST be kept across restarts; a learner who never chose a level MUST get the default; a level chosen before an update MUST be kept.
 - **FR-009**: The leniency MUST apply the same way with both engines and in every mode that checks chords (Wait, Follow, Arcade).
 - **FR-010**: Before any rule changes, the 16 refused chords of the owner and the 13 neighbouring chords wrongly accepted MUST be examined, and the cause of each refusal or acceptance recorded in a report.
@@ -120,22 +123,23 @@ Before any rule changes, the 16 chords of the owner refused at the end of spec 0
 - **Chord leniency level**: *Strict*, *Normal* (default) or *Lenient*, or *Custom* when an expert chord setting was changed by hand; each named level is a set of values of the expert chord settings; the learner's choice is kept.
 - **Clearly wrong chord**: an expected chord at least two of whose note names (the octave not counted) are missing from the chord played. Always refused.
 - **Wrong acceptance**: a control (the chord of another take) accepted while the owner played a chord whose note names are not all among the control's, nor the control's among the played chord's: a really different chord. A control with the same note names (a subset, a superset, an octave more or less) is **another voicing**: it is reported apart, never counted as a wrong acceptance.
+- **Reference series**: the owner's third series of chords through the Rocksmith adapter, `owner-chords-3`: 25 takes of 8 chords (Am, C, G, Em, D, A, Bm, Dm), each judged against its own chord (25), and against every other take's chord: 54 voicings, 138 one name off, 408 clearly wrong.
 - **Chord diagnostic**: for each of the owner's refused chords and wrongly accepted neighbours, the cause found (the string or evidence concerned, the path that decided).
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: All 42 of the owner's chords through the Rocksmith cable are accepted with the default settings (100 %; 26 today), with each engine.
-- **SC-002**: With *Normal*, no clearly wrong chord is accepted on the owner's recordings, with each engine (or, under the fallback, the FR-003 lines hold); the really different chords wrongly accepted are as few as the settings that accept every right chord allow; *Strict* accepts at most as many.
-- **SC-003**: No single-note or wrong-note figure of any dataset is worse than at the end of spec 023; the chord a whole tone higher stays refused at least 85 % of the time; GuitarSet complete chords are not worse.
+- **SC-001**: All 25 takes of the owner's reference series through the Rocksmith cable are accepted with the default settings (100 %; 17 today), with each engine.
+- **SC-002**: With *Normal*, no clearly wrong chord is accepted on the reference series (408 such judgements), with each engine (or, under the fallback, the FR-003 lines hold); the really different chords wrongly accepted are as few as the settings that accept every right chord allow; *Strict* accepts at most as many.
+- **SC-003**: The first two series keep at least 8 and 18 takes accepted. No single-note or wrong-note figure of any dataset is worse than at the end of spec 023; the chord a whole tone higher stays refused at least 85 % of the time; GuitarSet complete chords are not worse.
 - **SC-004**: Each leniency level orders as promised on the owner's chords: the more lenient, the more right chords accepted; the stricter, the fewer really different chords wrongly accepted.
 - **SC-005**: The owner, playing chords of a score through the cable in Wait, Follow and Arcade with the default, judges that right chords are accepted and wrong ones refused (gate on a test sheet).
 - **SC-006**: The diagnostic gives a recorded cause for each of the 16 refused chords and the 13 wrong acceptances.
 
 ## Assumptions
 
-- The owner's 42 chords and their neighbours are the recordings used in spec 023 (`OwnerChordsBenchmarkTest`); "accepted" is counted as there; wrong acceptances are counted as defined in Key Entities, each take being judged against every other take's chord (not only the next one), so that every clearly wrong chord of the recordings is tried.
+- The owner's reference series is `owner-chords-3` (Clarifications); the takes are the owner's playing and are not committed, their labels and figures are (`benchmark/owner-chords-3/`); "accepted" is counted as in `OwnerChordsBenchmarkTest`; wrong acceptances are counted as defined in Key Entities, each take being judged against every other take's chord (not only the next one), so that every clearly wrong chord of the recordings is tried.
 - The targets (every right chord accepted, no clearly wrong chord accepted, the same chord in another voicing reported apart), the three levels, the place of the setting and its link with the expert settings were settled with the owner (Clarifications, 2026-11-05).
 - Both engines keep giving the same judgements; a change of a shared rule is measured on both.
 - Making every other internal constant of the engines an external parameter is out of scope: it is spec 026 (Clarifications, 2026-11-05).
