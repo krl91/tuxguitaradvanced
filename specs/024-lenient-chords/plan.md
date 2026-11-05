@@ -71,7 +71,7 @@
 | XIV. Learner-centred | Each level says what it accepts and what it risks. A refusal names the missing note names. The input warnings stay. |
 | Texts | English, French and Spanish in the plugin's `share/lang` files. |
 
-**Gate:** passes. The spec was amended through `/speckit-clarify` (the reference series, the first two series a guard, the level's values, voicings, the bass). Re-checked after design: passes. Stop condition A (R6) goes to the owner instead of being decided here.
+**Gate:** passes. The spec was amended through `/speckit-clarify` (the reference series, the first two series a guard, the level's values, voicings, the bass, and after the stop at T027 the owner's option B: the incomplete chords and the low minor triad). Re-checked after design: passes. Stop condition A (R6) goes to the owner instead of being decided here.
 
 ## Project Structure
 
@@ -115,6 +115,7 @@ desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/
 ├── dataset/OwnerChordsProfileTest.java         new (dataset): 25/25 and 0 clearly wrong with the defaults
 ├── dataset/ChordLeniencyLevelsTest.java        new (dataset): the levels' figures and order (SC-004)
 ├── dataset/ChordLeniencyComparisonTest.java    new (benchmark): before and after, both engines (R8)
+├── dataset/IdmtTriadProfileDiagnosticTest.java new (dataset): a report of the IDMT triads under the profile rule, the stop at T027 (R8)
 ├── session/ChordProfileTest.java               new (unit)
 ├── session/ChordMatcherProfileTest.java        new (unit)
 ├── session/ChordProfileParametersTest.java     new (unit): the values reach the run, Follow and Arcade (FR-009, FR-013)

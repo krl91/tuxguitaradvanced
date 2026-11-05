@@ -1,0 +1,17 @@
+Recognition of synthetic bass notes through the existing chain (spec 003 T003), run of 2026-10-08.
+One plucked note (Karplus-Strong, gain 0.3, 1.2 s) per run, 3 seeds per pitch; frames from 0.35 s to 1.0 s after the pluck.
+right = reliable reading within 35 cents of the expected pitch; octave = the right note one octave up or down; other = a reliable reading of another pitch; none = no reliable pitch.
+
+| note | midi | frames | right | octave | other | none | first right frame after the pluck |
+|---|---|---|---|---|---|---|---|
+| B0 | 23 | 366 | 0% | 0% | 0% | 100% | never |
+| C1 | 24 | 366 | 0% | 0% | 0% | 100% | never |
+| E1 | 28 | 366 | 0% | 0% | 0% | 100% | never |
+| F1 | 29 | 366 | 0% | 0% | 0% | 100% | never |
+| F#1 | 30 | 366 | 0% | 0% | 0% | 100% | never |
+| G1 | 31 | 366 | 100% | 0% | 0% | 0% | 60 ms |
+| A1 | 33 | 366 | 100% | 0% | 0% | 0% | 58 ms |
+| B1 | 35 | 366 | 100% | 0% | 0% | 0% | 56 ms |
+| D2 | 38 | 366 | 100% | 0% | 0% | 0% | 53 ms |
+| E2 | 40 | 366 | 100% | 0% | 0% | 0% | 51 ms |
+| G2 | 43 | 366 | 100% | 0% | 0% | 0% | 48 ms |

@@ -78,6 +78,11 @@ public final class RecognitionSettings {
 	 * cross-parameter rules are then applied. Never throws.
 	 */
 	public static Loaded fromStrings(Map<String, String> stored) {
+		return fromStrings(stored, ChordLeniency.HISTORY, ChordLeniency::apply);
+	}
+
+	/** Like {@link #fromStrings(Map)} with the given history of the chord levels' past values and their current values (spec 024, research R7). */
+	static Loaded fromStrings(Map<String, String> stored, List<ChordLeniency.PastSet> history, ChordLeniency.Applier current) {
 		Map<String, String> source = (stored != null ? stored : Collections.<String, String>emptyMap());
 		Object[] values = new Object[RecognitionParameters.ALL.size()];
 		Map<String, Repair> repairs = new LinkedHashMap<String, Repair>();
@@ -108,7 +113,7 @@ public final class RecognitionSettings {
 			}
 		}
 		Collections.sort(unknown);
-		RecognitionSettings settings = normalized(values, repairs);
+		RecognitionSettings settings = ChordLeniency.migrate(source, normalized(values, repairs), history, current);
 		return new Loaded(settings, repairs, unknown);
 	}
 

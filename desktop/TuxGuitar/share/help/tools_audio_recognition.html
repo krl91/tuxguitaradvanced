@@ -89,13 +89,23 @@
     <tr><td>Timing window (Arcade)</td><td>ms</td><td>40</td><td>200</td><td>100</td><td>stricter: in Arcade, a note must be closer to its written time to count as on time</td><td>more lenient: notes played a little early or late still count, but in a dense passage a note may be taken for the one still ringing. Milliseconds each side at 120 beats a minute; the real window grows and shrinks with the tempo</td></tr>
     </table>
     <h2 id="chords">Practice — chords</h2>
-    <p>A chord is checked against the written chord: each string that has overtones of its own must be heard within the strum window. Strings that cannot be told apart by sound (the same note twice, or an octave of a lower string) are shown as "not checked" and never claimed as heard. Extra wrong strings are not checked in this version.</p>
+    <p>A chord is checked against the written chord. With the recommended rule, <strong>Note names over the strum</strong>, the note names of the chord (the octave not counted) must be heard together over the strum, whatever the voicing: a chord missing two of its notes is always refused, a chord one note off may be accepted. With the rule <strong>Every string separately</strong>, each string that has overtones of its own must be heard within the strum window; strings that cannot be told apart by sound (the same note twice, or an octave of a lower string) are shown as "not checked" and never claimed as heard. Extra wrong strings are not checked in this version. Choosing a chord check level in the practice window sets the rule, the match and the attack setting; changing one of them here makes the level Custom.</p>
     <table>
     <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
     <tr><td>Chord strictness</td><td>%</td><td>20</td><td>80</td><td>33</td><td>weaker strings are accepted, a missing string may be accepted</td><td>stricter, a real but quiet string may be rejected</td></tr>
     <tr><td>Strum window</td><td>ms</td><td>300</td><td>1500</td><td>600</td><td>needs a quick, even strum</td><td>allows slow, arpeggiated strums</td></tr>
-    <tr><td>Strings required</td><td>choice</td><td>—</td><td>—</td><td>All strings that can be checked</td><td>—</td><td>—</td></tr>
+    <tr><td>Chord rule</td><td>choice</td><td>—</td><td>—</td><td>Note names over the strum</td><td>—</td><td>—</td></tr>
     <tr><td>Extra wrong strings</td><td>choice</td><td>—</td><td>—</td><td>Not checked yet</td><td>—</td><td>—</td></tr>
+    <tr><td>Chord match</td><td>%</td><td>50</td><td>99</td><td>79</td><td>accepts more, may accept a chord with one note wrong</td><td>stricter, may refuse a right chord played imperfectly</td></tr>
+    <tr><td>Weakest note of a chord</td><td>%</td><td>5</td><td>60</td><td>40</td><td>a quieter note still counts as heard</td><td>a quiet note counts as missing sooner</td></tr>
+    <tr><td>Accept a chord on its attack</td><td>yes/no</td><td>—</td><td>—</td><td>yes</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="chord-details">Chord details</h2>
+    <p>Technical settings of the rule <strong>Note names over the strum</strong>.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Highest note counted</td><td>MIDI</td><td>60</td><td>112</td><td>84</td><td>only the low and middle sound counts</td><td>more of the high overtones count</td></tr>
+    <tr><td>Time before judging a chord</td><td>ms</td><td>0</td><td>500</td><td>200</td><td>faster, judged on the first moments of the strum</td><td>steadier, slower</td></tr>
     </table>
     <h2 id="passages">Passages</h2>
     <p>The song is cut into passages in playing order (repeats and alternate endings are separate passages). At the end of a passage, if more of its notes and chords were wrong or skipped than the threshold, the passage is played again, up to the maximum. These are the values used when TuxGuitar starts; the Interactive Practice window can change the passage length and threshold for the current run only.</p>

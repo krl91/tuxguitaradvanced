@@ -89,13 +89,23 @@
     <tr><td>Fenêtre de temps (Arcade)</td><td>ms</td><td>40</td><td>200</td><td>100</td><td>plus strict : en Arcade, une note doit être plus proche de son heure écrite pour compter à l'heure</td><td>plus souple : les notes un peu en avance ou en retard comptent encore, mais dans un passage dense une note peut être prise pour celle qui résonne encore. Millisecondes de chaque côté à 120 battements par minute ; la fenêtre réelle s'élargit et se resserre avec le tempo</td></tr>
     </table>
     <h2 id="chords">Pratique — accords</h2>
-    <p>Un accord est vérifié par rapport à l'accord écrit : chaque corde qui a des harmoniques propres doit être entendue dans la fenêtre de grattage. Les cordes impossibles à distinguer à l'oreille (même note deux fois, ou octave d'une corde plus grave) sont indiquées « non vérifiées » et jamais déclarées entendues. Les cordes en trop ne sont pas vérifiées dans cette version.</p>
+    <p>Un accord est vérifié par rapport à l'accord écrit. Avec la règle recommandée, <strong>Noms des notes sur le grattage</strong>, les noms des notes de l'accord (sans compter l'octave) doivent être entendus ensemble pendant le grattage, quel que soit le doigté : un accord auquel il manque deux notes est toujours refusé, un accord à une note près peut être accepté. Avec la règle <strong>Chaque corde séparément</strong>, chaque corde qui a des harmoniques propres doit être entendue dans la fenêtre de grattage ; les cordes impossibles à distinguer à l'oreille (même note deux fois, ou octave d'une corde plus grave) sont indiquées « non vérifiées » et jamais déclarées entendues. Les cordes en trop ne sont pas vérifiées dans cette version. Choisir un niveau de vérification des accords dans la fenêtre de pratique règle la règle, la correspondance et l'acceptation sur l'attaque ; en changer un ici fait passer le niveau à Personnalisé.</p>
     <table>
     <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
     <tr><td>Exigence sur les accords</td><td>%</td><td>20</td><td>80</td><td>33</td><td>accepte les cordes plus faibles, peut accepter une corde absente</td><td>plus strict, peut refuser une corde réelle mais discrète</td></tr>
     <tr><td>Fenêtre de grattage</td><td>ms</td><td>300</td><td>1500</td><td>600</td><td>demande un grattage rapide et régulier</td><td>permet les grattages lents ou arpégés</td></tr>
-    <tr><td>Cordes exigées</td><td>choix</td><td>—</td><td>—</td><td>Toutes les cordes vérifiables</td><td>—</td><td>—</td></tr>
+    <tr><td>Règle des accords</td><td>choix</td><td>—</td><td>—</td><td>Noms des notes sur le grattage</td><td>—</td><td>—</td></tr>
     <tr><td>Cordes en trop</td><td>choix</td><td>—</td><td>—</td><td>Pas encore vérifiées</td><td>—</td><td>—</td></tr>
+    <tr><td>Correspondance de l'accord</td><td>%</td><td>50</td><td>99</td><td>79</td><td>accepte davantage, peut accepter un accord avec une note fausse</td><td>plus strict, peut refuser un bon accord joué imparfaitement</td></tr>
+    <tr><td>Note la plus faible d'un accord</td><td>%</td><td>5</td><td>60</td><td>40</td><td>une note plus discrète compte encore comme entendue</td><td>une note discrète compte plus tôt comme absente</td></tr>
+    <tr><td>Accepter un accord sur son attaque</td><td>oui/non</td><td>—</td><td>—</td><td>oui</td><td>—</td><td>—</td></tr>
+    </table>
+    <h2 id="chord-details">Détails des accords</h2>
+    <p>Réglages techniques de la règle <strong>Noms des notes sur le grattage</strong>.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Note la plus haute comptée</td><td>MIDI</td><td>60</td><td>112</td><td>84</td><td>seul le son grave et médium compte</td><td>davantage d'harmoniques aigus comptent</td></tr>
+    <tr><td>Durée avant de juger un accord</td><td>ms</td><td>0</td><td>500</td><td>200</td><td>plus rapide, jugé sur les premiers instants du grattage</td><td>plus stable, plus lent</td></tr>
     </table>
     <h2 id="passages">Passages</h2>
     <p>Le morceau est découpé en passages dans l'ordre de jeu (reprises et fins alternatives sont des passages distincts). À la fin d'un passage, si la part de notes et d'accords faux ou passés dépasse le seuil, le passage est rejoué, jusqu'au maximum. Ce sont les valeurs utilisées au démarrage de TuxGuitar ; la fenêtre de pratique interactive peut changer la taille et le seuil pour la session en cours seulement.</p>

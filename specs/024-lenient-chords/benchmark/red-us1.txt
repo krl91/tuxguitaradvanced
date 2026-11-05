@@ -1,0 +1,120 @@
+# Red run of phase 4 (T017), 2026-11-05
+
+## Part 1: TuxGuitar-audio-engine tests (T013, T014), before any production change
+
+Command: mvn -o -q test-compile -pl ../../TuxGuitar-audio-engine,../../TuxGuitar-practice -am (macOS SWT build directory). Result: compilation fails, the settings and ChordLeniency symbols are missing (the right reason).
+
+```
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[22,50] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[23,50] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[24,50] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[25,50] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[26,50] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[37,51] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[58,47] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[61,66] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[67,103] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[68,52] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[69,52] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[71,104] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[72,53] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[73,53] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[74,108] package ChordLeniency does not exist
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[74,35] package ChordLeniency does not exist
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[74,86] package ChordLeniency does not exist
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[75,50] package ChordLeniency does not exist
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[75,72] package ChordLeniency does not exist
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[77,105] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[77,149] package ChordLeniency does not exist
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[77,30] package ChordLeniency does not exist
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[82,68] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[86,138] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[90,49] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[92,68] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileMigrationTest.java:[93,76] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[35,45] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[36,58] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[37,45] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[38,58] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[39,131] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[39,45] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[40,135] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[40,45] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[41,79] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[42,65] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[43,67] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[44,84] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[50,134] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[50,91] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[51,54] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[52,106] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[52,65] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[53,65] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[59,62] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[60,51] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[61,51] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[68,60] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[69,60] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[70,60] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[71,60] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[72,60] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[83,116] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[83,64] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[84,116] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[84,64] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[85,117] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[85,65] cannot find symbol
+[ERROR] TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordProfileSettingsTest.java:[86,117] cannot find symbol
+```
+
+## Part 2: TuxGuitar-practice tests (T009-T012, T015, T016), after T019-T020 only
+
+The engine side (T013, T014) went green with T019-T020: 77 tests, 0 failures (ChordProfileSettingsTest 5, ChordProfileMigrationTest 5, the committed settings tests unchanged). The practice tests do not compile: ChordProfile, the profile constructor and fields of ChordMatcher.Parameters are missing (the right reason; javac stops at the first errors per file).
+
+```
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[23,24] constructor Parameters in class app.tuxguitar.app.tools.custom.practice.session.ChordMatcher.Parameters cannot be applied to given types;
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[26,24] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[27,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[27,44] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[38,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[45,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[55,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[62,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[68,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[70,53] constructor Parameters in class app.tuxguitar.app.tools.custom.practice.session.ChordMatcher.Parameters cannot be applied to given types;
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[75,58] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[83,58] constructor Parameters in class app.tuxguitar.app.tools.custom.practice.session.ChordMatcher.Parameters cannot be applied to given types;
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[91,53] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[96,124] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[97,104] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[98,63] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordMatcherProfileTest.java:[99,62] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[28,75] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[29,29] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[30,37] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[31,37] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[32,35] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[33,45] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[34,29] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[46,37] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[47,37] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[48,30] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[49,35] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[50,45] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[53,79] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileParametersTest.java:[54,38] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[107,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[121,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[138,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[149,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[156,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[165,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[49,24] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[50,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[50,44] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[61,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[93,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/ChordProfileTest.java:[94,17] cannot find symbol
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/FollowSessionChordProfileTest.java:[40,24] constructor Parameters in class app.tuxguitar.app.tools.custom.practice.session.ChordMatcher.Parameters cannot be applied to given types;
+[ERROR] TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/PracticeSessionChordProfileTest.java:[40,24] constructor Parameters in class app.tuxguitar.app.tools.custom.practice.session.ChordMatcher.Parameters cannot be applied to given types;
+```

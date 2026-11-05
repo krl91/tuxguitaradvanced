@@ -166,6 +166,13 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private Outcome lastPassedOutcome;
 	private final ChordMatcher chordMatcher;
 	private int chordRun;
+	/** The profile of the armed strum (spec 024): reset at each arming, summed on each usable frame. Made once. */
+	private final ChordProfile chordProfile = new ChordProfile();
+	/** The profile of one frame alone, for the attack path and the hint when no strum is armed. Made once. */
+	private final ChordProfile frameProfile = new ChordProfile();
+	/** The event and the arming the profile belongs to. */
+	private PracticeEvent profileEvent;
+	private long profileArmNanos = Long.MIN_VALUE;
 	private ChordFeedback chordFeedback;
 	/** The last confirmed wrong strum of the current chord, shown until the next attempt succeeds. */
 	private ChordFeedback lastIncomplete;
@@ -436,7 +443,12 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		// changed neither correctness nor latency on the real-guitar clips)
 		boolean usableLevel = (frame.getLevelState() == AnalysisFrame.LevelState.SUITABLE
 				|| frame.getLevelState() == AnalysisFrame.LevelState.TOO_HIGH);
-		if( this.polyphonic != null && frame.getAttackEvidence() != null ) {
+		boolean chord = (event != null && event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD);
+		boolean profileRule = chord && this.chordMatcher.getParameters().usesProfile();
+		if( profileRule ) {
+			sumProfile(frame, event, usableLevel);
+		}
+		if( this.polyphonic != null && frame.getAttackEvidence() != null && !(chord && !this.chordMatcher.getParameters().attack) ) {
 			if( event != null && (event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE || event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD) ) {
 				int[] pitches = expectedPitchesOf(event);
 				if( pitches.length == 1 && closeNeighbourHeard(frame, pitches[0]) ) {
@@ -452,8 +464,12 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 						&& pitches[0] >= corridorOf(this.bendEvent)[0] && pitches[0] <= corridorOf(this.bendEvent)[1]);
 				if( !bentPitch && this.polyphonic.offer((!vetoed && frame.getLevelState() != AnalysisFrame.LevelState.CLIPPING ? frame.getAttackEvidence() : null), now, pitches,
 						expectedFretsOf(event, pitches), this.tolerance) ) {
-					accept(event, now);
-					return snapshot();
+					if( !profileRule || attackGuardAllows(frame, event) ) {
+						accept(event, now);
+						return snapshot();
+					}
+					// the attack of a chord whose profile misses two names or more is no acceptance (research R6): the evidence waits for another attack
+					this.polyphonic.rearm(now);
 				}
 				// the single-pitch and chord rules keep judging too: they are the safe path for a clean single note (spec 004, SC-004)
 			}
@@ -719,7 +735,15 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 					: (frame.getLevelState() == AnalysisFrame.LevelState.CLIPPING ? ChordFeedback.UNCERTAIN : ChordFeedback.WAITING));
 			return;
 		}
-		ChordMatcher.Result result = this.chordMatcher.check(frame, event.getRequiredPitches(), event.getToleratedPitches());
+		ChordMatcher.Result result;
+		if( !this.chordMatcher.getParameters().usesProfile() ) {
+			result = this.chordMatcher.check(frame, event.getRequiredPitches(), event.getToleratedPitches());
+		} else if( this.articulationArmed ) {
+			result = this.chordMatcher.check(this.chordProfile, now);
+		} else {
+			// no strum armed: the hint to strum again reads the frame alone, as if it had been summed long enough
+			result = this.chordMatcher.check(frameProfile(spectrum, event, now), now);
+		}
 		this.chordRun = (result.isComplete() ? this.chordRun + 1 : 0);
 		if( !this.articulationArmed ) {
 			this.chordFeedback = (result.isComplete() ? new ChordFeedback(ChordFeedback.Kind.STRUM_AGAIN, new int[0], result.getUnverifiable())
@@ -741,6 +765,40 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			return;
 		}
 		this.chordFeedback = new ChordFeedback(ChordFeedback.Kind.WAITING, new int[0], result.getUnverifiable());
+	}
+
+	/** The profile of the armed strum: reset when a new strum is armed (or the event changes), then summed on each usable frame (spec 024). */
+	private void sumProfile(AnalysisFrame frame, PracticeEvent event, boolean usableLevel) {
+		if( !this.articulationArmed ) {
+			return;
+		}
+		long now = frame.getTimestampNanos();
+		if( this.profileEvent != event || this.profileArmNanos != this.armTransientNanos ) {
+			this.chordProfile.reset(event.getRequiredPitches(), event.getToleratedPitches(), this.chordMatcher.getParameters().profileTop, now);
+			this.profileEvent = event;
+			this.profileArmNanos = this.armTransientNanos;
+		}
+		if( usableLevel && frame.getSpectrum() != null ) {
+			this.chordProfile.add(frame.getSpectrum());
+		}
+	}
+
+	/** The weak-name guard of the attack path (research R6): the armed strum's profile, or the attack's own frame when none is armed or it summed nothing yet (no spectrum: allowed). */
+	private boolean attackGuardAllows(AnalysisFrame frame, PracticeEvent event) {
+		if( this.articulationArmed && !this.chordProfile.isEmpty() ) {
+			return this.chordMatcher.attackMayAccept(this.chordProfile);
+		}
+		if( frame.getSpectrum() == null ) {
+			return true;
+		}
+		return this.chordMatcher.attackMayAccept(frameProfile(frame.getSpectrum(), event, frame.getTimestampNanos()));
+	}
+
+	private ChordProfile frameProfile(SpectrumFrame spectrum, PracticeEvent event, long now) {
+		this.frameProfile.reset(event.getRequiredPitches(), event.getToleratedPitches(), this.chordMatcher.getParameters().profileTop,
+				now - this.chordMatcher.getParameters().profileSettleNanos);
+		this.frameProfile.add(spectrum);
+		return this.frameProfile;
 	}
 
 	private void setVerdict(Verdict verdict, long now) {

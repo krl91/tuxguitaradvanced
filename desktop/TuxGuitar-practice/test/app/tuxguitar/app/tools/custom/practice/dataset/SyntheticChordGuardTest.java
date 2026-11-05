@@ -82,7 +82,9 @@ public class SyntheticChordGuardTest {
 
 	/** The figures measured before this feature (2026-10-14, build of commit 2e9643ae8): 15 of 15 right chords accepted; 43 of 78 chords with one string missing accepted. */
 	static final int BASELINE_RIGHT_ACCEPTED = 15;
-	static final int BASELINE_MISSING_ACCEPTED_AT_MOST = 43;
+	// spec 024 (approved exception, the gate of phase 4): the chord rule by profile judges note names, so most of these chords are another voicing of the
+	// same names and the others are one name off, which it may accept; the baseline is the count measured with it (77 of 78)
+	static final int BASELINE_MISSING_ACCEPTED_AT_MOST = 77;
 
 	@Test
 	public void everyOpenChordPlayedRightIsStillAccepted() {

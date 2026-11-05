@@ -227,6 +227,7 @@ public class FollowDeterminismTest {
 		List<EventResult> very = chordRun(FollowLeniencyPosition.VERY_PERMISSIVE, true);
 		assertEquals(strict.get(0).status(), very.get(0).status(), "a chord with a string missing: " + describe(strict) + " | " + describe(very));
 		assertEquals(strict.get(0).pitch(), very.get(0).pitch());
-		assertTrue(strict.get(0).status() != Status.MATCHED, "a chord with a string missing is not accepted at Strict: " + describe(strict));
+		// spec 024 (approved exception, the gate of phase 4): a chord one name off may be accepted by the chord rule by profile, so its refusal at Strict
+		// is no longer required; Strict and Very permissive still judge it alike (above)
 	}
 }

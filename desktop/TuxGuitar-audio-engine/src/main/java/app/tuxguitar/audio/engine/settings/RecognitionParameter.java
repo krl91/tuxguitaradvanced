@@ -18,6 +18,8 @@ public abstract class RecognitionParameter {
 		TUNER,
 		NOTES,
 		CHORDS,
+		/** The values that shape the chord's pitch-class profile (spec 024): the chords section has no room left. */
+		CHORD_DETAILS,
 		PASSAGES,
 		ENGINE,
 		ADVANCED

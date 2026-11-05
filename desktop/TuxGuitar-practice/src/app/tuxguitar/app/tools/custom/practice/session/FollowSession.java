@@ -312,6 +312,8 @@ public final class FollowSession {
 		final long[] matchSince;
 		final int[] candidates;
 		final int[] chordRun;
+		/** Under the profile rule, the profile of each chord candidate, summed from the transient (spec 024); null for a single note. */
+		final ChordProfile[] profiles;
 		final long[] lastMatch;
 		long gapSince = -1L;
 		int heldMidi = Integer.MIN_VALUE;
@@ -332,6 +334,7 @@ public final class FollowSession {
 			this.lastMatch = new long[candidates.length];
 			Arrays.fill(this.matchSince, -1L);
 			this.chordRun = new int[candidates.length];
+			this.profiles = new ChordProfile[candidates.length];
 		}
 	}
 
@@ -871,6 +874,15 @@ public final class FollowSession {
 		this.recentOnsets.removeIf(o -> o.transient_ < transient_ - 3_000_000_000L);
 		PendingOnset onset = new PendingOnset(transient_, adjusted, candidates.stream().mapToInt(Integer::intValue).toArray());
 		onset.inWindow.addAll(inWindow);
+		if (this.chordMatcher.getParameters().usesProfile()) {
+			for (int c = 0; c < onset.candidates.length; c++) {
+				PracticeEvent event = this.events.get(onset.candidates[c]);
+				if (event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD) {
+					onset.profiles[c] = new ChordProfile();
+					onset.profiles[c].reset(event.getRequiredPitches(), event.getToleratedPitches(), this.chordMatcher.getParameters().profileTop, transient_);
+				}
+			}
+		}
 		this.pending.add(onset);
 		// the evidence began at the transient, some frames before the onset was reported
 		for (Seen past : this.history) {
@@ -944,7 +956,13 @@ public final class FollowSession {
 			PracticeEvent event = this.events.get(index);
 			if (event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD) {
 				if (seen.spectrum != null && seen.usable) {
-					ChordMatcher.Result r = this.chordMatcher.check(seen.spectrum, event.getRequiredPitches(), event.getToleratedPitches());
+					ChordMatcher.Result r;
+					if (onset.profiles[c] != null) {
+						onset.profiles[c].add(seen.spectrum);
+						r = this.chordMatcher.check(onset.profiles[c], seen.wall);
+					} else {
+						r = this.chordMatcher.check(seen.spectrum, event.getRequiredPitches(), event.getToleratedPitches());
+					}
 					onset.chordRun[c] = (r.isComplete() ? onset.chordRun[c] + 1 : 0);
 					if (onset.chordRun[c] >= this.chordMatcher.getParameters().stableHops) {
 						match(index, onset, context);
@@ -1144,6 +1162,10 @@ public final class FollowSession {
 			if (event.getBendPath() != null || this.legatoArrival[i]) {
 				continue;
 			}
+			boolean chord = (event.getKind() == PracticeEvent.Kind.EXPECTED_CHORD);
+			if (chord && !this.chordMatcher.getParameters().attack) {
+				continue;
+			}
 			PolyphonicAcceptance acceptance = this.acceptances[i];
 			if (acceptance == null) {
 				acceptance = this.polyphonicFactory.get();
@@ -1152,6 +1174,11 @@ public final class FollowSession {
 			int[] pitches = (event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ? new int[] { event.getExpectedMidi() } : event.getRequiredPitches());
 			int[] frets = (event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ? new int[] { event.getFret() } : null);
 			if (acceptance.offer(clipping ? null : frame.getAttackEvidence(), frame.getTimestampNanos(), pitches, frets, this.tolerance)) {
+				if (chord && this.chordMatcher.getParameters().usesProfile() && !attackGuardAllows(i, event, frame)) {
+					// the attack of a chord whose profile misses two names or more is no acceptance (research R6)
+					acceptance.rearm(frame.getTimestampNanos());
+					continue;
+				}
 				long evidenceWall = wall - (frame.getTimestampNanos() - acceptance.getOnsetNanos());
 				long onsetWall = evidenceWall;
 				if (this.ringingUnder[i]) {
@@ -1183,6 +1210,30 @@ public final class FollowSession {
 				}
 			}
 		}
+	}
+
+	/** The profile of one frame alone, for the attack path when no strum of the chord is pending. Made once. */
+	private final ChordProfile frameProfile = new ChordProfile();
+
+	/**
+	 * The weak-name guard of the attack path (research R6): the profile of the latest onset that holds the chord as a candidate, or the attack's
+	 * own frame when there is none or that profile summed nothing yet; a frame without a spectrum does not stop it (spec 023).
+	 */
+	private boolean attackGuardAllows(int index, PracticeEvent event, AnalysisFrame frame) {
+		for (int k = this.pending.size() - 1; k >= 0; k--) {
+			PendingOnset onset = this.pending.get(k);
+			for (int c = 0; c < onset.candidates.length; c++) {
+				if (onset.candidates[c] == index && onset.profiles[c] != null && !onset.resolved && !onset.profiles[c].isEmpty()) {
+					return this.chordMatcher.attackMayAccept(onset.profiles[c]);
+				}
+			}
+		}
+		if (frame.getSpectrum() == null) {
+			return true;
+		}
+		this.frameProfile.reset(event.getRequiredPitches(), event.getToleratedPitches(), this.chordMatcher.getParameters().profileTop, 0L);
+		this.frameProfile.add(frame.getSpectrum());
+		return this.chordMatcher.attackMayAccept(this.frameProfile);
 	}
 
 	/** The attack the detector reported nearest to the time the evidence gives, inside the window of the event, ; null when none. */

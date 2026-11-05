@@ -66,10 +66,25 @@ public final class RecognitionParameters {
 	// ---------------------------------------------------------------- practice: chords
 	public static final Number CHORD_EVIDENCE = new Number(PREFIX + "chord.evidence", Section.CHORDS, "%", 1.0 / 3.0, 0.20, 0.80, false, 100.0);
 	public static final Number CHORD_WINDOW = new Number(PREFIX + "chord.window", Section.CHORDS, "ms", 600, 300, 1500, true);
+	/** The rule of spec 023: every string verifiable in the spectrum is checked on its own. */
 	public static final String COMPLETENESS_ALL = "all-verifiable";
-	public static final Choice CHORD_COMPLETENESS = new Choice(PREFIX + "chord.completeness", Section.CHORDS, COMPLETENESS_ALL, COMPLETENESS_ALL);
+	/** The rule of spec 024: the note names summed over the strum, matched against the expected chord (contracts/chord-profile-rule.md). */
+	public static final String COMPLETENESS_PROFILE = "profile";
+	public static final Choice CHORD_COMPLETENESS = new Choice(PREFIX + "chord.completeness", Section.CHORDS, COMPLETENESS_PROFILE, COMPLETENESS_ALL, COMPLETENESS_PROFILE);
 	public static final String FOREIGN_IGNORE = "ignore";
 	public static final Choice CHORD_FOREIGN = new Choice(PREFIX + "chord.foreign", Section.CHORDS, FOREIGN_IGNORE, FOREIGN_IGNORE);
+	/** The cosine between the summed profile and the expected names from which a chord is complete (spec 024 T007: 0.79, Normal and Strict). */
+	public static final Number CHORD_PROFILE_MATCH = new Number(PREFIX + "chord.profile.match", Section.CHORDS, "%", 0.79, 0.50, 0.99, false, 100.0);
+	/** A required name summed below this share of the strongest required name is weak; two weak names are never complete. */
+	public static final Number CHORD_PROFILE_NAMES = new Number(PREFIX + "chord.profile.names", Section.CHORDS, "%", 0.40, 0.05, 0.60, false, 100.0);
+	/** Whether a chord may be accepted on its attack (the attack evidence), guarded by the weak names under the profile rule (research R6). */
+	public static final Flag CHORD_ATTACK = new Flag(PREFIX + "chord.attack", Section.CHORDS, true);
+
+	// ---------------------------------------------------------------- practice: chord details
+	/** The highest pitch summed into the profile. */
+	public static final Number CHORD_PROFILE_TOP = new Number(PREFIX + "chord.detail.top", Section.CHORD_DETAILS, "MIDI", 84, 60, 112, true);
+	/** The time of profile summed from the strum before a chord can be judged complete. */
+	public static final Number CHORD_PROFILE_SETTLE = new Number(PREFIX + "chord.detail.settle", Section.CHORD_DETAILS, "ms", 200, 0, 500, true);
 
 	// ---------------------------------------------------------------- passages
 	public static final String PASSAGES_OFF = "0";
@@ -105,7 +120,8 @@ public final class RecognitionParameters {
 		Collections.addAll(all, INPUT_LEVEL_MIN, INPUT_LEVEL_MAX, INPUT_NOISE_REDUCTION, INPUT_GAIN_SUGGESTION,
 				TUNER_IN_TUNE, TUNER_HOLD,
 				NOTE_ACCEPT, NOTE_FRET_SHARP, NOTE_CONFIDENCE, NOTE_STABILITY, NOTE_ATTACK, NOTE_LEGATO, NOTE_TECHNIQUE, TEMPO_WINDOW,
-				CHORD_EVIDENCE, CHORD_WINDOW, CHORD_COMPLETENESS, CHORD_FOREIGN,
+				CHORD_EVIDENCE, CHORD_WINDOW, CHORD_COMPLETENESS, CHORD_FOREIGN, CHORD_PROFILE_MATCH, CHORD_PROFILE_NAMES, CHORD_ATTACK,
+				CHORD_PROFILE_TOP, CHORD_PROFILE_SETTLE,
 				PASSAGE_MEASURES, PASSAGE_THRESHOLD, PASSAGE_RETRIES, FOLLOW_PLAY_TIME,
 				ENGINE_PITCH,
 				LEVEL_CLIP_SAMPLE, LEVEL_CLIP_SHARE, TUNER_CONFIDENCE, ATTACK_MIN_LEVEL, CHORD_MIN_PARTIALS, CHORD_CONFIRM);

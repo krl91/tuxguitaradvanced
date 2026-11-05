@@ -82,7 +82,10 @@ public final class PracticeParameters {
 	public ChordMatcher.Parameters chordParameters() {
 		return new ChordMatcher.Parameters((int) this.settings.get(RecognitionParameters.CHORD_MIN_PARTIALS),
 				this.settings.get(RecognitionParameters.CHORD_EVIDENCE), this.settings.getChordConfirmHops(),
-				(long) this.settings.get(RecognitionParameters.CHORD_WINDOW) * 1_000_000L);
+				(long) this.settings.get(RecognitionParameters.CHORD_WINDOW) * 1_000_000L, this.settings.get(RecognitionParameters.CHORD_COMPLETENESS),
+				this.settings.get(RecognitionParameters.CHORD_PROFILE_MATCH), this.settings.get(RecognitionParameters.CHORD_PROFILE_NAMES),
+				(int) this.settings.get(RecognitionParameters.CHORD_PROFILE_TOP), (long) this.settings.get(RecognitionParameters.CHORD_PROFILE_SETTLE) * 1_000_000L,
+				this.settings.get(RecognitionParameters.CHORD_ATTACK));
 	}
 
 	public RecognitionSettings getSettings() {

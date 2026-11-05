@@ -275,7 +275,9 @@ public class DatasetBenchmarkTest {
 		guard(all, "recognised when played", "single note", 0.97, report);
 		guard(all, "wrong note", null, 0.995, report);
 		guard(all, "recognised when played", "poly", 0.85, report);
-		guard(all, "incomplete chord", null, 0.90, report);
+		// spec 024 (approved exception, the owner's option B of 2026-11-05): the chord rule by profile tolerates one missing name, so an incomplete chord
+		// may be accepted; the floor is the share measured with both engines (20 of 44 refused)
+		guard(all, "incomplete chord", null, 0.45, report);
 	}
 
 	/** The share of OK among the run tests of one kind (test name prefix; label or dataset filter) must be at least {@code minimum}. */
