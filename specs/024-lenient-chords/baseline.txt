@@ -1,0 +1,16 @@
+Spec 024 baseline (T001), 2026-11-05
+
+HEAD at the start of the implementation: 218ca09c6. The code is that of 7372178b6 (spec 025, phase 6): the commits since then are spec 024's documents only.
+
+Full gate at that code (spec 025 T029, 2026-11-05, run then, no code changed since):
+- practice: 1466 tests, 12 skipped
+- audio engine: 498
+- tuner: 24
+- common: 73, 1, 1, 10 (1 skipped), 2
+- swt-gui-tests: 91
+
+Committed tests that read the files this spec changes (must stay green and unchanged):
+- audio engine: RecognitionSettingsTest (lines 48-50 pin CHORD_EVIDENCE 1/3, CHORD_MIN_PARTIALS 2, 8 confirmation hops, CHORD_WINDOW 600; line 290 the version), RecognitionSettingsStoreTest (valuesSurviveARestart: the round trip and version "1"), RecognitionSettingsStoreProfileTest (restoring gives RecognitionSettings.defaults()), ChordEvidenceParityTest, PolyphonicAnalyzerTest
+- practice: RecognitionControlsTest (lines 69-84: the chord evidence shown as 33), PracticeParametersTest, FollowLeniencyTest, ArcadeLeniencyTest, ArcadeLikePracticeParityTest, the ChordMatcher and PracticeSession chord tests, OwnerChordsBenchmarkTest with owner-chords-baseline.properties (owner-chords: at least 8 accepted, at most 2 wrong; owner-chords-2: at least 18, at most 11)
+
+Gate after phase 2 (T005, 2026-11-05): full build green; practice 1467 (12 skipped), audio engine 498 (1 skipped), tuner 24, common 73, 1, 1, 10 (1 skipped), 2; no window changed (no swt-gui run; the Mac session was locked).

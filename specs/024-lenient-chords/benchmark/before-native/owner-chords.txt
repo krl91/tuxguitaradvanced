@@ -1,0 +1,46 @@
+Owner chords through the Rocksmith USB adapter
+
+owner-chords/take01.wav [47, 52, 56, 59, 64]     own chord refused   | expecting [52, 56, 59]: refused
+owner-chords/take02.wav [52, 56, 59]             own chord refused   | expecting [52, 56, 59, 68]: refused
+owner-chords/take03.wav [52, 56, 59, 68]         own chord refused   | expecting [52, 56, 59, 64, 68]: refused
+owner-chords/take04.wav [52, 56, 59, 68]         own chord ACCEPTED   | expecting [52, 56, 59, 64, 68]: refused
+owner-chords/take05.wav [52, 56, 59, 64, 68]     own chord refused   | expecting [50, 57, 62, 66]: refused
+owner-chords/take06.wav [50, 57, 62, 66]         own chord refused   | expecting [43, 50, 55, 59, 67]: refused
+owner-chords/take07.wav [50, 57, 62, 66]         own chord refused   | expecting [43, 50, 55, 59, 67]: refused
+owner-chords/take08.wav [50, 57, 62, 66]         own chord refused   | expecting [43, 50, 55, 59, 67]: refused
+owner-chords/take09.wav [43, 50, 55, 59, 67]     own chord refused   | expecting [40, 52, 55, 60]: refused
+owner-chords/take10.wav [43, 50, 55, 59, 67]     own chord ACCEPTED   | expecting [40, 52, 55, 60]: refused
+owner-chords/take11.wav [43, 50, 55, 59, 67]     own chord refused   | expecting [40, 52, 55, 60]: refused
+owner-chords/take12.wav [40, 52, 55, 60]         own chord refused   | expecting [52, 55, 60, 64, 67]: refused
+owner-chords/take13.wav [52, 55, 60, 64, 67]     own chord refused   | expecting [52, 55, 60]: refused
+owner-chords/take14.wav [52, 55, 60]             own chord ACCEPTED   | expecting [50, 55, 62, 67]: refused
+owner-chords/take15.wav [50, 55, 62, 67]         own chord ACCEPTED   | expecting [43, 50, 55, 67]: WRONGLY ACCEPTED
+owner-chords/take16.wav [50, 55, 62, 67]         own chord ACCEPTED   | expecting [43, 50, 55, 67]: refused
+owner-chords/take17.wav [43, 50, 55, 67]         own chord ACCEPTED   | expecting [52, 57, 60]: refused
+owner-chords/take18.wav [52, 57, 60]             own chord ACCEPTED   | expecting [41, 53, 57, 65]: WRONGLY ACCEPTED
+owner-chords/take19.wav [41, 53, 57, 65]         own chord refused   | expecting [50, 57, 62, 66]: refused
+owner-chords/take20.wav [41, 53, 57, 65]         own chord ACCEPTED   | expecting [50, 57, 62, 66]: refused
+owner-chords/take21.wav [50, 57, 62, 66]         own chord refused   | expecting [52, 56, 59, 64]: refused
+owner-chords-2/take01.wav [52, 56, 59, 64]       own chord ACCEPTED   | expecting [40, 52, 56, 64]: WRONGLY ACCEPTED
+owner-chords-2/take02.wav [40, 52, 56, 64]       own chord ACCEPTED   | expecting [47, 52, 56, 59, 64]: WRONGLY ACCEPTED
+owner-chords-2/take03.wav [47, 52, 56, 59, 64]   own chord ACCEPTED   | expecting [40, 48, 52, 55, 60]: refused
+owner-chords-2/take04.wav [40, 48, 52, 55, 60]   own chord ACCEPTED   | expecting [52, 55, 60]: WRONGLY ACCEPTED
+owner-chords-2/take05.wav [52, 55, 60]           own chord ACCEPTED   | expecting [52, 55, 60, 64]: WRONGLY ACCEPTED
+owner-chords-2/take06.wav [52, 55, 60, 64]       own chord ACCEPTED   | expecting [45, 50, 57, 62, 66]: refused
+owner-chords-2/take07.wav [45, 50, 57, 62, 66]   own chord ACCEPTED   | expecting [50, 57, 62, 66]: WRONGLY ACCEPTED
+owner-chords-2/take08.wav [50, 57, 62, 66]       own chord ACCEPTED   | expecting [43, 55, 59, 67]: refused
+owner-chords-2/take09.wav [50, 57, 62, 66]       own chord refused   | expecting [43, 55, 59, 67]: refused
+owner-chords-2/take10.wav [50, 57, 62, 66]       own chord ACCEPTED   | expecting [43, 55, 59, 67]: refused
+owner-chords-2/take11.wav [50, 57, 62, 66]       own chord refused   | expecting [43, 55, 59, 67]: refused
+owner-chords-2/take12.wav [50, 57, 62, 66]       own chord refused   | expecting [43, 55, 59, 67]: refused
+owner-chords-2/take13.wav [43, 55, 59, 67]       own chord ACCEPTED   | expecting [55, 59, 67]: WRONGLY ACCEPTED
+owner-chords-2/take14.wav [43, 55, 59, 67]       own chord ACCEPTED   | expecting [55, 59, 67]: WRONGLY ACCEPTED
+owner-chords-2/take15.wav [55, 59, 67]           own chord ACCEPTED   | expecting [43, 55, 59, 67]: WRONGLY ACCEPTED
+owner-chords-2/take16.wav [43, 55, 59, 67]       own chord ACCEPTED   | expecting [45, 52, 57, 61, 69]: refused
+owner-chords-2/take17.wav [45, 52, 57, 61, 69]   own chord ACCEPTED   | expecting [52, 57, 61, 64]: WRONGLY ACCEPTED
+owner-chords-2/take18.wav [45, 52, 57, 61, 69]   own chord ACCEPTED   | expecting [52, 57, 61, 64]: WRONGLY ACCEPTED
+owner-chords-2/take19.wav [52, 57, 61, 64]       own chord ACCEPTED   | expecting [52, 57, 59, 64]: refused
+owner-chords-2/take20.wav [52, 57, 59, 64]       own chord ACCEPTED   | expecting [45, 52, 57, 69]: WRONGLY ACCEPTED
+owner-chords-2/take21.wav [45, 52, 57, 69]       own chord ACCEPTED   | expecting [47, 52, 56, 59, 64]: refused
+
+26 of 42 takes accepted for the chord that was played (62 %); 13 of 42 other chords wrongly accepted

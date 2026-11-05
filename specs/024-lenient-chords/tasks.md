@@ -43,11 +43,11 @@
 
 ## Phase 1: Setup (the figures before)
 
-- [ ] T001 Write `SPEC/baseline.txt`:
+- [X] T001 Write `SPEC/baseline.txt`:
   - HEAD;
   - the counts of the full gate and of `swt-gui-tests`;
   - the committed tests that read the files this spec changes (`RecognitionSettingsTest`, `RecognitionSettingsStoreTest`, `RecognitionSettingsStoreProfileTest`, `RecognitionControlsTest`, `PracticeParametersTest`, `FollowLeniencyTest`, `ArcadeLeniencyTest`, `ChordEvidenceParityTest`, the `ChordMatcher` and `PracticeSession` chord tests, `OwnerChordsBenchmarkTest` with its baseline file).
-- [ ] T002 Run the five committed dataset benchmarks (`DatasetBenchmarkTest`, `GuitarSetChordBenchmarkTest`, `TechniqueDatasetBenchmarkTest`, `OwnerChordsBenchmarkTest`, `BassRecognitionBenchmarkTest`) with each engine at the current code, as in quickstart §1. Copy `desktop/TuxGuitar-practice/target/dataset-benchmark/` and the bass report into `SPEC/benchmark/before-java/` and `SPEC/benchmark/before-native/`. Check that the owner's figures are 26 of 42 and 13 of 42 on both.
+- [X] T002 Run the five committed dataset benchmarks (`DatasetBenchmarkTest`, `GuitarSetChordBenchmarkTest`, `TechniqueDatasetBenchmarkTest`, `OwnerChordsBenchmarkTest`, `BassRecognitionBenchmarkTest`) with each engine at the current code, as in quickstart §1. Copy `desktop/TuxGuitar-practice/target/dataset-benchmark/` and the bass report into `SPEC/benchmark/before-java/` and `SPEC/benchmark/before-native/`. Check that the owner's figures are 26 of 42 and 13 of 42 on both.
 
 ## Phase 2: User Story 3 - The cause of each refused chord is known (P3, first: every later choice depends on it)
 
@@ -55,7 +55,7 @@
 
 **Independent Test**: quickstart §2; `SPEC/benchmark/diagnostic.md` exists with the causes grouped and counted.
 
-- [ ] T003 [US3] New test `PT/dataset/OwnerChordsDiagnosticTest.java` (tag `dataset`):
+- [X] T003 [US3] New test `PT/dataset/OwnerChordsDiagnosticTest.java` (tag `dataset`):
   - It reads the owner's takes and pairs each with its control, as `OwnerChordsBenchmarkTest` does.
   - It has its own judge that takes the `RecognitionSettings` and the session parameters as arguments. It mirrors `DatasetJudge.accepts`, which stays unchanged.
   - Per take, it records the fields of data-model "Chord diagnostic":
@@ -66,7 +66,7 @@
     - the cause, the first that applies of *clipped*, *one string short*, *weak evidence*, *too short*, *other* (research R1);
     - the counterfactual: which single relaxation flips the outcome, among L1 to L4 of research R3. L1 and L4 are simulated in the test's judge from the `ChordMatcher.Result` and the level state. L2 and L3 change the parameters.
   - It writes `target/dataset-benchmark/owner-chords-diagnostic-<engine>.txt`.
-- [ ] T004 [US3] Run T003 with each engine and write `SPEC/benchmark/diagnostic.md`:
+- [X] T004 [US3] Run T003 with each engine and write `SPEC/benchmark/diagnostic.md`:
   - one row per refused take and per wrong acceptance, with its cause and evidence;
   - the causes grouped with their counts;
   - which relaxation recovers how many refusals and adds how many wrong acceptances;
@@ -76,7 +76,8 @@
   Check the stop conditions:
   - if no lever of R3 recovers at least 12 refusals, alone or together, stop and report;
   - if the levers need evidence the engine does not carry, stop and report.
-- [ ] T005 [US3] Gate; commit "impl(024): phase 2 (US3): diagnostic".
+  *Done 2026-11-05 (`benchmark/diagnostic.md`): both engines give identical lines; 26/42 accepted, 13/42 wrong, of which 12 are the same chord in another voicing; clipping is not a cause; on 12 of the 16 refusals every string is heard at its own best frame but not together. The best lever, L1, gives at most 34/42 with 19 wrong (17 voicing pairs); evidence and confirmation recover nothing. **The stop condition applies: implementation stops after T005 and waits for the owner.***
+- [X] T005 [US3] Gate; commit "impl(024): phase 2 (US3): diagnostic".
 
 ## Phase 3: User Story 1 - The chords I play are accepted (P1)
 
