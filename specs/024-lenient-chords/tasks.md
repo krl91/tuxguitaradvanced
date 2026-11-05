@@ -130,6 +130,7 @@
   - *Strict*: a higher threshold;
   - *Lenient*: a lower threshold;
   - whether the attack path stays for chords;
+  - whether Follow and Arcade relax the threshold; if so, the chosen configuration must also give 25/25 and 0 clearly wrong at the relaxed threshold with Follow's arming (research R7), and the probe reports it;
   - whether the weight and the noise floor are kept as settings (kept when the chosen value is not the plain one: linear, no floor).
 
   *Normal*'s weak-name share must be at least 0.05 above the leak (research R6): T006 also reports the highest share that a name not played reaches in the reference takes, and `probe.md` writes it with the margin. T009 uses it.
@@ -193,10 +194,12 @@
   - a file with the spec 023 chord values and no profile key reads as *Normal*'s values;
   - a file with `CHORD_EVIDENCE` or `CHORD_CONFIRM` changed by hand keeps its values and `all-verifiable`;
   - a file with a profile key is read as it is;
+  - with a test history holding an older set tagged *Strict* and one tagged *Lenient*, a file with either old set reads as that level's current values, and a file differing by one value is read as it is (the table-driven migration of research R7);
   - `VERSION` is still "1".
 - [ ] T015 [P] [US1] New test `PT/session/ChordProfileParametersTest.java`:
   - `PracticeParameters.chordParameters()` passes the rule and the profile values from the settings;
   - `FollowLeniency` and `ArcadeLeniency` keep the rule and the profile threshold, unless T007 decided they relax it, then by their one-way rule (FR-009);
+  - they never relax the weak-name share (`CHORD_PROFILE_NAMES`);
   - a value changed in the settings reaches the next run's `ChordMatcher` with no restart (FR-013).
 - [ ] T016 [P] [US1] New test `PT/dataset/OwnerChordsProfileTest.java` (tag `dataset`; FR-001, FR-002, SC-001, SC-002):
   - with `RecognitionSettings.defaults()` on the reference series, judged as `DatasetJudge` does (the Wait session), 25 of 25 right accepted and 0 clearly wrong accepted (Follow and Arcade are measured by T006's Follow arming and covered by T012);
@@ -210,7 +213,7 @@
   - arrays made once;
   - `reset(required, tolerated, top, weight, noise)`, `add(SpectrumFrame)`, `match()`, `weakNames(share)`, `weakest(n)`, `summedNanos`.
 - [ ] T019 [US1] `AE/settings/RecognitionParameters.java`: add the option `profile` (`COMPLETENESS_PROFILE`) to `CHORD_COMPLETENESS` with the default `profile`. Add `CHORD_PROFILE_MATCH`, `CHORD_PROFILE_SETTLE` and `CHORD_PROFILE_NAMES` in the chords section (7 parameters, 8 rows: the advanced section is full, research R5). Add a new `Section.CHORD_DETAILS` holding `CHORD_PROFILE_TOP`, plus `CHORD_PROFILE_NOISE`, `CHORD_PROFILE_WEIGHT` and `CHORD_ATTACK` only if T007 kept them. All with T007's values. Register them in `RecognitionParameters.ALL`. The committed `RecognitionControlsTest.everySectionFitsWithoutScrolling` must stay green.
-- [ ] T020 [US1] `AE/settings/RecognitionSettings.java` `fromStrings`: the migration of research R7, beside the legacy tempo key.
+- [ ] T020 [US1] `AE/settings/RecognitionSettings.java` `fromStrings`: the table-driven migration of research R7, beside the legacy tempo key. The history of past sets starts here, in the new class `AE/settings/ChordLeniency.java` (only the history in this phase; T033 adds the levels), holding one set: spec 023's values tagged *Normal*.
 - [ ] T021 [US1] `PR/session/ChordMatcher.java`: `Parameters` gains the rule and the profile values (a new constructor; the old one keeps `all-verifiable`), and `check(ChordProfile, SpectrumFrame, required, tolerated)` decides by profile when the rule says so, by the per-string rule otherwise (contracts/chord-profile-rule.md). `PR/session/PracticeParameters.java` `chordParameters()` passes them.
 - [ ] T022 [US1] `PR/session/PracticeSession.java` `onChordFrame`:
   - the profile is reset at each arming and summed on each usable frame;
@@ -264,7 +267,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T033 [US2] New pure class `AE/settings/ChordLeniency.java`, with the levels' values from T007.
+- [ ] T033 [US2] `AE/settings/ChordLeniency.java` (made by T020 with the history): add the levels, their values from T007, `of`, `apply` and `values` (data-model "Chord leniency level").
 - [ ] T034 [US2] New `PR/ui/ChordLeniencyPanel.java` (contracts/chord-leniency.md): a label, a `UIDropDownSelect` and a wrapped line, listening to the store. Add it to the *Mode* tab in `PR/ui/PracticeWindow.java`, on the row after `FollowPanel`.
 - [ ] T035 [US2] Strings: `practice.chord-leniency`, `practice.chord-leniency.{strict,normal,lenient,custom}` and `….line`, in three languages; the French names are *Strict*, *Normal* and *Tolérant*. Also add to the `.tip` of the level's values in the Recognition settings window: "Choosing a chord check level in the practice window sets this value; changing it here makes the level Custom".
 - [ ] T036 [US2] Run T029–T031 with each engine for T030, and `-P swt-gui-tests` with the Mac session unlocked: green. Write `SPEC/benchmark/levels.md` from T030's reports.
@@ -277,7 +280,8 @@
   1. how each engine works, from the frame to the session's decision;
   2. their interface: the frame record, `frame_layout.txt`, the JNI functions of `jni_recognition.rs`, `NativeParameters`;
   3. every parameter of `RecognitionParameters` and `NativeParameters`: key, meaning, unit, default, bounds, where it is set;
-  4. the constants still fixed, by file, marked as spec 026's.
+  4. the constants still fixed, by file, marked as spec 026's;
+  5. the rule for later updates: a change of a level's values or of the defaults adds the old set to the `ChordLeniency` history (research R7).
 
   Then run T038: green.
 - [ ] T040 [P] The practice guide in three languages: the *Chord check* levels, and what a refused chord's message means now.

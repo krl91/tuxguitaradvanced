@@ -97,7 +97,7 @@ desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/settings
 ├── RecognitionParameter.java         + Section.CHORD_DETAILS, the values that shape the profile (R5)
 ├── RecognitionParameters.java        + option "profile" of CHORD_COMPLETENESS (default), + CHORD_PROFILE_MATCH, _SETTLE, _NAMES in the chords section, CHORD_PROFILE_TOP (and the kept options) in the chord details section (R5)
 ├── RecognitionSettings.java          fromStrings: migration of untouched spec 023 chord values (R7)
-└── ChordLeniency.java                new: the levels, derived and applied (R7)
+└── ChordLeniency.java                new: the history of past level values for the migration (phase 4), then the levels, derived and applied (phase 5) (R7)
 
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── session/ChordProfile.java         new, pure: the profile of a frame, its sum, the match, the weakest names (R3)

@@ -92,7 +92,7 @@ Invariants, each tested:
 
 ## Migration (R7)
 
-`RecognitionSettings.fromStrings` reads a file holding `all-verifiable`, `CHORD_EVIDENCE` 1/3, `CHORD_CONFIRM` 43 ms and no `recognition.chord.profile.match` key with *Normal*'s values. Any other file is read as it is. `VERSION` stays 1.
+`RecognitionSettings.fromStrings` reads a file whose chord values equal a past set of a level's values (`ChordLeniency` history) as that level's current values. In this spec the history holds one set: `all-verifiable`, `CHORD_EVIDENCE` 1/3, `CHORD_CONFIRM` 43 ms and no `recognition.chord.profile.match` key, tagged *Normal*. Any other file is read as it is. `VERSION` stays 1. A later update that changes a level's values adds the old set to the history (research R7).
 
 ## Judgement categories (reports, not code state)
 
