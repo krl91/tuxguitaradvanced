@@ -150,6 +150,10 @@ public class PracticeWindow {
 	private UILabel tuningLabel;
 	private UILabel unusualLabel;
 	private UILabel startLabel;
+	/** Where the practice starts (the beginning or the cursor's measure), in the Track tab. */
+	private UILabel startPositionLabel;
+	/** The window's fixed bottom area: the line of a greyed start and Check again (spec 025). */
+	private StartArea startArea;
 	private UILabel mismatchLabel;
 	private PracticeTunerContext.Listener sharedListener;
 	private RecognitionSettingsStore.Listener settingsListener;
@@ -329,10 +333,18 @@ public class PracticeWindow {
 		this.engineNotice = new RecognitionEngineNoticeView(uiFactory, this.window, windowLayout, 2, TuxGuitar::getProperty,
 				RecognitionEngineNoticeView.Session.of(this.context), () -> refit());
 
+		// the line of a greyed start and Check again, above the buttons, in view whatever the tab (spec 025)
+		this.startArea = new StartArea(uiFactory, this.window, TuxGuitar::getProperty, () -> {
+			this.engine.runLevelCheck();
+			updateStartButton();
+		});
+		windowLayout.set(this.startArea.getControl(), 3, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
+		this.startLabel = this.startArea.getLine();
+
 		UITableLayout buttonsLayout = new UITableLayout(0f);
 		UIPanel buttons = uiFactory.createPanel(this.window, false);
 		buttons.setLayout(buttonsLayout);
-		windowLayout.set(buttons, 3, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_FILL, true, false);
+		windowLayout.set(buttons, 4, 1, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_FILL, true, false);
 		// Start and Close are always in view, whatever the tab
 		UIButton ampButton = button(uiFactory, buttons, buttonsLayout, 1, AmpTexts.OPEN, () -> openAmp());
 		ampButton.setToolTipText(TuxGuitar.getProperty(AmpTexts.OPEN + ".tip"));
@@ -509,7 +521,7 @@ public class PracticeWindow {
 		this.trackNotice = label(uiFactory, panel, layout, 2);
 		this.tuningLabel = label(uiFactory, panel, layout, 3);
 		this.unusualLabel = label(uiFactory, panel, layout, 4);
-		this.startLabel = label(uiFactory, panel, layout, 5);
+		this.startPositionLabel = label(uiFactory, panel, layout, 5);
 		this.mismatchLabel = label(uiFactory, panel, layout, 6);
 
 		// ---- tab 2: the input and its level
@@ -520,6 +532,9 @@ public class PracticeWindow {
 		this.inputSelector.setContentListener(this::refit);
 		this.levelPanel = new LevelPanel(this.context, this.engine, uiFactory, inputPanel);
 		this.levelPanel.setContentListener(this::refit);
+		// no check starts by itself during a run or a start that waits (spec 025, FR-013); a check that starts is said under the start button
+		this.levelPanel.setRunGoing(() -> this.session != null || this.followPlan != null || this.arcadeRestartTries > 0 || this.startFlow.pending());
+		this.levelPanel.setRecheckListener(this::updateStartButton);
 		inputLayout.set(this.levelPanel.getControl(), 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 2);
 		this.headphoneLabel = label(uiFactory, inputPanel, inputLayout, 3);
 
@@ -695,7 +710,7 @@ public class PracticeWindow {
 			this.tuningLabel.setText("");
 			this.unusualLabel.setText("");
 			this.startBase = "";
-			this.startLabel.setText("");
+			this.startPositionLabel.setText("");
 			this.preparedSequence = null;
 			updateStartButton();
 			return;
@@ -704,7 +719,7 @@ public class PracticeWindow {
 		CaretView caret = this.host.caret();
 		this.preparedSequence = PracticeSequenceBuilder.build(this.song, candidate.getTrack(), tuning, caret.measure(), caret.position());
 		this.startBase = startText(this.preparedSequence);
-		this.startLabel.setText(this.startBase);
+		this.startPositionLabel.setText(this.startBase);
 		String strings = noteNames(tuning.getOpenStringMidi());
 		String text = TuxGuitar.getProperty("practice.tuning", new String[] { strings });
 		switch( tuning.getRealization() ) {
@@ -769,7 +784,11 @@ public class PracticeWindow {
 				: TuxGuitar.getProperty(modes.isFollow() ? "practice.start.follow" : "practice.start"));
 		// a greyed button is never left unexplained: a one-click start waits for the guitar, or the level check has not heard it yet or cannot use it
 		String greyed = QuickStart.greyedReason(this.tracks.getSelectedValue() != null, this.assessment.getStatus(), this.immediateStart && this.autoStart, this.autoStart);
-		this.startLabel.setText(greyed != null ? this.startBase + "\n" + TuxGuitar.getProperty(greyed) : this.startBase);
+		// said under the button, whatever the tab, with what to do and Check again for the input level's causes (spec 025, FR-002 to FR-004)
+		QuickStart.Blocker blocker = QuickStart.blocker(this.tracks.getSelectedValue() != null, this.assessment, this.immediateStart && this.autoStart, this.autoStart,
+				this.engine.isLevelCheckRunning());
+		this.startLabel.setText(blocker != null ? TuxGuitar.getProperty(blocker.key()) : greyed != null ? TuxGuitar.getProperty(greyed) : "");
+		this.startArea.show(blocker);
 		if( QuickStart.startNow(this.autoStart, canStart) ) {
 			// after the window is shown: the start hides it
 			TGSynchronizer.getInstance(this.context).executeLater(() -> {

@@ -39,6 +39,53 @@ final class QuickStart {
 		return (status == InputAssessment.Status.UNCHECKED ? "practice.start.greyed.UNCHECKED" : "practice.start.greyed.UNUSABLE");
 	}
 
+	/** Why the start button is greyed, said under it: the text key of the cause and its action, and whether Check again applies. */
+	static final class Blocker {
+		private final String key;
+		private final boolean checkAgain;
+
+		Blocker(String key, boolean checkAgain) {
+			this.key = key;
+			this.checkAgain = checkAgain;
+		}
+
+		String key() {
+			return this.key;
+		}
+
+		boolean checkAgain() {
+			return this.checkAgain;
+		}
+	}
+
+	/**
+	 * The cause of a greyed start button, or null when it can be pressed (spec 025, FR-002 to FR-004, data-model "Start blocker"): no track, the one-click
+	 * start waiting for the guitar, a check listening, or the cause the level check found, each with what to do; Check again for the input level's causes.
+	 */
+	static Blocker blocker(boolean trackSelected, InputAssessment assessment, boolean immediate, boolean oneClickWaiting, boolean checking) {
+		if( !trackSelected ) {
+			return new Blocker("practice.start.blocker.no-track", false);
+		}
+		if( canStart(trackSelected, assessment.getStatus(), immediate) ) {
+			return null;
+		}
+		if( oneClickWaiting ) {
+			return new Blocker("practice.quickstart.waiting", false);
+		}
+		if( checking ) {
+			return new Blocker("practice.start.blocker.checking", false);
+		}
+		if( assessment.getStatus() == InputAssessment.Status.UNCHECKED ) {
+			return new Blocker("practice.start.blocker.not-checked", true);
+		}
+		switch( assessment.getReason() ) {
+			case CLIPPING: return new Blocker("practice.start.blocker.saturating", true);
+			case DEVICE_LOST: return new Blocker("practice.start.blocker.input-lost", true);
+			case ACCESS_DENIED_SUSPECTED: return new Blocker("practice.start.blocker.access-refused", true);
+			default: return new Blocker("practice.start.blocker.no-signal", true);
+		}
+	}
+
 	/** The preparation window shows itself for an unusable input only when nothing else is going on: never over a run (Arcade, tempo following) or a start at once. */
 	static boolean showForUnusableInput(boolean windowShown, boolean runOngoing, boolean immediateStart, InputAssessment.Status status) {
 		return !windowShown && !runOngoing && !immediateStart && status == InputAssessment.Status.UNUSABLE;

@@ -45,6 +45,11 @@ public final class LevelPanel {
 	private volatile long lastUiNanos;
 	private boolean connected;
 	private Runnable contentListener;
+	/** Whether a practice run is going: no check starts by itself during one (spec 025, FR-013). */
+	private volatile java.util.function.BooleanSupplier runGoing = () -> false;
+	private final AtomicBoolean recheckPending = new AtomicBoolean();
+	/** Told on the UI thread when a check started by itself, so the window can say it listens. */
+	private volatile Runnable recheckListener;
 
 	public LevelPanel(TGContext context, AudioEngine engine, UIFactory uiFactory, UIContainer parent) {
 		this.context = context;
@@ -72,6 +77,10 @@ public final class LevelPanel {
 		checkAgain.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
 				LevelPanel.this.engine.runLevelCheck();
+				Runnable listener = LevelPanel.this.recheckListener;
+				if( listener != null ) {
+					listener.run();
+				}
 			}
 		});
 		layout.set(checkAgain, 4, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false, 1, 2);
@@ -87,6 +96,15 @@ public final class LevelPanel {
 	public void setContentListener(Runnable contentListener) {
 		this.contentListener = contentListener;
 		this.gainControl.setContentListener(contentListener);
+	}
+
+	/** The window tells whether a practice run is going. */
+	public void setRunGoing(java.util.function.BooleanSupplier runGoing) {
+		this.runGoing = runGoing;
+	}
+
+	public void setRecheckListener(Runnable recheckListener) {
+		this.recheckListener = recheckListener;
 	}
 
 	public UIPanel getControl() {
@@ -129,10 +147,26 @@ public final class LevelPanel {
 	/** Analysis thread: keeps the latest frame and schedules at most ~30 UI updates per second. */
 	private void frameReceived(AnalysisFrame frame) {
 		this.latestFrame.set(frame);
+		// a check that ended on no signal or saturation starts again when the guitar is heard (spec 025, FR-001)
+		if( LevelRecheck.shouldCheck(this.engine.getSelection().snapshot().getAssessment(), this.engine.isLevelCheckRunning(), this.runGoing.getAsBoolean(), frame)
+				&& this.recheckPending.compareAndSet(false, true) ) {
+			TGSynchronizer.getInstance(this.context).executeLater(this::recheck);
+		}
 		long now = System.nanoTime();
 		if( now - this.lastUiNanos >= UI_INTERVAL_NANOS && this.uiPending.compareAndSet(false, true) ) {
 			this.lastUiNanos = now;
 			TGSynchronizer.getInstance(this.context).executeLater(this::updateMeter);
+		}
+	}
+
+	private void recheck() {
+		this.recheckPending.set(false);
+		if( this.connected && !this.panel.isDisposed() ) {
+			this.engine.runLevelCheck();
+			Runnable listener = this.recheckListener;
+			if( listener != null ) {
+				listener.run();
+			}
 		}
 	}
 
