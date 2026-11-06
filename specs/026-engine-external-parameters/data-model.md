@@ -11,7 +11,7 @@ A `RecognitionParameter` (`Number`, `Flag` or `Choice`) in `RecognitionParameter
 | unit | as shown: `ms`, `hops`, `dB`, `dBFS`, `cents`, `Hz`, `MIDI`, `%`, `×`, or none |
 | default | the literal the code uses today, exactly (research R3) |
 | bounds | minimum and maximum; whole values for counts and hops. Chosen from the meaning (for example a share in 0–1, cents within ±100); when the meaning gives none, from a quarter to four times the default, and at least 1 for a count. An upper bound that sizes a buffer is the size allocated (research R6) |
-| takes effect | `next run` (practice session, calibration, technique values), or `listening restart` for the values the native engine reads (pushed with `configure`), as the level values today |
+| takes effect | `next run` (practice session, calibration, technique values), or `listening restart` for the values an engine stage reads, Java or native (the Java analysis is rebuilt, the native one receives `configure` or `configureTuning`), as the level values today |
 | documented | a row of `docs/architecture/recognition-engines.md` with name, meaning, unit, default, bounds, section and when it takes effect (FR-008) |
 
 Validation: as every recognition setting (`RecognitionSettings.fromStrings`): missing, empty or unreadable → default; out of bounds → nearest bound. Pairs that must stay ordered are repaired as `recognition.note.accept` ≥ `recognition.tuner.in-tune` is today:

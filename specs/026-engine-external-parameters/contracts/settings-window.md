@@ -9,4 +9,5 @@ Window: TuxGuitar Configuration › *Audio recognition* (`AudioRecognitionOption
   - The tip says what the value does, which way is more lenient or more sensitive, and "Expert setting: the recommended value was measured; change it only to test".
 - *Restore* of a category restores its values; *Restore all* restores every value, the new ones included.
 - Fit: on a screen whose usable height is 768 pixels, every category's every control and its *Restore* button are inside the window, without scrolling (new SWT test, as spec 025's `PracticeWindowFitsSwtTest`).
+- The help pages `desktop/TuxGuitar/share/help/tools_audio_recognition{,_fr,_es}.html` get one heading per new section and one row per parameter (name, current range, recommended value), as for the 34 settings today.
 - Nothing in the practice window changes.

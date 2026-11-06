@@ -46,7 +46,7 @@ No default changes. Every dataset report is compared byte for byte before and af
 | Principle | Status |
 |---|---|
 | I. Compatibility | Pass: additive keys; an older configuration file reads every new key as its default (FR-007); no song format touched. |
-| II. Extend before core | Pass: only the fork modules and the crate; nothing in `common/` or `desktop/TuxGuitar`. The strings go in the practice plugin's message files (`desktop/TuxGuitar-practice/share/lang`), where the existing settings' are. |
+| II. Extend before core | Pass: the code changes only in the fork modules and the crate; nothing in `common/`. In `desktop/TuxGuitar`, only the three help pages `share/help/tools_audio_recognition{,_fr,_es}.html` change, as spec 024 did: they already document the 34 settings, and the committed `RecognitionControlsTest` requires a row for each. The strings go in the practice plugin's message files (`desktop/TuxGuitar-practice/share/lang`). |
 | III. Evidence | Pass: research R1–R11 cite the inspected files. |
 | IV. Spec-driven | Pass: spec, two clarifications and the owner's three answers before this plan. |
 | V. Incremental | Pass: one family group per phase, each with its before/after comparison (tasks). |
@@ -102,6 +102,7 @@ desktop/build-scripts/native-modules/tuxguitar-monitor-native/src/
 └── jni_recognition.rs (openTuned, openAnalysisTuned, configureTuning, analyzeTuned, tuningLayout)
 
 desktop/TuxGuitar-practice/share/lang/messages.properties, messages_fr.properties, messages_es.properties   (names, tips, section names)
+desktop/TuxGuitar/share/help/tools_audio_recognition{,_fr,_es}.html   (one row per parameter, one heading per section)
 docs/architecture/recognition-engines.md    (sections 3.4, 4 and 6)
 ```
 
