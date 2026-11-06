@@ -9,7 +9,7 @@
 About 170 values that change what is heard or accepted, fixed today in the Java engine, the native engine and the practice session, become recognition settings:
 - stored and repaired like the 34 existing ones;
 - read once when a run opens;
-- passed to the native library through a `double[]` interface with a layout check;
+- passed to the native library in a second `double[]` (the tuning array) beside today's unchanged `float[21]`, with a layout check;
 - shown in the Recognition settings window in about 31 new "Advanced: …" categories of at most 7 values;
 - documented in `docs/architecture/recognition-engines.md`.
 
@@ -46,7 +46,7 @@ No default changes. Every dataset report is compared byte for byte before and af
 | Principle | Status |
 |---|---|
 | I. Compatibility | Pass: additive keys; an older configuration file reads every new key as its default (FR-007); no song format touched. |
-| II. Extend before core | Pass: only the fork modules and the crate; nothing in `common/` or `desktop/TuxGuitar`. The three message files in `common/resources/lang` get new keys, as for every recognition setting. |
+| II. Extend before core | Pass: only the fork modules and the crate; nothing in `common/` or `desktop/TuxGuitar`. The strings go in the practice plugin's message files (`desktop/TuxGuitar-practice/share/lang`), where the existing settings' are. |
 | III. Evidence | Pass: research R1–R11 cite the inspected files. |
 | IV. Spec-driven | Pass: spec, two clarifications and the owner's three answers before this plan. |
 | V. Incremental | Pass: one family group per phase, each with its before/after comparison (tasks). |
@@ -59,7 +59,7 @@ No default changes. Every dataset report is compared byte for byte before and af
 | XII. Truthful reporting | Pass: before/after reports kept in `benchmark/`. |
 | XIII–XIV. Guitar semantics, learner feedback | Not affected: no behaviour changes; the tips say these are expert settings. |
 
-Post-design re-check: pass. The design adds no core change and no new dependency. The only interface change, the native `double[]` and `parameterLayout()`, is approved by the owner.
+Post-design re-check: pass. The design adds no core change and no new dependency. The only interface change is additive: the tuning `double[]`, new JNI functions and `tuningLayout()`, with today's functions unchanged. The owner approved it.
 
 ## Project Structure
 
@@ -85,7 +85,7 @@ desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/
 ├── frontend/  (HighPass, NoiseEstimator, NoiseGate, SpectralSubtractor, InputGain, GainSuggester)
 ├── technique/ (BendDetector, SlideDetector, VibratoDetector, LegatoDetector, PitchMotion)
 ├── calibration/ (RecognitionRate, RecordingQuality, SoundDetection)
-├── nativeengine/NativeParameters.java, NativeRecognitionLibrary.java   (double[], parameterLayout)
+├── nativeengine/NativeParameters.java, NativeRecognitionLibrary.java   (tuning double[], new JNI functions, tuningLayout)
 └── AudioEngine.java                        (builds the stages from the settings)
 desktop/TuxGuitar-audio-engine/src/test/java/…  (new tests only)
 
@@ -97,11 +97,11 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 desktop/TuxGuitar-practice/test/…            (new tests only)
 
 desktop/build-scripts/native-modules/tuxguitar-monitor-native/src/
-├── analysis/mod.rs (Parameters, LENGTH, from_slice exact length)
+├── analysis/mod.rs (Parameters unchanged; new Tuning, TUNING_LENGTH, exact length)
 ├── analysis/{articulation,polyphonic,attack,chord,strum_clip,front_end,target,yin}.rs
-└── jni_recognition.rs (double[] arrays, parameterLayout)
+└── jni_recognition.rs (openTuned, openAnalysisTuned, configureTuning, analyzeTuned, tuningLayout)
 
-common/resources/lang/messages.properties, messages_fr.properties, messages_es.properties   (names, tips, section names)
+desktop/TuxGuitar-practice/share/lang/messages.properties, messages_fr.properties, messages_es.properties   (names, tips, section names)
 docs/architecture/recognition-engines.md    (sections 3.4, 4 and 6)
 ```
 
@@ -115,7 +115,7 @@ docs/architecture/recognition-engines.md    (sections 3.4, 4 and 6)
    - the inventory tests, seen red (they list every constant not yet a parameter).
 2. **Foundation**:
    - the new `Section` values, the ordered-pair repair, and the window's 768-pixel SWT test;
-   - the native `double[]` interface and `parameterLayout()`, with only the 21 values of today.
+   - the native tuning `double[]`, its JNI functions and `tuningLayout()`, with an empty-but-checked layout first.
    - Gate: identical reports.
 3. **US1, native-engine stages**: onset, onset fast, pitch, polyphonic, attack, chord evidence, strum, front end, noise gate, gain. In Java and the crate together, family by family, each with its "takes effect" test with each engine. Gate: identical reports.
 4. **US1, session**: acceptance, Wait, Follow, timing, leniency rows, techniques, calibration, input quality. Gate: identical reports.
@@ -136,5 +136,4 @@ US2 ("nothing changes") is the gate of every phase, not a phase of its own.
 | Item | Why needed | Simpler alternative rejected because |
 |---|---|---|
 | 31 new categories in the drop-down | about 170 values at 7 per category (the row budget that keeps the window on a 768-pixel screen) | one scrolled category: the owner asked for more Advanced categories rather than overflow |
-| `double[]` across the JNI | new values must keep their exact `double` (SC-002) | `float[]` would change bits of values the crate keeps as `f64` |
-| Indices 0–20 rounded through `float` | today's native results stay identical | sending exact doubles would change native figures, which this spec forbids |
+| A second array (tuning `double[]`) and new JNI functions beside today's | committed tests use the `float[21]` interface and the `Api` methods directly; the new values must keep their exact `double` (SC-002) | changing the `float[]` breaks committed tests (owner's rule); growing it loses precision and an older library would accept it silently |

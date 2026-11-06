@@ -56,7 +56,7 @@ A value kept in the code, listed in section 6 of the documentation with its kind
 
 Built once when a run or an offline analysis opens, from the effective `RecognitionSettings` (store, device profile overlay, Follow or Arcade leniency):
 - the Java stages' value objects (research R4);
-- `NativeParameters.of(settings, …)`: the `double[]` for the native engine (contracts/native-parameters.md);
+- `NativeParameters.of(settings, …)` (today's `float[21]`) and `NativeParameters.tuning(settings)` (the `double[]`) for the native engine (contracts/native-parameters.md);
 - `PracticeParameters` for the session.
 
 Never changed during a run, except the values pushed with `configure` (level, attack, front end), as today.

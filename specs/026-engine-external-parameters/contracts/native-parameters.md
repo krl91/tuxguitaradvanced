@@ -1,25 +1,47 @@
 # Contract: the native parameter interface (spec 026, FR-004, FR-009)
 
-Extends spec 023's contract §1 (`NativeRecognitionLibrary`, `jni_recognition.rs`). Approved by the owner on 2026-11-06 (Q3 A).
+Extends spec 023's contract §1 (`NativeRecognitionLibrary`, `jni_recognition.rs`). Approved by the owner on 2026-11-06 (Q3 A). Research R5.
 
-## Layout
+## The two arrays
 
-- Every parameter array between Java and the crate is a `double[]`: `open`, `configure`, `analyze`, `frontEnd`, `strumClipOffline`, `openAnalysis`.
-- `NativeParameters` names each index (constants `0 … LENGTH − 1`); `CRATE/analysis/mod.rs` has the same names and indices. Indices 0–20 keep their meaning and order of today. New indices follow, one per parameter an engine stage reads (onset fast windows, pitch, polyphonic, attack, chord evidence, strum, front end, noise gate, subtraction).
-- Indices 0–20 are written as `(double) (float) value`, the precision they have today (research R5). New indices carry the setting's `double` unchanged.
-- Counts and hops are whole numbers in the array; the crate rounds them as today (`round() as i32`).
+- **`parameters`** (`float[21]`, unchanged): the layout, indices and precision of today. Five values that are fixed today are now taken from the settings: `ONSET_FLUX_FACTOR`, `ONSET_FLUX_OFFSET`, `ONSET_REFRACTORY` and the four windows, and `YIN_THRESHOLD`. `withFastOnset(float[])` keeps the default fast windows, and a new overload `withFastOnset(float[], settings)` reads them from the settings.
+- **`tuning`** (`double[TUNING_LENGTH]`, new): every other value a native stage reads, at named indices `NativeParameters.T_…`, the same names in `CRATE/analysis/mod.rs`:
+  - polyphonic, attack, chord evidence and strum;
+  - front end, noise gate and subtraction;
+  - pitch target.
+
+  Counts and hops are whole numbers, rounded by the crate as today. `Tuning::from_slice` refuses any length other than `TUNING_LENGTH`.
+
+## JNI functions
+
+| Function | Status |
+|---|---|
+| `open`, `configure`, `analyze`, `frontEnd`, `strumClipOffline`, `openAnalysis` | unchanged; they use `Tuning::defaults()` |
+| `openTuned(inputName, inputChannel, blockFrames, javaNanosAtOpen, float[] parameters, double[] tuning)` | new |
+| `openAnalysisTuned(rate, float[] parameters, double[] tuning)` | new |
+| `configureTuning(handle, double[] tuning)` | new: same lock-free mailbox as `configure` |
+| `analyzeTuned(…, float[] parameters, double[] tuning, …)` | new: offline, for tests |
+| `tuningLayout()` | new: returns `TUNING_LENGTH` |
+
+## `NativeRecognitionLibrary.Api`
+
+- New `open(…, float[] parameters, double[] tuning)`: the interface's default calls today's `open(…, parameters)`. The `JNI` implementation overrides it: it loads the library, checks the layout, then calls `openTuned`.
+- New `configureTuning(handle, tuning)`: the interface's default does nothing; `JNI` overrides it with the JNI call.
+- So a fake that implements only today's methods (the committed `FakeRecognitionApi`) keeps working unchanged.
 
 ## Version check
 
-- New function `int parameterLayout()` (no handle): returns the crate's `LENGTH`.
-- Java calls it once after loading the library. If the symbol is missing (`UnsatisfiedLinkError`) or the value differs from `NativeParameters.LENGTH`, the library is not used: the failure reason is `LIBRARY_MISSING`, with the detail "native library parameter layout N, expected M" (or "too old"); the run falls back to the Java engine with the existing notice. No new learner-visible string.
-- `Parameters::from_slice` refuses an array whose length is not exactly `LENGTH` (today: shorter only); `open` and `openAnalysis` then fail with the existing error.
+After loading, the `JNI` implementation calls `tuningLayout()`:
+- if the symbol is missing (an older library) or the value differs from `NativeParameters.TUNING_LENGTH`, the library is not used;
+- the reason is `LIBRARY_MISSING`, with the detail "native library tuning layout N, expected M" or "native library too old: no tuning layout";
+- the run falls back to the Java engine with the existing notice. There is no new learner-visible string.
 
 ## Real time
 
-- `configure` replaces the values through the existing lock-free mailbox (`CRATE/recognition.rs`); it never changes a buffer size. Values that size a buffer are bounded; the crate allocates for the bound at `open` (research R6).
-- No validation in the crate: values come validated from `RecognitionSettings` (as today).
+- `configureTuning` replaces the values through the existing lock-free mailbox (`CRATE/recognition.rs`); it never changes a buffer size.
+- Values that size a buffer are bounded, and the crate allocates for the bound when it opens (research R6).
+- The crate does no validation: values come validated from `RecognitionSettings`, as today.
 
 ## Parity
 
-The Java and native stages read the same parameter for the same value (FR-004). The parity tests of spec 023 run with the defaults and with one non-default value per family (SC-001).
+The Java and native stages read the same parameter for the same value (FR-004). The parity tests of spec 023 stay as they are (defaults). New parity tests run one non-default value per family through `analyzeTuned` (SC-001).

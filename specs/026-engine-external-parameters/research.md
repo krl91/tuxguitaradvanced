@@ -52,16 +52,31 @@ The final per-key inventory is written by task T002 into `inventory.md` and kept
 
 **Alternatives.** Read `RecognitionSettings` from each stage at each hop: rejected (lookups in the loop).
 
-## R5. The native interface: a `double[]`, and a layout check
+## R5. The native interface: the 21 values unchanged, a second `double[]` for the new ones, and a layout check
 
 **Decision.**
-1. Every parameter array between Java and the crate becomes a `double[]` (`open`, `configure`, `analyze`, `frontEnd`, `strumClipOffline`, `openAnalysis` in `AE/nativeengine/NativeRecognitionLibrary.java` and `CRATE/jni_recognition.rs`). `NativeParameters.LENGTH` grows to carry every value an engine stage reads; `CRATE/analysis/mod.rs` `Parameters::from_slice` reads the same indices and refuses any other length.
-2. The 21 values carried today keep their present precision: Java writes them rounded through `float` (`(double) (float) value`), so the native engine computes exactly what it computes today. A later spec may drop that rounding, with its own before/after.
-3. A new JNI function `parameterLayout()` returns the crate's `LENGTH`. After loading the library, `NativeRecognitionLibrary` calls it: a missing symbol (`UnsatisfiedLinkError`, an older library) or another length makes the library unusable with the reason `LIBRARY_MISSING` and a detail naming the version mismatch; the run falls back to the Java engine with the existing notice (`RecognitionEngineNotice`).
+1. The 21-value `float[]` of today stays exactly as it is: its layout, its precision, its JNI functions (`open`, `configure`, `analyze`, `frontEnd`, `strumClipOffline`, `openAnalysis`). Five of its values that are fixed today come from the settings: the onset flux factor and offset, the refractory, the windows, and the YIN threshold.
+2. The new values that an engine stage reads go in a second array, the **tuning** `double[]`, built by a new `NativeParameters.tuning(settings)`. The crate reads it with `Tuning::from_slice` in `CRATE/analysis/mod.rs`, which refuses any length other than `TUNING_LENGTH`.
+3. New JNI functions carry it:
+   - `openTuned(…, float[] parameters, double[] tuning)` and `openAnalysisTuned(rate, parameters, tuning)`, so the analysis starts with its values;
+   - `configureTuning(handle, tuning)`, through the same lock-free mailbox as `configure`;
+   - `analyzeTuned(…)` for the offline parity and "takes effect" tests.
 
-**Rationale.** The new values (for example the polyphonic relative salience 0.10, today an `f64` literal in `CRATE/analysis/polyphonic.rs`) would change bits if sent as `float` (SC-002). An older library given a longer `float[]` would accept it silently (`from_slice` checks only `len < LENGTH`), so a layout check is needed (FR-009). The owner approved extending the interface (2026-11-06, Q3 A).
+   The existing functions stay and use the default tuning.
+4. `NativeRecognitionLibrary.Api` gets matching methods:
+   - in the interface, `open(…, parameters, tuning)` defaults to the existing `open(…, parameters)`, and `configureTuning` defaults to doing nothing, so fakes that implement only today's methods keep working (the committed `FakeRecognitionApi`);
+   - the `JNI` implementation overrides them with the real calls.
+5. A new JNI function `tuningLayout()` returns the crate's `TUNING_LENGTH`. The `JNI` implementation calls it after loading the library. If the symbol is missing (`UnsatisfiedLinkError`, an older library) or the length differs from `NativeParameters.TUNING_LENGTH`, the library is not used: the reason is `LIBRARY_MISSING` with a detail naming the mismatch, and the run falls back to the Java engine with the existing notice (`RecognitionEngineNotice`).
 
-**Alternatives.** A second `double[]` beside the `float[]`: rejected, two layouts to keep in step. Keep `float[]`: rejected (precision).
+**Rationale.**
+- Committed tests use the `float[]` interface directly and would no longer compile if it changed: `FakeRecognitionApi.open(…, float[])` and `configure(…, float[])`, `NativeParametersTest`, `NativeParametersOfAnalyzersTest`, `ParityEngines`, `FrontEndParityTest`, `StrumClipParityTest` and `NativeBackendTest`. The owner's rule forbids editing them.
+- Keeping the 21 values as they are keeps today's native results bit for bit.
+- A `double[]` keeps the exact value of the new parameters, which the crate holds as `f64` literals today (for example the polyphonic relative salience 0.10 in `CRATE/analysis/polyphonic.rs`). That keeps SC-002.
+- An older library would be refused for a missing symbol (FR-009). The owner approved extending the interface (2026-11-06, Q3 A).
+
+**Alternatives.**
+- Change every array to `double[]`: rejected, it breaks the committed tests listed above.
+- Grow the `float[]`: rejected for two reasons. It loses precision on the new values. An older library would also accept a longer array silently, because `from_slice` checks only `len < LENGTH`.
 
 ## R6. Values that size buffers in the native engine and in Java
 
@@ -71,7 +86,7 @@ The final per-key inventory is written by task T002 into `inventory.md` and kept
 
 ## R7. The settings window
 
-**Decision.** New `RecognitionParameter.Section` values, each a category of the existing drop-down (`PR/ui/RecognitionSettingsPanel.java`), placed after `ADVANCED`, named "Advanced: <family>" (French "Avancé : …", Spanish "Avanzado: …"). Each holds at most 7 parameters, the budget `RecognitionControls.MAX_SECTION_ROWS` = 8 rows (7 values and the *Restore* button) that `RecognitionControlsTest.everySectionFitsWithoutScrolling` already enforces for every section; a family with more values is split ("Advanced: Follow (1/3)"). Existing categories keep their place and content (FR-005a). Every parameter has a name and a tip in the three message files (`common/resources/lang/messages{,_fr,_es}.properties`), checked by the existing `RecognitionControlsTest.everyTextOfTheRubricIsInTheTranslationFile`.
+**Decision.** New `RecognitionParameter.Section` values, each a category of the existing drop-down (`PR/ui/RecognitionSettingsPanel.java`), placed after `ADVANCED`, named "Advanced: <family>" (French "Avancé : …", Spanish "Avanzado: …"). Each holds at most 7 parameters, the budget `RecognitionControls.MAX_SECTION_ROWS` = 8 rows (7 values and the *Restore* button) that `RecognitionControlsTest.everySectionFitsWithoutScrolling` already enforces for every section; a family with more values is split ("Advanced: Follow (1/3)"). Existing categories keep their place and content (FR-005a). Every parameter has a name and a tip in the three message files (`desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties` (the plugin's message files, where the 34 existing settings are)), checked by the existing `RecognitionControlsTest.everyTextOfTheRubricIsInTheTranslationFile`.
 
 **Rationale.** The existing tests already loop over `Section.values()` (`RecognitionSettingsPanelTest`, `RecognitionSettingsSwtTest` "inside the window" for every control and *Restore* button), so the new categories are checked by them unchanged. A new SWT test adds the 768-pixel screen (SC-007), as spec 025 did for the practice window.
 
