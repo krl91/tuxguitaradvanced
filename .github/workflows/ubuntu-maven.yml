@@ -38,7 +38,7 @@ jobs:
       with:
         target: x86_64-unknown-linux-gnu
     - name: Build with Maven
-      run: cd desktop/build-scripts/tuxguitar-linux-swt-deb && mvn -B --no-transfer-progress -e clean verify -P native-modules
+      run: cd desktop/build-scripts/tuxguitar-linux-swt-deb && mvn -B --no-transfer-progress -e clean verify -P native-modules -Dsurefire.excludesFile="$GITHUB_WORKSPACE/.github/ci-timing-excludes.txt"
     - uses: actions/upload-artifact@v7
       with:
         name: Package-Ubuntu

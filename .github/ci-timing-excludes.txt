@@ -1,0 +1,7 @@
+# Wall-clock timing tests left out of the CI runs only (owner's decision of 2026-11-06, option A).
+# On shared CI runners they measure the machine's load, not the code: PlayerTempoClockTest learned 1,878 to 1,881 ticks/s
+# (1,920 ± 2 % expected) twice on Ubuntu, ArcadeFrameSourceNoWaitTest took 1.25 and 1.4 ms per frame (1 ms at most) on macOS,
+# ArcadeRenderBenchmarkTest failed once. All three still run in every local gate. Read by surefire through -Dsurefire.excludesFile.
+**/PlayerTempoClockTest.java
+**/ArcadeFrameSourceNoWaitTest.java
+**/ArcadeRenderBenchmarkTest.java
