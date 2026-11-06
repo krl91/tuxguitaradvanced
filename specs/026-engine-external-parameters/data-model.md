@@ -8,13 +8,14 @@ A `RecognitionParameter` (`Number`, `Flag` or `Choice`) in `RecognitionParameter
 |---|---|
 | key | `recognition.<family>.<name>`, lower case and hyphens; unique; never renamed once released |
 | section | one of the new `Section` values below (at most 7 parameters each) |
-| unit | as shown: `ms`, `hops`, `dB`, `dBFS`, `cents`, `Hz`, `MIDI`, `%`, `×`, or none |
+| unit | as shown: `ms`, `hops`, `ticks`, `dB`, `dBFS`, `cents`, `Hz`, `MIDI`, `%`, `times` (shown "×"), or none. A unit that is new (`hops`, `ticks`, `Hz`, `times`) gets its `recognition.unit.<unit>` text in the three message files, as the committed `RecognitionControlsTest.everyTextOfTheRubricIsInTheTranslationFile` requires for every unit |
 | default | the literal the code uses today, exactly (research R3) |
-| bounds | minimum and maximum; whole values for counts and hops. Chosen from the meaning (for example a share in 0–1, cents within ±100); when the meaning gives none, from a quarter to four times the default, and at least 1 for a count. An upper bound that sizes a buffer is the size allocated (research R6) |
+| bounds | minimum and maximum; whole values for counts and hops. Chosen from the meaning (for example a share in 0–1, cents within ±100); when the meaning gives none, from about a quarter to about four times the default, rounded outward to the slider grid, and at least 1 for a count. An upper bound that sizes a buffer is the size allocated (research R6) |
+| slider grid | the window's slider moves in steps of 1 / (display factor × resolution) (`RecognitionControls`: resolution 10 for a fractional value with display factor 1, else 1). The minimum, the maximum **and the default** are each a whole number of steps, so that the committed `RecognitionControlsTest.everySliderRunsFromZeroAndCoversExactlyTheValidRange` holds (both ends exact) and the recommended value is shown exactly. A small value takes a display factor that makes it whole: for example the YIN threshold 0.15 is shown in % (factor 100), a learn rate 0.005 in ‰ or with factor 1000 and no unit |
 | takes effect | `next run` (practice session, calibration, technique values), or `listening restart` for the values an engine stage reads, Java or native (the Java analysis is rebuilt, the native one receives `configure` or `configureTuning`), as the level values today |
 | documented | a row of `docs/architecture/recognition-engines.md` with name, meaning, unit, default, bounds, section and when it takes effect (FR-008) |
 
-Validation: as every recognition setting (`RecognitionSettings.fromStrings`): missing, empty or unreadable → default; out of bounds → nearest bound. Pairs that must stay ordered are repaired as `recognition.note.accept` ≥ `recognition.tuner.in-tune` is today:
+Validation: as every recognition setting (`RecognitionSettings.fromStrings`): missing, empty or unreadable → default; out of bounds → nearest bound. Pairs that must stay ordered are repaired as `recognition.note.accept` ≥ `recognition.tuner.in-tune` is today, in `RecognitionSettings.normalized`, so on reading (`fromStrings`, the repair reported) and on every change (`with`, `withDefaults`, the window's sliders). Because the window then moves the partner, the bounds of a pair are chosen so that, from the defaults, moving either value to its minimum or its maximum never crosses the other's default: the committed `RecognitionSettingsPanelTest.everySliderChangesOnlyItsOwnValueAndTextAtItsMinimumMiddleAndMaximum` requires that no other control moves. Each family's `…ParametersTest` asserts it for its pairs. The pairs:
 - `noise-gate.open` > `noise-gate.close`;
 - the onset windows: pre-first ≥ pre-last, post-first ≤ post-last (normal and fast);
 - the bend window: min ≤ max;
@@ -24,7 +25,7 @@ Validation: as every recognition setting (`RecognitionSettings.fromStrings`): mi
 
 ## Families and sections (the categories of the window)
 
-Counts are those of the scan of 2026-11-06 (research R1); task T002 writes the exact list. A family above 7 values is split into numbered sections.
+Counts are those of the scan of 2026-11-06 (research R1); task T003 writes the exact list in `inventory.md`. A family above 7 values is split into numbered sections.
 
 | Section (`Section` value) | Family key | Where the values are today | About |
 |---|---|---|---|
@@ -47,7 +48,7 @@ Counts are those of the scan of 2026-11-06 (research R1); task T002 writes the e
 | `CALIBRATION_1`… `CALIBRATION_3` | `calibration` | `CalibrationRun` thresholds, `CalibrationTaps` outliers, `RecognitionRate`, `RecordingQuality` levels, `SoundDetection` refractory and lead | 17 |
 | `INPUT_QUALITY` | `input-quality` | `InputQuality` | 3 |
 
-About 177 parameters and 32 new sections. The existing 8 sections are unchanged.
+About 182 parameters (the sum of the counts above) and 32 new sections. The existing 8 sections are unchanged.
 
 ## Fixed constant
 

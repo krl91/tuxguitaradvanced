@@ -6,7 +6,7 @@
 
 ## Summary
 
-About 177 values that change what is heard or accepted, fixed today in the Java engine, the native engine and the practice session, become recognition settings:
+About 182 values that change what is heard or accepted, fixed today in the Java engine, the native engine and the practice session, become recognition settings:
 - stored and repaired like the 34 existing ones;
 - read once when a run opens;
 - passed to the native library in a second `double[]` (the tuning array) beside today's unchanged `float[21]`, with a layout check;
@@ -38,7 +38,7 @@ No default changes. Every dataset report is compared byte for byte before and af
 - the window fits a 768-pixel-high screen (SC-007).
 
 **Scale/Scope**:
-- about 177 parameters, 32 categories, about 1,000 new strings (a name and a tip for each, in 3 languages);
+- about 182 parameters, 32 categories, about 1,000 new strings (a name and a tip for each, in 3 languages);
 - the source of about 40 Java classes and 10 crate files.
 
 ## Constitution Check
@@ -136,5 +136,5 @@ US2 ("nothing changes") is the gate of every phase, not a phase of its own.
 
 | Item | Why needed | Simpler alternative rejected because |
 |---|---|---|
-| 32 new categories in the drop-down | about 177 values at 7 per category (the row budget that keeps the window on a 768-pixel screen) | one scrolled category: the owner asked for more Advanced categories rather than overflow |
+| 32 new categories in the drop-down | about 182 values at 7 per category (the row budget that keeps the window on a 768-pixel screen) | one scrolled category: the owner asked for more Advanced categories rather than overflow |
 | A second array (tuning `double[]`) and new JNI functions beside today's | committed tests use the `float[21]` interface and the `Api` methods directly; the new values must keep their exact `double` (SC-002) | changing the `float[]` breaks committed tests (owner's rule); growing it loses precision and an older library would accept it silently |

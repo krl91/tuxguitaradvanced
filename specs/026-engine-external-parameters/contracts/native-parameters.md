@@ -4,7 +4,7 @@ Extends spec 023's contract §1 (`NativeRecognitionLibrary`, `jni_recognition.rs
 
 ## The two arrays
 
-- **`parameters`** (`float[21]`, unchanged): the layout, indices and precision of today. Five values that are fixed today are now taken from the settings: `ONSET_FLUX_FACTOR`, `ONSET_FLUX_OFFSET`, `ONSET_REFRACTORY` and the four windows, and `YIN_THRESHOLD`. `withFastOnset(float[])` keeps the default fast windows, and a new overload `withFastOnset(float[], settings)` reads them from the settings.
+- **`parameters`** (`float[21]`, unchanged): the layout, indices and precision of today. Eight values that are fixed today are now taken from the settings: `ONSET_FLUX_FACTOR`, `ONSET_FLUX_OFFSET`, `ONSET_REFRACTORY`, the four windows (`ONSET_PRE_FIRST`, `ONSET_PRE_LAST`, `ONSET_POST_FIRST`, `ONSET_POST_LAST`) and `YIN_THRESHOLD`. `withFastOnset(float[])` keeps the default fast windows, and a new overload `withFastOnset(float[], settings)` reads them from the settings.
 - **`tuning`** (`double[TUNING_LENGTH]`, new): every other value a native stage reads, at named indices `NativeParameters.T_…`, the same names in `CRATE/analysis/mod.rs`:
   - polyphonic, attack, chord evidence and strum;
   - front end, noise gate and subtraction;

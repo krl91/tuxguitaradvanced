@@ -93,7 +93,7 @@ The owner reads one document to know every parameter of both engines: name, mean
 
 ### Key Entities
 
-- **Engine parameter**: a named value with meaning, unit, default, bounds, a section (family) and the moment it takes effect (at once, at the next run, when the listening restarts); read identically by both engines.
+- **Engine parameter**: a named value with meaning, unit, default, bounds, a section (family) and the moment it takes effect (at the next run, or when the listening restarts); read identically by both engines.
 - **Fixed constant**: a value deliberately kept in the code, of one of the kinds of FR-002, with the reason, listed in the documentation.
 - **Parameter set**: the values in force for a run, built once when the run starts from the stored settings and their defaults.
 
