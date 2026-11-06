@@ -64,22 +64,23 @@ The owner reads one document to know every parameter of both engines: name, mean
 - Two values that must stay ordered (for example an opening margin above a closing margin, a first window before a last one): an inconsistent pair is repaired to a consistent one, as `recognition.note.accept` is kept above `recognition.tuner.in-tune` today.
 - The "fast" variants of the onset values (a second set used in fast passages): each is a parameter of its own.
 - A device profile (spec 013) overlays some recognition settings: the new parameters are not overlaid unless listed.
-- The relaxed values of Follow and Arcade (`FollowLeniency`, `ArcadeLeniency`) are derived from the note and chord settings: they become parameters as well, or stay derived, as the scope answer below says.
+- The relaxed values of Follow and Arcade (`FollowLeniency`, `ArcadeLeniency`) are derived from the note and chord settings: they become parameters (FR-001), with defaults equal to today's derived values.
 - An older native library that does not know the new values: the application falls back to the Java engine, as it does today when the native library does not load.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: Every value listed in section 6 of `docs/architecture/recognition-engines.md` that changes what the engines or the practice session decide MUST become an external parameter, read when a run starts (or pushed to a running engine as the level values are today), with no rebuild of the application or of the native library. [NEEDS CLARIFICATION: does the scope include the practice session's timings (Wait, Follow, Arcade: verdict hold, neighbour veto, evidence horizons, technique and bend windows, Follow and Arcade relaxed values), or only the two engines' analysis values?]
+- **FR-001**: Every value listed in section 6 of `docs/architecture/recognition-engines.md` that changes what the engines or the practice session decide MUST become an external parameter, read when a run starts (or pushed to a running engine as the level values are today), with no rebuild of the application or of the native library. The scope covers both engines and the practice session (owner, 2026-11-06): the Wait, Follow and Arcade timings (verdict hold, neighbour veto, evidence horizons, technique and bend windows), the relaxed values of Follow and Arcade, and the calibration and input-quality values.
 - **FR-002**: Values that are not tuning values (buffer and ring sizes, numerical safety margins such as epsilons) MAY stay fixed; each one kept fixed MUST be listed in the documentation with the reason.
 - **FR-003**: Each parameter MUST have a stable name, a meaning, a unit, a default equal to today's fixed value, and bounds; an unreadable, missing or out-of-bounds value MUST be repaired (default or nearest bound) as the existing recognition settings are.
 - **FR-004**: Both engines MUST read the same parameters with the same names, units, defaults and bounds; a value shared by a Java stage and its native port MUST be one parameter, not two.
-- **FR-005**: The new parameters MUST be set where the existing recognition settings are kept, so that a value set once is used by both engines. [NEEDS CLARIFICATION: must every new parameter be shown in the Recognition settings window (with its tip in three languages), or only stored in the configuration file and documented, with the window unchanged?]
+- **FR-005**: The new parameters MUST be set where the existing recognition settings are kept, so that a value set once is used by both engines, and each MUST be shown in the Recognition settings window, with a tip in English, French and Spanish (owner, 2026-11-06).
+- **FR-005a**: The Recognition settings window MUST still fit the screen with the new parameters: no category may make the window taller or wider than the usable screen (at least on a 768-pixel-high screen, as spec 025 measures), every control MUST be reachable, and when the parameters do not fit one category they MUST be split into several *Advanced* categories (owner, 2026-11-06: "fais attention à ce que ça ne déborde pas de l'écran, sinon fais d'autres onglets Avancés"). The existing categories keep their place.
 - **FR-006**: No default MUST change, and with the defaults every recognition result MUST be identical to the results before this spec, with each engine.
 - **FR-007**: A configuration file saved before this spec MUST be read without loss; the new parameters take their defaults.
 - **FR-008**: The engines' documentation MUST describe every parameter (name, meaning, unit, default, bounds, where it is set, when it takes effect); an automated check MUST fail when a parameter is not documented.
-- **FR-009**: Passing the new values to the native engine MUST follow the owner's rule on its interface. [NEEDS CLARIFICATION: may the interface between the application and the native library be extended to carry the new values (it carries 21 values today), and must an older native library be refused, or must the change keep that interface as it is?]
+- **FR-009**: The interface between the application and the native library MAY be extended to carry the new values (it carries 21 today; owner, 2026-11-06). A native library that does not take the extended set MUST be refused, and the run then falls back to the Java engine with the existing notice, as when the native library does not load.
 - **FR-010**: Reading a parameter MUST never allocate, lock or wait in the audio callback or the analysis loop; sizes are taken when a run opens.
 - **FR-011**: macOS, Linux and Windows MUST behave alike: the same parameters, the same defaults, the same documentation.
 
@@ -98,6 +99,7 @@ The owner reads one document to know every parameter of both engines: name, mean
 - **SC-003**: 100 % of the parameters are documented with their six facts; the documentation check is green.
 - **SC-004**: The list of constants still fixed in the code holds only non-tuning values, each with its reason.
 - **SC-005**: A configuration file of the previous release opens with every stored value kept.
+- **SC-007**: With every new parameter shown, each category of the Recognition settings window fits a 768-pixel-high screen and every control can be reached.
 - **SC-006**: The full gate of the branch (all tests, both engines, macOS; Linux and Windows builds) stays green.
 
 ## Assumptions
