@@ -67,6 +67,8 @@
 
   Each "takes effect" test checks the moment its row gives.
 
+  The scan also reads the numbers written inline in method bodies and constructor calls (research R1): each one outside the mathematical and unit allow-list gets a row, by file and text, as a future parameter (named as a constant by its family task) or as fixed with its reason.
+
   Section sizes follow data-model.md, at most 7 values each. The counts of data-model.md are approximate; `inventory.md` fixes them, and data-model.md is updated to the exact counts in the same task.
 
 ## Phase 2: Foundational (blocks every story)
@@ -135,8 +137,8 @@
   - a **parameter** row of `SPEC/inventory.md` whose key is in `RecognitionParameters.ALL` and whose default equals the literal: the constant then serves only as that parameter's default;
   - or a **fixed** row of `DOC` section 6, with its kind and reason.
 
-  A row is matched by its file and constant name, as written in the inventory and the documentation (research R9). Seen red against the current section 6.
-- [ ] T030 [P] [US3] New test `PT/SessionConstantInventoryTest.java`: the same rule and matching as T029, for `PR/session` and `PR/arcade/core`. Seen red.
+  A row is matched by its file and constant name, as written in the inventory and the documentation (research R9). It also fails on an inline number in a method body or constructor call outside the test's mathematical and unit allow-list, unless `inventory.md` lists it as fixed by file and text. Seen red against the current section 6.
+- [ ] T030 [P] [US3] New test `PT/SessionConstantInventoryTest.java`: the same rule and matching as T029, inline numbers included, for `PR/session` and `PR/arcade/core`. Seen red.
 - [ ] T031 [P] [US3] New crate test (`CRATE/analysis/mod.rs`, `#[cfg(test)]`): every `const` of `CRATE/analysis` is one of three things: an index of `Parameters` or `Tuning`, a default of `Tuning::defaults()` named in a parameter row of `SPEC/inventory.md`, or a fixed row of `DOC` section 6. It is matched by its file and name, as in T029. Seen red.
 - [ ] T032 [P] [US3] New test `AET/settings/EngineDocumentationFactsTest.java`: each key of `ALL` has a row in `DOC` with its unit, default, bounds, section and when it takes effect, matching the code. Seen red.
 - [ ] T033 [US3] Rewrite `DOC`:

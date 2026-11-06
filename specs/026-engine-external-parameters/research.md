@@ -12,7 +12,7 @@ Each decision cites the source it rests on (constitution III). Paths are relativ
 - the relaxed values of `PR/session/FollowLeniency` (6 rows × 2 positions) and `PR/arcade/core/ArcadeLeniency` (5 rows × 2 positions);
 - the player clock (clarification 3): `PR/session/TickInterpolator` (fit window, minimum points, minimum span, stall, extrapolation, seek margin) and `PR/session/LatencyCompensation.LIMIT_MILLIS`.
 
-The final per-key inventory is written by task T002 into `inventory.md` and kept complete by a source-scan test (R9).
+The final per-key inventory is written by task T003 into `inventory.md` and kept complete by a source-scan test (R9). The scan of T003 also reads the numbers written inline in method bodies and constructor calls (for example `PolyphonicAnalyzer.java` `maxHarmonicHz * 1.1 … + 3`, `ArticulationDetector.java` `this(…, 19, 2, 4, …)`): a mathematical or unit value (0, 1, 0.5 of a Hann window, 10 and 20 of decibels, 100 and 1,200 cents, 12, 69 and 440 of MIDI, time conversions) stays inline; any other is named as a constant in the family task that reads it, then made a parameter or listed as fixed, so the inventory tests see it.
 
 **Stays fixed (FR-002, clarifications of 2026-11-06), each listed in the documentation with its reason:**
 
@@ -99,7 +99,7 @@ The final per-key inventory is written by task T002 into `inventory.md` and kept
 
 ## R9. Keeping the inventory complete
 
-**Decision.** A new test `EngineConstantInventoryTest` (audio-engine) and `SessionConstantInventoryTest` (practice) scan the source for numeric `static final` fields, `Parameters.defaults()` bodies and public numeric default fields, and fail on any that is neither read from a parameter nor listed in the fixed list of `docs/architecture/recognition-engines.md` section 6 (with its reason). A `CRATE` test does the same with `const` items of `analysis/`. `EngineDocumentationTest` (spec 024) already fails when a key of `RecognitionParameters.ALL` is not documented; it is extended (new test, not an edit) to require the six facts of FR-008 in the table row.
+**Decision.** A new test `EngineConstantInventoryTest` (audio-engine) and `SessionConstantInventoryTest` (practice) scan the source for numeric `static final` fields, `Parameters.defaults()` bodies and public numeric default fields, and fail on any that is neither read from a parameter nor listed in the fixed list of `docs/architecture/recognition-engines.md` section 6 (with its reason). They also fail on a number written inline in a method body or constructor call whose value is not in the mathematical and unit allow-list written in the test (R1), unless `inventory.md` lists it by file and text as fixed. A `CRATE` test does the same with `const` items of `analysis/`. `EngineDocumentationTest` (spec 024) already fails when a key of `RecognitionParameters.ALL` is not documented; it is extended (new test, not an edit) to require the six facts of FR-008 in the table row.
 
 ## R10. Proving that nothing changed (SC-002)
 
