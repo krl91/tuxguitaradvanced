@@ -36,7 +36,7 @@ These are the 44 cases of `DatasetBenchmarkTest` ("incomplete chord refused (one
 | *Normal* | 24 of 44 |
 | *Lenient* | 32 of 44 |
 
-**The spec's edge case "Strict refuses it more often" is not met:** *Strict* refuses the same incomplete chords as *Normal*. An incomplete chord is accepted by the profile over the strum, not by the attack path, and the two levels have the same match. As task T030 says, the edge case is corrected through `/speckit-clarify` (constitution XII). This is the owner's decision; the guide and the release notes already say only what was measured.
+**The spec's edge case "Strict refuses it more often" is not met:** *Strict* refuses the same incomplete chords as *Normal*. An incomplete chord is accepted by the profile over the strum, not by the attack path, and the two levels have the same match. The owner corrected the edge case to this measure through `/speckit-clarify` on 2026-11-06 (option A, no code change); the guide and the release notes already said only what was measured.
 
 ## The native panel
 

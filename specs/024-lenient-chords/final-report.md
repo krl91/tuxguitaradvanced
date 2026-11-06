@@ -43,7 +43,7 @@
   - `FollowDeterminismTest`: line 230 removed;
   - `owner-chords-baseline.properties`: the `wrong.max` lines.
 - **Known limit**: the minor triad on G2 (IDMT) is refused. It is a low-register semitone leak (research R8).
-- **The spec's edge case "Strict refuses an incomplete chord more often" is not met.** *Strict* and *Normal* both accept 24 of the 44 incomplete chords of the datasets (*Lenient* 32). What makes *Strict* stricter is the one-name-off chords (0 of 138 against 6) and the attack path. As T030 says, the edge case is to be corrected through `/speckit-clarify` by the owner. The guide and the release notes say only what was measured.
+- **The spec's edge case "Strict refuses an incomplete chord more often" was not met by the measure**: *Strict* and *Normal* both accept 24 of the 44 incomplete chords of the datasets (*Lenient* 32). What makes *Strict* stricter is the one-name-off chords (0 of 138 against 6) and the attack path. The owner chose to correct the spec to the measure (`/speckit-clarify`, 2026-11-06, option A); no code change.
 - **T012**: "two chord candidates of one onset" cannot happen (the windows never overlap). It was tested as two onsets.
 
 ## Gates
@@ -57,5 +57,4 @@
 
 ## Open
 
-- **`/speckit-clarify`** on the *Strict* edge case (above).
 - **T045**: sheet F15 (SC-005).
