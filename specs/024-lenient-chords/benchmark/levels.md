@@ -38,6 +38,6 @@ These are the 44 cases of `DatasetBenchmarkTest` ("incomplete chord refused (one
 
 **The spec's edge case "Strict refuses it more often" is not met:** *Strict* refuses the same incomplete chords as *Normal*. An incomplete chord is accepted by the profile over the strum, not by the attack path, and the two levels have the same match. As task T030 says, the edge case is corrected through `/speckit-clarify` (constitution XII). This is the owner's decision; the guide and the release notes already say only what was measured.
 
-## Not run overnight
+## The native panel
 
-`ChordLeniencyPanelSwtTest` (the native panel) waits for the owner's return, with the other SWT tests of the branch (tasks.md, Phase 5 note).
+`ChordLeniencyPanelSwtTest` was not run overnight (tasks.md, Phase 5 note). It ran on the owner's return on 2026-11-06, with the other SWT tests of the branch: 92 tests, 0 failures.

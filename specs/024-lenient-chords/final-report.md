@@ -1,6 +1,6 @@
 # Spec 024: final report
 
-**Lenient chords: every chord the owner plays right is accepted, a clearly wrong chord is always refused.** Written on 2026-11-06 (T044), overnight, at the owner's request: everything except the native SWT runs, which wait for the owner (see "Open").
+**Lenient chords: every chord the owner plays right is accepted, a clearly wrong chord is always refused.** Written on 2026-11-06 (T044), overnight, at the owner's request; the native SWT runs were done on the owner's return the same morning.
 
 ## What was built
 
@@ -22,14 +22,14 @@
 | FR-003 / SC-003 | **Met, with the two lines the owner allowed lower** (option B, 2026-11-05). Single notes and wrong notes unchanged, the whole tone higher 100 % refused, techniques and bass unchanged. Lower, above their floors: incomplete chords refused 43 → 20 of 44 (floor 20); IDMT poly recognised 64 → 58 of 66 (floor 85 %) | `benchmark/comparison.md` (both engines) |
 | FR-003a | **Met**: the first two series keep 8 and 18 | `benchmark/comparison.md` |
 | FR-004 | **Met, better**: GuitarSet complete chords 33 → 40 of 56 (summed) and 23 → 25 of 56 (microphone) | `benchmark/comparison.md` |
-| FR-005 | **Met**: *Chord check* in the *Mode* tab under the mode choice, three levels with a line saying what each accepts and risks, in three languages. The native check of the panel waits for the owner | `ChordLeniencyPanelSourceTest`; `ChordLeniencyPanelSwtTest` (open) |
+| FR-005 | **Met**: *Chord check* in the *Mode* tab under the mode choice, three levels with a line saying what each accepts and risks, in three languages. The native panel is checked by the SWT run | `ChordLeniencyPanelSourceTest`, `ChordLeniencyPanelSwtTest` |
 | FR-006 | **Met**: *Normal* accepts every right chord, and among the settings that do, it refuses the most wrong ones (the T007 probe) | `benchmark/probe.md` |
 | FR-007 / SC-004 | **Met** on the reference series, both engines: right chords 23 ≤ 25 ≤ 25 (Strict, Normal, Lenient); wrong acceptances 0 ≤ 6 ≤ 69 | `ChordLeniencyLevelsTest`; `benchmark/levels.md` |
 | FR-008 | **Met**: the level is derived from the stored values, so it survives a restart; the defaults are *Normal*; a spec 023 file is read as *Normal* | `ChordLeniencyTest`, `ChordProfileMigrationTest` |
 | FR-009 | **Met**: one rule in Java for both engines (identical figures everywhere), in Wait, Follow and Arcade | `FollowSessionChordProfileTest`, `PracticeSessionChordProfileTest`; both engines' reports |
 | FR-010 / SC-006 | **Met** (phase 2) | `benchmark/diagnostic.md` |
 | FR-011 | **Met**: before and after for each engine | `benchmark/before-*`, `after-*`, `comparison.md`, `levels.md` |
-| FR-012 | **Met**: a level writes the rule, the match and the attack, never the strum window or the chord evidence; a hand change shows *Custom* | `ChordLeniencyTest`; `ChordLeniencyPanelSwtTest` (open) |
+| FR-012 | **Met**: a level writes the rule, the match and the attack, never the strum window or the chord evidence; a hand change shows *Custom* | `ChordLeniencyTest`, `ChordLeniencyPanelSwtTest` |
 | FR-013 | **Met**: every value added is a recognition setting read at the next start, the same for both engines | `ChordProfileSettingsTest`, `ChordProfileParametersTest`; F15 step 8 (owner) |
 | FR-014 | **Met** | `docs/architecture/recognition-engines.md`, `EngineDocumentationTest` |
 | SC-005 | **Open**: the owner's gate, sheet F15 (T045) | — |
@@ -53,9 +53,9 @@
 | Phase 4 (T028), 2026-11-05 23:24 | build success; 1,509 practice tests, 0 failures (after fixing 2 bugs and applying 2 approved exceptions) |
 | Phase 5 (T037), 2026-11-06 00:24, without SWT | build success; 1,512 practice and 519 engine tests, 0 failures |
 | Final (T043), 2026-11-06 01:00, without SWT | build success; 1,512 practice and 520 engine tests, 0 failures (`SyntheticChordGuardTest` included); then, with each engine (`-Dtuxguitar.recognition.engine=java` and `native`), `OwnerChordsProfileTest`, `ChordLeniencyLevelsTest` and `DatasetBenchmarkTest`: green |
+| SWT (`-P swt-gui-tests`), 2026-11-06, Mac unlocked | build success; 92 tests (91 before, plus `ChordLeniencyPanelSwtTest`), 0 failures |
 
 ## Open
 
-- **The native SWT runs** (`-P swt-gui-tests`) of the whole branch, including the new `ChordLeniencyPanelSwtTest`. They need the Mac session unlocked, so they were moved to the owner's return at the owner's request (tasks.md, Phase 5 note). Nothing is pushed before they are green.
 - **`/speckit-clarify`** on the *Strict* edge case (above).
 - **T045**: sheet F15 (SC-005).
