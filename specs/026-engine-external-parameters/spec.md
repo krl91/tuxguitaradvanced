@@ -10,6 +10,13 @@
 
 **Where it comes from**: the owner's rule of 2026-11-05: an engine is tuned by its parameters, never by changing its code. Spec 024 made the chord and strum values external parameters and wrote the engines' documentation (`docs/architecture/recognition-engines.md`). Its section 6, "Constants still fixed in the code (left for spec 026)", lists what remains: about 120 values in the Java engine, the native engine and the practice session (onset detection, pitch estimation, polyphonic analysis, attack analysis, chord evidence, clipping, front end and noise gate, gain suggestion, note tolerance, Wait / Follow / Arcade timings). Changing any of them today needs a rebuild of the application and, for the native engine, of the native library.
 
+## Clarifications
+
+### Session 2026-11-06
+
+- Q: Do the sizes that structure the analysis (sample rate 48,000 Hz, window 2,048 and hop 256 samples, FFT sizes 8,192, 4,096 and 1,024) also become parameters? → A: No: they stay fixed and are documented as structural sizes with the reason (FR-002); every other value becomes a parameter (owner, 2026-11-06: "B").
+- Q: Do values that change no recognition decision become parameters too (Arcade score steps 10 and 25; plumbing: native open timeout 1.5 s, thread waits 50 and 500 ms, calibration timeouts 20 s and 180 s; the native clock drift correction)? → A: No: only the values that change what is heard or accepted become parameters (both engines, the practice session, the calibration and input-quality thresholds); the score, the plumbing and the clock drift correction stay fixed and are documented with their reason (owner, 2026-11-06: "A").
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - I tune an engine value without a rebuild (Priority: P1)
@@ -54,13 +61,12 @@ The owner reads one document to know every parameter of both engines: name, mean
 **Acceptance Scenarios**:
 
 1. **Given** the engines' documentation, **When** the owner looks up any parameter, **Then** its name, meaning, unit, default, bounds, where it is set and when it takes effect are given.
-2. **Given** the list of constants still fixed in the code (section 6 of the documentation), **When** this spec is done, **Then** it holds only values that are not tuning values (buffer sizes and numerical safety margins), each with the reason it is not a parameter.
+2. **Given** the list of constants still fixed in the code (section 6 of the documentation), **When** this spec is done, **Then** it holds only values that are not tuning values (structural sizes, buffer sizes and numerical safety margins), each with the reason it is not a parameter.
 
 ---
 
 ### Edge Cases
 
-- A value that sets a size used to prepare buffers (a window or FFT size, the sample rate): changing it must not make the engine allocate, lock or wait during the analysis; the size is taken when the run opens.
 - Two values that must stay ordered (for example an opening margin above a closing margin, a first window before a last one): an inconsistent pair is repaired to a consistent one, as `recognition.note.accept` is kept above `recognition.tuner.in-tune` today.
 - The "fast" variants of the onset values (a second set used in fast passages): each is a parameter of its own.
 - A device profile (spec 013) overlays some recognition settings: the new parameters are not overlaid unless listed.
@@ -71,8 +77,8 @@ The owner reads one document to know every parameter of both engines: name, mean
 
 ### Functional Requirements
 
-- **FR-001**: Every value listed in section 6 of `docs/architecture/recognition-engines.md` that changes what the engines or the practice session decide MUST become an external parameter, read when a run starts (or pushed to a running engine as the level values are today), with no rebuild of the application or of the native library. The scope covers both engines and the practice session (owner, 2026-11-06): the Wait, Follow and Arcade timings (verdict hold, neighbour veto, evidence horizons, technique and bend windows), the relaxed values of Follow and Arcade, and the calibration and input-quality values.
-- **FR-002**: Values that are not tuning values (buffer and ring sizes, numerical safety margins such as epsilons) MAY stay fixed; each one kept fixed MUST be listed in the documentation with the reason.
+- **FR-001**: Every value listed in section 6 of `docs/architecture/recognition-engines.md` that changes what the engines or the practice session decide MUST become an external parameter, read when a run starts (or pushed to a running engine as the level values are today), with no rebuild of the application or of the native library. The scope covers both engines and the practice session (owner, 2026-11-06): the Wait, Follow and Arcade timings (verdict hold, neighbour veto, evidence horizons, technique and bend windows), the relaxed values of Follow and Arcade, and the calibration and input-quality thresholds. Only values that change what is heard or accepted are in scope: the Arcade score, the plumbing timeouts and waits, and the native clock drift correction are not (FR-002).
+- **FR-002**: Values that are not tuning values MUST stay fixed: the structural sizes of the analysis (sample rate 48,000 Hz, analysis window 2,048 and hop 256 samples, every FFT size), buffer and ring sizes, numerical safety margins such as epsilons, the Arcade score steps, the plumbing timeouts and waits (native open, thread joins, calibration timeouts) and the native clock drift correction; each one kept fixed MUST be listed in the documentation with the reason.
 - **FR-003**: Each parameter MUST have a stable name, a meaning, a unit, a default equal to today's fixed value, and bounds; an unreadable, missing or out-of-bounds value MUST be repaired (default or nearest bound) as the existing recognition settings are.
 - **FR-004**: Both engines MUST read the same parameters with the same names, units, defaults and bounds; a value shared by a Java stage and its native port MUST be one parameter, not two.
 - **FR-005**: The new parameters MUST be set where the existing recognition settings are kept, so that a value set once is used by both engines, and each MUST be shown in the Recognition settings window, with a tip in English, French and Spanish (owner, 2026-11-06).
@@ -81,7 +87,7 @@ The owner reads one document to know every parameter of both engines: name, mean
 - **FR-007**: A configuration file saved before this spec MUST be read without loss; the new parameters take their defaults.
 - **FR-008**: The engines' documentation MUST describe every parameter (name, meaning, unit, default, bounds, where it is set, when it takes effect); an automated check MUST fail when a parameter is not documented.
 - **FR-009**: The interface between the application and the native library MAY be extended to carry the new values (it carries 21 today; owner, 2026-11-06). A native library that does not take the extended set MUST be refused, and the run then falls back to the Java engine with the existing notice, as when the native library does not load.
-- **FR-010**: Reading a parameter MUST never allocate, lock or wait in the audio callback or the analysis loop; sizes are taken when a run opens.
+- **FR-010**: Reading a parameter MUST never allocate, lock or wait in the audio callback or the analysis loop.
 - **FR-011**: macOS, Linux and Windows MUST behave alike: the same parameters, the same defaults, the same documentation.
 
 ### Key Entities
