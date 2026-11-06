@@ -1,4 +1,4 @@
-# Feature Specification: A standalone amp and effect pedals for the guitar, without TuxGuitar
+# Feature Specification: GuitarFX, a standalone amp and effect pedals for the guitar, without TuxGuitar
 
 **Feature Branch**: `feature/interactive-practice` (no branch of its own; spec directory `specs/027-standalone-amp`)
 
@@ -11,6 +11,16 @@
 **Where it comes from**: spec 022 gave TuxGuitarAdvanced an amp and effect pedals inside the practice window. Today the sound only exists while TuxGuitarAdvanced runs with its practice window open, and each block of sound goes from the native audio device to the effects and back. On 2026-11-06 the owner chose option B among the two ways of a standalone tool: the same amp and pedals, rewritten in the native audio part and applied right where the sound is received and sent, in a small program of its own per system. The owner's wish is a "pocket amp": plug the guitar into the computer, open the tool, play.
 
 **Note on the request's technical words**: the owner's request names the language and the audio library. They are recorded here as constraints of the request (see Assumptions); the requirements below say what the learner gets, and the plan says how.
+
+## Clarifications
+
+### Session 2026-11-06
+
+- Q: In which music software must the plugin load? → A: **VST3, CLAP and Audio Unit** (option C): GarageBand and Logic on macOS as well as Reaper, Bitwig, Ableton, Cubase, Studio One…; and **SoundCraft** (github.com/storytold/soundcraft, an open-source music program in Rust that loads CLAP, VST3 and Audio Unit) is one of the programs the plugin is tested in.
+- Q: What is the tool called, for the application, the plugin and the packages? → A: **GuitarFX**.
+- Q: Where does the guitarist set the internal values of the effects that are not knobs? → A: **In an *Advanced* window of the application** (option B), by categories, each value with its bounds, its default and a tooltip, with a *Defaults* button; the settings file stays readable by hand; the plugin reads the same values and has no *Advanced* page of its own.
+- Q: Does GuitarFX have a tuner in this spec? → A: **No**; a later spec adds it (the application and the plugin stay without a tuner here).
+- Q: How is GuitarFX installed, the plugin included? → A: **One installer per system** (option A): a .pkg on macOS, an installer on Windows, a package or an archive with an install script on Linux; it places the application and the plugins (VST3, CLAP, and Audio Unit on macOS) in the system's standard folders, and a clean uninstall removes them.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -68,7 +78,7 @@ The guitarist finds the four ready-made sounds of spec 022 (clean, crunch, lead,
 
 ### User Story 4 - Safe, and tunable without rebuilding (Priority: P2)
 
-The sound starts off and rises quietly when turned on. With a built-in microphone the tool warns about feedback and suggests headphones; a howl is cut at once. When the computer cannot keep up, the sound gets simpler rather than crackling. Every internal value of the effects that is not a knob (a filter's corner, a time constant, a safety threshold…) can be changed in the tool's settings file and is documented, so tuning never needs a rebuild.
+The sound starts off and rises quietly when turned on. With a built-in microphone the tool warns about feedback and suggests headphones; a howl is cut at once. When the computer cannot keep up, the sound gets simpler rather than crackling. Every internal value of the effects that is not a knob (a filter's corner, a time constant, a safety threshold…) can be changed in the application's *Advanced* window (or its settings file) and is documented, so tuning never needs a rebuild.
 
 **Why this priority**: ears and speakers must be protected; and the owner's standing rule says an engine is tuned by its parameters, never by changing its code.
 
@@ -79,7 +89,7 @@ The sound starts off and rises quietly when turned on. With a built-in microphon
 1. **Given** a fresh install, **When** the tool opens, **Then** no sound is played.
 2. **Given** the input is a built-in microphone, **When** the sound is turned on, **Then** a warning about feedback is shown with the advice to use headphones.
 3. **Given** a feedback howl builds up, **When** it is detected, **Then** the sound is muted within SC-005, a message says why, and the guitarist can turn it on again.
-4. **Given** an internal value changed in the settings file within its bounds, **When** the tool starts, **Then** it uses that value; a value out of its bounds is brought back into them and the tool starts normally.
+4. **Given** an internal value changed in the *Advanced* window, or in the settings file by hand, within its bounds, **When** the sound is next turned on (the application) or the plugin is next loaded, **Then** it uses that value; a value out of its bounds is brought back into them and the tool starts normally.
 
 ---
 
@@ -118,7 +128,8 @@ The guitarist who records with music software loads the amp as a plugin on a gui
 
 ### Functional Requirements
 
-- **FR-001** (standalone): The tool MUST run on its own, without TuxGuitarAdvanced and without Java installed, from one package per system (macOS, Linux, Windows).
+- **FR-001** (standalone): The tool, named **GuitarFX** (the application, the plugin as music software lists it, the packages and the guides), MUST run on its own, without TuxGuitarAdvanced and without Java installed, from one installer per system (macOS, Linux, Windows).
+- **FR-026** (installation): Each installer MUST place the application and the plugins (VST3 and CLAP; Audio Unit on macOS) in the system's standard folders, where music software finds them without the guitarist copying anything; a clean uninstall MUST remove everything it installed and keep the guitarist's sounds and settings unless asked to remove them. Installing a newer version over an older one MUST keep the sounds and settings.
 - **FR-002** (form): The tool MUST come in two forms built from the same effects: a desktop application with a window of its own, where the guitarist sets the devices, the chain, the sounds and the volumes; and a plugin that music software loads on a guitar track, showing the chain, the sounds and the knobs (the host software owns the devices and the volume).
 - **FR-003** (devices): The guitarist MUST be able to choose the input, its channel, and the output among the devices of the system, and refresh the list after plugging a device; the choice MUST survive a restart.
 - **FR-004** (amp): The chain MUST contain one amp with a clean, a crunch and a high-gain character, with gain, bass, middle, treble and volume knobs, and a cabinet that can be switched off, as in spec 022.
@@ -134,6 +145,7 @@ The guitarist who records with music software loads the amp as a plugin on a gui
 - **FR-014** (cost): When the computer cannot process the chain in time, the sound MUST get simpler or mute with a message rather than crackle.
 - **FR-015** (real-time safety): The processing of each block of sound MUST NOT allocate memory, take a lock or wait; changes made by the guitarist MUST reach it without blocking it (owner's rule, constitution VI).
 - **FR-016** (external parameters): Every internal value of the effects, the safety guards and the device handling that changes what is heard (corner frequencies, time constants, thresholds, ceilings, ramp times, block size…) MUST be an external parameter with a default equal to spec 022's value, bounds, a unit and a description, read from the tool's settings at start; no such value is fixed in the code (owner's rule of 2026-11-05). A value out of bounds MUST be brought back into them.
+- **FR-025** (*Advanced* window): The application MUST show every external parameter in an *Advanced* window, grouped in categories, each with its name, value, unit, bounds, default and a tooltip in the three languages saying what it changes; a *Defaults* button MUST bring every value back to its default after a confirmation. The window MUST fit a 768-pixel-high screen. A change MUST take effect the next time the sound is turned on, and the window MUST say so. The plugin MUST read the same values from the application's settings on the same computer when it is loaded (defaults when the application was never used) and MUST NOT offer an *Advanced* page of its own.
 - **FR-017** (delay shown): The tool MUST show the delay estimated from the devices in use (input, output, block size and processing), named as an estimate.
 - **FR-018** (languages): Every label, knob, message and tooltip MUST exist in English, French and Spanish, the tool following the system's language (English otherwise); each tooltip says what the control changes, its unit and its default.
 - **FR-019** (documentation): A guide in the three languages MUST describe the installation, the devices, the chain, the sounds, the delay, headphones and feedback; a reference MUST list every external parameter (name, meaning, unit, default, bounds).
@@ -141,7 +153,7 @@ The guitarist who records with music software loads the amp as a plugin on a gui
 - **FR-021** (parity): The tool MUST offer the same features on macOS, Linux and Windows and be published for all three in the same release (owner's standing rule); the delay reached on each system is reported, Linux and Windows by testers or stated as unknown.
 - **FR-022** (TuxGuitarAdvanced): TuxGuitarAdvanced's amp sound MUST keep its features and sound of spec 022 and its own effects; making it use the rewritten effects, so that only one copy remains, is a later spec. Its only change in this spec is the export and import of a sound (FR-023).
 - **FR-023** (sounds as files): The tool, its plugin and TuxGuitarAdvanced's *Amp and effects* window MUST export a sound to a file and import such a file; the file holds the chain and its knob values in a documented format; a file from a newer version or damaged is refused with a message, never half-read.
-- **FR-024** (plugin): The plugin MUST load in music software on the three systems, save its chain and knobs with the host's project and restore them when the project is reopened, and follow the host's rate and block size; it MUST obey FR-005 to FR-008, FR-010, FR-014 to FR-016 and FR-020 like the application.
+- **FR-024** (plugin): The plugin MUST be offered in three formats: VST3 and CLAP on the three systems, and Audio Unit on macOS (the only system that has it; the application and the two other formats keep the three systems at parity). It MUST load in music software on the three systems, save its chain and knobs with the host's project and restore them when the project is reopened, and follow the host's rate and block size; it MUST obey FR-005 to FR-008, FR-010, FR-014 to FR-016 and FR-020 like the application.
 
 ### Key Entities
 
@@ -157,26 +169,26 @@ The guitarist who records with music software loads the amp as a plugin on a gui
 
 ### Measurable Outcomes
 
-- **SC-001**: On each of the three systems, the tool installs from its package and plays the guitar on a computer with no Java installed (macOS checked by the owner; Linux and Windows by CI start-up checks and testers, or stated as unchecked).
+- **SC-001**: On each of the three systems, the tool installs from its installer, its plugins are found by music software without any copy by hand, it plays the guitar on a computer with no Java installed, and the uninstall leaves none of its files but the guitarist's sounds and settings (macOS checked by the owner; Linux and Windows by CI start-up checks and testers, or stated as unchecked).
 - **SC-002**: The delay from a string struck to its sound heard, measured by the loopback probe of spec 022 on the owner's Mac with the same devices and block size, MUST NOT be longer than TuxGuitarAdvanced's measured with the same probe (spec 022: 32.5 ms with the USB microphone into the built-in speakers at 128 frames); a shorter delay is the aim, reported as measured, not promised. The 30 ms ceiling of spec 022 with the Rocksmith cable stays the shipping condition.
 - **SC-003**: On the test signals of spec 022 (synthetic and recorded), every element and every ready-made sound gives an output whose difference from TuxGuitarAdvanced's stays below −90 dBFS (inaudible) on every sample.
 - **SC-004**: Every change of a knob, a switch or a sound is heard within 0.1 second, and a recording of the output while moving every knob end to end shows no click, gap or level jump above the limit used in spec 022.
 - **SC-005**: A feedback howl made on purpose (built-in microphone and speakers) is muted within 0.5 second.
 - **SC-006**: During one hour of play with a chain of six active elements, the owner hears no crackle or dropout, and the endurance test reports no dropped block.
 - **SC-007**: With every knob at its loudest the output stays under the safe ceiling; a fresh install is silent; the devices, chain and sounds survive a restart.
-- **SC-008**: Every internal value listed by the parameter reference can be changed in the settings and takes effect at the next start without rebuilding; an automated check finds no value that changes the sound left fixed in the code outside the reference's list of fixed values (each with its reason).
+- **SC-008**: Every internal value listed by the parameter reference is shown in the *Advanced* window, can be changed there or in the settings file, and takes effect the next time the sound is turned on (the plugin: the next time it is loaded) without rebuilding; an automated check finds no value that changes the sound left fixed in the code outside the reference's list of fixed values (each with its reason).
 - **SC-009**: The package of the tool (application and plugin) is at most a tenth of the size of TuxGuitarAdvanced's package on the same system.
 - **SC-010**: Every label, knob and message has its text and tooltip in the three languages.
 - **SC-011**: A sound exported from the tool and imported in TuxGuitarAdvanced, and the reverse, sounds the same within SC-003 (automated round trip on the four ready-made sounds and one sound using every pedal).
-- **SC-012**: The plugin loads, plays and restores its settings with a project in at least one music program on each of the three systems (macOS checked by the owner; Linux and Windows by testers or stated as unchecked).
+- **SC-012**: The plugin loads, plays and restores its settings with a project in SoundCraft on each of the three systems, in each of its formats there (VST3, CLAP, and Audio Unit on macOS), and on macOS also in GarageBand or Logic (Audio Unit) and in one other program loading VST3 or CLAP (macOS checked by the owner; Linux and Windows by testers or stated as unchecked).
 
 ## Assumptions
 
 - **Constraints of the request** (owner, 2026-11-06, option B): the effects are rewritten in the language of the native audio part of TuxGuitarAdvanced (Rust) and run in the audio library it already uses (cpal), with no Java and no JVM in the tool. The plan will say how they relate to the existing crate `tuxguitar-monitor-native`.
 - The reference for "the same output" is the spec 022 effects as they are in the repository when this spec is planned; the comparison runs the existing Java effects and the new ones on the same signals.
 - The usual setup is the one of spec 022: an instrument cable or an audio interface, headphones or speakers.
-- The tool lives in this repository, is built by the project's CI for the three systems and published with the TuxGuitarAdvanced releases as separate packages; its name is to be chosen by the owner (`/speckit-clarify`).
+- The tool lives in this repository, is built by the project's CI for the three systems and published with the TuxGuitarAdvanced releases as separate packages; its name is GuitarFX (owner, 2026-11-06).
 - While two copies of the effects exist, a change to one must be made to the other; the comparison of FR-007 catches a difference.
-- The plugin's format is chosen in the plan among formats with a licence compatible with FR-020 (no GPL); the music programs tested are named there.
-- Out of scope: a tuner, recording to a file, a looper, the later pedals (fuzz, flanger, phaser, tremolo, wah, octave, equalizer, pitch shifter), impulse responses of real cabinets, MIDI control, the practice features of TuxGuitarAdvanced (recognition, scores, sound per score), Android.
+- The development kits of the three plugin formats must have licences compatible with FR-020 (no GPL); the plan checks each one's licence. SoundCraft is pre-alpha: a failure caused by SoundCraft itself is reported, not counted against the plugin, when the plugin works in another program with the same format.
+- Out of scope: a tuner (owner, 2026-11-06: a later spec), recording to a file, a looper, the later pedals (fuzz, flanger, phaser, tremolo, wah, octave, equalizer, pitch shifter), impulse responses of real cabinets, MIDI control, the practice features of TuxGuitarAdvanced (recognition, scores, sound per score), Android.
 - The microphone permission on macOS and Windows is asked by the system the first time the tool opens the input.
