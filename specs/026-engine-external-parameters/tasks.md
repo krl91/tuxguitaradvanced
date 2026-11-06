@@ -42,11 +42,11 @@
   - `mvn -o -e clean verify -P native-modules` from `BUILD` is green;
   - the dataset reports with each engine are identical to `SPEC/benchmark/before-<engine>/` (quickstart §2);
   - `git diff --name-status <phase start> -- '*test*'` shows only added files;
-  - no SWT run overnight or with the Mac locked: the SWT runs are grouped in T040.
+  - no SWT run overnight or with the Mac locked: the SWT runs are grouped in T042.
 - **Real time:** nothing new is read, allocated, locked or awaited per frame or per hop.
 - **Commits and pushes:**
   - commit each phase without any co-author trailer;
-  - one push per round, both refs together, after the SWT run of T040.
+  - one push per round, both refs together, after the SWT run of T042.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -79,6 +79,7 @@
   - today's JNI functions and the `float[21]` are untouched.
 
   T004–T006 green; every committed native test still green.
+  Also a new test `AET/AudioEngineTuningPushTest.java` (on `FakeRecognitionApi`'s pattern, a new fake that records `configureTuning`): a settings change during listening pushes the new tuning, as `pushNativeParameters` pushes the `float[21]` today. Seen red before the push is wired.
 - [ ] T008 [P] New test `AET/settings/RecognitionSectionsTest.java`:
   - the 8 existing sections keep their order and content;
   - every section holds 1 to 7 parameters;
@@ -87,8 +88,9 @@
 
   Seen red (the class does not exist).
 - [ ] T009 Add `OrderedPair` and `RecognitionParameters.ORDERED_PAIRS`, applied in `AE/settings/RecognitionSettings.java` beside the existing `note.accept` ≥ `tuner.in-tune` rule. T008 green.
-- [ ] T010 [P] New SWT test `PT/ui/RecognitionSettingsFitSwtTest.java` (`swt-gui-tests`): with the usable height forced to 768, every category's every control and its *Restore* button lie inside the window without scrolling, as `PracticeWindowFitsSwtTest` (spec 025) does. Written now, run in T040.
-- [ ] T011 Gate (with the reports identical); commit "impl(026): phase 2: the native tuning array with its layout check, the ordered-pair repair".
+- [ ] T010 [P] New SWT test `PT/ui/RecognitionSettingsFitSwtTest.java` (`swt-gui-tests`): with the usable height forced to 768, every category's every control and its *Restore* button lie inside the window without scrolling, as `PracticeWindowFitsSwtTest` (spec 025) does. It also has a case that builds a test panel of 9 value rows in the same window and expects it to overflow, so the check is seen red on a real overflow. Written now, run in T042 (the Mac unlocked).
+- [ ] T011 [P] New test `PT/ui/RecognitionStringsAllLanguagesTest.java`: every key of `RecognitionParameters.ALL` and every `Section` has a non-empty name and tip in `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`; the French and Spanish texts differ from the English one, except units and proper names. If it is green at once on the 34 existing settings, record it as a guard; each family then extends what it checks.
+- [ ] T012 Gate (with the reports identical); commit "impl(026): phase 2: the native tuning array with its layout check, the ordered-pair repair".
 
 ## Phase 3: User Story 1, the engine stages (Priority: P1) 🎯 MVP
 
@@ -96,13 +98,13 @@
 
 **Independent test**: each family's "takes effect" test, with each engine; the reports identical.
 
-- [ ] T012 [US1] Family `onset` and `onset-fast` (`AE/analysis/ArticulationDetector.java`, `NativeParameters` windows, `PracticeParameters.WEAK_FAST_DBFS`, `CRATE/analysis/articulation.rs`): sections `ONSET`, `ONSET_FAST`; new tests `AET/settings/OnsetParametersTest.java` and `AET/analysis/OnsetTakesEffectTest.java` (Java and native).
-- [ ] T013 [US1] Family `pitch` (YIN threshold, `AE/recognition/ExpectedPitchVerifier.java` search and periods with `CRATE/analysis/target.rs`, `AE/pitch/TolerancePolicy.java`, `PR/session/AttackCandidates.java` range): section `PITCH`; tests `PitchParametersTest`, `PitchTakesEffectTest`.
-- [ ] T014 [US1] Family `polyphonic` (`AE/analysis/PolyphonicAnalyzer.java` except the FFT size and the band range, `CRATE/analysis/polyphonic.rs`): sections `POLYPHONIC_1`, `POLYPHONIC_2`. The candidate count and the harmonics are allocated at their upper bound (research R6). Tests `PolyphonicParametersTest`, `PolyphonicTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
-- [ ] T015 [US1] Family `attack` (`AE/analysis/AttackAnalyzer.java` except the FFT size, `AE/analysis/AttackEvidence.java`, `CRATE/analysis/attack.rs`): sections `ATTACK_1`, `ATTACK_2`; the lag ring is allocated at its bound. Tests `AttackParametersTest`, `AttackTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
-- [ ] T016 [US1] Family `chord-evidence` (`AE/analysis/ChordEvidence.java`, `CRATE/analysis/chord.rs`, `AE/analysis/StrumClipMeter.java`, `CRATE/analysis/strum_clip.rs`): section `CHORD_EVIDENCE`; tests `ChordEvidenceParametersTest`, `ChordEvidenceTakesEffectTest`.
-- [ ] T017 [US1] Families `front-end`, `noise-gate`, `gain` (`AE/frontend/*`, `CRATE/analysis/front_end.rs`): sections `FRONT_END`, `NOISE_GATE`, `GAIN`. Ordered pair: `noise-gate.open` > `noise-gate.close`. Tests `FrontEndParametersTest`, `FrontEndTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
-- [ ] T018 [US1] Gate (reports identical with each engine); commit "impl(026): phase 3 (US1): the engine stages' values are parameters, read alike by both engines".
+- [ ] T013 [US1] Family `onset` and `onset-fast` (`AE/analysis/ArticulationDetector.java`, `NativeParameters` windows, `PracticeParameters.WEAK_FAST_DBFS`, `CRATE/analysis/articulation.rs`): sections `ONSET`, `ONSET_FAST`; new tests `AET/settings/OnsetParametersTest.java` and `AET/analysis/OnsetTakesEffectTest.java` (Java and native).
+- [ ] T014 [US1] Family `pitch` (YIN threshold, `AE/recognition/ExpectedPitchVerifier.java` search and periods with `CRATE/analysis/target.rs`, `AE/pitch/TolerancePolicy.java`, `PR/session/AttackCandidates.java` range): section `PITCH`; tests `PitchParametersTest`, `PitchTakesEffectTest`.
+- [ ] T015 [US1] Family `polyphonic` (`AE/analysis/PolyphonicAnalyzer.java` except the FFT size and the band range, `CRATE/analysis/polyphonic.rs`): sections `POLYPHONIC_1`, `POLYPHONIC_2`. The candidate count and the harmonics are allocated at their upper bound (research R6). Tests `PolyphonicParametersTest`, `PolyphonicTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
+- [ ] T016 [US1] Family `attack` (`AE/analysis/AttackAnalyzer.java` except the FFT size, `AE/analysis/AttackEvidence.java`, `CRATE/analysis/attack.rs`): sections `ATTACK_1`, `ATTACK_2`; the lag ring is allocated at its bound. Tests `AttackParametersTest`, `AttackTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
+- [ ] T017 [US1] Family `chord-evidence` (`AE/analysis/ChordEvidence.java`, `CRATE/analysis/chord.rs`, `AE/analysis/StrumClipMeter.java`, `CRATE/analysis/strum_clip.rs`): section `CHORD_EVIDENCE`; tests `ChordEvidenceParametersTest`, `ChordEvidenceTakesEffectTest`.
+- [ ] T018 [US1] Families `front-end`, `noise-gate`, `gain` (`AE/frontend/*`, `CRATE/analysis/front_end.rs`): sections `FRONT_END`, `NOISE_GATE`, `GAIN`. Ordered pair: `noise-gate.open` > `noise-gate.close`. Tests `FrontEndParametersTest`, `FrontEndTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
+- [ ] T019 [US1] Gate (reports identical with each engine); commit "impl(026): phase 3 (US1): the engine stages' values are parameters, read alike by both engines".
 
 ## Phase 4: User Story 1, the practice session (Priority: P1)
 
@@ -110,64 +112,65 @@
 
 **Independent test**: each family's "takes effect" test; the reports identical.
 
-- [ ] T019 [US1] Family `acceptance` (`PR/session/PolyphonicAcceptance.java`): sections `ACCEPTANCE_1`, `ACCEPTANCE_2`; tests `PT/session/AcceptanceParametersTest.java`, `AcceptanceTakesEffectTest.java`.
-- [ ] T020 [US1] Family `wait` (`PR/session/PracticeSession.java` verdict hold, neighbour veto and confidence, technique and bend windows, technique lead, speed window; `PracticeParameters` early stability): sections `WAIT_1`, `WAIT_2`; tests `WaitParametersTest`, `WaitTakesEffectTest`.
-- [ ] T021 [US1] Family `follow` (`PR/session/FollowSession.java` timings, technique and bend windows): sections `FOLLOW_1`…`FOLLOW_3`; tests `FollowParametersTest`, `FollowTakesEffectTest`.
-- [ ] T022 [US1] Family `timing` (`PR/session/TimingTolerance.java` reference beat, `PlayTimeWindow` advance and gap, `ClockUncertainty`): section `TIMING`; tests `TimingParametersTest`, `TimingTakesEffectTest`.
-- [ ] T023 [US1] Families `follow-leniency`, `arcade-leniency` (`PR/session/FollowLeniency.java`, `PR/arcade/core/ArcadeLeniency.java`, one parameter per row and position). Ordered pair: very permissive at least as lenient as permissive. Sections `LENIENCY_1`…`LENIENCY_4`; tests `LeniencyParametersTest`, `LeniencyTakesEffectTest`.
-- [ ] T024 [US1] Family `technique` (`AE/technique/BendDetector.java`, `SlideDetector`, `VibratoDetector`, `LegatoDetector`, `PitchMotion`): sections `TECHNIQUE_1`…`TECHNIQUE_4`; tests `AET/settings/TechniqueParametersTest.java`, `AET/technique/TechniqueTakesEffectTest.java`.
-- [ ] T025 [US1] Families `calibration`, `input-quality` (`PR/session/CalibrationRun.java` thresholds, `CalibrationTaps` outliers, `AE/calibration/RecognitionRate`, `RecordingQuality` levels, `SoundDetection` refractory and lead; `PR/session/InputQuality`). Ordered pair: calm below < loud above. Sections `CALIBRATION_1`…`CALIBRATION_3`, `INPUT_QUALITY`; tests `CalibrationParametersTest`, `CalibrationTakesEffectTest`.
-- [ ] T026 [US1] Gate (reports identical with each engine); commit "impl(026): phase 4 (US1): the practice session's, techniques' and calibration's values are parameters".
+- [ ] T020 [US1] Family `acceptance` (`PR/session/PolyphonicAcceptance.java`): sections `ACCEPTANCE_1`, `ACCEPTANCE_2`; tests `PT/session/AcceptanceParametersTest.java`, `AcceptanceTakesEffectTest.java`.
+- [ ] T021 [US1] Family `wait` (`PR/session/PracticeSession.java` verdict hold, neighbour veto and confidence, technique and bend windows, technique lead, speed window; `PracticeParameters` early stability): sections `WAIT_1`, `WAIT_2`; tests `WaitParametersTest`, `WaitTakesEffectTest`.
+- [ ] T022 [US1] Family `follow` (`PR/session/FollowSession.java` timings, technique and bend windows): sections `FOLLOW_1`…`FOLLOW_3`; tests `FollowParametersTest`, `FollowTakesEffectTest`.
+- [ ] T023 [US1] Family `clock` (clarification 3: `PR/session/TickInterpolator.java` fit window, minimum points, minimum span, stall, extrapolation, seek margin; `PR/session/LatencyCompensation.java` limit; `CAPACITY` and `PlayerTempoClock.NOMINAL_TICKS_PER_SECOND` stay fixed): section `CLOCK`; tests `ClockParametersTest`, `ClockTakesEffectTest` (on the interpolator with a scripted tick source, not the real sequencer).
+- [ ] T024 [US1] Family `timing` (`PR/session/TimingTolerance.java` reference beat, `PlayTimeWindow` advance and gap, `ClockUncertainty`): section `TIMING`; tests `TimingParametersTest`, `TimingTakesEffectTest`.
+- [ ] T025 [US1] Families `follow-leniency`, `arcade-leniency` (`PR/session/FollowLeniency.java`, `PR/arcade/core/ArcadeLeniency.java`, one parameter per row and position). Ordered pair: very permissive at least as lenient as permissive. Sections `LENIENCY_1`…`LENIENCY_4`; tests `LeniencyParametersTest`, `LeniencyTakesEffectTest`.
+- [ ] T026 [US1] Family `technique` (`AE/technique/BendDetector.java`, `SlideDetector`, `VibratoDetector`, `LegatoDetector`, `PitchMotion`): sections `TECHNIQUE_1`…`TECHNIQUE_4`; tests `AET/settings/TechniqueParametersTest.java`, `AET/technique/TechniqueTakesEffectTest.java`.
+- [ ] T027 [US1] Families `calibration`, `input-quality` (`PR/session/CalibrationRun.java` thresholds, `CalibrationTaps` outliers, `AE/calibration/RecognitionRate`, `RecordingQuality` levels, `SoundDetection` refractory and lead; `PR/session/InputQuality`). Ordered pair: calm below < loud above. Sections `CALIBRATION_1`…`CALIBRATION_3`, `INPUT_QUALITY`; tests `CalibrationParametersTest`, `CalibrationTakesEffectTest`.
+- [ ] T028 [US1] Gate (reports identical with each engine); commit "impl(026): phase 4 (US1): the practice session's, techniques' and calibration's values are parameters".
 
 ## Phase 5: User Story 3, every parameter documented (Priority: P2)
 
-- [ ] T027 [P] [US3] New test `AET/settings/EngineConstantInventoryTest.java`. It finds every numeric `static final`, `Parameters.defaults()` literal and public numeric default field in `AE`, and requires each one to be in one of two places:
+- [ ] T029 [P] [US3] New test `AET/settings/EngineConstantInventoryTest.java`. It finds every numeric `static final`, `Parameters.defaults()` literal and public numeric default field in `AE`, and requires each one to be in one of two places:
   - a **parameter** row of `SPEC/inventory.md` whose key is in `RecognitionParameters.ALL` and whose default equals the literal: the constant then serves only as that parameter's default;
   - or a **fixed** row of `DOC` section 6, with its kind and reason.
 
   A row is matched by its file and constant name, as written in the inventory and the documentation (research R9). Seen red against the current section 6.
-- [ ] T028 [P] [US3] New test `PT/SessionConstantInventoryTest.java`: the same rule and matching as T027, for `PR/session` and `PR/arcade/core`. Seen red.
-- [ ] T029 [P] [US3] New crate test (`CRATE/analysis/mod.rs`, `#[cfg(test)]`): every `const` of `CRATE/analysis` is one of three things: an index of `Parameters` or `Tuning`, a default of `Tuning::defaults()` named in a parameter row of `SPEC/inventory.md`, or a fixed row of `DOC` section 6. It is matched by its file and name, as in T027. Seen red.
-- [ ] T030 [P] [US3] New test `AET/settings/EngineDocumentationFactsTest.java`: each key of `ALL` has a row in `DOC` with its unit, default, bounds, section and when it takes effect, matching the code. Seen red.
-- [ ] T031 [US3] Rewrite `DOC`:
+- [ ] T030 [P] [US3] New test `PT/SessionConstantInventoryTest.java`: the same rule and matching as T029, for `PR/session` and `PR/arcade/core`. Seen red.
+- [ ] T031 [P] [US3] New crate test (`CRATE/analysis/mod.rs`, `#[cfg(test)]`): every `const` of `CRATE/analysis` is one of three things: an index of `Parameters` or `Tuning`, a default of `Tuning::defaults()` named in a parameter row of `SPEC/inventory.md`, or a fixed row of `DOC` section 6. It is matched by its file and name, as in T029. Seen red.
+- [ ] T032 [P] [US3] New test `AET/settings/EngineDocumentationFactsTest.java`: each key of `ALL` has a row in `DOC` with its unit, default, bounds, section and when it takes effect, matching the code. Seen red.
+- [ ] T033 [US3] Rewrite `DOC`:
   - §3.4 (the `float[21]`, the tuning `double[]`, the new JNI functions and `tuningLayout`);
   - §4, one table per new section;
   - §6, only the fixed constants, grouped by kind with the reason.
 
-  T027–T030 green, and `EngineDocumentationTest` still green.
-- [ ] T032 [US3] Gate; commit "impl(026): phase 5 (US3): the engines' documentation lists every parameter and every fixed constant with its reason".
+  T029–T032 green, and `EngineDocumentationTest` still green.
+- [ ] T034 [US3] Gate; commit "impl(026): phase 5 (US3): the engines' documentation lists every parameter and every fixed constant with its reason".
 
 ## Phase 6: Polish and cross-cutting concerns
 
-- [ ] T033 [P] New test `AET/settings/RecognitionSettingsMigrationTest.java`: a configuration file written by v0.8.0-beta.7 and one written at the end of spec 024 are read with every stored value kept and every new key at its default (SC-005). Seen red only if a value is lost; otherwise record it green at once, as a guard.
-- [ ] T034 [P] Review the strings in three languages: every name and tip says what the value does and which way is more lenient or more sensitive, and ends with the expert sentence of the contract; the section names follow contracts/settings-window.md.
-- [ ] T035 [P] Practice guide `docs/PRACTICE{,-FR,-ES}.md`: one paragraph on the Advanced categories. They are expert settings, *Restore* brings back the measured values, and the full list is in `DOC`.
-- [ ] T036 [P] New sheet `specs/test-sheets/F16-parametres-experts.md` (SC-001, SC-007):
+- [ ] T035 [P] New test `AET/settings/RecognitionSettingsMigrationTest.java`: a configuration file written by v0.8.0-beta.7 and one written at the end of spec 024 are read with every stored value kept and every new key at its default (SC-005). Seen red only if a value is lost; otherwise record it green at once, as a guard.
+- [ ] T036 [P] Review the strings in three languages: every name and tip says what the value does and which way is more lenient or more sensitive, and ends with the expert sentence of the contract; the section names follow contracts/settings-window.md.
+- [ ] T037 [P] Practice guide `docs/PRACTICE{,-FR,-ES}.md`: one paragraph on the Advanced categories. They are expert settings, *Restore* brings back the measured values, and the full list is in `DOC`.
+- [ ] T038 [P] New sheet `specs/test-sheets/F16-parametres-experts.md` (SC-001, SC-007):
   - open each Advanced category and check that nothing overflows the screen;
   - change the onset sensitivity, start a Wait run and see fewer attacks;
   - *Restore*;
   - repeat with the native engine.
-- [ ] T037 Draft the release notes `docs/release-notes/next-expert-parameters.md` (macOS, Linux and Windows alike; an older native library is never mixed in, since packages carry their own).
-- [ ] T038 Full gate: `clean verify -P native-modules`, the reports identical with each engine, the CI on Ubuntu and macOS dispatched on the branch (its timing tests reported apart, as in memory `ci-timing-tests-flaky`). Windows has no CI build outside the release workflow (its Windows job cross-compiles on Linux, without tests): the final report states that Windows is verified only by that job at the next release, not before (constitution IX), and the release run must show the Windows job green before the release is announced.
-- [ ] T039 Write `SPEC/final-report.md` (each FR and SC with its evidence, both engines, the reports' comparison) and update `specs/STATUS.md`. Commit "impl(026): phase 6: migration guard, strings, guide, sheet F16, final report".
-- [ ] T040 With the Mac unlocked: `-P swt-gui-tests` on the whole branch, including `RecognitionSettingsFitSwtTest` and the existing settings window tests over the 31 new categories. Fix any failure under the bug protocol, commit the result, then one push of both refs.
-- [ ] T041 [HUMAN] The owner's gate: sheet F16 on the built application.
+- [ ] T039 Draft the release notes `docs/release-notes/next-expert-parameters.md` (macOS, Linux and Windows alike; an older native library is never mixed in, since packages carry their own).
+- [ ] T040 Full gate: `clean verify -P native-modules`, the reports identical with each engine, the CI on Ubuntu and macOS dispatched on the branch (its timing tests reported apart, as in memory `ci-timing-tests-flaky`). Windows has no CI build outside the release workflow (its Windows job cross-compiles on Linux, without tests): the final report states that Windows is verified only by that job at the next release, not before (constitution IX), and the release run must show the Windows job green before the release is announced.
+- [ ] T041 Write `SPEC/final-report.md` (each FR and SC with its evidence, both engines, the reports' comparison) and update `specs/STATUS.md`. Commit "impl(026): phase 6: migration guard, strings, guide, sheet F16, final report".
+- [ ] T042 With the Mac unlocked: `-P swt-gui-tests` on the whole branch, including `RecognitionSettingsFitSwtTest` and the existing settings window tests over the 32 new categories. Fix any failure under the bug protocol, commit the result, then one push of both refs.
+- [ ] T043 [HUMAN] The owner's gate: sheet F16 on the built application.
 
 ## Dependencies & execution order
 
 - Phase 1 → Phase 2 → Phases 3 and 4 → Phase 5 → Phase 6.
-- T007 (the tuning array) blocks every engine family of phase 3; T009 (the pair repair) blocks T017, T023 and T025.
+- T007 (the tuning array) blocks every engine family of phase 3; T009 (the pair repair) blocks T018, T025 and T027.
 - Within phase 3, the families touch different stages and could run in parallel, but they share `RecognitionParameters.java`, `NativeParameters.java`, `CRATE/analysis/mod.rs` and the message files, so they run one after the other.
 - Phase 4 families touch different session classes; same shared files, same order.
-- T027–T030 are [P]: separate new files.
-- T040 needs the Mac unlocked; T041 needs the owner.
+- T029–T032 are [P]: separate new files.
+- T042 needs the Mac unlocked; T043 needs the owner.
 
 ## Parallel example
 
 ```text
 Phase 2: T004, T005, T006 (separate test files), then T007.
-Phase 5: T027, T028, T029, T030 together, then T031.
-Phase 6: T033, T034, T035, T036 together.
+Phase 5: T029, T030, T031, T032 together, then T033.
+Phase 6: T035, T036, T037, T038 together.
 ```
 
 ## Implementation strategy

@@ -9,7 +9,8 @@ Each decision cites the source it rests on (constitution III). Paths are relativ
 - the technique detectors' `Parameters` fields in `AE/technique/` (`BendDetector`, `SlideDetector`, `VibratoDetector`, `LegatoDetector`) and `PitchMotion` (`OUTLIER_CENTS` 400, `MIN_VOICED` 8);
 - the calibration thresholds (`AE/calibration/RecognitionRate`, `RecordingQuality`, `SoundDetection` refractory and lead; `PR/session/CalibrationRun`, `CalibrationTaps`);
 - `PR/session/InputQuality`, `PlayTimeWindow` (advance, gap), `TimingTolerance` (reference beat), `ClockUncertainty`, `AttackCandidates` (MIDI range);
-- the relaxed values of `PR/session/FollowLeniency` (6 rows × 2 positions) and `PR/arcade/core/ArcadeLeniency` (5 rows × 2 positions).
+- the relaxed values of `PR/session/FollowLeniency` (6 rows × 2 positions) and `PR/arcade/core/ArcadeLeniency` (5 rows × 2 positions);
+- the player clock (clarification 3): `PR/session/TickInterpolator` (fit window, minimum points, minimum span, stall, extrapolation, seek margin) and `PR/session/LatencyCompensation.LIMIT_MILLIS`.
 
 The final per-key inventory is written by task T002 into `inventory.md` and kept complete by a source-scan test (R9).
 
@@ -21,9 +22,9 @@ The final per-key inventory is written by task T002 into `inventory.md` and kept
 | Buffers and layouts | ring and block sizes (`CAPTURE_BLOCKS`, `FRAME_RING`, `HOP_RING`, `CAPACITY`, `CHUNK`, `RECENT_FRAMES`, `BEND_FRAMES_MAX`, `MAX_PITCHES`, `MAX_HYPOTHESES`, `COST_BINS`), record indices, `VERSION`, `LAYOUT` | Not tuning values |
 | Numerical safety | `EPSILON`, `RIDGE`, `GAIN_TOLERANCE`, `FLOOR_DBFS` −120 | Not tuning values |
 | Plumbing | `NATIVE_OPEN_TIMEOUT_MILLIS`, `NativeBackend.WAIT_MILLIS`/`JOIN_MILLIS`, `SoundDetection` silence and total timeouts, `CaptureClock`, `SessionLoop.MIN_UI_INTERVAL_NANOS` | Owner, clarification 2 |
-| Clock | `TickInterpolator`, `PlayerTempoClock`, `LatencyCompensation.LIMIT_MILLIS`, `CRATE/resampler.rs` | Owner, clarification 2 (clock drift correction); the player clock is the same kind |
-| Score and display | `ArcadeScoring` steps, `PracticeSession.SPEED_SHOW_NANOS`, `FollowSession.REASON_SPAN_NANOS`, `FollowSettings` display percents (already user settings of the Follow window) | Change no recognition decision |
-| Calibration protocol | `CalibrationRun.LEAD_NANOS`, `PERIOD_NANOS`, `CalibrationTaps.CLICKS` | The exercise played to the learner, not a threshold |
+| Clock | `CRATE/resampler.rs` (the native clock drift correction); `PlayerTempoClock.NOMINAL_TICKS_PER_SECOND` (TuxGuitar's tick rate, a structural value); `TickInterpolator.CAPACITY` (a buffer) | Owner, clarification 2 |
+| Score and display | `ArcadeScoring` steps, `PracticeSession.SPEED_SHOW_NANOS`, `FollowSession.REASON_SPAN_NANOS`, `FollowSettings` display percents (already user settings of the Follow window) | Owner, clarifications 2 and 3: they change no recognition decision |
+| Calibration protocol | `CalibrationRun.LEAD_NANOS`, `PERIOD_NANOS`, `CalibrationTaps.CLICKS` | Owner, clarification 3: the exercise played to the learner, not a threshold |
 | Already settings | `PassagePolicy` defaults (`recognition.passage.*`), `ChordMatcher.Parameters.defaults()` (mirrors the chord settings), the play-time bounds of `PlayTimeWindow` | Already parameters |
 
 **Rationale.** The owner's rule covers what changes what is heard or accepted; the clarifications exclude sizes, plumbing, clock and score.

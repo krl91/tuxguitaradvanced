@@ -40,13 +40,14 @@ Counts are those of the scan of 2026-11-06 (research R1); task T002 writes the e
 | `ACCEPTANCE_1`, `ACCEPTANCE_2` | `acceptance` | `PolyphonicAcceptance.Parameters.defaults()` and its constants | 14 |
 | `WAIT_1`, `WAIT_2` | `wait` | `PracticeSession` (verdict hold, neighbour veto, technique and bend windows, speed window), `PracticeParameters` early stability | 12 |
 | `FOLLOW_1`… `FOLLOW_3` | `follow` | `FollowSession` timings, technique and bend windows | 15 |
+| `CLOCK` | `clock` | `TickInterpolator` (fit window, minimum points and span, stall, extrapolation, seek margin), `LatencyCompensation.LIMIT_MILLIS` | 7 |
 | `TIMING` | `timing` | `TimingTolerance` reference beat, `PlayTimeWindow` advance and gap, `ClockUncertainty` | 4 |
 | `LENIENCY_1`… `LENIENCY_4` | `follow-leniency`, `arcade-leniency` | `FollowLeniency` and `ArcadeLeniency` rows × positions | 22 |
 | `TECHNIQUE_1`… `TECHNIQUE_4` | `technique` | `BendDetector`, `SlideDetector`, `VibratoDetector`, `LegatoDetector` parameters, `PitchMotion` | 27 |
 | `CALIBRATION_1`… `CALIBRATION_3` | `calibration` | `CalibrationRun` thresholds, `CalibrationTaps` outliers, `RecognitionRate`, `RecordingQuality` levels, `SoundDetection` refractory and lead | 17 |
 | `INPUT_QUALITY` | `input-quality` | `InputQuality` | 3 |
 
-About 170 parameters and 31 new sections. The existing 8 sections are unchanged.
+About 177 parameters and 32 new sections. The existing 8 sections are unchanged.
 
 ## Fixed constant
 

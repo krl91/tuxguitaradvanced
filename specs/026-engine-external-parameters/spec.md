@@ -16,6 +16,7 @@
 
 - Q: Do the sizes that structure the analysis (sample rate 48,000 Hz, window 2,048 and hop 256 samples, FFT sizes 8,192, 4,096 and 1,024) also become parameters? → A: No: they stay fixed and are documented as structural sizes with the reason (FR-002); every other value becomes a parameter (owner, 2026-11-06: "B").
 - Q: Do values that change no recognition decision become parameters too (Arcade score steps 10 and 25; plumbing: native open timeout 1.5 s, thread waits 50 and 500 ms, calibration timeouts 20 s and 180 s; the native clock drift correction)? → A: No: only the values that change what is heard or accepted become parameters (both engines, the practice session, the calibration and input-quality thresholds); the score, the plumbing and the clock drift correction stay fixed and are documented with their reason (owner, 2026-11-06: "A").
+- Q: Do the player clock (fit window 600 ms, at least 8 points, minimum span 150 ms, stall 60 ms, extrapolation 30 ms, seek margin 960 ticks, latency limit 1 s), the calibration protocol (lead 1.5 s, period 1 s, 8 clicks) and the display durations (speed shown 600 ms, Follow reasons 1 s) become parameters? → A: The player clock becomes parameters (it decides what is on time in Follow and Arcade); the calibration protocol and the display durations stay fixed and are documented with their reason (owner, 2026-11-06: "B").
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -61,7 +62,7 @@ The owner reads one document to know every parameter of both engines: name, mean
 **Acceptance Scenarios**:
 
 1. **Given** the engines' documentation, **When** the owner looks up any parameter, **Then** its name, meaning, unit, default, bounds, where it is set and when it takes effect are given.
-2. **Given** the list of constants still fixed in the code (section 6 of the documentation), **When** this spec is done, **Then** it holds only values that are not tuning values (structural sizes, buffer sizes and numerical safety margins), each with the reason it is not a parameter.
+2. **Given** the list of constants still fixed in the code (section 6 of the documentation), **When** this spec is done, **Then** it holds only the values FR-002 keeps fixed (structural sizes, buffers, numerical safety margins, plumbing, the native clock drift correction, the Arcade score, the calibration protocol and the display durations), each with the reason it is not a parameter.
 
 ---
 
@@ -77,8 +78,8 @@ The owner reads one document to know every parameter of both engines: name, mean
 
 ### Functional Requirements
 
-- **FR-001**: Every value listed in section 6 of `docs/architecture/recognition-engines.md`, or found by the plan's inventory of the source (`inventory.md`), that changes what the engines or the practice session decide MUST become an external parameter, read when a run starts (or pushed to a running engine as the level values are today), with no rebuild of the application or of the native library. The scope covers both engines and the practice session (owner, 2026-11-06): the Wait, Follow and Arcade timings (verdict hold, neighbour veto, evidence horizons, technique and bend windows), the relaxed values of Follow and Arcade, and the calibration and input-quality thresholds. Only values that change what is heard or accepted are in scope: the Arcade score, the plumbing timeouts and waits, and the native clock drift correction are not (FR-002).
-- **FR-002**: Values that are not tuning values MUST stay fixed: the structural sizes of the analysis (sample rate 48,000 Hz, analysis window 2,048 and hop 256 samples, every FFT size), buffer and ring sizes, numerical safety margins such as epsilons, the Arcade score steps, the plumbing timeouts and waits (native open, thread joins, calibration timeouts) and the native clock drift correction; each one kept fixed MUST be listed in the documentation with the reason.
+- **FR-001**: Every value listed in section 6 of `docs/architecture/recognition-engines.md`, or found by the plan's inventory of the source (`inventory.md`), that changes what the engines or the practice session decide MUST become an external parameter, read when a run starts (or pushed to a running engine as the level values are today), with no rebuild of the application or of the native library. The scope covers both engines and the practice session (owner, 2026-11-06): the Wait, Follow and Arcade timings (verdict hold, neighbour veto, evidence horizons, technique and bend windows), the relaxed values of Follow and Arcade, the player clock that places the learner's notes in time, and the calibration and input-quality thresholds. Only values that change what is heard or accepted are in scope: the Arcade score, the plumbing timeouts and waits, the native clock drift correction, the calibration protocol and the display durations are not (FR-002).
+- **FR-002**: Values that are not tuning values MUST stay fixed: the structural sizes of the analysis (sample rate 48,000 Hz, analysis window 2,048 and hop 256 samples, every FFT size), buffer and ring sizes, numerical safety margins such as epsilons, the Arcade score steps, the plumbing timeouts and waits (native open, thread joins, calibration timeouts), the native clock drift correction, the calibration protocol (lead, period, number of clicks) and the display durations; each one kept fixed MUST be listed in the documentation with the reason.
 - **FR-003**: Each parameter MUST have a stable name, a meaning, a unit, a default equal to today's fixed value, and bounds; an unreadable, missing or out-of-bounds value MUST be repaired (default or nearest bound) as the existing recognition settings are.
 - **FR-004**: Both engines MUST read the same parameters with the same names, units, defaults and bounds; a value shared by a Java stage and its native port MUST be one parameter, not two.
 - **FR-005**: The new parameters MUST be set where the existing recognition settings are kept, so that a value set once is used by both engines, and each MUST be shown in the Recognition settings window, with a tip in English, French and Spanish (owner, 2026-11-06).
@@ -93,14 +94,14 @@ The owner reads one document to know every parameter of both engines: name, mean
 ### Key Entities
 
 - **Engine parameter**: a named value with meaning, unit, default, bounds, a section (family) and the moment it takes effect (at once, at the next run, when the listening restarts); read identically by both engines.
-- **Fixed constant**: a value deliberately kept in the code, with the reason (buffer size, numerical safety), listed in the documentation.
+- **Fixed constant**: a value deliberately kept in the code, of one of the kinds of FR-002, with the reason, listed in the documentation.
 - **Parameter set**: the values in force for a run, built once when the run starts from the stored settings and their defaults.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: Every tuning value of section 6 of the engines' documentation (within the scope of FR-001) can be changed without a rebuild, and a change is seen in a run with each engine (one value per family checked by an automated test).
+- **SC-001**: Every tuning value of section 6 of the engines' documentation or of `inventory.md` (within the scope of FR-001) can be changed without a rebuild, and a change is seen in a run with each engine (one value per family checked by an automated test).
 - **SC-002**: With the defaults, every dataset and benchmark figure of the branch is identical before and after, with each engine (0 figure changed).
 - **SC-003**: 100 % of the parameters are documented with their six facts; the documentation check is green.
 - **SC-004**: The list of constants still fixed in the code holds only non-tuning values, each with its reason.
