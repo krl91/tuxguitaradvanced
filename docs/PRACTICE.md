@@ -36,7 +36,7 @@ A small palette stays on screen and the expected note or chord is framed on the 
 * **green tick**: heard, the practice moves on;
 * **red cross**: another note was heard (shown only for a note that was just struck, not for the previous note still ringing);
 * nothing happens on silence or noise, and a note that rings on is never taken for the next one;
-* a chord is accepted when its notes are heard together; the missing notes are named when the chord is incomplete;
+* a chord is accepted when its note names are heard together over the strum, whatever the voicing (how strictly: *Chord check*, below); when a chord is refused, the message names the notes of the chord that were heard the weakest: check them (a string muted, a finger not pressing hard enough), then strum the chord again, since a new strum is needed;
 * a **bent note** is accepted when the bend reaches the written target: the note it starts from (a pre-bend, its bent pitch) starts the bend and the practice tells you to bend it up; while you bend, release or pre-bend along what is written, no pitch on the way is a wrong note, the target of the bend is not taken for the next note (which needs its own pick), and a written release must be made too (the practice tells you to release down to its end); **Skip** passes a bend or release you do not want to play. Whether the bend was exactly on pitch is a technique result, which for now says *cannot be checked yet*;
 * **Skip** passes the note, **Resume** continues after a pause (a playback, an unusable input), **Restart** starts the passage again, **Stop** ends the practice immediately and brings the preparation window back.
 
@@ -66,6 +66,15 @@ In the **Mode** tab of the practice window you choose how the score is practised
 | **Wait for the right note** | The score waits for you (the mode described above). |
 | **Follow the tempo** | The score plays at its tempo, after a count-in. The track you practise is silent, the other tracks sound as a backing. Each note or chord is judged on time: on time, early, late, wrong, missed. |
 | **Arcade** | The same run, shown as a game: the notes come towards you on a neck and are judged as they pass. The result of the run is shown at the end. |
+
+**Chord check** (Mode tab, next to the choice Wait / Follow / Arcade): how strictly a chord is accepted, in the three modes and with both recognition engines. A line under the list says what the chosen level accepts and what it risks.
+
+* **Normal** (the default): a chord is accepted when the note names of the chord are heard together over the strum, whatever the voicing: another voicing of the same chord (more or fewer strings, an octave more or less) is accepted. A chord missing two of its notes is always refused; a chord with one note different may be accepted.
+* **Strict**: a chord is never accepted on the attack of the strum alone, so more chords that are almost right are refused, and some right ones may be refused too.
+* **Lenient**: more right chords played imperfectly are accepted, and also more chords that are one note off.
+* **Custom**: shown when a chord setting was changed by hand in *Recognition settings* (below); it cannot be chosen, and choosing a level again restores that level's values.
+
+A level changed during a run applies from the next run, and the run does not stop. The level you choose is kept from one session to the next and across updates; if you never chose one, you get the default. The chord check never hides an input problem: the level warnings stay.
 
 Both timed modes share the **tempo** (20 % to 150 % of the written tempo) and the **rhythm calibration** of your audio route (calibrate with clicks, or type the delay by hand: without it the notes may be judged a little early or late, and the window says *Reduced rhythmic precision*). **Arcade** judges the time with the **timing window** (a slider from 40 to 200 ms each side at 120 beats a minute, **100 ms** by default; it grows and shrinks with the tempo, is one saved setting also shown in the Configuration window, and an older choice is converted: strict 50 ms, lenient 125 ms, normal the new default; a wide window can take a note for the one still ringing in a dense passage); **Follow the tempo** judges it with the **time to play the note** (below).
 
@@ -161,7 +170,9 @@ Every setting has a recommended value and a *Restore* button. The ones you may w
 | Minimum certainty | How sure the pitch detector must be before a single note is judged. |
 | Time to confirm a note | How long a note must sound before it is accepted. |
 | Pick attack sensitivity | How strong a sudden rise of the sound counts as a new attack. |
-| Chord settings | How strictly the notes of a chord are checked and how long a strum may take. |
+| Chord settings | How the notes of a chord are checked and how long a strum may take (below). |
+
+The chord settings: **Chord rule**, *Note names over the strum* (the default, recommended: the note names of the chord heard together over the strum, the octave not counted, whatever the voicing) or *Every string separately* (the rule of earlier versions: each string that can be checked on its own must be heard); **Chord match** (how closely the note names heard must match the chord); **Weakest note of a chord** (under this share of the strongest note of the chord, a note counts as missing); **Accept a chord on its attack** (off in *Strict*); and, in the section **Chord details** (technical), **Highest note counted** and **Time before judging a chord**. Choosing a *Chord check* level in the Mode tab sets three of these values, the **Chord rule**, the **Chord match** and **Accept a chord on its attack**; changing one of those three by hand makes the level show *Custom*, the others never change the level. *Restore* in the chord section gives the values of *Normal*. The *Strum window* is not a level value: no level changes it.
 
 ### The recognition engine
 
@@ -228,7 +239,7 @@ On a benchmark of 1,208 annotated recordings of real guitars (clean and with 11 
 * **single notes recognised**: 99.8 % (effects) to 100 % (clean);
 * **a note a semitone or a tone away from the played one accepted**: none in more than 2,700 tests;
 * **intervals and triads with effects recognised**: 87 %; **chords of clean guitars**: 95 %;
-* **chords with a note missing refused**: 96 to 98 %;
+* **chords with a note missing refused**: about 45 % with the default chord check (20 of 44 on the IDMT recordings, 2026-11-05; 96 to 98 % with the earlier rule, *Every string separately*), since a chord one note off may be accepted;
 * **notes played one after the other, the previous one still ringing**: 97 to 100 % recognised;
 * **delay** between playing a note and its recognition: about 0.1 s (median 105 ms, 90 % within 170 ms) on a real recording; the practice preparation window states it.
 
@@ -243,6 +254,8 @@ Limits, measured and not hidden:
 * **notes close together**: about 0.3 s between picked notes are followed (91 % of three-note runs at 0.35 s, 67 % at 0.25 s); faster, only the first note of a run is recognised and Practice waits for you, it never marks a wrong note (0 of 92 tests). The practice window says so when it happens;
 
 * chords whose lowest note is G2 are sometimes accepted a whole tone higher (the two chords are one frequency step apart at that pitch);
+* chords played very low on the neck (lowest note around G2) can be harder to recognise: their notes are close together in frequency and blur into each other (a minor triad on G2 may be refused);
+* with the default *Chord check*, a chord missing one of its notes may be accepted (only a chord missing two is always refused); the figure above for chords with a note missing refused was measured with the earlier rule;
 * four-note seventh chords and some open chords (A major, E major) are recognised less often;
 * an octave, or a note that is a harmonic of a lower chord note, cannot be verified separately from it;
 * the settings were tuned on the recordings above; another guitar or microphone may call for another gain or sensitivity.

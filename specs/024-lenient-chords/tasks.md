@@ -291,9 +291,9 @@
 
 ## Phase 6: Polish & cross-cutting concerns
 
-- [ ] T038 A new test `AET/settings/EngineDocumentationTest.java` checks that every key of `RecognitionParameters` appears in `docs/architecture/recognition-engines.md`, so the documentation stays complete (FR-014). Run it: red, since the document does not exist yet.
+- [X] T038 A new test `AET/settings/EngineDocumentationTest.java` checks that every key of `RecognitionParameters` appears in `docs/architecture/recognition-engines.md`, so the documentation stays complete (FR-014). Run it: red, since the document does not exist yet.
   *Order kept as far as possible (2026-11-05): T039 was written first, in parallel, by an agent. To see T038 red for the right reason, run it once with `docs/architecture/recognition-engines.md` set aside in the scratchpad (absent document), record it in `SPEC/benchmark/red-docs.txt`, put the document back and run it again: green.*
-- [ ] T039 New `docs/architecture/recognition-engines.md` (FR-014, research R10), linked from `docs/architecture/README.md`. It covers:
+- [X] T039 New `docs/architecture/recognition-engines.md` (FR-014, research R10), linked from `docs/architecture/README.md`. It covers:
   1. how each engine works, from the frame to the session's decision;
   2. their interface: the frame record, `frame_layout.txt`, the JNI functions of `jni_recognition.rs`, `NativeParameters`;
   3. every parameter of `RecognitionParameters` and `NativeParameters`: key, meaning, unit, default, bounds, where it is set;
@@ -301,12 +301,15 @@
   5. the rule for later updates: a change of a level's values or of the defaults adds the old set to the `ChordLeniency` history (research R7).
 
   Then run T038: green.
-- [ ] T040 [P] The practice guide in three languages: the *Chord check* levels, and what a refused chord's message means now.
-- [ ] T041 [P] New sheet `specs/test-sheets/F15-accords-tolerants.md` (SC-005): chords of a score through the cable in Wait, Follow and Arcade with *Normal*, then one chord with each level, then one threshold changed in Recognition settings and seen at the next run (FR-013), and one chord played right after a held note (tied or let ring), accepted whether the held note still rings or has faded.
-- [ ] T042 Draft the release notes (macOS, Linux and Windows alike).
+- [X] T040 [P] The practice guide in three languages: the *Chord check* levels, and what a refused chord's message means now.
+- [X] T041 [P] New sheet `specs/test-sheets/F15-accords-tolerants.md` (SC-005): chords of a score through the cable in Wait, Follow and Arcade with *Normal*, then one chord with each level, then one threshold changed in Recognition settings and seen at the next run (FR-013), and one chord played right after a held note (tied or let ring), accepted whether the held note still rings or has faded.
+- [X] T042 Draft the release notes (macOS, Linux and Windows alike).
   *T039–T042 were written in parallel on 2026-11-05 by agents (each on its own files, no build, no commit); they are checked off after review in this phase, T039 after T038 is seen red then green.*
-- [ ] T043 Full gate: `clean verify -P native-modules`, then `-P swt-gui-tests`, and the dataset tests of this spec with each engine.
-- [ ] T044 Write `SPEC/final-report.md` (each FR and SC with its figure and evidence, both engines, the stop conditions met or not) and update `specs/STATUS.md`. Commit "impl(024): phase 6: documentation, sheet F15, final report"; push both refs in one push.
+  *Reviewed 2026-11-06: T038 seen red with the document set aside, then green (`benchmark/red-docs.txt`). Corrected in review: the guide in three languages and the release notes said that a level sets every chord setting (it sets three: the rule, the match, the attack); the release notes said Strict refuses incomplete chords more often (measured: no, `benchmark/levels.md`); `recognition-engines.md` §4.10 still described phase 4; sheet F15 step 1 asked to hover the levels (the line under the list shows the chosen level's).*
+- [X] T043 Full gate: `clean verify -P native-modules`, then `-P swt-gui-tests`, and the dataset tests of this spec with each engine.
+  *Done 2026-11-06 01:00 without `-P swt-gui-tests` (Phase 5 note): build success, 1,512 practice and 520 engine tests, 0 failures; `OwnerChordsProfileTest`, `ChordLeniencyLevelsTest` and `DatasetBenchmarkTest` green with each engine. The SWT run waits for the owner.*
+- [X] T044 Write `SPEC/final-report.md` (each FR and SC with its figure and evidence, both engines, the stop conditions met or not) and update `specs/STATUS.md`. Commit "impl(024): phase 6: documentation, sheet F15, final report"; push both refs in one push.
+  *Done 2026-11-06 without the push: the owner asked for nothing to be pushed before the SWT runs, done on the owner's return; the push of both refs follows them.*
 - [ ] T045 [HUMAN] The owner's gate: sheet F15 on the built application (SC-005).
 
 ## Dependencies & execution order

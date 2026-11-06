@@ -36,6 +36,15 @@ En la pestaña **Modo** de la ventana de práctica eliges cómo se trabaja la pa
 | **Seguir el tempo** | La partitura suena a su tempo, tras una cuenta atrás. La pista que practicas queda muda y las demás suenan de acompañamiento. Cada nota o acorde se juzga en el tiempo: a tiempo, pronto, tarde, errónea, fallada. |
 | **Arcade** | La misma partida, presentada como un juego: las notas vienen hacia ti sobre un mástil y se juzgan al pasar. El resultado se muestra al final. |
 
+**Comprobación de acordes** (pestaña Modo, junto a la elección Esperar / Seguir / Arcade): con qué rigor se acepta un acorde, en los tres modos y con los dos motores de reconocimiento. Una línea bajo la lista dice lo que acepta el nivel elegido y lo que arriesga.
+
+* **Normal** (predeterminado): un acorde se acepta cuando los nombres de las notas del acorde se oyen juntos en el rasgueo, sea cual sea la disposición: otra disposición del mismo acorde (más o menos cuerdas, una octava más o menos) se acepta. Un acorde al que le faltan dos de sus notas siempre se rechaza; un acorde con una nota distinta puede aceptarse.
+* **Estricto**: un acorde nunca se acepta solo por el ataque del rasgueo, así que se rechazan más acordes casi correctos, y también pueden rechazarse algunos correctos.
+* **Tolerante**: se aceptan más acordes correctos tocados de forma imperfecta, y también más acordes con una nota de diferencia.
+* **Personalizado**: se muestra cuando un ajuste de acordes se cambió a mano en *Ajustes de reconocimiento* (más abajo); no se puede elegir, y elegir de nuevo un nivel restablece los valores de ese nivel.
+
+Un nivel cambiado durante una partida se aplica desde la partida siguiente, y la partida no se detiene. El nivel que eliges se conserva de una sesión a otra y en las actualizaciones; si nunca elegiste uno, tienes el predeterminado. La comprobación de acordes nunca oculta un problema de la entrada: los avisos de nivel siguen.
+
 Los dos modos cronometrados comparten el **tempo** (20 % a 150 % del tempo escrito) y la **calibración del ritmo** de tu cadena de audio (calibra con clics, o escribe el retraso a mano: sin ella las notas pueden juzgarse algo pronto o tarde, y la ventana indica *Precisión rítmica reducida*). **Arcade** juzga el momento con la **ventana de tiempo** (un control deslizante de 40 a 200 ms a cada lado a 120 pulsos por minuto, **100 ms** por defecto; crece y se reduce con el tempo, es un único ajuste guardado que también aparece en la ventana de Configuración, y una elección antigua se convierte: estricta 50 ms, flexible 125 ms, normal el nuevo valor por defecto; una ventana ancha puede hacer confundir una nota con la que aún suena en un pasaje denso); **Seguir el tempo** lo juzga con el **tiempo para tocar la nota** (abajo).
 
 ### Seguir el tempo: el tiempo para tocar la nota y la permisividad
@@ -103,7 +112,7 @@ Una pequeña paleta se queda en pantalla y la nota o el acorde esperado aparece 
 * **marca verde**: se ha oído, la práctica continúa;
 * **cruz roja**: se oyó otra nota (solo se muestra para una nota que acaba de tocarse, no para la nota anterior que aún suena);
 * no pasa nada con el silencio o el ruido, y una nota que sigue sonando nunca se toma por la siguiente;
-* un acorde se acepta cuando sus notas se oyen juntas; si el acorde está incompleto, se nombran las notas que faltan;
+* un acorde se acepta cuando los nombres de sus notas se oyen juntos en el rasgueo, sea cual sea la disposición (con qué rigor: *Comprobación de acordes*, más arriba); cuando un acorde se rechaza, el mensaje nombra las notas del acorde que se oyeron más débiles: compruébalas (una cuerda apagada, un dedo que no pisa lo bastante), y luego rasguea el acorde otra vez, porque hace falta un rasgueo nuevo;
 * una **nota con bend** se acepta cuando el bend alcanza el objetivo escrito: la nota de partida (un pre-bend, su altura ya subida) inicia el bend y la práctica te dice que subas la nota; mientras haces el bend, la liberación o el pre-bend como está escrito, ninguna altura intermedia es una nota incorrecta, la altura que alcanza el bend no se toma por la nota siguiente (que necesita su propia púa), y una liberación escrita también debe hacerse (la práctica te dice que liberes hasta su final); **Saltar** permite pasar un bend o una liberación que no quieres tocar. Si el bend fue exactamente justo es un resultado de técnica, que por ahora dice *aún no se puede comprobar*;
 * **Saltar** pasa la nota, **Reanudar** continúa tras una pausa (una reproducción, una entrada inutilizable), **Reiniciar** vuelve a empezar el pasaje, **Detener** termina la práctica de inmediato y vuelve a mostrar la ventana de preparación.
 
@@ -162,7 +171,9 @@ Cada ajuste tiene un valor recomendado y un botón *Restablecer*. Los que quizá
 | Certeza mínima | Cuán seguro debe estar el detector de altura antes de juzgar una nota suelta. |
 | Tiempo para confirmar una nota | Cuánto tiempo debe sonar una nota antes de aceptarse. |
 | Sensibilidad al ataque de la púa | Cuán fuerte debe ser una subida repentina del sonido para contar como un nuevo ataque. |
-| Ajustes de acordes | Con qué rigor se comprueban las notas de un acorde y cuánto puede durar un rasgueo. |
+| Ajustes de acordes | Cómo se comprueban las notas de un acorde y cuánto puede durar un rasgueo (abajo). |
+
+Los ajustes de acordes: **Regla de acordes**, *Nombres de las notas en el rasgueo* (predeterminada, recomendada: los nombres de las notas del acorde oídos juntos en el rasgueo, sin contar la octava, sea cual sea la disposición) o *Cada cuerda por separado* (la regla de las versiones anteriores: cada cuerda que se puede comprobar sola debe oírse); **Coincidencia del acorde** (cuánto deben coincidir con el acorde los nombres de las notas oídos); **Nota más débil de un acorde** (por debajo de esta parte de la nota más fuerte del acorde, una nota cuenta como ausente); **Aceptar un acorde por su ataque** (desactivado en *Estricto*); y, en la sección **Detalles de acordes** (técnica), **Nota más alta contada** y **Tiempo antes de juzgar un acorde**. Elegir un nivel de *Comprobación de acordes* en la pestaña Modo fija tres de estos valores, la **Regla de acordes**, la **Coincidencia del acorde** y **Aceptar un acorde por su ataque**; cambiar uno de esos tres a mano hace que el nivel muestre *Personalizado*, los demás nunca cambian el nivel. *Restablecer* en la sección de acordes da los valores de *Normal*. La *Ventana de rasgueo* no es un valor de nivel: ningún nivel la cambia.
 
 ### El motor de reconocimiento
 
@@ -229,7 +240,7 @@ En un banco de pruebas de 1 208 grabaciones anotadas de guitarras reales (limpia
 * **notas sueltas reconocidas**: 99,8 % (efectos) a 100 % (limpias);
 * **nota un semitono o un tono distinta de la tocada aceptada**: ninguna en más de 2 700 pruebas;
 * **intervalos y tríadas con efectos reconocidos**: 87 %; **acordes de guitarras limpias**: 95 %;
-* **acordes con una nota ausente rechazados**: 96 a 98 %;
+* **acordes con una nota ausente rechazados**: alrededor del 45 % con la comprobación de acordes predeterminada (20 de 44 en las grabaciones IDMT, 2026-11-05; 96 a 98 % con la regla anterior, *Cada cuerda por separado*), ya que un acorde con una nota de diferencia puede aceptarse;
 * **notas tocadas una tras otra, con la anterior aún sonando**: 97 a 100 % reconocidas;
 * **retraso** entre tocar una nota y su reconocimiento: unos 0,1 s (mediana 105 ms, 90 % en menos de 170 ms) en una grabación real; la ventana de preparación de la práctica lo indica.
 
@@ -244,6 +255,8 @@ Límites, medidos y no ocultos:
 * **notas muy juntas**: se siguen unos 0,3 s entre dos notas tocadas con púa (91 % de las series de tres notas a 0,35 s, 67 % a 0,25 s); más rápido, solo se reconoce la primera nota de una serie y la práctica te espera, sin marcar nunca una nota incorrecta (0 de 92 pruebas). La ventana de práctica lo indica cuando ocurre;
 
 * los acordes cuya nota más grave es G2 a veces se aceptan un tono más alto (los dos acordes están a un solo paso de frecuencia a esa altura);
+* los acordes tocados muy abajo en el mástil (nota más grave hacia G2) pueden ser más difíciles de reconocer: sus notas están cerca en frecuencia y se mezclan (una tríada menor en G2 puede rechazarse);
+* con la *Comprobación de acordes* predeterminada, un acorde al que le falta una de sus notas puede aceptarse (solo un acorde al que le faltan dos se rechaza siempre); la cifra de arriba de acordes con una nota ausente rechazados se midió con la regla anterior;
 * los acordes de séptima de cuatro notas y algunos acordes abiertos (La mayor, Mi mayor) se reconocen con menos frecuencia;
 * una octava, o una nota que es un armónico de una nota grave del acorde, no se puede verificar por separado de ella;
 * los ajustes se afinaron con las grabaciones anteriores; otra guitarra u otro micrófono pueden pedir otra ganancia u otra sensibilidad.

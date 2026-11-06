@@ -36,7 +36,7 @@ Une petite palette reste à l'écran et la note ou l'accord attendu est encadré
 * **coche verte** : entendu, la pratique avance ;
 * **croix rouge** : une autre note a été entendue (affichée seulement pour une note qui vient d'être frappée, pas pour la note précédente qui résonne encore) ;
 * rien ne se passe sur du silence ou du bruit, et une note qui résonne n'est jamais prise pour la suivante ;
-* un accord est accepté quand ses notes sont entendues ensemble ; les notes manquantes sont nommées si l'accord est incomplet ;
+* un accord est accepté quand les noms de ses notes sont entendus ensemble sur le grattage, quel que soit le voicing (avec quelle rigueur : *Vérification des accords*, plus bas) ; quand un accord est refusé, le message nomme les notes de l'accord entendues le plus faiblement : vérifiez-les (une corde étouffée, un doigt qui n'appuie pas assez), puis grattez l'accord à nouveau, car un nouveau grattage est nécessaire ;
 * une **note avec bend** est acceptée quand le bend atteint la cible écrite : la note de départ (un pré-bend, sa hauteur déjà montée) lance le bend et la pratique vous dit de faire monter la note ; pendant que vous faites le bend, le relâché ou le pré-bend comme écrit, aucune hauteur intermédiaire n'est une fausse note, la hauteur atteinte par le bend n'est pas prise pour la note suivante (qui demande son propre coup de médiator), et un relâché écrit doit aussi être fait (la pratique vous dit de relâcher jusqu'à sa fin) ; **Passer** permet de sauter un bend ou un relâché que vous ne voulez pas jouer. Savoir si le bend était exactement juste est un résultat de technique, qui dit pour l'instant *pas encore vérifiable* ;
 * **Passer** saute la note, **Reprendre** continue après une pause (lecture, entrée inutilisable), **Recommencer** reprend le passage, **Stop** termine la pratique immédiatement et ramène la fenêtre de préparation.
 
@@ -66,6 +66,15 @@ Dans l'onglet **Mode** de la fenêtre de pratique, vous choisissez comment la pa
 | **Attendre la bonne note** | La partition vous attend (le mode décrit plus haut). |
 | **Suivre le tempo** | La partition joue à son tempo, après un décompte. La piste travaillée est muette, les autres pistes jouent l'accompagnement. Chaque note ou accord est jugé dans le temps : à l'heure, en avance, en retard, faux, manqué. |
 | **Arcade** | La même partie, présentée comme un jeu : les notes viennent vers vous sur un manche et sont jugées à leur passage. Le résultat s'affiche à la fin. |
+
+**Vérification des accords** (onglet Mode, à côté du choix Attendre / Suivre / Arcade) : avec quelle rigueur un accord est accepté, dans les trois modes et avec les deux moteurs de reconnaissance. Une ligne sous la liste dit ce que le niveau choisi accepte et ce qu'il risque.
+
+* **Normal** (par défaut) : un accord est accepté quand les noms des notes de l'accord sont entendus ensemble sur le grattage, quel que soit le voicing : un autre voicing du même accord (plus ou moins de cordes, une octave de plus ou de moins) est accepté. Un accord auquel il manque deux de ses notes est toujours refusé ; un accord dont une note diffère peut être accepté.
+* **Strict** : un accord n'est jamais accepté sur la seule attaque du grattage ; plus d'accords presque justes sont donc refusés, et quelques accords justes peuvent l'être aussi.
+* **Tolérant** : plus d'accords justes joués imparfaitement sont acceptés, et aussi plus d'accords à une note près.
+* **Personnalisé** : affiché quand un réglage des accords a été changé à la main dans les *Réglages de reconnaissance* (plus bas) ; il ne se choisit pas, et choisir à nouveau un niveau rétablit les valeurs de ce niveau.
+
+Un niveau changé pendant une exécution s'applique à partir de l'exécution suivante, et l'exécution ne s'arrête pas. Le niveau choisi est conservé d'une session à l'autre et lors des mises à jour ; si vous n'en avez jamais choisi, vous avez celui par défaut. La vérification des accords ne cache jamais un problème d'entrée : les avertissements de niveau restent.
 
 Les deux modes chronométrés partagent le **tempo** (20 % à 150 % du tempo écrit) et le **calibrage du rythme** de votre chaîne audio (calibrage par clics, ou délai saisi à la main : sans lui, les notes peuvent être jugées un peu en avance ou en retard, et la fenêtre indique *Précision rythmique réduite*). **Arcade** juge le moment avec la **fenêtre de temps** (un curseur de 40 à 200 ms de chaque côté à 120 battements par minute, **100 ms** par défaut ; elle s'élargit et se resserre avec le tempo, c'est un seul réglage enregistré qui se retrouve dans la fenêtre Configuration, et un ancien choix est converti : stricte 50 ms, souple 125 ms, normale le nouveau défaut ; une fenêtre large peut faire prendre une note pour celle qui résonne encore dans un passage dense) ; **Suivre le tempo** le juge avec le **temps pour jouer la note** (ci-dessous).
 
@@ -161,7 +170,9 @@ Chaque réglage a une valeur recommandée et un bouton *Restaurer*. Ceux que vou
 | Certitude minimale | À quel point le détecteur doit être sûr avant de juger une note seule. |
 | Durée de confirmation d'une note | Combien de temps une note doit sonner avant d'être acceptée. |
 | Sensibilité à l'attaque | Quelle hausse soudaine du son compte comme une nouvelle attaque. |
-| Réglages des accords | Avec quelle rigueur les notes d'un accord sont vérifiées et combien de temps peut durer un grattage. |
+| Réglages des accords | Comment les notes d'un accord sont vérifiées et combien de temps peut durer un grattage (ci-dessous). |
+
+Les réglages des accords : **Règle des accords**, *Noms des notes sur le grattage* (par défaut, recommandé : les noms des notes de l'accord entendus ensemble sur le grattage, sans compter l'octave, quel que soit le voicing) ou *Chaque corde séparément* (la règle des versions précédentes : chaque corde vérifiable seule doit être entendue) ; **Correspondance de l'accord** (à quel point les noms des notes entendus doivent correspondre à l'accord) ; **Note la plus faible d'un accord** (sous cette part de la note la plus forte de l'accord, une note compte comme manquante) ; **Accepter un accord sur son attaque** (désactivé en *Strict*) ; et, dans la section **Détails des accords** (technique), **Note la plus haute comptée** et **Durée avant de juger un accord**. Choisir un niveau de *Vérification des accords* dans l'onglet Mode règle trois de ces valeurs, la **Règle des accords**, la **Correspondance de l'accord** et **Accepter un accord sur son attaque** ; changer l'une de ces trois à la main fait afficher *Personnalisé* au niveau, les autres ne changent jamais le niveau. *Restaurer* dans la section des accords donne les valeurs de *Normal*. La *Fenêtre de grattage* n'est pas une valeur de niveau : aucun niveau ne la change.
 
 ### Le moteur de reconnaissance
 
@@ -228,7 +239,7 @@ Sur un banc d'essai de 1 208 enregistrements annotés de vraies guitares (claire
 * **notes seules reconnues** : 99,8 % (effets) à 100 % (claires) ;
 * **note à un demi-ton ou un ton de celle jouée acceptée** : aucune sur plus de 2 700 tests ;
 * **intervalles et accords de trois notes avec effets reconnus** : 87 % ; **accords de guitares claires** : 95 % ;
-* **accords auxquels il manque une note refusés** : 96 à 98 % ;
+* **accords auxquels il manque une note refusés** : environ 45 % avec la vérification des accords par défaut (20 sur 44 sur les enregistrements IDMT, 2026-11-05 ; 96 à 98 % avec l'ancienne règle, *Chaque corde séparément*), car un accord à une note près peut être accepté ;
 * **notes jouées l'une après l'autre, la précédente résonnant encore** : 97 à 100 % reconnues ;
 * **délai** entre le jeu d'une note et sa reconnaissance : environ 0,1 s (médiane 105 ms, 90 % en moins de 170 ms) sur un vrai enregistrement ; la fenêtre de préparation de la pratique l'indique.
 
@@ -243,6 +254,8 @@ Limites, mesurées et non cachées :
 * **notes rapprochées** : environ 0,3 s entre deux notes jouées au médiator sont suivies (91 % des suites de trois notes à 0,35 s, 67 % à 0,25 s) ; plus vite, seule la première note d'une suite est reconnue et la pratique vous attend, sans jamais compter une note fausse (0 sur 92 tests). La fenêtre de pratique le dit quand cela arrive ;
 
 * les accords dont la note la plus grave est Sol2 sont parfois acceptés un ton plus haut (les deux accords ne sont séparés que d'un pas de fréquence à cette hauteur) ;
+* les accords joués très bas sur le manche (note la plus grave vers Sol2) peuvent être plus difficiles à reconnaître : leurs notes sont proches en fréquence et se mêlent (un accord mineur sur Sol2 peut être refusé) ;
+* avec la *Vérification des accords* par défaut, un accord auquel il manque une de ses notes peut être accepté (seul un accord auquel il en manque deux est toujours refusé) ; le chiffre ci-dessus des accords incomplets refusés a été mesuré avec l'ancienne règle ;
 * les accords de septième à quatre notes et certains accords ouverts (La majeur, Mi majeur) sont moins souvent reconnus ;
 * une octave, ou une note qui est un harmonique d'une note plus grave de l'accord, ne peut pas être vérifiée séparément de celle-ci ;
 * les réglages ont été ajustés sur les enregistrements ci-dessus : une autre guitare ou un autre micro peut demander un autre gain ou une autre sensibilité.

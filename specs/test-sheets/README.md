@@ -27,6 +27,7 @@ Ces fiches regroupent **tout ce qui reste à tester par une personne** dans les 
 | [F12](F12-ampli-effets.md) | 022 la guitare par un ampli et des pédales | T060, T029 | guitare + Rocksmith + casque filaire (+ micro intégré) | 30 min (+ 1 h de pratique) | Porte de la spec 022, avant la prochaine version |
 | [F13](F13-moteur-natif.md) | 023 le moteur de reconnaissance natif (Rust) | T087 (confirme T056) | guitare + Rocksmith + casque filaire | 30 min | Porte de la spec 023 ; avec des lignes pour les testeurs Linux et Windows |
 | [F14](F14-ergonomie.md) | 025 les fenêtres de pratique et d'ampli tiennent dans l'écran et disent quoi faire | T031 | guitare + câble + casque | 20 min | Porte de la spec 025 ; avec une ligne pour les testeurs Linux et Windows |
+| [F15](F15-accords-tolerants.md) | 024 les accords bien joués acceptés, les accords nettement faux refusés, la *Vérification des accords* | T045 | guitare + câble Rocksmith | 25 min | Porte de la spec 024 ; avec une ligne pour les testeurs Linux et Windows |
 
 ## Ce qui reste ouvert mais n'est pas une fiche pour toi seul
 

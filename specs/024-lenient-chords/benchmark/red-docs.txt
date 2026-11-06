@@ -1,0 +1,19 @@
+# Red then green run of T038, 2026-11-06
+
+T039 (the document) was written first, by an agent, in parallel (tasks.md note under T038). To see EngineDocumentationTest red for the right reason, docs/architecture/recognition-engines.md was set aside in the scratchpad, the test run, the document put back and the test run again.
+
+Command: mvn -o test -pl ../../TuxGuitar-audio-engine -am -Dtest=EngineDocumentationTest -Dsurefire.failIfNoSpecifiedTests=false (macOS SWT build directory).
+
+## Red (document set aside)
+
+```
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.015 s <<< FAILURE! -- in app.tuxguitar.audio.engine.settings.EngineDocumentationTest
+[ERROR] app.tuxguitar.audio.engine.settings.EngineDocumentationTest.everyRecognitionKeyIsDocumented -- Time elapsed: 0.008 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: the engines' documentation exists: docs/architecture/recognition-engines.md ==> expected: <true> but was: <false>
+```
+
+## Green (document back)
+
+```
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.023 s -- in app.tuxguitar.audio.engine.settings.EngineDocumentationTest
+```

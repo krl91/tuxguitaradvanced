@@ -25,3 +25,7 @@ Chaque page existe aussi en PNG (`0X-vue-…-N-….png`). Le contenu est tiré d
 | `tuner.puml` / `.png` | Accordeur : ouverture, chaîne signal → trame, affichage (guidé, chromatique, lecture conservée), changements en cours d'usage, fermeture, lien avec Practice (pause pendant que l'accordeur est ouvert). |
 
 Régénérer les PNG : `java -jar plantuml.jar -tpng sequences/*.puml` (PlantUML et Graphviz installés).
+
+## Moteurs de reconnaissance
+
+- [`recognition-engines.md`](recognition-engines.md) : les deux moteurs de reconnaissance (Java et natif Rust), de la trame à la décision de la session, leur interface (trame, `frame_layout.txt`, JNI, `NativeParameters`), chaque paramètre de `RecognitionParameters` et les constantes encore fixées dans le code (en anglais).
