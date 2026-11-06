@@ -25,7 +25,7 @@ No default changes. Every dataset report is compared byte for byte before and af
 
 **Testing**: JUnit 5 (`TuxGuitar-audio-engine/src/test/java`, `TuxGuitar-practice/test`), SWT GUI tests (`-P swt-gui-tests`, Mac unlocked), `cargo test` through the native-modules build, the dataset reports (`-Dgroups=dataset`) with each engine.
 
-**Target Platform**: macOS (validated locally), Linux and Windows (CI builds and the release workflow); all three packages carry the same parameters (FR-011).
+**Target Platform**: macOS (validated locally, tests and SWT), Linux (CI build with tests), Windows (only the release workflow's cross-build, without tests, verified at the next release, not before); all three packages carry the same parameters (FR-011).
 
 **Project Type**: desktop application, plugin modules plus a native library.
 

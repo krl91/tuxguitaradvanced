@@ -106,4 +106,4 @@ The final per-key inventory is written by task T002 into `inventory.md` and kept
 
 ## R11. Platforms
 
-**Decision.** Validated on macOS (local gate, SWT); Linux and Windows through the CI builds (the crate is built for each by `.github/workflows/release.yml` and `ubuntu-maven.yml`). The CI timing tests that fail on runners (memory `ci-timing-tests-flaky`, 2026-11-06) are not touched by this spec and are reported apart.
+**Decision.** Validated on macOS (local gate, SWT) and Linux (`ubuntu-maven.yml`, with tests). Windows is built only by the release workflow's Windows job (`.github/workflows/release.yml`, cross-compiled on Linux, without tests): it is verified at the next release, and stated as such, not claimed before (constitution IX). The CI timing tests that fail on runners (memory `ci-timing-tests-flaky`, 2026-11-06) are not touched by this spec and are reported apart.

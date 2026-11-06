@@ -77,7 +77,7 @@ The owner reads one document to know every parameter of both engines: name, mean
 
 ### Functional Requirements
 
-- **FR-001**: Every value listed in section 6 of `docs/architecture/recognition-engines.md` that changes what the engines or the practice session decide MUST become an external parameter, read when a run starts (or pushed to a running engine as the level values are today), with no rebuild of the application or of the native library. The scope covers both engines and the practice session (owner, 2026-11-06): the Wait, Follow and Arcade timings (verdict hold, neighbour veto, evidence horizons, technique and bend windows), the relaxed values of Follow and Arcade, and the calibration and input-quality thresholds. Only values that change what is heard or accepted are in scope: the Arcade score, the plumbing timeouts and waits, and the native clock drift correction are not (FR-002).
+- **FR-001**: Every value listed in section 6 of `docs/architecture/recognition-engines.md`, or found by the plan's inventory of the source (`inventory.md`), that changes what the engines or the practice session decide MUST become an external parameter, read when a run starts (or pushed to a running engine as the level values are today), with no rebuild of the application or of the native library. The scope covers both engines and the practice session (owner, 2026-11-06): the Wait, Follow and Arcade timings (verdict hold, neighbour veto, evidence horizons, technique and bend windows), the relaxed values of Follow and Arcade, and the calibration and input-quality thresholds. Only values that change what is heard or accepted are in scope: the Arcade score, the plumbing timeouts and waits, and the native clock drift correction are not (FR-002).
 - **FR-002**: Values that are not tuning values MUST stay fixed: the structural sizes of the analysis (sample rate 48,000 Hz, analysis window 2,048 and hop 256 samples, every FFT size), buffer and ring sizes, numerical safety margins such as epsilons, the Arcade score steps, the plumbing timeouts and waits (native open, thread joins, calibration timeouts) and the native clock drift correction; each one kept fixed MUST be listed in the documentation with the reason.
 - **FR-003**: Each parameter MUST have a stable name, a meaning, a unit, a default equal to today's fixed value, and bounds; an unreadable, missing or out-of-bounds value MUST be repaired (default or nearest bound) as the existing recognition settings are.
 - **FR-004**: Both engines MUST read the same parameters with the same names, units, defaults and bounds; a value shared by a Java stage and its native port MUST be one parameter, not two.
@@ -105,8 +105,8 @@ The owner reads one document to know every parameter of both engines: name, mean
 - **SC-003**: 100 % of the parameters are documented with their six facts; the documentation check is green.
 - **SC-004**: The list of constants still fixed in the code holds only non-tuning values, each with its reason.
 - **SC-005**: A configuration file of the previous release opens with every stored value kept.
-- **SC-007**: With every new parameter shown, each category of the Recognition settings window fits a 768-pixel-high screen and every control can be reached.
 - **SC-006**: The full gate of the branch (all tests, both engines, macOS; Linux and Windows builds) stays green.
+- **SC-007**: With every new parameter shown, each category of the Recognition settings window fits a 768-pixel-high screen and every control can be reached.
 
 ## Assumptions
 

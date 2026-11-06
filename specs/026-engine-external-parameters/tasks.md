@@ -61,7 +61,7 @@
   - **parameter**: key, section, unit, default (the literal), bounds, takes effect, file and constant, Java and crate counterparts;
   - **fixed**: kind and reason, from the table in research R1.
 
-  Section sizes follow data-model.md, at most 7 values each.
+  Section sizes follow data-model.md, at most 7 values each. The counts of data-model.md are approximate; `inventory.md` fixes them, and data-model.md is updated to the exact counts in the same task.
 
 ## Phase 2: Foundational (blocks every story)
 
@@ -82,6 +82,7 @@
 - [ ] T008 [P] New test `AET/settings/RecognitionSectionsTest.java`:
   - the 8 existing sections keep their order and content;
   - every section holds 1 to 7 parameters;
+  - no parameter of a new section is in `ProfileParameters.LIST` (a device profile never overlays them; research R8);
   - the new ordered-pair rule (`AE/settings/OrderedPair.java`): built on any two `Number` parameters, it brings the lower one of an inverted pair back within the upper one, and `RecognitionSettings.fromStrings` applies every pair of `RecognitionParameters.ORDERED_PAIRS` (empty until the families fill it).
 
   Seen red (the class does not exist).
@@ -97,10 +98,10 @@
 
 - [ ] T012 [US1] Family `onset` and `onset-fast` (`AE/analysis/ArticulationDetector.java`, `NativeParameters` windows, `PracticeParameters.WEAK_FAST_DBFS`, `CRATE/analysis/articulation.rs`): sections `ONSET`, `ONSET_FAST`; new tests `AET/settings/OnsetParametersTest.java` and `AET/analysis/OnsetTakesEffectTest.java` (Java and native).
 - [ ] T013 [US1] Family `pitch` (YIN threshold, `AE/recognition/ExpectedPitchVerifier.java` search and periods with `CRATE/analysis/target.rs`, `AE/pitch/TolerancePolicy.java`, `PR/session/AttackCandidates.java` range): section `PITCH`; tests `PitchParametersTest`, `PitchTakesEffectTest`.
-- [ ] T014 [US1] Family `polyphonic` (`AE/analysis/PolyphonicAnalyzer.java` except the FFT size and the band range, `CRATE/analysis/polyphonic.rs`): sections `POLYPHONIC_1`, `POLYPHONIC_2`. The candidate count and the harmonics are allocated at their upper bound (research R6). Tests `PolyphonicParametersTest`, `PolyphonicTakesEffectTest`.
-- [ ] T015 [US1] Family `attack` (`AE/analysis/AttackAnalyzer.java` except the FFT size, `AE/analysis/AttackEvidence.java`, `CRATE/analysis/attack.rs`): sections `ATTACK_1`, `ATTACK_2`; the lag ring is allocated at its bound. Tests `AttackParametersTest`, `AttackTakesEffectTest`.
+- [ ] T014 [US1] Family `polyphonic` (`AE/analysis/PolyphonicAnalyzer.java` except the FFT size and the band range, `CRATE/analysis/polyphonic.rs`): sections `POLYPHONIC_1`, `POLYPHONIC_2`. The candidate count and the harmonics are allocated at their upper bound (research R6). Tests `PolyphonicParametersTest`, `PolyphonicTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
+- [ ] T015 [US1] Family `attack` (`AE/analysis/AttackAnalyzer.java` except the FFT size, `AE/analysis/AttackEvidence.java`, `CRATE/analysis/attack.rs`): sections `ATTACK_1`, `ATTACK_2`; the lag ring is allocated at its bound. Tests `AttackParametersTest`, `AttackTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
 - [ ] T016 [US1] Family `chord-evidence` (`AE/analysis/ChordEvidence.java`, `CRATE/analysis/chord.rs`, `AE/analysis/StrumClipMeter.java`, `CRATE/analysis/strum_clip.rs`): section `CHORD_EVIDENCE`; tests `ChordEvidenceParametersTest`, `ChordEvidenceTakesEffectTest`.
-- [ ] T017 [US1] Families `front-end`, `noise-gate`, `gain` (`AE/frontend/*`, `CRATE/analysis/front_end.rs`): sections `FRONT_END`, `NOISE_GATE`, `GAIN`. Ordered pair: `noise-gate.open` > `noise-gate.close`. Tests `FrontEndParametersTest`, `FrontEndTakesEffectTest`.
+- [ ] T017 [US1] Families `front-end`, `noise-gate`, `gain` (`AE/frontend/*`, `CRATE/analysis/front_end.rs`): sections `FRONT_END`, `NOISE_GATE`, `GAIN`. Ordered pair: `noise-gate.open` > `noise-gate.close`. Tests `FrontEndParametersTest`, `FrontEndTakesEffectTest`. A new crate test with the existing `CRATE/no_allocation.rs` harness: `configureTuning` with every value of the family at its upper bound, then hops analysed, allocates nothing (FR-010, research R6).
 - [ ] T018 [US1] Gate (reports identical with each engine); commit "impl(026): phase 3 (US1): the engine stages' values are parameters, read alike by both engines".
 
 ## Phase 4: User Story 1, the practice session (Priority: P1)
@@ -120,9 +121,13 @@
 
 ## Phase 5: User Story 3, every parameter documented (Priority: P2)
 
-- [ ] T027 [P] [US3] New test `AET/settings/EngineConstantInventoryTest.java`: every numeric `static final`, `Parameters.defaults()` literal and public numeric default field in `AE` is either the default reference of a parameter of `RecognitionParameters.ALL` or listed in `DOC` section 6 with its reason (research R9). Seen red against the current section 6.
-- [ ] T028 [P] [US3] New test `PT/SessionConstantInventoryTest.java`: the same for `PR/session` and `PR/arcade/core`. Seen red.
-- [ ] T029 [P] [US3] New crate test (`CRATE/analysis/mod.rs`, `#[cfg(test)]`): every `const` of `CRATE/analysis` is a parameter index, a field default or in the fixed list of `DOC` section 6. Seen red.
+- [ ] T027 [P] [US3] New test `AET/settings/EngineConstantInventoryTest.java`. It finds every numeric `static final`, `Parameters.defaults()` literal and public numeric default field in `AE`, and requires each one to be in one of two places:
+  - a **parameter** row of `SPEC/inventory.md` whose key is in `RecognitionParameters.ALL` and whose default equals the literal: the constant then serves only as that parameter's default;
+  - or a **fixed** row of `DOC` section 6, with its kind and reason.
+
+  A row is matched by its file and constant name, as written in the inventory and the documentation (research R9). Seen red against the current section 6.
+- [ ] T028 [P] [US3] New test `PT/SessionConstantInventoryTest.java`: the same rule and matching as T027, for `PR/session` and `PR/arcade/core`. Seen red.
+- [ ] T029 [P] [US3] New crate test (`CRATE/analysis/mod.rs`, `#[cfg(test)]`): every `const` of `CRATE/analysis` is one of three things: an index of `Parameters` or `Tuning`, a default of `Tuning::defaults()` named in a parameter row of `SPEC/inventory.md`, or a fixed row of `DOC` section 6. It is matched by its file and name, as in T027. Seen red.
 - [ ] T030 [P] [US3] New test `AET/settings/EngineDocumentationFactsTest.java`: each key of `ALL` has a row in `DOC` with its unit, default, bounds, section and when it takes effect, matching the code. Seen red.
 - [ ] T031 [US3] Rewrite `DOC`:
   - §3.4 (the `float[21]`, the tuning `double[]`, the new JNI functions and `tuningLayout`);
@@ -143,7 +148,7 @@
   - *Restore*;
   - repeat with the native engine.
 - [ ] T037 Draft the release notes `docs/release-notes/next-expert-parameters.md` (macOS, Linux and Windows alike; an older native library is never mixed in, since packages carry their own).
-- [ ] T038 Full gate: `clean verify -P native-modules`, the reports identical with each engine, the CI on Ubuntu and macOS dispatched on the branch (its timing tests reported apart, as in memory `ci-timing-tests-flaky`).
+- [ ] T038 Full gate: `clean verify -P native-modules`, the reports identical with each engine, the CI on Ubuntu and macOS dispatched on the branch (its timing tests reported apart, as in memory `ci-timing-tests-flaky`). Windows has no CI build outside the release workflow (its Windows job cross-compiles on Linux, without tests): the final report states that Windows is verified only by that job at the next release, not before (constitution IX), and the release run must show the Windows job green before the release is announced.
 - [ ] T039 Write `SPEC/final-report.md` (each FR and SC with its evidence, both engines, the reports' comparison) and update `specs/STATUS.md`. Commit "impl(026): phase 6: migration guard, strings, guide, sheet F16, final report".
 - [ ] T040 With the Mac unlocked: `-P swt-gui-tests` on the whole branch, including `RecognitionSettingsFitSwtTest` and the existing settings window tests over the 31 new categories. Fix any failure under the bug protocol, commit the result, then one push of both refs.
 - [ ] T041 [HUMAN] The owner's gate: sheet F16 on the built application.
