@@ -47,7 +47,7 @@ The final per-key inventory is written by task T002 into `inventory.md` and kept
 
 ## R4. How each stage reads its values
 
-**Decision.** Each stage that has fixed values gets them from a value object built once from `RecognitionSettings` when a run (or an offline analysis) opens, following the pattern already in place: `StrumClipMeter.Parameters.of(settings)` (`AE/analysis/StrumClipMeter.java`), `PolyphonicAnalyzer.Parameters`, `AttackAnalyzer.Parameters`, `PolyphonicAcceptance.Parameters`, `PracticeParameters` (built once per run). Static constants become fields of those objects; the existing no-argument constructors and `defaults()` keep giving today's values (tests build stages without settings).
+**Decision.** Each stage that has fixed values gets them from a value object built once from `RecognitionSettings` when a run (or an offline analysis) opens, following the pattern already in place: `StrumClipMeter.Parameters.of(settings)` (`AE/analysis/StrumClipMeter.java`), `PolyphonicAnalyzer.Parameters`, `AttackAnalyzer.Parameters`, `PolyphonicAcceptance.Parameters`, `PracticeParameters` (built once per run). The values in force become fields of those objects; the static constants stay, as the parameters' defaults, because committed tests read about forty of them (for example `ArticulationDetector.DECISION_DELAY_HOPS`, `LatencyCompensation.LIMIT_MILLIS`, `CalibrationRun.LEAD_NANOS`, `NativeParameters.LENGTH`); the existing no-argument constructors and `defaults()` keep giving today's values (tests build stages without settings).
 
 **Rationale.** The analysis loop and the cpal callback never read the store: they read final fields of an object built before the run (FR-010, constitution VI).
 
@@ -56,7 +56,7 @@ The final per-key inventory is written by task T002 into `inventory.md` and kept
 ## R5. The native interface: the 21 values unchanged, a second `double[]` for the new ones, and a layout check
 
 **Decision.**
-1. The 21-value `float[]` of today stays exactly as it is: its layout, its precision, its JNI functions (`open`, `configure`, `analyze`, `frontEnd`, `strumClipOffline`, `openAnalysis`). Five of its values that are fixed today come from the settings: the onset flux factor and offset, the refractory, the windows, and the YIN threshold.
+1. The 21-value `float[]` of today stays exactly as it is: its layout, its precision, its JNI functions (`open`, `configure`, `analyze`, `frontEnd`, `strumClipOffline`, `openAnalysis`). Eight of its values that are fixed today come from the settings: the onset flux factor and offset, the refractory, the four windows, and the YIN threshold.
 2. The new values that an engine stage reads go in a second array, the **tuning** `double[]`, built by a new `NativeParameters.tuning(settings)`. The crate reads it with `Tuning::from_slice` in `CRATE/analysis/mod.rs`, which refuses any length other than `TUNING_LENGTH`.
 3. New JNI functions carry it:
    - `openTuned(…, float[] parameters, double[] tuning)` and `openAnalysisTuned(rate, parameters, tuning)`, so the analysis starts with its values;
