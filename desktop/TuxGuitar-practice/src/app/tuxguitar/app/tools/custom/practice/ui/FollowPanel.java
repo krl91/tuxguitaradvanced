@@ -53,6 +53,16 @@ public final class FollowPanel {
 		/** A calibration on the clicks of the player, or null when there is no usable input or the player is playing. */
 		CalibrationRun newCalibration();
 
+		/** The largest latency offset accepted, in milliseconds (spec 026, {@code recognition.clock.latency-limit}). */
+		default double latencyLimitMillis() {
+			return LatencyCompensation.LIMIT_MILLIS;
+		}
+
+		/** The spread of the capture's lag from which the route is called unstable, in milliseconds (spec 026, {@code recognition.timing.clock-spread}). */
+		default double unstableSpreadMillis() {
+			return ClockUncertainty.UNSTABLE_SPREAD_MILLIS;
+		}
+
 		/** True when the player is playing: the calibration would sound over it, so it waits. */
 		default boolean playerBusy() {
 			return false;
@@ -319,8 +329,9 @@ public final class FollowPanel {
 		this.manualRow.setLayout(manualLayout);
 		layout.set(this.manualRow, 9, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 		this.manual = uiFactory.createSpinner(this.manualRow);
-		this.manual.setMinimum((int) -LatencyCompensation.LIMIT_MILLIS);
-		this.manual.setMaximum((int) LatencyCompensation.LIMIT_MILLIS);
+		int limit = (int) this.backend.latencyLimitMillis();
+		this.manual.setMinimum(-limit);
+		this.manual.setMaximum(limit);
 		this.manual.setIncrement(5);
 		manualLayout.set(this.manual, 1, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		this.manualApply = uiFactory.createButton(this.manualRow);
@@ -331,7 +342,7 @@ public final class FollowPanel {
 		manualLayout.set(this.manualForget, 1, 3, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, false, false);
 		this.manualHint = wrap(uiFactory, layout, 10);
 		this.manualHint.setText(TuxGuitar.getProperty("practice.follow.calibration.manual.hint",
-				new String[] { Integer.toString((int) -LatencyCompensation.LIMIT_MILLIS), Integer.toString((int) LatencyCompensation.LIMIT_MILLIS) }));
+				new String[] { Integer.toString(-limit), Integer.toString(limit) }));
 
 		this.announce = wrap(uiFactory, layout, 11);
 		this.announce.setText(TuxGuitar.getProperty("practice.follow.calibration.announce",
@@ -622,7 +633,7 @@ public final class FollowPanel {
 					.append(TuxGuitar.getProperty("practice.follow.precision.reason.NOT_CALIBRATED"));
 		}
 		double spread = this.backend.lagSpreadMillis();
-		if (!Double.isNaN(spread) && new ClockUncertainty(spread).isUnstable()) {
+		if (!Double.isNaN(spread) && new ClockUncertainty(spread, this.backend.unstableSpreadMillis()).isUnstable()) {
 			if (text.length() == 0) {
 				text.append(TuxGuitar.getProperty("practice.follow.precision.reduced")).append(". ");
 			} else {
@@ -638,8 +649,9 @@ public final class FollowPanel {
 		if (route == null) {
 			return;
 		}
-		int millis = Math.max((int) -LatencyCompensation.LIMIT_MILLIS, Math.min((int) LatencyCompensation.LIMIT_MILLIS, this.manual.getValue()));
-		this.backend.calibrations().set(route, LatencyCompensation.manual(millis));
+		int limit = (int) this.backend.latencyLimitMillis();
+		int millis = Math.max(-limit, Math.min(limit, this.manual.getValue()));
+		this.backend.calibrations().set(route, LatencyCompensation.manual(millis, limit));
 		this.progress.setText("");
 		refresh();
 	}

@@ -27,6 +27,10 @@ public final class BendDetector implements TechniqueDetector {
 		/** Hops whose median gives the start and the end pitch. */
 		public int edgeHops = 8;
 
+		/** The pitch motion's outlier, in cents, and its fewest kept samples (spec 026, {@code recognition.technique.motion.*}). */
+		public double motionOutlierCents = PitchMotion.OUTLIER_CENTS;
+		public int motionMinVoiced = PitchMotion.MIN_VOICED;
+
 		public static Parameters defaults() {
 			return new Parameters();
 		}
@@ -45,13 +49,13 @@ public final class BendDetector implements TechniqueDetector {
 
 	@Override
 	public TechniqueEvidence evaluate(NoteSegment segment) {
-		PitchMotion motion = new PitchMotion(segment);
+		PitchMotion motion = new PitchMotion(segment, this.parameters.motionOutlierCents, this.parameters.motionMinVoiced);
 		Map<String, Double> m = new LinkedHashMap<String, Double>();
 		m.put("rangeCents", motion.range);
 		m.put("driftCents", motion.drift);
 		double voicedShare = motion.voicedShare(segment.size());
 		m.put("voicedShare", voicedShare);
-		if( segment.getDurationSeconds() < this.parameters.minDurationSeconds || voicedShare < this.parameters.minVoicedShare || motion.voiced < PitchMotion.MIN_VOICED ) {
+		if( segment.getDurationSeconds() < this.parameters.minDurationSeconds || voicedShare < this.parameters.minVoicedShare || motion.voiced < this.parameters.motionMinVoiced ) {
 			return new TechniqueEvidence(DetectableTechnique.BEND, TechniqueEvidence.Verdict.UNCERTAIN, 0.0, m);
 		}
 		if( motion.range >= this.parameters.minRangeCents ) {
@@ -103,7 +107,7 @@ public final class BendDetector implements TechniqueDetector {
 			}
 		}
 		m.put("voicedShare", segment.size() == 0 ? 0.0 : (double) count / segment.size());
-		if( count < PitchMotion.MIN_VOICED ) {
+		if( count < this.parameters.motionMinVoiced ) {
 			return new TechniqueEvidence(DetectableTechnique.BEND, TechniqueEvidence.Verdict.UNCERTAIN, 0.0, m);
 		}
 		int edge = Math.min(this.parameters.edgeHops, count);

@@ -20,12 +20,23 @@ public final class InputQuality {
 	static final long ATTACK_WINDOW_NANOS = 200_000_000L;
 
 	private final double weakDbfs;
+	private final int attacks;
+	private final long rememberNanos;
+	private final long attackWindowNanos;
 	private final ArrayDeque<double[]> peaks = new ArrayDeque<double[]>();
 	private long attackStartNanos = Long.MIN_VALUE;
 	private double attackPeak;
 
 	public InputQuality(double weakDbfs) {
+		this(weakDbfs, ATTACKS, REMEMBER_NANOS, ATTACK_WINDOW_NANOS);
+	}
+
+	/** @param attacks, rememberNanos, attackWindowNanos the attacks considered and how long they count (spec 026, {@code recognition.input-quality.*}) */
+	public InputQuality(double weakDbfs, int attacks, long rememberNanos, long attackWindowNanos) {
 		this.weakDbfs = weakDbfs;
+		this.attacks = attacks;
+		this.rememberNanos = rememberNanos;
+		this.attackWindowNanos = attackWindowNanos;
 	}
 
 	/** Offers the next frame; clipping frames are ignored (that is another problem, with its own message). */
@@ -35,7 +46,7 @@ public final class InputQuality {
 			return;
 		}
 		if( this.attackStartNanos != Long.MIN_VALUE ) {
-			if( now - this.attackStartNanos <= ATTACK_WINDOW_NANOS ) {
+			if( now - this.attackStartNanos <= this.attackWindowNanos ) {
 				this.attackPeak = Math.max(this.attackPeak, frame.getRmsDbfs());
 			} else {
 				this.peaks.addLast(new double[] { this.attackStartNanos, this.attackPeak });
@@ -46,10 +57,10 @@ public final class InputQuality {
 			this.attackStartNanos = now;
 			this.attackPeak = frame.getRmsDbfs();
 		}
-		while( !this.peaks.isEmpty() && now - (long) this.peaks.peekFirst()[0] > REMEMBER_NANOS ) {
+		while( !this.peaks.isEmpty() && now - (long) this.peaks.peekFirst()[0] > this.rememberNanos ) {
 			this.peaks.removeFirst();
 		}
-		while( this.peaks.size() > ATTACKS ) {
+		while( this.peaks.size() > this.attacks ) {
 			this.peaks.removeFirst();
 		}
 	}
@@ -62,12 +73,12 @@ public final class InputQuality {
 
 	/** True when at least {@link #ATTACKS} recent attacks were played and their median level is below the weak limit. */
 	public boolean isPoor() {
-		return this.peaks.size() >= ATTACKS && median() < this.weakDbfs;
+		return this.peaks.size() >= this.attacks && median() < this.weakDbfs;
 	}
 
 	/** The median level of the recent attacks in dBFS, or NaN while there are fewer than {@link #ATTACKS}. */
 	public double getPlayedLevelDbfs() {
-		return this.peaks.size() >= ATTACKS ? median() : Double.NaN;
+		return this.peaks.size() >= this.attacks ? median() : Double.NaN;
 	}
 
 	private double median() {

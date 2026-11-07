@@ -396,6 +396,258 @@ Expert settings, one category per section in the Advanced part of the settings w
 | `recognition.gain.no-change` | Gain suggestion: nothing to change within | dB | 1.5 | 0.5 to 6 | next run | `GainSuggester.java` `NO_CHANGE_DB` |
 | `recognition.gain.min-snr` | Gain suggestion: playing above the noise by | dB | 20.0 | 6 to 40 | next run | `GainSuggester.java` `MIN_SIGNAL_TO_NOISE_DB` |
 
+#### Advanced: Struck notes, decision (`Section.ACCEPTANCE_1`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.acceptance.min-share` | Struck notes: share explained | % | 0.30 | 0.05 to 0.9 | next run | `PolyphonicAcceptance.java` `Parameters.minShare` |
+| `recognition.acceptance.min-balance` | Struck notes: chord balance | % | 0.10 | 0 to 0.5 | next run | `PolyphonicAcceptance.java` `Parameters.minBalance` |
+| `recognition.acceptance.min-peak` | Struck notes: strongest pitch | % | 0.7 | 0.1 to 1 | next run | `PolyphonicAcceptance.java` `Parameters.minPeakRatio` |
+| `recognition.acceptance.hops` | Struck notes: confirmed for | hops | 6 | 1 to 30 | next run | `PolyphonicAcceptance.java` `Parameters.hops` |
+| `recognition.acceptance.neighbour` | Struck notes: over the neighbours | × | 0.0 | 0 to 4 | next run | `PolyphonicAcceptance.java` `Parameters.neighbourRatio` |
+| `recognition.acceptance.attack-strength` | Struck notes: attack strength | — | 0.0 | 0 to 5 | next run | `PolyphonicAcceptance.java` `Parameters.minAttackStrength` |
+| `recognition.acceptance.rearm` | Struck notes: ignored after a note | ms | 220 | 50 to 1000 | next run | `PolyphonicAcceptance.java` `Parameters.rearmNanos` |
+
+#### Advanced: Struck notes, attack (`Section.ACCEPTANCE_2`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.acceptance.offset-margin` | Struck notes: tuning margin | cents | 15.0 | 0 to 50 | next run | `PolyphonicAcceptance.java` `OFFSET_MARGIN` |
+| `recognition.acceptance.decay` | Struck notes: forgiveness | hops | 1 | 0 to 5 | next run | `PolyphonicAcceptance.java` `DECAY` |
+| `recognition.acceptance.guard` | Struck notes: thump skipped | ms | 60 | 0 to 200 | next run | `PolyphonicAcceptance.java` `GUARD_NANOS` |
+| `recognition.acceptance.min-total` | Struck notes: quietest note | ‰ | 0.01 | 0.001 to 0.1 | next run | `PolyphonicAcceptance.java` `MIN_TOTAL` |
+| `recognition.acceptance.floor-hops` | Struck notes: quiet level over | hops | 10 | 1 to 50 | next run | `PolyphonicAcceptance.java` `FLOOR_HOPS` |
+| `recognition.acceptance.silence` | Struck notes: from silence | % | 0.6 | 0.1 to 1 | next run | `PolyphonicAcceptance.java` `SILENCE_STRENGTH` |
+| `recognition.acceptance.min-onset` | Struck notes: smallest onset | ‰ | 0.002 | 0.001 to 0.05 | next run | `PolyphonicAcceptance.java` `MIN_ONSET_TOTAL` |
+
+#### Advanced: Struck notes, onset (`Section.ACCEPTANCE_3`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.acceptance.onset-floor` | Struck notes: onset over the quiet level | × | 3.0 | 1 to 10 | next run | `PolyphonicAcceptance.java` inline 3.0 * floor (onset above the floor) |
+| `recognition.acceptance.release` | Struck notes: end of the attack | % | 0.25 | 0.05 to 0.9 | next run | `PolyphonicAcceptance.java` inline 0.25 * attackPeak (end of the attack) |
+
+#### Advanced: Wait mode, verdicts and techniques (`Section.WAIT_1`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.wait.verdict-hold` | Wait: verdict shown for | ms | 1000 | 200 to 3000 | next run | `PracticeSession.java` `VERDICT_HOLD_NANOS` |
+| `recognition.wait.neighbour-veto` | Wait: neighbour hold-back | ms | 120 | 0 to 500 | next run | `PracticeSession.java` `NEIGHBOUR_VETO_NANOS` |
+| `recognition.wait.neighbour-confidence` | Wait: neighbour confidence | % | 0.8 | 0.5 to 1 | next run | `PracticeSession.java` `NEIGHBOUR_CONFIDENCE` |
+| `recognition.wait.technique-window` | Wait: technique observed for | ms | 1500 | 500 to 4000 | next run | `PracticeSession.java` `TECHNIQUE_WINDOW_NANOS` |
+| `recognition.wait.bend-window-min` | Wait: bend observed at least | ms | 1000 | 250 to 2500 | next run | `PracticeSession.java` `BEND_WINDOW_MIN_NANOS` |
+| `recognition.wait.bend-window-max` | Wait: bend observed at most | ms | 2500 | 1000 to 4000 | next run | `PracticeSession.java` `BEND_WINDOW_MAX_NANOS`; `PracticeSession.java` `BEND_FRAMES_MAX` |
+| `recognition.wait.bend-margin` | Wait: bend margin | semitones | 0.5 | 0.1 to 2 | next run | `PracticeSession.java` `BEND_PATH_MARGIN_SEMITONES` |
+
+#### Advanced: Wait mode, speed and level (`Section.WAIT_2`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.wait.technique-lead` | Wait: technique from before | ms | 150 | 0 to 500 | next run | `PracticeSession.java` `TECHNIQUE_LEAD_NANOS` |
+| `recognition.wait.speed-window` | Wait: too fast within | ms | 200 | 50 to 1000 | next run | `PracticeSession.java` `SPEED_WINDOW_NANOS` |
+| `recognition.wait.speed-lead` | Wait: too fast from before | ms | 20 | 0 to 100 | next run | `PracticeSession.java` inline 20_000_000L (speed check, before the last acceptance) |
+| `recognition.wait.early-margin` | Wait: early acceptance margin | — | 0.5 | 0.1 to 2 | next run | `PracticeParameters.java` `EARLY_STABILITY_MARGIN` |
+| `recognition.wait.early-hops` | Wait: early acceptance after | hops | 12 | 4 to 40 | next run | `PracticeParameters.java` `EARLY_STABILITY_NANOS` |
+| `recognition.wait.weak-fast` | Wait: too weak for speed | dBFS | -30.0 | -50 to -10 | next run | `PracticeParameters.java` `WEAK_FAST_DBFS` |
+
+#### Advanced: Follow mode, attacks (`Section.FOLLOW_1`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.follow.evidence-horizon` | Follow: pitch awaited for | ms | 400 | 100 to 1500 | next run | `FollowSession.java` `EVIDENCE_HORIZON_NANOS` |
+| `recognition.follow.silence` | Follow: end of a sound | ms | 40 | 10 to 200 | next run | `FollowSession.java` `SILENCE_NANOS` |
+| `recognition.follow.short-note` | Follow: shortest note | ms | 40 | 10 to 200 | next run | `FollowSession.java` `SHORT_NOTE_NANOS` |
+| `recognition.follow.same-sound` | Follow: same sound within | ms | 100 | 20 to 400 | next run | `FollowSession.java` `SAME_SOUND_NANOS` |
+| `recognition.follow.ringing` | Follow: string rings for | ms | 1500 | 300 to 4000 | next run | `FollowSession.java` `RINGING_NANOS` |
+| `recognition.follow.scan-back` | Follow: notes looked back | — | 8 | 0 to 32 | next run | `FollowSession.java` inline scanStart() 8 (events looked back) |
+| `recognition.follow.onset-memory` | Follow: attacks kept for | ms | 3000 | 20 to 10000 | next run | `FollowSession.java` inline 3_000_000_000L (recent onsets kept) |
+
+#### Advanced: Follow mode, attack times (`Section.FOLLOW_2`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.follow.refine-before` | Follow: attack before the evidence | ms | 150 | 0 to 500 | next run | `FollowSession.java` `REFINE_BEFORE_NANOS` |
+| `recognition.follow.refine-after` | Follow: attack after the evidence | ms | 30 | 0 to 200 | next run | `FollowSession.java` `REFINE_AFTER_NANOS` |
+| `recognition.follow.after-close` | Follow: open after its window | ms | 100 | 0 to 400 | next run | `FollowSession.java` `EVIDENCE_AFTER_CLOSE_NANOS` |
+| `recognition.follow.tail` | Follow: end of the run | ms | 100 | 0 to 400 | next run | `FollowSession.java` `TAIL_NANOS` |
+| `recognition.follow.history` | Follow: sound kept for | ms | 1200 | 100 to 4000 | next run | `FollowSession.java` `HISTORY_NANOS` |
+
+#### Advanced: Follow mode, techniques (`Section.FOLLOW_3`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.follow.technique-window` | Follow: technique observed for | ms | 1500 | 500 to 4000 | next run | `FollowSession.java` `TECHNIQUE_WINDOW_NANOS` |
+| `recognition.follow.bend-window-min` | Follow: bend observed at least | ms | 1000 | 250 to 2500 | next run | `FollowSession.java` `BEND_WINDOW_MIN_NANOS` |
+| `recognition.follow.bend-window-max` | Follow: bend observed at most | ms | 2500 | 1000 to 4000 | next run | `FollowSession.java` `BEND_WINDOW_MAX_NANOS` |
+| `recognition.follow.bend-margin` | Follow: bend margin | semitones | 0.5 | 0.1 to 2 | next run | `FollowSession.java` `BEND_MARGIN_SEMITONES` |
+| `recognition.follow.evidence-lead` | Follow: evidence watched from | ms | 400 | 100 to 1500 | next run | `FollowSession.java` `EVIDENCE_LEAD_NANOS` |
+
+#### Advanced: Playback clock and latency (`Section.CLOCK`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.clock.fit-window` | Clock: position measured over | ms | 600 | 150 to 2000 | next run | `TickInterpolator.java` `FIT_WINDOW_NANOS` |
+| `recognition.clock.min-points` | Clock: readings needed | — | 8 | 3 to 64 | next run | `TickInterpolator.java` `MIN_POINTS` |
+| `recognition.clock.min-span` | Clock: readings spread over | ms | 150 | 30 to 600 | next run | `TickInterpolator.java` `MIN_SPAN_NANOS` |
+| `recognition.clock.stall` | Clock: player stopped after | ms | 60 | 20 to 300 | next run | `TickInterpolator.java` `STALL_NANOS` |
+| `recognition.clock.extrapolation` | Clock: ahead of the last reading | ms | 30 | 0 to 200 | next run | `TickInterpolator.java` `EXTRAPOLATION_NANOS` |
+| `recognition.clock.seek-margin` | Clock: jump taken as a seek | ticks | 960 | 240 to 3840 | next run | `TickInterpolator.java` `SEEK_MARGIN_TICKS` |
+| `recognition.clock.latency-limit` | Clock: largest latency | ms | 1000.0 | 200 to 3000 | next run | `LatencyCompensation.java` `LIMIT_MILLIS` |
+
+#### Advanced: Timing windows (`Section.TIMING`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.timing.reference-beat` | Timing: width read at the beat | ms | 500.0 | 250 to 1000 | next run | `TimingTolerance.java` `REFERENCE_BEAT_MILLIS` |
+| `recognition.timing.advance` | Timing: play before the red | ms | 50 | 0 to 200 | next run | `PlayTimeWindow.java` `ADVANCE_NANOS` |
+| `recognition.timing.gap` | Timing: gap before the next note | ms | 20 | 0 to 100 | next run | `PlayTimeWindow.java` `GAP_NANOS` |
+| `recognition.timing.clock-spread` | Timing: unstable route from | ms | 80.0 | 20 to 300 | next run | `ClockUncertainty.java` `UNSTABLE_SPREAD_MILLIS` |
+
+#### Advanced: Follow mode, permissive (`Section.LENIENCY_1`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.follow-leniency.permissive.accept` | Follow permissive: note accepted within | cents | 35.0 | 10 to 45 | next run | `FollowLeniency.java` `NOTE_ACCEPT` |
+| `recognition.follow-leniency.permissive.confidence` | Follow permissive: pitch confidence | % | 0.60 | 0.5 to 0.95 | next run | `FollowLeniency.java` `NOTE_CONFIDENCE` |
+| `recognition.follow-leniency.permissive.stability` | Follow permissive: note held for | ms | 55.0 | 50 to 300 | next run | `FollowLeniency.java` `NOTE_STABILITY` |
+| `recognition.follow-leniency.permissive.chord-evidence` | Follow permissive: chord evidence | % | 0.22 | 0.2 to 0.8 | next run | `FollowLeniency.java` `CHORD_EVIDENCE` |
+| `recognition.follow-leniency.permissive.chord-partials` | Follow permissive: chord partials needed | — | 1.0 | 1 to 4 | next run | `FollowLeniency.java` `CHORD_MIN_PARTIALS` |
+| `recognition.follow-leniency.permissive.chord-confirm` | Follow permissive: chord confirmed after | ms | 24.0 | 20 to 150 | next run | `FollowLeniency.java` `CHORD_CONFIRM` |
+
+#### Advanced: Follow mode, very permissive (`Section.LENIENCY_2`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.follow-leniency.very-permissive.accept` | Follow very permissive: note accepted within | cents | 35.0 | 10 to 45 | next run | `FollowLeniency.java` `NOTE_ACCEPT` |
+| `recognition.follow-leniency.very-permissive.confidence` | Follow very permissive: pitch confidence | % | 0.50 | 0.5 to 0.95 | next run | `FollowLeniency.java` `NOTE_CONFIDENCE` |
+| `recognition.follow-leniency.very-permissive.stability` | Follow very permissive: note held for | ms | 50.0 | 50 to 300 | next run | `FollowLeniency.java` `NOTE_STABILITY` |
+| `recognition.follow-leniency.very-permissive.chord-evidence` | Follow very permissive: chord evidence | % | 0.20 | 0.2 to 0.8 | next run | `FollowLeniency.java` `CHORD_EVIDENCE` |
+| `recognition.follow-leniency.very-permissive.chord-partials` | Follow very permissive: chord partials needed | — | 1.0 | 1 to 4 | next run | `FollowLeniency.java` `CHORD_MIN_PARTIALS` |
+| `recognition.follow-leniency.very-permissive.chord-confirm` | Follow very permissive: chord confirmed after | ms | 20.0 | 20 to 150 | next run | `FollowLeniency.java` `CHORD_CONFIRM` |
+
+#### Advanced: Arcade, fun (`Section.LENIENCY_3`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.arcade-leniency.fun.confidence` | Arcade fun: pitch confidence | % | 0.70 | 0.5 to 0.95 | next run | `ArcadeLeniency.java` `NOTE_CONFIDENCE` |
+| `recognition.arcade-leniency.fun.stability` | Arcade fun: note held for | ms | 75.0 | 50 to 300 | next run | `ArcadeLeniency.java` `NOTE_STABILITY` |
+| `recognition.arcade-leniency.fun.chord-evidence` | Arcade fun: chord evidence | % | 0.28 | 0.2 to 0.8 | next run | `ArcadeLeniency.java` `CHORD_EVIDENCE` |
+| `recognition.arcade-leniency.fun.chord-partials` | Arcade fun: chord partials needed | — | 2.0 | 1 to 4 | next run | `ArcadeLeniency.java` `CHORD_MIN_PARTIALS` |
+| `recognition.arcade-leniency.fun.chord-confirm` | Arcade fun: chord confirmed after | ms | 32.0 | 20 to 150 | next run | `ArcadeLeniency.java` `CHORD_CONFIRM` |
+| `recognition.arcade-leniency.fun.tempo-window` | Arcade fun: timing window widened | % | 1.25 | 1 to 2 | next run | `ArcadeLeniency.java` windowMillis() factor 1.25 (fun) |
+
+#### Advanced: Arcade, very permissive (`Section.LENIENCY_4`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.arcade-leniency.very-permissive.confidence` | Arcade very permissive: pitch confidence | % | 0.60 | 0.5 to 0.95 | next run | `ArcadeLeniency.java` `NOTE_CONFIDENCE` |
+| `recognition.arcade-leniency.very-permissive.stability` | Arcade very permissive: note held for | ms | 55.0 | 50 to 300 | next run | `ArcadeLeniency.java` `NOTE_STABILITY` |
+| `recognition.arcade-leniency.very-permissive.chord-evidence` | Arcade very permissive: chord evidence | % | 0.22 | 0.2 to 0.8 | next run | `ArcadeLeniency.java` `CHORD_EVIDENCE` |
+| `recognition.arcade-leniency.very-permissive.chord-partials` | Arcade very permissive: chord partials needed | — | 1.0 | 1 to 4 | next run | `ArcadeLeniency.java` `CHORD_MIN_PARTIALS` |
+| `recognition.arcade-leniency.very-permissive.chord-confirm` | Arcade very permissive: chord confirmed after | ms | 24.0 | 20 to 150 | next run | `ArcadeLeniency.java` `CHORD_CONFIRM` |
+| `recognition.arcade-leniency.very-permissive.tempo-window` | Arcade very permissive: timing window widened | % | 1.5 | 1 to 2 | next run | `ArcadeLeniency.java` windowMillis() factor 1.5 (very-permissive) |
+
+#### Advanced: Techniques, bend (`Section.TECHNIQUE_1`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.technique.bend.min-range` | Bend: detected from | cents | 60.0 | 20 to 200 | next run | `BendDetector.java` `Parameters.minRangeCents` |
+| `recognition.technique.bend.plain-range` | Bend: plain note under | cents | 30.0 | 5 to 100 | next run | `BendDetector.java` `Parameters.plainRangeCents` |
+| `recognition.technique.bend.min-duration` | Bend: shortest note | ms | 0.2 | 0.05 to 1 | next run | `BendDetector.java` `Parameters.minDurationSeconds` |
+| `recognition.technique.bend.voiced` | Bend: pitch heard for | % | 0.6 | 0.2 to 1 | next run | `BendDetector.java` `Parameters.minVoicedShare` |
+| `recognition.technique.bend.written-move` | Bend: smallest written move | cents | 25.0 | 5 to 100 | next run | `BendDetector.java` `Parameters.minWrittenMoveCents` |
+
+#### Advanced: Techniques, written bend (`Section.TECHNIQUE_2`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.technique.bend.on-tolerance` | Bend: on target within | cents | 30.0 | 5 to 100 | next run | `BendDetector.java` `Parameters.onToleranceCents` |
+| `recognition.technique.bend.on-share` | Bend: on target within a share | % | 0.15 | 0 to 0.5 | next run | `BendDetector.java` `Parameters.onToleranceShare` |
+| `recognition.technique.bend.moved-share` | Bend: under target, uncertain from | % | 0.5 | 0.1 to 1 | next run | `BendDetector.java` `Parameters.movedShare` |
+| `recognition.technique.bend.start-tolerance` | Bend: pre-bend start within | cents | 40.0 | 5 to 150 | next run | `BendDetector.java` `Parameters.startToleranceCents` |
+| `recognition.technique.bend.edge` | Bend: start and end read over | hops | 8 | 1 to 40 | next run | `BendDetector.java` `Parameters.edgeHops` |
+
+#### Advanced: Techniques, slide (`Section.TECHNIQUE_3`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.technique.slide.min-range` | Slide: detected from | cents | 100.0 | 30 to 300 | next run | `SlideDetector.java` `Parameters.minRangeCents` |
+| `recognition.technique.slide.plain-range` | Slide: plain note under | cents | 40.0 | 5 to 150 | next run | `SlideDetector.java` `Parameters.plainRangeCents` |
+| `recognition.technique.slide.monotony` | Slide: one direction for | % | 0.75 | 0.3 to 1 | next run | `SlideDetector.java` `Parameters.minMonotony` |
+| `recognition.technique.slide.steps` | Slide: moving steps needed | hops | 6 | 1 to 30 | next run | `SlideDetector.java` `Parameters.minMovingSteps` |
+| `recognition.technique.slide.min-duration` | Slide: shortest note | ms | 0.15 | 0.05 to 1 | next run | `SlideDetector.java` `Parameters.minDurationSeconds` |
+| `recognition.technique.slide.voiced` | Slide: pitch heard for | % | 0.5 | 0.2 to 1 | next run | `SlideDetector.java` `Parameters.minVoicedShare` |
+
+#### Advanced: Techniques, vibrato (`Section.TECHNIQUE_4`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.technique.vibrato.depth` | Vibrato: detected from depth | cents | 25.0 | 5 to 100 | next run | `VibratoDetector.java` `Parameters.minDepthCents` |
+| `recognition.technique.vibrato.plain-depth` | Vibrato: plain note under | cents | 10.0 | 1 to 50 | next run | `VibratoDetector.java` `Parameters.plainDepthCents` |
+| `recognition.technique.vibrato.min-rate` | Vibrato: slowest rate | Hz | 2.5 | 0.5 to 6 | next run | `VibratoDetector.java` `Parameters.minRateHz` |
+| `recognition.technique.vibrato.max-rate` | Vibrato: fastest rate | Hz | 9.0 | 6.5 to 20 | next run | `VibratoDetector.java` `Parameters.maxRateHz` |
+| `recognition.technique.vibrato.min-duration` | Vibrato: shortest note | ms | 0.35 | 0.1 to 2 | next run | `VibratoDetector.java` `Parameters.minDurationSeconds` |
+| `recognition.technique.vibrato.voiced` | Vibrato: pitch heard for | % | 0.7 | 0.2 to 1 | next run | `VibratoDetector.java` `Parameters.minVoicedShare` |
+
+#### Advanced: Techniques, legato and pitch (`Section.TECHNIQUE_5`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.technique.legato.start-window` | Legato: start looked at | ms | 0.1 | 0.03 to 0.5 | next run | `LegatoDetector.java` `Parameters.startWindowSeconds` |
+| `recognition.technique.legato.picked-rise` | Legato: picked above a rise of | dB | 6.0 | 2 to 20 | next run | `LegatoDetector.java` `Parameters.pickedRiseDb` |
+| `recognition.technique.legato.rise` | Legato: legato under a rise of | dB | 3.0 | 0 to 10 | next run | `LegatoDetector.java` `Parameters.legatoRiseDb` |
+| `recognition.technique.frame-confidence` | Techniques: pitch confidence | % | 0.8 | 0.5 to 1 | next run | `PracticeSession.java` inline 0.8 (collectTechniqueFrame); `FollowSession.java` inline 0.8 (process) |
+| `recognition.technique.motion.outlier` | Techniques: stray pitch beyond | cents | 400.0 | 100 to 1200 | next run | `PitchMotion.java` `OUTLIER_CENTS` |
+| `recognition.technique.motion.min-voiced` | Techniques: readings needed | hops | 8 | 2 to 40 | next run | `PitchMotion.java` `MIN_VOICED` |
+
+#### Advanced: Delay calibration, notes (`Section.CALIBRATION_1`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.calibration.early-window` | Calibration: note before its click | ms | 250 | 50 to 1000 | next run | `CalibrationRun.java` `EARLY_WINDOW_NANOS` |
+| `recognition.calibration.late-window` | Calibration: note after its click | ms | 700 | 200 to 2000 | next run | `CalibrationRun.java` `LATE_WINDOW_NANOS` |
+| `recognition.calibration.pitch-patience` | Calibration: pitch awaited for | ms | 25 | 5 to 200 | next run | `CalibrationRun.java` `PITCH_PATIENCE_NANOS` |
+| `recognition.calibration.pitch-before` | Calibration: pitch begun before | ms | 30 | 0 to 200 | next run | `CalibrationRun.java` `PITCH_BEFORE_ATTACK_NANOS` |
+| `recognition.calibration.same-pitch` | Calibration: same pitch within | semitones | 0.5 | 0.1 to 2 | next run | `CalibrationRun.java` `SAME_PITCH_SEMITONES` |
+| `recognition.calibration.min-confidence` | Calibration: pitch confidence | % | 0.8 | 0.5 to 1 | next run | `CalibrationRun.java` `MIN_CONFIDENCE` |
+| `recognition.calibration.min-frequency` | Calibration: lowest pitch | Hz | 70.0 | 40 to 200 | next run | `CalibrationRun.java` `MIN_HZ` |
+
+#### Advanced: Delay calibration, result (`Section.CALIBRATION_2`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.calibration.max-frequency` | Calibration: highest pitch | Hz | 1400.0 | 500 to 4000 | next run | `CalibrationRun.java` `MAX_HZ` |
+| `recognition.calibration.min-usable` | Calibration: notes needed | — | 5 | 2 to 8 | next run | `CalibrationTaps.java` `MIN_USABLE` |
+| `recognition.calibration.outlier-deviations` | Calibration: stray note beyond | × | 3.0 | 1 to 6 | next run | `CalibrationTaps.java` `OUTLIER_DEVIATIONS` |
+| `recognition.calibration.outlier-floor` | Calibration: never set aside within | ms | 40.0 | 5 to 200 | next run | `CalibrationTaps.java` `OUTLIER_FLOOR_MILLIS` |
+| `recognition.calibration.unstable-spread` | Calibration: unstable above | ms | 60.0 | 10 to 300 | next run | `CalibrationTaps.java` `UNSTABLE_SPREAD_MILLIS` |
+| `recognition.calibration.recognition-rate` | Recognition rate kept | % | 60 | 10 to 100 | next run | `RecognitionRate.java` `THRESHOLD_PERCENT` |
+
+#### Advanced: Input calibration (`Section.CALIBRATION_3`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.calibration.calm-below` | Calibration: calm below | dBFS | -60.0 | -90 to -46 | next run | `RecordingQuality.java` `CALM_BELOW_DBFS` |
+| `recognition.calibration.loud-above` | Calibration: loud above | dBFS | -45.0 | -59 to -20 | next run | `RecordingQuality.java` `LOUD_ABOVE_DBFS` |
+| `recognition.calibration.sound-refractory` | Calibration: one sound within | ms | 250 | 50 to 1000 | next run | `SoundDetection.java` `REFRACTORY_MILLIS` |
+| `recognition.calibration.sound-lead` | Calibration: sound cut before | ms | 150 | 0 to 500 | next run | `SoundDetection.java` `SEGMENT_LEAD_MILLIS` |
+
+#### Advanced: Level check (`Section.LEVEL_CHECK`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.level-check.playing-confidence` | Level check: playing confidence | % | 0.80 | 0.5 to 1 | next run | `InputAssessor.java` `Parameters.playingConfidence` |
+| `recognition.level-check.required-playing` | Level check: playing needed | ms | 500 | 100 to 3000 | next run | `InputAssessor.java` `Parameters.requiredPlayingNanos` |
+| `recognition.level-check.suboptimal-share` | Level check: too loud from | % | 0.10 | 0.01 to 0.5 | next run | `InputAssessor.java` `Parameters.suboptimalShare` |
+
+#### Advanced: Weak input (`Section.INPUT_QUALITY`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.input-quality.attacks` | Weak input: attacks looked at | — | 3 | 1 to 10 | next run | `InputQuality.java` `ATTACKS` |
+| `recognition.input-quality.remember` | Weak input: attacks kept for | ms | 8000 | 1000 to 30000 | next run | `InputQuality.java` `REMEMBER_NANOS` |
+| `recognition.input-quality.attack-window` | Weak input: attack level over | ms | 200 | 50 to 1000 | next run | `InputQuality.java` `ATTACK_WINDOW_NANOS` |
+
 <!-- spec026-sections:end -->
 
 ## 5. The chord rule's migration and the rule for later updates

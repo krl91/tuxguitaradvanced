@@ -91,9 +91,9 @@ public final class RouteCalibrations {
 		double millis = Double.parseDouble(text.substring(colon + 1));
 		switch (LatencyCompensation.Source.valueOf(text.substring(0, colon))) {
 			case MANUAL:
-				return LatencyCompensation.manual(millis);
+				return LatencyCompensation.manual(millis, LatencyCompensation.MAX_LIMIT_MILLIS);
 			case CALIBRATED:
-				return LatencyCompensation.calibrated(millis);
+				return LatencyCompensation.calibrated(millis, LatencyCompensation.MAX_LIMIT_MILLIS);
 			default:
 				return null;
 		}

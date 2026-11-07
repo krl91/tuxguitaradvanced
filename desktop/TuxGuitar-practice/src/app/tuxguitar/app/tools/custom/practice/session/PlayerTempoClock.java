@@ -22,12 +22,21 @@ public final class PlayerTempoClock implements TempoClock {
 
 	private final LongSupplier wall;
 	private final LongSupplier tick;
-	private final TickInterpolator interpolator;
+	private final double nominalTicksPerSecond;
+	private TickInterpolator interpolator;
 
 	public PlayerTempoClock(LongSupplier wall, LongSupplier tick, double nominalTicksPerSecond) {
 		this.wall = wall;
 		this.tick = tick;
+		this.nominalTicksPerSecond = nominalTicksPerSecond;
 		this.interpolator = new TickInterpolator(nominalTicksPerSecond);
+	}
+
+	/** The interpolator's values (spec 026), given before a run: other values start it again, as a seek would. */
+	public void setParameters(TickInterpolator.Parameters parameters) {
+		if (!parameters.equals(this.interpolator.parameters())) {
+			this.interpolator = new TickInterpolator(this.nominalTicksPerSecond, parameters);
+		}
 	}
 
 	/** The clock of the application's player. Nothing is read from the player until {@link #poll()}. */

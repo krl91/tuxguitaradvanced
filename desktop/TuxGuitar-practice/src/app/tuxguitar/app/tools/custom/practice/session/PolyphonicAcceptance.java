@@ -2,6 +2,7 @@ package app.tuxguitar.app.tools.custom.practice.session;
 
 import app.tuxguitar.audio.engine.analysis.AttackEvidence;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 
 /**
@@ -47,22 +48,43 @@ public final class PolyphonicAcceptance {
 		public static Parameters defaults() {
 			return new Parameters(0.30, 0.10, 0.7, 6, 0.0, 0.0, 220_000_000L);
 		}
+
+		/** The values of the settings (spec 026, section {@code ACCEPTANCE_1}); the defaults are {@link #defaults()}. */
+		public static Parameters of(RecognitionSettings settings) {
+			return new Parameters(settings.get(RecognitionParameters.ACCEPTANCE_MIN_SHARE), settings.get(RecognitionParameters.ACCEPTANCE_MIN_BALANCE),
+					settings.get(RecognitionParameters.ACCEPTANCE_MIN_PEAK), (int) Math.round(settings.get(RecognitionParameters.ACCEPTANCE_HOPS)),
+					settings.get(RecognitionParameters.ACCEPTANCE_NEIGHBOUR), settings.get(RecognitionParameters.ACCEPTANCE_ATTACK_STRENGTH),
+					Math.round(settings.get(RecognitionParameters.ACCEPTANCE_REARM) * 1_000_000.0));
+		}
 	}
 
 	private static final int[] NEIGHBOURS = { -2, -1, 1, 2 };
 	/** The measured offset of the new partials is noisy at low frequencies (about 35 cents on a low E): it only has to rule out the semitone neighbour (100 cents), not to judge the tuning. */
-	private static final double OFFSET_MARGIN = 15.0;
-	private static final int DECAY = 1;
+	public static final double DEFAULT_OFFSET_MARGIN = 15.0;
+	public static final int DEFAULT_DECAY = 1;
 
 	private final Parameters parameters;
 	/** The first part of a pluck is a broadband thump and body resonances: pitch evidence is read only after it. */
-	private static final long GUARD_NANOS = 60L * 1_000_000L;
+	public static final long DEFAULT_GUARD_NANOS = 60L * 1_000_000L;
 	/** Below this the growth is room noise, not a note (amplitude as a share of a full-scale sine; quiet real notes measure 0.02 and above). */
-	private static final double MIN_TOTAL = 0.01;
-	private static final int FLOOR_HOPS = 10;
-	private static final double SILENCE_STRENGTH = 0.6;
-	private static final double MIN_ONSET_TOTAL = 0.002;
-	private final double[] recentTotals = new double[FLOOR_HOPS];
+	public static final double DEFAULT_MIN_TOTAL = 0.01;
+	public static final int DEFAULT_FLOOR_HOPS = 10;
+	public static final double DEFAULT_SILENCE_STRENGTH = 0.6;
+	public static final double DEFAULT_MIN_ONSET_TOTAL = 0.002;
+	/** An attack begins when the sound exceeds this many times the quiet level before it, and ends when it falls under this share of its peak. */
+	public static final double DEFAULT_ONSET_FLOOR = 3.0;
+	public static final double DEFAULT_RELEASE = 0.25;
+	/** The values above, from the settings of the run (spec 026, sections {@code ACCEPTANCE_2} and {@code ACCEPTANCE_3}). */
+	private final double offsetMargin;
+	private final int decay;
+	private final long guardNanos;
+	private final double minTotal;
+	private final int floorHops;
+	private final double silenceStrength;
+	private final double minOnsetTotal;
+	private final double onsetFloor;
+	private final double release;
+	private final double[] recentTotals;
 	private int recentCount;
 	private boolean inAttack;
 	private double attackPeak;
@@ -82,6 +104,16 @@ public final class PolyphonicAcceptance {
 	public PolyphonicAcceptance(Parameters parameters, RecognitionSettings settings) {
 		this.parameters = parameters;
 		this.settings = settings;
+		this.offsetMargin = settings.get(RecognitionParameters.ACCEPTANCE_OFFSET_MARGIN);
+		this.decay = (int) Math.round(settings.get(RecognitionParameters.ACCEPTANCE_DECAY));
+		this.guardNanos = Math.round(settings.get(RecognitionParameters.ACCEPTANCE_GUARD) * 1_000_000.0);
+		this.minTotal = settings.get(RecognitionParameters.ACCEPTANCE_MIN_TOTAL);
+		this.floorHops = (int) Math.round(settings.get(RecognitionParameters.ACCEPTANCE_FLOOR_HOPS));
+		this.silenceStrength = settings.get(RecognitionParameters.ACCEPTANCE_SILENCE);
+		this.minOnsetTotal = settings.get(RecognitionParameters.ACCEPTANCE_MIN_ONSET);
+		this.onsetFloor = settings.get(RecognitionParameters.ACCEPTANCE_ONSET_FLOOR);
+		this.release = settings.get(RecognitionParameters.ACCEPTANCE_RELEASE);
+		this.recentTotals = new double[this.floorHops];
 	}
 
 	public RecognitionSettings getSettings() {
@@ -130,7 +162,7 @@ public final class PolyphonicAcceptance {
 			this.rearmAtNextFrame = false;
 		}
 		if( evidence == null || expected == null || expected.length == 0 || timestampNanos < this.ignoreUntilNanos
-				|| evidence.getAttackStrength() < this.parameters.minAttackStrength || evidence.getTotal() < MIN_TOTAL ) {
+				|| evidence.getAttackStrength() < this.parameters.minAttackStrength || evidence.getTotal() < this.minTotal ) {
 			this.run = 0;
 			return false;
 		}
@@ -145,32 +177,32 @@ public final class PolyphonicAcceptance {
 		}
 		// where the sound begins growing: the attack's own onset, from the quiet level before it
 		double floor = Double.MAX_VALUE;
-		for( int i = 0 ; i < Math.min(this.recentCount, FLOOR_HOPS) ; i ++ ) {
+		for( int i = 0 ; i < Math.min(this.recentCount, this.floorHops) ; i ++ ) {
 			floor = Math.min(floor, this.recentTotals[i]);
 		}
 		if( floor == Double.MAX_VALUE ) {
 			floor = 0.0;
 		}
 		double total = evidence.getTotal();
-		if( !this.inAttack && total > Math.max(MIN_ONSET_TOTAL, 3.0 * floor) ) {
+		if( !this.inAttack && total > Math.max(this.minOnsetTotal, this.onsetFloor * floor) ) {
 			this.inAttack = true;
 			this.onsetNanos = timestampNanos;
 			this.attackPeak = total;
 			this.attackStrengthPeak = 0.0;
 		} else if( this.inAttack ) {
 			this.attackPeak = Math.max(this.attackPeak, total);
-			if( total < 0.25 * this.attackPeak || total < MIN_ONSET_TOTAL ) {
+			if( total < this.release * this.attackPeak || total < this.minOnsetTotal ) {
 				this.inAttack = false;
 			}
 		}
-		this.recentTotals[this.recentCount % FLOOR_HOPS] = total;
+		this.recentTotals[this.recentCount % this.floorHops] = total;
 		this.recentCount ++;
 		if( this.inAttack ) {
 			this.attackStrengthPeak = Math.max(this.attackStrengthPeak, evidence.getAttackStrength());
 		}
 		// a note struck from near silence is mostly a broadband thump at first; a note added to a sounding texture is not
-		boolean fromSilence = (this.attackStrengthPeak >= SILENCE_STRENGTH);
-		boolean settled = !fromSilence || (this.inAttack && timestampNanos - this.onsetNanos >= GUARD_NANOS);
+		boolean fromSilence = (this.attackStrengthPeak >= this.silenceStrength);
+		boolean settled = !fromSilence || (this.inAttack && timestampNanos - this.onsetNanos >= this.guardNanos);
 		boolean dominant = true;
 		if( this.parameters.neighbourRatio > 0.0 ) {
 			for( int pitch : expected ) {
@@ -191,7 +223,7 @@ public final class PolyphonicAcceptance {
 			for( int i = 0 ; i < expected.length ; i ++ ) {
 				double offset = evidence.offsetCents(expected[i], this.settings);
 				int fret = (frets != null && i < frets.length ? frets[i] : 0);
-				if( Double.isNaN(offset) || offset < -(tolerance.getPracticeAcceptCents() + OFFSET_MARGIN) || offset > tolerance.sharpLimitCents(fret) + OFFSET_MARGIN ) {
+				if( Double.isNaN(offset) || offset < -(tolerance.getPracticeAcceptCents() + this.offsetMargin) || offset > tolerance.sharpLimitCents(fret) + this.offsetMargin ) {
 					inTune = false;
 				}
 			}
@@ -218,7 +250,7 @@ public final class PolyphonicAcceptance {
 		}
 		boolean heard = settled && inTune && dominant && balanced && (sum / evidence.getTotal() >= this.parameters.minShare)
 				&& (strongest >= this.parameters.minPeakRatio * evidence.getMaximum());
-		this.run = (heard ? this.run + 1 : (DECAY > 0 ? Math.max(0, this.run - DECAY) : 0));
+		this.run = (heard ? this.run + 1 : (this.decay > 0 ? Math.max(0, this.run - this.decay) : 0));
 		return (this.run >= this.parameters.hops);
 	}
 

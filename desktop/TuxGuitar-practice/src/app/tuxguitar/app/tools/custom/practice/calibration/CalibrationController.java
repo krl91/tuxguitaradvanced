@@ -21,6 +21,7 @@ import app.tuxguitar.audio.engine.calibration.SoundCounter;
 import app.tuxguitar.audio.engine.calibration.SoundSegmenter;
 import app.tuxguitar.audio.engine.settings.ProfileParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionParameter;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 
 /**
@@ -470,13 +471,16 @@ public final class CalibrationController {
 		}
 		float[] samples = recording.getSamples();
 		int rate = recording.getSampleRate() > 0 ? recording.getSampleRate() : this.port.sampleRate();
-		RecordingQuality measured = RecordingQuality.measure(samples, rate, this.heard, this.expected);
+		RecognitionSettings settings = this.defaults.get();
+		RecordingQuality measured = RecordingQuality.measure(samples, rate, this.heard, this.expected).withNoiseBands(
+				settings.get(RecognitionParameters.CALIBRATION_CALM_BELOW), settings.get(RecognitionParameters.CALIBRATION_LOUD_ABOVE));
 		SoundSegmenter.Refusal refusal = measured.getRefusal();
 		if (refusal != null) {
 			refuse(cause(refusal), this.heard, Event.LISTENING_REFUSED);
 			return;
 		}
-		SoundSegmenter.Result cut = SoundSegmenter.segment(samples, rate, this.expected);
+		SoundSegmenter.Result cut = SoundSegmenter.segment(samples, rate, this.expected, (int) settings.get(RecognitionParameters.CALIBRATION_SOUND_REFRACTORY),
+				(int) settings.get(RecognitionParameters.CALIBRATION_SOUND_LEAD));
 		if (!cut.isAccepted()) {
 			refuse(cause(cut.getRefusal()), cut.getHeard(), Event.LISTENING_REFUSED);
 			return;
@@ -542,6 +546,11 @@ public final class CalibrationController {
 		}
 	}
 
+	/** The rate a profile needs to be saved without asking, in percent (spec 026, {@code recognition.calibration.recognition-rate}). */
+	public int thresholdPercent() {
+		return (int) this.defaults.get().get(RecognitionParameters.CALIBRATION_RECOGNITION_RATE);
+	}
+
 	private synchronized void onSearchEnded(ProfileSearch running, ProfileSearch.Result result) {
 		if (this.search != running || this.flow.getState() != State.ANALYSING || result.isCancelled()) {
 			return;
@@ -550,7 +559,7 @@ public final class CalibrationController {
 		this.segments = null;
 		this.pending = result;
 		RecognitionRate found = result.getBestScore().getRate();
-		if (result.isBetterThanDefault() && found.meetsThreshold()) {
+		if (result.isBetterThanDefault() && found.meetsThreshold(thresholdPercent())) {
 			this.resultKind = ResultKind.SAVED;
 			save(searchedProfile(result));
 			move(Event.SEARCH_SAVED);

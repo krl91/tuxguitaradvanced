@@ -28,6 +28,11 @@ public final class MidiFollowPlayer implements FollowPlayer, TGEventListener {
 		this.clock = PlayerTempoClock.of(player);
 	}
 
+	/** The clock of the player, whose values are set before each run (spec 026). */
+	public PlayerTempoClock tempoClock() {
+		return this.clock;
+	}
+
 	@Override
 	public synchronized void addListener(Listener listener) {
 		this.listeners.add(listener);

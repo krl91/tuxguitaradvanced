@@ -26,18 +26,19 @@ public final class ArcadeLeniency {
 	private static final class Row {
 		final RecognitionParameter.Number parameter;
 		final boolean higherIsMoreLenient;
-		final double fun;
-		final double veryPermissive;
+		final RecognitionParameter.Number fun;
+		final RecognitionParameter.Number veryPermissive;
 
-		Row(RecognitionParameter.Number parameter, boolean higherIsMoreLenient, double fun, double veryPermissive) {
+		Row(RecognitionParameter.Number parameter, boolean higherIsMoreLenient, RecognitionParameter.Number fun, RecognitionParameter.Number veryPermissive) {
 			this.parameter = parameter;
 			this.higherIsMoreLenient = higherIsMoreLenient;
 			this.fun = fun;
 			this.veryPermissive = veryPermissive;
 		}
 
-		double at(ArcadeLeniencyPosition position) {
-			return position == ArcadeLeniencyPosition.FUN ? this.fun : this.veryPermissive;
+		/** The position's value, read from the settings (spec 026, {@code recognition.arcade-leniency.*}). */
+		double at(ArcadeLeniencyPosition position, RecognitionSettings settings) {
+			return settings.get(position == ArcadeLeniencyPosition.FUN ? this.fun : this.veryPermissive);
 		}
 	}
 
@@ -49,11 +50,16 @@ public final class ArcadeLeniency {
 
 	private static List<Row> rows() {
 		List<Row> rows = new ArrayList<Row>();
-		rows.add(new Row(RecognitionParameters.NOTE_CONFIDENCE, false, 0.70, 0.60));
-		rows.add(new Row(RecognitionParameters.NOTE_STABILITY, false, 75.0, 55.0));
-		rows.add(new Row(RecognitionParameters.CHORD_EVIDENCE, false, 0.28, 0.22));
-		rows.add(new Row(RecognitionParameters.CHORD_MIN_PARTIALS, false, 2.0, 1.0));
-		rows.add(new Row(RecognitionParameters.CHORD_CONFIRM, false, 32.0, 24.0));
+		rows.add(new Row(RecognitionParameters.NOTE_CONFIDENCE, false, RecognitionParameters.ARCADE_LENIENCY_FUN_CONFIDENCE,
+				RecognitionParameters.ARCADE_LENIENCY_VERY_PERMISSIVE_CONFIDENCE));
+		rows.add(new Row(RecognitionParameters.NOTE_STABILITY, false, RecognitionParameters.ARCADE_LENIENCY_FUN_STABILITY,
+				RecognitionParameters.ARCADE_LENIENCY_VERY_PERMISSIVE_STABILITY));
+		rows.add(new Row(RecognitionParameters.CHORD_EVIDENCE, false, RecognitionParameters.ARCADE_LENIENCY_FUN_CHORD_EVIDENCE,
+				RecognitionParameters.ARCADE_LENIENCY_VERY_PERMISSIVE_CHORD_EVIDENCE));
+		rows.add(new Row(RecognitionParameters.CHORD_MIN_PARTIALS, false, RecognitionParameters.ARCADE_LENIENCY_FUN_CHORD_PARTIALS,
+				RecognitionParameters.ARCADE_LENIENCY_VERY_PERMISSIVE_CHORD_PARTIALS));
+		rows.add(new Row(RecognitionParameters.CHORD_CONFIRM, false, RecognitionParameters.ARCADE_LENIENCY_FUN_CHORD_CONFIRM,
+				RecognitionParameters.ARCADE_LENIENCY_VERY_PERMISSIVE_CHORD_CONFIRM));
 		return rows;
 	}
 
@@ -68,7 +74,7 @@ public final class ArcadeLeniency {
 		RecognitionSettings relaxed = effective;
 		for (Row row : ROWS) {
 			double current = relaxed.get(row.parameter);
-			double wanted = row.at(position);
+			double wanted = row.at(position, effective);
 			double value = row.higherIsMoreLenient ? Math.max(current, wanted) : Math.min(current, wanted);
 			if (value != current) {
 				relaxed = relaxed.with(row.parameter, Double.valueOf(value));
@@ -79,10 +85,16 @@ public final class ArcadeLeniency {
 
 	/** The width of the on-time window of an Arcade run, in milliseconds each side at 120 beats a minute: the player's, widened, never beyond the existing maximum. */
 	public static int windowMillis(ArcadeLeniencyPosition position, int chosenMillis) {
+		return windowMillis(position, chosenMillis, RecognitionSettings.defaults());
+	}
+
+	/** The same, the position's factor read from the settings (spec 026, {@code recognition.arcade-leniency.*.tempo-window}). */
+	public static int windowMillis(ArcadeLeniencyPosition position, int chosenMillis, RecognitionSettings settings) {
 		if (position == ArcadeLeniencyPosition.LIKE_PRACTICE) {
 			return chosenMillis;
 		}
-		double factor = position == ArcadeLeniencyPosition.FUN ? 1.25 : 1.5;
+		double factor = settings.get(position == ArcadeLeniencyPosition.FUN ? RecognitionParameters.ARCADE_LENIENCY_FUN_TEMPO_WINDOW
+				: RecognitionParameters.ARCADE_LENIENCY_VERY_PERMISSIVE_TEMPO_WINDOW);
 		return Math.max(chosenMillis, Math.min(TimingTolerance.MAX_WIDTH_MILLIS, (int) Math.round(chosenMillis * factor)));
 	}
 

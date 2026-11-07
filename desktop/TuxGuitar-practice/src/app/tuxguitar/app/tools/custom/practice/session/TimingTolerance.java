@@ -48,8 +48,8 @@ public final class TimingTolerance implements WindowPolicy {
 	/** The least and the most the learner can choose, in milliseconds each side of the target at 120 beats a minute (spec 012). */
 	public static final int MIN_WIDTH_MILLIS = 40;
 	public static final int MAX_WIDTH_MILLIS = 200;
-	/** The beat of the reference tempo of the width, 120 beats a minute. */
-	private static final double REFERENCE_BEAT_MILLIS = 500.0;
+	/** The beat of the reference tempo of the width, 120 beats a minute: the default of {@code recognition.timing.reference-beat} (spec 026). */
+	public static final double REFERENCE_BEAT_MILLIS = 500.0;
 
 	/** The shape of the windows: fractions of the local beat and the floors and ceilings in milliseconds. What a preset and a width both reduce to. */
 	private static final class Shape {
@@ -79,10 +79,11 @@ public final class TimingTolerance implements WindowPolicy {
 		/**
 		 * The shape of a width W: the ratios of the old Normal (75 ms: fraction 0.15, floor 60, ceiling 150; outer fraction 0.40, floor 150, ceiling 450), so that W = 75 gives
 		 * exactly the old Normal. The fractions are written as divisions of exact numbers so that W = 75 gives the very same doubles as the literals 0.15 and 0.40.
+		 * The width is read at the reference beat (spec 026): the outer fraction is 8/3 of the on-time one, 1500 being three reference beats of 500 ms.
 		 */
-		static Shape of(int widthMillis) {
-			double on = widthMillis / REFERENCE_BEAT_MILLIS;
-			double outer = widthMillis * 8.0 / 1500.0;
+		static Shape of(int widthMillis, double referenceBeatMillis) {
+			double on = widthMillis / referenceBeatMillis;
+			double outer = widthMillis * 8.0 / (3.0 * referenceBeatMillis);
 			long onFloor = Math.round(0.8 * widthMillis);
 			return new Shape(on, onFloor, 2L * widthMillis, outer, outer, 2L * widthMillis, 6L * widthMillis);
 		}
@@ -99,9 +100,9 @@ public final class TimingTolerance implements WindowPolicy {
 		this.shape = Shape.of(preset);
 	}
 
-	private TimingTolerance(int widthMillis) {
+	private TimingTolerance(int widthMillis, double referenceBeatMillis) {
 		this.preset = null;
-		this.shape = Shape.of(widthMillis);
+		this.shape = Shape.of(widthMillis, referenceBeatMillis);
 	}
 
 	/**
@@ -109,10 +110,18 @@ public final class TimingTolerance implements WindowPolicy {
 	 * {@value #MAX_WIDTH_MILLIS}; it grows and shrinks with the tempo between a floor and a ceiling like the presets do.
 	 */
 	public static TimingTolerance ofMillis(int widthMillis) {
+		return ofMillis(widthMillis, REFERENCE_BEAT_MILLIS);
+	}
+
+	/** The same, the width read at another reference beat in milliseconds (spec 026, {@code recognition.timing.reference-beat}). */
+	public static TimingTolerance ofMillis(int widthMillis, double referenceBeatMillis) {
 		if (widthMillis < MIN_WIDTH_MILLIS || widthMillis > MAX_WIDTH_MILLIS) {
 			throw new IllegalArgumentException("a width is from " + MIN_WIDTH_MILLIS + " to " + MAX_WIDTH_MILLIS + " ms: " + widthMillis);
 		}
-		return new TimingTolerance(widthMillis);
+		if (!(referenceBeatMillis > 0.0)) {
+			throw new IllegalArgumentException("a reference beat is positive: " + referenceBeatMillis);
+		}
+		return new TimingTolerance(widthMillis, referenceBeatMillis);
 	}
 
 	/** The preset this was made from, or null when it was made from a width. */

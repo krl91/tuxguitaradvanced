@@ -34,9 +34,18 @@ public final class InputAssessor implements AnalysisService.Listener {
 		public double tooLowShare = 0.50;
 		/** A whole window at or below this RMS level is treated as exact silence (all zeros). */
 		public double digitalSilenceDbfs = -120.0;
+
+		/** The check's values read from the settings (spec 026, {@code recognition.level-check.*}); the others keep their values. */
+		public static Parameters of(app.tuxguitar.audio.engine.settings.RecognitionSettings settings) {
+			Parameters p = new Parameters();
+			p.playingConfidence = settings.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.LEVEL_CHECK_PLAYING_CONFIDENCE);
+			p.requiredPlayingNanos = Math.round(settings.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.LEVEL_CHECK_REQUIRED_PLAYING) * 1_000_000.0);
+			p.suboptimalShare = settings.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.LEVEL_CHECK_SUBOPTIMAL_SHARE);
+			return p;
+		}
 	}
 
-	private final Parameters parameters;
+	private Parameters parameters;
 	private final Listener listener;
 
 	private boolean checking;
@@ -58,6 +67,13 @@ public final class InputAssessor implements AnalysisService.Listener {
 	public InputAssessor(Parameters parameters, Listener listener) {
 		this.parameters = parameters;
 		this.listener = listener;
+	}
+
+	/** The values of the next check (spec 026); a running check keeps its own. */
+	public synchronized void setParameters(Parameters parameters) {
+		if( !this.checking ) {
+			this.parameters = parameters;
+		}
 	}
 
 	/** Starts a new check, discarding any running one. */

@@ -24,6 +24,8 @@ import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
 import app.tuxguitar.audio.engine.recognition.TargetEvidence;
+import app.tuxguitar.audio.engine.settings.RecognitionParameter;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.technique.NoteSegment;
 
 /**
@@ -70,8 +72,87 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		WRONG
 	}
 
-	/** Provisional display time of a verdict. */
+	/** Provisional display time of a verdict: the default of {@code recognition.wait.verdict-hold} (spec 026). */
 	public static final long VERDICT_HOLD_NANOS = 1_000_000_000L;
+
+	/**
+	 * The Wait session's values (spec 026, T021, inventory.md "WAIT_1", "WAIT_2"), read from the settings; {@link #defaults()} are the values the
+	 * session always had. Immutable.
+	 */
+	public static final class WaitParameters {
+		/** How long a verdict stays shown. */
+		public final long verdictHoldNanos;
+		/** How long a close neighbour read by the pitch estimate holds back the attack evidence, and the confidence it must be read with. */
+		public final long neighbourVetoNanos;
+		public final double neighbourConfidence;
+		/** How long a note's techniques are observed after its acceptance. */
+		public final long techniqueWindowNanos;
+		/**
+		 * A bent note is observed from its acceptance for its written length at the score tempo, never less than the minimum (a learner in wait
+		 * mode does not play at the score tempo) and never more than the maximum (about the longest a guitar note sustains), research R5 addendum.
+		 */
+		public final long bendWindowMinNanos;
+		public final long bendWindowMaxNanos;
+		/** A pitch within this many semitones of the written path counts as on the path: a bend is never exact. */
+		public final double bendMarginSemitones;
+		/** How far before the acceptance a note's segment may start (acceptance follows the attack by about 100 ms). */
+		public final long techniqueLeadNanos;
+		/**
+		 * A new attack this soon after an acceptance (or this little before it) is the learner playing faster than recognition follows (the
+		 * acceptance comes about 0.1 s after its attack and the evidence of that attack is ignored for 0.22 s: about 0.3 s between notes, research R11).
+		 */
+		public final long speedWindowNanos;
+		public final long speedLeadNanos;
+		/** The level below which fast recognition is not reliable (FR-015). */
+		public final double weakFastDbfs;
+		/** The confidence a pitch frame needs to be kept for a technique (spec 026, {@code recognition.technique.frame-confidence}). */
+		public final double techniqueFrameConfidence;
+		/** The weak-input check's attacks and how long they count (spec 026, {@code recognition.input-quality.*}). */
+		public final int inputQualityAttacks;
+		public final long inputQualityRememberNanos;
+		public final long inputQualityAttackWindowNanos;
+
+		public WaitParameters(long verdictHoldNanos, long neighbourVetoNanos, double neighbourConfidence, long techniqueWindowNanos, long bendWindowMinNanos,
+				long bendWindowMaxNanos, double bendMarginSemitones, long techniqueLeadNanos, long speedWindowNanos, long speedLeadNanos, double weakFastDbfs,
+				double techniqueFrameConfidence, int inputQualityAttacks, long inputQualityRememberNanos, long inputQualityAttackWindowNanos) {
+			this.verdictHoldNanos = verdictHoldNanos;
+			this.neighbourVetoNanos = neighbourVetoNanos;
+			this.neighbourConfidence = neighbourConfidence;
+			this.techniqueWindowNanos = techniqueWindowNanos;
+			this.bendWindowMinNanos = bendWindowMinNanos;
+			this.bendWindowMaxNanos = bendWindowMaxNanos;
+			this.bendMarginSemitones = bendMarginSemitones;
+			this.techniqueLeadNanos = techniqueLeadNanos;
+			this.speedWindowNanos = speedWindowNanos;
+			this.speedLeadNanos = speedLeadNanos;
+			this.weakFastDbfs = weakFastDbfs;
+			this.techniqueFrameConfidence = techniqueFrameConfidence;
+			this.inputQualityAttacks = inputQualityAttacks;
+			this.inputQualityRememberNanos = inputQualityRememberNanos;
+			this.inputQualityAttackWindowNanos = inputQualityAttackWindowNanos;
+		}
+
+		public static WaitParameters defaults() {
+			return of(app.tuxguitar.audio.engine.settings.RecognitionSettings.defaults());
+		}
+
+		public static WaitParameters of(app.tuxguitar.audio.engine.settings.RecognitionSettings settings) {
+			return new WaitParameters(millis(settings, RecognitionParameters.WAIT_VERDICT_HOLD), millis(settings, RecognitionParameters.WAIT_NEIGHBOUR_VETO),
+					settings.get(RecognitionParameters.WAIT_NEIGHBOUR_CONFIDENCE), millis(settings, RecognitionParameters.WAIT_TECHNIQUE_WINDOW),
+					millis(settings, RecognitionParameters.WAIT_BEND_WINDOW_MIN), millis(settings, RecognitionParameters.WAIT_BEND_WINDOW_MAX),
+					settings.get(RecognitionParameters.WAIT_BEND_MARGIN), millis(settings, RecognitionParameters.WAIT_TECHNIQUE_LEAD),
+					millis(settings, RecognitionParameters.WAIT_SPEED_WINDOW), millis(settings, RecognitionParameters.WAIT_SPEED_LEAD),
+					settings.get(RecognitionParameters.WAIT_WEAK_FAST), settings.get(RecognitionParameters.TECHNIQUE_FRAME_CONFIDENCE),
+					(int) settings.get(RecognitionParameters.INPUT_QUALITY_ATTACKS), millis(settings, RecognitionParameters.INPUT_QUALITY_REMEMBER),
+					millis(settings, RecognitionParameters.INPUT_QUALITY_ATTACK_WINDOW));
+		}
+
+		private static long millis(app.tuxguitar.audio.engine.settings.RecognitionSettings settings, RecognitionParameter.Number parameter) {
+			return Math.round(settings.get(parameter) * 1_000_000.0);
+		}
+	}
+
+	private WaitParameters wait = WaitParameters.defaults();
 
 	public enum Outcome {
 		ACCEPTED,
@@ -91,29 +172,16 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private BiConsumer<int[], int[]> expectedChordSink;
 	/** Attack-difference acceptance (spec 004); null: the f0 and chord rules judge. */
 	private PolyphonicAcceptance polyphonic;
-	private static final long NEIGHBOUR_VETO_NANOS = 120L * 1_000_000L;
-	private static final double NEIGHBOUR_CONFIDENCE = 0.8;
 	private long neighbourHeardNanos = Long.MIN_VALUE;
 	private final long articulationLatencyNanos;
 	/** Judges the written techniques of the accepted notes (spec 002); null: no technique line. */
 	private TechniqueJudge techniqueJudge;
 	private static final int RECENT_FRAMES = 64;
-	private static final long TECHNIQUE_WINDOW_NANOS = 1_500_000_000L;
-	/**
-	 * A bent note is observed from its acceptance for its written length at the score tempo, never less than 1.0 s (a learner in
-	 * wait mode does not play at the score tempo) and never more than 2.5 s (about the longest a guitar note sustains), research R5 addendum.
-	 */
-	private static final long BEND_WINDOW_MIN_NANOS = 1_000_000_000L;
-	private static final long BEND_WINDOW_MAX_NANOS = 2_500_000_000L;
-	/** A pitch within this many semitones of the written path counts as on the path: a bend is never exact. */
-	private static final double BEND_PATH_MARGIN_SEMITONES = 0.5;
 	/** The tolerance of the bend target is the detector's: what is called on pitch when the bend is judged. */
 	private static final app.tuxguitar.audio.engine.technique.BendDetector.Parameters BEND_DETECTOR = app.tuxguitar.audio.engine.technique.BendDetector.Parameters.defaults();
-	/** How far before the acceptance a note's segment may start (acceptance follows the attack by about 100 ms). */
-	private static final long TECHNIQUE_LEAD_NANOS = 150L * 1_000_000L;
 	/** The last hops (timestamp, MIDI pitch or NaN, level, onset) so a note's segment can start at its attack. */
 	private final java.util.ArrayDeque<double[]> recentFrames = new java.util.ArrayDeque<double[]>();
-	private long pendingWindowNanos = TECHNIQUE_WINDOW_NANOS;
+	private long pendingWindowNanos = this.wait.techniqueWindowNanos;
 	/**
 	 * The hops of the bend in progress, from the moment its run started on the written pitch: the note is accepted only when the bend has
 	 * reached its target, so the rise is over when the acceptance comes and the detector must still see it (owner's decision of 2026-10-07).
@@ -123,7 +191,8 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private long bendTargetStartNanos = -1;
 	/** The pitch has touched the written peak of the bend (the rise is made): the release, if written, is what is left. */
 	private boolean bendPeakReached;
-	private static final int BEND_FRAMES_MAX = 800;
+	/** The hops a bend keeps: 800 for the longest window of 2.5 s, in proportion for another (spec 026). */
+	private int bendFramesMax = bendFramesMax(this.wait);
 	/** The bent note whose observation window is open (null: none) and when it ends. */
 	private PracticeEvent bendEvent;
 	private long bendWindowEndNanos;
@@ -149,16 +218,11 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	private boolean articulationArmed;
 	/** Attack time of the onset that armed the current attempt. */
 	private long armTransientNanos;
-	/**
-	 * A new attack this soon after an acceptance is the learner playing faster than recognition follows (the acceptance comes about
-	 * 0.1 s after its attack and the evidence of that attack is ignored for 0.22 s: about 0.3 s between notes, research R11).
-	 */
-	private static final long SPEED_WINDOW_NANOS = 200L * 1_000_000L;
 	/** The limit is only shown when the note that followed has still not been recognised after this long. */
 	private static final long SPEED_SHOW_NANOS = 600L * 1_000_000L;
 	private long lastAcceptNanos = Long.MIN_VALUE;
 	/** The level the learner plays at, for the "input too weak for fast recognition" message (FR-015). */
-	private final InputQuality inputQuality = new InputQuality(PracticeParameters.WEAK_FAST_DBFS);
+	private InputQuality inputQuality = new InputQuality(this.wait.weakFastDbfs);
 	private long speedHitNanos = Long.MIN_VALUE;
 	private Feedback feedback;
 	private PracticeEvent lastAccepted;
@@ -236,6 +300,24 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.currentIndex = sequence.getStartIndex();
 	}
 
+	/** The values of the session (spec 026), set before Start; the defaults are the values it always had. */
+	public void setWaitParameters(WaitParameters parameters) {
+		this.wait = parameters;
+		this.pendingWindowNanos = parameters.techniqueWindowNanos;
+		this.bendFramesMax = bendFramesMax(parameters);
+		this.inputQuality = new InputQuality(parameters.weakFastDbfs, parameters.inputQualityAttacks, parameters.inputQualityRememberNanos,
+				parameters.inputQualityAttackWindowNanos);
+	}
+
+	/** The pitch of a frame kept for a technique, in MIDI, or NaN when it is unvoiced or read with less than {@code minConfidence} (Wait and Follow). */
+	static double techniqueMidi(double f0, double confidence, double minConfidence) {
+		return Double.isFinite(f0) && f0 > 0.0 && confidence >= minConfidence ? 69.0 + 12.0 * Math.log(f0 / 440.0) / Math.log(2.0) : Double.NaN;
+	}
+
+	private static int bendFramesMax(WaitParameters parameters) {
+		return (int) Math.ceil(800.0 * parameters.bendWindowMaxNanos / 2_500_000_000.0);
+	}
+
 	/**
 	 * When the audio's evidence for the expected pitch beats every neighbour by at least
 	 * {@code margin}, the note is accepted after {@code stabilityNanos} instead of the standard
@@ -299,7 +381,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	 */
 	private boolean closeNeighbourHeard(AnalysisFrame frame, int expectedMidi) {
 		double f0 = frame.getF0Hz();
-		if( !Double.isFinite(f0) || f0 <= 0.0 || !(frame.getConfidence() >= NEIGHBOUR_CONFIDENCE) ) {
+		if( !Double.isFinite(f0) || f0 <= 0.0 || !(frame.getConfidence() >= this.wait.neighbourConfidence) ) {
 			return false;
 		}
 		double exact = 69.0 + 12.0 * Math.log(f0 / 440.0) / Math.log(2.0);
@@ -415,7 +497,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		long now = frame.getTimestampNanos();
 		if( frame.isOnset() && this.lastAcceptNanos != Long.MIN_VALUE ) {
 			long transient_ = now - this.articulationLatencyNanos;
-			if( transient_ > this.lastAcceptNanos - 20_000_000L && transient_ - this.lastAcceptNanos < SPEED_WINDOW_NANOS && this.speedHitNanos == Long.MIN_VALUE ) {
+			if( transient_ > this.lastAcceptNanos - this.wait.speedLeadNanos && transient_ - this.lastAcceptNanos < this.wait.speedWindowNanos && this.speedHitNanos == Long.MIN_VALUE ) {
 				this.speedHitNanos = now;
 			}
 		}
@@ -429,7 +511,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 				this.verdict = Verdict.NONE;
 			}
 		}
-		if( this.verdict != Verdict.NONE && now - this.verdictNanos > VERDICT_HOLD_NANOS ) {
+		if( this.verdict != Verdict.NONE && now - this.verdictNanos > this.wait.verdictHoldNanos ) {
 			this.verdict = Verdict.NONE;
 		}
 		PracticeEvent event = currentEvent();
@@ -455,7 +537,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 					this.neighbourHeardNanos = now;
 				}
 				// the pitch estimate is unreliable during the attack itself: the veto outlasts the reading
-				boolean vetoed = (this.neighbourHeardNanos != Long.MIN_VALUE && now - this.neighbourHeardNanos < NEIGHBOUR_VETO_NANOS);
+				boolean vetoed = (this.neighbourHeardNanos != Long.MIN_VALUE && now - this.neighbourHeardNanos < this.wait.neighbourVetoNanos);
 				// a quiet note is still a note (a low string under a loud one): only clipping, which distorts the spectrum, stops the judgement
 				// an expected pitch on the path of the bend just played cannot be told from the bend by its spectrum: it waits for its own attack
 				// a note whose bend is required is accepted when the bend reaches its target, not on the spectrum of its base note
@@ -519,7 +601,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		}
 		double tolerance = Math.max(BEND_DETECTOR.onToleranceCents, BEND_DETECTOR.onToleranceShare * start * 100.0) / 100.0;
 		double midi = this.reading.getMidi() + this.reading.getCents() / 100.0;
-		return midi >= bendBase(event) + start - tolerance && midi <= bendBase(event) + start + BEND_PATH_MARGIN_SEMITONES;
+		return midi >= bendBase(event) + start - tolerance && midi <= bendBase(event) + start + this.wait.bendMarginSemitones;
 	}
 
 	/** True when the pitch has come down to the written end of the release (within the detector's tolerance, and the path margin below). */
@@ -532,7 +614,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		double midi = this.reading.getMidi() + this.reading.getCents() / 100.0;
 		// the end of the release is the written note, read as such: half a semitone on each side (a fretted note reads 30 to 50 cents sharp on
 		// the owner's guitar, and a plain note already gets a sharp allowance by fret that the end of a release must not be stricter than)
-		return midi >= base + end - BEND_PATH_MARGIN_SEMITONES && midi <= base + end + BEND_PATH_MARGIN_SEMITONES;
+		return midi >= base + end - this.wait.bendMarginSemitones && midi <= base + end + this.wait.bendMarginSemitones;
 	}
 
 	/** True when the pitch has reached the written target of the bend (within the detector's tolerance) and has not gone past the path. */
@@ -545,16 +627,16 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		double rise = (peak - event.getBendPath().getPoints().get(0).getSemitones()) * 100.0;
 		double tolerance = Math.max(BEND_DETECTOR.onToleranceCents, BEND_DETECTOR.onToleranceShare * rise) / 100.0;
 		double midi = this.reading.getMidi() + this.reading.getCents() / 100.0;
-		return midi >= base + peak - tolerance && midi <= base + peak + BEND_PATH_MARGIN_SEMITONES;
+		return midi >= base + peak - tolerance && midi <= base + peak + this.wait.bendMarginSemitones;
 	}
 
-	private static long bendWindowNanos(PracticeEvent event) {
+	private long bendWindowNanos(PracticeEvent event) {
 		long written = (long) (event.getBendWrittenSeconds() * 1e9);
-		return Math.max(BEND_WINDOW_MIN_NANOS, Math.min(BEND_WINDOW_MAX_NANOS, written));
+		return Math.max(this.wait.bendWindowMinNanos, Math.min(this.wait.bendWindowMaxNanos, written));
 	}
 
 	/** The pitches (MIDI, fractional) a bent note covers: from the lowest to the highest point of its path, with the margin. */
-	private static double[] corridorOf(PracticeEvent event) {
+	private double[] corridorOf(PracticeEvent event) {
 		double low = Double.POSITIVE_INFINITY;
 		double high = Double.NEGATIVE_INFINITY;
 		double base = bendBase(event);
@@ -562,7 +644,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 			low = Math.min(low, point.getSemitones());
 			high = Math.max(high, point.getSemitones());
 		}
-		return new double[] { base + low - BEND_PATH_MARGIN_SEMITONES, base + high + BEND_PATH_MARGIN_SEMITONES };
+		return new double[] { base + low - this.wait.bendMarginSemitones, base + high + this.wait.bendMarginSemitones };
 	}
 
 	/** The fretted pitch of a bent note: the base carried by the targets of its path. */
@@ -617,7 +699,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 	 * The pitch of the expected note is on the written path of the bent note before it: the bend itself reaching it is not a new note,
 	 * which needs its own attack (a hammer-on is a pitch change without attack, a bend is not).
 	 */
-	private static boolean onBentPathOf(PracticeEvent previous, PracticeEvent event) {
+	private boolean onBentPathOf(PracticeEvent previous, PracticeEvent event) {
 		if( previous.getBendPath() == null ) {
 			return false;
 		}
@@ -946,8 +1028,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		if( this.techniqueJudge == null ) {
 			return;
 		}
-		double f0 = frame.getF0Hz();
-		double midi = (Double.isFinite(f0) && f0 > 0.0 && frame.getConfidence() >= 0.8 ? 69.0 + 12.0 * Math.log(f0 / 440.0) / Math.log(2.0) : Double.NaN);
+		double midi = techniqueMidi(frame.getF0Hz(), frame.getConfidence(), this.wait.techniqueFrameConfidence);
 		double[] hop = new double[] { frame.getTimestampNanos(), midi, frame.getRmsDbfs(), frame.isOnset() ? 1.0 : 0.0 };
 		this.recentFrames.addLast(hop);
 		if( this.recentFrames.size() > RECENT_FRAMES ) {
@@ -955,7 +1036,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		}
 		if( this.bendCollecting ) {
 			this.bendFrames.add(hop);
-			if( this.bendFrames.size() > BEND_FRAMES_MAX ) {
+			if( this.bendFrames.size() > this.bendFramesMax ) {
 				this.bendFrames.remove(0);
 			}
 		}
@@ -1025,7 +1106,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		this.pendingEvent = event;
 		this.pendingTargets = targets;
 		this.pendingStartNanos = timestampNanos;
-		this.pendingWindowNanos = (event.getBendPath() != null ? bendWindowNanos(event) : TECHNIQUE_WINDOW_NANOS);
+		this.pendingWindowNanos = (event.getBendPath() != null ? bendWindowNanos(event) : this.wait.techniqueWindowNanos);
 		if( event.getBendPath() != null && !this.bendFrames.isEmpty() ) {
 			// a bend: its segment starts when its run began on the written pitch
 			this.pendingFrames.addAll(this.bendFrames);
@@ -1033,7 +1114,7 @@ public final class PracticeSession implements SessionLoop.Handler<PracticeSnapsh
 		}
 		// the note began with its attack: its segment starts there (or at the oldest hop kept)
 		for( double[] hop : this.recentFrames ) {
-			if( hop[0] >= Math.max(this.armTransientNanos, timestampNanos - TECHNIQUE_LEAD_NANOS) ) {
+			if( hop[0] >= Math.max(this.armTransientNanos, timestampNanos - this.wait.techniqueLeadNanos) ) {
 				this.pendingFrames.add(hop);
 			}
 		}

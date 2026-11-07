@@ -248,8 +248,260 @@
     <tr><td>Gain suggestion: nothing to change within</td><td>dB</td><td>0.5</td><td>6</td><td>1.5</td><td>small corrections proposed</td><td>only large ones</td></tr>
     <tr><td>Gain suggestion: playing above the noise by</td><td>dB</td><td>6</td><td>40</td><td>20</td><td>the noise warning less often</td><td>the warning sooner</td></tr>
     </table>
+    <h2 id="acceptance-1">Advanced: Struck notes, decision</h2>
+    <p>How the practice session decides that the expected notes were just struck, from the sound the attack added: how much of it they must explain, how balanced a chord must be, for how long. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Struck notes: share explained</td><td>%</td><td>5</td><td>90</td><td>30</td><td>more lenient</td><td>stricter, only a clean note</td></tr>
+    <tr><td>Struck notes: chord balance</td><td>%</td><td>0</td><td>50</td><td>10</td><td>a soft string still counts</td><td>every string must sound clearly</td></tr>
+    <tr><td>Struck notes: strongest pitch</td><td>%</td><td>10</td><td>100</td><td>70</td><td>another loud pitch allowed</td><td>the expected note must lead</td></tr>
+    <tr><td>Struck notes: confirmed for</td><td>hops</td><td>1</td><td>30</td><td>6</td><td>faster, more mistakes</td><td>surer, slower</td></tr>
+    <tr><td>Struck notes: over the neighbours</td><td>×</td><td>0</td><td>4</td><td>0</td><td>more lenient (zero: off)</td><td>a neighbour note refused sooner</td></tr>
+    <tr><td>Struck notes: attack strength</td><td></td><td>0</td><td>5</td><td>0</td><td>soft attacks count (zero: any)</td><td>only clear attacks count</td></tr>
+    <tr><td>Struck notes: ignored after a note</td><td>ms</td><td>50</td><td>1000</td><td>220</td><td>fast passages followed</td><td>fewer double counts</td></tr>
+    </table>
+    <h2 id="acceptance-2">Advanced: Struck notes, attack</h2>
+    <p>How the attack of a struck note is read: the tuning margin of its rough pitch measure, how a short miss is forgiven, the thump skipped after silence, the quietest note and the quiet level before it. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Struck notes: tuning margin</td><td>cents</td><td>0</td><td>50</td><td>15</td><td>stricter on the tuning</td><td>more lenient</td></tr>
+    <tr><td>Struck notes: forgiveness</td><td>hops</td><td>0</td><td>5</td><td>1</td><td>stricter (zero: start again)</td><td>a short miss costs less</td></tr>
+    <tr><td>Struck notes: thump skipped</td><td>ms</td><td>0</td><td>200</td><td>60</td><td>faster</td><td>the thump never read as a pitch</td></tr>
+    <tr><td>Struck notes: quietest note</td><td>‰</td><td>1</td><td>100</td><td>10</td><td>soft notes count, noise too</td><td>only clear notes</td></tr>
+    <tr><td>Struck notes: quiet level over</td><td>hops</td><td>1</td><td>50</td><td>10</td><td>follows a changing background</td><td>the quietest moment found</td></tr>
+    <tr><td>Struck notes: from silence</td><td>%</td><td>10</td><td>100</td><td>60</td><td>more attacks wait for the thump</td><td>fewer</td></tr>
+    <tr><td>Struck notes: smallest onset</td><td>‰</td><td>1</td><td>50</td><td>2</td><td>soft attacks found, noise too</td><td>only clear attacks</td></tr>
+    </table>
+    <h2 id="acceptance-3">Advanced: Struck notes, onset</h2>
+    <p>Where the attack of a struck note begins and ends, against the quiet level before it and its own peak. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Struck notes: onset over the quiet level</td><td>×</td><td>1</td><td>10</td><td>3</td><td>soft attacks found, noise too</td><td>only clear attacks</td></tr>
+    <tr><td>Struck notes: end of the attack</td><td>%</td><td>5</td><td>90</td><td>25</td><td>the attack lasts longer</td><td>it ends sooner</td></tr>
+    </table>
+    <h2 id="wait-1">Advanced: Wait mode, verdicts and techniques</h2>
+    <p>How the Wait mode shows its verdicts and observes the written techniques: how long a verdict stays shown, how a neighbouring note read by the pitch estimate holds back a struck note, how long techniques and bends are observed, the margin around a bend's path. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Wait: verdict shown for</td><td>ms</td><td>200</td><td>3000</td><td>1000</td><td>clears sooner</td><td>stays in view</td></tr>
+    <tr><td>Wait: neighbour hold-back</td><td>ms</td><td>0</td><td>500</td><td>120</td><td>faster, a neighbour taken for the note more often</td><td>surer, slower</td></tr>
+    <tr><td>Wait: neighbour confidence</td><td>%</td><td>50</td><td>100</td><td>80</td><td>a neighbour holds back more often</td><td>only a clear neighbour</td></tr>
+    <tr><td>Wait: technique observed for</td><td>ms</td><td>500</td><td>4000</td><td>1500</td><td>result sooner, from less of the note</td><td>from more of it, later</td></tr>
+    <tr><td>Wait: bend observed at least</td><td>ms</td><td>250</td><td>2500</td><td>1000</td><td>a short bend's result sooner</td><td>a slow bend still seen whole</td></tr>
+    <tr><td>Wait: bend observed at most</td><td>ms</td><td>1000</td><td>4000</td><td>2500</td><td>a long bend's result sooner</td><td>a long bend seen to its end</td></tr>
+    <tr><td>Wait: bend margin</td><td>semitones</td><td>0.1</td><td>2</td><td>0.5</td><td>stricter, a bend past its target refused</td><td>more lenient, a wrong note near the path not reported</td></tr>
+    </table>
+    <h2 id="wait-2">Advanced: Wait mode, speed and level</h2>
+    <p>How the Wait mode sees the learner's speed and level: how far back a note's technique is observed, when a new attack means the learner plays faster than recognition follows, the early acceptance (when switched on), the level below which the input is too weak for fast recognition. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Wait: technique from before</td><td>ms</td><td>0</td><td>500</td><td>150</td><td>the start of the note left out</td><td>more of its start seen</td></tr>
+    <tr><td>Wait: too fast within</td><td>ms</td><td>50</td><td>1000</td><td>200</td><td>speed limit shown less often</td><td>more often</td></tr>
+    <tr><td>Wait: too fast from before</td><td>ms</td><td>0</td><td>100</td><td>20</td><td>fewer attacks count</td><td>more</td></tr>
+    <tr><td>Wait: early acceptance margin</td><td></td><td>0.1</td><td>2</td><td>0.5</td><td>early more often, more mistakes</td><td>rarely early</td></tr>
+    <tr><td>Wait: early acceptance after</td><td>hops</td><td>4</td><td>40</td><td>12</td><td>faster</td><td>surer</td></tr>
+    <tr><td>Wait: too weak for speed</td><td>dBFS</td><td>-50</td><td>-10</td><td>-30</td><td>message shown less often</td><td>more often</td></tr>
+    </table>
+    <h2 id="follow-1">Advanced: Follow mode, attacks</h2>
+    <p>How the Follow mode resolves an attack: how long its pitch is awaited, when its sound is over, the shortest note, a second attack on the same sound, how long a string rings, the notes looked back, the attacks kept. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Follow: pitch awaited for</td><td>ms</td><td>100</td><td>1500</td><td>400</td><td>noise set aside sooner</td><td>a slow pitch still counts</td></tr>
+    <tr><td>Follow: end of a sound</td><td>ms</td><td>10</td><td>200</td><td>40</td><td>short note decided sooner</td><td>a brief drop does not end the note</td></tr>
+    <tr><td>Follow: shortest note</td><td>ms</td><td>10</td><td>200</td><td>40</td><td>more lenient</td><td>a very short note not counted</td></tr>
+    <tr><td>Follow: same sound within</td><td>ms</td><td>20</td><td>400</td><td>100</td><td>more extra notes</td><td>fewer</td></tr>
+    <tr><td>Follow: string rings for</td><td>ms</td><td>300</td><td>4000</td><td>1500</td><td>fewer ringing notes</td><td>more</td></tr>
+    <tr><td>Follow: notes looked back</td><td></td><td>0</td><td>32</td><td>8</td><td>a second attack more often extra</td><td>more looked at</td></tr>
+    <tr><td>Follow: attacks kept for</td><td>ms</td><td>20</td><td>10000</td><td>3000</td><td>an attack may be forgotten</td><td>kept longer</td></tr>
+    </table>
+    <h2 id="follow-2">Advanced: Follow mode, attack times</h2>
+    <p>How the Follow mode dates an attack heard from its evidence: how far the reported attack may lie from it, how long a repeated note stays open after its window, the end of the run, the sound kept. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Follow: attack before the evidence</td><td>ms</td><td>0</td><td>500</td><td>150</td><td>fewer notes take the reported time</td><td>more</td></tr>
+    <tr><td>Follow: attack after the evidence</td><td>ms</td><td>0</td><td>200</td><td>30</td><td>faster</td><td>the reported time used more often</td></tr>
+    <tr><td>Follow: open after its window</td><td>ms</td><td>0</td><td>400</td><td>100</td><td>a late confirmation lost</td><td>open longer</td></tr>
+    <tr><td>Follow: end of the run</td><td>ms</td><td>0</td><td>400</td><td>100</td><td>summary sooner</td><td>a last late note still heard</td></tr>
+    <tr><td>Follow: sound kept for</td><td>ms</td><td>100</td><td>4000</td><td>1200</td><td>the start of a note may be lost</td><td>more kept</td></tr>
+    </table>
+    <h2 id="follow-3">Advanced: Follow mode, techniques</h2>
+    <p>How the Follow mode observes the written techniques and bends, and how early a note watches the attack evidence. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Follow: technique observed for</td><td>ms</td><td>500</td><td>4000</td><td>1500</td><td>result sooner, from less of the note</td><td>from more of it, later</td></tr>
+    <tr><td>Follow: bend observed at least</td><td>ms</td><td>250</td><td>2500</td><td>1000</td><td>a short bend's result sooner</td><td>a slow bend still seen whole</td></tr>
+    <tr><td>Follow: bend observed at most</td><td>ms</td><td>1000</td><td>4000</td><td>2500</td><td>a long bend's result sooner</td><td>a long bend seen to its end</td></tr>
+    <tr><td>Follow: bend margin</td><td>semitones</td><td>0.1</td><td>2</td><td>0.5</td><td>stricter, a bend past its target breaks the note</td><td>more lenient</td></tr>
+    <tr><td>Follow: evidence watched from</td><td>ms</td><td>100</td><td>1500</td><td>400</td><td>an early attack may be missed</td><td>more watched</td></tr>
+    </table>
+    <h2 id="clock">Advanced: Playback clock and latency</h2>
+    <p>How the session follows the player's position between its readings, and the largest latency accepted. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Clock: position measured over</td><td>ms</td><td>150</td><td>2000</td><td>600</td><td>follows tempo sooner, less steady</td><td>steadier, slower to follow</td></tr>
+    <tr><td>Clock: readings needed</td><td></td><td>3</td><td>64</td><td>8</td><td>measured sooner</td><td>steadier</td></tr>
+    <tr><td>Clock: readings spread over</td><td>ms</td><td>30</td><td>600</td><td>150</td><td>measured sooner</td><td>steadier</td></tr>
+    <tr><td>Clock: player stopped after</td><td>ms</td><td>20</td><td>300</td><td>60</td><td>a pause seen sooner</td><td>a slow reading not taken for a pause</td></tr>
+    <tr><td>Clock: ahead of the last reading</td><td>ms</td><td>0</td><td>200</td><td>30</td><td>never ahead of the player</td><td>smoother between readings</td></tr>
+    <tr><td>Clock: jump taken as a seek</td><td>ticks</td><td>240</td><td>3840</td><td>960</td><td>a smaller jump restarts it</td><td>only a large jump does</td></tr>
+    <tr><td>Clock: largest latency</td><td>ms</td><td>200</td><td>3000</td><td>1000</td><td>a wrong measurement refused sooner</td><td>a slow sound card still compensated</td></tr>
+    </table>
+    <h2 id="timing">Advanced: Timing windows</h2>
+    <p>The timing windows: the beat at which Arcade's width is read, how early and how close together Follow's notes may be played, and when the route is called unstable. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Timing: width read at the beat</td><td>ms</td><td>250</td><td>1000</td><td>500</td><td>wider at every tempo</td><td>narrower at every tempo</td></tr>
+    <tr><td>Timing: play before the red</td><td>ms</td><td>0</td><td>200</td><td>50</td><td>stricter</td><td>an early note still counts</td></tr>
+    <tr><td>Timing: gap before the next note</td><td>ms</td><td>0</td><td>100</td><td>20</td><td>longer windows in fast passages</td><td>a clearer boundary</td></tr>
+    <tr><td>Timing: unstable route from</td><td>ms</td><td>20</td><td>300</td><td>80</td><td>warns sooner</td><td>warns only on a very irregular route</td></tr>
+    </table>
+    <h2 id="leniency-1">Advanced: Follow mode, permissive</h2>
+    <p>The values a Follow mode run relaxes the recognition to at this position, one way: the learner's own value is kept when it is more lenient. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Follow permissive: note accepted within</td><td>cents</td><td>10</td><td>45</td><td>35</td><td>no relaxation</td><td>a wrong note may pass</td></tr>
+    <tr><td>Follow permissive: pitch confidence</td><td>%</td><td>50</td><td>95</td><td>60</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Follow permissive: note held for</td><td>ms</td><td>50</td><td>300</td><td>55</td><td>quicker, more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Follow permissive: chord evidence</td><td>%</td><td>20</td><td>80</td><td>22</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Follow permissive: chord partials needed</td><td></td><td>1</td><td>4</td><td>1</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Follow permissive: chord confirmed after</td><td>ms</td><td>20</td><td>150</td><td>24</td><td>quicker</td><td>no relaxation</td></tr>
+    </table>
+    <h2 id="leniency-2">Advanced: Follow mode, very permissive</h2>
+    <p>The values a Follow mode run relaxes the recognition to at this position, one way: the learner's own value is kept when it is more lenient. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Follow very permissive: note accepted within</td><td>cents</td><td>10</td><td>45</td><td>35</td><td>no relaxation</td><td>a wrong note may pass</td></tr>
+    <tr><td>Follow very permissive: pitch confidence</td><td>%</td><td>50</td><td>95</td><td>50</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Follow very permissive: note held for</td><td>ms</td><td>50</td><td>300</td><td>50</td><td>quicker, more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Follow very permissive: chord evidence</td><td>%</td><td>20</td><td>80</td><td>20</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Follow very permissive: chord partials needed</td><td></td><td>1</td><td>4</td><td>1</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Follow very permissive: chord confirmed after</td><td>ms</td><td>20</td><td>150</td><td>20</td><td>quicker</td><td>no relaxation</td></tr>
+    </table>
+    <h2 id="leniency-3">Advanced: Arcade, fun</h2>
+    <p>The values a Arcade run relaxes the recognition to at this position, one way: the learner's own value is kept when it is more lenient. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Arcade fun: pitch confidence</td><td>%</td><td>50</td><td>95</td><td>70</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Arcade fun: note held for</td><td>ms</td><td>50</td><td>300</td><td>75</td><td>quicker, more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Arcade fun: chord evidence</td><td>%</td><td>20</td><td>80</td><td>28</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Arcade fun: chord partials needed</td><td></td><td>1</td><td>4</td><td>2</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Arcade fun: chord confirmed after</td><td>ms</td><td>20</td><td>150</td><td>32</td><td>quicker</td><td>no relaxation</td></tr>
+    <tr><td>Arcade fun: timing window widened</td><td>%</td><td>100</td><td>200</td><td>125</td><td>not widened</td><td>wider</td></tr>
+    </table>
+    <h2 id="leniency-4">Advanced: Arcade, very permissive</h2>
+    <p>The values a Arcade run relaxes the recognition to at this position, one way: the learner's own value is kept when it is more lenient. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Arcade very permissive: pitch confidence</td><td>%</td><td>50</td><td>95</td><td>60</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Arcade very permissive: note held for</td><td>ms</td><td>50</td><td>300</td><td>55</td><td>quicker, more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Arcade very permissive: chord evidence</td><td>%</td><td>20</td><td>80</td><td>22</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Arcade very permissive: chord partials needed</td><td></td><td>1</td><td>4</td><td>1</td><td>more lenient</td><td>no relaxation</td></tr>
+    <tr><td>Arcade very permissive: chord confirmed after</td><td>ms</td><td>20</td><td>150</td><td>24</td><td>quicker</td><td>no relaxation</td></tr>
+    <tr><td>Arcade very permissive: timing window widened</td><td>%</td><td>100</td><td>200</td><td>150</td><td>not widened</td><td>wider</td></tr>
+    </table>
+    <h2 id="technique-1">Advanced: Techniques, bend</h2>
+    <p>The thresholds of the technique detectors (bend, slide, vibrato, hammer-on and pull-off) and of the pitch readings they use. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Bend: detected from</td><td>cents</td><td>20</td><td>200</td><td>60</td><td>smaller bends detected</td><td>only large bends</td></tr>
+    <tr><td>Bend: plain note under</td><td>cents</td><td>5</td><td>100</td><td>30</td><td>fewer notes called plain</td><td>more notes called plain</td></tr>
+    <tr><td>Bend: shortest note</td><td>ms</td><td>50</td><td>1000</td><td>200</td><td>shorter notes judged</td><td>only longer notes judged</td></tr>
+    <tr><td>Bend: pitch heard for</td><td>%</td><td>20</td><td>100</td><td>60</td><td>judged on less</td><td>judged only on clean notes</td></tr>
+    <tr><td>Bend: smallest written move</td><td>cents</td><td>5</td><td>100</td><td>25</td><td>tiny bends judged</td><td>small bends not judged</td></tr>
+    </table>
+    <h2 id="technique-2">Advanced: Techniques, written bend</h2>
+    <p>The thresholds of the technique detectors (bend, slide, vibrato, hammer-on and pull-off) and of the pitch readings they use. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Bend: on target within</td><td>cents</td><td>5</td><td>100</td><td>30</td><td>stricter</td><td>more lenient</td></tr>
+    <tr><td>Bend: on target within a share</td><td>%</td><td>0</td><td>50</td><td>15</td><td>stricter on large bends</td><td>more lenient on large bends</td></tr>
+    <tr><td>Bend: under target, uncertain from</td><td>%</td><td>10</td><td>100</td><td>50</td><td>more often uncertain</td><td>more often not made</td></tr>
+    <tr><td>Bend: pre-bend start within</td><td>cents</td><td>5</td><td>150</td><td>40</td><td>stricter</td><td>more lenient</td></tr>
+    <tr><td>Bend: start and end read over</td><td>hops</td><td>1</td><td>40</td><td>8</td><td>more sensitive to the first and last moments</td><td>steadier, less precise</td></tr>
+    </table>
+    <h2 id="technique-3">Advanced: Techniques, slide</h2>
+    <p>The thresholds of the technique detectors (bend, slide, vibrato, hammer-on and pull-off) and of the pitch readings they use. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Slide: detected from</td><td>cents</td><td>30</td><td>300</td><td>100</td><td>shorter slides detected</td><td>only long slides</td></tr>
+    <tr><td>Slide: plain note under</td><td>cents</td><td>5</td><td>150</td><td>40</td><td>fewer notes called plain</td><td>more notes called plain</td></tr>
+    <tr><td>Slide: one direction for</td><td>%</td><td>30</td><td>100</td><td>75</td><td>more lenient</td><td>only clean glides</td></tr>
+    <tr><td>Slide: moving steps needed</td><td>hops</td><td>1</td><td>30</td><td>6</td><td>a jump may count</td><td>only slow glides</td></tr>
+    <tr><td>Slide: shortest note</td><td>ms</td><td>50</td><td>1000</td><td>150</td><td>shorter notes judged</td><td>only longer notes judged</td></tr>
+    <tr><td>Slide: pitch heard for</td><td>%</td><td>20</td><td>100</td><td>50</td><td>judged on less</td><td>judged only on clean notes</td></tr>
+    </table>
+    <h2 id="technique-4">Advanced: Techniques, vibrato</h2>
+    <p>The thresholds of the technique detectors (bend, slide, vibrato, hammer-on and pull-off) and of the pitch readings they use. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Vibrato: detected from depth</td><td>cents</td><td>5</td><td>100</td><td>25</td><td>shallower vibratos detected</td><td>only wide vibratos</td></tr>
+    <tr><td>Vibrato: plain note under</td><td>cents</td><td>1</td><td>50</td><td>10</td><td>fewer notes called plain</td><td>more notes called plain</td></tr>
+    <tr><td>Vibrato: slowest rate</td><td>Hz</td><td>0.5</td><td>6</td><td>2.5</td><td>slow wobbles count</td><td>only quick vibratos</td></tr>
+    <tr><td>Vibrato: fastest rate</td><td>Hz</td><td>6.5</td><td>20</td><td>9</td><td>only moderate vibratos</td><td>fast wobbles count</td></tr>
+    <tr><td>Vibrato: shortest note</td><td>ms</td><td>100</td><td>2000</td><td>350</td><td>shorter notes judged</td><td>only longer notes judged</td></tr>
+    <tr><td>Vibrato: pitch heard for</td><td>%</td><td>20</td><td>100</td><td>70</td><td>judged on less</td><td>judged only on clean notes</td></tr>
+    </table>
+    <h2 id="technique-5">Advanced: Techniques, legato and pitch</h2>
+    <p>The thresholds of the technique detectors (bend, slide, vibrato, hammer-on and pull-off) and of the pitch readings they use. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Legato: start looked at</td><td>ms</td><td>30</td><td>500</td><td>100</td><td>only the very start</td><td>a longer start</td></tr>
+    <tr><td>Legato: picked above a rise of</td><td>dB</td><td>2</td><td>20</td><td>6</td><td>more notes called picked</td><td>fewer notes called picked</td></tr>
+    <tr><td>Legato: legato under a rise of</td><td>dB</td><td>0</td><td>10</td><td>3</td><td>stricter</td><td>more lenient</td></tr>
+    <tr><td>Techniques: pitch confidence</td><td>%</td><td>50</td><td>100</td><td>80</td><td>more readings used, less clean</td><td>fewer readings, cleaner</td></tr>
+    <tr><td>Techniques: stray pitch beyond</td><td>cents</td><td>100</td><td>1200</td><td>400</td><td>more readings set aside</td><td>more strays kept</td></tr>
+    <tr><td>Techniques: readings needed</td><td>hops</td><td>2</td><td>40</td><td>8</td><td>short notes measured</td><td>only longer notes</td></tr>
+    </table>
+    <h2 id="calibration-1">Advanced: Delay calibration, notes</h2>
+    <p>The calibrations and the input checks: which notes a delay calibration keeps and how it judges them, when a profile is kept, how the room's noise is named, how sounds are counted, the level check, and the weak-input warning. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Calibration: note before its click</td><td>ms</td><td>50</td><td>1000</td><td>250</td><td>an early note is lost</td><td>an early note counts</td></tr>
+    <tr><td>Calibration: note after its click</td><td>ms</td><td>200</td><td>2000</td><td>700</td><td>a slow route is not measured</td><td>a very slow route is measured</td></tr>
+    <tr><td>Calibration: pitch awaited for</td><td>ms</td><td>5</td><td>200</td><td>25</td><td>stricter</td><td>a slow pitch still counts</td></tr>
+    <tr><td>Calibration: pitch begun before</td><td>ms</td><td>0</td><td>200</td><td>30</td><td>stricter</td><td>a ringing note may count</td></tr>
+    <tr><td>Calibration: same pitch within</td><td>semitones</td><td>0.1</td><td>2</td><td>0.5</td><td>a small change is a new note</td><td>a large change is the same sound</td></tr>
+    <tr><td>Calibration: pitch confidence</td><td>%</td><td>50</td><td>100</td><td>80</td><td>more lenient</td><td>stricter</td></tr>
+    <tr><td>Calibration: lowest pitch</td><td>Hz</td><td>40</td><td>200</td><td>70</td><td>low notes count</td><td>only higher notes</td></tr>
+    </table>
+    <h2 id="calibration-2">Advanced: Delay calibration, result</h2>
+    <p>The calibrations and the input checks: which notes a delay calibration keeps and how it judges them, when a profile is kept, how the room's noise is named, how sounds are counted, the level check, and the weak-input warning. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Calibration: highest pitch</td><td>Hz</td><td>500</td><td>4000</td><td>1400</td><td>only lower notes</td><td>high notes count</td></tr>
+    <tr><td>Calibration: notes needed</td><td></td><td>2</td><td>8</td><td>5</td><td>kept from fewer notes</td><td>needs almost every note</td></tr>
+    <tr><td>Calibration: stray note beyond</td><td>×</td><td>1</td><td>6</td><td>3</td><td>more notes set aside</td><td>fewer notes set aside</td></tr>
+    <tr><td>Calibration: never set aside within</td><td>ms</td><td>5</td><td>200</td><td>40</td><td>a steady player may lose notes</td><td>more notes kept</td></tr>
+    <tr><td>Calibration: unstable above</td><td>ms</td><td>10</td><td>300</td><td>60</td><td>more often unstable</td><td>kept more often</td></tr>
+    <tr><td>Recognition rate kept</td><td>%</td><td>10</td><td>100</td><td>60</td><td>more profiles kept</td><td>only very good profiles</td></tr>
+    </table>
+    <h2 id="calibration-3">Advanced: Input calibration</h2>
+    <p>The calibrations and the input checks: which notes a delay calibration keeps and how it judges them, when a profile is kept, how the room's noise is named, how sounds are counted, the level check, and the weak-input warning. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Calibration: calm below</td><td>dBFS</td><td>-90</td><td>-46</td><td>-60</td><td>fewer rooms called calm</td><td>more rooms called calm</td></tr>
+    <tr><td>Calibration: loud above</td><td>dBFS</td><td>-59</td><td>-20</td><td>-45</td><td>more rooms called loud</td><td>fewer rooms called loud</td></tr>
+    <tr><td>Calibration: one sound within</td><td>ms</td><td>50</td><td>1000</td><td>250</td><td>a strum may count as several</td><td>close notes count as one</td></tr>
+    <tr><td>Calibration: sound cut before</td><td>ms</td><td>0</td><td>500</td><td>150</td><td>the very start may be cut</td><td>more of the start kept</td></tr>
+    </table>
+    <h2 id="level-check">Advanced: Level check</h2>
+    <p>The calibrations and the input checks: which notes a delay calibration keeps and how it judges them, when a profile is kept, how the room's noise is named, how sounds are counted, the level check, and the weak-input warning. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Level check: playing confidence</td><td>%</td><td>50</td><td>100</td><td>80</td><td>more counted as playing</td><td>only clear playing</td></tr>
+    <tr><td>Level check: playing needed</td><td>ms</td><td>100</td><td>3000</td><td>500</td><td>concludes sooner</td><td>surer, slower</td></tr>
+    <tr><td>Level check: too loud from</td><td>%</td><td>1</td><td>50</td><td>10</td><td>warns sooner</td><td>warns only on much saturation</td></tr>
+    </table>
+    <h2 id="input-quality">Advanced: Weak input</h2>
+    <p>The calibrations and the input checks: which notes a delay calibration keeps and how it judges them, when a profile is kept, how the room's noise is named, how sounds are counted, the level check, and the weak-input warning. Taken into account at the next start. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Weak input: attacks looked at</td><td></td><td>1</td><td>10</td><td>3</td><td>told sooner</td><td>steadier, told later</td></tr>
+    <tr><td>Weak input: attacks kept for</td><td>ms</td><td>1000</td><td>30000</td><td>8000</td><td>only recent playing</td><td>slow playing counts</td></tr>
+    <tr><td>Weak input: attack level over</td><td>ms</td><td>50</td><td>1000</td><td>200</td><td>only the very attack</td><td>a slower swell counts</td></tr>
+    </table>
     <h2 id="limits">Limits</h2><p>Recognition is based on pitch only: it cannot tell which string or fret was used. The techniques written in the score (hammer-on, pull-off, slide, bend, vibrato) are listened for, but none is verified yet: practice shows them as "cannot be checked yet" instead of guessing. Legato notes (hammer-on, pull-off, slide) have no pick attack and may have to be picked again or skipped; accepting them without an attack and rejecting extra chord strings are proposals still under review, so they are not offered as settings.</p>
-    <h2 id="calibration">Calibrating the recognition for one input</h2><p>The <strong>Input</strong> tab of the practice window shows a coloured dot next to the input chooser. <strong>Grey</strong>: no input selected. <strong>Orange</strong>: this input was never calibrated (or the default was chosen), the default settings are used. <strong>Green</strong>: calibrated, at least 60 % of the sounds of the calibration piece recognised. <strong>Red</strong>: calibrated, but under 60 %. A sentence next to the dot warns when the noise reduction or the input gain is not what it was at the recording; the profile stays in use. A profile made at another sample rate is not applied (orange, with the reason).</p><p><strong>Calibrate the recognition</strong> opens one window that guides you: tuning, advice, then a short piece to play once, with no tempo. The window listens by itself and counts the sounds without saying which one it heard; it stops when all were heard. You are shown the measures of the recording (sounds heard, highest level, background noise, clipping) and asked whether it is good enough. The best settings for this input are then searched on the recording, at most about two minutes, and the window blocks the application until it is done. The result shows the recognition rate with the default settings and with the settings found, for notes, chords and in total.</p><p>If the recording cannot be used, or the settings found are not better than the default, or better but under 60 %, the application never decides for you: you can record again, use the default configuration, or stop. Closing the window, at any step, asks "Stop the calibration?"; nothing is saved then. <strong>Forget the calibration</strong> deletes the profile of the selected input only, after a confirmation.</p><p>The window shows a <strong>picture of the tablature of the next sound to play</strong>: six lines (the thinnest string on top) with the fret number on the string of each note, 0 for an open string, a chord having its numbers one above the other. It changes each time a sound is heard. At the question about the quality of the recording, a check box <strong>Keep a copy of this recording for diagnosis</strong>, unticked every time, writes the recording as a WAV file in the folder <code>tuxguitar-calibration-takes</code> of your home folder, only when you tick it; the window shows where. The application never reads it back and never sends it anywhere.</p><p>The profile applies everywhere the recognition is used (tuner window, Follow, Arcade, Wait), except the tuner's own parameters. <strong>No audio is kept</strong> unless you tick the diagnostic copy: the recording lives in memory during the calibration and is dropped at the end or when you stop. The result is measured on one recording: confirm it by playing.</p>
+    <h2 id="calibration">Calibrating the recognition for one input</h2><p>The <strong>Input</strong> tab of the practice window shows a coloured dot next to the input chooser. <strong>Grey</strong>: no input selected. <strong>Orange</strong>: this input was never calibrated (or the default was chosen), the default settings are used. <strong>Green</strong>: calibrated, at least 60 % of the sounds of the calibration piece recognised (the recommended rate; it is an expert setting of the Advanced part, "Recognition rate kept"). <strong>Red</strong>: calibrated, but under 60 %. A sentence next to the dot warns when the noise reduction or the input gain is not what it was at the recording; the profile stays in use. A profile made at another sample rate is not applied (orange, with the reason).</p><p><strong>Calibrate the recognition</strong> opens one window that guides you: tuning, advice, then a short piece to play once, with no tempo. The window listens by itself and counts the sounds without saying which one it heard; it stops when all were heard. You are shown the measures of the recording (sounds heard, highest level, background noise, clipping) and asked whether it is good enough. The best settings for this input are then searched on the recording, at most about two minutes, and the window blocks the application until it is done. The result shows the recognition rate with the default settings and with the settings found, for notes, chords and in total.</p><p>If the recording cannot be used, or the settings found are not better than the default, or better but under 60 %, the application never decides for you: you can record again, use the default configuration, or stop. Closing the window, at any step, asks "Stop the calibration?"; nothing is saved then. <strong>Forget the calibration</strong> deletes the profile of the selected input only, after a confirmation.</p><p>The window shows a <strong>picture of the tablature of the next sound to play</strong>: six lines (the thinnest string on top) with the fret number on the string of each note, 0 for an open string, a chord having its numbers one above the other. It changes each time a sound is heard. At the question about the quality of the recording, a check box <strong>Keep a copy of this recording for diagnosis</strong>, unticked every time, writes the recording as a WAV file in the folder <code>tuxguitar-calibration-takes</code> of your home folder, only when you tick it; the window shows where. The application never reads it back and never sends it anywhere.</p><p>The profile applies everywhere the recognition is used (tuner window, Follow, Arcade, Wait), except the tuner's own parameters. <strong>No audio is kept</strong> unless you tick the diagnostic copy: the recording lives in memory during the calibration and is dropped at the end or when you stop. The result is measured on one recording: confirm it by playing.</p>
     </section>
   <script src="init.js"></script>
 </body>

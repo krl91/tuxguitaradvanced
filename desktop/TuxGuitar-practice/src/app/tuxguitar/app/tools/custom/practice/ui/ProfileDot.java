@@ -41,6 +41,11 @@ final class ProfileDot {
 
 		/** Opens the calibration of the selected device. */
 		void calibrate();
+
+		/** The rate a kept profile needs to be green, in percent (spec 026, {@code recognition.calibration.recognition-rate}). */
+		default int thresholdPercent() {
+			return app.tuxguitar.audio.engine.calibration.RecognitionRate.THRESHOLD_PERCENT;
+		}
 	}
 
 	private final CalibrationWindow.Texts texts;
@@ -139,7 +144,7 @@ final class ProfileDot {
 		DeviceKey key = this.host.selectedKey();
 		RecognitionProfile profile = key == null ? null : this.library.get(key);
 		int rate = this.host.sampleRate();
-		this.state = ProfileState.of(key != null, profile, rate);
+		this.state = ProfileState.of(key != null, profile, rate, this.host.thresholdPercent());
 		switch (this.state) {
 		case NONE:
 			show(this.grey, t("dot.none"));

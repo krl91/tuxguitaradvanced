@@ -13,17 +13,28 @@ public final class ClockUncertainty {
 	public static final double UNSTABLE_SPREAD_MILLIS = 80.0;
 
 	private final double captureLagSpreadMillis;
+	private final double unstableSpreadMillis;
 
 	public ClockUncertainty(double captureLagSpreadMillis) {
+		this(captureLagSpreadMillis, UNSTABLE_SPREAD_MILLIS);
+	}
+
+	/** @param unstableSpreadMillis the spread from which the route is called unstable (spec 026, {@code recognition.timing.clock-spread}) */
+	public ClockUncertainty(double captureLagSpreadMillis, double unstableSpreadMillis) {
 		if (Double.isNaN(captureLagSpreadMillis) || captureLagSpreadMillis < 0.0) {
 			throw new IllegalArgumentException("a spread cannot be negative: " + captureLagSpreadMillis);
 		}
 		this.captureLagSpreadMillis = captureLagSpreadMillis;
+		this.unstableSpreadMillis = unstableSpreadMillis;
 	}
 
 	/** A measured spread, or none yet (NaN, as when the input has just been opened): then nothing is known, so the route is not called unstable. */
 	public static ClockUncertainty ofMeasurement(double captureLagSpreadMillis) {
-		return new ClockUncertainty(Double.isNaN(captureLagSpreadMillis) ? 0.0 : captureLagSpreadMillis);
+		return ofMeasurement(captureLagSpreadMillis, UNSTABLE_SPREAD_MILLIS);
+	}
+
+	public static ClockUncertainty ofMeasurement(double captureLagSpreadMillis, double unstableSpreadMillis) {
+		return new ClockUncertainty(Double.isNaN(captureLagSpreadMillis) ? 0.0 : captureLagSpreadMillis, unstableSpreadMillis);
 	}
 
 	public static ClockUncertainty of(CaptureClock clock) {
@@ -35,6 +46,6 @@ public final class ClockUncertainty {
 	}
 
 	public boolean isUnstable() {
-		return this.captureLagSpreadMillis >= UNSTABLE_SPREAD_MILLIS;
+		return this.captureLagSpreadMillis >= this.unstableSpreadMillis;
 	}
 }

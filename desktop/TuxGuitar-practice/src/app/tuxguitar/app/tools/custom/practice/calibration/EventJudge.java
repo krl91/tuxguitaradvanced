@@ -71,7 +71,8 @@ public final class EventJudge {
 		PracticeParameters parameters = PracticeParameters.of(settings);
 		PracticeSession session = new PracticeSession(selection, only, parameters.noteInterpreter(), parameters.tolerance(), parameters.stabilityNanos(),
 				parameters.articulationLatencyNanos(), new ChordMatcher(parameters.chordParameters()), null);
-		session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults(), settings));
+		session.setWaitParameters(parameters.waitParameters());
+		session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.of(settings), settings));
 		session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		session.onCommand(PracticeCommand.START);
 		for (AnalysisFrame frame : frames) {

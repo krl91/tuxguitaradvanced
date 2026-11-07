@@ -36,6 +36,32 @@ public final class CalibrationTaps {
 		OUT_OF_RANGE
 	}
 
+	/** The evaluation's values (spec 026, {@code recognition.calibration.*}); the defaults are the constants above. Immutable. */
+	public static final class Parameters {
+		public final int minUsable;
+		public final double outlierDeviations;
+		public final double outlierFloorMillis;
+		public final double unstableSpreadMillis;
+
+		public Parameters(int minUsable, double outlierDeviations, double outlierFloorMillis, double unstableSpreadMillis) {
+			this.minUsable = minUsable;
+			this.outlierDeviations = outlierDeviations;
+			this.outlierFloorMillis = outlierFloorMillis;
+			this.unstableSpreadMillis = unstableSpreadMillis;
+		}
+
+		public static Parameters defaults() {
+			return of(app.tuxguitar.audio.engine.settings.RecognitionSettings.defaults());
+		}
+
+		public static Parameters of(app.tuxguitar.audio.engine.settings.RecognitionSettings s) {
+			return new Parameters((int) s.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_MIN_USABLE),
+					s.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_OUTLIER_DEVIATIONS),
+					s.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_OUTLIER_FLOOR),
+					s.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_UNSTABLE_SPREAD));
+		}
+	}
+
 	public static final class Result {
 		private final Status status;
 		private final double medianMillis;
@@ -75,11 +101,27 @@ public final class CalibrationTaps {
 
 		/** The compensation to keep, or none when the calibration failed. */
 		public LatencyCompensation compensation() {
-			return this.status == Status.CALIBRATED ? LatencyCompensation.calibrated(this.medianMillis) : LatencyCompensation.none();
+			return this.status == Status.CALIBRATED ? LatencyCompensation.calibrated(this.medianMillis, LatencyCompensation.MAX_LIMIT_MILLIS) : LatencyCompensation.none();
 		}
 	}
 
 	private final List<Double> offsetsMillis = new ArrayList<Double>();
+	private final double latencyLimitMillis;
+	private final Parameters parameters;
+
+	public CalibrationTaps() {
+		this(LatencyCompensation.LIMIT_MILLIS);
+	}
+
+	/** @param latencyLimitMillis a median beyond it is out of range (spec 026, {@code recognition.clock.latency-limit}) */
+	public CalibrationTaps(double latencyLimitMillis) {
+		this(latencyLimitMillis, Parameters.defaults());
+	}
+
+	public CalibrationTaps(double latencyLimitMillis, Parameters parameters) {
+		this.latencyLimitMillis = latencyLimitMillis;
+		this.parameters = parameters;
+	}
 
 	/** A note played along a click, as its offset to the click in milliseconds. */
 	public void add(double offsetMillis) {
@@ -93,12 +135,20 @@ public final class CalibrationTaps {
 	}
 
 	public Result evaluate() {
-		return evaluate(this.offsetsMillis, CLICKS);
+		return evaluate(this.offsetsMillis, CLICKS, this.latencyLimitMillis, this.parameters);
 	}
 
 	/** @param total how many clicks were played, to say how many notes were missing */
 	public static Result evaluate(List<Double> offsets, int total) {
-		if (offsets.size() < MIN_USABLE) {
+		return evaluate(offsets, total, LatencyCompensation.LIMIT_MILLIS);
+	}
+
+	public static Result evaluate(List<Double> offsets, int total, double latencyLimitMillis) {
+		return evaluate(offsets, total, latencyLimitMillis, Parameters.defaults());
+	}
+
+	public static Result evaluate(List<Double> offsets, int total, double latencyLimitMillis, Parameters parameters) {
+		if (offsets.size() < parameters.minUsable) {
 			return new Result(Status.TOO_FEW, 0.0, 0.0, offsets.size(), total);
 		}
 		double median = median(offsets);
@@ -107,14 +157,14 @@ public final class CalibrationTaps {
 			deviations.add(Math.abs(offset - median));
 		}
 		// 1.4826 turns the median absolute deviation into the standard deviation of a normal spread
-		double limit = Math.max(OUTLIER_FLOOR_MILLIS, OUTLIER_DEVIATIONS * 1.4826 * median(deviations));
+		double limit = Math.max(parameters.outlierFloorMillis, parameters.outlierDeviations * 1.4826 * median(deviations));
 		List<Double> kept = new ArrayList<Double>();
 		for (double offset : offsets) {
 			if (Math.abs(offset - median) <= limit) {
 				kept.add(offset);
 			}
 		}
-		if (kept.size() < MIN_USABLE) {
+		if (kept.size() < parameters.minUsable) {
 			return new Result(Status.TOO_FEW, 0.0, 0.0, kept.size(), total);
 		}
 		double keptMedian = median(kept);
@@ -128,10 +178,10 @@ public final class CalibrationTaps {
 			variance += (offset - mean) * (offset - mean);
 		}
 		double spread = Math.sqrt(variance / kept.size());
-		if (spread > UNSTABLE_SPREAD_MILLIS) {
+		if (spread > parameters.unstableSpreadMillis) {
 			return new Result(Status.UNSTABLE, keptMedian, spread, kept.size(), total);
 		}
-		if (Math.abs(keptMedian) > LatencyCompensation.LIMIT_MILLIS) {
+		if (Math.abs(keptMedian) > latencyLimitMillis) {
 			return new Result(Status.OUT_OF_RANGE, keptMedian, spread, kept.size(), total);
 		}
 		return new Result(Status.CALIBRATED, keptMedian, spread, kept.size(), total);

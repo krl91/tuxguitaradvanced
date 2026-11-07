@@ -143,7 +143,7 @@ public final class FollowStarter {
 			PracticeParameters parameters, TechniqueJudge judge, java.util.function.Supplier<PolyphonicAcceptance> polyphonic, Environment environment,
 			Consumer<FollowSession.Snapshot> uiSink, Executor uiExecutor, Consumer<FollowRun.Ended> endListener, FollowRun.EventsFactory eventsFactory,
 			Runnable restart) {
-		final TimingTolerance tolerance = TimingTolerance.ofMillis(windowMillis);
+		final TimingTolerance tolerance = TimingTolerance.ofMillis(windowMillis, parameters.referenceBeatMillis());
 		return prepare(context, song, full, trackNumber, settings, tolerance, windowMillis, -1, null, null, parameters, judge, polyphonic, environment, uiSink,
 				uiExecutor, endListener, eventsFactory, restart);
 	}
@@ -160,8 +160,9 @@ public final class FollowStarter {
 			Runnable restart) {
 		int playTimeMillis = settings.getPlayTimeMillis();
 		RecognitionSettings recognition = FollowLeniency.apply(position, effective);
-		return prepare(context, song, full, trackNumber, settings, new PlayTimeWindow(playTimeMillis), settings.getWindowMillis(), playTimeMillis, position,
-				recognition, PracticeParameters.of(recognition), judge, polyphonic, environment, uiSink, uiExecutor, endListener, eventsFactory, restart);
+		PracticeParameters parameters = PracticeParameters.of(recognition);
+		return prepare(context, song, full, trackNumber, settings, parameters.playTimeWindow(playTimeMillis), settings.getWindowMillis(), playTimeMillis, position,
+				recognition, parameters, judge, polyphonic, environment, uiSink, uiExecutor, endListener, eventsFactory, restart);
 	}
 
 	private static Plan prepare(TGContext context, TGSong song, PracticeSequence full, int trackNumber, FollowSettings settings, final WindowPolicy policy,
@@ -174,10 +175,11 @@ public final class FollowStarter {
 		final FollowPlayer player = environment.player();
 		final TempoClock clock = player.clock();
 		FollowSession session = new FollowSession(sequence, timeline, FIRST_TICK, clock, environment::wallNanosOf,
-				() -> new TimingContext(policy, environment.calibrations().forRoute(environment.route()), ClockUncertainty.ofMeasurement(environment.lagSpreadMillis()),
+				() -> new TimingContext(policy, environment.calibrations().forRoute(environment.route()), ClockUncertainty.ofMeasurement(environment.lagSpreadMillis(), parameters.unstableSpreadMillis()),
 						environment.captureReady(), clock.isReady() && !clock.isStalled(clock.nowNanos())),
 				parameters.noteInterpreter(), parameters.tolerance(), new ChordMatcher(parameters.chordParameters()), parameters.stabilityNanos(),
 				parameters.articulationLatencyNanos());
+		session.setFollowParameters(parameters.followParameters());
 		session.setAssessment(environment.assessment());
 		session.setTrackAccepted(true);
 		if (judge != null) {

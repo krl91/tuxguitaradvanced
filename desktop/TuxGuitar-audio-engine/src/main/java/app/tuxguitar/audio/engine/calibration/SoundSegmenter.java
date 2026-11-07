@@ -72,12 +72,17 @@ public final class SoundSegmenter {
 	}
 
 	public static Result segment(float[] samples, int sampleRate, int expectedSounds) {
+		return segment(samples, sampleRate, expectedSounds, SoundDetection.REFRACTORY_MILLIS, SoundDetection.SEGMENT_LEAD_MILLIS);
+	}
+
+	/** @param refractoryMillis two sounds closer than this are one; @param leadMillis a segment starts this long before its onset (spec 026) */
+	public static Result segment(float[] samples, int sampleRate, int expectedSounds, int refractoryMillis, int leadMillis) {
 		RecognitionSettings defaults = RecognitionSettings.defaults();
 		double levelMinimum = defaults.get(RecognitionParameters.INPUT_LEVEL_MIN);
 		List<AnalysisFrame> frames = OfflineAnalysis.analyze(samples, sampleRate, defaults, false, null);
 		boolean clipped = false;
 		List<Long> onsets = new ArrayList<Long>();
-		long refractory = (long) SoundDetection.REFRACTORY_MILLIS * 1_000_000L;
+		long refractory = (long) refractoryMillis * 1_000_000L;
 		long lastOnset = Long.MIN_VALUE;
 		for (AnalysisFrame frame : frames) {
 			if (frame.getLevelState() == AnalysisFrame.LevelState.CLIPPING) {
@@ -103,7 +108,7 @@ public final class SoundSegmenter {
 		List<Integer> starts = new ArrayList<Integer>();
 		for (Long onset : onsets) {
 			int end = (int) Math.min(samples.length, onset.longValue() * sampleRate / 1_000_000_000L);
-			int start = Math.max(0, end - (int) ((long) SoundDetection.SEGMENT_LEAD_MILLIS * sampleRate / 1000L));
+			int start = Math.max(0, end - (int) ((long) leadMillis * sampleRate / 1000L));
 			if (!starts.isEmpty() && start <= starts.get(starts.size() - 1)) {
 				start = starts.get(starts.size() - 1) + 1;
 			}

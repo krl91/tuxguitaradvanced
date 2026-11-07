@@ -41,17 +41,49 @@ public final class CalibrationRun {
 	public static final long EARLY_WINDOW_NANOS = 250_000_000L;
 	/** ...to this long after it (the delay of a route, a Bluetooth one included, and the learner's reaction). */
 	public static final long LATE_WINDOW_NANOS = 700_000_000L;
-	/**
-	 * An attack must show a pitch within this long of the frame that reports it to be a note. The attack is reported well after its transient, so the
-	 * pitch of a real note is already there: a pitch that comes later is another sound's.
-	 */
-	private static final long PITCH_PATIENCE_NANOS = 25_000_000L;
-	/** The pitched sound must have begun with the attack: a note that was already ringing is not the attack's, a click heard over it is not a note. */
-	private static final long PITCH_BEFORE_ATTACK_NANOS = 30_000_000L;
-	private static final double SAME_PITCH_SEMITONES = 0.5;
-	private static final double MIN_CONFIDENCE = 0.8;
-	private static final double MIN_HZ = 70.0;
-	private static final double MAX_HZ = 1400.0;
+
+	/** The run's values (spec 026, {@code recognition.calibration.*}); the defaults are the constants above. Immutable. */
+	public static final class Parameters {
+		public final long earlyWindowNanos;
+		public final long lateWindowNanos;
+		/**
+		 * An attack must show a pitch within this long of the frame that reports it to be a note. The attack is reported well after its transient, so
+		 * the pitch of a real note is already there: a pitch that comes later is another sound's.
+		 */
+		public final long pitchPatienceNanos;
+		/** The pitched sound must have begun with the attack: a note that was already ringing is not the attack's, a click heard over it is not a note. */
+		public final long pitchBeforeNanos;
+		/** A pitch that moves this much starts a new pitched sound; a pitch counts read with this confidence, from the lowest to the highest frequency. */
+		public final double samePitchSemitones;
+		public final double minConfidence;
+		public final double minHz;
+		public final double maxHz;
+		public final CalibrationTaps.Parameters taps;
+
+		private Parameters(app.tuxguitar.audio.engine.settings.RecognitionSettings s) {
+			this.earlyWindowNanos = millis(s, app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_EARLY_WINDOW);
+			this.lateWindowNanos = millis(s, app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_LATE_WINDOW);
+			this.pitchPatienceNanos = millis(s, app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_PITCH_PATIENCE);
+			this.pitchBeforeNanos = millis(s, app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_PITCH_BEFORE);
+			this.samePitchSemitones = s.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_SAME_PITCH);
+			this.minConfidence = s.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_MIN_CONFIDENCE);
+			this.minHz = s.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_MIN_FREQUENCY);
+			this.maxHz = s.get(app.tuxguitar.audio.engine.settings.RecognitionParameters.CALIBRATION_MAX_FREQUENCY);
+			this.taps = CalibrationTaps.Parameters.of(s);
+		}
+
+		public static Parameters defaults() {
+			return of(app.tuxguitar.audio.engine.settings.RecognitionSettings.defaults());
+		}
+
+		public static Parameters of(app.tuxguitar.audio.engine.settings.RecognitionSettings settings) {
+			return new Parameters(settings);
+		}
+
+		private static long millis(app.tuxguitar.audio.engine.settings.RecognitionSettings s, app.tuxguitar.audio.engine.settings.RecognitionParameter.Number p) {
+			return Math.round(s.get(p) * 1_000_000.0);
+		}
+	}
 
 	private static final class Candidate {
 		final long transientWall;
@@ -77,6 +109,8 @@ public final class CalibrationRun {
 	private long firstClickAt = Long.MIN_VALUE;
 	private volatile int played;
 	private volatile CalibrationTaps.Result result;
+	private double latencyLimitMillis = LatencyCompensation.LIMIT_MILLIS;
+	private Parameters parameters = Parameters.defaults();
 
 	/** @param articulationLatencyNanos how long after the transient the onset of a frame is reported */
 	public CalibrationRun(ClickPlayer clicks, long articulationLatencyNanos) {
@@ -91,6 +125,16 @@ public final class CalibrationRun {
 		this.clickWall = new long[clickCount];
 		this.tapOffsetMillis = new double[clickCount];
 		java.util.Arrays.fill(this.tapOffsetMillis, Double.NaN);
+	}
+
+	/** A median beyond this is out of range (spec 026, {@code recognition.clock.latency-limit}); set before the run starts. */
+	public void setLatencyLimitMillis(double limitMillis) {
+		this.latencyLimitMillis = limitMillis;
+	}
+
+	/** The run's values (spec 026); set before the run starts. */
+	public synchronized void setParameters(Parameters parameters) {
+		this.parameters = parameters;
 	}
 
 	public State state() {
@@ -173,12 +217,12 @@ public final class CalibrationRun {
 			this.played++;
 		}
 		if (frame.isOnset()) {
-			this.candidates.add(new Candidate(frameWall - this.articulationLatencyNanos, frameWall + PITCH_PATIENCE_NANOS));
+			this.candidates.add(new Candidate(frameWall - this.articulationLatencyNanos, frameWall + this.parameters.pitchPatienceNanos));
 		}
-		boolean pitched = frame.getConfidence() >= MIN_CONFIDENCE && frame.getF0Hz() >= MIN_HZ && frame.getF0Hz() <= MAX_HZ;
+		boolean pitched = frame.getConfidence() >= this.parameters.minConfidence && frame.getF0Hz() >= this.parameters.minHz && frame.getF0Hz() <= this.parameters.maxHz;
 		if (pitched) {
 			double midi = 69.0 + 12.0 * Math.log(frame.getF0Hz() / 440.0) / Math.log(2.0);
-			if (this.pitchRunStart == Long.MIN_VALUE || Math.abs(midi - this.pitchRunMidi) >= SAME_PITCH_SEMITONES) {
+			if (this.pitchRunStart == Long.MIN_VALUE || Math.abs(midi - this.pitchRunMidi) >= this.parameters.samePitchSemitones) {
 				this.pitchRunStart = frameWall;
 			}
 			this.pitchRunMidi = midi;
@@ -186,15 +230,15 @@ public final class CalibrationRun {
 			this.pitchRunStart = Long.MIN_VALUE;
 		}
 		for (Candidate candidate : new ArrayList<Candidate>(this.candidates)) {
-			if (pitched && this.pitchRunStart >= candidate.transientWall - PITCH_BEFORE_ATTACK_NANOS) {
+			if (pitched && this.pitchRunStart >= candidate.transientWall - this.parameters.pitchBeforeNanos) {
 				this.candidates.remove(candidate);
 				assign(candidate.transientWall);
 			} else if (frameWall >= candidate.deadline) {
 				this.candidates.remove(candidate);
 			}
 		}
-		if (this.played == this.clickCount && frameWall > this.clickWall[this.clickCount - 1] + LATE_WINDOW_NANOS + this.articulationLatencyNanos) {
-			CalibrationTaps taps = new CalibrationTaps();
+		if (this.played == this.clickCount && frameWall > this.clickWall[this.clickCount - 1] + this.parameters.lateWindowNanos + this.articulationLatencyNanos) {
+			CalibrationTaps taps = new CalibrationTaps(this.latencyLimitMillis, this.parameters.taps);
 			for (double offset : this.tapOffsetMillis) {
 				if (!Double.isNaN(offset)) {
 					taps.add(offset);
@@ -213,7 +257,7 @@ public final class CalibrationRun {
 		long bestDistance = Long.MAX_VALUE;
 		for (int k = 0; k < this.played; k++) {
 			long offset = transientWall - this.clickWall[k];
-			if (offset >= -EARLY_WINDOW_NANOS && offset <= LATE_WINDOW_NANOS && Math.abs(offset) < bestDistance) {
+			if (offset >= -this.parameters.earlyWindowNanos && offset <= this.parameters.lateWindowNanos && Math.abs(offset) < bestDistance) {
 				best = k;
 				bestDistance = Math.abs(offset);
 			}

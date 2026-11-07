@@ -12,12 +12,17 @@ public enum ProfileState {
 	RED;
 
 	public static ProfileState of(boolean inputSelected, RecognitionProfile profile, int captureSampleRate) {
+		return of(inputSelected, profile, captureSampleRate, RecognitionRate.THRESHOLD_PERCENT);
+	}
+
+	/** @param thresholdPercent the rate that makes a kept profile green (spec 026, {@code recognition.calibration.recognition-rate}) */
+	public static ProfileState of(boolean inputSelected, RecognitionProfile profile, int captureSampleRate, int thresholdPercent) {
 		if (!inputSelected) {
 			return NONE;
 		}
 		if (profile == null || profile.getOrigin() == RecognitionProfile.Origin.DEFAULT_CHOSEN || !profile.appliesAt(captureSampleRate)) {
 			return ORANGE;
 		}
-		return profile.getFoundRate().meetsThreshold() ? GREEN : RED;
+		return profile.getFoundRate().meetsThreshold(thresholdPercent) ? GREEN : RED;
 	}
 }

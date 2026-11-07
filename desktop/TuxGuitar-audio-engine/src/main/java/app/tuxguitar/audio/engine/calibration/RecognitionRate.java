@@ -63,7 +63,12 @@ public final class RecognitionRate {
 
 	/** At least 60 % of the events, counted in whole numbers (exactly 60 % counts). */
 	public boolean meetsThreshold() {
-		return getTotal() > 0 && getAccepted() * 100 >= THRESHOLD_PERCENT * getTotal();
+		return meetsThreshold(THRESHOLD_PERCENT);
+	}
+
+	/** @param thresholdPercent the rate a profile needs to be kept (spec 026, {@code recognition.calibration.recognition-rate}) */
+	public boolean meetsThreshold(int thresholdPercent) {
+		return getTotal() > 0 && getAccepted() * 100 >= thresholdPercent * getTotal();
 	}
 
 	@Override

@@ -18,31 +18,51 @@ public final class PlayTimeWindow implements WindowPolicy {
 
 	private final int playTimeMillis;
 	private final long playTimeNanos;
+	private final long advanceNanos;
+	private final long gapNanos;
 
 	public PlayTimeWindow(int playTimeMillis) {
+		this(playTimeMillis, ADVANCE_NANOS, GAP_NANOS);
+	}
+
+	/** @param advanceNanos how long before its red a note may be played; @param gapNanos what is left before the next red (spec 026, {@code recognition.timing.*}) */
+	public PlayTimeWindow(int playTimeMillis, long advanceNanos, long gapNanos) {
 		if (playTimeMillis < MIN_MILLIS || playTimeMillis > MAX_MILLIS) {
 			throw new IllegalArgumentException("a time to play is from " + MIN_MILLIS + " to " + MAX_MILLIS + " ms: " + playTimeMillis);
 		}
+		if (advanceNanos < 0L || gapNanos < 0L) {
+			throw new IllegalArgumentException("an advance and a gap cannot be negative: " + advanceNanos + ", " + gapNanos);
+		}
 		this.playTimeMillis = playTimeMillis;
 		this.playTimeNanos = playTimeMillis * 1_000_000L;
+		this.advanceNanos = advanceNanos;
+		this.gapNanos = gapNanos;
 	}
 
 	public int playTimeMillis() {
 		return this.playTimeMillis;
 	}
 
+	public long advanceNanos() {
+		return this.advanceNanos;
+	}
+
+	public long gapNanos() {
+		return this.gapNanos;
+	}
+
 	/** The late limit of an event whose next event is {@code gapAfterNanos} away. */
 	private long late(long gapAfterNanos) {
-		return gapAfterNanos == Long.MAX_VALUE ? this.playTimeNanos : Math.max(0L, Math.min(this.playTimeNanos, gapAfterNanos - GAP_NANOS));
+		return gapAfterNanos == Long.MAX_VALUE ? this.playTimeNanos : Math.max(0L, Math.min(this.playTimeNanos, gapAfterNanos - this.gapNanos));
 	}
 
 	@Override
 	public TimingTolerance.Window windowFor(long targetNanos, long beatNanos, long gapBeforeNanos, long gapAfterNanos) {
 		long late = late(gapAfterNanos);
-		long early = ADVANCE_NANOS;
+		long early = this.advanceNanos;
 		if (gapBeforeNanos != Long.MAX_VALUE) {
 			long previousLate = late(gapBeforeNanos);
-			early = Math.max(0L, Math.min(ADVANCE_NANOS, gapBeforeNanos - previousLate - 1));
+			early = Math.max(0L, Math.min(this.advanceNanos, gapBeforeNanos - previousLate - 1));
 		}
 		long onTimeTo = targetNanos + Math.min(late, this.playTimeNanos / 2);
 		return new TimingTolerance.Window(targetNanos, targetNanos, onTimeTo, targetNanos - early, targetNanos + late);

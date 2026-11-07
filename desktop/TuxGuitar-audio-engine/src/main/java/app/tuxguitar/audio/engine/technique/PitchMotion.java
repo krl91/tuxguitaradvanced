@@ -29,6 +29,11 @@ final class PitchMotion {
 	final int movingSteps;
 
 	PitchMotion(NoteSegment segment) {
+		this(segment, OUTLIER_CENTS, MIN_VOICED);
+	}
+
+	/** @param outlierCents further than this from the median is discarded; @param minVoiced fewer kept samples cannot be measured (spec 026) */
+	PitchMotion(NoteSegment segment, double outlierCents, int minVoiced) {
 		this.hop = segment.getHopSeconds();
 		int n = segment.size();
 		double[] voicedMidi = new double[n];
@@ -45,12 +50,12 @@ final class PitchMotion {
 		int keptCount = 0;
 		for( int i = 0 ; i < n ; i ++ ) {
 			double cents = (Double.isFinite(segment.midiAt(i)) ? (segment.midiAt(i) - median) * 100.0 : Double.NaN);
-			if( Double.isFinite(cents) && Math.abs(cents) <= OUTLIER_CENTS ) {
+			if( Double.isFinite(cents) && Math.abs(cents) <= outlierCents ) {
 				kept[keptCount ++] = cents;
 			}
 		}
 		this.voiced = keptCount;
-		if( keptCount < MIN_VOICED ) {
+		if( keptCount < minVoiced ) {
 			this.wobbleDepth = 0.0;
 			this.wobbleRate = 0.0;
 			this.drift = 0.0;

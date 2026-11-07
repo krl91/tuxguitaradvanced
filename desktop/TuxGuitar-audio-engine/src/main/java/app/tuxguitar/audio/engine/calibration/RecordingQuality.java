@@ -35,13 +35,26 @@ public final class RecordingQuality {
 	private final double peakDbfs;
 	private final double noiseDbfs;
 	private final boolean clipped;
+	private final double calmBelowDbfs;
+	private final double loudAboveDbfs;
 
 	public RecordingQuality(int heard, int expected, double peakDbfs, double noiseDbfs, boolean clipped) {
+		this(heard, expected, peakDbfs, noiseDbfs, clipped, CALM_BELOW_DBFS, LOUD_ABOVE_DBFS);
+	}
+
+	private RecordingQuality(int heard, int expected, double peakDbfs, double noiseDbfs, boolean clipped, double calmBelowDbfs, double loudAboveDbfs) {
 		this.heard = heard;
 		this.expected = expected;
 		this.peakDbfs = peakDbfs;
 		this.noiseDbfs = noiseDbfs;
 		this.clipped = clipped;
+		this.calmBelowDbfs = calmBelowDbfs;
+		this.loudAboveDbfs = loudAboveDbfs;
+	}
+
+	/** The same measure, its noise word told with other bands (spec 026, {@code recognition.calibration.calm-below}, {@code loud-above}). */
+	public RecordingQuality withNoiseBands(double calmBelowDbfs, double loudAboveDbfs) {
+		return new RecordingQuality(this.heard, this.expected, this.peakDbfs, this.noiseDbfs, this.clipped, calmBelowDbfs, loudAboveDbfs);
 	}
 
 	/** Measures a recording; {@code heard} is the count of the listening mode (or of the segmenter). */
@@ -67,10 +80,14 @@ public final class RecordingQuality {
 	}
 
 	public static NoiseWord wordFor(double noiseDbfs) {
-		if (noiseDbfs < CALM_BELOW_DBFS) {
+		return wordFor(noiseDbfs, CALM_BELOW_DBFS, LOUD_ABOVE_DBFS);
+	}
+
+	public static NoiseWord wordFor(double noiseDbfs, double calmBelowDbfs, double loudAboveDbfs) {
+		if (noiseDbfs < calmBelowDbfs) {
 			return NoiseWord.CALM;
 		}
-		return noiseDbfs <= LOUD_ABOVE_DBFS ? NoiseWord.MEDIUM : NoiseWord.LOUD;
+		return noiseDbfs <= loudAboveDbfs ? NoiseWord.MEDIUM : NoiseWord.LOUD;
 	}
 
 	public int getHeard() {
@@ -92,7 +109,7 @@ public final class RecordingQuality {
 	}
 
 	public NoiseWord getNoiseWord() {
-		return wordFor(this.noiseDbfs);
+		return wordFor(this.noiseDbfs, this.calmBelowDbfs, this.loudAboveDbfs);
 	}
 
 	public boolean isClipped() {

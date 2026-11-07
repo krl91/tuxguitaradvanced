@@ -25,6 +25,8 @@ import app.tuxguitar.audio.engine.input.InputAssessment;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.PitchReading;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
+import app.tuxguitar.audio.engine.settings.RecognitionParameter;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.technique.BendDetector;
 import app.tuxguitar.audio.engine.technique.NoteSegment;
 
@@ -404,30 +406,84 @@ public final class FollowSession {
 		int legatoMidi = Integer.MIN_VALUE;
 	}
 
-	private static final long EVIDENCE_HORIZON_NANOS = 400_000_000L;
-	/** Without any pitch for this long the sound of an attack is over. */
-	private static final long SILENCE_NANOS = 40_000_000L;
-	/** A note that ended before the stability time is accepted when its pitch was held this long. */
-	private static final long SHORT_NOTE_NANOS = 40_000_000L;
-	private static final long SAME_SOUND_NANOS = 100_000_000L;
 	/**
-	 * How far before the time the attack evidence gives a reported attack may lie to be the same attack. The evidence begins to grow late when the
-	 * identical note before it still rings; the transient is the earlier time.
+	 * The Follow session's values (spec 026, T022, inventory.md "FOLLOW_1" to "FOLLOW_3"), read from the settings; {@link #defaults()} are the values
+	 * the session always had. Immutable.
 	 */
-	/** How long a plucked string is taken to ring under the notes that follow it. */
-	private static final long RINGING_NANOS = 1_500_000_000L;
-	private static final long REFINE_BEFORE_NANOS = 150_000_000L;
-	private static final long REFINE_AFTER_NANOS = 30_000_000L;
-	/** The evidence of an attack is confirmed some frames after it begins: an event that closed unmatched waits this much longer. */
-	private static final long EVIDENCE_AFTER_CLOSE_NANOS = 100_000_000L;
-	private static final long TAIL_NANOS = 100_000_000L;
-	private static final long HISTORY_NANOS = 1_200_000_000L;
-	private static final long TECHNIQUE_WINDOW_NANOS = 1_500_000_000L;
-	private static final long BEND_WINDOW_MIN_NANOS = 1_000_000_000L;
-	private static final long BEND_WINDOW_MAX_NANOS = 2_500_000_000L;
+	public static final class FollowParameters {
+		/** An attack with no pitch evidence after this long is a click or noise. */
+		public final long evidenceHorizonNanos;
+		/** Without any pitch for this long the sound of an attack is over. */
+		public final long silenceNanos;
+		/** A note that ended before the stability time is accepted when its pitch was held this long. */
+		public final long shortNoteNanos;
+		/** An attack this close to the sound an event was matched on is that same sound. */
+		public final long sameSoundNanos;
+		/** How long a plucked string is taken to ring under the notes that follow it. */
+		public final long ringingNanos;
+		/** How many matched events before the first open one are still looked at (a second attack may fall in their window). */
+		public final int scanBack;
+		/** How long the attacks the detector reported are kept. */
+		public final long onsetMemoryNanos;
+		/**
+		 * How far before and after the time the attack evidence gives a reported attack may lie to be the same attack. The evidence begins to grow
+		 * late when the identical note before it still rings; the transient is the earlier time.
+		 */
+		public final long refineBeforeNanos;
+		public final long refineAfterNanos;
+		/** The evidence of an attack is confirmed some frames after it begins: an event that closed unmatched waits this much longer. */
+		public final long afterCloseNanos;
+		/** How long after the last window the run goes on before it is complete. */
+		public final long tailNanos;
+		/** How long the frames are kept (the start of a note's technique segment). */
+		public final long historyNanos;
+		/** How long a note's techniques are observed; a bend's is its written length within the two bounds. */
+		public final long techniqueWindowNanos;
+		public final long bendWindowMinNanos;
+		public final long bendWindowMaxNanos;
+		/** A pitch within this many semitones of the written path of a bend counts as on the path. */
+		public final double bendMarginSemitones;
+		/** How long before its window an event starts watching the attack evidence: the quiet level before the attack is needed to see it grow. */
+		public final long evidenceLeadNanos;
+		/** The confidence a pitch frame needs to be kept for a technique (spec 026, {@code recognition.technique.frame-confidence}). */
+		public final double techniqueFrameConfidence;
+
+		private FollowParameters(app.tuxguitar.audio.engine.settings.RecognitionSettings s) {
+			this.evidenceHorizonNanos = millis(s, RecognitionParameters.FOLLOW_EVIDENCE_HORIZON);
+			this.silenceNanos = millis(s, RecognitionParameters.FOLLOW_SILENCE);
+			this.shortNoteNanos = millis(s, RecognitionParameters.FOLLOW_SHORT_NOTE);
+			this.sameSoundNanos = millis(s, RecognitionParameters.FOLLOW_SAME_SOUND);
+			this.ringingNanos = millis(s, RecognitionParameters.FOLLOW_RINGING);
+			this.scanBack = (int) s.get(RecognitionParameters.FOLLOW_SCAN_BACK);
+			this.onsetMemoryNanos = millis(s, RecognitionParameters.FOLLOW_ONSET_MEMORY);
+			this.refineBeforeNanos = millis(s, RecognitionParameters.FOLLOW_REFINE_BEFORE);
+			this.refineAfterNanos = millis(s, RecognitionParameters.FOLLOW_REFINE_AFTER);
+			this.afterCloseNanos = millis(s, RecognitionParameters.FOLLOW_AFTER_CLOSE);
+			this.tailNanos = millis(s, RecognitionParameters.FOLLOW_TAIL);
+			this.historyNanos = millis(s, RecognitionParameters.FOLLOW_HISTORY);
+			this.techniqueWindowNanos = millis(s, RecognitionParameters.FOLLOW_TECHNIQUE_WINDOW);
+			this.bendWindowMinNanos = millis(s, RecognitionParameters.FOLLOW_BEND_WINDOW_MIN);
+			this.bendWindowMaxNanos = millis(s, RecognitionParameters.FOLLOW_BEND_WINDOW_MAX);
+			this.bendMarginSemitones = s.get(RecognitionParameters.FOLLOW_BEND_MARGIN);
+			this.evidenceLeadNanos = millis(s, RecognitionParameters.FOLLOW_EVIDENCE_LEAD);
+			this.techniqueFrameConfidence = s.get(RecognitionParameters.TECHNIQUE_FRAME_CONFIDENCE);
+		}
+
+		public static FollowParameters defaults() {
+			return of(app.tuxguitar.audio.engine.settings.RecognitionSettings.defaults());
+		}
+
+		public static FollowParameters of(app.tuxguitar.audio.engine.settings.RecognitionSettings settings) {
+			return new FollowParameters(settings);
+		}
+
+		private static long millis(app.tuxguitar.audio.engine.settings.RecognitionSettings settings, RecognitionParameter.Number parameter) {
+			return Math.round(settings.get(parameter) * 1_000_000.0);
+		}
+	}
+
 	/** How far from its target an attack of the right pitch is looked for, to say that a missed event was played too early or too late (spec 016). */
 	private static final long REASON_SPAN_NANOS = 1_000_000_000L;
-	private static final double BEND_MARGIN_SEMITONES = 0.5;
 	private static final BendDetector.Parameters BEND = BendDetector.Parameters.defaults();
 
 	private final PracticeSequence sequence;
@@ -450,6 +506,7 @@ public final class FollowSession {
 	/** For a matched event: the time of the sound it was matched on (an attack flagged at the same time, by another path, is that same sound). */
 	private final long[] soundAt;
 
+	private FollowParameters follow = FollowParameters.defaults();
 	private TechniqueJudge judge;
 	private Supplier<PolyphonicAcceptance> polyphonicFactory;
 	private boolean waitsForReportedAttack;
@@ -542,13 +599,13 @@ public final class FollowSession {
 		this.lastContext = this.contextSupplier.get();
 	}
 
-	/** True when an event within the last {@link #RINGING_NANOS} expects one of the pitches of this one: that pitch is still ringing when this event is played. */
+	/** True when an event within the last {@link FollowParameters#ringingNanos} expects one of the pitches of this one: that pitch is still ringing when this event is played. */
 	private boolean sharesAPitchWithARecentEvent(int index) {
 		int[] pitches = expectedPitches(this.events.get(index));
 		if (pitches.length == 0) {
 			return false;
 		}
-		for (int j = index - 1; j >= 0 && this.timeline.targetNanos(index) - this.timeline.targetNanos(j) <= RINGING_NANOS; j--) {
+		for (int j = index - 1; j >= 0 && this.timeline.targetNanos(index) - this.timeline.targetNanos(j) <= this.follow.ringingNanos; j--) {
 			for (int other : expectedPitches(this.events.get(j))) {
 				for (int pitch : pitches) {
 					if (other == pitch) {
@@ -565,6 +622,14 @@ public final class FollowSession {
 			return event.getRequiredPitches();
 		}
 		return event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ? new int[] { event.getExpectedMidi() } : new int[0];
+	}
+
+	/** The values of the session (spec 026), set before the run starts; the defaults are the values it always had. */
+	public void setFollowParameters(FollowParameters parameters) {
+		this.follow = parameters;
+		for (int i = 0; i < this.events.size(); i++) {
+			this.ringingUnder[i] = sharesAPitchWithARecentEvent(i);
+		}
 	}
 
 	public void setTechniqueJudge(TechniqueJudge judge) {
@@ -778,7 +843,7 @@ public final class FollowSession {
 			this.state = State.FOLLOWING;
 		}
 		process(frame, wall, context);
-		if (firstOpen() < 0 && this.pending.isEmpty() && wall > lastWindowEnd(context) + this.articulationLatencyNanos + this.stabilityNanos + TAIL_NANOS) {
+		if (firstOpen() < 0 && this.pending.isEmpty() && wall > lastWindowEnd(context) + this.articulationLatencyNanos + this.stabilityNanos + this.follow.tailNanos) {
 			finalizeCollectors(Long.MAX_VALUE);
 			this.state = State.COMPLETE;
 		}
@@ -788,12 +853,11 @@ public final class FollowSession {
 	private void process(AnalysisFrame frame, long wall, TimingContext context) {
 		boolean usable = frame.getLevelState() == AnalysisFrame.LevelState.SUITABLE || frame.getLevelState() == AnalysisFrame.LevelState.TOO_HIGH;
 		PitchReading reading = this.interpreter.interpret(frame.getF0Hz(), frame.getConfidence(), this.assessment);
-		double f0 = frame.getF0Hz();
-		double midi = (Double.isFinite(f0) && f0 > 0.0 && frame.getConfidence() >= 0.8 ? 69.0 + 12.0 * Math.log(f0 / 440.0) / Math.log(2.0) : Double.NaN);
+		double midi = PracticeSession.techniqueMidi(frame.getF0Hz(), frame.getConfidence(), this.follow.techniqueFrameConfidence);
 		double[] hop = new double[] { wall, midi, frame.getRmsDbfs(), frame.isOnset() ? 1.0 : 0.0 };
 		Seen seen = new Seen(wall, reading, frame.getSpectrum(), usable, hop, frame.getConfidence());
 		this.history.addLast(seen);
-		while (!this.history.isEmpty() && wall - this.history.peekFirst().wall > HISTORY_NANOS) {
+		while (!this.history.isEmpty() && wall - this.history.peekFirst().wall > this.follow.historyNanos) {
 			this.history.removeFirst();
 		}
 		for (Collector collector : this.collectors) {
@@ -845,7 +909,7 @@ public final class FollowSession {
 
 	/** The first event worth looking at: the matched ones just before can still be in window for a second attack. */
 	private int scanStart() {
-		return Math.max(0, this.scanFrom - 8);
+		return Math.max(0, this.scanFrom - this.follow.scanBack);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------- onsets
@@ -871,7 +935,7 @@ public final class FollowSession {
 			}
 		}
 		this.recentOnsets.add(new RecentOnset(transient_));
-		this.recentOnsets.removeIf(o -> o.transient_ < transient_ - 3_000_000_000L);
+		this.recentOnsets.removeIf(o -> o.transient_ < transient_ - this.follow.onsetMemoryNanos);
 		PendingOnset onset = new PendingOnset(transient_, adjusted, candidates.stream().mapToInt(Integer::intValue).toArray());
 		onset.inWindow.addAll(inWindow);
 		if (this.chordMatcher.getParameters().usesProfile()) {
@@ -931,12 +995,12 @@ public final class FollowSession {
 			if (onset.gapSince < 0) {
 				onset.gapSince = seen.wall;
 			}
-			if (seen.wall - onset.gapSince >= SILENCE_NANOS) {
+			if (seen.wall - onset.gapSince >= this.follow.silenceNanos) {
 				// the sound of this attack is over: a short note (a grace note) that held its pitch long enough is a note
 				for (int c = 0; c < onset.candidates.length; c++) {
 					int index = onset.candidates[c];
 					if (onset.matchSince[c] >= 0 && isOpenForOnset(index) && this.events.get(index).getKind() == PracticeEvent.Kind.EXPECTED_NOTE
-							&& onset.lastMatch[c] - onset.matchSince[c] >= SHORT_NOTE_NANOS) {
+							&& onset.lastMatch[c] - onset.matchSince[c] >= this.follow.shortNoteNanos) {
 						match(index, onset, context);
 						return;
 					}
@@ -989,7 +1053,7 @@ public final class FollowSession {
 						return;
 					}
 				} else {
-					if (onset.matchSince[c] >= 0 && onset.lastMatch[c] - onset.matchSince[c] >= SHORT_NOTE_NANOS) {
+					if (onset.matchSince[c] >= 0 && onset.lastMatch[c] - onset.matchSince[c] >= this.follow.shortNoteNanos) {
 						// the pitch changed after being held long enough: that was a short note (a grace note), the next sound is another one
 						match(index, onset, context);
 						return;
@@ -1019,7 +1083,7 @@ public final class FollowSession {
 		} else {
 			onset.heldMidi = Integer.MIN_VALUE;
 		}
-		if (age >= EVIDENCE_HORIZON_NANOS && !hasPendingChord(onset)) {
+		if (age >= this.follow.evidenceHorizonNanos && !hasPendingChord(onset)) {
 			// no pitch evidence: a click, noise: neither a note nor an extra note
 			resolve(onset);
 		}
@@ -1077,7 +1141,7 @@ public final class FollowSession {
 				this.results[index] = this.results[index].withAttempts(this.results[index].attempts() + 1);
 			}
 			for (int index : onset.inWindow) {
-				if (this.soundAt[index] != Long.MIN_VALUE && Math.abs(this.soundAt[index] - onset.transient_) <= SAME_SOUND_NANOS) {
+				if (this.soundAt[index] != Long.MIN_VALUE && Math.abs(this.soundAt[index] - onset.transient_) <= this.follow.sameSoundNanos) {
 					// the attack of a sound an event was already matched on, by the attack evidence or from the pitch of a step
 					onset.matchedEvent = index;
 					resolve(onset);
@@ -1134,9 +1198,6 @@ public final class FollowSession {
 
 	// ------------------------------------------------------------------------------------------------------------- attack evidence
 
-	/** How long before its window an event starts watching the attack evidence: the quiet level before the attack is needed to see it grow. */
-	private static final long EVIDENCE_LEAD_NANOS = 400_000_000L;
-
 	private void polyphonicAcceptance(AnalysisFrame frame, long wall, TimingContext context) {
 		if (this.polyphonicFactory == null || frame.getAttackEvidence() == null) {
 			return;
@@ -1149,12 +1210,12 @@ public final class FollowSession {
 				continue;
 			}
 			Window w = window(i, context);
-			if (w.outerFrom() - EVIDENCE_LEAD_NANOS > context.compensation().adjust(wall)) {
+			if (w.outerFrom() - this.follow.evidenceLeadNanos > context.compensation().adjust(wall)) {
 				break;
 			}
 			// an event that closed unmatched stays open to its evidence for as long as the detector can still report its attack, like the pitch path
 			if (!pending
-					&& context.compensation().adjust(wall) > w.outerTo() + this.articulationLatencyNanos + REFINE_AFTER_NANOS + EVIDENCE_AFTER_CLOSE_NANOS) {
+					&& context.compensation().adjust(wall) > w.outerTo() + this.articulationLatencyNanos + this.follow.refineAfterNanos + this.follow.afterCloseNanos) {
 				this.acceptances[i] = null;
 				continue;
 			}
@@ -1196,7 +1257,7 @@ public final class FollowSession {
 					} else if (!pending) {
 						// a closed event is reopened only by an attack the detector reported: the late time of the evidence is no time for it
 						continue;
-					} else if (this.waitsForReportedAttack && wall < evidenceWall + this.articulationLatencyNanos + REFINE_AFTER_NANOS) {
+					} else if (this.waitsForReportedAttack && wall < evidenceWall + this.articulationLatencyNanos + this.follow.refineAfterNanos) {
 						continue;
 					}
 				}
@@ -1263,8 +1324,8 @@ public final class FollowSession {
 		return false;
 	}
 
-	private static boolean near(RecentOnset candidate, long evidenceWall) {
-		return candidate.transient_ >= evidenceWall - REFINE_BEFORE_NANOS && candidate.transient_ <= evidenceWall + REFINE_AFTER_NANOS;
+	private boolean near(RecentOnset candidate, long evidenceWall) {
+		return candidate.transient_ >= evidenceWall - this.follow.refineBeforeNanos && candidate.transient_ <= evidenceWall + this.follow.refineAfterNanos;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------- legato arrivals
@@ -1321,13 +1382,13 @@ public final class FollowSession {
 					low = Math.min(low, point.getSemitones());
 					high = Math.max(high, point.getSemitones());
 				}
-				if (midi >= base + low - BEND_MARGIN_SEMITONES && midi <= base + high + BEND_MARGIN_SEMITONES) {
+				if (midi >= base + low - this.follow.bendMarginSemitones && midi <= base + high + this.follow.bendMarginSemitones) {
 					return true;
 				}
 			}
 			if (start * 100.0 >= BEND.minWrittenMoveCents) {
 				double tol = Math.max(BEND.onToleranceCents, BEND.onToleranceShare * start * 100.0) / 100.0;
-				if (midi >= base + start - tol && midi <= base + start + BEND_MARGIN_SEMITONES) {
+				if (midi >= base + start - tol && midi <= base + start + this.follow.bendMarginSemitones) {
 					return true;
 				}
 			}
@@ -1517,9 +1578,9 @@ public final class FollowSession {
 			return;
 		}
 		PracticeEvent event = this.events.get(index);
-		long window = TECHNIQUE_WINDOW_NANOS;
+		long window = this.follow.techniqueWindowNanos;
 		if (event.getBendPath() != null) {
-			window = Math.max(BEND_WINDOW_MIN_NANOS, Math.min(BEND_WINDOW_MAX_NANOS, (long) (event.getBendWrittenSeconds() * 1e9)));
+			window = Math.max(this.follow.bendWindowMinNanos, Math.min(this.follow.bendWindowMaxNanos, (long) (event.getBendWrittenSeconds() * 1e9)));
 		}
 		Collector collector = new Collector(index, transient_, transient_ + window, targets);
 		for (Seen past : this.history) {

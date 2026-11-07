@@ -15,6 +15,7 @@ import app.tuxguitar.audio.engine.calibration.ProfileLibrary;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UISelectionEvent;
@@ -227,6 +228,11 @@ public final class InputSelectorPanel {
 				ConfirmWindow.ask(uiFactory, mainWindow.get(), CalibrationLauncher.TEXTS.get("practice.profile.dot.forget"),
 						CalibrationLauncher.TEXTS.get("practice.profile.forget.question"), CalibrationLauncher.TEXTS.get("practice.profile.stop.yes"),
 						CalibrationLauncher.TEXTS.get("practice.profile.stop.no"), yes);
+			}
+
+			public int thresholdPercent() {
+				return (int) RecognitionSettingsStore.getInstance(InputSelectorPanel.this.context).get()
+						.get(RecognitionParameters.CALIBRATION_RECOGNITION_RATE);
 			}
 
 			public void calibrate() {

@@ -247,8 +247,260 @@
     <tr><td>Sugerencia de ganancia: nada que cambiar por debajo de</td><td>dB</td><td>0.5</td><td>6</td><td>1.5</td><td>se proponen correcciones pequeñas</td><td>solo las grandes</td></tr>
     <tr><td>Sugerencia de ganancia: juego sobre el ruido en</td><td>dB</td><td>6</td><td>40</td><td>20</td><td>el aviso de ruido menos a menudo</td><td>el aviso antes</td></tr>
     </table>
+    <h2 id="acceptance-1">Avanzado: Notas pulsadas, decisión</h2>
+    <p>Cómo decide la sesión de práctica que las notas esperadas se acaban de pulsar, a partir del sonido añadido por el ataque: qué parte deben explicar, qué tan equilibrado debe estar un acorde, durante cuánto tiempo. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Notas pulsadas: parte explicada</td><td>%</td><td>5</td><td>90</td><td>30</td><td>más tolerante</td><td>más estricto, solo una nota limpia</td></tr>
+    <tr><td>Notas pulsadas: equilibrio del acorde</td><td>%</td><td>0</td><td>50</td><td>10</td><td>una cuerda suave sigue contando</td><td>cada cuerda debe sonar con claridad</td></tr>
+    <tr><td>Notas pulsadas: altura más fuerte</td><td>%</td><td>10</td><td>100</td><td>70</td><td>se permite otra altura fuerte</td><td>la nota esperada debe dominar</td></tr>
+    <tr><td>Notas pulsadas: confirmadas durante</td><td>saltos</td><td>1</td><td>30</td><td>6</td><td>más rápido, más errores</td><td>más seguro, más lento</td></tr>
+    <tr><td>Notas pulsadas: sobre las vecinas</td><td>×</td><td>0</td><td>4</td><td>0</td><td>más tolerante (cero: desactivado)</td><td>una nota vecina se rechaza antes</td></tr>
+    <tr><td>Notas pulsadas: fuerza del ataque</td><td></td><td>0</td><td>5</td><td>0</td><td>cuentan los ataques suaves (cero: cualquiera)</td><td>solo cuentan los ataques claros</td></tr>
+    <tr><td>Notas pulsadas: ignorado tras una nota</td><td>ms</td><td>50</td><td>1000</td><td>220</td><td>se siguen los pasajes rápidos</td><td>menos dobles cuentas</td></tr>
+    </table>
+    <h2 id="acceptance-2">Avanzado: Notas pulsadas, ataque</h2>
+    <p>Cómo se lee el ataque de una nota pulsada: el margen de afinación de su medida de altura aproximada, la indulgencia ante un fallo corto, el golpe ignorado tras el silencio, la nota más suave y el nivel tranquilo anterior. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Notas pulsadas: margen de afinación</td><td>cents</td><td>0</td><td>50</td><td>15</td><td>más estricto con la afinación</td><td>más tolerante</td></tr>
+    <tr><td>Notas pulsadas: indulgencia</td><td>saltos</td><td>0</td><td>5</td><td>1</td><td>más estricto (cero: reinicia)</td><td>un fallo corto cuesta menos</td></tr>
+    <tr><td>Notas pulsadas: golpe ignorado</td><td>ms</td><td>0</td><td>200</td><td>60</td><td>más rápido</td><td>el golpe nunca se lee como altura</td></tr>
+    <tr><td>Notas pulsadas: nota más suave</td><td>‰</td><td>1</td><td>100</td><td>10</td><td>cuentan las notas suaves, el ruido también</td><td>solo las notas claras</td></tr>
+    <tr><td>Notas pulsadas: nivel tranquilo sobre</td><td>saltos</td><td>1</td><td>50</td><td>10</td><td>sigue un fondo que cambia</td><td>se encuentra el momento más tranquilo</td></tr>
+    <tr><td>Notas pulsadas: desde el silencio</td><td>%</td><td>10</td><td>100</td><td>60</td><td>más ataques esperan el golpe</td><td>menos</td></tr>
+    <tr><td>Notas pulsadas: inicio más pequeño</td><td>‰</td><td>1</td><td>50</td><td>2</td><td>ataques suaves encontrados, ruido también</td><td>solo los ataques claros</td></tr>
+    </table>
+    <h2 id="acceptance-3">Avanzado: Notas pulsadas, inicio</h2>
+    <p>Dónde empieza y termina el ataque de una nota pulsada, frente al nivel tranquilo anterior y a su propia cima. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Notas pulsadas: inicio sobre la calma</td><td>×</td><td>1</td><td>10</td><td>3</td><td>ataques suaves encontrados, ruido también</td><td>solo los ataques claros</td></tr>
+    <tr><td>Notas pulsadas: fin del ataque</td><td>%</td><td>5</td><td>90</td><td>25</td><td>el ataque dura más</td><td>termina antes</td></tr>
+    </table>
+    <h2 id="wait-1">Avanzado: Modo espera, veredictos y técnicas</h2>
+    <p>Cómo muestra el modo espera sus veredictos y observa las técnicas escritas: cuánto tiempo sigue mostrándose un veredicto, cómo una nota vecina leída por la estimación de altura retiene una nota pulsada, cuánto tiempo se observan las técnicas y los bends, el margen alrededor del recorrido de un bend. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Espera: veredicto mostrado durante</td><td>ms</td><td>200</td><td>3000</td><td>1000</td><td>se despeja antes</td><td>sigue a la vista</td></tr>
+    <tr><td>Espera: retención por una vecina</td><td>ms</td><td>0</td><td>500</td><td>120</td><td>más rápido, una vecina se toma más a menudo por la nota</td><td>más seguro, más lento</td></tr>
+    <tr><td>Espera: confianza de la vecina</td><td>%</td><td>50</td><td>100</td><td>80</td><td>una vecina retiene más a menudo</td><td>solo una vecina clara</td></tr>
+    <tr><td>Espera: técnica observada durante</td><td>ms</td><td>500</td><td>4000</td><td>1500</td><td>resultado antes, con menos de la nota</td><td>con más de ella, más tarde</td></tr>
+    <tr><td>Espera: bend observado al menos</td><td>ms</td><td>250</td><td>2500</td><td>1000</td><td>resultado de un bend corto antes</td><td>un bend lento se sigue viendo entero</td></tr>
+    <tr><td>Espera: bend observado como máximo</td><td>ms</td><td>1000</td><td>4000</td><td>2500</td><td>resultado de un bend largo antes</td><td>un bend largo se ve hasta el final</td></tr>
+    <tr><td>Espera: margen del bend</td><td>semitonos</td><td>0.1</td><td>2</td><td>0.5</td><td>más estricto, un bend que pasa su objetivo se rechaza</td><td>más tolerante, una nota falsa cerca del recorrido no se señala</td></tr>
+    </table>
+    <h2 id="wait-2">Avanzado: Modo espera, velocidad y nivel</h2>
+    <p>Cómo percibe el modo espera la velocidad y el nivel del alumno: desde cuándo se observa la técnica de una nota, cuándo un nuevo ataque significa que el alumno toca más rápido de lo que sigue el reconocimiento, la aceptación temprana (cuando está activada), el nivel por debajo del cual la entrada es demasiado débil para un reconocimiento rápido. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Espera: técnica desde antes</td><td>ms</td><td>0</td><td>500</td><td>150</td><td>se deja fuera el inicio de la nota</td><td>se ve más de su inicio</td></tr>
+    <tr><td>Espera: demasiado rápido dentro de</td><td>ms</td><td>50</td><td>1000</td><td>200</td><td>límite de velocidad mostrado menos</td><td>más a menudo</td></tr>
+    <tr><td>Espera: demasiado rápido desde antes</td><td>ms</td><td>0</td><td>100</td><td>20</td><td>cuentan menos ataques</td><td>más</td></tr>
+    <tr><td>Espera: margen de aceptación temprana</td><td></td><td>0.1</td><td>2</td><td>0.5</td><td>temprana más a menudo, más errores</td><td>rara vez temprana</td></tr>
+    <tr><td>Espera: aceptación temprana tras</td><td>saltos</td><td>4</td><td>40</td><td>12</td><td>más rápido</td><td>más seguro</td></tr>
+    <tr><td>Espera: demasiado débil para la velocidad</td><td>dBFS</td><td>-50</td><td>-10</td><td>-30</td><td>mensaje menos a menudo</td><td>más a menudo</td></tr>
+    </table>
+    <h2 id="follow-1">Avanzado: Modo seguimiento, ataques</h2>
+    <p>Cómo resuelve el modo seguimiento un ataque: cuánto se espera su altura, cuándo termina su sonido, la nota más corta, un segundo ataque sobre el mismo sonido, cuánto suena una cuerda, las notas revisadas, los ataques guardados. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Seguimiento: altura esperada durante</td><td>ms</td><td>100</td><td>1500</td><td>400</td><td>el ruido se descarta antes</td><td>una altura lenta sigue contando</td></tr>
+    <tr><td>Seguimiento: fin de un sonido</td><td>ms</td><td>10</td><td>200</td><td>40</td><td>nota corta decidida antes</td><td>una breve caída no termina la nota</td></tr>
+    <tr><td>Seguimiento: nota más corta</td><td>ms</td><td>10</td><td>200</td><td>40</td><td>más tolerante</td><td>una nota muy corta no cuenta</td></tr>
+    <tr><td>Seguimiento: mismo sonido dentro de</td><td>ms</td><td>20</td><td>400</td><td>100</td><td>más notas de más</td><td>menos</td></tr>
+    <tr><td>Seguimiento: la cuerda suena durante</td><td>ms</td><td>300</td><td>4000</td><td>1500</td><td>menos notas resonantes</td><td>más</td></tr>
+    <tr><td>Seguimiento: notas revisadas atrás</td><td></td><td>0</td><td>32</td><td>8</td><td>segundo ataque más a menudo de más</td><td>se mira más</td></tr>
+    <tr><td>Seguimiento: ataques guardados durante</td><td>ms</td><td>20</td><td>10000</td><td>3000</td><td>un ataque puede olvidarse</td><td>se guardan más tiempo</td></tr>
+    </table>
+    <h2 id="follow-2">Avanzado: Modo seguimiento, instantes de los ataques</h2>
+    <p>Cómo fecha el modo seguimiento un ataque oído por su indicio: a qué distancia puede estar el ataque señalado, cuánto sigue abierta una nota repetida tras su ventana, el fin del pasaje, el sonido guardado. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Seguimiento: ataque antes del indicio</td><td>ms</td><td>0</td><td>500</td><td>150</td><td>menos notas toman el instante señalado</td><td>más</td></tr>
+    <tr><td>Seguimiento: ataque después del indicio</td><td>ms</td><td>0</td><td>200</td><td>30</td><td>más rápido</td><td>el instante señalado se usa más</td></tr>
+    <tr><td>Seguimiento: abierta tras su ventana</td><td>ms</td><td>0</td><td>400</td><td>100</td><td>se pierde una confirmación tardía</td><td>abierta más tiempo</td></tr>
+    <tr><td>Seguimiento: fin del pasaje</td><td>ms</td><td>0</td><td>400</td><td>100</td><td>resumen antes</td><td>una última nota tardía todavía se oye</td></tr>
+    <tr><td>Seguimiento: sonido guardado durante</td><td>ms</td><td>100</td><td>4000</td><td>1200</td><td>puede perderse el inicio de una nota</td><td>se guarda más</td></tr>
+    </table>
+    <h2 id="follow-3">Avanzado: Modo seguimiento, técnicas</h2>
+    <p>Cómo observa el modo seguimiento las técnicas escritas y los bends, y desde cuándo una nota vigila el indicio de ataque. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Seguimiento: técnica observada durante</td><td>ms</td><td>500</td><td>4000</td><td>1500</td><td>resultado antes, con menos de la nota</td><td>con más de ella, más tarde</td></tr>
+    <tr><td>Seguimiento: bend observado al menos</td><td>ms</td><td>250</td><td>2500</td><td>1000</td><td>resultado de un bend corto antes</td><td>un bend lento se sigue viendo entero</td></tr>
+    <tr><td>Seguimiento: bend observado como máximo</td><td>ms</td><td>1000</td><td>4000</td><td>2500</td><td>resultado de un bend largo antes</td><td>un bend largo se ve hasta el final</td></tr>
+    <tr><td>Seguimiento: margen del bend</td><td>semitonos</td><td>0.1</td><td>2</td><td>0.5</td><td>más estricto, un bend que se pasa interrumpe la nota</td><td>más tolerante</td></tr>
+    <tr><td>Seguimiento: indicio vigilado desde</td><td>ms</td><td>100</td><td>1500</td><td>400</td><td>puede perderse un ataque adelantado</td><td>se vigila más</td></tr>
+    </table>
+    <h2 id="clock">Avanzado: Reloj de reproducción y latencia</h2>
+    <p>Cómo sigue la sesión la posición del reproductor entre sus lecturas, y la mayor latencia aceptada. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Reloj: posición medida sobre</td><td>ms</td><td>150</td><td>2000</td><td>600</td><td>sigue el tempo antes, menos estable</td><td>más estable, más lento en seguir</td></tr>
+    <tr><td>Reloj: lecturas necesarias</td><td></td><td>3</td><td>64</td><td>8</td><td>se mide antes</td><td>más estable</td></tr>
+    <tr><td>Reloj: lecturas repartidas en</td><td>ms</td><td>30</td><td>600</td><td>150</td><td>se mide antes</td><td>más estable</td></tr>
+    <tr><td>Reloj: reproductor parado tras</td><td>ms</td><td>20</td><td>300</td><td>60</td><td>una pausa se ve antes</td><td>una lectura lenta no es una pausa</td></tr>
+    <tr><td>Reloj: adelanto sobre la última lectura</td><td>ms</td><td>0</td><td>200</td><td>30</td><td>nunca se adelanta al reproductor</td><td>más regular entre lecturas</td></tr>
+    <tr><td>Reloj: salto tomado por un desplazamiento</td><td>ticks</td><td>240</td><td>3840</td><td>960</td><td>un salto menor lo reinicia</td><td>solo un salto grande</td></tr>
+    <tr><td>Reloj: latencia más grande</td><td>ms</td><td>200</td><td>3000</td><td>1000</td><td>medida errónea rechazada antes</td><td>tarjeta lenta todavía compensada</td></tr>
+    </table>
+    <h2 id="timing">Avanzado: Ventanas de tiempo</h2>
+    <p>Las ventanas de tiempo: el pulso al que se lee la anchura de Arcade, cuánto antes y cuán juntas pueden tocarse las notas del modo seguimiento, y cuándo la ruta se considera inestable. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Tiempo: anchura leída al pulso</td><td>ms</td><td>250</td><td>1000</td><td>500</td><td>más ancha a todos los tempos</td><td>más estrecha a todos los tempos</td></tr>
+    <tr><td>Tiempo: tocar antes del rojo</td><td>ms</td><td>0</td><td>200</td><td>50</td><td>más estricto</td><td>una nota adelantada sigue contando</td></tr>
+    <tr><td>Tiempo: separación antes de la nota siguiente</td><td>ms</td><td>0</td><td>100</td><td>20</td><td>ventanas más largas en pasajes rápidos</td><td>frontera más clara</td></tr>
+    <tr><td>Tiempo: ruta inestable desde</td><td>ms</td><td>20</td><td>300</td><td>80</td><td>avisa antes</td><td>solo avisa con una ruta muy irregular</td></tr>
+    </table>
+    <h2 id="leniency-1">Avanzado: Modo seguimiento, permisivo</h2>
+    <p>Los valores a los que una partida en modo seguimiento relaja el reconocimiento en esta posición, en un solo sentido: se conserva el valor del alumno si es más tolerante. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Seguimiento permisivo: nota aceptada a menos de</td><td>cents</td><td>10</td><td>45</td><td>35</td><td>sin relajación</td><td>puede pasar una nota falsa</td></tr>
+    <tr><td>Seguimiento permisivo: confianza de altura</td><td>%</td><td>50</td><td>95</td><td>60</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Seguimiento permisivo: nota mantenida durante</td><td>ms</td><td>50</td><td>300</td><td>55</td><td>más rápido, más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Seguimiento permisivo: indicio de acorde</td><td>%</td><td>20</td><td>80</td><td>22</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Seguimiento permisivo: parciales de acorde necesarios</td><td></td><td>1</td><td>4</td><td>1</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Seguimiento permisivo: acorde confirmado tras</td><td>ms</td><td>20</td><td>150</td><td>24</td><td>más rápido</td><td>sin relajación</td></tr>
+    </table>
+    <h2 id="leniency-2">Avanzado: Modo seguimiento, muy permisivo</h2>
+    <p>Los valores a los que una partida en modo seguimiento relaja el reconocimiento en esta posición, en un solo sentido: se conserva el valor del alumno si es más tolerante. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Seguimiento muy permisivo: nota aceptada a menos de</td><td>cents</td><td>10</td><td>45</td><td>35</td><td>sin relajación</td><td>puede pasar una nota falsa</td></tr>
+    <tr><td>Seguimiento muy permisivo: confianza de altura</td><td>%</td><td>50</td><td>95</td><td>50</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Seguimiento muy permisivo: nota mantenida durante</td><td>ms</td><td>50</td><td>300</td><td>50</td><td>más rápido, más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Seguimiento muy permisivo: indicio de acorde</td><td>%</td><td>20</td><td>80</td><td>20</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Seguimiento muy permisivo: parciales de acorde necesarios</td><td></td><td>1</td><td>4</td><td>1</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Seguimiento muy permisivo: acorde confirmado tras</td><td>ms</td><td>20</td><td>150</td><td>20</td><td>más rápido</td><td>sin relajación</td></tr>
+    </table>
+    <h2 id="leniency-3">Avanzado: Arcade, divertido</h2>
+    <p>Los valores a los que una partida Arcade relaja el reconocimiento en esta posición, en un solo sentido: se conserva el valor del alumno si es más tolerante. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Arcade divertido: confianza de altura</td><td>%</td><td>50</td><td>95</td><td>70</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Arcade divertido: nota mantenida durante</td><td>ms</td><td>50</td><td>300</td><td>75</td><td>más rápido, más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Arcade divertido: indicio de acorde</td><td>%</td><td>20</td><td>80</td><td>28</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Arcade divertido: parciales de acorde necesarios</td><td></td><td>1</td><td>4</td><td>2</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Arcade divertido: acorde confirmado tras</td><td>ms</td><td>20</td><td>150</td><td>32</td><td>más rápido</td><td>sin relajación</td></tr>
+    <tr><td>Arcade divertido: ventana de tiempo ampliada</td><td>%</td><td>100</td><td>200</td><td>125</td><td>sin ampliar</td><td>más ancha</td></tr>
+    </table>
+    <h2 id="leniency-4">Avanzado: Arcade, muy permisivo</h2>
+    <p>Los valores a los que una partida Arcade relaja el reconocimiento en esta posición, en un solo sentido: se conserva el valor del alumno si es más tolerante. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Arcade muy permisivo: confianza de altura</td><td>%</td><td>50</td><td>95</td><td>60</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Arcade muy permisivo: nota mantenida durante</td><td>ms</td><td>50</td><td>300</td><td>55</td><td>más rápido, más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Arcade muy permisivo: indicio de acorde</td><td>%</td><td>20</td><td>80</td><td>22</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Arcade muy permisivo: parciales de acorde necesarios</td><td></td><td>1</td><td>4</td><td>1</td><td>más tolerante</td><td>sin relajación</td></tr>
+    <tr><td>Arcade muy permisivo: acorde confirmado tras</td><td>ms</td><td>20</td><td>150</td><td>24</td><td>más rápido</td><td>sin relajación</td></tr>
+    <tr><td>Arcade muy permisivo: ventana de tiempo ampliada</td><td>%</td><td>100</td><td>200</td><td>150</td><td>sin ampliar</td><td>más ancha</td></tr>
+    </table>
+    <h2 id="technique-1">Avanzado: Técnicas, bend</h2>
+    <p>Los umbrales de los detectores de técnicas (bend, deslizamiento, vibrato, hammer-on y pull-off) y de las lecturas de altura que usan. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Bend: detectado desde</td><td>cents</td><td>20</td><td>200</td><td>60</td><td>se detectan bends menores</td><td>solo bends grandes</td></tr>
+    <tr><td>Bend: nota simple bajo</td><td>cents</td><td>5</td><td>100</td><td>30</td><td>menos notas simples</td><td>más notas simples</td></tr>
+    <tr><td>Bend: nota más corta</td><td>ms</td><td>50</td><td>1000</td><td>200</td><td>se juzgan notas más cortas</td><td>solo notas largas</td></tr>
+    <tr><td>Bend: altura oída en</td><td>%</td><td>20</td><td>100</td><td>60</td><td>se juzga con menos</td><td>solo con notas limpias</td></tr>
+    <tr><td>Bend: menor movimiento escrito</td><td>cents</td><td>5</td><td>100</td><td>25</td><td>se juzgan bends mínimos</td><td>bends pequeños no se juzgan</td></tr>
+    </table>
+    <h2 id="technique-2">Avanzado: Técnicas, bend escrito</h2>
+    <p>Los umbrales de los detectores de técnicas (bend, deslizamiento, vibrato, hammer-on y pull-off) y de las lecturas de altura que usan. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Bend: en el objetivo a menos de</td><td>cents</td><td>5</td><td>100</td><td>30</td><td>más estricto</td><td>más tolerante</td></tr>
+    <tr><td>Bend: en el objetivo a una parte</td><td>%</td><td>0</td><td>50</td><td>15</td><td>más estricto en bends grandes</td><td>más tolerante en bends grandes</td></tr>
+    <tr><td>Bend: bajo el objetivo, incierto desde</td><td>%</td><td>10</td><td>100</td><td>50</td><td>más a menudo incierto</td><td>más a menudo fallido</td></tr>
+    <tr><td>Bend: inicio del pre-bend a menos de</td><td>cents</td><td>5</td><td>150</td><td>40</td><td>más estricto</td><td>más tolerante</td></tr>
+    <tr><td>Bend: inicio y fin leídos en</td><td>saltos</td><td>1</td><td>40</td><td>8</td><td>más sensible a los primeros y últimos instantes</td><td>más estable, menos preciso</td></tr>
+    </table>
+    <h2 id="technique-3">Avanzado: Técnicas, deslizamiento</h2>
+    <p>Los umbrales de los detectores de técnicas (bend, deslizamiento, vibrato, hammer-on y pull-off) y de las lecturas de altura que usan. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Deslizamiento: detectado desde</td><td>cents</td><td>30</td><td>300</td><td>100</td><td>se detectan deslizamientos cortos</td><td>solo deslizamientos largos</td></tr>
+    <tr><td>Deslizamiento: nota simple bajo</td><td>cents</td><td>5</td><td>150</td><td>40</td><td>menos notas simples</td><td>más notas simples</td></tr>
+    <tr><td>Deslizamiento: un solo sentido en</td><td>%</td><td>30</td><td>100</td><td>75</td><td>más tolerante</td><td>solo deslizamientos limpios</td></tr>
+    <tr><td>Deslizamiento: pasos en movimiento necesarios</td><td>saltos</td><td>1</td><td>30</td><td>6</td><td>un salto puede contar</td><td>solo deslizamientos lentos</td></tr>
+    <tr><td>Deslizamiento: nota más corta</td><td>ms</td><td>50</td><td>1000</td><td>150</td><td>se juzgan notas más cortas</td><td>solo notas largas</td></tr>
+    <tr><td>Deslizamiento: altura oída en</td><td>%</td><td>20</td><td>100</td><td>50</td><td>se juzga con menos</td><td>solo con notas limpias</td></tr>
+    </table>
+    <h2 id="technique-4">Avanzado: Técnicas, vibrato</h2>
+    <p>Los umbrales de los detectores de técnicas (bend, deslizamiento, vibrato, hammer-on y pull-off) y de las lecturas de altura que usan. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Vibrato: detectado desde la profundidad</td><td>cents</td><td>5</td><td>100</td><td>25</td><td>se detectan vibratos leves</td><td>solo vibratos amplios</td></tr>
+    <tr><td>Vibrato: nota simple bajo</td><td>cents</td><td>1</td><td>50</td><td>10</td><td>menos notas simples</td><td>más notas simples</td></tr>
+    <tr><td>Vibrato: velocidad más lenta</td><td>Hz</td><td>0.5</td><td>6</td><td>2.5</td><td>cuentan oscilaciones lentas</td><td>solo vibratos rápidos</td></tr>
+    <tr><td>Vibrato: velocidad más rápida</td><td>Hz</td><td>6.5</td><td>20</td><td>9</td><td>solo vibratos moderados</td><td>cuentan oscilaciones rápidas</td></tr>
+    <tr><td>Vibrato: nota más corta</td><td>ms</td><td>100</td><td>2000</td><td>350</td><td>se juzgan notas más cortas</td><td>solo notas largas</td></tr>
+    <tr><td>Vibrato: altura oída en</td><td>%</td><td>20</td><td>100</td><td>70</td><td>se juzga con menos</td><td>solo con notas limpias</td></tr>
+    </table>
+    <h2 id="technique-5">Avanzado: Técnicas, legato y altura</h2>
+    <p>Los umbrales de los detectores de técnicas (bend, deslizamiento, vibrato, hammer-on y pull-off) y de las lecturas de altura que usan. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Legato: inicio examinado</td><td>ms</td><td>30</td><td>500</td><td>100</td><td>solo el comienzo</td><td>un inicio más largo</td></tr>
+    <tr><td>Legato: pulsada por encima de una subida de</td><td>dB</td><td>2</td><td>20</td><td>6</td><td>más notas pulsadas</td><td>menos notas pulsadas</td></tr>
+    <tr><td>Legato: legato bajo una subida de</td><td>dB</td><td>0</td><td>10</td><td>3</td><td>más estricto</td><td>más tolerante</td></tr>
+    <tr><td>Técnicas: confianza de altura</td><td>%</td><td>50</td><td>100</td><td>80</td><td>más lecturas, menos limpias</td><td>menos lecturas, más limpias</td></tr>
+    <tr><td>Técnicas: altura parásita más allá de</td><td>cents</td><td>100</td><td>1200</td><td>400</td><td>más lecturas descartadas</td><td>más parásitos conservados</td></tr>
+    <tr><td>Técnicas: lecturas necesarias</td><td>saltos</td><td>2</td><td>40</td><td>8</td><td>se miden notas cortas</td><td>solo notas largas</td></tr>
+    </table>
+    <h2 id="calibration-1">Avanzado: Calibración del retardo, notas</h2>
+    <p>Las calibraciones y los controles de la entrada: qué notas conserva una calibración del retardo y cómo las juzga, cuándo se conserva un perfil, cómo se nombra el ruido de la sala, cómo se cuentan los sonidos, el control del nivel y el aviso de entrada débil. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Calibración: nota antes de su clic</td><td>ms</td><td>50</td><td>1000</td><td>250</td><td>se pierde una nota adelantada</td><td>cuenta una nota adelantada</td></tr>
+    <tr><td>Calibración: nota después de su clic</td><td>ms</td><td>200</td><td>2000</td><td>700</td><td>no se mide una ruta lenta</td><td>se mide una ruta muy lenta</td></tr>
+    <tr><td>Calibración: altura esperada durante</td><td>ms</td><td>5</td><td>200</td><td>25</td><td>más estricto</td><td>una altura lenta sigue contando</td></tr>
+    <tr><td>Calibración: altura iniciada antes</td><td>ms</td><td>0</td><td>200</td><td>30</td><td>más estricto</td><td>una nota que suena puede contar</td></tr>
+    <tr><td>Calibración: misma altura a menos de</td><td>semitonos</td><td>0.1</td><td>2</td><td>0.5</td><td>un pequeño cambio es una nota nueva</td><td>un gran cambio es el mismo sonido</td></tr>
+    <tr><td>Calibración: confianza de altura</td><td>%</td><td>50</td><td>100</td><td>80</td><td>más tolerante</td><td>más estricto</td></tr>
+    <tr><td>Calibración: altura más baja</td><td>Hz</td><td>40</td><td>200</td><td>70</td><td>cuentan las notas graves</td><td>solo notas más agudas</td></tr>
+    </table>
+    <h2 id="calibration-2">Avanzado: Calibración del retardo, resultado</h2>
+    <p>Las calibraciones y los controles de la entrada: qué notas conserva una calibración del retardo y cómo las juzga, cuándo se conserva un perfil, cómo se nombra el ruido de la sala, cómo se cuentan los sonidos, el control del nivel y el aviso de entrada débil. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Calibración: altura más alta</td><td>Hz</td><td>500</td><td>4000</td><td>1400</td><td>solo notas más graves</td><td>cuentan las notas agudas</td></tr>
+    <tr><td>Calibración: notas necesarias</td><td></td><td>2</td><td>8</td><td>5</td><td>se conserva con menos notas</td><td>necesita casi todas las notas</td></tr>
+    <tr><td>Calibración: nota descartada más allá de</td><td>×</td><td>1</td><td>6</td><td>3</td><td>más notas descartadas</td><td>menos notas descartadas</td></tr>
+    <tr><td>Calibración: nunca descartada a menos de</td><td>ms</td><td>5</td><td>200</td><td>40</td><td>un músico regular puede perder notas</td><td>se conservan más notas</td></tr>
+    <tr><td>Calibración: inestable por encima de</td><td>ms</td><td>10</td><td>300</td><td>60</td><td>más a menudo inestable</td><td>se conserva más a menudo</td></tr>
+    <tr><td>Tasa de reconocimiento conservada</td><td>%</td><td>10</td><td>100</td><td>60</td><td>se conservan más perfiles</td><td>solo perfiles muy buenos</td></tr>
+    </table>
+    <h2 id="calibration-3">Avanzado: Calibración de la entrada</h2>
+    <p>Las calibraciones y los controles de la entrada: qué notas conserva una calibración del retardo y cómo las juzga, cuándo se conserva un perfil, cómo se nombra el ruido de la sala, cómo se cuentan los sonidos, el control del nivel y el aviso de entrada débil. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Calibración: tranquilo bajo</td><td>dBFS</td><td>-90</td><td>-46</td><td>-60</td><td>menos salas tranquilas</td><td>más salas tranquilas</td></tr>
+    <tr><td>Calibración: ruidoso por encima de</td><td>dBFS</td><td>-59</td><td>-20</td><td>-45</td><td>más salas ruidosas</td><td>menos salas ruidosas</td></tr>
+    <tr><td>Calibración: un solo sonido dentro de</td><td>ms</td><td>50</td><td>1000</td><td>250</td><td>un rasgueo puede contar varias veces</td><td>notas cercanas cuentan como una</td></tr>
+    <tr><td>Calibración: sonido cortado antes</td><td>ms</td><td>0</td><td>500</td><td>150</td><td>puede cortarse el inicio</td><td>se conserva más del inicio</td></tr>
+    </table>
+    <h2 id="level-check">Avanzado: Control del nivel</h2>
+    <p>Las calibraciones y los controles de la entrada: qué notas conserva una calibración del retardo y cómo las juzga, cuándo se conserva un perfil, cómo se nombra el ruido de la sala, cómo se cuentan los sonidos, el control del nivel y el aviso de entrada débil. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Control del nivel: confianza al tocar</td><td>%</td><td>50</td><td>100</td><td>80</td><td>más instantes cuentan como tocados</td><td>solo el toque claro</td></tr>
+    <tr><td>Control del nivel: toque necesario</td><td>ms</td><td>100</td><td>3000</td><td>500</td><td>concluye antes</td><td>más seguro, más lento</td></tr>
+    <tr><td>Control del nivel: demasiado fuerte desde</td><td>%</td><td>1</td><td>50</td><td>10</td><td>avisa antes</td><td>solo avisa con mucha saturación</td></tr>
+    </table>
+    <h2 id="input-quality">Avanzado: Entrada débil</h2>
+    <p>Las calibraciones y los controles de la entrada: qué notas conserva una calibración del retardo y cómo las juzga, cuándo se conserva un perfil, cómo se nombra el ruido de la sala, cómo se cuentan los sonidos, el control del nivel y el aviso de entrada débil. Se tiene en cuenta en el próximo inicio. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Entrada débil: ataques examinados</td><td></td><td>1</td><td>10</td><td>3</td><td>se avisa antes</td><td>más estable, se avisa después</td></tr>
+    <tr><td>Entrada débil: ataques guardados durante</td><td>ms</td><td>1000</td><td>30000</td><td>8000</td><td>solo el toque reciente</td><td>cuenta el toque lento</td></tr>
+    <tr><td>Entrada débil: nivel del ataque en</td><td>ms</td><td>50</td><td>1000</td><td>200</td><td>solo el ataque mismo</td><td>cuenta una subida lenta</td></tr>
+    </table>
     <h2 id="limits">Límites</h2><p>El reconocimiento se basa solo en la altura: no puede saber qué cuerda o qué traste se usó. Las técnicas escritas (hammer-on, pull-off, slide, bend, vibrato) se intentan oír, pero ninguna está todavía verificada: la práctica las muestra como «todavía no verificable» en lugar de adivinar. Las notas ligadas no tienen ataque de púa y puede que haya que tocarlas de nuevo o saltarlas; aceptarlas sin ataque y rechazar las cuerdas de más son propuestas aún en estudio, por eso no se ofrecen como ajustes.</p>
-    <h2 id="calibration">Calibrar el reconocimiento para una entrada</h2><p>La pestaña <strong>Entrada</strong> de la ventana de práctica muestra un punto de color junto al selector de entrada. <strong>Gris</strong>: ninguna entrada seleccionada. <strong>Naranja</strong>: esta entrada nunca se calibró (o se eligió el valor por defecto), se usan los ajustes por defecto. <strong>Verde</strong>: calibrada, al menos el 60 % de los sonidos de la pieza de calibración reconocidos. <strong>Rojo</strong>: calibrada, pero por debajo del 60 %. Una frase junto al punto avisa cuando la reducción de ruido o la ganancia de entrada no es la de la grabación; el perfil sigue en uso. Un perfil hecho con otra frecuencia de muestreo no se aplica (naranja, con el motivo).</p><p><strong>Calibrar el reconocimiento</strong> abre una sola ventana que le guía: afinación, consejos y una pieza corta que se toca una vez, sin tempo. La ventana escucha sola y cuenta los sonidos sin decir cuál oyó; se detiene cuando se oyeron todos. Se muestran las medidas de la grabación (sonidos oídos, nivel más alto, ruido de fondo, saturación) y se pregunta si es suficientemente buena. Después se buscan los mejores ajustes para esta entrada sobre la grabación, dos minutos como máximo, y la ventana bloquea la aplicación hasta el final. El resultado muestra la tasa de reconocimiento con los ajustes por defecto y con los encontrados, para notas, acordes y en total.</p><p>Si la grabación no sirve, o los ajustes encontrados no mejoran el valor por defecto, o lo mejoran pero quedan por debajo del 60 %, la aplicación nunca decide por usted: puede grabar de nuevo, usar la configuración por defecto o parar. Cerrar la ventana, en cualquier paso, pregunta «¿Detener la calibración?»; entonces no se guarda nada. <strong>Olvidar la calibración</strong> borra solo el perfil de la entrada elegida, tras una confirmación.</p><p>La ventana muestra una <strong>imagen de la tablatura del siguiente sonido que hay que tocar</strong>: seis líneas (la cuerda más fina arriba) con el número de traste en la cuerda de cada nota, 0 para una cuerda al aire, y los números de un acorde uno encima de otro. Cambia cada vez que se oye un sonido. En la pregunta sobre la calidad de la grabación, una casilla <strong>Conservar una copia de esta grabación para el diagnóstico</strong>, desmarcada cada vez, escribe la grabación como archivo WAV en la carpeta <code>tuxguitar-calibration-takes</code> de su carpeta personal, solo si la marca; la ventana indica dónde. La aplicación nunca la vuelve a leer ni la envía a ningún sitio.</p><p>El perfil se aplica en todo lugar donde se usa el reconocimiento (afinador, Seguimiento, Arcade, Espera), salvo los parámetros propios del afinador. <strong>No se conserva ningún audio</strong> salvo que marque la copia de diagnóstico: la grabación queda en memoria durante la calibración y se descarta al final o al parar. El resultado se mide sobre una sola grabación: confírmelo tocando.</p>
+    <h2 id="calibration">Calibrar el reconocimiento para una entrada</h2><p>La pestaña <strong>Entrada</strong> de la ventana de práctica muestra un punto de color junto al selector de entrada. <strong>Gris</strong>: ninguna entrada seleccionada. <strong>Naranja</strong>: esta entrada nunca se calibró (o se eligió el valor por defecto), se usan los ajustes por defecto. <strong>Verde</strong>: calibrada, al menos el 60 % de los sonidos de la pieza de calibración reconocidos (la tasa recomendada; es un ajuste experto de la parte Avanzado, «Tasa de reconocimiento conservada»). <strong>Rojo</strong>: calibrada, pero por debajo del 60 %. Una frase junto al punto avisa cuando la reducción de ruido o la ganancia de entrada no es la de la grabación; el perfil sigue en uso. Un perfil hecho con otra frecuencia de muestreo no se aplica (naranja, con el motivo).</p><p><strong>Calibrar el reconocimiento</strong> abre una sola ventana que le guía: afinación, consejos y una pieza corta que se toca una vez, sin tempo. La ventana escucha sola y cuenta los sonidos sin decir cuál oyó; se detiene cuando se oyeron todos. Se muestran las medidas de la grabación (sonidos oídos, nivel más alto, ruido de fondo, saturación) y se pregunta si es suficientemente buena. Después se buscan los mejores ajustes para esta entrada sobre la grabación, dos minutos como máximo, y la ventana bloquea la aplicación hasta el final. El resultado muestra la tasa de reconocimiento con los ajustes por defecto y con los encontrados, para notas, acordes y en total.</p><p>Si la grabación no sirve, o los ajustes encontrados no mejoran el valor por defecto, o lo mejoran pero quedan por debajo del 60 %, la aplicación nunca decide por usted: puede grabar de nuevo, usar la configuración por defecto o parar. Cerrar la ventana, en cualquier paso, pregunta «¿Detener la calibración?»; entonces no se guarda nada. <strong>Olvidar la calibración</strong> borra solo el perfil de la entrada elegida, tras una confirmación.</p><p>La ventana muestra una <strong>imagen de la tablatura del siguiente sonido que hay que tocar</strong>: seis líneas (la cuerda más fina arriba) con el número de traste en la cuerda de cada nota, 0 para una cuerda al aire, y los números de un acorde uno encima de otro. Cambia cada vez que se oye un sonido. En la pregunta sobre la calidad de la grabación, una casilla <strong>Conservar una copia de esta grabación para el diagnóstico</strong>, desmarcada cada vez, escribe la grabación como archivo WAV en la carpeta <code>tuxguitar-calibration-takes</code> de su carpeta personal, solo si la marca; la ventana indica dónde. La aplicación nunca la vuelve a leer ni la envía a ningún sitio.</p><p>El perfil se aplica en todo lugar donde se usa el reconocimiento (afinador, Seguimiento, Arcade, Espera), salvo los parámetros propios del afinador. <strong>No se conserva ningún audio</strong> salvo que marque la copia de diagnóstico: la grabación queda en memoria durante la calibración y se descarta al final o al parar. El resultado se mide sobre una sola grabación: confírmelo tocando.</p>
     </section>
   <script src="init.js"></script>
 </body>

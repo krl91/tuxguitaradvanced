@@ -74,6 +74,42 @@ public final class PracticeParameters {
 	/** ...shortens the stability window to 12 hops (about 64 ms); the standard window stays the fallback. */
 	public static final long EARLY_STABILITY_NANOS = 12 * HOP_NANOS;
 
+	/** The early stability's margin, the default of {@code recognition.wait.early-margin} being {@link #EARLY_STABILITY_MARGIN} (spec 026). */
+	public double earlyStabilityMargin() {
+		return this.settings.get(RecognitionParameters.WAIT_EARLY_MARGIN);
+	}
+
+	/** The early stability's window, the default of {@code recognition.wait.early-hops} giving {@link #EARLY_STABILITY_NANOS} (spec 026). */
+	public long earlyStabilityNanos() {
+		return (long) this.settings.get(RecognitionParameters.WAIT_EARLY_HOPS) * HOP_NANOS;
+	}
+
+	/** The Follow session's values (spec 026, T022). */
+	public FollowSession.FollowParameters followParameters() {
+		return FollowSession.FollowParameters.of(this.settings);
+	}
+
+	/** The beat at which Arcade's timing width is read, in milliseconds (spec 026, T024). */
+	public double referenceBeatMillis() {
+		return this.settings.get(RecognitionParameters.TIMING_REFERENCE_BEAT);
+	}
+
+	/** Follow's time to play with the advance and gap of the settings (spec 026, T024). */
+	public PlayTimeWindow playTimeWindow(int playTimeMillis) {
+		return new PlayTimeWindow(playTimeMillis, (long) this.settings.get(RecognitionParameters.TIMING_ADVANCE) * 1_000_000L,
+				(long) this.settings.get(RecognitionParameters.TIMING_GAP) * 1_000_000L);
+	}
+
+	/** The spread of the capture's lag from which the route is called unstable, in milliseconds (spec 026, T024). */
+	public double unstableSpreadMillis() {
+		return this.settings.get(RecognitionParameters.TIMING_CLOCK_SPREAD);
+	}
+
+	/** The Wait session's values (spec 026, T021). */
+	public PracticeSession.WaitParameters waitParameters() {
+		return PracticeSession.WaitParameters.of(this.settings);
+	}
+
 	/** The detector reports an onset this long after its attack: the last hop of its post window (spec 026, {@code onset.post-last}). */
 	public long articulationLatencyNanos() {
 		return (long) this.settings.get(RecognitionParameters.ONSET_POST_LAST) * HOP_NANOS;

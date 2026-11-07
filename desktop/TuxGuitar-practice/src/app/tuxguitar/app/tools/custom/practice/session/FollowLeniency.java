@@ -22,18 +22,20 @@ public final class FollowLeniency {
 	private static final class Row {
 		final RecognitionParameter.Number parameter;
 		final boolean higherIsMoreLenient;
-		final double permissive;
-		final double veryPermissive;
+		final RecognitionParameter.Number permissive;
+		final RecognitionParameter.Number veryPermissive;
 
-		Row(RecognitionParameter.Number parameter, boolean higherIsMoreLenient, double permissive, double veryPermissive) {
+		Row(RecognitionParameter.Number parameter, boolean higherIsMoreLenient, RecognitionParameter.Number permissive,
+				RecognitionParameter.Number veryPermissive) {
 			this.parameter = parameter;
 			this.higherIsMoreLenient = higherIsMoreLenient;
 			this.permissive = permissive;
 			this.veryPermissive = veryPermissive;
 		}
 
-		double at(FollowLeniencyPosition position) {
-			return position == FollowLeniencyPosition.PERMISSIVE ? this.permissive : this.veryPermissive;
+		/** The position's value, read from the settings (spec 026, {@code recognition.follow-leniency.*}). */
+		double at(FollowLeniencyPosition position, RecognitionSettings settings) {
+			return settings.get(position == FollowLeniencyPosition.PERMISSIVE ? this.permissive : this.veryPermissive);
 		}
 	}
 
@@ -41,12 +43,18 @@ public final class FollowLeniency {
 
 	private static List<Row> rows() {
 		List<Row> rows = new ArrayList<Row>();
-		rows.add(new Row(RecognitionParameters.NOTE_ACCEPT, true, 35.0, 35.0));
-		rows.add(new Row(RecognitionParameters.NOTE_CONFIDENCE, false, 0.60, 0.50));
-		rows.add(new Row(RecognitionParameters.NOTE_STABILITY, false, 55.0, 50.0));
-		rows.add(new Row(RecognitionParameters.CHORD_EVIDENCE, false, 0.22, 0.20));
-		rows.add(new Row(RecognitionParameters.CHORD_MIN_PARTIALS, false, 1.0, 1.0));
-		rows.add(new Row(RecognitionParameters.CHORD_CONFIRM, false, 24.0, 20.0));
+		rows.add(new Row(RecognitionParameters.NOTE_ACCEPT, true, RecognitionParameters.FOLLOW_LENIENCY_PERMISSIVE_ACCEPT,
+				RecognitionParameters.FOLLOW_LENIENCY_VERY_PERMISSIVE_ACCEPT));
+		rows.add(new Row(RecognitionParameters.NOTE_CONFIDENCE, false, RecognitionParameters.FOLLOW_LENIENCY_PERMISSIVE_CONFIDENCE,
+				RecognitionParameters.FOLLOW_LENIENCY_VERY_PERMISSIVE_CONFIDENCE));
+		rows.add(new Row(RecognitionParameters.NOTE_STABILITY, false, RecognitionParameters.FOLLOW_LENIENCY_PERMISSIVE_STABILITY,
+				RecognitionParameters.FOLLOW_LENIENCY_VERY_PERMISSIVE_STABILITY));
+		rows.add(new Row(RecognitionParameters.CHORD_EVIDENCE, false, RecognitionParameters.FOLLOW_LENIENCY_PERMISSIVE_CHORD_EVIDENCE,
+				RecognitionParameters.FOLLOW_LENIENCY_VERY_PERMISSIVE_CHORD_EVIDENCE));
+		rows.add(new Row(RecognitionParameters.CHORD_MIN_PARTIALS, false, RecognitionParameters.FOLLOW_LENIENCY_PERMISSIVE_CHORD_PARTIALS,
+				RecognitionParameters.FOLLOW_LENIENCY_VERY_PERMISSIVE_CHORD_PARTIALS));
+		rows.add(new Row(RecognitionParameters.CHORD_CONFIRM, false, RecognitionParameters.FOLLOW_LENIENCY_PERMISSIVE_CHORD_CONFIRM,
+				RecognitionParameters.FOLLOW_LENIENCY_VERY_PERMISSIVE_CHORD_CONFIRM));
 		return rows;
 	}
 
@@ -61,7 +69,7 @@ public final class FollowLeniency {
 		RecognitionSettings relaxed = effective;
 		for (Row row : ROWS) {
 			double current = relaxed.get(row.parameter);
-			double wanted = row.at(position);
+			double wanted = row.at(position, effective);
 			double value = row.higherIsMoreLenient ? Math.max(current, wanted) : Math.min(current, wanted);
 			if (value != current) {
 				relaxed = relaxed.with(row.parameter, Double.valueOf(value));

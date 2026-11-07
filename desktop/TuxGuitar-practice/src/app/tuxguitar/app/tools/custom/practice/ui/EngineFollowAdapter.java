@@ -10,12 +10,15 @@ import app.tuxguitar.app.tools.custom.practice.session.MidiFollowPlayer;
 import app.tuxguitar.app.tools.custom.practice.session.PracticeParameters;
 import app.tuxguitar.app.tools.custom.practice.session.RouteCalibrationStore;
 import app.tuxguitar.app.tools.custom.practice.session.RouteCalibrations;
+import app.tuxguitar.app.tools.custom.practice.session.TickInterpolator;
 import app.tuxguitar.audio.engine.AudioEngine;
 import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.input.CaptureClock;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.input.InputAssessment;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.player.base.MidiOutputPort;
 import app.tuxguitar.player.base.MidiPlayer;
@@ -53,6 +56,8 @@ public final class EngineFollowAdapter implements PracticeHost.RunEnvironment {
 
 	@Override
 	public FollowPlayer player() {
+		// the clock's values are read for each run (spec 026)
+		this.player.tempoClock().setParameters(TickInterpolator.Parameters.of(RecognitionSettingsStore.getInstance(this.context).get()));
 		return this.player;
 	}
 
@@ -104,8 +109,12 @@ public final class EngineFollowAdapter implements PracticeHost.RunEnvironment {
 		if (route() == null || assessment.isUnusable() || playerBusy()) {
 			return null;
 		}
-		PracticeParameters parameters = PracticeParameters.of(RecognitionSettingsStore.getInstance(this.context).get());
-		return new CalibrationRun(new MidiClickPlayer(this.midiPlayer), parameters.articulationLatencyNanos());
+		RecognitionSettings settings = RecognitionSettingsStore.getInstance(this.context).get();
+		PracticeParameters parameters = PracticeParameters.of(settings);
+		CalibrationRun run = new CalibrationRun(new MidiClickPlayer(this.midiPlayer), parameters.articulationLatencyNanos());
+		run.setLatencyLimitMillis(latencyLimitMillis());
+		run.setParameters(CalibrationRun.Parameters.of(settings));
+		return run;
 	}
 
 	/** The output of the player, as the editor audition and the calibration click use it: a note on the channel of its track, straight to the transmitter. */
@@ -164,5 +173,15 @@ public final class EngineFollowAdapter implements PracticeHost.RunEnvironment {
 			this.engine.unsubscribe(this.calibrationListener);
 			this.calibrationListener = null;
 		}
+	}
+
+	@Override
+	public double latencyLimitMillis() {
+		return RecognitionSettingsStore.getInstance(this.context).get().get(RecognitionParameters.CLOCK_LATENCY_LIMIT);
+	}
+
+	@Override
+	public double unstableSpreadMillis() {
+		return RecognitionSettingsStore.getInstance(this.context).get().get(RecognitionParameters.TIMING_CLOCK_SPREAD);
 	}
 }

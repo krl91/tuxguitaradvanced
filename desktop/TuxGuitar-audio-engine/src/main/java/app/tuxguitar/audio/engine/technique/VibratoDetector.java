@@ -18,6 +18,10 @@ public final class VibratoDetector implements TechniqueDetector {
 		public double minDurationSeconds = 0.35;
 		public double minVoicedShare = 0.7;
 
+		/** The pitch motion's outlier, in cents, and its fewest kept samples (spec 026, {@code recognition.technique.motion.*}). */
+		public double motionOutlierCents = PitchMotion.OUTLIER_CENTS;
+		public int motionMinVoiced = PitchMotion.MIN_VOICED;
+
 		public static Parameters defaults() {
 			return new Parameters();
 		}
@@ -36,13 +40,13 @@ public final class VibratoDetector implements TechniqueDetector {
 
 	@Override
 	public TechniqueEvidence evaluate(NoteSegment segment) {
-		PitchMotion motion = new PitchMotion(segment);
+		PitchMotion motion = new PitchMotion(segment, this.parameters.motionOutlierCents, this.parameters.motionMinVoiced);
 		Map<String, Double> m = new LinkedHashMap<String, Double>();
 		m.put("depthCents", motion.wobbleDepth);
 		m.put("rateHz", motion.wobbleRate);
 		double voicedShare = motion.voicedShare(segment.size());
 		m.put("voicedShare", voicedShare);
-		if( segment.getDurationSeconds() < this.parameters.minDurationSeconds || voicedShare < this.parameters.minVoicedShare || motion.voiced < PitchMotion.MIN_VOICED ) {
+		if( segment.getDurationSeconds() < this.parameters.minDurationSeconds || voicedShare < this.parameters.minVoicedShare || motion.voiced < this.parameters.motionMinVoiced ) {
 			return new TechniqueEvidence(DetectableTechnique.VIBRATO, TechniqueEvidence.Verdict.UNCERTAIN, 0.0, m);
 		}
 		boolean rateOk = motion.wobbleRate >= this.parameters.minRateHz && motion.wobbleRate <= this.parameters.maxRateHz;

@@ -20,8 +20,13 @@ public final class LatencyCompensation {
 		CALIBRATED
 	}
 
-	/** A bound for sanity, not a model of any device: a calibrated Bluetooth route is a few hundred milliseconds. */
+	/**
+	 * A bound for sanity, not a model of any device: a calibrated Bluetooth route is a few hundred milliseconds. The default of
+	 * {@code recognition.clock.latency-limit} (spec 026); an offset is checked against the limit given where it is made (the setting).
+	 */
 	public static final double LIMIT_MILLIS = 1000.0;
+	/** The highest limit the setting allows: an offset stored under it stays readable whatever the limit is now. */
+	public static final double MAX_LIMIT_MILLIS = 3000.0;
 
 	private static final LatencyCompensation NO_CALIBRATION = new LatencyCompensation(0L, Source.NONE);
 
@@ -38,16 +43,24 @@ public final class LatencyCompensation {
 	}
 
 	public static LatencyCompensation manual(double offsetMillis) {
-		return new LatencyCompensation(nanosOf(offsetMillis), Source.MANUAL);
+		return manual(offsetMillis, LIMIT_MILLIS);
+	}
+
+	public static LatencyCompensation manual(double offsetMillis, double limitMillis) {
+		return new LatencyCompensation(nanosOf(offsetMillis, limitMillis), Source.MANUAL);
 	}
 
 	public static LatencyCompensation calibrated(double offsetMillis) {
-		return new LatencyCompensation(nanosOf(offsetMillis), Source.CALIBRATED);
+		return calibrated(offsetMillis, LIMIT_MILLIS);
 	}
 
-	private static long nanosOf(double offsetMillis) {
-		if (Double.isNaN(offsetMillis) || Math.abs(offsetMillis) > LIMIT_MILLIS) {
-			throw new IllegalArgumentException("a latency offset must be within +-" + LIMIT_MILLIS + " ms: " + offsetMillis);
+	public static LatencyCompensation calibrated(double offsetMillis, double limitMillis) {
+		return new LatencyCompensation(nanosOf(offsetMillis, limitMillis), Source.CALIBRATED);
+	}
+
+	private static long nanosOf(double offsetMillis, double limitMillis) {
+		if (Double.isNaN(offsetMillis) || Math.abs(offsetMillis) > limitMillis) {
+			throw new IllegalArgumentException("a latency offset must be within +-" + limitMillis + " ms: " + offsetMillis);
 		}
 		return Math.round(offsetMillis * 1e6);
 	}

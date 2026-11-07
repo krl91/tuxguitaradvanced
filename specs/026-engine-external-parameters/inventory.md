@@ -189,7 +189,7 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 | `recognition.follow.same-sound` | ms | 100 | 20 | 400 | 100 ms | next run | `FollowSession.java` `SAME_SOUND_NANOS` | - |
 | `recognition.follow.ringing` | ms | 1500 | 300 | 4000 | 1500 ms | next run | `FollowSession.java` `RINGING_NANOS` | - |
 | `recognition.follow.scan-back` | — | 8 | 0 | 32 | 8  | next run | `FollowSession.java` inline scanStart() 8 (events looked back) | - |
-| `recognition.follow.onset-memory` | ms | 3000 | 500 | 10000 | 3000 ms | next run | `FollowSession.java` inline 3_000_000_000L (recent onsets kept) | - |
+| `recognition.follow.onset-memory` | ms | 3000 | 20 | 10000 | 3000 ms | next run | `FollowSession.java` inline 3_000_000_000L (recent onsets kept) | - |
 
 ### `FOLLOW_2`
 
@@ -199,7 +199,7 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 | `recognition.follow.refine-after` | ms | 30 | 0 | 200 | 30 ms | next run | `FollowSession.java` `REFINE_AFTER_NANOS` | - |
 | `recognition.follow.after-close` | ms | 100 | 0 | 400 | 100 ms | next run | `FollowSession.java` `EVIDENCE_AFTER_CLOSE_NANOS` | - |
 | `recognition.follow.tail` | ms | 100 | 0 | 400 | 100 ms | next run | `FollowSession.java` `TAIL_NANOS` | - |
-| `recognition.follow.history` | ms | 1200 | 400 | 4000 | 1200 ms | next run | `FollowSession.java` `HISTORY_NANOS` | - |
+| `recognition.follow.history` | ms | 1200 | 100 | 4000 | 1200 ms | next run | `FollowSession.java` `HISTORY_NANOS` | - |
 
 ### `FOLLOW_3`
 
@@ -294,7 +294,7 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 | `recognition.technique.bend.on-share` | % | 0.15 | 0 | 0.5 | 15 % | next run | `BendDetector.java` `Parameters.onToleranceShare` | - |
 | `recognition.technique.bend.moved-share` | % | 0.5 | 0.1 | 1 | 50 % | next run | `BendDetector.java` `Parameters.movedShare` | - |
 | `recognition.technique.bend.start-tolerance` | cents | 40.0 | 5 | 150 | 40 cents | next run | `BendDetector.java` `Parameters.startToleranceCents` | - |
-| `recognition.technique.bend.edge` | hops | 8 | 0 | 40 | 8 hops | next run | `BendDetector.java` `Parameters.edgeHops` | - |
+| `recognition.technique.bend.edge` | hops | 8 | 1 | 40 | 8 hops | next run | `BendDetector.java` `Parameters.edgeHops` | - |
 
 ### `TECHNIQUE_3`
 

@@ -71,7 +71,7 @@ import app.tuxguitar.audio.engine.monitor.MonitorState;
 import app.tuxguitar.audio.engine.settings.RecognitionParameters;
 import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
-import app.tuxguitar.audio.engine.technique.TechniqueCatalog;
+import app.tuxguitar.audio.engine.settings.TechniqueParameters;
 import app.tuxguitar.audio.engine.session.PracticeTunerContext;
 import app.tuxguitar.editor.action.TGActionProcessor;
 import app.tuxguitar.song.helpers.tuning.TuningManager;
@@ -870,15 +870,16 @@ public class PracticeWindow {
 		this.session = new PracticeSession(selection, sequence, parameters.noteInterpreter(), parameters.tolerance(),
 				parameters.stabilityNanos(), parameters.articulationLatencyNanos(),
 				new ChordMatcher(parameters.chordParameters()), PassageSettings.getInstance(this.context).toPolicy());
+		this.session.setWaitParameters(parameters.waitParameters());
 		this.session.setAssessment(this.assessment);
 		// the written techniques are judged beside the pitch, never instead of it (spec 002); off: every technique is "not verifiable"
-		this.session.setTechniqueJudge(new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)));
+		this.session.setTechniqueJudge(new TechniqueJudge(TechniqueParameters.catalog(recognition), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)));
 		// notes and chords are also judged from what each attack adds to the sound (spec 004): works over strings that keep ringing
-		this.session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults(), recognition));
+		this.session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.of(recognition), recognition));
 		this.engine.setAttackCandidates(AttackCandidates.of(sequence, recognition));
 		this.session.setExpectedChordSink(this.engine::setExpectedChord);
 		if( PracticeParameters.EARLY_STABILITY_ENABLED ) {
-			this.session.setEarlyStability(PracticeParameters.EARLY_STABILITY_MARGIN, PracticeParameters.EARLY_STABILITY_NANOS);
+			this.session.setEarlyStability(parameters.earlyStabilityMargin(), parameters.earlyStabilityNanos());
 			this.session.setExpectedPitchSink(this.engine::setExpectedPitches);
 		}
 		this.loop = new SessionLoop<PracticeSnapshot>(this.context, this.session, this::render);
@@ -983,9 +984,9 @@ public class PracticeWindow {
 		final ArcadeEndRouter.Run endRun = this.arcadeEnds.next();
 		try {
 			plan = ArcadeStarter.prepareFrom(this.context, this.song, candidate.getTrack(), full, FollowSettings.getInstance(this.context),
-					ArcadeLeniency.windowMillis(leniency, FollowSettings.getInstance(this.context).getWindowMillis()), parameters,
-					new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
-					() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults(), recognition), this.followAdapter, this::renderArcade,
+					ArcadeLeniency.windowMillis(leniency, FollowSettings.getInstance(this.context).getWindowMillis(), recognition), parameters,
+					new TechniqueJudge(TechniqueParameters.catalog(recognition), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
+					() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.of(recognition), recognition), this.followAdapter, this::renderArcade,
 					runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), endRun::ended,
 					(loop, handler) -> new FollowEvents(this.context, loop, handler, this.engine.getSelection(), this.shared),
 					() -> TGSynchronizer.getInstance(this.context).executeLater(this::restartArcade));
@@ -1206,8 +1207,8 @@ public class PracticeWindow {
 		// spec 016: the time to play of the learner and the pitch permissiveness chosen in the Mode tab, read when the run starts
 		FollowStarter.Plan plan = FollowStarter.prepareFollow(this.context, this.song, this.preparedSequence, candidate.getTrack().getNumber(),
 				FollowSettings.getInstance(this.context), FollowChoices.of(this.context).leniency(), recognition,
-				new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
-				() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults(), recognition), this.followAdapter, this::renderFollow,
+				new TechniqueJudge(TechniqueParameters.catalog(recognition), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
+				() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.of(recognition), recognition), this.followAdapter, this::renderFollow,
 				runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), this::followEnded,
 				(loop, handler) -> new FollowEvents(this.context, loop, handler, this.engine.getSelection(), this.shared),
 				() -> TGSynchronizer.getInstance(this.context).executeLater(this::restartFollow));

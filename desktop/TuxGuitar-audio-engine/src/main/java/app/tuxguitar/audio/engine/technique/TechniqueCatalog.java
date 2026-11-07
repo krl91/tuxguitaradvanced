@@ -46,14 +46,21 @@ public final class TechniqueCatalog {
 
 	/** The catalogue as benchmarked today: every detector exists, none is verified yet. */
 	public static TechniqueCatalog defaults() {
+		return of(VibratoDetector.Parameters.defaults(), BendDetector.Parameters.defaults(), SlideDetector.Parameters.defaults(),
+				LegatoDetector.Parameters.defaults());
+	}
+
+	/** The same catalogue with the detectors' values given (spec 026: read from the settings by {@code TechniqueParameters.catalog}). */
+	public static TechniqueCatalog of(VibratoDetector.Parameters vibrato, BendDetector.Parameters bend, SlideDetector.Parameters slide,
+			LegatoDetector.Parameters legato) {
 		TechniqueCatalog catalog = new TechniqueCatalog();
-		catalog.entries.put(DetectableTechnique.VIBRATO, new Entry(new VibratoDetector(VibratoDetector.Parameters.defaults()), false,
+		catalog.entries.put(DetectableTechnique.VIBRATO, new Entry(new VibratoDetector(vibrato), false,
 				"IDMT-SMT-Guitar dataset 2: vibrato detected on 59 % of 116 vibrato notes (target 85 %), wrongly on 0.5 % of 3548 plain notes"));
-		catalog.entries.put(DetectableTechnique.BEND, new Entry(new BendDetector(BendDetector.Parameters.defaults()), false,
+		catalog.entries.put(DetectableTechnique.BEND, new Entry(new BendDetector(bend), false,
 				"IDMT-SMT-Guitar dataset 2: bend detected on 82 % of 51 bent notes (target 85 %), wrongly on 3.7 % of 3548 plain notes"));
-		catalog.entries.put(DetectableTechnique.SLIDE, new Entry(new SlideDetector(SlideDetector.Parameters.defaults()), false,
+		catalog.entries.put(DetectableTechnique.SLIDE, new Entry(new SlideDetector(slide), false,
 				"IDMT-SMT-Guitar dataset 2: slide detected on 48 % of 93 slid notes (target 85 %), wrongly on 1.3 % of 3548 plain notes"));
-		catalog.entries.put(DetectableTechnique.LEGATO, new Entry(new LegatoDetector(LegatoDetector.Parameters.defaults()), false,
+		catalog.entries.put(DetectableTechnique.LEGATO, new Entry(new LegatoDetector(legato), false,
 				"no recording labelled hammer-on or pull-off is available: only synthetic signals and one written pair of the reference recording"));
 		return catalog;
 	}

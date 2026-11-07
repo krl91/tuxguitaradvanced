@@ -34,7 +34,32 @@ public abstract class RecognitionParameter {
 		CHORD_EVIDENCE,
 		FRONT_END,
 		NOISE_GATE,
-		GAIN
+		GAIN,
+		/** The practice session's values (spec 026): the chord acceptance. */
+		ACCEPTANCE_1,
+		ACCEPTANCE_2,
+		ACCEPTANCE_3,
+		WAIT_1,
+		WAIT_2,
+		FOLLOW_1,
+		FOLLOW_2,
+		FOLLOW_3,
+		CLOCK,
+		TIMING,
+		LENIENCY_1,
+		LENIENCY_2,
+		LENIENCY_3,
+		LENIENCY_4,
+		TECHNIQUE_1,
+		TECHNIQUE_2,
+		TECHNIQUE_3,
+		TECHNIQUE_4,
+		TECHNIQUE_5,
+		CALIBRATION_1,
+		CALIBRATION_2,
+		CALIBRATION_3,
+		LEVEL_CHECK,
+		INPUT_QUALITY
 	}
 
 	/** What validation did with a raw value. */

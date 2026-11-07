@@ -38,6 +38,8 @@ public final class SoundCounter implements HopListener {
 
 	private final int expected;
 	private final double levelMinimum;
+	/** Two sounds closer than this are one (spec 026, {@code recognition.calibration.sound-refractory}). */
+	private final int refractoryMillis;
 	private final ArticulationDetector detector;
 	private final float[] window = new float[OfflineAnalysis.WINDOW];
 	private volatile State state = State.LISTENING;
@@ -53,6 +55,7 @@ public final class SoundCounter implements HopListener {
 	public SoundCounter(int expected, RecognitionSettings settings) {
 		this.expected = expected;
 		this.levelMinimum = settings.get(RecognitionParameters.INPUT_LEVEL_MIN);
+		this.refractoryMillis = (int) settings.get(RecognitionParameters.CALIBRATION_SOUND_REFRACTORY);
 		this.detector = AudioEngine.articulationDetector(settings);
 	}
 
@@ -111,7 +114,7 @@ public final class SoundCounter implements HopListener {
 			if (onset && windowDbfs() >= this.levelMinimum) {
 				long gap = this.lastOnsetSamples < 0 ? Long.MAX_VALUE : (this.samplesSeen - this.lastOnsetSamples) * 1000L / this.sampleRate;
 				this.lastOnsetSamples = this.samplesSeen;
-				if (gap >= SoundDetection.REFRACTORY_MILLIS) {
+				if (gap >= this.refractoryMillis) {
 					count();
 				}
 			}

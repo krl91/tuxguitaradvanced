@@ -416,6 +416,7 @@ public final class AudioEngine {
 		if( this.assessor.isChecking() ) {
 			return;
 		}
+		this.assessor.setParameters(InputAssessor.Parameters.of(currentSettings()));
 		this.assessor.runLevelCheck();
 		subscribe(this.assessor);
 	}

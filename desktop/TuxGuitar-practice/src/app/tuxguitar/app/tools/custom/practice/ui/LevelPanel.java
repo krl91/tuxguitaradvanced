@@ -8,6 +8,8 @@ import app.tuxguitar.audio.engine.AudioEngine;
 import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.input.InputAssessment;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettingsStore;
 import app.tuxguitar.ui.UIFactory;
 import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
@@ -148,7 +150,8 @@ public final class LevelPanel {
 	private void frameReceived(AnalysisFrame frame) {
 		this.latestFrame.set(frame);
 		// a check that ended on no signal or saturation starts again when the guitar is heard (spec 025, FR-001)
-		if( LevelRecheck.shouldCheck(this.engine.getSelection().snapshot().getAssessment(), this.engine.isLevelCheckRunning(), this.runGoing.getAsBoolean(), frame)
+		if( LevelRecheck.shouldCheck(this.engine.getSelection().snapshot().getAssessment(), this.engine.isLevelCheckRunning(), this.runGoing.getAsBoolean(), frame,
+				RecognitionSettingsStore.getInstance(this.context).get().get(RecognitionParameters.LEVEL_CHECK_PLAYING_CONFIDENCE))
 				&& this.recheckPending.compareAndSet(false, true) ) {
 			TGSynchronizer.getInstance(this.context).executeLater(this::recheck);
 		}

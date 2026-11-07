@@ -18,6 +18,11 @@ final class LevelRecheck {
 	}
 
 	static boolean shouldCheck(InputAssessment assessment, boolean checking, boolean runGoing, AnalysisFrame frame) {
+		return shouldCheck(assessment, checking, runGoing, frame, PLAYING_CONFIDENCE);
+	}
+
+	/** @param playingConfidence the confidence from which the check counts a frame as playing (spec 026, {@code recognition.level-check.playing-confidence}) */
+	static boolean shouldCheck(InputAssessment assessment, boolean checking, boolean runGoing, AnalysisFrame frame, double playingConfidence) {
 		if( checking || runGoing || assessment.getStatus() != InputAssessment.Status.UNUSABLE ) {
 			return false;
 		}
@@ -25,6 +30,6 @@ final class LevelRecheck {
 		if( reason != InputAssessment.Reason.NO_SIGNAL && reason != InputAssessment.Reason.CLIPPING ) {
 			return false;
 		}
-		return !Double.isNaN(frame.getF0Hz()) && frame.getConfidence() >= PLAYING_CONFIDENCE;
+		return !Double.isNaN(frame.getF0Hz()) && frame.getConfidence() >= playingConfidence;
 	}
 }
