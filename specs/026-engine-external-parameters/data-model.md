@@ -20,35 +20,52 @@ Validation: as every recognition setting (`RecognitionSettings.fromStrings`): mi
 - the onset windows: pre-first ≥ pre-last, post-first ≤ post-last (normal and fast);
 - the bend window: min ≤ max;
 - `polyphonic.candidate-low` < `polyphonic.candidate-high`, `attack-candidates.low` < `attack-candidates.high`;
-- the calibration levels: calm below < loud above;
-- each leniency row: very permissive at least as lenient as permissive.
+- the calibration levels: calm below < loud above.
+- the leniency rows have no pair (inventory.md, "Ordered pairs": a pair would leave a row with a single value).
 
 ## Families and sections (the categories of the window)
 
-Counts are those of the scan of 2026-11-06 (research R1); task T003 writes the exact list in `inventory.md`. A family above 7 values is split into numbered sections.
+Exact counts, from `inventory.md` (task T003). A family above 7 values is split into numbered sections.
 
-| Section (`Section` value) | Family key | Where the values are today | About |
-|---|---|---|---|
-| `ONSET` | `onset` | `ArticulationDetector`, `NativeParameters` (normal windows) | 7 |
-| `ONSET_FAST` | `onset-fast` | `ArticulationDetector` fast values, `PracticeParameters.WEAK_FAST_DBFS` | 6 |
-| `PITCH` | `pitch` | YIN threshold, `ExpectedPitchVerifier` (search, periods), `TolerancePolicy.MAX_SHARP_CENTS`, `AttackCandidates` range | 6 |
-| `POLYPHONIC_1`, `POLYPHONIC_2` | `polyphonic` | `PolyphonicAnalyzer.Parameters` (except FFT and band range), floor width and factor | 10 |
-| `ATTACK_1`, `ATTACK_2` | `attack` | `AttackAnalyzer.Parameters` (except FFT), `AttackEvidence` | 8 |
-| `CHORD_EVIDENCE` | `chord-evidence` | `ChordEvidence` / `chord.rs`, `StrumClipMeter` / `strum_clip.rs` | 6 |
-| `FRONT_END` | `front-end` | `HighPass`, `NoiseEstimator` | 5 |
-| `NOISE_GATE` | `noise-gate` | `NoiseGate`, `SpectralSubtractor` (alpha, beta, learn rate) | 7 |
-| `GAIN` | `gain` | `InputGain` range, `GainSuggester` | 6 |
-| `ACCEPTANCE_1`, `ACCEPTANCE_2` | `acceptance` | `PolyphonicAcceptance.Parameters.defaults()` and its constants | 14 |
-| `WAIT_1`, `WAIT_2` | `wait` | `PracticeSession` (verdict hold, neighbour veto, technique and bend windows, speed window), `PracticeParameters` early stability | 12 |
-| `FOLLOW_1`… `FOLLOW_3` | `follow` | `FollowSession` timings, technique and bend windows | 15 |
-| `CLOCK` | `clock` | `TickInterpolator` (fit window, minimum points and span, stall, extrapolation, seek margin), `LatencyCompensation.LIMIT_MILLIS` | 7 |
-| `TIMING` | `timing` | `TimingTolerance` reference beat, `PlayTimeWindow` advance and gap, `ClockUncertainty` | 4 |
-| `LENIENCY_1`… `LENIENCY_4` | `follow-leniency`, `arcade-leniency` | `FollowLeniency` and `ArcadeLeniency` rows × positions | 22 |
-| `TECHNIQUE_1`… `TECHNIQUE_4` | `technique` | `BendDetector`, `SlideDetector`, `VibratoDetector`, `LegatoDetector` parameters, `PitchMotion` | 27 |
-| `CALIBRATION_1`… `CALIBRATION_3` | `calibration` | `CalibrationRun` thresholds, `CalibrationTaps` outliers, `RecognitionRate`, `RecordingQuality` levels, `SoundDetection` refractory and lead | 17 |
-| `INPUT_QUALITY` | `input-quality` | `InputQuality` | 3 |
+| Section (`Section` value) | Family keys | Values |
+|---|---|---|
+| `ONSET` | `onset` | 7 |
+| `ONSET_FAST` | `onset-fast` | 7 |
+| `PITCH` | `pitch` | 6 |
+| `POLYPHONIC_1` | `polyphonic` | 6 |
+| `POLYPHONIC_2` | `polyphonic` | 5 |
+| `ATTACK_1` | `attack` | 5 |
+| `ATTACK_2` | `attack` | 3 |
+| `CHORD_EVIDENCE` | `chord-evidence` | 6 |
+| `FRONT_END` | `front-end` | 4 |
+| `NOISE_GATE` | `noise-gate` | 7 |
+| `GAIN` | `gain` | 4 |
+| `ACCEPTANCE_1` | `acceptance` | 7 |
+| `ACCEPTANCE_2` | `acceptance` | 7 |
+| `ACCEPTANCE_3` | `acceptance` | 2 |
+| `WAIT_1` | `wait` | 7 |
+| `WAIT_2` | `wait` | 6 |
+| `FOLLOW_1` | `follow` | 7 |
+| `FOLLOW_2` | `follow` | 5 |
+| `FOLLOW_3` | `follow` | 5 |
+| `CLOCK` | `clock` | 7 |
+| `TIMING` | `timing` | 4 |
+| `LENIENCY_1` | `follow-leniency` | 6 |
+| `LENIENCY_2` | `follow-leniency` | 6 |
+| `LENIENCY_3` | `arcade-leniency` | 6 |
+| `LENIENCY_4` | `arcade-leniency` | 6 |
+| `TECHNIQUE_1` | `technique` | 5 |
+| `TECHNIQUE_2` | `technique` | 5 |
+| `TECHNIQUE_3` | `technique` | 6 |
+| `TECHNIQUE_4` | `technique` | 6 |
+| `TECHNIQUE_5` | `technique` | 6 |
+| `CALIBRATION_1` | `calibration` | 7 |
+| `CALIBRATION_2` | `calibration` | 6 |
+| `CALIBRATION_3` | `calibration` | 4 |
+| `LEVEL_CHECK` | `level-check` | 3 |
+| `INPUT_QUALITY` | `input-quality` | 3 |
 
-About 182 parameters (the sum of the counts above) and 32 new sections. The existing 8 sections are unchanged.
+192 parameters and 35 new sections. The existing 8 sections are unchanged.
 
 ## Fixed constant
 

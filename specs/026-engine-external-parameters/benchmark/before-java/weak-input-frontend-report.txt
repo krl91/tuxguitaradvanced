@@ -1,0 +1,14 @@
+WEAK AND NOISY NOTES THROUGH THE INPUT FRONT END (spec 002 T135): share of 48 real notes recognised
+Data: IDMT-SMT-Guitar V2 dataset 1, plain single notes (CC BY-NC-ND 4.0, kept outside the repository); level = RMS of the strongest 2048-sample window before the front end, white noise added before it; the gain is the application's input gain (-6 to +18 dB).
+
+condition                              -45 dBFS     -40 dBFS     -35 dBFS
+no front end, no noise                      0%         96%        100%
+gain +0 dB, noise -50 dBFS                  0%         96%        100%
+gain +6 dB, noise -50 dBFS                100%         98%        100%
+gain +12 dB, noise -50 dBFS               100%         98%        100%
+gain +18 dB, noise -50 dBFS               100%        100%        100%
+gate, noise -50 dBFS                        0%         98%        100%
+gate + subtraction, noise -50 dBFS          0%         98%        100%
+gain +12 dB + gate + subtraction           10%         98%        100%
+gain +12 dB, noise -40 dBFS                75%        100%        100%
+gain +12 dB + gate + subtraction, noise -40 dBFS          0%          0%         10%

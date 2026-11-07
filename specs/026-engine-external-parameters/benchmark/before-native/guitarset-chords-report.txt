@@ -1,0 +1,63 @@
+GUITARSET CHORD BENCHMARK (spec 004 T007): complete versus incomplete chords
+Data: GuitarSet 1.0.1 (Xi, Bittner, Pauwels, Ye, Bello, ISMIR 2018), Zenodo 10.5281/zenodo.1422265, licence CC BY-NC 4.0; kept outside the repository.
+Code revision: d2d99e426 (+ uncommitted changes)
+Recordings: 24 comping recordings: [00_BN1-129-Eb_comp, 00_Funk1-97-C_comp, 00_Jazz2-187-F#_comp, 00_Rock3-117-Bb_comp, 01_BN1-129-Eb_comp, 01_Funk1-97-C_comp, 01_Jazz2-187-F#_comp, 01_Rock3-117-Bb_comp, 02_BN1-129-Eb_comp, 02_Funk1-97-C_comp, 02_Jazz2-187-F#_comp, 02_Rock3-117-Bb_comp, 03_BN1-129-Eb_comp, 03_Funk1-97-C_comp, 03_Jazz2-187-F#_comp, 03_Rock3-117-Bb_comp, 04_BN1-129-Eb_comp, 04_Funk1-97-C_comp, 04_Jazz2-187-F#_comp, 04_Rock3-117-Bb_comp, 05_BN1-129-Eb_comp, 05_Funk1-97-C_comp, 05_Jazz2-187-F#_comp, 05_Rock3-117-Bb_comp]
+Chords evaluated: 56
+Acceptance parameters: minShare 0.30, minBalance 0.10, minPeakRatio 0.7, hops 6, rearm 220 ms (PolyphonicAcceptance.Parameters.defaults()); recognition settings (RecognitionSettings.defaults()): {recognition.advanced.attack.min-level=-50, recognition.advanced.chord.confirm=43, recognition.advanced.chord.min-partials=2, recognition.advanced.level.clip-sample=0.99, recognition.advanced.level.clip-share=0.1, recognition.advanced.tuner.confidence=0.8, recognition.chord.attack=true, recognition.chord.completeness=profile, recognition.chord.detail.settle=200, recognition.chord.detail.top=84, recognition.chord.evidence=0.3333333333333333, recognition.chord.foreign=ignore, recognition.chord.profile.match=0.79, recognition.chord.profile.names=0.4, recognition.chord.window=600, recognition.engine.pitch=automatic, recognition.follow.play-time=600, recognition.input.gain-suggestion=true, recognition.input.level.max=-6, recognition.input.level.min=-40, recognition.input.noise-reduction=false, recognition.note.accept=35, recognition.note.attack=4.5, recognition.note.confidence=0.8, recognition.note.fret-sharp=0.7, recognition.note.legato=strict, recognition.note.stability=107, recognition.note.technique=true, recognition.passage.measures=2, recognition.passage.retries=2, recognition.passage.threshold=50, recognition.tempo.window=100, recognition.tuner.hold=true, recognition.tuner.in-tune=5, recognition.version=1}
+Excerpt of a chord: from 0.35 s before its onset (the previous chord still rings) to 0.4 s after it; the recording's gain is set so that the sum of the six channels peaks at 0.7, the same for all its chords. Accepted = within the excerpt, not before 50 ms ahead of the strum.
+
+Complete chords (must be accepted):
+  complete chord, six string channels summed           accepted 40 / 56 (71.4%); delay median 103 ms, p90 300 ms, max 358 ms (40 accepted chords)
+  complete chord, microphone                           accepted 25 / 56 (44.6%); delay median 178 ms, p90 312 ms, max 312 ms (25 accepted chords)
+  complete chords by how many of their notes were still ringing from an earlier strike when they were played (the string is struck again while it vibrates):
+    none ringing   complete chord, six string channels summed           accepted  35 /  45 (77.8%)
+    some ringing   complete chord, six string channels summed           accepted   5 /  11 (45.5%)
+    none ringing   complete chord, microphone                           accepted  23 /  45 (51.1%)
+    some ringing   complete chord, microphone                           accepted   2 /  11 (18.2%)
+  complete chords by style of the recording (the part of the file name after the player number, e.g. BN1, Funk2, Jazz3, Rock1, SS2):
+    BN     complete chord, six string channels summed           accepted   8 /  11 (72.7%)
+    Funk   complete chord, six string channels summed           accepted   3 /   4 (75.0%)
+    Jazz   complete chord, six string channels summed           accepted   6 /   6 (100.0%)
+    Rock   complete chord, six string channels summed           accepted  23 /  35 (65.7%)
+    BN     complete chord, microphone                           accepted   5 /  11 (45.5%)
+    Funk   complete chord, microphone                           accepted   3 /   4 (75.0%)
+    Jazz   complete chord, microphone                           accepted   3 /   6 (50.0%)
+    Rock   complete chord, microphone                           accepted  14 /  35 (40.0%)
+
+Incomplete chords, one separately verifiable note removed (must be refused):
+  refused 98 / 137 (71.5%); FALSE ACCEPTANCES 39
+  false acceptances by style of the recording:
+    BN         9 /  23 accepted wrongly (39.1%)
+    Funk       2 /   9 accepted wrongly (22.2%)
+    Jazz       5 /  15 accepted wrongly (33.3%)
+    Rock      23 /  90 accepted wrongly (25.6%)
+  false acceptances by chord family (instructed label quality):
+    7          3 /   8 accepted wrongly (37.5%)
+    hdim7      0 /   3 accepted wrongly (0.0%)
+    maj       25 /  96 accepted wrongly (26.0%)
+    min       11 /  30 accepted wrongly (36.7%)
+  false acceptances by position of the missing note:
+    bass      30 /  56 accepted wrongly (53.6%)
+    inner      6 /  59 accepted wrongly (10.2%)
+    top        3 /  22 accepted wrongly (13.6%)
+  false acceptances by number of notes of the chord:
+    3 notes   23 /  83 accepted wrongly (27.7%)
+    4 notes   14 /  51 accepted wrongly (27.5%)
+    6 notes    2 /   3 accepted wrongly (66.7%)
+  family x position, false acceptances / tests:
+    7 / bass         2 / 3
+    7 / top          1 / 2
+    maj / bass       21 / 40
+    maj / inner      4 / 42
+    min / bass       7 / 12
+    min / inner      2 / 13
+    min / top        2 / 5
+
+Not separately verifiable (the removed note is an octave or a harmonic of a lower note of the chord: audio cannot tell it apart, spec FR-004).
+  reported on their own, never counted as heard or missing: 51 cases (21 refused, 30 accepted: information only)
+
+Strikes not used, with the reason:
+    110  a note is shorter than 0.2 s
+    123  a played note is not in the instructed chord (annotation disagreement)
+    878  next strike within 0.4 s
+     10  previous strike within 0.15 s

@@ -1,0 +1,45 @@
+Owner chords, reference series, default chord rule (spec 024, T016), engine native
+
+take01.wav                   [45, 52, 57, 60]             own chord ACCEPTED
+    voicing: take01.wav accepted for [40, 45, 52, 57, 60]
+    voicing: take01.wav accepted for [40, 45, 52, 57, 60]
+take02.wav                   [40, 45, 52, 57, 60]         own chord ACCEPTED
+    voicing: take02.wav accepted for [45, 52, 57, 60]
+take03.wav                   [40, 45, 52, 57, 60]         own chord ACCEPTED
+    voicing: take03.wav accepted for [45, 52, 57, 60]
+take04.wav                   [40, 48, 52, 55, 60, 64]     own chord ACCEPTED
+take05.wav                   [40, 48, 52, 55, 60, 64]     own chord ACCEPTED
+take06.wav                   [40, 48, 52, 55, 60, 64]     own chord ACCEPTED
+take07.wav                   [43, 47, 50, 55, 67]         own chord ACCEPTED
+    voicing: take07.wav accepted for [43, 47, 50, 55]
+take08.wav                   [43, 47, 50, 55, 67]         own chord ACCEPTED
+    voicing: take08.wav accepted for [43, 47, 50, 55]
+take09.wav                   [43, 47, 50, 55, 67]         own chord ACCEPTED
+    voicing: take09.wav accepted for [43, 47, 50, 55]
+take10.wav                   [43, 47, 50, 55]             own chord ACCEPTED
+    voicing: take10.wav accepted for [43, 47, 50, 55, 67]
+    voicing: take10.wav accepted for [43, 47, 50, 55, 67]
+    voicing: take10.wav accepted for [43, 47, 50, 55, 67]
+take11.wav                   [40, 47, 52, 55, 64]         own chord ACCEPTED
+    one name off: take11.wav accepted for [40, 48, 52, 55, 60, 64]
+    one name off: take11.wav accepted for [40, 48, 52, 55, 60, 64]
+    one name off: take11.wav accepted for [40, 48, 52, 55, 60, 64]
+take12.wav                   [40, 47, 52, 55, 64]         own chord ACCEPTED
+take13.wav                   [40, 47, 52, 55, 64]         own chord ACCEPTED
+    one name off: take13.wav accepted for [40, 48, 52, 55, 60, 64]
+    one name off: take13.wav accepted for [40, 48, 52, 55, 60, 64]
+    one name off: take13.wav accepted for [40, 48, 52, 55, 60, 64]
+take14.wav                   [45, 50, 57, 62, 66]         own chord ACCEPTED
+take15.wav                   [45, 50, 57, 62, 66]         own chord ACCEPTED
+take16.wav                   [45, 50, 57, 62, 66]         own chord ACCEPTED
+take17.wav                   [40, 45, 52, 57, 61]         own chord ACCEPTED
+take18.wav                   [40, 45, 52, 57, 61]         own chord ACCEPTED
+take19.wav                   [40, 45, 52, 57, 61]         own chord ACCEPTED
+take20.wav                   [47, 54, 59, 62]             own chord ACCEPTED
+take21.wav                   [47, 54, 59, 62]             own chord ACCEPTED
+take22.wav                   [47, 54, 59, 62]             own chord ACCEPTED
+take23.wav                   [45, 50, 57, 62, 65]         own chord ACCEPTED
+take24.wav                   [45, 50, 57, 62, 65]         own chord ACCEPTED
+take25.wav                   [45, 50, 57, 62, 65]         own chord ACCEPTED
+
+25 of 25 right accepted; voicings 10 of 10, one name off 6 of 138, clearly wrong 0 of 408 accepted

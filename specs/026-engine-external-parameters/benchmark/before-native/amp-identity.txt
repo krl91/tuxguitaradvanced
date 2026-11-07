@@ -1,0 +1,5 @@
+outcomes.csv: 943 lines, identical
+report.txt: 63 lines, identical
+guitarset-chords-outcomes.csv: 301 lines, identical
+technique-report.txt: 29 lines, identical
+owner-chords.txt: 29 lines, identical

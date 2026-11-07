@@ -6,11 +6,11 @@
 
 ## Summary
 
-About 182 values that change what is heard or accepted, fixed today in the Java engine, the native engine and the practice session, become recognition settings:
+192 values (inventory.md) that change what is heard or accepted, fixed today in the Java engine, the native engine and the practice session, become recognition settings:
 - stored and repaired like the 34 existing ones;
 - read once when a run opens;
 - passed to the native library in a second `double[]` (the tuning array) beside today's unchanged `float[21]`, with a layout check;
-- shown in the Recognition settings window in about 32 new "Advanced: …" categories of at most 7 values;
+- shown in the Recognition settings window in 35 new "Advanced: …" categories of at most 7 values;
 - documented in `docs/architecture/recognition-engines.md`.
 
 No default changes. Every dataset report is compared byte for byte before and after, with each engine. The structural sizes, buffers, numerical margins, plumbing, clocks, score and display stay fixed and are documented with their reason (clarifications of 2026-11-06).
@@ -38,7 +38,7 @@ No default changes. Every dataset report is compared byte for byte before and af
 - the window fits a 768-pixel-high screen (SC-007).
 
 **Scale/Scope**:
-- about 182 parameters, 32 categories, about 1,000 new strings (a name and a tip for each, in 3 languages);
+- 192 parameters, 35 categories, about 1,150 new strings (a name and a tip for each, in 3 languages);
 - the source of about 40 Java classes and 10 crate files.
 
 ## Constitution Check
@@ -136,5 +136,5 @@ US2 ("nothing changes") is the gate of every phase, not a phase of its own.
 
 | Item | Why needed | Simpler alternative rejected because |
 |---|---|---|
-| 32 new categories in the drop-down | about 182 values at 7 per category (the row budget that keeps the window on a 768-pixel screen) | one scrolled category: the owner asked for more Advanced categories rather than overflow |
+| 35 new categories in the drop-down | 192 values at most 7 per category (the row budget that keeps the window on a 768-pixel screen) | one scrolled category: the owner asked for more Advanced categories rather than overflow |
 | A second array (tuning `double[]`) and new JNI functions beside today's | committed tests use the `float[21]` interface and the `Api` methods directly; the new values must keep their exact `double` (SC-002) | changing the `float[]` breaks committed tests (owner's rule); growing it loses precision and an older library would accept it silently |

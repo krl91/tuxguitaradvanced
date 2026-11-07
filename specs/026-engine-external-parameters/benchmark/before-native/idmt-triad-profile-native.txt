@@ -1,0 +1,64 @@
+IDMT-SMT-Audio-Effects NoFX triads, chord rule by profile, engine native
+
+P65-43210-1111-41290.wav major    G2 B2 D3     accepted true   |  200 ms match 0,767 weak 0  | 1000 ms match 0,843 weak 0
+      1 s names: C0,24 C#0,10 *D0,60 D#0,06 E0,01 F0,02 F#0,62 *G0,88 G#0,34 A0,34 A#0,27 *B1,00
+P65-44210-1111-41291.wav major    G#2 C3 D#3   accepted true   |  200 ms match 0,861 weak 0  | 1000 ms match 0,878 weak 0
+      1 s names: *C1,00 C#0,07 D0,24 *D#0,91 E0,25 F0,01 F#0,02 G0,57 *G#0,90 A0,42 A#0,31 B0,21
+P65-45210-1111-41292.wav major    A2 C#3 E3    accepted true   |  200 ms match 0,878 weak 0  | 1000 ms match 0,884 weak 0
+      1 s names: C0,50 *C#0,99 D0,26 D#0,07 *E0,73 F0,15 F#0,01 G0,02 G#0,43 *A1,00 A#0,08 B0,32
+P65-46210-1111-41293.wav major    A#2 D3 F3    accepted true   |  200 ms match 0,800 weak 0  | 1000 ms match 0,848 weak 0
+      1 s names: C0,25 C#0,19 *D0,92 D#0,05 E0,11 *F0,70 F#0,09 G0,01 G#0,01 A0,84 *A#1,00 B0,12
+P65-47210-1111-41294.wav major    B2 D#3 F#3   accepted true   |  200 ms match 0,858 weak 0  | 1000 ms match 0,872 weak 0
+      1 s names: C0,23 C#0,17 D0,37 *D#0,94 E0,20 F0,11 *F#0,59 G0,09 G#0,01 A0,02 A#0,54 *B1,00
+P65-48210-1111-41295.wav major    C3 E3 G3     accepted true   |  200 ms match 0,865 weak 0  | 1000 ms match 0,883 weak 0
+      1 s names: *C1,00 C#0,08 D0,30 D#0,08 *E0,78 F0,12 F#0,06 *G0,57 G#0,07 A0,01 A#0,04 B0,55
+P65-49210-1111-41296.wav major    C#3 F3 G#3   accepted true   |  200 ms match 0,846 weak 0  | 1000 ms match 0,840 weak 0
+      1 s names: C0,78 *C#1,00 D0,28 D#0,24 E0,13 *F0,85 F#0,06 G0,05 *G#0,62 A0,08 A#0,01 B0,02
+P65-50210-1111-41297.wav major    D3 F#3 A3    accepted true   |  200 ms match 0,929 weak 0  | 1000 ms match 0,933 weak 0
+      1 s names: C0,02 C#0,38 *D1,00 D#0,06 E0,18 F0,13 *F#0,71 G0,05 G#0,04 *A0,66 A#0,06 B0,01
+P65-51210-1111-41298.wav major    D#3 G3 A#3   accepted true   |  200 ms match 0,893 weak 0  | 1000 ms match 0,888 weak 0
+      1 s names: C0,01 C#0,00 D0,55 *D#1,00 E0,22 F0,14 F#0,07 *G0,72 G#0,04 A0,12 *A#0,60 B0,08
+P65-52210-1111-41299.wav major    E3 G#3 B3    accepted true   |  200 ms match 0,954 weak 0  | 1000 ms match 0,970 weak 0
+      1 s names: C0,06 C#0,00 D0,00 D#0,21 *E1,00 F0,14 F#0,12 G0,07 *G#0,87 A0,08 A#0,05 *B0,71
+P65-53210-1111-41300.wav major    F3 A3 C4     accepted true   |  200 ms match 0,938 weak 0  | 1000 ms match 0,946 weak 0
+      1 s names: *C0,74 C#0,02 D0,01 D#0,01 E0,37 *F1,00 F#0,08 G0,27 G#0,05 *A0,82 A#0,02 B0,04
+P65-54210-1111-41301.wav major    F#3 A#3 C#4  accepted true   |  200 ms match 0,931 weak 0  | 1000 ms match 0,955 weak 0
+      1 s names: C0,08 *C#0,96 D0,08 D#0,00 E0,01 F0,40 *F#1,00 G0,07 G#0,25 A0,19 *A#0,98 B0,04
+P65-55210-1111-41302.wav major    G3 B3 D4     accepted true   |  200 ms match 0,918 weak 0  | 1000 ms match 0,979 weak 0
+      1 s names: C0,03 C#0,02 *D0,93 D#0,02 E0,00 F0,01 F#0,25 *G1,00 G#0,07 A0,21 A#0,07 *B1,00
+P65-56210-1111-41303.wav major    G#3 C4 D#4   accepted true   |  200 ms match 0,949 weak 0  | 1000 ms match 0,970 weak 0
+      1 s names: *C0,86 C#0,02 D0,04 *D#0,68 E0,02 F0,00 F#0,00 G0,18 *G#1,00 A0,10 A#0,16 B0,12
+P65-57210-1111-41304.wav major    A3 C#4 E4    accepted true   |  200 ms match 0,962 weak 0  | 1000 ms match 0,977 weak 0
+      1 s names: C0,20 *C#0,86 D0,06 D#0,02 *E0,78 F0,02 F#0,01 G0,00 G#0,14 *A1,00 A#0,03 B0,15
+
+P65-43220-1111-41305.wav minor    G2 A#2 D3    accepted false  |  200 ms match 0,733 weak 0  | 1000 ms match 0,798 weak 0
+      1 s names: C0,05 C#0,11 *D0,69 D#0,04 E0,02 F0,41 F#0,40 *G1,00 G#0,44 A0,77 *A#0,94 B0,35
+P65-44220-1111-41306.wav minor    G#2 B2 D#3   accepted true   |  200 ms match 0,844 weak 0  | 1000 ms match 0,860 weak 0
+      1 s names: C0,34 C#0,01 D0,25 *D#0,95 E0,21 F0,01 F#0,33 G0,31 *G#0,93 A0,48 A#0,56 *B1,00
+P65-45220-1111-41307.wav minor    A2 C3 E3     accepted true   |  200 ms match 0,903 weak 0  | 1000 ms match 0,912 weak 0
+      1 s names: *C0,91 C#0,13 D0,02 D#0,07 *E0,74 F0,11 F#0,01 G0,30 G#0,24 *A1,00 A#0,10 B0,49
+P65-46220-1111-41308.wav minor    A#2 C#3 F3   accepted true   |  200 ms match 0,766 weak 0  | 1000 ms match 0,807 weak 0
+      1 s names: C0,68 *C#0,87 D0,28 D#0,01 E0,12 *F0,71 F#0,05 G0,01 G#0,21 A0,72 *A#1,00 B0,13
+P65-47220-1111-41309.wav minor    B2 D3 F#3    accepted true   |  200 ms match 0,878 weak 0  | 1000 ms match 0,892 weak 0
+      1 s names: C0,24 C#0,34 *D0,87 D#0,09 E0,01 F0,11 *F#0,61 G0,04 G#0,01 A0,15 A#0,48 *B1,00
+P65-48220-1111-41310.wav minor    C3 D#3 G3    accepted true   |  200 ms match 0,859 weak 0  | 1000 ms match 0,873 weak 0
+      1 s names: *C1,00 C#0,08 D0,53 *D#0,83 E0,26 F0,01 F#0,06 *G0,57 G#0,03 A0,01 A#0,30 B0,24
+P65-49220-1111-41311.wav minor    C#3 E3 G#3   accepted true   |  200 ms match 0,873 weak 0  | 1000 ms match 0,860 weak 0
+      1 s names: C0,54 *C#1,00 D0,28 D#0,30 *E0,74 F0,15 F#0,01 G0,05 *G#0,63 A0,05 A#0,01 B0,32
+P65-50220-1111-41312.wav minor    D3 F3 A3     accepted true   |  200 ms match 0,927 weak 0  | 1000 ms match 0,938 weak 0
+      1 s names: C0,26 C#0,21 *D1,00 D#0,06 E0,30 *F0,80 F#0,10 G0,01 G#0,04 *A0,66 A#0,02 B0,01
+P65-51220-1111-41313.wav minor    D#3 F#3 A#3  accepted true   |  200 ms match 0,896 weak 0  | 1000 ms match 0,897 weak 0
+      1 s names: C0,00 C#0,17 D0,40 *D#1,00 E0,22 F0,25 *F#0,64 G0,10 G#0,01 A0,12 *A#0,62 B0,02
+P65-52220-1111-41314.wav minor    E3 G3 B3     accepted true   |  200 ms match 0,944 weak 0  | 1000 ms match 0,966 weak 0
+      1 s names: C0,02 C#0,00 D0,17 D#0,10 *E1,00 F0,14 F#0,18 *G0,73 G#0,10 A0,01 A#0,05 *B0,75
+P65-53220-1111-41315.wav minor    F3 G#3 C4    accepted true   |  200 ms match 0,939 weak 0  | 1000 ms match 0,943 weak 0
+      1 s names: *C0,74 C#0,02 D0,01 D#0,27 E0,16 *F1,00 F#0,07 G0,31 *G#0,74 A0,09 A#0,01 B0,04
+P65-54220-1111-41316.wav minor    F#3 A3 C#4   accepted true   |  200 ms match 0,946 weak 0  | 1000 ms match 0,964 weak 0
+      1 s names: C0,08 *C#0,96 D0,08 D#0,01 E0,25 F0,19 *F#1,00 G0,07 G#0,29 *A0,95 A#0,09 B0,01
+P65-55220-1111-41317.wav minor    G3 A#3 D4    accepted true   |  200 ms match 0,906 weak 0  | 1000 ms match 0,961 weak 0
+      1 s names: C0,01 C#0,02 *D0,93 D#0,02 E0,01 F0,20 F#0,10 *G1,00 G#0,06 A0,38 *A#0,90 B0,12
+P65-56220-1111-41318.wav minor    G#3 B3 D#4   accepted true   |  200 ms match 0,943 weak 0  | 1000 ms match 0,968 weak 0
+      1 s names: C0,07 C#0,01 D0,04 *D#0,68 E0,02 F0,00 F#0,14 G0,08 *G#1,00 A0,10 A#0,21 *B0,82
+P65-57220-1111-41319.wav minor    A3 C4 E4     accepted true   |  200 ms match 0,963 weak 0  | 1000 ms match 0,977 weak 0
+      1 s names: *C0,85 C#0,02 D0,01 D#0,02 *E0,79 F0,02 F#0,01 G0,11 G#0,06 *A1,00 A#0,03 B0,26
+

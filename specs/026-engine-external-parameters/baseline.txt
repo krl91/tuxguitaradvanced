@@ -1,0 +1,101 @@
+# Spec 026, T001: the baseline before any change
+
+Taken on 2026-11-06 at HEAD bd19f8126 (the code; later commits before phase 1 only add spec 027's documents).
+
+Command, from desktop/build-scripts/tuxguitar-macosx-swt-cocoa, JDK 21:
+    mvn -o -e clean verify -P native-modules
+
+Result: BUILD SUCCESS, 32:48 min.
+
+Counts of the full gate (without SWT):
+- tuxguitar-lib 73, editor-utils 1, compat 1, gtp 10 (1 skipped), midi 2
+- tuxguitar-audio-engine 520 (1 skipped)
+- tuxguitar-tuner-next 24, tuxguitar-synth-gervill 9
+- tuxguitar-practice 1512 (12 skipped)
+- the native crate (cargo test): 51 passed, 4 ignored
+- 0 failures, 0 errors
+
+Committed tests watched by this spec (they read the classes it changes or loop over every parameter or section; never modified, only new tests added):
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/analysis/ArticulationDetectorTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/analysis/AttackAnalyzerTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/analysis/InputAssessorStatsTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/analysis/InputAssessorTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/analysis/PolyphonicAnalyzerTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/analysis/StrumClipMeterTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/AudioEngineBackendTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/benchmark/FrontEndBenchmarkTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/calibration/RecognitionProfileTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/frontend/FrontEndTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/frontend/NoiseGateTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/NoiseGateTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/AttackEvidenceParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/ChordEvidenceParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/FrontEndParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/LevelParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/NativeParametersOfAnalyzersTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/NativeParametersTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/OnsetParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/PitchParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/SpectrumParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/StrumClipParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/nativeengine/TargetEvidenceParityTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/ChordLeniencyTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/EngineDocumentationTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/RecognitionSettingsStoreProfileTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/RecognitionSettingsStoreTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/RecognitionSettingsTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/technique/BendDetectorTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/TechniqueSignalsTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/arcade/core/ArcadeLeniencyTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/arcade/core/ArcadeLikePracticeParityTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/arcade/core/ArcadeScopeParityTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/arcade/view/TechniqueMarkTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/arcade/view/TechniqueSceneTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/calibration/CalibrationControllerDiagnosticTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/calibration/CalibrationControllerTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/calibration/CalibrationFlowTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/calibration/CalibrationPieceLoadTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/calibration/CalibrationPieceTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/calibration/CalibrationScorerTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/dataset/ArcadeLeniencyCorpusTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/dataset/CalibrationTakeValidationTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/dataset/ChordLeniencyComparisonTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/dataset/ChordLeniencyLevelsTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/dataset/EventJudgeParityTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/dataset/TechniqueDatasetBenchmarkTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/functional/LegatoFunctionalTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/functional/TechniqueFamiliesFunctionalTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/model/TechniqueModelTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/model/TechniqueTargetsOfTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/replay/ArcadeLeniencyReplayTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/replay/FollowLeniencyReplayTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/CalibrationRunTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/CalibrationTapsTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/FlameParityTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/FollowLeniencyTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/FollowReasonParityTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/PlayerTempoClockTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/PolyphonicAcceptanceTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/PracticeParametersTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/PreRunParityTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/TechniqueJudgeTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/TechniqueSessionTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/TickInterpolatorTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/TimingContextTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/TimingToleranceTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/TimingWindowParityTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/ArcadeLeniencyLineTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/CalibrationStringsTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/CalibrationWindowDiagnosticTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/CalibrationWindowSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/CalibrationWindowTabSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/CalibrationWindowTabTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/CalibrationWindowTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/ChordLeniencyPanelSourceTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/ChordLeniencyPanelSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/LevelRecheckTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/RecognitionControlsTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/RecognitionSettingsPanelTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/RecognitionSettingsSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/TechniqueLineTest.java
+- the native crate's own tests (55 #[test], in tuxguitar-monitor-native/src)
