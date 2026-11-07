@@ -45,6 +45,7 @@
 - **`BEND_FRAMES_MAX`** became 800, in proportion to the bend window maximum (T021).
 - **The tests of phases 3 and 4** were seen red only by compilation (the parameters did not exist), not by a wrong value.
 - **The Spanish help page** had three row names of an older wording, now the current ones, and gains the row it lacked (T036). The two onset *pre-last* tips now say which way the value goes.
+- **One committed test changed, with the owner's approval (2026-11-07)**: `RecognitionSettingsFitSwtTest`, written in phase 2 and first run in T042, compared the settings dialog with its parent window; its walk now stops at the dialog's window. The window was not at fault.
 - **The GuitarSet report's settings line** gains the new keys at each gate: it prints every setting, so it is the expected difference of `compare.sh`.
 
 ## Gates
@@ -57,7 +58,7 @@
 | Phase 4 (T028) | green (practice 1,546 tests, 0 failures, 12 skipped); reports identical but the settings line (192 keys added) |
 | Phase 5 (T034) | green (practice 1,547, 0 failures, 12 skipped; engine 760, 0 failures, 1 skipped; crate 64 passed, 4 ignored); same reports |
 | Final (T040), 2026-11-07 | green: `clean verify -P native-modules` build success (practice 1,547 tests, 0 failures, 12 skipped; engine 762, 0 failures, 1 skipped, with the 2 migration tests); the native tests with the library green, no class without a test run; with the Java engine and with the native engine, the dataset reports (40 practice and 6 engine tests, 9 skipped for missing local files) equal the phase 1 baseline but the settings line: 192 keys added, none changed or removed |
-| SWT (T042) | run in T042, the Mac unlocked |
+| SWT (T042), 2026-11-07, Mac unlocked | build success; 94 tests, 0 failures (`RecognitionSettingsFitSwtTest` included: every category inside a 768-pixel window, 539 pixels at most), after the owner's exception on that test's walk (see *Deviations*) |
 | CI | Ubuntu and macOS dispatched on the branch after the push of T042 |
 
 The three wall-clock timing tests stay out of the CI runs only (`.github/ci-timing-excludes.txt`, owner's decision of 2026-11-06, option A); they run in every local gate. Windows has no CI build outside the release workflow: it is verified when that job runs for the release.

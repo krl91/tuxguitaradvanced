@@ -83,6 +83,8 @@ The final per-key inventory is written by task T003 into `inventory.md` and kept
 
 **Decision.** A tuning value that sets how much a stage keeps (the attack lag in hops, the number of polyphonic candidates, the number of harmonics, the technique windows) has an upper bound, and the stage allocates for that bound when it is built (at `open`, never at `configure`). A `configure` changes only the value used, never a size.
 
+**As built (2026-11-07, T015, T045).** The stages are not allocated at their upper bound at `open`. As `configure` does since spec 023, `configureTuning` builds the new pipeline, its buffers sized by the new values, on Java's thread, and the real-time loop only swaps it in through the mailbox. The loop still never allocates, locks or waits: the crate's `no_allocation.rs` tests (`the_polyphonic_values_at_their_upper_bounds_allocate_nothing_in_the_loop`, the attack and front-end ones) check it with every value at its upper bound. This is the aim of the decision, without holding every buffer at its bound; `final-report.md` lists it as a deviation.
+
 **Rationale.** `CRATE/recognition.rs` swaps parameters through a lock-free mailbox and its loop "never allocates, locks or waits on Java"; resizing there would break it.
 
 ## R7. The settings window

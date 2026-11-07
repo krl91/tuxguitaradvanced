@@ -178,13 +178,16 @@ public class RecognitionSettingsFitSwtTest {
 		return scale;
 	}
 
-	/** The control's native bounds lie inside each parent's client area, up to the shell. */
+	/**
+	 * The control's native bounds lie inside each parent's client area, up to the shell. The dialog's shell has the main window as its parent but
+	 * is a window of its own, never inside it: the walk stops there (owner's exception of 2026-11-07, T042).
+	 */
 	private static boolean inside(UIControl control) throws Exception {
 		Object current = control.getClass().getMethod("getControl").invoke(control);
 		Class<?> controlClass = Class.forName("org.eclipse.swt.widgets.Control");
 		while( true ) {
 			Object parent = controlClass.getMethod("getParent").invoke(current);
-			if( parent == null ) {
+			if( parent == null || Class.forName("org.eclipse.swt.widgets.Shell").isInstance(current) ) {
 				return true;
 			}
 			Object bounds = controlClass.getMethod("getBounds").invoke(current);

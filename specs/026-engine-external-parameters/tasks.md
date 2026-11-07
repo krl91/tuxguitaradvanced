@@ -10,6 +10,7 @@
 - if a committed test fails, fix the code under the bug protocol (a reproducing test first, at most 3 attempts), then stop and report.
 
 **Approved exceptions**: none. This spec changes no behaviour, so no committed test may need to change. If one does, stop and report.
+- *2026-11-07, owner (T042)*: `RecognitionSettingsFitSwtTest.inside` (this spec's own test, committed in phase 2 and first run in T042) walked from the dialog's shell up to the main window and compared the two windows; it now stops at the shell. The window was not at fault: 43 categories, 539 pixels high at most.
 
 **Stop conditions**: stop and report to the owner, with the figures, when:
 - **A**: a before/after report differs with the defaults (SC-002) and 3 attempts do not explain it;
@@ -164,7 +165,7 @@
 - [X] T039 Draft the release notes `docs/release-notes/next-expert-parameters.md` (macOS, Linux and Windows alike; an older native library is never mixed in, since packages carry their own). Done: the draft says what changes, that nothing changes until a value is changed, the parity, the library check, Windows verified at release, and points testers to F16.
 - [X] T040 Full gate: `clean verify -P native-modules`, the reports identical with each engine, the CI on Ubuntu and macOS dispatched on the branch (the three wall-clock timing tests are left out of the CI runs by `.github/ci-timing-excludes.txt`, owner's decision of 2026-11-06, option A; they still run in every local gate, and the report says so). Windows has no CI build outside the release workflow (its Windows job cross-compiles on Linux, without tests): the final report states that Windows is verified only by that job at the next release, not before (constitution IX), and the release run must show the Windows job green before the release is announced. Done (local part): verify green (practice 1,547, 0 failures, 12 skipped; engine 762, 0 failures, 1 skipped); native tests green, no class without a test run; with each engine the reports equal the baseline but the settings line (192 keys added, none changed or removed). The CI is dispatched after the push of T042 (one push per round); its result is in `final-report.md`.
 - [X] T041 Write `SPEC/final-report.md` (each FR and SC with its evidence, both engines, the reports' comparison) and update `specs/STATUS.md`. Commit "impl(026): phase 6: migration guard, strings, guide, sheet F16, final report". Done.
-- [ ] T042 With the Mac unlocked: `-P swt-gui-tests` on the whole branch, including `RecognitionSettingsFitSwtTest` and the existing settings window tests over the 35 new categories. Fix any failure under the bug protocol, commit the result, then one push of both refs.
+- [X] T042 With the Mac unlocked: `-P swt-gui-tests` on the whole branch, including `RecognitionSettingsFitSwtTest` and the existing settings window tests over the 35 new categories. Fix any failure under the bug protocol, commit the result, then one push of both refs. Done: first run 91 of 92 green, `RecognitionSettingsFitSwtTest` red because its walk compared the dialog's shell with the main window's client area (a shell is never inside its parent shell); a diagnostic copy, not kept, showed every category inside the dialog, 539 pixels high at most. Fixed in the test's walk under the owner's exception above; second run 94 of 94 green.
 - [ ] T043 [HUMAN] The owner's gate: sheet F16 on the built application.
 
 ## Dependencies & execution order
@@ -189,3 +190,8 @@ Phase 6: T035, T036, T037, T038 together.
 - **MVP**: phases 1–3. Every engine stage value is tunable without a rebuild, with both engines.
 - **Then**: phase 4 (session), phase 5 (documentation), phase 6.
 - US2 (nothing changes) is the gate of every phase: the before/after comparison with each engine.
+
+## Phase 7: Convergence
+
+- [ ] T044 After the push of T042, dispatch the Ubuntu and macOS CI on the branch (`gh workflow run ubuntu-maven.yml` and `macos-maven.yml`, `--ref feature/interactive-practice`), wait for both results, and write them in the CI line of the *Gates* table of `SPEC/final-report.md` (T040 is ticked, but the CI half of its gate is not done yet) per SC-006, FR-011 (partial)
+- [X] T045 Bring research R6 in line with what was built: add a note under its decision saying that `configureTuning` builds the new pipeline, with buffers sized by the new values, on Java's thread, and the loop only swaps it in, so the loop never allocates (the crate's `no_allocation.rs` tests); the stages are not allocated at their upper bound at `open`. Cite T015 and the deviation in `final-report.md` per plan: research R6 (contradicts) Done: the note "As built" under R6's decision.
