@@ -14,8 +14,10 @@
 
 ```sh
 cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa
-mvn -e clean verify -P native-modules
+mvn -e clean verify -P native-modules,guitarfx
 ```
+
+Without `guitarfx`, the build is TuxGuitarAdvanced's alone, as its CI and release jobs run it.
 
 Expected:
 - **BUILD SUCCESS.**

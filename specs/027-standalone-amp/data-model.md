@@ -59,7 +59,7 @@ The chain's entities keep the meaning, names and ranges of spec 022 (`EffectKind
 | Key | Meaning | Default |
 |---|---|---|
 | `devices.input`, `devices.channel`, `devices.output` | the device choice | none, chosen at first start |
-| `volume` | the output volume | the ready-made sounds' level of spec 022 |
+| `volume` | the output volume | 0.7, as `AmpSoundSettings.DEFAULT_GUITAR_VOLUME` (spec 022) |
 | `sound.current` | the current sound's name | `Clean` |
 | `chain.current` | the current chain (it may differ from the sound: changed) | the current sound's chain |
 | `guitarfx.<category>.<name>` | every external parameter | its default |
@@ -76,7 +76,7 @@ The chain's entities keep the meaning, names and ranges of spec 022 (`EffectKind
 | unit | dB, dBFS, ms, s, Hz, frames, bins, times, % |
 | default | equal to the Java constant it replaces (inventory.md). A test compares the two |
 | min, max | min ≤ default ≤ max; a value out of bounds is clamped |
-| description | a tooltip in three languages, with no figure in it (the value is shown beside it) |
+| description | a tooltip in three languages, with no figure in its text; the unit and the default are appended from the registry when it is shown (FR-018) |
 | takes effect | the next time the sound is turned on (the application) or the plugin is loaded |
 
 ## Plugin state (contracts/plugin.md)

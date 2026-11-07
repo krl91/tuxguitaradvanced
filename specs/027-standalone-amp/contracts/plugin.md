@@ -25,7 +25,7 @@ All three are built from one Rust library: nih-plug's `nih_export_clap!`, plus `
 
 ## Behaviour
 
-- **Rate and block**: the plugin follows the host's sample rate and maximum block. It prepares everything in `initialize` (allocation allowed there) and processes any block size up to that maximum, cut into pieces of at most 128 frames, so the glides and crossfades are the application's.
+- **Rate and block**: the plugin follows the host's sample rate and maximum block. It prepares everything in `initialize` (allocation allowed there) and processes any block size up to that maximum, cut into pieces of at most `guitarfx.devices.block` frames (default 128), so the glides and crossfades are the application's. When a piece takes longer than its share of time, the overload rule of the application lightens the chain (FR-014).
 - **Real time**: `process` never allocates, locks or waits (FR-015). Editor changes reach it through the same mailbox as in the application.
 - **Offline rendering**: the output is the same as in real time; the plugin never reads a clock.
 - **Latency reported to the host**: 0 samples. The oversampler's delay is reported if the inventory shows one; the comparison test checks the value.

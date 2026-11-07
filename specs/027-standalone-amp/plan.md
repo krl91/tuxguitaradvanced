@@ -37,8 +37,8 @@ One installer per system is published with the TuxGuitarAdvanced release.
 | `nih-plug` | the plugin, CLAP export only, git pinned | ISC |
 | `nih_plug_egui` | the plugin's editor | ISC |
 | `clap-wrapper` | VST3 and AUv2 | MIT/Apache-2.0; embeds the VST3 SDK (MIT) and the AudioUnitSDK (Apache-2.0) |
-| `eframe`/`egui` | the windows | MIT/Apache-2.0 |
-| `directories` | the settings folder | MIT/Apache-2.0 |
+| `eframe`/`egui` | the windows | MIT/Apache-2.0 (default fonts OFL-1.1 and UFL-1.0; clipboard on Windows BSL-1.0: R3) |
+| `directories` | the settings folder | MIT/Apache-2.0 (pulls `option-ext`, MPL-2.0: R3) |
 | `sys-locale` | the system's language | MIT/Apache-2.0 |
 
 No new Java library.
@@ -91,7 +91,7 @@ No new Java library.
 | VIII. Deterministic DSP | **Pass.** It is a port of spec 022's waveshaping, biquads, delay lines and Schroeder–Moorer reverb. No ML and no impulse responses. |
 | IX. Cross-platform | **Pass.** One code base for three systems. Audio Unit exists only on macOS: that is the format's limit, not a missing feature (FR-024). Platform code stays inside cpal, `realtime`, `latency` and the installers. Linux and Windows are reported as checked by CI only, until testers answer. |
 | X. No unrelated refactoring | **Pass.** The crate's shared parts are used where they are. Moving them into a common crate is left to the later spec that unifies the effects. |
-| XI. Build and test integrity | **Pass.** Every phase ends with the full macOS build (`clean verify -P native-modules`) green. No committed test is changed. |
+| XI. Build and test integrity | **Pass.** Every phase ends with the full macOS build (`clean verify -P native-modules,guitarfx`) green; TuxGuitarAdvanced's own builds, without the `guitarfx` profile, are unchanged. No committed test is changed. |
 | XII. Truthful reporting | **Pass.** The delay is reported as measured, and Linux and Windows as unchecked until tested. |
 | XIII. Honest guitar-audio semantics | **Not applicable**: GuitarFX judges nothing. |
 | XIV. Learner-centred feedback | **Pass.** Every message says what happened and what to do: feedback, a lost device, permission, overload. |
@@ -120,7 +120,7 @@ specs/027-standalone-amp/
 ### Source Code (repository root)
 
 ```text
-guitarfx/                                   (new Cargo workspace; built by the native-modules profile, never packaged in TuxGuitarAdvanced)
+guitarfx/                                   (new Cargo workspace; built by the `guitarfx` profile of the macOS build script and by guitarfx.yml, never packaged in TuxGuitarAdvanced)
 ├── Cargo.toml, Cargo.lock, deny.toml, pom.xml, README.md
 ├── lang/messages.properties, messages_fr.properties, messages_es.properties
 ├── guitarfx-dsp/src/        biquad, oversampler, gate, compressor, overdrive, distortion, amp, cabinet, chorus, echo, reverb,
@@ -136,16 +136,18 @@ guitarfx/                                   (new Cargo workspace; built by the n
 desktop/build-scripts/native-modules/tuxguitar-monitor-native/src/lib.rs   (`mod latency` → `pub mod latency`, the only change)
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/monitor/SoundFile.java      (new: read and write .guitarfx)
 desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/SoundFileTest.java  (new)
-desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/GuitarFxReferenceTest.java (new: writes target/guitarfx-reference/)
+desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/GuitarFxReferenceTest.java (new: writes target/guitarfx-reference/)
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/ui/AmpWindow.java  (⋯ menu: Export…, Import…)
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties                       (the two items and their messages)
-desktop/build-scripts/tuxguitar-{macosx-swt-cocoa,linux-swt,windows-swt-x86_64}/pom.xml   (native-modules profile: the guitarfx module)
+desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml   (a new `guitarfx` profile with the guitarfx module; TuxGuitarAdvanced's builds never activate it)
+misc/verify-release.sh, misc/test-verify-release.sh        (an option `--guitarfx` for the draft check; new self-test cases only)
 .github/workflows/guitarfx.yml (new), .github/workflows/release.yml (three installer jobs, the draft check)
 docs/guitarfx/guide{,_fr,_es}.md, docs/guitarfx/parameters.md
 ```
 
 **Structure Decision**:
-- GuitarFX is a product of its own, so it gets a top-level workspace. TuxGuitarAdvanced's tree changes only where the spec asks: the sound file, its two menu items and the reference test. Its build only runs GuitarFX's tests.
+- GuitarFX is a product of its own, so it gets a top-level workspace. TuxGuitarAdvanced's tree changes only where the spec asks: the sound file, its two menu items and the reference test.
+- GuitarFX is built with TuxGuitarAdvanced only in the owner's macOS gate (`-P native-modules,guitarfx`). TuxGuitarAdvanced's CI and release jobs build `-P native-modules -DskipTests` without `cargo-deny`; putting GuitarFX in that profile would break them, and would cross-compile egui and the plugin wrapper with MinGW inside TuxGuitarAdvanced's Windows job. Linux and Windows are built by `guitarfx.yml` and GuitarFX's own release jobs.
 - The DSP crate has no dependency, so the application, the plugin and a later unification spec can all use it.
 
 ### Phases (each one ends with the full macOS build green, then a commit)

@@ -35,14 +35,13 @@ guitarfx.output.fade-in=500
 
 ```properties
 sounds.format=1
-ready.Clean=                      # empty: as shipped
-ready.Crunch=gate:on,-60,150|amp:crunch,6,5,5,5,6|cab:on    # changed by the guitarist
-own.1.name=My lead
-own.1.chain=…
-own.2.name=…
+ready.Crunch.chain=gate:on,-60,150|amp:crunch,6,5,5,5,6|cab:on    # changed by the guitarist; a ready-made sound as shipped has no line
+sound.1.name=My lead
+sound.1.chain=…
+sound.2.name=…
 ```
 
-The scheme follows `AmpSoundStore`'s keys (`ready…`, `own.<n>.name`, `own.<n>.chain`) so the two stores read alike. They are not shared files (owner, Q2 B).
+The scheme follows `AmpSoundStore`'s keys (`ready.<name>.chain`, `sound.<n>.name`, `sound.<n>.chain`; `AmpSoundStore.java` lines 330 and 338) so the two stores read alike. They are not shared files (owner, Q2 B).
 
 ## Damaged or newer files
 

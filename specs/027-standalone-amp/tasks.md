@@ -35,7 +35,7 @@
   - never run two builds at once, and never edit sources while a build runs;
   - recreate the `.app` jre symlink after a clean build.
 - **Gate** (end of each phase):
-  - `mvn -o -e clean verify -P native-modules` from `BUILD` is green, including `cargo deny check licenses` and `cargo test --workspace` of `GFX`;
+  - `mvn -o -e clean verify -P native-modules,guitarfx` from `BUILD` is green, including `cargo deny check licenses` and `cargo test --workspace` of `GFX` (the `guitarfx` profile of T004; TuxGuitarAdvanced's own builds, CI and release jobs never activate it);
   - `git diff --name-status <phase start> -- '*test*' '*Test*'` shows only added files.
 - **Real time:**
   - nothing is allocated, locked or awaited in the cpal callbacks or in the plugin's `process`;
@@ -59,20 +59,23 @@
   - The scan's allow list of plain numbers is written at the top.
 - [ ] T002 Create the workspace `GFX/Cargo.toml` with the members `guitarfx-dsp`, `guitarfx-settings`, `guitarfx-ui`, `guitarfx-app`, `guitarfx-plugin`, `guitarfx-probe`.
   - Each member is an empty crate that builds.
-  - `rust-version` is that of the CRATE.
+  - `rust-version = "1.93"`, the toolchain of `.github/actions/install-rust` (the CRATE declares none).
+  - Run `cargo fetch` once (network: the crates are not in the local cargo cache) and commit `GFX/Cargo.lock`; every later build is `--locked`.
   - The licence is `LGPL-2.1-or-later`, as the CRATE.
   - Add `GFX/README.md` (what GuitarFX is, how to build) and `GFX/.gitignore` (`target/`).
-- [ ] T003 Write `GFX/deny.toml` with the allow list of research R3: MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, ISC, BSD-2-Clause, BSD-3-Clause, Zlib, Unicode-3.0, LGPL-2.1-or-later.
+- [ ] T003 Write `GFX/deny.toml` with the allow list of research R3: MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, ISC, BSD-2-Clause, BSD-3-Clause, Zlib, Unicode-3.0, LGPL-2.1-or-later, and the non-GPL licences R3 expects in the planned tree (MPL-2.0, OFL-1.1, LicenseRef-UFL-1.0, BSL-1.0, CC0-1.0).
+  - Each of those five is allowed only for the crates R3 names (`exceptions` of `deny.toml`), and T029 and T051 run `cargo deny list` once their dependencies are in, adjusting the exceptions to the crates actually pulled and recording them in R3.
   - Every GPL and AGPL variant is denied, and unknown licences are denied.
   - Check that `cargo deny check licenses` passes on the empty workspace, then fails when a GPL test crate is added temporarily in a scratch copy (seen red, never committed).
 - [ ] T004 Write `GFX/pom.xml`, a Maven module in the style of `CRATE/pom.xml`:
   - `cargo deny check licenses`;
   - `cargo test --workspace`, with `GUITARFX_REFERENCE_DIR=${project.basedir}/../desktop/TuxGuitar-audio-engine/target/guitarfx-reference`;
   - `cargo build --release -p guitarfx-app`.
-  - Add the module to the `native-modules` profile of `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml`, `desktop/build-scripts/tuxguitar-linux-swt/pom.xml` and `desktop/build-scripts/tuxguitar-windows-swt-x86_64/pom.xml`, after `TuxGuitar-audio-engine`.
-  - Check that no packaging step of those POMs copies anything of `GFX`.
-- [ ] T005 New test `MONT/GuitarFxReferenceTest.java` (normal build, not tagged). For each element of `MON/fx`, the whole chain of each ready-made sound of `MON/ReadyMadeChains.java`, `FeedbackGuard` and `OutputStage`, at 44.1, 48 and 96 kHz, with the default knobs and with each knob at its minimum and maximum:
-  - it runs the signals of `MONT/fx/Signals.java` (sines at 3 levels, noise at −40 dBFS, silence, a step) and one guitar recording already used by spec 022's tests;
+  - every cargo call has `--locked`, as in `CRATE/pom.xml`; `cargo deny` and `cargo test` are skipped when `skipTests` is set.
+  - Add the module to a **new profile `guitarfx`** of `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` only, listed after `TuxGuitar-audio-engine`. It is **not** added to `native-modules`, nor to the Linux or Windows build scripts: TuxGuitarAdvanced's CI and release jobs build with `-P native-modules -DskipTests` and have no `cargo-deny`, so the module there would break them (constitution I). GuitarFX's Linux and Windows builds are `guitarfx.yml` (T058) and its own release jobs (T060).
+  - Check that `mvn -o -e clean verify -P native-modules` without the profile builds as before, and that no packaging step copies anything of `GFX`.
+- [ ] T005 New test `MONT/fx/GuitarFxReferenceTest.java` (package `app.tuxguitar.audio.engine.monitor.fx`, so it can call the package-private `Signals`; normal build, not tagged). For each element of `MON/fx`, the whole chain of each ready-made sound of `MON/ReadyMadeChains.java`, `FeedbackGuard` and `OutputStage`, at 44.1, 48 and 96 kHz, with the default knobs and with each knob at its minimum and maximum:
+  - it runs `Signals.sine` at 3 levels and `Signals.noise` at −40 dBFS (the committed `Signals.java` is not changed), plus a silence and a step built in the test itself, and the first recording of `benchmark/MonitorFixtureSet.recognitionInputs()` (public, the guitar recordings of spec 022's `RecognitionUntouchedTest`);
   - it writes the input, the knob values and the output as little-endian `f32` files, plus an `index.properties`, into `desktop/TuxGuitar-audio-engine/target/guitarfx-reference/`;
   - it asserts that the files exist and that the index lists them.
 - [ ] T006 Run the gate once (T004 and T005 in): green.
@@ -97,7 +100,7 @@
   - the keys are unique;
   - a value out of bounds is clamped.
   - Seen red.
-- [ ] T009 Test `DSP/tests/inventory_scan.rs`: it scans `DSP/src/**/*.rs` for numeric literals outside comments, tests and the allow list of T001, and fails on any literal not named in `SPEC/inventory.md` as fixed or as a parameter's default in `params.rs` (SC-008). Seen red as soon as T010 adds code with a number.
+- [ ] T009 Test `DSP/tests/inventory_scan.rs`: it scans `DSP/src/**/*.rs`, `APP/src/**/*.rs` and `PLUG/src/**/*.rs` (the device handling and the plugin's processing are in FR-016's scope; directories not written yet are skipped) for numeric literals outside comments, tests and the allow list of T001, and fails on any literal not named in `SPEC/inventory.md` as fixed or as a parameter's default in `params.rs` (SC-008). Seen red as soon as T010 adds code with a number.
 - [ ] T010 [P] Port `MON/fx/Biquad.java` to `DSP/src/biquad.rs`: the gliding of frequency, Q and gain over a block, in `f64`, and the same coefficients.
 - [ ] T011 [P] Port `MON/fx/Oversampler.java` to `DSP/src/oversampler.rs`.
 - [ ] T012 Port `MON/fx/NoiseGate.java`, `Compressor.java`, `Overdrive.java` and `Distortion.java` to `DSP/src/{gate,compressor,overdrive,distortion}.rs`, and `MON/fx/Pedals.java` to `DSP/src/pedals.rs`; T007 green for these four.
@@ -129,7 +132,7 @@
   - the fade-in reaches the set level after 0.5 s (FR-010);
   - each ready-made sound with no input: the output is below −60 dBFS (FR-011);
   - a synthetic howl: it is muted within 0.5 s (SC-005).
-- [ ] T022 [P] Test `DSP/tests/smooth_changes.rs`: moving every knob end to end, switching and reordering, and changing the sound shows no sample-to-sample jump above the limit of spec 022's `MONT/SmoothChangesTest.java` (SC-004).
+- [ ] T022 [P] Test `DSP/tests/smooth_changes.rs`: moving every knob end to end, switching and reordering, and changing the sound passes the rule of spec 022's `MONT/SmoothChangesTest.java` (SC-004): the largest sample-to-sample step stays below 1.5 times that of the same run without the change, and the change is done within 0.1 s.
 - [ ] T023 Gate: green; T007 covers every element, the chain and the four sounds. Commit Phase 2.
 
 **Checkpoint**: the effects exist in Rust and sound the same as Java's.
@@ -155,21 +158,23 @@
 - [ ] T026 [US1] Test `APP/tests/engine.rs` on a fake device (no hardware), then write `APP/src/engine.rs`:
   - the input callback pushes the chosen channel into a `Ring` (CRATE);
   - the output callback pops blocks of the block size, resamples mono when the rates differ (`APP/src/resample.rs`, a mono Hermite port of `CRATE/src/resampler.rs`), runs the chain, and writes stereo;
-  - changes through `recognition::Mailbox` (CRATE);
+  - changes through `recognition::Mailbox` (CRATE): the callback hands every box it took back with `give_back`, never drops it (a drop would free on the audio thread); T020's allocator counts frees as well as allocations;
   - `realtime::promote_current_thread` and `workgroup` on the output thread;
-  - when the ring holds more than two blocks, the oldest are dropped and counted.
+  - when the ring holds more than `guitarfx.devices.ring-blocks` blocks (default 2), the oldest are dropped and counted; the block size is `guitarfx.devices.block` (default 128, `MonitorEngine.BLOCK_FRAMES`);
+  - **overload** (FR-014), ported from `MonitorEngine` (lines 243–258): a block whose processing takes more than `guitarfx.overload.budget` of its duration (default 0.5, the inline `/ 2`) counts as slow; after `guitarfx.overload.blocks` slow blocks in a row (default 20, `OVERLOAD_BLOCKS`) the chain is lightened by the next step of `LIGHTER`, and past the last step the sound mutes with its message. The fake device's clock drives it in the test.
   - The fake device checks the output equals the chain's on the same input.
   - T020's allocator covers both callbacks.
 - [ ] T027 [P] [US1] Test `APP/tests/delay_estimate.rs`, then write `APP/src/delay_estimate.rs`: input block + output block + `latency::declared` (input and output) + the resampler's target fill, in ms at the output rate, rounded to 0.1 (data-model "Estimated delay").
 - [ ] T028 [US1] Write `APP/src/devices.rs`:
   - list the inputs, their channels and the outputs, with refresh (FR-003);
   - a missing remembered device is shown as missing and never replaced;
-  - a lost device, a denied permission or an unsupported format stop the sound with the message of contracts/application.md, and the application stays open (FR-013).
+  - a lost device, a denied permission or an unsupported format stop the sound with the message of contracts/application.md, and the application stays open (FR-013);
+  - the built-in microphone is recognised by the rule of `desktop/TuxGuitar-audio-engine/.../input/InputDeviceCatalog.java` (lines 70–80: a microphone whose name holds `built-in`, `internal` or `macbook`), ported with its cases as a test (FR-012).
   - Test with cpal's error kinds mapped through a fake.
 - [ ] T029 [US1] Write the main window in `APP/src/main.rs` and `UI/src/{window,devices_bar,messages}.rs` per contracts/application.md:
   - the devices bar, *Sound on* (off at every start), the volume, the input meter with clipping, the estimated delay with the word "estimated" and the Bluetooth note, the message line;
   - the window's place and size remembered;
-  - it fits 1024×768.
+  - it fits 1024×768: a new test `UI/tests/fits_screen.rs` runs the window's layout headless (`egui::Context::run` with a 1024×768 screen, the longest texts of the three languages and every pedal in each tab) and asserts that every widget's rectangle lies inside the screen; it is seen red with a screen of 600 pixels.
   - Texts come through `SET/src/texts.rs` with English keys now; the other languages come in T046.
 - [ ] T030 [US1] Write `APP/src/single_instance.rs`: a lock file in the settings folder; a second instance shows "GuitarFX is already open." and quits without opening a device. Test with two processes.
 - [ ] T031 [US1] Write `guitarfx --check` (contracts/application.md "Headless start"): no window, no device; it loads the settings, texts and registry, builds the chain at 48 kHz, processes 1 s of silence, prints `ok`, and exits with 0. Test `APP/tests/check.rs` runs the binary.
@@ -200,7 +205,8 @@
 
 **Independent test**: SC-011's round trip is green in the build. The owner exports from one program and imports in the other (quickstart §4).
 
-- [ ] T039 [P] [US3] Test `SET/tests/sounds.rs`, then write `SET/src/sounds.rs` per contracts/settings-files.md (`sounds.properties`, `sounds.format=1`, `ready.<name>`, `own.<n>.name`, `own.<n>.chain`):
+- [ ] T039 [P] [US3] Test `SET/tests/sounds.rs`, then write `SET/src/sounds.rs` per contracts/settings-files.md (`sounds.properties`, `sounds.format=1`, `ready.<name>.chain`, `sound.<n>.name`, `sound.<n>.chain`, the keys of `AmpSoundStore`):
+  - a newer `sounds.format` or a damaged file is handled as contracts/settings-files.md says (left untouched, or copied aside as `.damaged-<date>`), as T025 does for `settings.properties`;
   - a name is "1 to 40 characters, not blank, unique among the sounds; it cannot take a ready-made sound's name";
   - a changed ready-made sound shows as changed, and *Restore* brings back the shipped chain;
   - an own sound edited shows as changed until *Save*, and is dropped when another sound is picked.
@@ -215,7 +221,10 @@
   - `SET/tests/sound_file.rs` reads them and asserts equal chains (Java → Rust);
   - it then writes the same five sounds itself and asserts each file is **byte-identical** to Java's. Since `SoundFileTest` reads Java's files, Rust's files are readable by TuxGuitarAdvanced (Rust → Java) without a second build.
 - [ ] T043 [US3] Write `UI/src/sounds.rs`: the sound list (ready-made first, then own sounds alphabetically, "(changed)"), *Save…* with the name prompt, and ⋯ with *Rename…*, *Delete*, *Restore*, *Export…* and *Import…* (a file dialog through `rfd`, MIT; add it to T003's check). Importing over an existing own name asks "replace, or keep both" (keep both names it "<name> 2"); a ready-made name gives "<name> (imported)".
-- [ ] T044 [US3] TuxGuitarAdvanced: add *Export…* and *Import…* to the ⋯ menu of `PR/ui/AmpWindow.java` (the menu of line 334) using `MON/SoundFile.java` and the toolkit's file dialog, with their texts and tips in `desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties` (French and Spanish different from English). Add a new test `PT/ui/AmpWindowSoundFileTest.java` on the window's model: import adds the sound, a newer format is refused with the message.
+- [ ] T044 [US3] TuxGuitarAdvanced: add *Export…* and *Import…* to the ⋯ menu of `PR/ui/AmpWindow.java` (the `menu` built at line 300, its items made by the helper of line 324) using `MON/SoundFile.java` and the toolkit's file dialog, with their texts and tips in `desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties` (French and Spanish different from English).
+  - The two keys go in `AmpTexts.KEYS`, each with its `.tip`, so the committed `AmpTextsTest` keeps every control with a label and a tip in the three languages.
+  - New test `PT/session/AmpSoundImportTest.java` (no window): importing a file into `AmpSoundStore` adds the sound, a name that exists asks (replace, or keep both), a ready-made name gives "<name> (imported)", a newer format is refused with the message.
+  - New SWT test `PT/ui/AmpSoundFileSwtTest.java` (`swt-gui-tests`): the ⋯ menu offers *Export…* and *Import…*. Written now, run in T065 with the Mac unlocked.
 - [ ] T045 [US3] Gate: green, including every committed `MONT/**` and `PT/**/Amp*` test unchanged. Commit Phase 5.
 
 ---
@@ -229,7 +238,7 @@
 - [ ] T046 [P] [US4] Test `SET/tests/texts.rs`, then write `GFX/lang/messages{,_fr,_es}.properties` and `SET/src/texts.rs`:
   - every key in the three files;
   - French and Spanish differ from English except a short listed set;
-  - no tooltip contains a figure with a unit (the value is shown beside it);
+  - no translated text contains a figure with a unit: the unit and the default of a knob or a parameter are appended to its tooltip from the knob table or the registry when it is shown, so every tooltip says its unit and default (FR-018) and a changed default never leaves a stale text;
   - the language comes from `sys-locale`, English otherwise.
   - Fill every text of the windows, knobs, parameters, messages and categories.
 - [ ] T047 [US4] Write the feedback and safety behaviour in the application:
@@ -259,7 +268,8 @@
 - [ ] T052 [US5] Test `PLUG/tests/render.rs`: the plugin's `process`, driven directly at 44.1, 48 and 96 kHz with blocks of 64, 128, 512 and 1024, gives the same output as the chain on the reference signals (SC-003), and an offline render equals a real-time one. T020's allocator covers `process`.
 - [ ] T053 [US5] Write `PLUG/src/lib.rs` per contracts/plugin.md:
   - the nih-plug `Plugin`: mono or stereo input summed to mono, stereo output;
-  - everything prepared in `initialize`; `process` cut into pieces of at most 128 frames;
+  - everything prepared in `initialize`; `process` cut into pieces of at most `guitarfx.devices.block` frames (default 128);
+  - the overload rule of T026 applies to `process` too (FR-024 includes FR-014);
   - `nih_export_clap!`, `export_vst3!`, `export_auv2!`, with the identifiers of the contract (CLAP `app.tuxguitar.guitarfx`, AU `aufx`/`GFX1`/`TGAd`, a fixed VST3 class id);
   - the latency reported as the inventory says;
   - no host automation.
@@ -278,7 +288,8 @@
   - `cargo deny`;
   - `GuitarFxReferenceTest` through Maven, then `cargo test --workspace`;
   - the bundles, `clap-validator`, and `auval` on macOS;
-  - the installer of T059 installed, then `guitarfx --check`, then uninstalled, checking that no file is left but the settings folder.
+  - the installer of T059 installed, then `guitarfx --check`, then uninstalled, checking that no file is left but the settings folder;
+  - **no Java** (FR-001, SC-001): the runners have Java, so the job checks the binaries' linked libraries (`otool -L`, `ldd`, `objdump -p`) name no `libjvm`/`jvm.dll`, and runs `guitarfx --check` with `JAVA_HOME` unset and no `java` on the `PATH`.
 - [ ] T059 Write the installers in `GFX/packaging/` per research R9:
   - **macOS**: `pkgbuild`/`productbuild` scripts placing `/Applications/GuitarFX.app` and the three plugins in `/Library/Audio/Plug-Ins/{VST3,CLAP,Components}`, and `guitarfx-uninstall` in the app's Resources.
   - **Windows**: `guitarfx.nsi` (Program Files, Start menu, `Common Files\VST3` and `\CLAP`, the uninstaller).
@@ -287,18 +298,22 @@
 - [ ] T060 Add three jobs to `.github/workflows/release.yml`, `build-guitarfx-macos`, `build-guitarfx-windows` and `build-guitarfx-linux`:
   - they sign as TuxGuitarAdvanced's macOS job does (stable self-signed certificate if the secrets exist, ad hoc otherwise);
   - they attach `GuitarFX-<version>-macos-arm64.pkg`, `GuitarFX-<version>-windows-x86_64-setup.exe`, `guitarfx_<version>_amd64.deb` and `GuitarFX-<version>-linux-x86_64.tar.gz` to the same draft release;
-  - the draft check lists those files beside TuxGuitarAdvanced's (FR-021).
+  - the draft check lists those files beside TuxGuitarAdvanced's (FR-021): `misc/verify-release.sh --draft` gains an option `--guitarfx` that adds the four GuitarFX files to the expected list; without it the check is unchanged, so the committed cases of `misc/test-verify-release.sh` stay as they are and new cases are added for the option;
+  - SC-009: the job compares each GuitarFX package's size with TuxGuitarAdvanced's package of the same system and fails above a tenth; the sizes go in the final report.
 - [ ] T061 [P] Write `docs/guitarfx/guide.md`, `guide_fr.md` and `guide_es.md`: install, devices, the chain, sounds and files, the delay, headphones and feedback, the *Advanced* window, the plugin and its formats, that the plugin's internal values come from the computer's settings, and the uninstall. Write `docs/guitarfx/parameters.md`, generated from the registry by `GFX/xtask` and checked by a test that regenerates and compares it (FR-019).
 - [ ] T062 The latency probe `guitarfx/guitarfx-probe/src/main.rs` per research R8: 20 clicks, the threshold of `MONT/MonitorLatencyProbeTest.java`, and the table of `specs/022-guitar-amp-effects/benchmark/native-probe-usb.md`. **Audible: run only on the owner's request, after warning them.** Write `SPEC/benchmark/latency.md` with the figures next to spec 022's for the same devices (SC-002; stop condition D).
 - [ ] T063 Endurance: `APP/tests/endurance.rs` (ignored by default), one hour on the fake device paced by the clock with six active elements and the real-time thread, counting dropped blocks and the worst gap. Run on the owner's request; write `SPEC/benchmark/endurance.md` (SC-006).
 - [ ] T064 Write `specs/test-sheets/F17-guitarfx.md`, the owner's sheet in French:
   - install, devices, play, sounds, export and import with TuxGuitarAdvanced, the *Advanced* window, feedback;
+  - the main and *Advanced* windows on a 768-pixel-high screen: nothing cut off;
   - the plugin in SoundCraft (each format) and in GarageBand or Logic;
   - the uninstall.
   - Write the draft release notes `docs/release-notes/next-guitarfx.md`.
 - [ ] T065 Final gate:
   - the full build is green;
+  - with the Mac unlocked, `-P swt-gui-tests` on the whole branch (the amp window's SWT tests, T044's new one included); a failure is fixed under the bug protocol;
   - `git diff --name-status <spec start> -- '*test*' '*Test*'` shows only added files;
+  - the delay on each system (FR-021): macOS from T062, Linux and Windows from testers or stated as unknown;
   - write `SPEC/final-report.md` (each FR and SC with its evidence, the stop conditions met, the deviations: the translation files outside TuxGuitarAdvanced's, the Windows runner if used);
   - update `specs/STATUS.md`;
   - commit, then one push of both refs.

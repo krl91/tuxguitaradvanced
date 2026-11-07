@@ -39,8 +39,8 @@ Written on 2026-11-06 for `/speckit-plan`. Each decision cites the source inspec
   - the same smoothing and gliding per block of 128 frames.
 - Rust's `f64::tanh/exp/sin…` call the platform's libm, and Java's `Math` may use intrinsics. They can differ in the last bit, which is far below −90 dBFS (about 3·10⁻⁵ of full scale); the comparison measures it.
 
-**How it is checked**: a new Java test in the audio engine, `GuitarFxReferenceTest`, never changing a committed test.
-- It runs each element and each ready-made sound on the signals of `fx/Signals.java` (sines, noise, the guitar recordings already used by spec 022's tests) at 44.1, 48 and 96 kHz.
+**How it is checked**: a new Java test in the audio engine, `monitor/fx/GuitarFxReferenceTest` (in the package of the package-private `Signals`), never changing a committed test.
+- It runs each element and each ready-made sound on `Signals.sine` and `Signals.noise`, a silence and a step built in the test, and a guitar recording of `benchmark/MonitorFixtureSet` (the recordings of spec 022's tests), at 44.1, 48 and 96 kHz.
 - It writes the inputs and outputs as raw little-endian `f32` files with a small index into `desktop/TuxGuitar-audio-engine/target/guitarfx-reference/`.
 - The GuitarFX Maven module then runs `cargo test` with `GUITARFX_REFERENCE_DIR` set. Under Maven a missing directory is a failure; under a plain `cargo test` the comparison is skipped with a message.
 - Nothing large is committed.
@@ -67,6 +67,7 @@ Written on 2026-11-06 for `/speckit-plan`. Each decision cites the source inspec
 - The plugin is written with `nih-plug` and exported **as CLAP only** (`nih_export_clap!`). `nih_export_vst3!` and its feature are never enabled.
 - VST3 and Audio Unit (AUv2, macOS) come from `clap-wrapper` over that CLAP entry. No GPL code is linked.
 - A licence gate in CI enforces it: `cargo deny check licenses` with an allow list of MIT, Apache-2.0, ISC, BSD-2/3-Clause, Zlib, Unicode-3.0 and LGPL-2.1-or-later (the TuxGuitarAdvanced crate itself). GPL, AGPL and unknown licences are refused.
+- **Other non-GPL licences expected in the planned tree** (2026-11-07, `/speckit-analyze`; from the crates' published metadata, not yet checked by `cargo deny list` because the crates are not fetched): MPL-2.0 (`option-ext`, through `directories` → `dirs-sys`), OFL-1.1 and LicenseRef-UFL-1.0 (`epaint_default_fonts`, egui's built-in fonts), BSL-1.0 (`clipboard-win` and `error-code`, egui's clipboard on Windows), CC0-1.0 (possible in small crates). None is GPL, all allow distribution with GuitarFX (FR-020). They are allowed only for the crates that need them (`exceptions` of `deny.toml`), and T029 and T051 confirm the list with `cargo deny list` and record it here.
 - `nih-plug` is not on crates.io, so it is a git dependency pinned to one commit in `Cargo.lock`. Its maintenance mode is accepted: the pinned commit is all GuitarFX needs. If it blocks a task, the Codeberg fork is a drop-in replacement, recorded as a deviation.
 
 **Alternatives rejected**:
@@ -111,7 +112,7 @@ Written on 2026-11-06 for `/speckit-plan`. Each decision cites the source inspec
 - **The chain is the text of `ChainSettings.toText()`**, for example `gate:on,-60,150|amp:crunch,5,5,5,5,6|cab:on|echo:on,380,3,5,30`. The parser is ported, with the same rules: each kind once, a pedal in its own section, a malformed text gives a ready-made sound.
 - **The sound file** (`.guitarfx`): a UTF-8 properties file with `format=1`, `name=…` and `chain=…`. Its grammar is in `contracts/sound-file.md`.
   - TuxGuitarAdvanced reads and writes it with a new small class, `SoundFile`, in the audio engine's `monitor` package, through `ChainSettings.parse` and `toText`.
-  - Its *Amp and effects* window gets *Export…* and *Import…* in the ⋯ menu of `AmpWindow` (`desktop/TuxGuitar-practice/.../ui/AmpWindow.java`, the menu of line 334).
+  - Its *Amp and effects* window gets *Export…* and *Import…* in the ⋯ menu of `AmpWindow` (`desktop/TuxGuitar-practice/.../ui/AmpWindow.java`, the `menu` built at line 300 and opened by `openMenu`, line 334).
   - A file with `format` above 1 or a malformed chain is refused whole.
 - **Writes are atomic**: write to a temporary file, then rename. A damaged file is kept as `*.damaged-<date>` before the defaults are written (spec edge case).
 
@@ -182,7 +183,7 @@ Written on 2026-11-06 for `/speckit-plan`. Each decision cites the source inspec
   - `guitarfx-app`: eframe and cpal;
   - `guitarfx-plugin`: nih-plug and clap-wrapper;
   - `guitarfx-probe`.
-- **Maven**: `guitarfx/pom.xml` is added to the `native-modules` profile of the three SWT build scripts, after `TuxGuitar-audio-engine`, so the Java references exist when `cargo test` runs. It builds GuitarFX, but GuitarFX is never copied into TuxGuitarAdvanced's packages.
+- **Maven**: `guitarfx/pom.xml` is the module of a new `guitarfx` profile of the macOS SWT build script, after `TuxGuitar-audio-engine`, so the Java references exist when `cargo test` runs; the owner's gate is `-P native-modules,guitarfx`. It is not in `native-modules`: TuxGuitarAdvanced's CI and release jobs build that profile with `-DskipTests` and without `cargo-deny`, and its Windows job cross-compiles with MinGW (`release.yml`), so GuitarFX there would break TuxGuitarAdvanced's releases (corrected 2026-11-07, `/speckit-analyze`). GuitarFX is never copied into TuxGuitarAdvanced's packages.
 - **CI**:
   - A new workflow `.github/workflows/guitarfx.yml` builds and tests on `macos-15`, `ubuntu-24.04` and Windows: the licence gate, the comparison, the no-allocation test, the bundle, `auval`, and a start-up check of the application in headless mode.
   - `release.yml` gets three jobs that build the installers and attach them to the same draft release, plus a check of the draft that names the GuitarFX files.
