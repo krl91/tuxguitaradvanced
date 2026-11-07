@@ -426,3 +426,322 @@ mod tests {
         assert_eq!(TUNING_LENGTH as i32, tuning_layout());
     }
 }
+
+/// Every number of the native analysis is accounted for (spec 026, T031, FR-002, research R9), by the rule of the Java inventory tests
+/// (`EngineConstantInventoryTest`): a `const` is an index of `Parameters` or `Tuning` (or their length), the default of a parameter whose row of
+/// `specs/026-engine-external-parameters/inventory.md` names it in its "Native" column, or a fixed constant of section 6 of
+/// `docs/architecture/recognition-engines.md`; a number written inline is mathematical, the default of such a parameter in a `defaults()`
+/// function, or listed in the inventory's "Inline numbers that stay inline". The `#[cfg(test)]` modules are not read.
+#[cfg(test)]
+mod constant_inventory {
+    use std::collections::HashSet;
+    use std::path::{Path, PathBuf};
+
+    const ALLOWED: [f64; 19] =
+        [0.0, 0.5, 1.0, 2.0, 4.0, 10.0, 12.0, 20.0, 60.0, 69.0, 100.0, 440.0, 1000.0, 1200.0, 3600.0, 1e6, 1e9, 1e-9, 1e-12];
+    const UNIT_FACTORS: [f64; 5] = [1.0, 1e3, 1e6, 1e9, 1e-3];
+    const NUMERIC_TYPES: [&str; 12] = ["i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "usize", "isize", "f32", "f64"];
+
+    struct Row {
+        default: f64,
+        native: String,
+    }
+
+    struct Inventory {
+        rows: Vec<Row>,
+        inline: Vec<(String, f64)>,
+        fixed: HashSet<String>,
+    }
+
+    fn root() -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../..")
+    }
+
+    fn between<'a>(text: &'a str, start: &str, end: Option<&str>) -> &'a str {
+        let from = text.find(&format!("\n{}", start)).unwrap_or_else(|| panic!("no heading {}", start));
+        let to = end.and_then(|e| text[from + 1..].find(&format!("\n{}", e)).map(|i| i + from + 1)).unwrap_or(text.len());
+        &text[from..to]
+    }
+
+    fn cells(line: &str) -> Vec<String> {
+        let inner = line.trim().trim_start_matches('|').trim_end_matches('|');
+        inner.split('|').map(|c| c.trim().to_string()).collect()
+    }
+
+    /// The first two backticked cells of a table row: a file and a name or a literal.
+    fn pair(line: &str) -> Option<(String, String)> {
+        let c = cells(line);
+        if !line.starts_with("| `") || c.len() < 2 {
+            return None;
+        }
+        let a = c[0].strip_prefix('`')?.strip_suffix('`')?;
+        let b = c[1].strip_prefix('`')?.strip_suffix('`')?;
+        Some((a.to_string(), b.to_string()))
+    }
+
+    fn read_inventory() -> Inventory {
+        let inventory = std::fs::read_to_string(root().join("specs/026-engine-external-parameters/inventory.md")).expect("the inventory");
+        let document = std::fs::read_to_string(root().join("docs/architecture/recognition-engines.md")).expect("the engines' documentation");
+        let mut rows = Vec::new();
+        for line in between(&inventory, "## Parameters", Some("## Ordered pairs")).lines() {
+            if line.starts_with("| `recognition.") {
+                let c = cells(line);
+                rows.push(Row { default: c[2].parse().expect("a default"), native: c[8].clone() });
+            }
+        }
+        let mut inline = Vec::new();
+        for line in between(&inventory, "## Inline numbers that stay inline", None).lines() {
+            if let Some((file, literal)) = pair(line) {
+                inline.push((file, literal_value(&literal)));
+            }
+        }
+        let mut fixed = HashSet::new();
+        for line in between(&document, "## 6. ", None).lines() {
+            if let Some((file, name)) = pair(line) {
+                fixed.insert(format!("{} {}", file, name));
+            }
+        }
+        Inventory { rows, inline, fixed }
+    }
+
+    fn same_in_unit(value: f64, default: f64) -> bool {
+        UNIT_FACTORS.iter().any(|f| (value - default * f).abs() <= 1e-9 * (default * f).abs().max(1.0))
+    }
+
+    /// The value of a Rust literal: underscores, a type suffix and a hexadecimal prefix allowed.
+    fn literal_value(literal: &str) -> f64 {
+        let text: String = literal.chars().filter(|c| *c != '_').collect();
+        if let Some(hex) = text.strip_prefix("0x") {
+            let digits: String = hex.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
+            return i64::from_str_radix(&digits, 16).expect("a hexadecimal literal") as f64;
+        }
+        let mut number = text.as_str();
+        for suffix in NUMERIC_TYPES.iter() {
+            if let Some(rest) = number.strip_suffix(suffix) {
+                number = rest;
+                break;
+            }
+        }
+        number.trim_end_matches(['f', 'F', 'd', 'D', 'l', 'L']).trim_end_matches('.').parse().expect("a numeric literal")
+    }
+
+    /// The source without comments, strings and test modules, positions kept.
+    fn stripped(source: &str) -> String {
+        let source = match source.find("#[cfg(test)]") {
+            Some(i) => &source[..i],
+            None => source,
+        };
+        let bytes = source.as_bytes();
+        let mut out = String::with_capacity(source.len());
+        let mut i = 0;
+        while i < bytes.len() {
+            let end = if source[i..].starts_with("//") {
+                source[i..].find('\n').map(|k| i + k).unwrap_or(bytes.len())
+            } else if source[i..].starts_with("/*") {
+                source[i + 2..].find("*/").map(|k| i + 2 + k + 2).unwrap_or(bytes.len())
+            } else if bytes[i] == b'"' {
+                let mut k = i + 1;
+                while k < bytes.len() && bytes[k] != b'"' {
+                    k += if bytes[k] == b'\\' { 2 } else { 1 };
+                }
+                (k + 1).min(bytes.len())
+            } else if source[i..].starts_with("#[") {
+                source[i..].find(']').map(|k| i + k + 1).unwrap_or(bytes.len())
+            } else {
+                let c = source[i..].chars().next().unwrap();
+                out.push(c);
+                i += c.len_utf8();
+                continue;
+            };
+            for c in source[i..end].chars() {
+                out.push(if c == '\n' { '\n' } else { ' ' });
+            }
+            i = end;
+        }
+        out
+    }
+
+    fn is_ident(c: u8) -> bool {
+        c.is_ascii_alphanumeric() || c == b'_'
+    }
+
+    /// The numeric literals of the code: their start, end and text.
+    fn literals(code: &str) -> Vec<(usize, usize, String)> {
+        let b = code.as_bytes();
+        let mut found = Vec::new();
+        let mut i = 0;
+        while i < b.len() {
+            if b[i].is_ascii_digit() && (i == 0 || !(is_ident(b[i - 1]) || b[i - 1] == b'.')) {
+                let start = i;
+                if code[i..].starts_with("0x") {
+                    i += 2;
+                    while i < b.len() && (b[i].is_ascii_hexdigit() || b[i] == b'_') {
+                        i += 1;
+                    }
+                } else {
+                    while i < b.len() && (b[i].is_ascii_digit() || b[i] == b'_') {
+                        i += 1;
+                    }
+                    if i + 1 < b.len() && b[i] == b'.' && b[i + 1].is_ascii_digit() {
+                        i += 1;
+                        while i < b.len() && (b[i].is_ascii_digit() || b[i] == b'_') {
+                            i += 1;
+                        }
+                    } else if i < b.len() && b[i] == b'.' && (i + 1 == b.len() || !(b[i + 1] == b'.' || is_ident(b[i + 1]))) {
+                        i += 1;
+                    }
+                    if i < b.len() && (b[i] == b'e' || b[i] == b'E') && i + 1 < b.len()
+                        && (b[i + 1].is_ascii_digit() || ((b[i + 1] == b'-' || b[i + 1] == b'+') && i + 2 < b.len() && b[i + 2].is_ascii_digit()))
+                    {
+                        i += 2;
+                        while i < b.len() && b[i].is_ascii_digit() {
+                            i += 1;
+                        }
+                    }
+                }
+                while i < b.len() && is_ident(b[i]) {
+                    i += 1;
+                }
+                found.push((start, i, code[start..i].to_string()));
+            } else {
+                i += 1;
+            }
+        }
+        found
+    }
+
+    /// A literal right after a unary minus is negative.
+    fn signed(code: &str, at: usize, value: f64) -> f64 {
+        let before = code[..at].trim_end();
+        if let Some(rest) = before.strip_suffix('-') {
+            let previous = rest.trim_end().bytes().last().unwrap_or(b'(');
+            if !(is_ident(previous) || previous == b')' || previous == b']' || previous == b'.') {
+                return -value;
+            }
+        }
+        value
+    }
+
+    /// The `const NAME: TYPE = INIT;` declarations of numeric type: name, type, initializer and span.
+    fn constants(code: &str) -> Vec<(String, String, String, usize, usize)> {
+        let b = code.as_bytes();
+        let mut found = Vec::new();
+        let mut from = 0;
+        while let Some(k) = code[from..].find("const ") {
+            let at = from + k;
+            from = at + 6;
+            if at > 0 && is_ident(b[at - 1]) {
+                continue;
+            }
+            let Some(colon) = code[from..].find(':').map(|c| from + c) else { break };
+            let name = code[from..colon].trim();
+            if name.is_empty() || !name.bytes().all(is_ident) {
+                continue;
+            }
+            let Some(equals) = code[colon..].find('=').map(|e| colon + e) else { break };
+            let kind = code[colon + 1..equals].trim();
+            let Some(semicolon) = code[equals..].find(';').map(|s| equals + s) else { break };
+            if NUMERIC_TYPES.contains(&kind) {
+                found.push((name.to_string(), kind.to_string(), code[equals + 1..semicolon].trim().to_string(), at, semicolon + 1));
+            }
+        }
+        found
+    }
+
+    /// The bodies of the `fn defaults()` functions.
+    fn defaults_bodies(code: &str) -> Vec<(usize, usize)> {
+        let mut bodies = Vec::new();
+        let mut from = 0;
+        while let Some(k) = code[from..].find("fn defaults()") {
+            let open = from + k + code[from + k..].find('{').expect("a body");
+            let mut depth = 0;
+            let mut close = code.len();
+            for (j, c) in code[open..].char_indices() {
+                if c == '{' {
+                    depth += 1;
+                } else if c == '}' {
+                    depth -= 1;
+                    if depth == 0 {
+                        close = open + j;
+                        break;
+                    }
+                }
+            }
+            bodies.push((open, close));
+            from = close;
+        }
+        bodies
+    }
+
+    fn names_in_native(row: &Row, file: &str, name: &str) -> bool {
+        let needle = format!("{} {}", file, name);
+        row.native.match_indices(&needle).any(|(i, _)| {
+            let after = row.native.as_bytes().get(i + needle.len()).copied().unwrap_or(b' ');
+            let before = if i == 0 { b' ' } else { row.native.as_bytes()[i - 1] };
+            !is_ident(after) && !is_ident(before)
+        })
+    }
+
+    fn unaccounted(inventory: &Inventory) -> Vec<String> {
+        let folder = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/analysis");
+        let mut files: Vec<PathBuf> =
+            std::fs::read_dir(&folder).unwrap().map(|e| e.unwrap().path()).filter(|p| p.extension().map_or(false, |x| x == "rs")).collect();
+        files.sort();
+        let mod_code = stripped(&std::fs::read_to_string(folder.join("mod.rs")).unwrap());
+        let mut problems = Vec::new();
+        for path in files {
+            let file = path.file_name().unwrap().to_str().unwrap().to_string();
+            let listed = format!("CRATE/analysis/{}", file);
+            let code = stripped(&std::fs::read_to_string(&path).unwrap());
+            let declared = constants(&code);
+            for (name, kind, init, _, _) in declared.iter() {
+                let index = file == "mod.rs" && kind == "usize"
+                    && (name == "LENGTH" || name == "TUNING_LENGTH" || mod_code.contains(&format!("[{}]", name)));
+                let parameter = inventory.rows.iter().any(|r| names_in_native(r, &file, name));
+                if !(index || parameter || inventory.fixed.contains(&format!("{} {}", listed, name))) {
+                    problems.push(format!("{} {} = {}: neither an index, a parameter's native default nor a fixed constant of section 6", listed, name, init));
+                }
+            }
+            let bodies = defaults_bodies(&code);
+            for (start, _, text) in literals(&code) {
+                if declared.iter().any(|d| d.3 <= start && start < d.4) {
+                    continue;
+                }
+                let value = signed(&code, start, literal_value(&text));
+                if ALLOWED.contains(&value.abs()) || inventory.inline.iter().any(|(f, v)| *f == listed && *v == value.abs()) {
+                    continue;
+                }
+                let in_defaults = bodies.iter().any(|(a, b)| *a <= start && start <= *b);
+                if in_defaults && inventory.rows.iter().any(|r| r.native.contains(&file) && same_in_unit(value, r.default)) {
+                    continue;
+                }
+                let line = 1 + code[..start].matches('\n').count();
+                problems.push(format!("{} line {}: inline {} is not in the allow-list nor in inventory.md \"Inline numbers that stay inline\"", listed, line, text));
+            }
+        }
+        problems
+    }
+
+    #[test]
+    fn the_scan_reads_rust_literals() {
+        assert_eq!(1e-15, literal_value("1e-15"));
+        assert_eq!(300_000_000.0, literal_value("300_000_000.0"));
+        assert_eq!(0.0, literal_value("0f32"));
+        assert_eq!(255.0, literal_value("0xff"));
+        let code = stripped("let a = [0f32; N]; // 7\nlet b = x.0 + 1..=3; let c = f(-70.0);\n#[cfg(test)]\nmod tests { 9 }");
+        let texts: Vec<String> = literals(&code).into_iter().map(|l| l.2).collect();
+        assert_eq!(vec!["0f32", "1", "3", "70.0"], texts);
+        let at = code.find("70.0").unwrap();
+        assert_eq!(-70.0, signed(&code, at, 70.0));
+        assert_eq!(vec![("A".to_string(), "usize".to_string(), "4".to_string())],
+            constants("pub const A: usize = 4; const B: &str = \"x\";").into_iter().map(|c| (c.0, c.1, c.2)).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn every_native_number_is_a_parameter_or_a_fixed_constant() {
+        let inventory = read_inventory();
+        assert!(!inventory.rows.is_empty(), "the inventory's parameter rows are read");
+        let problems = unaccounted(&inventory);
+        assert!(problems.is_empty(), "numbers of the native analysis the inventory and section 6 do not account for:\n{}", problems.join("\n"));
+    }
+}

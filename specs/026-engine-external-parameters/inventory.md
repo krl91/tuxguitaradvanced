@@ -2,7 +2,7 @@
 
 Written by task T003 from the scan of research R1 (`AE`, `PR/session`, `PR/arcade/core`, `CRATE/analysis`). One row per value: a **parameter** (its key in `RecognitionParameters.ALL`) or a **fixed** constant (its kind and reason, repeated in section 6 of `docs/architecture/recognition-engines.md`). The inventory tests (T029–T031) match a row by its file and constant name.
 
-Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116 inline numbers that stay inline.
+Totals: 192 parameters in 35 sections (at most 7 each), 224 fixed constants, 175 inline numbers that stay inline.
 
 **Takes effect**: *listening restart* for a value an engine stage reads, Java or native (a change while listening rebuilds the Java analysis and is pushed to the native one with `configureTuning` or `configure`); *next run* for a value of the session, the techniques, the calibration or the clock.
 
@@ -38,10 +38,10 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 
 | Key | Unit | Default | Min | Max | Shown default | Takes effect | Replaces | Native |
 |---|---|---|---|---|---|---|---|---|
-| `recognition.pitch.yin-threshold` | % | 0.20 | 0.05 | 0.5 | 20 % | listening restart | `TarsosFastYinEstimator.java` (FastYin default 0.20); `NativeParameters.java` `DEFAULT_YIN_THRESHOLD` | float[21] YIN_THRESHOLD; yin.rs DEFAULT_THRESHOLD |
+| `recognition.pitch.yin-threshold` | % | 0.20 | 0.05 | 0.5 | 20 % | listening restart | `TarsosFastYinEstimator.java` `DEFAULT_THRESHOLD`; `NativeParameters.java` `DEFAULT_YIN_THRESHOLD` | float[21] YIN_THRESHOLD; yin.rs DEFAULT_THRESHOLD |
 | `recognition.pitch.target-search` | cents | 20.0 | 5 | 50 | 20 cents | listening restart | `ExpectedPitchVerifier.java` `SEARCH_CENTS` | target.rs SEARCH_CENTS (tuning) |
 | `recognition.pitch.target-periods` | — | 4 | 2 | 8 | 4  | listening restart | `ExpectedPitchVerifier.java` `PERIODS` | target.rs PERIODS (tuning) |
-| `recognition.pitch.max-sharp` | cents | 49.0 | 20 | 49 | 49 cents | next run | `TolerancePolicy.java` `MAX_SHARP_CENTS` | - |
+| `recognition.pitch.max-sharp` | cents | 49.0 | 20 | 49 | 49 cents | next run | `TolerancePolicy.java` `DEFAULT_MAX_SHARP_CENTS` | - |
 | `recognition.pitch.attack-candidates-low` | MIDI | 28 | 24 | 40 | 28 MIDI | next run | `AttackCandidates.java` `LOWEST` | - |
 | `recognition.pitch.attack-candidates-high` | MIDI | 100 | 80 | 112 | 100 MIDI | next run | `AttackCandidates.java` `HIGHEST` | - |
 
@@ -63,8 +63,8 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 | `recognition.polyphonic.min-relative` | % | 0.10 | 0.01 | 0.5 | 10 % | listening restart | `PolyphonicAnalyzer.java` `Parameters.minRelativeSalience` | polyphonic.rs min_relative_salience |
 | `recognition.polyphonic.floor` | dB | -70.0 | -100 | -40 | -70 dB | listening restart | `PolyphonicAnalyzer.java` `Parameters.floorDb` | polyphonic.rs floor_db |
 | `recognition.polyphonic.subharmonic` | % | 0.30 | 0.05 | 0.9 | 30 % | listening restart | `PolyphonicAnalyzer.java` `Parameters.subharmonicRatio` | polyphonic.rs subharmonic_ratio |
-| `recognition.polyphonic.floor-width` | Hz | 25.0 | 5 | 100 | 25 Hz | listening restart | `PolyphonicAnalyzer.java` `FLOOR_HALF_WIDTH_HZ` | polyphonic.rs FLOOR_HALF_WIDTH_HZ |
-| `recognition.polyphonic.floor-factor` | × | 2.0 | 1 | 6 | 2 × | listening restart | `PolyphonicAnalyzer.java` `FLOOR_FACTOR` | polyphonic.rs FLOOR_FACTOR |
+| `recognition.polyphonic.floor-width` | Hz | 25.0 | 5 | 100 | 25 Hz | listening restart | `PolyphonicAnalyzer.java` `DEFAULT_FLOOR_HALF_WIDTH_HZ` | polyphonic.rs FLOOR_HALF_WIDTH_HZ |
+| `recognition.polyphonic.floor-factor` | × | 2.0 | 1 | 6 | 2 × | listening restart | `PolyphonicAnalyzer.java` `DEFAULT_FLOOR_FACTOR` | polyphonic.rs FLOOR_FACTOR |
 
 ### `ATTACK_1`
 
@@ -80,9 +80,9 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 
 | Key | Unit | Default | Min | Max | Shown default | Takes effect | Replaces | Native |
 |---|---|---|---|---|---|---|---|---|
-| `recognition.attack.evidence-partials` | — | 12 | 4 | 24 | 12  | next run | `AttackEvidence.java` `PARTIALS` | - |
-| `recognition.attack.evidence-search` | cents | 60.0 | 10 | 100 | 60 cents | next run | `AttackEvidence.java` `SEARCH_CENTS` | - |
-| `recognition.attack.evidence-peak` | % | 0.03 | 0.01 | 0.2 | 3 % | next run | `AttackEvidence.java` `MIN_PEAK_SHARE` | - |
+| `recognition.attack.evidence-partials` | — | 12 | 4 | 24 | 12  | next run | `AttackEvidence.java` `DEFAULT_PARTIALS` | - |
+| `recognition.attack.evidence-search` | cents | 60.0 | 10 | 100 | 60 cents | next run | `AttackEvidence.java` `DEFAULT_SEARCH_CENTS` | - |
+| `recognition.attack.evidence-peak` | % | 0.03 | 0.01 | 0.2 | 3 % | next run | `AttackEvidence.java` `DEFAULT_MIN_PEAK_SHARE` | - |
 
 ### `CHORD_EVIDENCE`
 
@@ -100,8 +100,8 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 | Key | Unit | Default | Min | Max | Shown default | Takes effect | Replaces | Native |
 |---|---|---|---|---|---|---|---|---|
 | `recognition.front-end.high-pass` | Hz | 40.0 | 10 | 120 | 40 Hz | listening restart | `HighPass.java` `CORNER_HZ` | front_end.rs CORNER_HZ |
-| `recognition.front-end.noise-rise` | dB/s | 0.5 | 0.1 | 5 | 0.5 dB/s | listening restart | `NoiseEstimator.java` `RISE_DB_PER_SECOND` | front_end.rs RISE_DB_PER_SECOND |
-| `recognition.front-end.noise-fall` | — | 0.2 | 0.1 | 1 | 0.2  | listening restart | `NoiseEstimator.java` `FALL_RATE` | front_end.rs FALL_RATE |
+| `recognition.front-end.noise-rise` | dB/s | 0.5 | 0.1 | 5 | 0.5 dB/s | listening restart | `NoiseEstimator.java` `DEFAULT_RISE_DB_PER_SECOND` | front_end.rs RISE_DB_PER_SECOND |
+| `recognition.front-end.noise-fall` | — | 0.2 | 0.1 | 1 | 0.2  | listening restart | `NoiseEstimator.java` `DEFAULT_FALL_RATE` | front_end.rs FALL_RATE |
 | `recognition.front-end.noise-trusted` | hops | 188 | 20 | 1000 | 188 hops | listening restart | `NoiseEstimator.java` `TRUSTED_AFTER_HOPS` | front_end.rs TRUSTED_AFTER_HOPS |
 
 ### `NOISE_GATE`
@@ -114,7 +114,7 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 | `recognition.noise-gate.hold` | hops | 19 | 1 | 100 | 19 hops | listening restart | `NoiseGate.java` `HOLD_HOPS` | front_end.rs HOLD_HOPS |
 | `recognition.noise-gate.subtraction` | × | 1.5 | 0.5 | 4 | 1.5 × | listening restart | `SpectralSubtractor.java` `ALPHA` | front_end.rs ALPHA |
 | `recognition.noise-gate.subtraction-floor` | % | 0.05 | 0 | 0.3 | 5 % | listening restart | `SpectralSubtractor.java` `BETA` | front_end.rs BETA |
-| `recognition.noise-gate.subtraction-learn` | % | 0.1 | 0.01 | 1 | 10 % | listening restart | `SpectralSubtractor.java` `LEARN_RATE` | front_end.rs LEARN_RATE |
+| `recognition.noise-gate.subtraction-learn` | % | 0.1 | 0.01 | 1 | 10 % | listening restart | `SpectralSubtractor.java` `DEFAULT_LEARN_RATE` | front_end.rs LEARN_RATE |
 
 ### `GAIN`
 
@@ -141,20 +141,20 @@ Totals: 192 parameters in 35 sections (at most 7 each), 184 fixed constants, 116
 
 | Key | Unit | Default | Min | Max | Shown default | Takes effect | Replaces | Native |
 |---|---|---|---|---|---|---|---|---|
-| `recognition.acceptance.offset-margin` | cents | 15.0 | 0 | 50 | 15 cents | next run | `PolyphonicAcceptance.java` `OFFSET_MARGIN` | - |
-| `recognition.acceptance.decay` | hops | 1 | 0 | 5 | 1 hops | next run | `PolyphonicAcceptance.java` `DECAY` | - |
-| `recognition.acceptance.guard` | ms | 60 | 0 | 200 | 60 ms | next run | `PolyphonicAcceptance.java` `GUARD_NANOS` | - |
-| `recognition.acceptance.min-total` | ‰ | 0.01 | 0.001 | 0.1 | 10 ‰ | next run | `PolyphonicAcceptance.java` `MIN_TOTAL` | - |
-| `recognition.acceptance.floor-hops` | hops | 10 | 1 | 50 | 10 hops | next run | `PolyphonicAcceptance.java` `FLOOR_HOPS` | - |
-| `recognition.acceptance.silence` | % | 0.6 | 0.1 | 1 | 60 % | next run | `PolyphonicAcceptance.java` `SILENCE_STRENGTH` | - |
-| `recognition.acceptance.min-onset` | ‰ | 0.002 | 0.001 | 0.05 | 2 ‰ | next run | `PolyphonicAcceptance.java` `MIN_ONSET_TOTAL` | - |
+| `recognition.acceptance.offset-margin` | cents | 15.0 | 0 | 50 | 15 cents | next run | `PolyphonicAcceptance.java` `DEFAULT_OFFSET_MARGIN` | - |
+| `recognition.acceptance.decay` | hops | 1 | 0 | 5 | 1 hops | next run | `PolyphonicAcceptance.java` `DEFAULT_DECAY` | - |
+| `recognition.acceptance.guard` | ms | 60 | 0 | 200 | 60 ms | next run | `PolyphonicAcceptance.java` `DEFAULT_GUARD_NANOS` | - |
+| `recognition.acceptance.min-total` | ‰ | 0.01 | 0.001 | 0.1 | 10 ‰ | next run | `PolyphonicAcceptance.java` `DEFAULT_MIN_TOTAL` | - |
+| `recognition.acceptance.floor-hops` | hops | 10 | 1 | 50 | 10 hops | next run | `PolyphonicAcceptance.java` `DEFAULT_FLOOR_HOPS` | - |
+| `recognition.acceptance.silence` | % | 0.6 | 0.1 | 1 | 60 % | next run | `PolyphonicAcceptance.java` `DEFAULT_SILENCE_STRENGTH` | - |
+| `recognition.acceptance.min-onset` | ‰ | 0.002 | 0.001 | 0.05 | 2 ‰ | next run | `PolyphonicAcceptance.java` `DEFAULT_MIN_ONSET_TOTAL` | - |
 
 ### `ACCEPTANCE_3`
 
 | Key | Unit | Default | Min | Max | Shown default | Takes effect | Replaces | Native |
 |---|---|---|---|---|---|---|---|---|
-| `recognition.acceptance.onset-floor` | × | 3.0 | 1 | 10 | 3 × | next run | `PolyphonicAcceptance.java` inline 3.0 * floor (onset above the floor) | - |
-| `recognition.acceptance.release` | % | 0.25 | 0.05 | 0.9 | 25 % | next run | `PolyphonicAcceptance.java` inline 0.25 * attackPeak (end of the attack) | - |
+| `recognition.acceptance.onset-floor` | × | 3.0 | 1 | 10 | 3 × | next run | `PolyphonicAcceptance.java` `DEFAULT_ONSET_FLOOR` (was inline 3.0 * floor) | - |
+| `recognition.acceptance.release` | % | 0.25 | 0.05 | 0.9 | 25 % | next run | `PolyphonicAcceptance.java` `DEFAULT_RELEASE` (was inline 0.25 * attackPeak) | - |
 
 ### `WAIT_1`
 
@@ -472,6 +472,43 @@ The leniency rows have no ordered pair: `recognition.follow-leniency.very-permis
 | `AE/nativeengine/NativeParameters.java` | `STRUM_LOUD` | buffer or layout | indices and length of the float[21] (contracts/native-parameters.md) |
 | `AE/nativeengine/NativeParameters.java` | `YIN_THRESHOLD` | buffer or layout | indices and length of the float[21] (contracts/native-parameters.md) |
 | `AE/nativeengine/NativeParameters.java` | `LENGTH` | buffer or layout | indices and length of the float[21] (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_TARGET_SEARCH` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_TARGET_PERIODS` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_CANDIDATE_LOW` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_CANDIDATE_HIGH` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_HARMONICS` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_MAX_HARMONIC` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_TOLERANCE` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_CANDIDATES` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_MIN_RELATIVE` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_FLOOR` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_SUBHARMONIC` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_FLOOR_WIDTH` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_POLY_FLOOR_FACTOR` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_ATTACK_LAG` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_ATTACK_MAX_FREQUENCY` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_ATTACK_PARTIALS` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_ATTACK_BETA` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_ATTACK_SIGMA` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_CHORD_PARTIAL_PRESENCE` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_CHORD_NEIGHBOUR_MARGIN` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_STRUM_WINDOW` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_STRUM_QUIET` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_STRUM_RISE` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_STRUM_CLIP_SHARE` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_FRONT_HIGH_PASS` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_FRONT_NOISE_RISE` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_FRONT_NOISE_FALL` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_FRONT_NOISE_TRUSTED` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_GATE_OPEN` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_GATE_CLOSE` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_GATE_REDUCTION` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_GATE_HOLD` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_SUBTRACTION` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_SUBTRACTION_FLOOR` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `T_SUBTRACTION_LEARN` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeParameters.java` | `TUNING_LENGTH` | buffer or layout | indices and length of the tuning array (contracts/native-parameters.md) |
+| `AE/nativeengine/NativeRecognitionException.java` | `serialVersionUID` | not recognition | serialization id of the exception |
 | `AE/nativeengine/FrameRecords.java` | `LENGTH` | buffer or layout | layout of the native frame record |
 | `AE/nativeengine/FrameRecords.java` | `TIMESTAMP_NANOS` | buffer or layout | layout of the native frame record |
 | `AE/nativeengine/FrameRecords.java` | `CAPTURE_SAMPLE_END` | buffer or layout | layout of the native frame record |
@@ -494,8 +531,7 @@ The leniency rows have no ordered pair: `recognition.follow-leniency.very-permis
 | `PR/session/PracticeParameters.java` | `MEASURED_DELAY_P90_MILLIS` | score or display | measured figures shown to the learner, not used to decide |
 | `PR/session/PracticeParameters.java` | `MEASURED_SPEED_LIMIT_SECONDS` | score or display | measured figures shown to the learner, not used to decide |
 | `PR/session/PracticeParameters.java` | `HOP_NANOS` | structural size | one hop at 48 kHz |
-| `PR/session/PracticeSession.java` | `RECENT_FRAMES` | buffer or layout | frame history sizes; BEND_FRAMES_MAX bounds recognition.wait.bend-window-max |
-| `PR/session/PracticeSession.java` | `BEND_FRAMES_MAX` | buffer or layout | frame history sizes; BEND_FRAMES_MAX bounds recognition.wait.bend-window-max |
+| `PR/session/PracticeSession.java` | `RECENT_FRAMES` | buffer or layout | frame history size |
 | `PR/session/PracticeSession.java` | `SPEED_SHOW_NANOS` | score or display | display duration (clarification 3) |
 | `PR/session/PlayTimeWindow.java` | `MIN_MILLIS` | already a setting | bounds and default of recognition.follow.play-time |
 | `PR/session/PlayTimeWindow.java` | `MAX_MILLIS` | already a setting | bounds and default of recognition.follow.play-time |
@@ -534,6 +570,7 @@ The leniency rows have no ordered pair: `recognition.follow-leniency.very-permis
 | `PR/session/CalibrationTaps.java` | `CLICKS` | calibration protocol | calibration protocol, 8 clicks (clarification 3) |
 | `PR/session/FollowRunRecorder.java` | `MAX_MILLIS` | plumbing | recording limits of a Follow run |
 | `PR/session/FollowRunRecorder.java` | `MARGIN_MILLIS` | plumbing | recording limits of a Follow run |
+| `PR/session/LatencyCompensation.java` | `MAX_LIMIT_MILLIS` | already a setting | the maximum of recognition.clock.latency-limit |
 | `PR/session/PassagePolicy.java` | `DEFAULT_MEASURES` | already a setting | defaults of the passage settings |
 | `PR/session/PassagePolicy.java` | `DEFAULT_MAX_ERROR_RATE` | already a setting | defaults of the passage settings |
 | `PR/session/PassagePolicy.java` | `DEFAULT_MAX_RETRIES` | already a setting | defaults of the passage settings |
@@ -570,11 +607,14 @@ The leniency rows have no ordered pair: `recognition.follow-leniency.very-permis
 | `CRATE/analysis/frame.rs` | `PART_ATTACK` | buffer or layout | layout of the frame record |
 | `CRATE/analysis/frame.rs` | `PART_CHORD` | buffer or layout | layout of the frame record |
 | `CRATE/analysis/frame.rs` | `CAPACITY` | buffer or layout | layout of the frame record |
+| `CRATE/analysis/front_end.rs` | `NEUTRAL_GAIN` | numerical safety | unit gain, as InputGain.NEUTRAL |
 | `CRATE/analysis/front_end.rs` | `MINIMUM_RMS` | numerical safety | as NoiseEstimator.MINIMUM_RMS |
 | `CRATE/analysis/front_end.rs` | `FRAME` | structural size | as SpectralSubtractor.FRAME and HOP |
 | `CRATE/analysis/front_end.rs` | `HOP` | structural size | as SpectralSubtractor.FRAME and HOP |
 | `CRATE/analysis/strum_clip.rs` | `SILENCE_DBFS` | numerical safety | as StrumClipMeter.SILENCE_DBFS |
-| `CRATE/analysis/strum_clip.rs` | `SUITABLE` | buffer or layout | strum verdict codes |
+| `CRATE/analysis/strum_clip.rs` | `NO_STRUM` | buffer or layout | strum verdict codes |
+| `CRATE/analysis/strum_clip.rs` | `GOOD` | buffer or layout | strum verdict codes |
+| `CRATE/analysis/strum_clip.rs` | `MAX_ARM_QUIET_HOPS` | buffer or layout | the level history of the arm check; bounds recognition.chord-evidence.strum-quiet (at most 200) |
 | `CRATE/analysis/strum_clip.rs` | `CLIPPING` | buffer or layout | strum verdict codes |
 | `CRATE/analysis/strum_clip.rs` | `TOO_LOUD` | buffer or layout | strum verdict codes |
 | `CRATE/analysis/strum_clip.rs` | `TOO_WEAK` | buffer or layout | strum verdict codes |
@@ -640,7 +680,6 @@ Numbers written in a method body or a constructor call, outside the mathematical
 | `AE/calibration/SoundCounter.java` | `1e-6` | numerical safety | level of digital silence |
 | `AE/calibration/SoundCounter.java` | `120.0` | numerical safety | level of digital silence |
 | `AE/calibration/ProfileLibrary.java` | `3` | audio format | stored record layout |
-| `AE/calibration/DeviceKey.java` | `9` | audio format | encoding of a device key |
 | `AE/calibration/DeviceKey.java` | `16` | audio format | encoding of a device key |
 | `AE/calibration/DeviceKey.java` | `3` | audio format | encoding of a device key |
 | `AE/technique/SlideDetector.java` | `1.5` | score or display | confidence reported with the evidence, decides nothing |
@@ -690,7 +729,6 @@ Numbers written in a method body or a constructor call, outside the mathematical
 | `PR/session/TimingTolerance.java` | `220` | legacy migration | the presets of spec 002, kept to read older configuration files |
 | `PR/session/TimingTolerance.java` | `700` | legacy migration | the presets of spec 002, kept to read older configuration files |
 | `PR/session/TimingTolerance.java` | `8.0` | algorithm definition | the shape of the on-time window from recognition.tempo.window: the ratios of the old Normal, written as exact divisions so that 75 ms gives the old literals bit for bit |
-| `PR/session/TimingTolerance.java` | `1500.0` | algorithm definition | the shape of the on-time window from recognition.tempo.window: the ratios of the old Normal, written as exact divisions so that 75 ms gives the old literals bit for bit |
 | `PR/session/TimingTolerance.java` | `0.8` | algorithm definition | the shape of the on-time window from recognition.tempo.window: the ratios of the old Normal, written as exact divisions so that 75 ms gives the old literals bit for bit |
 | `PR/session/TimingTolerance.java` | `6` | algorithm definition | the shape of the on-time window from recognition.tempo.window: the ratios of the old Normal, written as exact divisions so that 75 ms gives the old literals bit for bit |
 | `PR/session/CalibrationRun.java` | `200_000_000` | plumbing | calibration timeout margin and rounding up to a second |
@@ -705,5 +743,66 @@ Numbers written in a method body or a constructor call, outside the mathematical
 | `PR/arcade/core/ArcadeLevel.java` | `5` | score or display | the Arcade levels (how many notes are shown), not recognition |
 | `PR/arcade/core/ArcadeLevelFilter.java` | `50` | mathematical | rounding of a percentage |
 | `PR/arcade/core/ArcadeScoring.java` | `1.5` | score or display | Arcade score multiplier (clarification 2) |
+| `AE/analysis/ArticulationDetector.java` | `8` | already a setting | the fast detector's windows in fast(): the defaults of recognition.onset-fast.pre-first and .post-last (8) and .post-first (3) |
+| `AE/analysis/ArticulationDetector.java` | `3` | already a setting | the fast detector's windows in fast(): the defaults of recognition.onset-fast.pre-first and .post-last (8) and .post-first (3) |
+| `AE/analysis/HarmonicComb.java` | `128` | mathematical | MIDI range |
+| `AE/settings/ChordLeniency.java` | `0.70` | already a setting | the Lenient chord check level's recognition.chord.profile.match (spec 024) |
+| `AE/input/PcmSampleConverter.java` | `0xff` | mathematical | byte mask |
+| `AE/calibration/DeviceKey.java` | `0xFF` | mathematical | byte and digit masks of the hexadecimal encoding |
+| `AE/calibration/DeviceKey.java` | `0xF` | mathematical | byte and digit masks of the hexadecimal encoding |
+| `AE/nativeengine/FrameRecords.java` | `0xFFFFFFFFL` | mathematical | the low 32 bits of a long |
+| `PR/session/FireTuningStore.java` | `0xFFFFFF` | mathematical | colour mask |
+| `PR/session/ScoreKey.java` | `0xff` | mathematical | byte mask |
+| `PR/session/PassageSettings.java` | `25` | already a setting | the options of recognition.passage.threshold |
+| `PR/session/PassageSettings.java` | `50` | already a setting | the options of recognition.passage.threshold |
+| `PR/session/PassageSettings.java` | `75` | already a setting | the options of recognition.passage.threshold |
+| `PR/session/PolyphonicAcceptance.java` | `19` | mathematical | semitones above the fundamental of harmonics 3 to 8 |
+| `PR/session/PolyphonicAcceptance.java` | `24` | mathematical | semitones above the fundamental of harmonics 3 to 8 |
+| `PR/session/PolyphonicAcceptance.java` | `28` | mathematical | semitones above the fundamental of harmonics 3 to 8 |
+| `PR/session/PolyphonicAcceptance.java` | `31` | mathematical | semitones above the fundamental of harmonics 3 to 8 |
+| `PR/session/PolyphonicAcceptance.java` | `34` | mathematical | semitones above the fundamental of harmonics 3 to 8 |
+| `PR/session/PolyphonicAcceptance.java` | `36` | mathematical | semitones above the fundamental of harmonics 3 to 8 |
+| `PR/session/PracticeSession.java` | `800.0` | buffer or layout | the bend frame history: 800 frames for 2,500 ms (the former BEND_FRAMES_MAX), scaled with recognition.wait.bend-window-max |
+| `PR/session/PracticeSession.java` | `2_500_000_000.0` | buffer or layout | the bend frame history: 800 frames for 2,500 ms (the former BEND_FRAMES_MAX), scaled with recognition.wait.bend-window-max |
+| `PR/session/TimingTolerance.java` | `3.0` | algorithm definition | the outer fraction is 8/3 of the on-time one (1,500 ms being three reference beats of 500 ms), so that the defaults give the old Normal bit for bit |
+| `CRATE/analysis/articulation.rs` | `1.5` | already a setting | the detectors of normal() and fast(): the defaults of recognition.onset.* and recognition.onset-fast.*, replaced by the values Java sends |
+| `CRATE/analysis/articulation.rs` | `5.0` | already a setting | the detectors of normal() and fast(): the defaults of recognition.onset.* and recognition.onset-fast.*, replaced by the values Java sends |
+| `CRATE/analysis/articulation.rs` | `19` | already a setting | the detectors of normal() and fast(): the defaults of recognition.onset.* and recognition.onset-fast.*, replaced by the values Java sends |
+| `CRATE/analysis/articulation.rs` | `13` | already a setting | the detectors of normal() and fast(): the defaults of recognition.onset.* and recognition.onset-fast.*, replaced by the values Java sends |
+| `CRATE/analysis/articulation.rs` | `6` | already a setting | the detectors of normal() and fast(): the defaults of recognition.onset.* and recognition.onset-fast.*, replaced by the values Java sends |
+| `CRATE/analysis/articulation.rs` | `8` | already a setting | the detectors of normal() and fast(): the defaults of recognition.onset.* and recognition.onset-fast.*, replaced by the values Java sends |
+| `CRATE/analysis/articulation.rs` | `3` | already a setting | the detectors of normal() and fast(): the defaults of recognition.onset.* and recognition.onset-fast.*, replaced by the values Java sends |
+| `CRATE/analysis/attack.rs` | `4096` | structural size | attack FFT 4096 (clarification 1), as AttackAnalyzer |
+| `CRATE/analysis/attack.rs` | `1e-15` | numerical safety | step epsilon of the solver, as NnlsSolver |
+| `CRATE/analysis/attack.rs` | `3.0` | mathematical | a Gaussian kernel cut at three standard deviations, as AttackAnalyzer |
+| `CRATE/analysis/chord.rs` | `3.0` | algorithm definition | the second and third partials and the credit they give (1/3), as ChordEvidence |
+| `CRATE/analysis/chord.rs` | `128` | mathematical | MIDI range |
+| `CRATE/analysis/comb.rs` | `128` | mathematical | MIDI range |
+| `CRATE/analysis/comb.rs` | `8` | algorithm definition | subharmonics 1/2 to 1/8 searched, as HarmonicComb |
+| `CRATE/analysis/comb.rs` | `27.0` | algorithm definition | fitted harmonic weight model, as HarmonicComb |
+| `CRATE/analysis/comb.rs` | `320.0` | algorithm definition | fitted harmonic weight model, as HarmonicComb |
+| `CRATE/analysis/frame.rs` | `32` | mathematical | two ints in a long, as FrameRecords |
+| `CRATE/analysis/target.rs` | `32` | numerical safety | shortest lag examined, as ExpectedPitchVerifier |
+| `CRATE/analysis/polyphonic.rs` | `8192` | structural size | FFT size and band range (clarification 1), as PolyphonicAnalyzer |
+| `CRATE/analysis/polyphonic.rs` | `24` | structural size | FFT size and band range (clarification 1), as PolyphonicAnalyzer |
+| `CRATE/analysis/polyphonic.rs` | `112` | structural size | FFT size and band range (clarification 1), as PolyphonicAnalyzer |
+| `CRATE/analysis/polyphonic.rs` | `128` | mathematical | MIDI range |
+| `CRATE/analysis/polyphonic.rs` | `50.0` | mathematical | half a semitone (50 cents), the edge of a semitone band |
+| `CRATE/analysis/polyphonic.rs` | `1.1` | buffer or layout | peak search length: 10 % and 3 bins past the highest harmonic, as PolyphonicAnalyzer |
+| `CRATE/analysis/polyphonic.rs` | `3` | buffer or layout | peak search length: 10 % and 3 bins past the highest harmonic, as PolyphonicAnalyzer |
+| `CRATE/analysis/mod.rs` | `40.0` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `6.0` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `0.99` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `0.10` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `1.5` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `5.0` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `50.0` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `4.5` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `19.0` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `13.0` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/mod.rs` | `0.20` | already a setting | Parameters::defaults(): the float[21] NativeParameters.of(RecognitionSettings.defaults()) sends |
+| `CRATE/analysis/strum_clip.rs` | `40.0` | already a setting | defaults of recognition.input.level.min, .max and advanced.level.clip-sample, replaced by the values Java sends |
+| `CRATE/analysis/strum_clip.rs` | `0.99` | already a setting | defaults of recognition.input.level.min, .max and advanced.level.clip-sample, replaced by the values Java sends |
+| `CRATE/analysis/strum_clip.rs` | `6.0` | already a setting | defaults of recognition.input.level.min, .max and advanced.level.clip-sample, replaced by the values Java sends |
 
 `AE/monitor` (the amplifier and effects of spec 022) is out of the scan: it changes what the learner hears from the amplifier, never what is recognised.
