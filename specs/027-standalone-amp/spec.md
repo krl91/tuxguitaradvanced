@@ -22,6 +22,10 @@
 - Q: Does GuitarFX have a tuner in this spec? → A: **No**; a later spec adds it (the application and the plugin stay without a tuner here).
 - Q: How is GuitarFX installed, the plugin included? → A: **One installer per system** (option A): a .pkg on macOS, an installer on Windows, a package or an archive with an install script on Linux; it places the application and the plugins (VST3, CLAP, and Audio Unit on macOS) in the system's standard folders, and a clean uninstall removes them.
 
+### Session 2026-11-07
+
+- Q: Is the note on Bluetooth headphones' delay shown all the time beside the estimated delay, or only when the output is detected as Bluetooth? → A: **All the time** (option A): a small fixed note beside the estimated delay, "Bluetooth headphones add their own delay, not counted here.", the same on the three systems; no Bluetooth detection.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - I plug my guitar in and hear it through an amp, without TuxGuitar (Priority: P1)
@@ -122,7 +126,7 @@ The guitarist who records with music software loads the amp as a plugin on a gui
 - **The tool runs while TuxGuitarAdvanced's amp sound is on**: both may try to play the guitar; the tool does not prevent it, and its guide says to use one at a time.
 - **A sound file imported from a newer version, or damaged**: refused with a message (FR-023); nothing already saved is changed.
 - **The plugin in a host running offline (faster than real time)**: it renders the same output as in real time.
-- **Bluetooth headphones**: they add their own delay; the tool says so beside the delay shown.
+- **Bluetooth headphones**: they add their own delay; a fixed note beside the estimated delay says so at all times, on every system, without detecting the output's kind.
 
 ## Requirements *(mandatory)*
 
@@ -146,7 +150,7 @@ The guitarist who records with music software loads the amp as a plugin on a gui
 - **FR-015** (real-time safety): The processing of each block of sound MUST NOT allocate memory, take a lock or wait; changes made by the guitarist MUST reach it without blocking it (owner's rule, constitution VI).
 - **FR-016** (external parameters): Every internal value of the effects, the safety guards and the device handling that changes what is heard (corner frequencies, time constants, thresholds, ceilings, ramp times, block size…) MUST be an external parameter with a default equal to spec 022's value, bounds, a unit and a description, read from the tool's settings at start; no such value is fixed in the code (owner's rule of 2026-11-05). A value out of bounds MUST be brought back into them.
 - **FR-025** (*Advanced* window): The application MUST show every external parameter in an *Advanced* window, grouped in categories, each with its name, value, unit, bounds, default and a tooltip in the three languages saying what it changes; a *Defaults* button MUST bring every value back to its default after a confirmation. The window MUST fit a 768-pixel-high screen. A change MUST take effect the next time the sound is turned on, and the window MUST say so. The plugin MUST read the same values from the application's settings on the same computer when it is loaded (defaults when the application was never used) and MUST NOT offer an *Advanced* page of its own.
-- **FR-017** (delay shown): The tool MUST show the delay estimated from the devices in use (input, output, block size and processing), named as an estimate.
+- **FR-017** (delay shown): The tool MUST show the delay estimated from the devices in use (input, output, block size and processing), named as an estimate, with a fixed note beside it, at all times, that Bluetooth headphones add their own delay not counted in it.
 - **FR-018** (languages): Every label, knob, message and tooltip MUST exist in English, French and Spanish, the tool following the system's language (English otherwise); each tooltip says what the control changes, its unit and its default.
 - **FR-019** (documentation): A guide in the three languages MUST describe the installation, the devices, the chain, the sounds, the delay, headphones and feedback; a reference MUST list every external parameter (name, meaning, unit, default, bounds).
 - **FR-020** (original and licences): The amp, the pedals and the ready-made sounds MUST be the project's own (as spec 022, FR-018); the tool MUST contain no GPL code, and every third-party component MUST have a licence compatible with the project's distribution.

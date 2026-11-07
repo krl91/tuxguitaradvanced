@@ -172,7 +172,7 @@
   - the built-in microphone is recognised by the rule of `desktop/TuxGuitar-audio-engine/.../input/InputDeviceCatalog.java` (lines 70–80: a microphone whose name holds `built-in`, `internal` or `macbook`), ported with its cases as a test (FR-012).
   - Test with cpal's error kinds mapped through a fake.
 - [ ] T029 [US1] Write the main window in `APP/src/main.rs` and `UI/src/{window,devices_bar,messages}.rs` per contracts/application.md:
-  - the devices bar, *Sound on* (off at every start), the volume, the input meter with clipping, the estimated delay with the word "estimated" and the Bluetooth note, the message line;
+  - the devices bar, *Sound on* (off at every start), the volume, the input meter with clipping, the estimated delay with the word "estimated" and the Bluetooth note shown at all times beside it, never depending on the output (clarification 2026-11-07), the message line;
   - the window's place and size remembered;
   - it fits 1024×768: a new test `UI/tests/fits_screen.rs` runs the window's layout headless (`egui::Context::run` with a 1024×768 screen, the longest texts of the three languages and every pedal in each tab) and asserts that every widget's rectangle lies inside the screen; it is seen red with a screen of 600 pixels.
   - Texts come through `SET/src/texts.rs` with English keys now; the other languages come in T046.

@@ -58,7 +58,7 @@
 | input clipping | "The input clips: lower the input gain of your interface or of the system." | unchanged |
 | a second instance | "GuitarFX is already open." | the second instance quits |
 | a newer or damaged settings file | contracts/settings-files.md | defaults |
-| Bluetooth output | "Bluetooth headphones add their own delay, not counted here." beside the delay | unchanged |
+| always (no detection; clarification 2026-11-07) | "Bluetooth headphones add their own delay, not counted here." beside the delay | unchanged |
 
 ## Headless start (CI)
 
