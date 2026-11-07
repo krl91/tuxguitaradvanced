@@ -1,5 +1,7 @@
 package app.tuxguitar.audio.engine.nativeengine;
 
+import java.util.function.IntSupplier;
+
 /**
  * The entry points of the native recognition (spec 023, contract §1), in the crate {@code tuxguitar-monitor-native} loaded once with the amp sound's
  * device ({@link NativeLibrary}). A handle stands for one opened input and its analysis thread. The records are those of {@link FrameRecords}; the
@@ -17,7 +19,32 @@ public final class NativeRecognitionLibrary {
 	public interface Api {
 
 		Api JNI = new Api() {
+			@Override
+			public long open(String inputName, int inputChannel, int blockFrames, long javaNanosAtOpen, float[] parameters, double[] tuning)
+					throws NativeRecognitionException {
+				String failure = load();
+				if( failure != null ) {
+					throw new NativeRecognitionException(NativeRecognitionException.Reason.LIBRARY_MISSING, failure);
+				}
+				checkLayout(NativeRecognitionLibrary::tuningLayout);
+				return NativeRecognitionLibrary.openTuned(inputName, inputChannel, blockFrames, javaNanosAtOpen, parameters, tuning);
+			}
+
+			@Override
+			public void configureTuning(long handle, double[] tuning) {
+				NativeRecognitionLibrary.configureTuning(handle, tuning);
+			}
 		};
+
+		/** Opens with the tuning array (spec 026); by default today's {@code open}, which uses the crate's default tuning. */
+		default long open(String inputName, int inputChannel, int blockFrames, long javaNanosAtOpen, float[] parameters, double[] tuning)
+				throws NativeRecognitionException {
+			return open(inputName, inputChannel, blockFrames, javaNanosAtOpen, parameters);
+		}
+
+		/** Replaces the tuning array of a running analysis (spec 026); by default nothing. */
+		default void configureTuning(long handle, double[] tuning) {
+		}
 
 		default long open(String inputName, int inputChannel, int blockFrames, long javaNanosAtOpen, float[] parameters) throws NativeRecognitionException {
 			String failure = load();
@@ -84,6 +111,23 @@ public final class NativeRecognitionLibrary {
 		}
 	}
 
+	/**
+	 * The version check of a loaded library (spec 026, contracts/native-parameters.md "Version check"): its tuning layout must be
+	 * {@link NativeParameters#TUNING_LENGTH}, else it is refused as missing and the run falls back to the Java engine.
+	 */
+	static void checkLayout(IntSupplier layout) throws NativeRecognitionException {
+		int length;
+		try {
+			length = layout.getAsInt();
+		} catch (UnsatisfiedLinkError older) {
+			throw new NativeRecognitionException(NativeRecognitionException.Reason.LIBRARY_MISSING, "native library too old: no tuning layout");
+		}
+		if( length != NativeParameters.TUNING_LENGTH ) {
+			throw new NativeRecognitionException(NativeRecognitionException.Reason.LIBRARY_MISSING,
+					"native library tuning layout " + length + ", expected " + NativeParameters.TUNING_LENGTH);
+		}
+	}
+
 	/** Loads the library once; null when it is there, else the reason it could not be loaded. */
 	public static String load() {
 		return NativeLibrary.load();
@@ -91,6 +135,16 @@ public final class NativeRecognitionLibrary {
 
 	/** Opens the input ({@code ""} the default, channel −1 the first) at the device's current rate and starts the analysis thread. */
 	public static native long open(String inputName, int inputChannel, int blockFrames, long javaNanosAtOpen, float[] parameters) throws NativeRecognitionException;
+
+	/** As {@link #open}, with the tuning array of {@link NativeParameters#tuning} (spec 026). */
+	public static native long openTuned(String inputName, int inputChannel, int blockFrames, long javaNanosAtOpen, float[] parameters, double[] tuning)
+			throws NativeRecognitionException;
+
+	/** The length of the tuning array this library reads ({@link NativeParameters#TUNING_LENGTH} when it matches). */
+	public static native int tuningLayout();
+
+	/** Replaces the tuning array of a running analysis, through the same mailbox as {@link #configure}. */
+	public static native void configureTuning(long handle, double[] tuning);
 
 	public static native float sampleRate(long handle);
 
@@ -136,6 +190,10 @@ public final class NativeRecognitionLibrary {
 	public static native float[] analyze(float[] mono, int rate, float[] parameters, boolean spectrum, int[] attackCandidates, int[] expectedPitches,
 			int[] chordRequired, int[] chordTolerated);
 
+	/** As {@link #analyze}, with the tuning array (spec 026): the parity tests of one non-default value per family. */
+	public static native float[] analyzeTuned(float[] mono, int rate, float[] parameters, double[] tuning, boolean spectrum, int[] attackCandidates,
+			int[] expectedPitches, int[] chordRequired, int[] chordTolerated);
+
 	/** Test only: the hops of {@code mono} (hop 256) after the native front end set from {@code parameters}. */
 	public static native float[] frontEnd(float[] mono, int rate, float[] parameters);
 
@@ -150,6 +208,9 @@ public final class NativeRecognitionLibrary {
 
 	/** A per-hop analysis at {@code rate} with these parameters ({@link NativeParameters}); closed by {@link #closeAnalysis}. */
 	public static native long openAnalysis(int rate, float[] parameters) throws NativeRecognitionException;
+
+	/** As {@link #openAnalysis}, with the tuning array (spec 026). */
+	public static native long openAnalysisTuned(int rate, float[] parameters, double[] tuning) throws NativeRecognitionException;
 
 	/** Spectrum on or off; switched on, it starts from an empty history (as {@code AnalysisService}). */
 	public static native void setAnalysisSpectrum(long handle, boolean on);

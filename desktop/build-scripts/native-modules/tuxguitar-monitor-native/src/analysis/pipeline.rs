@@ -11,7 +11,7 @@ use super::level::LevelAnalyzer;
 use super::polyphonic::{PolyphonicAnalyzer, PolyphonicParameters, Spectrum};
 use super::target::{ExpectedPitchVerifier, Target, MAX_HYPOTHESES};
 use super::yin::Yin;
-use super::Parameters;
+use super::{Parameters, Tuning};
 
 pub const WINDOW: usize = 2048;
 pub const HOP: usize = 256;
@@ -61,6 +61,11 @@ pub struct Pipeline {
 
 impl Pipeline {
     pub fn new(rate: i32, p: Parameters) -> Pipeline {
+        Pipeline::new_tuned(rate, p, Tuning::defaults())
+    }
+
+    /// With the tuning array (spec 026); each engine family reads its values from it.
+    pub fn new_tuned(rate: i32, p: Parameters, _tuning: Tuning) -> Pipeline {
         let polyphonic_parameters = PolyphonicParameters::defaults();
         let polyphonic = PolyphonicAnalyzer::new(polyphonic_parameters, rate as f64);
         let bin_hz = polyphonic.bin_hz();
@@ -317,7 +322,12 @@ fn articulation_of(p: &Parameters) -> ArticulationParameters {
 
 /// The whole recording offline (contract §1 `analyze`): every record, one after another.
 pub fn analyze(mono: &[f32], rate: i32, p: Parameters, request: Request) -> Vec<f32> {
-    let mut pipeline = Pipeline::new(rate, p);
+    analyze_tuned(mono, rate, p, Tuning::defaults(), request)
+}
+
+/// As `analyze`, with the tuning array (spec 026, `analyzeTuned`).
+pub fn analyze_tuned(mono: &[f32], rate: i32, p: Parameters, tuning: Tuning, request: Request) -> Vec<f32> {
+    let mut pipeline = Pipeline::new_tuned(rate, p, tuning);
     pipeline.set_request(request);
     let mut records = Vec::new();
     let mut record = vec![0f32; frame::CAPACITY];

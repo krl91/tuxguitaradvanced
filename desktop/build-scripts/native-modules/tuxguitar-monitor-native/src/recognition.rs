@@ -13,7 +13,7 @@ use crate::analysis::frame;
 use crate::analysis::front_end::{FrontEnd, FrontEndSettings};
 use crate::analysis::pipeline::{HopResult, Pipeline, Request, HOP};
 use crate::analysis::strum_clip::{StrumClip, StrumParameters, StrumShared};
-use crate::analysis::Parameters;
+use crate::analysis::{Parameters, Tuning};
 use crate::workgroup::Workgroup;
 use crate::capture::{Block, CaptureShared, BLOCK};
 use crate::ring::Ring;
@@ -334,6 +334,11 @@ pub enum Step {
 
 impl Worker {
     pub fn new(shared: Arc<Shared>, parameters: Parameters, front: FrontEndSettings, strum: StrumParameters) -> Worker {
+        Worker::new_tuned(shared, parameters, Tuning::defaults(), front, strum)
+    }
+
+    /// With the tuning array (spec 026).
+    pub fn new_tuned(shared: Arc<Shared>, parameters: Parameters, tuning: Tuning, front: FrontEndSettings, strum: StrumParameters) -> Worker {
         let rate = shared.rate;
         let mut front_end = FrontEnd::new(rate as f64, HOP);
         front_end.set(front);
@@ -341,7 +346,7 @@ impl Worker {
         meter.configure(rate, &shared.strum);
         let observed_dropped = shared.capture.blocks.dropped();
         Worker {
-            pipeline: Pipeline::new(rate, parameters),
+            pipeline: Pipeline::new_tuned(rate, parameters, tuning),
             front: front_end,
             strum: meter,
             block: Block::EMPTY,
@@ -497,11 +502,16 @@ pub struct Requests {
 
 /// A pipeline for these parameters with these requests (Java's thread: it allocates).
 pub fn pipeline_for(rate: i32, parameters: Parameters, requests: &Requests) -> Pipeline {
+    pipeline_for_tuned(rate, parameters, Tuning::defaults(), requests)
+}
+
+/// As `pipeline_for`, with the tuning array (spec 026).
+pub fn pipeline_for_tuned(rate: i32, parameters: Parameters, tuning: Tuning, requests: &Requests) -> Pipeline {
     let (required, tolerated) = match &requests.chord {
         Some((r, t)) => (r.as_slice(), t.as_slice()),
         None => (&[][..], &[][..]),
     };
-    let mut pipeline = Pipeline::new(rate, parameters);
+    let mut pipeline = Pipeline::new_tuned(rate, parameters, tuning);
     pipeline.set_request(Request { spectrum: false, attack_candidates: &requests.attack, expected_pitches: &requests.expected, chord_required: required, chord_tolerated: tolerated });
     pipeline
 }

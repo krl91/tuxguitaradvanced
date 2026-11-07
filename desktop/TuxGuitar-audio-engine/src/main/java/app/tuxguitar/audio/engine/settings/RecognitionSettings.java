@@ -212,7 +212,27 @@ public final class RecognitionSettings {
 				repairs.put(RecognitionParameters.NOTE_ACCEPT.getKey(), Repair.CLAMPED);
 			}
 		}
+		applyPairs(values, repairs, RecognitionParameters.ORDERED_PAIRS);
 		return new RecognitionSettings(values);
+	}
+
+	/** Brings each pair's lower value down to its upper one when they are not ordered; {@code repairs} may be null. */
+	static void applyPairs(Object[] values, Map<String, Repair> repairs, List<OrderedPair> pairs) {
+		for( OrderedPair pair : pairs ) {
+			int lowerIndex = pair.getLower().getIndex();
+			double upper = (Double) values[pair.getUpper().getIndex()];
+			if( (Double) values[lowerIndex] > upper ) {
+				values[lowerIndex] = upper;
+				if( repairs != null ) {
+					repairs.put(pair.getLower().getKey(), Repair.CLAMPED);
+				}
+			}
+		}
+	}
+
+	/** A copy of the values in the order of {@link RecognitionParameters#ALL}; tests only. */
+	Object[] toArray() {
+		return this.values.clone();
 	}
 
 	@Override

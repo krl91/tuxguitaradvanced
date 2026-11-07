@@ -73,33 +73,33 @@
 
 ## Phase 2: Foundational (blocks every story)
 
-- [ ] T004 [P] New test `AET/nativeengine/NativeTuningTest.java`:
+- [X] T004 [P] New test `AET/nativeengine/NativeTuningTest.java`:
   - `NativeParameters.tuning(RecognitionSettings.defaults())` has `NativeParameters.TUNING_LENGTH` values;
   - `NativeParameters.of(…)` (`float[21]`) is unchanged for the defaults (contracts/native-parameters.md);
   - the interface's default `open(…, parameters, tuning)` calls today's `open(…, parameters)`, and its default `configureTuning` does nothing, checked with a fake that implements only today's methods.
 
   Seen red.
-- [ ] T005 [P] New test `AET/nativeengine/NativeLayoutCheckTest.java`: the layout check of the `JNI` implementation refuses a library whose `tuningLayout()` is missing (`UnsatisfiedLinkError`) or returns another length. The refusal has the reason `LIBRARY_MISSING` and the detail of the contract, and the backend falls back to the Java engine with the notice. The check is a small function taking the layout supplier, so it can be tested without a library. Seen red.
-- [ ] T006 [P] New crate tests in `CRATE/analysis/mod.rs`: `Tuning::from_slice` refuses a shorter and a longer slice; `Tuning::defaults()` equals today's crate literals; `tuning_layout()` equals `TUNING_LENGTH`. Seen red.
-- [ ] T007 Add the tuning array (`AE/nativeengine/NativeParameters.java`, `NativeRecognitionLibrary.java` and its `Api`, `AE/backend/NativeBackend.java`, `AE/AudioEngine.java`, `CRATE/jni_recognition.rs`, `CRATE/analysis/mod.rs`, `CRATE/recognition.rs`):
+- [X] T005 [P] New test `AET/nativeengine/NativeLayoutCheckTest.java`: the layout check of the `JNI` implementation refuses a library whose `tuningLayout()` is missing (`UnsatisfiedLinkError`) or returns another length. The refusal has the reason `LIBRARY_MISSING` and the detail of the contract, and the backend falls back to the Java engine with the notice. The check is a small function taking the layout supplier, so it can be tested without a library. Seen red.
+- [X] T006 [P] New crate tests in `CRATE/analysis/mod.rs`: `Tuning::from_slice` refuses a shorter and a longer slice; `Tuning::defaults()` equals today's crate literals; `tuning_layout()` equals `TUNING_LENGTH`. Seen red.
+- [X] T007 Add the tuning array (`AE/nativeengine/NativeParameters.java`, `NativeRecognitionLibrary.java` and its `Api`, `AE/backend/NativeBackend.java`, `AE/AudioEngine.java`, `CRATE/jni_recognition.rs`, `CRATE/analysis/mod.rs`, `CRATE/recognition.rs`):
   - it starts with no family, `TUNING_LENGTH` 0, and the layout check in place;
   - each family of phase 3 adds its indices;
   - today's JNI functions and the `float[21]` are untouched.
 
   T004–T006 green; every committed native test still green.
   Every engine-stage parameter added later must also be in the list that `AudioEngine.engineValuesDiffer` compares, so that the Java analysis is rebuilt when it changes during listening. A new test `AET/AudioEngineEngineValuesTest.java` requires every key whose `inventory.md` row says "listening restart" to be in that list. It is green while the list is empty of new keys and goes red as soon as a family adds a key without listing it.
-  Also a new test `AET/AudioEngineTuningPushTest.java` (on `FakeRecognitionApi`'s pattern, a new fake that records `configureTuning`): a settings change during listening pushes the new tuning, as `pushNativeParameters` pushes the `float[21]` today. Seen red before the push is wired.
-- [ ] T008 [P] New test `AET/settings/RecognitionSectionsTest.java`:
+  Also a new test `AET/AudioEngineTuningPushTest.java` (on `FakeRecognitionApi`'s pattern, a new fake that records `configureTuning`): a settings change during listening pushes the new tuning, as `pushNativeParameters` pushes the `float[21]` today. Seen red before the push is wired. *Implementation note*: `FakeRecognitionApi` is final and committed, so the new fake wraps it rather than extending it.
+- [X] T008 [P] New test `AET/settings/RecognitionSectionsTest.java`:
   - the 8 existing sections keep their order and content;
   - every section holds 1 to 7 parameters;
   - no parameter of a new section is in `ProfileParameters.LIST` (a device profile never overlays them; research R8);
   - the new ordered-pair rule (`AE/settings/OrderedPair.java`): built on any two `Number` parameters, it brings the lower one of an inverted pair back within the upper one, and `RecognitionSettings.fromStrings` and `with` apply every pair of `RecognitionParameters.ORDERED_PAIRS` (empty until the families fill it; the test uses a pair built on two existing parameters).
 
   Seen red (the class does not exist).
-- [ ] T009 Add `OrderedPair` and `RecognitionParameters.ORDERED_PAIRS`, applied in `RecognitionSettings.normalized` (`AE/settings/RecognitionSettings.java`) beside the existing `note.accept` ≥ `tuner.in-tune` rule, so on reading and on every change, the repair reported on reading. T008 green.
-- [ ] T010 [P] New SWT test `PT/ui/RecognitionSettingsFitSwtTest.java` (`swt-gui-tests`): with the usable height forced to 768, every category's every control and its *Restore* button lie inside the window without scrolling, as `PracticeWindowFitsSwtTest` (spec 025) does. It also has a case that builds a test panel of 9 value rows in the same window and expects it to overflow, so the check is seen red on a real overflow. Written now, run in T042 (the Mac unlocked).
-- [ ] T011 [P] New test `PT/ui/RecognitionStringsAllLanguagesTest.java`: every key of `RecognitionParameters.ALL` and every `Section` has a non-empty name and tip in `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`; the French and Spanish texts differ from the English one; only Spanish texts may be in a short exception list written in the test itself (names such as YIN, units), since the committed `RecognitionSettingsPanelTest` already requires every French name, tip and category name to differ. Seen red with one French tip removed for the run (not committed), then green once it is put back.
-- [ ] T012 Gate (with the reports identical); commit "impl(026): phase 2: the native tuning array with its layout check, the ordered-pair repair".
+- [X] T009 Add `OrderedPair` and `RecognitionParameters.ORDERED_PAIRS`, applied in `RecognitionSettings.normalized` (`AE/settings/RecognitionSettings.java`) beside the existing `note.accept` ≥ `tuner.in-tune` rule, so on reading and on every change, the repair reported on reading. T008 green.
+- [X] T010 [P] New SWT test `PT/ui/RecognitionSettingsFitSwtTest.java` (`swt-gui-tests`): with the usable height forced to 768, every category's every control and its *Restore* button lie inside the window without scrolling, as `PracticeWindowFitsSwtTest` (spec 025) does. It also has a case that builds a test panel of value rows in the same window and expects it to overflow, so the check is seen red on a real overflow. Written now, run in T042 (the Mac unlocked). *Implementation note (2026-11-07)*: the overflow case measures one value row on the real toolkit and builds three rows more than 768 pixels hold, instead of a fixed 9: on its own a one-line row is about 30 pixels, so 9 rows would not overflow and the case could not be seen red. The window is built as `TGSettingsEditor` builds the Configuration dialog (legend panel, then the Defaults, OK and Cancel row).
+- [X] T011 [P] New test `PT/ui/RecognitionStringsAllLanguagesTest.java`: every key of `RecognitionParameters.ALL` and every `Section` has a non-empty name and tip in `LANG/messages.properties`, `messages_fr.properties` and `messages_es.properties`; the French and Spanish texts differ from the English one; only Spanish texts may be in a short exception list written in the test itself (names such as YIN, units), since the committed `RecognitionSettingsPanelTest` already requires every French name, tip and category name to differ. Seen red with one French tip removed for the run (not committed), then green once it is put back.
+- [X] T012 Gate (with the reports identical); commit "impl(026): phase 2: the native tuning array with its layout check, the ordered-pair repair".
 
 ## Phase 3: User Story 1, the engine stages (Priority: P1) 🎯 MVP
 

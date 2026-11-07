@@ -329,6 +329,7 @@ public final class AudioEngine {
 	private NativeBackend nativeBackend() {
 		if( this.nativeBackend == null ) {
 			this.nativeBackend = this.backendFactory.createNative(this.context, this.selection, this::liveNativeParameters);
+			this.nativeBackend.setTuning(() -> NativeParameters.tuning(currentSettings()));
 			this.nativeBackend.setFormatListener(format -> {
 				formatNegotiated(format);
 				this.lastSampleRate = Math.round(format.getSampleRate());
@@ -377,6 +378,7 @@ public final class AudioEngine {
 		RecognitionBackend backend = this.activeBackend;
 		if( backend != null && backend.engineKind() == PitchEngineCatalog.Kind.NATIVE ) {
 			backend.configure(liveNativeParameters());
+			backend.configureTuning(NativeParameters.tuning(currentSettings()));
 		}
 	}
 

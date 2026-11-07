@@ -2,7 +2,7 @@
 //! `app.tuxguitar.audio.engine.nativeengine.NativeRecognitionLibrary`. Errors become `NativeRecognitionException`s whose message is
 //! "REASON: detail".
 
-use jni::objects::{JClass, JFloatArray, JIntArray, JString};
+use jni::objects::{JClass, JDoubleArray, JFloatArray, JIntArray, JString};
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
@@ -10,7 +10,7 @@ use crate::analysis::front_end::FrontEnd;
 use crate::analysis::pipeline::{self, HopResult, Pipeline, Request};
 use crate::analysis::chord::ExpectedChord;
 use crate::analysis::strum_clip::{self, StrumClip, StrumShared};
-use crate::analysis::Parameters;
+use crate::analysis::{Parameters, Tuning};
 use crate::workgroup::Workgroup;
 use crate::capture::{Capture, CaptureShared};
 use crate::recognition::{self, front_of, strum_of, AttackSlot, Config, Requests, Shared, Worker, HOP_BLOCK};
@@ -39,6 +39,7 @@ struct Live {
     capture: Capture,
     thread: Option<JoinHandle<()>>,
     parameters: Parameters,
+    tuning: Tuning,
     requests: Requests,
 }
 
@@ -65,6 +66,17 @@ fn parameters_of(env: &mut JNIEnv, parameters: &JFloatArray) -> Option<Parameter
     floats(env, parameters).and_then(|p| Parameters::from_slice(&p))
 }
 
+/// The tuning array (spec 026), or None when it is missing or of another length than the layout's.
+fn tuning_of(env: &mut JNIEnv, tuning: &JDoubleArray) -> Option<Tuning> {
+    if tuning.is_null() {
+        return None;
+    }
+    let length = env.get_array_length(tuning).ok()? as usize;
+    let mut values = vec![0f64; length];
+    env.get_double_array_region(tuning, 0, &mut values).ok()?;
+    Tuning::from_slice(&values)
+}
+
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_open<'local>(
     mut env: JNIEnv<'local>,
@@ -75,26 +87,60 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
     java_nanos_at_open: jlong,
     parameters: JFloatArray<'local>,
 ) -> jlong {
-    let name: String = if input.is_null() { String::new() } else { env.get_string(&input).map(|s| s.into()).unwrap_or_default() };
     let Some(parameters) = parameters_of(&mut env, &parameters) else {
         fail(&mut env, "STREAM_FAILED: the parameters are missing or too short");
         return 0;
     };
+    open_live(&mut env, &input, channel, java_nanos_at_open, parameters, Tuning::defaults())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_openTuned<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    input: JString<'local>,
+    channel: jint,
+    _block: jint,
+    java_nanos_at_open: jlong,
+    parameters: JFloatArray<'local>,
+    tuning: JDoubleArray<'local>,
+) -> jlong {
+    let Some(parameters) = parameters_of(&mut env, &parameters) else {
+        fail(&mut env, "STREAM_FAILED: the parameters are missing or too short");
+        return 0;
+    };
+    let Some(tuning) = tuning_of(&mut env, &tuning) else {
+        fail(&mut env, "STREAM_FAILED: the tuning is missing or of another length");
+        return 0;
+    };
+    open_live(&mut env, &input, channel, java_nanos_at_open, parameters, tuning)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_tuningLayout<'local>(
+    _env: JNIEnv<'local>,
+    _class: JClass<'local>,
+) -> jint {
+    crate::analysis::tuning_layout()
+}
+
+fn open_live(env: &mut JNIEnv, input: &JString, channel: jint, java_nanos_at_open: jlong, parameters: Parameters, tuning: Tuning) -> jlong {
+    let name: String = if input.is_null() { String::new() } else { env.get_string(input).map(|s| s.into()).unwrap_or_default() };
     // the blocks are always of 128 frames (capture::BLOCK), two to a hop, whatever the system's callback size
     let capture_shared = Arc::new(CaptureShared::new(CAPTURE_BLOCKS));
     let origin = Instant::now();
     let capture = match Capture::open(&name, channel, capture_shared.clone(), origin) {
         Ok(capture) => capture,
         Err((reason, detail)) => {
-            fail(&mut env, &format!("{}: {}", reason.name(), detail));
+            fail(env, &format!("{}: {}", reason.name(), detail));
             return 0;
         }
     };
     let rate = capture.sample_rate() as i32;
     let shared = Arc::new(Shared::new(capture_shared, rate, java_nanos_at_open));
-    let worker = Worker::new(shared.clone(), parameters, front_of(&parameters), strum_of(&parameters));
+    let worker = Worker::new_tuned(shared.clone(), parameters, tuning, front_of(&parameters), strum_of(&parameters));
     let thread = recognition::start_in(worker, Workgroup::of_device(capture.name()));
-    let live = Live { shared, capture, thread: Some(thread), parameters, requests: Requests::default() };
+    let live = Live { shared, capture, thread: Some(thread), parameters, tuning, requests: Requests::default() };
     let handle = LiveHandle { live: Mutex::new(Some(live)), frames_scratch: Mutex::new(Vec::new()), hops_scratch: Mutex::new(Vec::new()) };
     Box::into_raw(Box::new(handle)) as jlong
 }
@@ -120,8 +166,30 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
     };
     with_live(handle, |live| {
         // the new pipeline is built here, on Java's thread, with the requests made so far: the loop only swaps it in
-        let pipeline = if recognition::analysis_changed(&live.parameters, &parameters) { Some(recognition::pipeline_for(live.shared.rate, parameters, &live.requests)) } else { None };
+        let pipeline = if recognition::analysis_changed(&live.parameters, &parameters) { Some(recognition::pipeline_for_tuned(live.shared.rate, parameters, live.tuning, &live.requests)) } else { None };
         live.parameters = parameters;
+        live.shared.config.post(Box::new(Config { pipeline, front: front_of(&parameters), strum: strum_of(&parameters) }));
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_configureTuning<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    handle: jlong,
+    tuning: JDoubleArray<'local>,
+) {
+    let Some(tuning) = tuning_of(&mut env, &tuning) else {
+        return;
+    };
+    with_live(handle, |live| {
+        // as configure: the new pipeline is built on Java's thread, the loop only swaps it in, through the same mailbox
+        if live.tuning == tuning {
+            return;
+        }
+        live.tuning = tuning;
+        let parameters = live.parameters;
+        let pipeline = Some(recognition::pipeline_for_tuned(live.shared.rate, parameters, tuning, &live.requests));
         live.shared.config.post(Box::new(Config { pipeline, front: front_of(&parameters), strum: strum_of(&parameters) }));
     });
 }
@@ -389,6 +457,36 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
 }
 
 #[no_mangle]
+pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_analyzeTuned<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    mono: JFloatArray<'local>,
+    rate: jint,
+    parameters: JFloatArray<'local>,
+    tuning: JDoubleArray<'local>,
+    spectrum: jboolean,
+    attack_candidates: JIntArray<'local>,
+    expected_pitches: JIntArray<'local>,
+    chord_required: JIntArray<'local>,
+    chord_tolerated: JIntArray<'local>,
+) -> jfloatArray {
+    let Some((samples, parameters)) = offline_input(&mut env, &mono, rate, &parameters) else {
+        return std::ptr::null_mut();
+    };
+    let Some(tuning) = tuning_of(&mut env, &tuning) else {
+        fail(&mut env, "STREAM_FAILED: the tuning is missing or of another length");
+        return std::ptr::null_mut();
+    };
+    let attack = ints(&mut env, &attack_candidates);
+    let expected = ints(&mut env, &expected_pitches);
+    let required = ints(&mut env, &chord_required);
+    let tolerated = ints(&mut env, &chord_tolerated);
+    let request = Request { spectrum: spectrum != 0, attack_candidates: &attack, expected_pitches: &expected, chord_required: &required, chord_tolerated: &tolerated };
+    let records = pipeline::analyze_tuned(&samples, rate, parameters, tuning, request);
+    float_array(&mut env, &records)
+}
+
+#[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_frontEnd<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
@@ -462,6 +560,30 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
         return 0;
     }
     let analysis = HopAnalysis { pipeline: Pipeline::new(rate, parameters), hop: vec![0f32; pipeline::HOP], record: vec![0f32; crate::analysis::frame::CAPACITY] };
+    Box::into_raw(Box::new(analysis)) as jlong
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_openAnalysisTuned<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    rate: jint,
+    parameters: JFloatArray<'local>,
+    tuning: JDoubleArray<'local>,
+) -> jlong {
+    let Some(parameters) = floats(&mut env, &parameters).and_then(|p| Parameters::from_slice(&p)) else {
+        fail(&mut env, "STREAM_FAILED: the parameters are missing or too short");
+        return 0;
+    };
+    let Some(tuning) = tuning_of(&mut env, &tuning) else {
+        fail(&mut env, "STREAM_FAILED: the tuning is missing or of another length");
+        return 0;
+    };
+    if rate <= 0 {
+        fail(&mut env, "FORMAT_UNSUPPORTED: invalid sample rate");
+        return 0;
+    }
+    let analysis = HopAnalysis { pipeline: Pipeline::new_tuned(rate, parameters, tuning), hop: vec![0f32; pipeline::HOP], record: vec![0f32; crate::analysis::frame::CAPACITY] };
     Box::into_raw(Box::new(analysis)) as jlong
 }
 

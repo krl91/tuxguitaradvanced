@@ -38,6 +38,13 @@ public final class NativeParameters {
 	public static final int YIN_THRESHOLD = 20;
 	public static final int LENGTH = 21;
 
+	/**
+	 * The length of the tuning array (spec 026, contracts/native-parameters.md): every other value a native stage reads, at the indices
+	 * {@code T_…} that each engine family adds, the same names in the crate's {@code analysis/mod.rs}. The native library reports its own
+	 * length ({@code tuningLayout()}); a library with another one is not used.
+	 */
+	public static final int TUNING_LENGTH = 0;
+
 	/** The absolute threshold of the YIN pitch estimator (de Cheveigné and Kawahara 2002), the value of the Java engine. */
 	public static final double DEFAULT_YIN_THRESHOLD = 0.20;
 
@@ -106,6 +113,11 @@ public final class NativeParameters {
 		p[FRONT_NOISE_REDUCTION] = 0f;
 		p[FRONT_SUBTRACTION] = 0f;
 		return p;
+	}
+
+	/** The tuning array of {@code settings}, in the order of the {@code T_…} indices. */
+	public static double[] tuning(RecognitionSettings settings) {
+		return new double[TUNING_LENGTH];
 	}
 
 	/** A copy of {@code parameters} with the windows of the fast-run articulation detector (the parity tests of the fast mode). */

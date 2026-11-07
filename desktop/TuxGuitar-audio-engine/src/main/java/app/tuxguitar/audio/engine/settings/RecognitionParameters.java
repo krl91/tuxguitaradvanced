@@ -131,6 +131,9 @@ public final class RecognitionParameters {
 		ALL = Collections.unmodifiableList(all);
 	}
 
+	/** The pairs that must stay ordered (spec 026); each engine family adds its own. */
+	public static final List<OrderedPair> ORDERED_PAIRS = Collections.unmodifiableList(new ArrayList<OrderedPair>());
+
 	private RecognitionParameters() {
 	}
 

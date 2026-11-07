@@ -125,6 +125,38 @@ impl Parameters {
     }
 }
 
+/// The length of the tuning array sent by Java's `NativeParameters.tuning` as a `double[]` (spec 026, contracts/native-parameters.md): every
+/// other value a native stage reads, at the indices `T_…` that each engine family adds, the same names as in Java.
+pub const TUNING_LENGTH: usize = 0;
+
+/// What `tuningLayout()` reports to Java: a library whose layout differs is not used.
+pub fn tuning_layout() -> i32 {
+    TUNING_LENGTH as i32
+}
+
+/// The values of the tuning array, read from it; carried as doubles, as Java holds them.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Tuning {}
+
+impl Tuning {
+    /// The values of today's stages, at their indices: what `NativeParameters.tuning(RecognitionSettings.defaults())` sends.
+    pub fn default_values() -> [f64; TUNING_LENGTH] {
+        [0f64; TUNING_LENGTH]
+    }
+
+    pub fn defaults() -> Tuning {
+        Tuning::from_slice(&Tuning::default_values()).unwrap()
+    }
+
+    /// The values at their indices, or None when the array has another length than the layout's.
+    pub fn from_slice(values: &[f64]) -> Option<Tuning> {
+        if values.len() != TUNING_LENGTH {
+            return None;
+        }
+        Some(Tuning {})
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,5 +179,29 @@ mod tests {
         assert_eq!(p.strum_loud_dbfs, 19.5);
         assert_eq!(p.yin_threshold, 20.5);
         assert!(Parameters::from_slice(&values[..LENGTH - 1]).is_none());
+    }
+
+    // spec 026, T006: the tuning array has exactly its layout's length, and its defaults are today's values
+
+    #[test]
+    fn a_tuning_of_another_length_is_refused() {
+        let longer = vec![0f64; TUNING_LENGTH + 1];
+        assert!(Tuning::from_slice(&longer).is_none());
+        if TUNING_LENGTH > 0 {
+            let shorter = vec![0f64; TUNING_LENGTH - 1];
+            assert!(Tuning::from_slice(&shorter).is_none());
+        }
+        assert!(Tuning::from_slice(&Tuning::default_values()).is_some());
+    }
+
+    #[test]
+    fn the_default_tuning_is_today_s_literals() {
+        assert_eq!(Some(Tuning::defaults()), Tuning::from_slice(&Tuning::default_values()));
+        assert_eq!(TUNING_LENGTH, Tuning::default_values().len());
+    }
+
+    #[test]
+    fn the_layout_is_the_tuning_length() {
+        assert_eq!(TUNING_LENGTH as i32, tuning_layout());
     }
 }

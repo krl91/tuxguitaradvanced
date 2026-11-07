@@ -53,6 +53,10 @@ public interface RecognitionBackend {
 	 */
 	void configure(float[] parameters);
 
+	/** The tuning array of the native engine ({@code NativeParameters.tuning}, spec 026) changed; the Java backend ignores it. */
+	default void configureTuning(double[] tuning) {
+	}
+
 	/** The clock that dates the samples of the capture on the wall clock. */
 	CaptureClock clock();
 

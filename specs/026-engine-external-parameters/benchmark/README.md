@@ -16,4 +16,4 @@ Left out, because they measure the devices or the clock rather than the recognit
 - ten-minute wall-clock endurance runs: `MonitorEnduranceBenchmarkTest`, `NativeRecognitionEnduranceBenchmarkTest`. A first run stopped on `MonitorEnduranceBenchmarkTest` (17 and 34 dropped blocks on a normal thread, which spec 022 measured as 20 to 30); it has nothing to do with recognition and was not changed.
 
 `before-java/` and `before-native/` hold the reports of `TuxGuitar-practice/target/dataset-benchmark/`; the large `.tsv` probes are gzipped.
-`compare.sh <engine> <new reports folder>` masks dates and durations, then runs `diff -r`; it was checked to give "identical" on each engine's own reports and a difference across engines.
+`compare.sh <engine> <new reports folder>` masks dates, durations and the code revision, sorts the lines, then runs `diff -r`. The sort was added at the phase 2 gate: the dataset tests run in parallel, so a new run writes the same rows in another order. It gives "identical" on each engine's phase 2 reports and a difference across engines.

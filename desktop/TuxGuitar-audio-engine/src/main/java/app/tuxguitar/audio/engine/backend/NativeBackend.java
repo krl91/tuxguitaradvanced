@@ -20,8 +20,10 @@ import app.tuxguitar.audio.engine.input.CaptureClock;
 import app.tuxguitar.audio.engine.input.CaptureService;
 import app.tuxguitar.audio.engine.input.CurrentInputSelection;
 import app.tuxguitar.audio.engine.nativeengine.FrameRecords;
+import app.tuxguitar.audio.engine.nativeengine.NativeParameters;
 import app.tuxguitar.audio.engine.nativeengine.NativeRecognitionException;
 import app.tuxguitar.audio.engine.nativeengine.NativeRecognitionLibrary;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.audio.engine.settings.PitchEngineCatalog;
 import app.tuxguitar.thread.TGThreadManager;
 import app.tuxguitar.util.TGContext;
@@ -54,6 +56,8 @@ public final class NativeBackend implements RecognitionBackend {
 	private final CurrentInputSelection selection;
 	private final NativeRecognitionLibrary.Api api;
 	private final Supplier<float[]> parameters;
+	/** The tuning array at each open (spec 026); the defaults until {@code AudioEngine} sets the settings'. */
+	private volatile Supplier<double[]> tuning = () -> NativeParameters.tuning(RecognitionSettings.defaults());
 	private final Set<String> consumers = new HashSet<String>();
 	private final List<AnalysisService.Listener> listeners = new CopyOnWriteArrayList<AnalysisService.Listener>();
 	private final List<CaptureService.Listener> captureListeners = new CopyOnWriteArrayList<CaptureService.Listener>();
@@ -84,6 +88,11 @@ public final class NativeBackend implements RecognitionBackend {
 		this.selection.addListener(this::selectionChanged);
 	}
 
+	/** The tuning array given at each open (spec 026). */
+	public void setTuning(Supplier<double[]> tuning) {
+		this.tuning = tuning;
+	}
+
 	/** Told synchronously at each open the format the input was opened with, before the first frame. */
 	public void setFormatListener(CaptureService.FormatListener formatListener) {
 		this.formatListener = formatListener;
@@ -107,7 +116,7 @@ public final class NativeBackend implements RecognitionBackend {
 		AudioInputDescriptor input = snapshot.getInput();
 		String name = (input == null || input.isSystemDefault() ? "" : input.getDeviceName());
 		int channel = (input == null ? -1 : input.getChannelIndex().orElse(-1));
-		long opened = this.api.open(name, channel, BLOCK_FRAMES, System.nanoTime(), this.parameters.get());
+		long opened = this.api.open(name, channel, BLOCK_FRAMES, System.nanoTime(), this.parameters.get(), this.tuning.get());
 		float rate = this.api.sampleRate(opened);
 		// the route of the practice knows the input by its channels and a 16-bit profile, as the Java capture opens it
 		int channels = (input != null ? input.getChannelCount() : 1);
@@ -305,6 +314,14 @@ public final class NativeBackend implements RecognitionBackend {
 		long opened = this.handle;
 		if( opened != 0 ) {
 			this.api.configure(opened, values);
+		}
+	}
+
+	@Override
+	public void configureTuning(double[] values) {
+		long opened = this.handle;
+		if( opened != 0 ) {
+			this.api.configureTuning(opened, values);
 		}
 	}
 
