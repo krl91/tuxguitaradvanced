@@ -20,7 +20,12 @@ public final class HighPass implements FrontEndStage {
 	private double y2;
 
 	public HighPass(int sampleRate) {
-		double w0 = 2.0 * Math.PI * CORNER_HZ / sampleRate;
+		this(sampleRate, CORNER_HZ);
+	}
+
+	/** With another corner (spec 026, {@code front-end.high-pass}). */
+	public HighPass(int sampleRate, double cornerHz) {
+		double w0 = 2.0 * Math.PI * cornerHz / sampleRate;
 		double q = 1.0 / Math.sqrt(2.0);
 		double alpha = Math.sin(w0) / (2.0 * q);
 		double cos = Math.cos(w0);

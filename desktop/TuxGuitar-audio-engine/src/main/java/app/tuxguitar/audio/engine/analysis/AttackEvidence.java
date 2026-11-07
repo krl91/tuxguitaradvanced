@@ -1,5 +1,8 @@
 package app.tuxguitar.audio.engine.analysis;
 
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
+
 /**
  * What the newest hop added to the sound, explained by pitches (spec 004): the amplitude, per
  * candidate pitch, of the non-negative combination of harmonic templates that best reproduces the
@@ -103,18 +106,32 @@ public final class AttackEvidence {
 	 * amplitudes alone cannot at low frequencies. NaN when fewer than two partials are measurable.
 	 */
 	public double offsetCents(int midi) {
+		return offsetCents(midi, DEFAULT_PARTIALS, DEFAULT_SEARCH_CENTS, DEFAULT_MIN_PEAK_SHARE);
+	}
+
+	/** As {@link #offsetCents(int)}, with the measure's values of the settings (spec 026, section {@code ATTACK_2}). */
+	public double offsetCents(int midi, RecognitionSettings settings) {
+		return offsetCents(midi, (int) settings.get(RecognitionParameters.ATTACK_EVIDENCE_PARTIALS), settings.get(RecognitionParameters.ATTACK_EVIDENCE_SEARCH),
+				settings.get(RecognitionParameters.ATTACK_EVIDENCE_PEAK));
+	}
+
+	/**
+	 * As {@link #offsetCents(int)}: over the first {@code partials} partials, each searched within {@code searchCents} of its place, a peak kept from
+	 * {@code minPeakShare} of the strongest growth.
+	 */
+	public double offsetCents(int midi, int partials, double searchCents, double minPeakShare) {
 		if( this.growth == null ) {
 			return Double.NaN;
 		}
 		double f0 = 440.0 * Math.pow(2.0, (midi - 69) / 12.0);
 		double strongest = this.maxGrowth;
-		double[] offsets = new double[PARTIALS];
-		double[] weights = new double[PARTIALS];
+		double[] offsets = new double[partials];
+		double[] weights = new double[partials];
 		int found = 0;
-		for( int h = 1 ; h <= PARTIALS ; h ++ ) {
+		for( int h = 1 ; h <= partials ; h ++ ) {
 			double hz = f0 * h;
 			double center = hz / this.binHz;
-			int half = (int) Math.max(1.0, Math.ceil(hz * (Math.pow(2.0, SEARCH_CENTS / 1200.0) - 1.0) / this.binHz));
+			int half = (int) Math.max(1.0, Math.ceil(hz * (Math.pow(2.0, searchCents / 1200.0) - 1.0) / this.binHz));
 			int from = Math.max(1, (int) Math.round(center) - half);
 			int to = Math.min(this.growth.length - 2, (int) Math.round(center) + half);
 			if( to <= from ) {
@@ -142,7 +159,7 @@ public final class AttackEvidence {
 		int kept = 0;
 		double[] values = new double[found];
 		for( int i = 0 ; i < found ; i ++ ) {
-			if( weights[i] >= MIN_PEAK_SHARE * strongest ) {
+			if( weights[i] >= minPeakShare * strongest ) {
 				values[kept ++] = offsets[i];
 			}
 		}
@@ -153,9 +170,10 @@ public final class AttackEvidence {
 		return (kept % 2 == 1 ? values[kept / 2] : 0.5 * (values[kept / 2 - 1] + values[kept / 2]));
 	}
 
-	private static final int PARTIALS = 12;
-	private static final double SEARCH_CENTS = 60.0;
-	private static final double MIN_PEAK_SHARE = 0.03;
+	/** The former values of the offset measure, the defaults of the settings {@code attack.evidence-*}. */
+	public static final int DEFAULT_PARTIALS = 12;
+	public static final double DEFAULT_SEARCH_CENTS = 60.0;
+	public static final double DEFAULT_MIN_PEAK_SHARE = 0.03;
 
 	/** Share of the explained growth that belongs to the given pitches (0 when nothing grew). */
 	public double shareOf(int... midi) {

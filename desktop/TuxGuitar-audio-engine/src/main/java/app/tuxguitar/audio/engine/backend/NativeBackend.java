@@ -13,6 +13,7 @@ import javax.sound.sampled.AudioFormat;
 import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.AnalysisService;
 import app.tuxguitar.audio.engine.analysis.HopListener;
+import app.tuxguitar.audio.engine.analysis.PolyphonicAnalyzer;
 import app.tuxguitar.audio.engine.analysis.StrumClipMeter;
 import app.tuxguitar.audio.engine.analysis.StrumVerdict;
 import app.tuxguitar.audio.engine.input.AudioInputDescriptor;
@@ -58,6 +59,8 @@ public final class NativeBackend implements RecognitionBackend {
 	private final Supplier<float[]> parameters;
 	/** The tuning array at each open (spec 026); the defaults until {@code AudioEngine} sets the settings'. */
 	private volatile Supplier<double[]> tuning = () -> NativeParameters.tuning(RecognitionSettings.defaults());
+	/** The polyphonic parameters of the tuning last given: those of the spectra read back (spec 026). */
+	private volatile PolyphonicAnalyzer.Parameters polyphonic = PolyphonicAnalyzer.Parameters.defaults();
 	private final Set<String> consumers = new HashSet<String>();
 	private final List<AnalysisService.Listener> listeners = new CopyOnWriteArrayList<AnalysisService.Listener>();
 	private final List<CaptureService.Listener> captureListeners = new CopyOnWriteArrayList<CaptureService.Listener>();
@@ -116,7 +119,9 @@ public final class NativeBackend implements RecognitionBackend {
 		AudioInputDescriptor input = snapshot.getInput();
 		String name = (input == null || input.isSystemDefault() ? "" : input.getDeviceName());
 		int channel = (input == null ? -1 : input.getChannelIndex().orElse(-1));
-		long opened = this.api.open(name, channel, BLOCK_FRAMES, System.nanoTime(), this.parameters.get(), this.tuning.get());
+		double[] tuningValues = this.tuning.get();
+		this.polyphonic = NativeParameters.polyphonic(tuningValues);
+		long opened = this.api.open(name, channel, BLOCK_FRAMES, System.nanoTime(), this.parameters.get(), tuningValues);
 		float rate = this.api.sampleRate(opened);
 		// the route of the practice knows the input by its channels and a 16-bit profile, as the Java capture opens it
 		int channels = (input != null ? input.getChannelCount() : 1);
@@ -321,6 +326,7 @@ public final class NativeBackend implements RecognitionBackend {
 	public void configureTuning(double[] values) {
 		long opened = this.handle;
 		if( opened != 0 ) {
+			this.polyphonic = NativeParameters.polyphonic(values);
 			this.api.configureTuning(opened, values);
 		}
 	}
@@ -392,7 +398,7 @@ public final class NativeBackend implements RecognitionBackend {
 			}
 			int offset = 0;
 			for( int i = 0; i < count; i++ ) {
-				AnalysisFrame frame = FrameRecords.read(records, offset);
+				AnalysisFrame frame = FrameRecords.read(records, offset, this.polyphonic);
 				this.clock.onSamples(FrameRecords.arrivalNanos(records, offset), frame.getCaptureSampleEnd());
 				publish(frame);
 				offset += FrameRecords.length(records, offset);

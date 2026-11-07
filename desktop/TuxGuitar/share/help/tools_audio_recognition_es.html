@@ -132,6 +132,121 @@
     <tr><td>Armónicos por cuerda en acordes</td><td></td><td>1</td><td>4</td><td>2</td><td>más cuerdas comprobables, de forma menos fiable</td><td>menos cuerdas comprobables por separado</td></tr>
     <tr><td>Tiempo para confirmar un acorde</td><td>ms</td><td>20</td><td>150</td><td>43</td><td>los acordes se aceptan antes</td><td>más estable, más lento. Se redondea a pasos de análisis enteros</td></tr>
     </table>
+    <h2 id="onset">Avanzado: Ataques</h2>
+    <p>Cómo se encuentra un ataque (un nuevo golpe de púa): una subida del cambio del espectro y luego un nivel después del ataque más alto que antes. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar. El salto del análisis (256 muestras) es la unidad de las ventanas.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Ataque: factor de flujo</td><td>×</td><td>0.5</td><td>6</td><td>1.5</td><td>más ataques encontrados, más falsos</td><td>menos ataques falsos, más notas repetidas perdidas</td></tr>
+    <tr><td>Ataque: margen de flujo</td><td></td><td>1</td><td>20</td><td>5</td><td>más sensible en pasajes suaves</td><td>menos ataques por ruido</td></tr>
+    <tr><td>Ataque: reposo tras un ataque</td><td>saltos</td><td>3</td><td>48</td><td>12</td><td>las notas repetidas rápidas se oyen todas</td><td>una nota nunca cuenta dos veces</td></tr>
+    <tr><td>Ataque: nivel antes, desde</td><td>saltos</td><td>2</td><td>19</td><td>19</td><td>se encuentran mejor las notas repetidas sobre una nota que se apaga</td><td>una nota anterior que suena oculta más notas repetidas</td></tr>
+    <tr><td>Ataque: nivel antes, hasta</td><td>saltos</td><td>1</td><td>19</td><td>2</td><td>la subida se mide frente al nivel más reciente</td><td>la subida se mide frente a un nivel más antiguo</td></tr>
+    <tr><td>Ataque: nivel después, desde</td><td>saltos</td><td>1</td><td>13</td><td>4</td><td>el transitorio mismo cuenta más</td><td>solo cuenta el nivel sostenido</td></tr>
+    <tr><td>Ataque: nivel después, hasta</td><td>saltos</td><td>4</td><td>13</td><td>13</td><td>ataques señalados más pronto, con menos sonido</td><td>más seguro, señalado más tarde</td></tr>
+    </table>
+    <h2 id="onset-fast">Avanzado: Ataques en pasajes rápidos</h2>
+    <p>La misma detección con las ventanas de los pasajes rápidos, donde las notas se siguen de cerca. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Pasaje rápido: factor de flujo</td><td>×</td><td>0.5</td><td>6</td><td>1.5</td><td>más ataques encontrados, más falsos</td><td>menos ataques falsos</td></tr>
+    <tr><td>Pasaje rápido: margen de flujo</td><td></td><td>1</td><td>20</td><td>5</td><td>más sensible</td><td>menos ataques por ruido</td></tr>
+    <tr><td>Pasaje rápido: reposo tras un ataque</td><td>saltos</td><td>2</td><td>24</td><td>6</td><td>las notas más cercanas se oyen todas</td><td>una nota nunca cuenta dos veces</td></tr>
+    <tr><td>Pasaje rápido: nivel antes, desde</td><td>saltos</td><td>2</td><td>19</td><td>8</td><td>una nota anterior que se apaga oculta menos notas repetidas</td><td>el nivel anterior se toma sobre más saltos</td></tr>
+    <tr><td>Pasaje rápido: nivel antes, hasta</td><td>saltos</td><td>1</td><td>8</td><td>2</td><td>la subida se mide frente al nivel más reciente</td><td>la subida se mide frente a un nivel más antiguo</td></tr>
+    <tr><td>Pasaje rápido: nivel después, desde</td><td>saltos</td><td>1</td><td>8</td><td>3</td><td>el transitorio mismo cuenta más</td><td>solo cuenta el nivel sostenido</td></tr>
+    <tr><td>Pasaje rápido: nivel después, hasta</td><td>saltos</td><td>3</td><td>8</td><td>8</td><td>señalado más pronto, con menos sonido</td><td>más seguro, señalado más tarde</td></tr>
+    </table>
+    <h2 id="pitch">Avanzado: Altura</h2>
+    <p>Cómo se lee una altura en el sonido y se compara con las notas esperadas. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Altura: umbral YIN</td><td>%</td><td>5</td><td>50</td><td>20</td><td>solo las notas claras tienen altura</td><td>las débiles también, más falsas</td></tr>
+    <tr><td>Altura: búsqueda de la nota esperada</td><td>cents</td><td>5</td><td>50</td><td>20</td><td>notas desafinadas menos confirmadas</td><td>notas vecinas más a menudo tomadas</td></tr>
+    <tr><td>Altura: períodos de la nota esperada</td><td></td><td>2</td><td>8</td><td>4</td><td>más rápido, con menos sonido</td><td>más estable, necesita una nota más larga</td></tr>
+    <tr><td>Altura: lado agudo máximo</td><td>cents</td><td>20</td><td>49</td><td>49</td><td>trastes altos apretados rechazados antes</td><td>hasta justo debajo del semitono siguiente</td></tr>
+    <tr><td>Altura: candidato de ataque más grave</td><td>MIDI</td><td>24</td><td>40</td><td>28</td><td>las notas falsas graves también compiten</td><td>menos cálculo</td></tr>
+    <tr><td>Altura: candidato de ataque más agudo</td><td>MIDI</td><td>80</td><td>112</td><td>100</td><td>menos cálculo</td><td>las notas falsas agudas también compiten</td></tr>
+    </table>
+    <h2 id="polyphonic-1">Avanzado: Espectro de acordes, candidatos</h2>
+    <p>Qué alturas busca el espectro de acordes y cómo pesa cada una según sus armónicos. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Espectro: candidato más grave</td><td>MIDI</td><td>24</td><td>60</td><td>33</td><td>cuerdas graves de una guitarra afinada más baja</td><td>menos notas graves falsas</td></tr>
+    <tr><td>Espectro: candidato más agudo</td><td>MIDI</td><td>64</td><td>112</td><td>88</td><td>menos notas agudas falsas</td><td>trastes más altos encontrados</td></tr>
+    <tr><td>Espectro: armónicos por nota</td><td></td><td>4</td><td>24</td><td>12</td><td>más estable con sonido brillante</td><td>notas apagadas todavía encontradas</td></tr>
+    <tr><td>Espectro: armónico más alto</td><td>Hz</td><td>1000</td><td>12000</td><td>5000</td><td>armónicos altos de otras notas cuentan menos</td><td>cuentan más armónicos de notas agudas</td></tr>
+    <tr><td>Espectro: tolerancia de armónicos</td><td>cents</td><td>5</td><td>50</td><td>25</td><td>armónicos de otras notas tomados menos</td><td>cuerdas algo desafinadas todavía encontradas</td></tr>
+    <tr><td>Espectro: alturas por trama</td><td></td><td>1</td><td>12</td><td>6</td><td>solo las alturas más fuertes</td><td>cada cuerda de un acorde completo</td></tr>
+    </table>
+    <h2 id="polyphonic-2">Avanzado: Espectro de acordes, umbral</h2>
+    <p>Cuándo deja el espectro de acordes de nombrar alturas, y el umbral que quita antes de buscar los armónicos. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Espectro: altura más débil conservada</td><td>%</td><td>1</td><td>50</td><td>10</td><td>cuerdas suaves de un acorde nombradas</td><td>menos alturas falsas de armónicos</td></tr>
+    <tr><td>Espectro: nivel mínimo</td><td>dB</td><td>-100</td><td>-40</td><td>-70</td><td>toque muy suave analizado</td><td>silencio y zumbido no nombran nada</td></tr>
+    <tr><td>Espectro: comprobación de la nota más grave</td><td>%</td><td>5</td><td>90</td><td>30</td><td>octava inferior elegida más a menudo</td><td>altura oída conservada</td></tr>
+    <tr><td>Espectro: anchura del umbral</td><td>Hz</td><td>5</td><td>100</td><td>25</td><td>armónicos cercanos destacan más</td><td>ruido amplio quitado mejor</td></tr>
+    <tr><td>Espectro: factor del umbral</td><td>×</td><td>1</td><td>6</td><td>2</td><td>cuentan armónicos débiles</td><td>solo cuentan armónicos claros</td></tr>
+    </table>
+    <h2 id="attack-1">Avanzado: Notas atacadas, crecimiento</h2>
+    <p>Cómo se reconocen las notas recién atacadas, incluso sobre cuerdas que siguen sonando: el crecimiento del espectro se explica con modelos de las notas candidatas. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Ataque: duración del crecimiento</td><td>saltos</td><td>4</td><td>64</td><td>22</td><td>ataques seguidos separados</td><td>ataques lentos vistos enteros</td></tr>
+    <tr><td>Ataque: frecuencia más alta</td><td>Hz</td><td>1000</td><td>12000</td><td>5000</td><td>menos ruido de la púa</td><td>cuentan armónicos de notas agudas</td></tr>
+    <tr><td>Ataque: armónicos por nota</td><td></td><td>4</td><td>24</td><td>14</td><td>notas que comparten armónicos menos distinguidas</td><td>notas reconocidas por todo su sonido</td></tr>
+    <tr><td>Ataque: peso de los armónicos altos</td><td></td><td>0</td><td>2</td><td>0.3</td><td>armónicos altos pesan igual</td><td>deciden los primeros armónicos</td></tr>
+    <tr><td>Ataque: anchura de los armónicos</td><td></td><td>0.3</td><td>4</td><td>1.2</td><td>notas vecinas mejor distinguidas</td><td>cuerdas desafinadas todavía coinciden</td></tr>
+    </table>
+    <h2 id="attack-2">Avanzado: Notas atacadas, afinación</h2>
+    <p>A qué distancia está una nota atacada de su altura exacta, medida en sus nuevos armónicos: la práctica la compara con el margen aceptado. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Afinación atacada: armónicos medidos</td><td></td><td>4</td><td>24</td><td>12</td><td>solo los más claros</td><td>mediana más estable</td></tr>
+    <tr><td>Afinación atacada: búsqueda</td><td>cents</td><td>10</td><td>100</td><td>60</td><td>picos vecinos tomados menos</td><td>notas muy desafinadas todavía medidas</td></tr>
+    <tr><td>Afinación atacada: pico más pequeño</td><td>%</td><td>1</td><td>20</td><td>3</td><td>también armónicos débiles</td><td>solo armónicos fuertes</td></tr>
+    </table>
+    <h2 id="chord-evidence">Avanzado: Prueba de acorde y comprobación del rasgueo</h2>
+    <p>Cómo se lee en el espectro la prueba de un acorde esperado, y cómo se mide el primer rasgueo de una comprobación para su nivel y saturación. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Acorde: armónico presente desde</td><td>%</td><td>1</td><td>30</td><td>5</td><td>cuerdas suaves cuentan como oídas</td><td>solo cuentan cuerdas claras</td></tr>
+    <tr><td>Acorde: comprobación a un tono</td><td>×</td><td>1</td><td>4</td><td>1.5</td><td>acorde a un tono rechazado antes</td><td>rechazado solo si está claramente al lado</td></tr>
+    <tr><td>Comprobación del rasgueo: ventana</td><td>ms</td><td>100</td><td>1000</td><td>300</td><td>solo el ataque</td><td>todo el sonido del rasgueo</td></tr>
+    <tr><td>Comprobación del rasgueo: calma antes</td><td>saltos</td><td>10</td><td>200</td><td>60</td><td>encontrado tras un momento ruidoso</td><td>ruido lento no tomado por rasgueo</td></tr>
+    <tr><td>Comprobación del rasgueo: subida</td><td>dB</td><td>3</td><td>30</td><td>12</td><td>rasgueos suaves la inician, el ruido también</td><td>solo rasgueos claros la inician</td></tr>
+    <tr><td>Comprobación del rasgueo: parte saturada</td><td>‰</td><td>1</td><td>50</td><td>5</td><td>se señala la menor saturación</td><td>solo saturación fuerte</td></tr>
+    </table>
+    <h2 id="front-end">Avanzado: Limpieza de la entrada</h2>
+    <p>Con la reducción de ruido activa, cómo se limpia la entrada antes del reconocimiento: el filtro antirretumbo, y cómo se estima el nivel del ruido de fondo. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Corte del filtro antirretumbo</td><td>Hz</td><td>10</td><td>120</td><td>40</td><td>cuerdas graves conservan su cuerpo</td><td>se corta más retumbo</td></tr>
+    <tr><td>Nivel del ruido: velocidad de subida</td><td>dB/s</td><td>0.1</td><td>5</td><td>0.5</td><td>una nota sostenida no se toma por ruido</td><td>un ruido que crece se sigue antes</td></tr>
+    <tr><td>Nivel del ruido: velocidad de bajada</td><td></td><td>0.1</td><td>1</td><td>0.2</td><td>la estimación baja suavemente</td><td>baja enseguida</td></tr>
+    <tr><td>Nivel del ruido: fiable tras</td><td>saltos</td><td>20</td><td>1000</td><td>188</td><td>la puerta actúa antes</td><td>primero una estimación más segura</td></tr>
+    </table>
+    <h2 id="noise-gate">Avanzado: Puerta de ruido</h2>
+    <p>Con la reducción de ruido activa, cuándo se abre y se cierra la puerta de ruido, cuánto baja los silencios, y los valores de la resta del ruido. El margen de cierre siempre queda por debajo del de apertura. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Puerta: se abre sobre el ruido en</td><td>dB</td><td>6</td><td>30</td><td>9</td><td>las notas suaves la abren, un ruido fuerte también</td><td>solo las notas claras la abren</td></tr>
+    <tr><td>Puerta: se cierra bajo el ruido más</td><td>dB</td><td>0</td><td>8</td><td>5</td><td>una nota que se apaga se conserva más</td><td>se cierra antes sobre una nota que se apaga</td></tr>
+    <tr><td>Puerta: reducción</td><td>dB</td><td>0</td><td>60</td><td>20</td><td>el ruido sigue audible</td><td>silencios más tranquilos</td></tr>
+    <tr><td>Puerta: mantenimiento</td><td>saltos</td><td>1</td><td>100</td><td>19</td><td>se cierra rápido</td><td>los huecos cortos siguen abiertos</td></tr>
+    <tr><td>Resta del ruido: fuerza</td><td>×</td><td>0.5</td><td>4</td><td>1.5</td><td>queda algo de ruido</td><td>se quita más ruido, notas más delgadas</td></tr>
+    <tr><td>Resta del ruido: suelo</td><td>%</td><td>0</td><td>30</td><td>5</td><td>silencios más profundos, más artefactos</td><td>menos artefactos, queda más ruido</td></tr>
+    <tr><td>Resta del ruido: velocidad de aprendizaje</td><td>%</td><td>1</td><td>100</td><td>10</td><td>una imagen del ruido más estable</td><td>un ruido que cambia se sigue antes</td></tr>
+    </table>
+    <h2 id="gain">Avanzado: Sugerencia de ganancia</h2>
+    <p>La ganancia que propone la comprobación del nivel: el nivel de juego buscado, el pico más alto permitido, cuándo no hay nada que cambiar, y cuándo una subida subiría sobre todo el ruido. Se tiene en cuenta en la próxima comprobación del nivel. Ajustes expertos: los valores recomendados se midieron; cámbielos solo para probar.</p>
+    <table>
+    <tr><th>Ajuste</th><th>Unidad</th><th>Mínimo</th><th>Máximo</th><th>Recomendado</th><th>Valor más bajo</th><th>Valor más alto</th></tr>
+    <tr><td>Sugerencia de ganancia: nivel de juego buscado</td><td>dBFS</td><td>-40</td><td>-10</td><td>-22</td><td>nivel más suave, más margen</td><td>nivel más fuerte, más cerca de la saturación</td></tr>
+    <tr><td>Sugerencia de ganancia: pico más alto</td><td>dBFS</td><td>-12</td><td>-1</td><td>-3</td><td>más margen antes de la saturación</td><td>más fuerte, más cerca de la saturación</td></tr>
+    <tr><td>Sugerencia de ganancia: nada que cambiar por debajo de</td><td>dB</td><td>0.5</td><td>6</td><td>1.5</td><td>se proponen correcciones pequeñas</td><td>solo las grandes</td></tr>
+    <tr><td>Sugerencia de ganancia: juego sobre el ruido en</td><td>dB</td><td>6</td><td>40</td><td>20</td><td>el aviso de ruido menos a menudo</td><td>el aviso antes</td></tr>
+    </table>
     <h2 id="limits">Límites</h2><p>El reconocimiento se basa solo en la altura: no puede saber qué cuerda o qué traste se usó. Las técnicas escritas (hammer-on, pull-off, slide, bend, vibrato) se intentan oír, pero ninguna está todavía verificada: la práctica las muestra como «todavía no verificable» en lugar de adivinar. Las notas ligadas no tienen ataque de púa y puede que haya que tocarlas de nuevo o saltarlas; aceptarlas sin ataque y rechazar las cuerdas de más son propuestas aún en estudio, por eso no se ofrecen como ajustes.</p>
     <h2 id="calibration">Calibrar el reconocimiento para una entrada</h2><p>La pestaña <strong>Entrada</strong> de la ventana de práctica muestra un punto de color junto al selector de entrada. <strong>Gris</strong>: ninguna entrada seleccionada. <strong>Naranja</strong>: esta entrada nunca se calibró (o se eligió el valor por defecto), se usan los ajustes por defecto. <strong>Verde</strong>: calibrada, al menos el 60 % de los sonidos de la pieza de calibración reconocidos. <strong>Rojo</strong>: calibrada, pero por debajo del 60 %. Una frase junto al punto avisa cuando la reducción de ruido o la ganancia de entrada no es la de la grabación; el perfil sigue en uso. Un perfil hecho con otra frecuencia de muestreo no se aplica (naranja, con el motivo).</p><p><strong>Calibrar el reconocimiento</strong> abre una sola ventana que le guía: afinación, consejos y una pieza corta que se toca una vez, sin tempo. La ventana escucha sola y cuenta los sonidos sin decir cuál oyó; se detiene cuando se oyeron todos. Se muestran las medidas de la grabación (sonidos oídos, nivel más alto, ruido de fondo, saturación) y se pregunta si es suficientemente buena. Después se buscan los mejores ajustes para esta entrada sobre la grabación, dos minutos como máximo, y la ventana bloquea la aplicación hasta el final. El resultado muestra la tasa de reconocimiento con los ajustes por defecto y con los encontrados, para notas, acordes y en total.</p><p>Si la grabación no sirve, o los ajustes encontrados no mejoran el valor por defecto, o lo mejoran pero quedan por debajo del 60 %, la aplicación nunca decide por usted: puede grabar de nuevo, usar la configuración por defecto o parar. Cerrar la ventana, en cualquier paso, pregunta «¿Detener la calibración?»; entonces no se guarda nada. <strong>Olvidar la calibración</strong> borra solo el perfil de la entrada elegida, tras una confirmación.</p><p>La ventana muestra una <strong>imagen de la tablatura del siguiente sonido que hay que tocar</strong>: seis líneas (la cuerda más fina arriba) con el número de traste en la cuerda de cada nota, 0 para una cuerda al aire, y los números de un acorde uno encima de otro. Cambia cada vez que se oye un sonido. En la pregunta sobre la calidad de la grabación, una casilla <strong>Conservar una copia de esta grabación para el diagnóstico</strong>, desmarcada cada vez, escribe la grabación como archivo WAV en la carpeta <code>tuxguitar-calibration-takes</code> de su carpeta personal, solo si la marca; la ventana indica dónde. La aplicación nunca la vuelve a leer ni la envía a ningún sitio.</p><p>El perfil se aplica en todo lugar donde se usa el reconocimiento (afinador, Seguimiento, Arcade, Espera), salvo los parámetros propios del afinador. <strong>No se conserva ningún audio</strong> salvo que marque la copia de diagnóstico: la grabación queda en memoria durante la calibración y se descarta al final o al parar. El resultado se mide sobre una sola grabación: confírmelo tocando.</p>
     </section>

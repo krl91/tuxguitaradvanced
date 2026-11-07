@@ -92,7 +92,7 @@ impl ChordEvaluator {
                 continue;
             }
             let neighbour: f64 = distinct.iter().map(|&midi| self.comb.salience(&self.peaks, length, midi + shift, 0)).sum();
-            if neighbour > NEIGHBOUR_MARGIN * own {
+            if neighbour > self.p.neighbour_margin * own {
                 return true;
             }
         }
@@ -108,7 +108,7 @@ impl ChordEvaluator {
         }
         let f0 = self.comb.frequency_of(midi);
         let ratio = self.comb.tolerance_ratio();
-        let present = |h: f64| self.comb.peak_around(&self.peaks, length, f0 * h, ratio) >= PARTIAL_PRESENCE_RATIO * strongest_partial;
+        let present = |h: f64| self.comb.peak_around(&self.peaks, length, f0 * h, ratio) >= self.p.partial_presence_ratio * strongest_partial;
         if present(1.0) || !present(2.0) || !present(3.0) {
             return false;
         }
@@ -167,7 +167,7 @@ impl ChordEvaluator {
             let n = self.comb.partial_peaks(&self.peaks, length, out.pitches[i].midi, Some(sounding), &mut self.partials);
             let mut clear = 0;
             for &peak in &self.partials[..n] {
-                if strongest_partial > 0.0 && peak >= PARTIAL_PRESENCE_RATIO * strongest_partial {
+                if strongest_partial > 0.0 && peak >= self.p.partial_presence_ratio * strongest_partial {
                     clear += 1;
                 }
             }

@@ -1,9 +1,12 @@
 package app.tuxguitar.app.tools.custom.practice.session;
 
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import app.tuxguitar.app.tools.custom.practice.model.PracticeEvent;
 import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 
 /**
  * The pitches the attack evidence is computed for (spec 004): every pitch of the practice track,
@@ -13,14 +16,17 @@ import app.tuxguitar.app.tools.custom.practice.model.PracticeSequence;
 public final class AttackCandidates {
 
 	private static final int[] NEIGHBOURS = { -12, -2, -1, 1, 2, 12 };
-	private static final int LOWEST = 28;
-	private static final int HIGHEST = 100;
 
 	private AttackCandidates() {
 	}
 
-	/** @return the candidate pitches in ascending order; empty when the sequence has no note or chord */
+	/** With the recommended candidate range. */
 	public static int[] of(PracticeSequence sequence) {
+		return of(sequence, RecognitionSettings.defaults());
+	}
+
+	/** @return the candidate pitches in ascending order, neighbours within the range of the settings; empty when the sequence has no note or chord */
+	public static int[] of(PracticeSequence sequence, RecognitionSettings settings) {
 		TreeSet<Integer> own = new TreeSet<Integer>();
 		for( PracticeEvent event : sequence.getEvents() ) {
 			if( event.getKind() == PracticeEvent.Kind.EXPECTED_NOTE ) {
@@ -31,11 +37,22 @@ public final class AttackCandidates {
 				}
 			}
 		}
+		return around(own, settings);
+	}
+
+	/** The pitches and their neighbours within the candidate range of the settings (spec 026, {@code pitch.attack-candidates-low/high}). */
+	public static int[] around(SortedSet<Integer> own, RecognitionSettings settings) {
+		return around(own, (int) settings.get(RecognitionParameters.PITCH_ATTACK_CANDIDATES_LOW),
+				(int) settings.get(RecognitionParameters.PITCH_ATTACK_CANDIDATES_HIGH));
+	}
+
+	/** The pitches and their neighbours from {@code lowest} to {@code highest}; the pitches themselves are always kept. */
+	public static int[] around(SortedSet<Integer> own, int lowest, int highest) {
 		TreeSet<Integer> all = new TreeSet<Integer>(own);
 		for( int pitch : own ) {
 			for( int delta : NEIGHBOURS ) {
 				int neighbour = pitch + delta;
-				if( neighbour >= LOWEST && neighbour <= HIGHEST ) {
+				if( neighbour >= lowest && neighbour <= highest ) {
 					all.add(neighbour);
 				}
 			}

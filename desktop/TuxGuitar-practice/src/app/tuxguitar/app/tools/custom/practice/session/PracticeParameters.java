@@ -1,6 +1,5 @@
 package app.tuxguitar.app.tools.custom.practice.session;
 
-import app.tuxguitar.audio.engine.analysis.ArticulationDetector;
 import app.tuxguitar.audio.engine.analysis.TarsosFastYinEstimator;
 import app.tuxguitar.audio.engine.pitch.NoteInterpreter;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
@@ -50,7 +49,7 @@ public final class PracticeParameters {
 	/** In-tune range (shared with the tuner) and acceptance range; the settings keep in-tune ≤ accept. */
 	public TolerancePolicy tolerance() {
 		return new TolerancePolicy(this.settings.get(RecognitionParameters.TUNER_IN_TUNE), this.settings.get(RecognitionParameters.NOTE_ACCEPT),
-				this.settings.get(RecognitionParameters.NOTE_FRET_SHARP));
+				this.settings.get(RecognitionParameters.NOTE_FRET_SHARP), this.settings.get(RecognitionParameters.PITCH_MAX_SHARP));
 	}
 
 	public long stabilityNanos() {
@@ -75,8 +74,9 @@ public final class PracticeParameters {
 	/** ...shortens the stability window to 12 hops (about 64 ms); the standard window stays the fallback. */
 	public static final long EARLY_STABILITY_NANOS = 12 * HOP_NANOS;
 
+	/** The detector reports an onset this long after its attack: the last hop of its post window (spec 026, {@code onset.post-last}). */
 	public long articulationLatencyNanos() {
-		return ArticulationDetector.DECISION_DELAY_HOPS * HOP_NANOS;
+		return (long) this.settings.get(RecognitionParameters.ONSET_POST_LAST) * HOP_NANOS;
 	}
 
 	public ChordMatcher.Parameters chordParameters() {

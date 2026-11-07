@@ -200,6 +200,12 @@ public final class NativeRecognitionLibrary {
 	/** Test only: the final reading of the native strum clip measure fed {@code mono} hop by hop (hop 256), as {@link #strumClip}. */
 	public static native float[] strumClipOffline(float[] mono, int rate, float[] parameters);
 
+	/** As {@link #frontEnd}, with the tuning array (spec 026); null when it is missing or of another length. */
+	public static native float[] frontEndTuned(float[] mono, int rate, float[] parameters, double[] tuning);
+
+	/** As {@link #strumClipOffline}, with the tuning array (spec 026); null when it is missing or of another length. */
+	public static native float[] strumClipOfflineTuned(float[] mono, int rate, float[] parameters, double[] tuning);
+
 	/*
 	 * The analysis of a stream captured by Java, hop by hop (amendment of 2026-11-03, owner, during T039): with the native engine, a Java capture (the
 	 * test inputs, or the Java capture when the native one cannot open) is analysed by the same native stages as the offline analysis, so the two give

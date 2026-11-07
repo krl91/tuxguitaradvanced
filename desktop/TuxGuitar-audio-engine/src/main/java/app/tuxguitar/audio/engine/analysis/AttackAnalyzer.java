@@ -2,6 +2,9 @@ package app.tuxguitar.audio.engine.analysis;
 
 import java.util.Arrays;
 
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
+
 /**
  * Tells which pitches were just struck, also over strings that keep ringing (spec 004): compares
  * the spectrum of the newest window with the one {@code lagHops} hops earlier, keeps only the
@@ -37,6 +40,13 @@ public final class AttackAnalyzer {
 
 		public static Parameters defaults() {
 			return new Parameters(4096, 22, 5000.0, 14, 0.3, 1.2);
+		}
+
+		/** The defaults with the values of the settings (spec 026, section {@code ATTACK_1}); the FFT size stays. */
+		public static Parameters of(RecognitionSettings settings) {
+			return new Parameters(defaults().fftSize, (int) settings.get(RecognitionParameters.ATTACK_LAG), settings.get(RecognitionParameters.ATTACK_MAX_FREQUENCY),
+					(int) settings.get(RecognitionParameters.ATTACK_PARTIALS), settings.get(RecognitionParameters.ATTACK_BETA),
+					settings.get(RecognitionParameters.ATTACK_SIGMA));
 		}
 	}
 

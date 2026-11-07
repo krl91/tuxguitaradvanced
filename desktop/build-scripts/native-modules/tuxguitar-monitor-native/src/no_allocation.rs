@@ -146,3 +146,109 @@ fn the_live_recognition_loop_allocates_nothing_even_when_java_changes_its_reques
     assert_eq!(allocations() - before, 0);
     assert!(shared.dropped_blocks() > 0);
 }
+
+/// The live loop given a pipeline built with `values` as its tuning array (spec 026, research R6): the pipeline is built on Java's thread, at
+/// `configureTuning`; the loop that swaps it in and analyses with it allocates nothing.
+fn the_live_loop_allocates_nothing_with_the_tuning(values: &[f64]) {
+    the_live_loop_allocates_nothing_with(values, crate::analysis::Parameters::defaults());
+}
+
+fn the_live_loop_allocates_nothing_with(values: &[f64], p: crate::analysis::Parameters) {
+    use crate::analysis::Tuning;
+    use crate::capture::{CaptureShared, BLOCK};
+    use crate::recognition::{front_of, pipeline_for_tuned, strum_of, Config, Requests, Shared, Step, Worker};
+    use std::sync::Arc;
+    let rate = 44100;
+    let tuning = Tuning::from_slice(values).expect("a tuning of the layout's length");
+    let shared = Arc::new(Shared::new(Arc::new(CaptureShared::new(64)), rate, 0));
+    let mut worker = Worker::new(shared.clone(), p, front_of(&p), strum_of(&p));
+    shared.set_spectrum(true);
+    shared.set_hops_enabled(true);
+    let block: Vec<f32> = (0..BLOCK)
+        .map(|i| {
+            let t = i as f64 / rate as f64;
+            (0.1 * (2.0 * std::f64::consts::PI * 82.4 * t).sin() + 0.1 * (2.0 * std::f64::consts::PI * 659.3 * t).sin()) as f32
+        })
+        .collect();
+    let block: [f32; BLOCK] = block.try_into().unwrap();
+    let mut out = vec![0f32; 1 << 18];
+    let drain = |shared: &Shared, out: &mut [f32]| {
+        shared.next_frames(out, std::time::Duration::ZERO);
+        shared.next_hops(out, std::time::Duration::ZERO);
+    };
+    let requests = Requests { spectrum: true, attack: vec![40, 45, 52, 64, 76], expected: vec![40, 76], chord: Some((vec![40, 52, 64, 76], vec![45])) };
+    let config = Box::new(Config { pipeline: Some(pipeline_for_tuned(rate, p, tuning, &requests)), front: front_of(&p), strum: strum_of(&p) });
+    for _ in 0..80 {
+        shared.capture.blocks.push(&block, 0);
+        while worker.step() == Step::Block {}
+        drain(&shared, &mut out);
+    }
+    let before = allocations();
+    shared.config.post(config);
+    for _ in 0..400 {
+        shared.capture.blocks.push(&block, 0);
+        while worker.step() == Step::Block {}
+        drain(&shared, &mut out);
+    }
+    assert_eq!(allocations() - before, 0);
+}
+
+#[test]
+fn the_polyphonic_values_at_their_upper_bounds_allocate_nothing_in_the_loop() {
+    use crate::analysis::*;
+    let mut values = Tuning::default_values();
+    values[T_POLY_CANDIDATE_LOW] = 60.0;
+    values[T_POLY_CANDIDATE_HIGH] = 112.0;
+    values[T_POLY_HARMONICS] = 24.0;
+    values[T_POLY_MAX_HARMONIC] = 12000.0;
+    values[T_POLY_TOLERANCE] = 50.0;
+    values[T_POLY_CANDIDATES] = 12.0;
+    values[T_POLY_MIN_RELATIVE] = 0.5;
+    values[T_POLY_FLOOR] = -40.0;
+    values[T_POLY_SUBHARMONIC] = 0.9;
+    values[T_POLY_FLOOR_WIDTH] = 100.0;
+    values[T_POLY_FLOOR_FACTOR] = 6.0;
+    the_live_loop_allocates_nothing_with_the_tuning(&values);
+    // and the widest candidate range with the most candidates and harmonics
+    let mut values = Tuning::default_values();
+    values[T_POLY_CANDIDATE_LOW] = 24.0;
+    values[T_POLY_HARMONICS] = 24.0;
+    values[T_POLY_CANDIDATES] = 12.0;
+    values[T_POLY_MIN_RELATIVE] = 0.01;
+    values[T_POLY_FLOOR] = -100.0;
+    the_live_loop_allocates_nothing_with_the_tuning(&values);
+}
+
+#[test]
+fn the_attack_values_at_their_upper_bounds_allocate_nothing_in_the_loop() {
+    use crate::analysis::*;
+    let mut values = Tuning::default_values();
+    values[T_ATTACK_LAG] = 64.0;
+    values[T_ATTACK_MAX_FREQUENCY] = 12000.0;
+    values[T_ATTACK_PARTIALS] = 24.0;
+    values[T_ATTACK_BETA] = 2.0;
+    values[T_ATTACK_SIGMA] = 4.0;
+    the_live_loop_allocates_nothing_with_the_tuning(&values);
+}
+
+#[test]
+fn the_front_end_values_at_their_upper_bounds_allocate_nothing_in_the_loop() {
+    use crate::analysis::*;
+    let mut values = Tuning::default_values();
+    values[T_FRONT_HIGH_PASS] = 120.0;
+    values[T_FRONT_NOISE_RISE] = 5.0;
+    values[T_FRONT_NOISE_FALL] = 1.0;
+    values[T_FRONT_NOISE_TRUSTED] = 1000.0;
+    values[T_GATE_OPEN] = 30.0;
+    values[T_GATE_CLOSE] = 8.0;
+    values[T_GATE_REDUCTION] = 60.0;
+    values[T_GATE_HOLD] = 100.0;
+    values[T_SUBTRACTION] = 4.0;
+    values[T_SUBTRACTION_FLOOR] = 0.3;
+    values[T_SUBTRACTION_LEARN] = 1.0;
+    // the noise reduction and the subtraction on, so every stage of the front end runs with its new values
+    let mut p = Parameters::defaults();
+    p.front_noise_reduction = true;
+    p.front_subtraction = true;
+    the_live_loop_allocates_nothing_with(&values, p);
+}

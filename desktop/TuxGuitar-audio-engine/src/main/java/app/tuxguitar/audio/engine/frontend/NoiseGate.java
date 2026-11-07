@@ -17,13 +17,25 @@ public final class NoiseGate implements FrontEndStage {
 	public static final int HOLD_HOPS = 19;
 
 	private final NoiseEstimator estimator;
-	private final double reduction = Math.pow(10.0, -REDUCTION_DB / 20.0);
+	private final double openFactor;
+	private final double closeFactor;
+	private final int holdHops;
+	private final double reduction;
 	private boolean open;
 	private int hold;
 	private double lastGain = 1.0;
 
 	public NoiseGate(NoiseEstimator estimator) {
+		this(estimator, OPEN_MARGIN_DB, CLOSE_MARGIN_DB, REDUCTION_DB, HOLD_HOPS);
+	}
+
+	/** With other margins, reduction and hold (spec 026, section {@code NOISE_GATE}). */
+	public NoiseGate(NoiseEstimator estimator, double openMarginDb, double closeMarginDb, double reductionDb, int holdHops) {
 		this.estimator = estimator;
+		this.openFactor = Math.pow(10.0, openMarginDb / 20.0);
+		this.closeFactor = Math.pow(10.0, closeMarginDb / 20.0);
+		this.holdHops = holdHops;
+		this.reduction = Math.pow(10.0, -reductionDb / 20.0);
 	}
 
 	@Override
@@ -31,11 +43,11 @@ public final class NoiseGate implements FrontEndStage {
 		double level = NoiseEstimator.rms(hop, length);
 		this.estimator.update(level);
 		double floor = this.estimator.getFloorRms();
-		double openThreshold = floor * Math.pow(10.0, OPEN_MARGIN_DB / 20.0);
-		double closeThreshold = floor * Math.pow(10.0, CLOSE_MARGIN_DB / 20.0);
+		double openThreshold = floor * this.openFactor;
+		double closeThreshold = floor * this.closeFactor;
 		if( level > openThreshold ) {
 			this.open = true;
-			this.hold = HOLD_HOPS;
+			this.hold = this.holdHops;
 		} else if( this.open ) {
 			if( level < closeThreshold ) {
 				this.hold --;
@@ -43,7 +55,7 @@ public final class NoiseGate implements FrontEndStage {
 					this.open = false;
 				}
 			} else {
-				this.hold = HOLD_HOPS;
+				this.hold = this.holdHops;
 			}
 		}
 		double target = (this.open || !this.estimator.isTrusted() ? 1.0 : this.reduction);

@@ -21,7 +21,7 @@ pub const PART_TARGET: u32 = 2;
 pub const PART_ATTACK: u32 = 4;
 pub const PART_CHORD: u32 = 8;
 
-pub const CAPACITY: usize = 4096;
+pub const CAPACITY: usize = 8192;
 
 /// Writes one record into a slice; `overflow` is set when something did not fit (the record is then refused).
 pub struct Writer<'a> {

@@ -45,10 +45,15 @@ public final class StrumClipMeter implements HopListener {
 			return new Parameters(300_000_000L, -40.0, 60, 12.0, 0.005, 0.99, -40.0, -6.0);
 		}
 
-		/** The three levels of these settings (the minimal level, the maximal level, the clip level of a sample); the rest are the constants of the meter. */
+		/**
+		 * The three levels of these settings (the minimal level, the maximal level, the clip level of a sample) and the meter's window, quiet hops, rise
+		 * and clip share (spec 026, {@code chord-evidence.strum-*}).
+		 */
 		public static Parameters of(RecognitionSettings settings) {
 			double min = settings.get(RecognitionParameters.INPUT_LEVEL_MIN);
-			return new Parameters(300_000_000L, min, 60, 12.0, 0.005, settings.get(RecognitionParameters.LEVEL_CLIP_SAMPLE), min,
+			return new Parameters(Math.round(settings.get(RecognitionParameters.CHORD_EVIDENCE_STRUM_WINDOW) * 1_000_000.0), min,
+					(int) settings.get(RecognitionParameters.CHORD_EVIDENCE_STRUM_QUIET), settings.get(RecognitionParameters.CHORD_EVIDENCE_STRUM_RISE),
+					settings.get(RecognitionParameters.CHORD_EVIDENCE_STRUM_CLIP_SHARE), settings.get(RecognitionParameters.LEVEL_CLIP_SAMPLE), min,
 					settings.get(RecognitionParameters.INPUT_LEVEL_MAX));
 		}
 	}

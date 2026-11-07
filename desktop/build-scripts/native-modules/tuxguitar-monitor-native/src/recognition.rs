@@ -96,10 +96,15 @@ pub struct AttackSlot {
 
 impl AttackSlot {
     pub fn of(rate: i32, candidates: &[i32]) -> AttackSlot {
+        AttackSlot::of_tuned(rate, AttackParameters::defaults(), candidates)
+    }
+
+    /// With the attack values of the tuning array (spec 026).
+    pub fn of_tuned(rate: i32, p: AttackParameters, candidates: &[i32]) -> AttackSlot {
         if candidates.is_empty() {
             return AttackSlot { analyzer: None, evidence: Attack { pitches: Vec::new(), amplitudes: Vec::new(), attack_strength: 0.0, growth: Vec::new(), bin_hz: 0.0 } };
         }
-        let analyzer = AttackAnalyzer::new(AttackParameters::defaults(), rate as f64, candidates);
+        let analyzer = AttackAnalyzer::new(p, rate as f64, candidates);
         let evidence = analyzer.new_evidence();
         AttackSlot { analyzer: Some(analyzer), evidence }
     }
@@ -340,7 +345,7 @@ impl Worker {
     /// With the tuning array (spec 026).
     pub fn new_tuned(shared: Arc<Shared>, parameters: Parameters, tuning: Tuning, front: FrontEndSettings, strum: StrumParameters) -> Worker {
         let rate = shared.rate;
-        let mut front_end = FrontEnd::new(rate as f64, HOP);
+        let mut front_end = FrontEnd::new_tuned(rate as f64, HOP, tuning.front);
         front_end.set(front);
         let mut meter = StrumClip::new(strum);
         meter.configure(rate, &shared.strum);
@@ -412,7 +417,8 @@ impl Worker {
                 if let Some(pipeline) = config.pipeline.as_mut() {
                     std::mem::swap(&mut self.pipeline, pipeline);
                     self.spectrum = false;
-                    self.front.reset();
+                    // the front end takes the new pipeline's stage values (spec 026); this restarts its history, as the reset did
+                    self.front.set_parameters(self.pipeline.front_parameters());
                     self.strum.configure(shared.rate, &shared.strum);
                     self.hop_fill = 0;
                     self.marker_pending = true;
@@ -521,7 +527,21 @@ pub fn front_of(p: &Parameters) -> FrontEndSettings {
 }
 
 pub fn strum_of(p: &Parameters) -> StrumParameters {
-    StrumParameters { arm_floor_dbfs: p.strum_arm_floor_dbfs, clip_sample: p.strum_clip_sample, weak_dbfs: p.strum_weak_dbfs, loud_dbfs: p.strum_loud_dbfs }
+    strum_of_tuned(p, &Tuning::defaults())
+}
+
+/// As `strum_of`, with the strum values of the tuning array (spec 026).
+pub fn strum_of_tuned(p: &Parameters, t: &Tuning) -> StrumParameters {
+    StrumParameters {
+        arm_floor_dbfs: p.strum_arm_floor_dbfs,
+        clip_sample: p.strum_clip_sample,
+        weak_dbfs: p.strum_weak_dbfs,
+        loud_dbfs: p.strum_loud_dbfs,
+        window_nanos: t.strum_window_nanos,
+        arm_quiet_hops: t.strum_quiet_hops,
+        attack_rise_db: t.strum_rise_db,
+        clip_share: t.strum_clip_share,
+    }
 }
 
 /// True when the analysis values differ (a new pipeline), false when only the front end or the strum meter changed.

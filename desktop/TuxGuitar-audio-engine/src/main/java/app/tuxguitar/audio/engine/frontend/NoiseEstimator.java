@@ -16,21 +16,30 @@ public final class NoiseEstimator {
 
 	/** The floor never goes below this (about −96 dBFS), so a digital silence does not collapse it to zero. */
 	private static final double MINIMUM_RMS = 1.5e-5;
-	/** How fast the floor may rise toward a louder hop: 0.5 dB per second. */
-	private static final double RISE_DB_PER_SECOND = 0.5;
-	/** How fast it falls to a quieter hop (share of the gap closed per hop). */
-	private static final double FALL_RATE = 0.2;
+	/** How fast the floor may rise toward a louder hop: 0.5 dB per second (the default of {@code front-end.noise-rise}). */
+	public static final double DEFAULT_RISE_DB_PER_SECOND = 0.5;
+	/** How fast it falls to a quieter hop (share of the gap closed per hop; the default of {@code front-end.noise-fall}). */
+	public static final double DEFAULT_FALL_RATE = 0.2;
 	/** Hops needed before the estimate is trusted (about one second at 48 kHz, 256-sample hops). */
 	public static final int TRUSTED_AFTER_HOPS = 188;
 
 	private final double riseFactorPerHop;
+	private final double fallRate;
+	private final int trustedAfterHops;
 	private double floorRms;
 	private int hops;
 	private Source source = Source.NONE;
 
 	public NoiseEstimator(int sampleRate, int hopSize) {
+		this(sampleRate, hopSize, DEFAULT_RISE_DB_PER_SECOND, DEFAULT_FALL_RATE, TRUSTED_AFTER_HOPS);
+	}
+
+	/** With other values (spec 026, section {@code FRONT_END}). */
+	public NoiseEstimator(int sampleRate, int hopSize, double riseDbPerSecond, double fallRate, int trustedAfterHops) {
 		double secondsPerHop = hopSize / (double) sampleRate;
-		this.riseFactorPerHop = Math.pow(10.0, RISE_DB_PER_SECOND * secondsPerHop / 20.0);
+		this.riseFactorPerHop = Math.pow(10.0, riseDbPerSecond * secondsPerHop / 20.0);
+		this.fallRate = fallRate;
+		this.trustedAfterHops = trustedAfterHops;
 		reset();
 	}
 
@@ -40,7 +49,7 @@ public final class NoiseEstimator {
 		if( this.hops == 0 || this.floorRms <= 0.0 ) {
 			this.floorRms = level;
 		} else if( level < this.floorRms ) {
-			this.floorRms += FALL_RATE * (level - this.floorRms);
+			this.floorRms += this.fallRate * (level - this.floorRms);
 		} else {
 			this.floorRms = Math.min(level, this.floorRms * this.riseFactorPerHop);
 		}
@@ -66,7 +75,7 @@ public final class NoiseEstimator {
 	}
 
 	public boolean isTrusted() {
-		return this.source == Source.LEVEL_CHECK || this.hops >= TRUSTED_AFTER_HOPS;
+		return this.source == Source.LEVEL_CHECK || this.hops >= this.trustedAfterHops;
 	}
 
 	public Source getSource() {

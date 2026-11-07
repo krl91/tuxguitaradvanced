@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 import app.tuxguitar.audio.engine.frontend.FrontEnd;
 import app.tuxguitar.audio.engine.input.SampleRingBuffer;
 import app.tuxguitar.audio.engine.nativeengine.FrameRecords;
@@ -37,10 +38,23 @@ public final class AnalysisService {
 		private final ArticulationDetector articulationDetector;
 		/** Null: the Java stages; else the parameters of the native per-hop analysis that replaces them (spec 023, amendment of 2026-11-03). */
 		private final float[] nativeParameters;
+		/** The tuning array of the native per-hop analysis (spec 026); null: the library's defaults. */
+		private final double[] nativeTuning;
+		/** The settings the Java stages built here read (spec 026): the expected-pitch verifier's search and periods. */
+		private final RecognitionSettings settings;
+		/** The polyphonic analyser's parameters of these settings, for the Java analyser and the native frames read. */
+		private final PolyphonicAnalyzer.Parameters polyphonicParameters;
+		/** The attack analyser's parameters of these settings. */
+		private final AttackAnalyzer.Parameters attackParameters;
 
 		private Configuration(int sampleRate, PitchEstimator pitchEstimator, long discardUntil,
-				LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector, float[] nativeParameters) {
+				LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector, float[] nativeParameters, double[] nativeTuning,
+				RecognitionSettings settings) {
 			this.nativeParameters = nativeParameters;
+			this.nativeTuning = nativeTuning;
+			this.settings = settings;
+			this.polyphonicParameters = PolyphonicAnalyzer.Parameters.of(settings);
+			this.attackParameters = AttackAnalyzer.Parameters.of(settings);
 			this.sampleRate = sampleRate;
 			this.pitchEstimator = pitchEstimator;
 			this.discardUntil = discardUntil;
@@ -112,7 +126,7 @@ public final class AnalysisService {
 		this.requestedArticulationDetector = articulationDetector;
 		this.windowSize = windowSize;
 		this.hopSize = hopSize;
-		this.configuration = new Configuration(sampleRate, pitchEstimator, 0L, levelAnalyzer, articulationDetector, null);
+		this.configuration = new Configuration(sampleRate, pitchEstimator, 0L, levelAnalyzer, articulationDetector, null, null, RecognitionSettings.defaults());
 		this.pendingConfiguration = new AtomicReference<Configuration>();
 		this.listeners = new CopyOnWriteArrayList<Listener>();
 	}
@@ -195,6 +209,15 @@ public final class AnalysisService {
 	 */
 	public void reconfigure(int sampleRate, PitchEstimator pitchEstimator, long discardUntil,
 			LevelAnalyzer levelAnalyzer, ArticulationDetector articulationDetector, float[] nativeParameters) {
+		reconfigure(sampleRate, pitchEstimator, discardUntil, levelAnalyzer, articulationDetector, nativeParameters, null, RecognitionSettings.defaults());
+	}
+
+	/**
+	 * Like the other overloads, with the settings the stages built by this service read and the native analysis's tuning array (spec 026); a null
+	 * {@code nativeTuning} leaves the native analysis with the library's defaults.
+	 */
+	public void reconfigure(int sampleRate, PitchEstimator pitchEstimator, long discardUntil, LevelAnalyzer levelAnalyzer,
+			ArticulationDetector articulationDetector, float[] nativeParameters, double[] nativeTuning, RecognitionSettings settings) {
 		if (sampleRate <= 0) {
 			throw new IllegalArgumentException("invalid sample rate");
 		}
@@ -205,7 +228,8 @@ public final class AnalysisService {
 			this.requestedLevelAnalyzer = levelAnalyzer;
 			this.requestedArticulationDetector = articulationDetector;
 			this.pendingConfiguration.set(new Configuration(sampleRate, pitchEstimator, discardUntil, levelAnalyzer, articulationDetector,
-					nativeParameters != null ? nativeParameters.clone() : null));
+					nativeParameters != null ? nativeParameters.clone() : null, nativeTuning != null ? nativeTuning.clone() : null,
+					settings != null ? settings : RecognitionSettings.defaults()));
 		}
 	}
 
@@ -255,7 +279,7 @@ public final class AnalysisService {
 			return null;
 		}
 		if( this.attackAnalyzer == null || this.attackAnalyzerCandidates != candidates || this.attackAnalyzerRate != this.configuration.sampleRate ) {
-			this.attackAnalyzer = new AttackAnalyzer(AttackAnalyzer.Parameters.defaults(), this.configuration.sampleRate, this.hopSize, candidates);
+			this.attackAnalyzer = new AttackAnalyzer(this.configuration.attackParameters, this.configuration.sampleRate, this.hopSize, candidates);
 			this.attackAnalyzerCandidates = candidates;
 			this.attackAnalyzerRate = this.configuration.sampleRate;
 		}
@@ -293,9 +317,10 @@ public final class AnalysisService {
 				this.configuration.articulationDetector.reset();
 				this.polyphonicAnalyzer = null;
 				this.attackAnalyzer = null;
+				this.verifier = null;
 				closeNative();
 				openNative();
-				this.frontEnd.configure(this.configuration.sampleRate, this.hopSize);
+				this.frontEnd.configure(this.configuration.sampleRate, this.hopSize, FrontEnd.Parameters.of(this.configuration.settings));
 				for (HopEntry entry : this.hopListeners) {
 					entry.needsConfigure = true;
 				}
@@ -364,7 +389,9 @@ public final class AnalysisService {
 			return;
 		}
 		try {
-			this.nativeHandle = NativeRecognitionLibrary.openAnalysis(this.configuration.sampleRate, parameters);
+			double[] tuning = this.configuration.nativeTuning;
+			this.nativeHandle = (tuning != null ? NativeRecognitionLibrary.openAnalysisTuned(this.configuration.sampleRate, parameters, tuning)
+					: NativeRecognitionLibrary.openAnalysis(this.configuration.sampleRate, parameters));
 		} catch (RuntimeException | LinkageError | app.tuxguitar.audio.engine.nativeengine.NativeRecognitionException exception) {
 			// the Java stages run instead
 			this.nativeHandle = 0;
@@ -403,7 +430,7 @@ public final class AnalysisService {
 		if (length <= 0) {
 			return null;
 		}
-		AnalysisFrame f = FrameRecords.read(record, 0);
+		AnalysisFrame f = FrameRecords.read(record, 0, this.configuration.polyphonicParameters);
 		return new AnalysisFrame(timestampNanos, f.getRmsDbfs(), f.getPeakDbfs(), f.getClippedRatio(), f.getLevelState(), f.getF0Hz(), f.getConfidence(),
 				f.isOnset(), f.getSpectrum(), f.getTargetEvidence(), null, f.getAttackEvidence(), captureSampleEnd, f.getChordEvidence());
 	}
@@ -431,7 +458,7 @@ public final class AnalysisService {
 			return;
 		}
 		if (this.polyphonicAnalyzer == null) {
-			this.polyphonicAnalyzer = new PolyphonicAnalyzer(PolyphonicAnalyzer.Parameters.defaults(), this.configuration.sampleRate);
+			this.polyphonicAnalyzer = new PolyphonicAnalyzer(this.configuration.polyphonicParameters, this.configuration.sampleRate);
 		}
 		this.polyphonicAnalyzer.push(hop, 0, hop.length);
 	}
@@ -445,7 +472,7 @@ public final class AnalysisService {
 		TargetEvidence evidence = null;
 		if( expected != null ) {
 			if( this.verifier == null || this.verifierRate != this.configuration.sampleRate ) {
-				this.verifier = new ExpectedPitchVerifier(this.configuration.sampleRate);
+				this.verifier = ExpectedPitchVerifier.of(this.configuration.sampleRate, this.configuration.settings);
 				this.verifierRate = this.configuration.sampleRate;
 			}
 			evidence = this.verifier.verify(window, expected);

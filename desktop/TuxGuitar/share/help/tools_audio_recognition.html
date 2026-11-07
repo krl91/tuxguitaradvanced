@@ -133,6 +133,121 @@
     <tr><td>Chord overtones per string</td><td></td><td>1</td><td>4</td><td>2</td><td>more strings can be checked, less reliably</td><td>fewer strings can be checked separately</td></tr>
     <tr><td>Time to confirm a chord</td><td>ms</td><td>20</td><td>150</td><td>43</td><td>chords are accepted faster</td><td>steadier, slower. Rounded to whole analysis steps</td></tr>
     </table>
+    <h2 id="onset">Advanced: Onsets</h2>
+    <p>How an attack (a new pick stroke) is found: a rise of the spectrum's change, then a level after the attack higher than before it. Expert settings: the recommended values were measured; change them only to test. The step of the analysis (256 samples) is the unit of the windows.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Onset: flux factor</td><td>×</td><td>0.5</td><td>6</td><td>1.5</td><td>more attacks found, more false ones</td><td>fewer false attacks, more missed re-plucks</td></tr>
+    <tr><td>Onset: flux margin</td><td></td><td>1</td><td>20</td><td>5</td><td>more sensitive in quiet passages</td><td>fewer attacks from noise</td></tr>
+    <tr><td>Onset: rest after an attack</td><td>hops</td><td>3</td><td>48</td><td>12</td><td>fast repeated notes are each heard</td><td>one note never counts twice</td></tr>
+    <tr><td>Onset: level before, from</td><td>hops</td><td>2</td><td>19</td><td>19</td><td>re-plucks of a decaying note are found more easily</td><td>a ringing previous note hides more re-plucks</td></tr>
+    <tr><td>Onset: level before, to</td><td>hops</td><td>1</td><td>19</td><td>2</td><td>the rise is measured against the latest level</td><td>the rise is measured against an older level</td></tr>
+    <tr><td>Onset: level after, from</td><td>hops</td><td>1</td><td>13</td><td>4</td><td>the transient itself counts more</td><td>only the sustained level counts</td></tr>
+    <tr><td>Onset: level after, to</td><td>hops</td><td>4</td><td>13</td><td>13</td><td>attacks reported sooner, on less sound</td><td>surer, reported later</td></tr>
+    </table>
+    <h2 id="onset-fast">Advanced: Fast-run onsets</h2>
+    <p>The same detection with the windows of fast runs, where notes follow each other closely. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Fast run: flux factor</td><td>×</td><td>0.5</td><td>6</td><td>1.5</td><td>more attacks found, more false ones</td><td>fewer false attacks</td></tr>
+    <tr><td>Fast run: flux margin</td><td></td><td>1</td><td>20</td><td>5</td><td>more sensitive</td><td>fewer attacks from noise</td></tr>
+    <tr><td>Fast run: rest after an attack</td><td>hops</td><td>2</td><td>24</td><td>6</td><td>closer notes are each heard</td><td>one note never counts twice</td></tr>
+    <tr><td>Fast run: level before, from</td><td>hops</td><td>2</td><td>19</td><td>8</td><td>a decaying previous note hides fewer re-plucks</td><td>the level before is taken over more hops</td></tr>
+    <tr><td>Fast run: level before, to</td><td>hops</td><td>1</td><td>8</td><td>2</td><td>the rise is measured against the latest level</td><td>the rise is measured against an older level</td></tr>
+    <tr><td>Fast run: level after, from</td><td>hops</td><td>1</td><td>8</td><td>3</td><td>the transient itself counts more</td><td>only the sustained level counts</td></tr>
+    <tr><td>Fast run: level after, to</td><td>hops</td><td>3</td><td>8</td><td>8</td><td>reported sooner, on less sound</td><td>surer, reported later</td></tr>
+    </table>
+    <h2 id="pitch">Advanced: Pitch</h2>
+    <p>How a pitch is read from the sound and checked against the expected notes. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Pitch: YIN threshold</td><td>%</td><td>5</td><td>50</td><td>20</td><td>only clear notes get a pitch</td><td>weak notes get one too, more wrong ones</td></tr>
+    <tr><td>Pitch: expected-note search</td><td>cents</td><td>5</td><td>50</td><td>20</td><td>out-of-tune notes less often confirmed</td><td>neighbouring notes more often taken</td></tr>
+    <tr><td>Pitch: expected-note periods</td><td></td><td>2</td><td>8</td><td>4</td><td>quicker, on less sound</td><td>steadier, needs a longer note</td></tr>
+    <tr><td>Pitch: maximum sharp side</td><td>cents</td><td>20</td><td>49</td><td>49</td><td>hard-pressed high frets refused sooner</td><td>up to just under the next semitone</td></tr>
+    <tr><td>Pitch: lowest attack candidate</td><td>MIDI</td><td>24</td><td>40</td><td>28</td><td>low wrong notes compete too</td><td>less work</td></tr>
+    <tr><td>Pitch: highest attack candidate</td><td>MIDI</td><td>80</td><td>112</td><td>100</td><td>less work</td><td>high wrong notes compete too</td></tr>
+    </table>
+    <h2 id="polyphonic-1">Advanced: Chord spectrum, candidates</h2>
+    <p>Which pitches the chord spectrum looks for, and how it weighs each one from its partials. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Spectrum: lowest candidate</td><td>MIDI</td><td>24</td><td>60</td><td>33</td><td>lowest strings of a down-tuned guitar found</td><td>fewer false low pitches</td></tr>
+    <tr><td>Spectrum: highest candidate</td><td>MIDI</td><td>64</td><td>112</td><td>88</td><td>fewer false high pitches</td><td>highest frets found</td></tr>
+    <tr><td>Spectrum: partials per note</td><td></td><td>4</td><td>24</td><td>12</td><td>steadier on a bright sound</td><td>dull notes still found</td></tr>
+    <tr><td>Spectrum: highest partial</td><td>Hz</td><td>1000</td><td>12000</td><td>5000</td><td>other notes' high partials count less</td><td>more partials of high notes count</td></tr>
+    <tr><td>Spectrum: partial tolerance</td><td>cents</td><td>5</td><td>50</td><td>25</td><td>other notes' partials less often taken</td><td>slightly out-of-tune strings still found</td></tr>
+    <tr><td>Spectrum: pitches per frame</td><td></td><td>1</td><td>12</td><td>6</td><td>only the strongest pitches</td><td>every string of a full chord</td></tr>
+    </table>
+    <h2 id="polyphonic-2">Advanced: Chord spectrum, floor</h2>
+    <p>When the chord spectrum stops naming pitches, and the floor it removes before looking for partials. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Spectrum: weakest pitch kept</td><td>%</td><td>1</td><td>50</td><td>10</td><td>soft strings of a chord named</td><td>fewer false pitches from partials</td></tr>
+    <tr><td>Spectrum: level floor</td><td>dB</td><td>-100</td><td>-40</td><td>-70</td><td>very soft playing analysed</td><td>silence and hum name nothing</td></tr>
+    <tr><td>Spectrum: lower note check</td><td>%</td><td>5</td><td>90</td><td>30</td><td>octave below chosen more often</td><td>pitch heard kept</td></tr>
+    <tr><td>Spectrum: floor width</td><td>Hz</td><td>5</td><td>100</td><td>25</td><td>close partials stand out more</td><td>broad noise removed better</td></tr>
+    <tr><td>Spectrum: floor factor</td><td>×</td><td>1</td><td>6</td><td>2</td><td>weak partials count</td><td>only clear partials count</td></tr>
+    </table>
+    <h2 id="attack-1">Advanced: Struck notes, growth</h2>
+    <p>How the notes just struck are told, also over strings that keep ringing: the growth of the spectrum is explained by models of the candidate notes. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Struck: growth span</td><td>hops</td><td>4</td><td>64</td><td>22</td><td>quick re-strikes told apart</td><td>slow attacks fully seen</td></tr>
+    <tr><td>Struck: highest frequency</td><td>Hz</td><td>1000</td><td>12000</td><td>5000</td><td>less pick noise</td><td>high notes' partials count</td></tr>
+    <tr><td>Struck: partials per note</td><td></td><td>4</td><td>24</td><td>14</td><td>notes sharing partials told apart less</td><td>notes matched by their whole sound</td></tr>
+    <tr><td>Struck: weight of high partials</td><td></td><td>0</td><td>2</td><td>0.3</td><td>high partials weigh as much</td><td>first partials decide</td></tr>
+    <tr><td>Struck: partial width</td><td></td><td>0.3</td><td>4</td><td>1.2</td><td>neighbouring notes told apart better</td><td>out-of-tune strings still match</td></tr>
+    </table>
+    <h2 id="attack-2">Advanced: Struck notes, tuning</h2>
+    <p>How far a struck note is from its exact pitch, measured on its new partials: the practice compares it with the accepted range. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Struck tuning: partials measured</td><td></td><td>4</td><td>24</td><td>12</td><td>clearest partials only</td><td>steadier median</td></tr>
+    <tr><td>Struck tuning: search</td><td>cents</td><td>10</td><td>100</td><td>60</td><td>neighbouring peaks less often taken</td><td>badly out-of-tune notes still measured</td></tr>
+    <tr><td>Struck tuning: smallest peak</td><td>%</td><td>1</td><td>20</td><td>3</td><td>weak partials measured too</td><td>only strong partials</td></tr>
+    </table>
+    <h2 id="chord-evidence">Advanced: Chord evidence and strum check</h2>
+    <p>How the evidence of an expected chord is read from the spectrum, and how the first strum of a check is measured for its level and clipping. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Chord: partial present from</td><td>%</td><td>1</td><td>30</td><td>5</td><td>soft strings count as heard</td><td>only clear strings count</td></tr>
+    <tr><td>Chord: whole-tone check</td><td>×</td><td>1</td><td>4</td><td>1.5</td><td>a chord a tone off refused sooner</td><td>refused only when clearly off</td></tr>
+    <tr><td>Strum check: window</td><td>ms</td><td>100</td><td>1000</td><td>300</td><td>only the attack</td><td>the strum's whole sound</td></tr>
+    <tr><td>Strum check: quiet before</td><td>hops</td><td>10</td><td>200</td><td>60</td><td>found after a noisy moment</td><td>slow noise not taken for a strum</td></tr>
+    <tr><td>Strum check: rise</td><td>dB</td><td>3</td><td>30</td><td>12</td><td>soft strums start it, noise too</td><td>only clear strums start it</td></tr>
+    <tr><td>Strum check: clipping share</td><td>‰</td><td>1</td><td>50</td><td>5</td><td>the slightest clipping reported</td><td>only heavy clipping</td></tr>
+    </table>
+    <h2 id="front-end">Advanced: Input clean-up</h2>
+    <p>With the noise reduction on, how the input is cleaned before the recognition: the rumble filter, and how the background-noise level is estimated. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Rumble filter corner</td><td>Hz</td><td>10</td><td>120</td><td>40</td><td>low strings keep their body</td><td>more rumble cut</td></tr>
+    <tr><td>Noise level: rise speed</td><td>dB/s</td><td>0.1</td><td>5</td><td>0.5</td><td>a held note is not taken for noise</td><td>a growing noise followed sooner</td></tr>
+    <tr><td>Noise level: fall speed</td><td></td><td>0.1</td><td>1</td><td>0.2</td><td>the estimate drops gently</td><td>it drops at once</td></tr>
+    <tr><td>Noise level: trusted after</td><td>hops</td><td>20</td><td>1000</td><td>188</td><td>the gate acts sooner</td><td>a surer estimate first</td></tr>
+    </table>
+    <h2 id="noise-gate">Advanced: Noise gate</h2>
+    <p>With the noise reduction on, when the noise gate opens and closes, how much it lowers the silences, and the values of the noise subtraction. The closing margin always stays under the opening one. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Gate: opens above the noise by</td><td>dB</td><td>6</td><td>30</td><td>9</td><td>soft notes open it, loud noise too</td><td>only clear notes open it</td></tr>
+    <tr><td>Gate: closes under the noise plus</td><td>dB</td><td>0</td><td>8</td><td>5</td><td>a fading note kept longer</td><td>closes sooner on a fading note</td></tr>
+    <tr><td>Gate: reduction</td><td>dB</td><td>0</td><td>60</td><td>20</td><td>the noise stays audible</td><td>quieter silences</td></tr>
+    <tr><td>Gate: hold</td><td>hops</td><td>1</td><td>100</td><td>19</td><td>closes quickly</td><td>short gaps stay open</td></tr>
+    <tr><td>Noise subtraction: strength</td><td>×</td><td>0.5</td><td>4</td><td>1.5</td><td>some noise stays</td><td>more noise removed, thinner notes</td></tr>
+    <tr><td>Noise subtraction: floor</td><td>%</td><td>0</td><td>30</td><td>5</td><td>deeper silences, more artefacts</td><td>fewer artefacts, more noise left</td></tr>
+    <tr><td>Noise subtraction: learning speed</td><td>%</td><td>1</td><td>100</td><td>10</td><td>a steadier noise picture</td><td>a changing noise followed sooner</td></tr>
+    </table>
+    <h2 id="gain">Advanced: Gain suggestion</h2>
+    <p>The gain the level check proposes: the playing level it aims at, the highest peak it allows, when it counts as nothing to change, and when a boost would mostly raise the noise. Taken into account at the next level check. Expert settings: the recommended values were measured; change them only to test.</p>
+    <table>
+    <tr><th>Setting</th><th>Unit</th><th>Minimum</th><th>Maximum</th><th>Recommended</th><th>Lower value</th><th>Higher value</th></tr>
+    <tr><td>Gain suggestion: playing level aimed at</td><td>dBFS</td><td>-40</td><td>-10</td><td>-22</td><td>softer level, more room</td><td>louder level, closer to clipping</td></tr>
+    <tr><td>Gain suggestion: highest peak</td><td>dBFS</td><td>-12</td><td>-1</td><td>-3</td><td>more room before clipping</td><td>louder, closer to clipping</td></tr>
+    <tr><td>Gain suggestion: nothing to change within</td><td>dB</td><td>0.5</td><td>6</td><td>1.5</td><td>small corrections proposed</td><td>only large ones</td></tr>
+    <tr><td>Gain suggestion: playing above the noise by</td><td>dB</td><td>6</td><td>40</td><td>20</td><td>the noise warning less often</td><td>the warning sooner</td></tr>
+    </table>
     <h2 id="limits">Limits</h2><p>Recognition is based on pitch only: it cannot tell which string or fret was used. The techniques written in the score (hammer-on, pull-off, slide, bend, vibrato) are listened for, but none is verified yet: practice shows them as "cannot be checked yet" instead of guessing. Legato notes (hammer-on, pull-off, slide) have no pick attack and may have to be picked again or skipped; accepting them without an attack and rejecting extra chord strings are proposals still under review, so they are not offered as settings.</p>
     <h2 id="calibration">Calibrating the recognition for one input</h2><p>The <strong>Input</strong> tab of the practice window shows a coloured dot next to the input chooser. <strong>Grey</strong>: no input selected. <strong>Orange</strong>: this input was never calibrated (or the default was chosen), the default settings are used. <strong>Green</strong>: calibrated, at least 60 % of the sounds of the calibration piece recognised. <strong>Red</strong>: calibrated, but under 60 %. A sentence next to the dot warns when the noise reduction or the input gain is not what it was at the recording; the profile stays in use. A profile made at another sample rate is not applied (orange, with the reason).</p><p><strong>Calibrate the recognition</strong> opens one window that guides you: tuning, advice, then a short piece to play once, with no tempo. The window listens by itself and counts the sounds without saying which one it heard; it stops when all were heard. You are shown the measures of the recording (sounds heard, highest level, background noise, clipping) and asked whether it is good enough. The best settings for this input are then searched on the recording, at most about two minutes, and the window blocks the application until it is done. The result shows the recognition rate with the default settings and with the settings found, for notes, chords and in total.</p><p>If the recording cannot be used, or the settings found are not better than the default, or better but under 60 %, the application never decides for you: you can record again, use the default configuration, or stop. Closing the window, at any step, asks "Stop the calibration?"; nothing is saved then. <strong>Forget the calibration</strong> deletes the profile of the selected input only, after a confirmation.</p><p>The window shows a <strong>picture of the tablature of the next sound to play</strong>: six lines (the thinnest string on top) with the fret number on the string of each note, 0 for an open string, a chord having its numbers one above the other. It changes each time a sound is heard. At the question about the quality of the recording, a check box <strong>Keep a copy of this recording for diagnosis</strong>, unticked every time, writes the recording as a WAV file in the folder <code>tuxguitar-calibration-takes</code> of your home folder, only when you tick it; the window shows where. The application never reads it back and never sends it anywhere.</p><p>The profile applies everywhere the recognition is used (tuner window, Follow, Arcade, Wait), except the tuner's own parameters. <strong>No audio is kept</strong> unless you tick the diagnostic copy: the recording lives in memory during the calibration and is dropped at the end or when you stop. The result is measured on one recording: confirm it by playing.</p>
     </section>

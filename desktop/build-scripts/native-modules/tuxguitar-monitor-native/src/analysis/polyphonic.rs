@@ -19,6 +19,14 @@ pub struct PolyphonicParameters {
     pub min_relative_salience: f64,
     pub floor_db: f64,
     pub subharmonic_ratio: f64,
+    /// Half width of the local floor window (spec 026, `polyphonic.floor-width`).
+    pub floor_half_width_hz: f64,
+    /// Content must exceed this multiple of the local mean to count as a partial (spec 026, `polyphonic.floor-factor`).
+    pub floor_factor: f64,
+    /// The chord evidence: a partial is present from this share of the strongest (spec 026, `chord-evidence.partial-presence`).
+    pub partial_presence_ratio: f64,
+    /// The chord a whole tone away must explain the partials this many times better (spec 026, `chord-evidence.neighbour-margin`).
+    pub neighbour_margin: f64,
 }
 
 impl PolyphonicParameters {
@@ -37,12 +45,14 @@ impl PolyphonicParameters {
             min_relative_salience: 0.10,
             floor_db: -70.0,
             subharmonic_ratio: 0.30,
+            floor_half_width_hz: 25.0,
+            floor_factor: 2.0,
+            partial_presence_ratio: super::chord::PARTIAL_PRESENCE_RATIO,
+            neighbour_margin: super::chord::NEIGHBOUR_MARGIN,
         }
     }
 }
 
-const FLOOR_HALF_WIDTH_HZ: f64 = 25.0;
-const FLOOR_FACTOR: f64 = 2.0;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Candidate {
@@ -160,7 +170,7 @@ impl PolyphonicAnalyzer {
             let peak = self.comb.peak_around(&self.spectrum, self.spectrum.len(), frequency(midi), self.band_ratio);
             out.band_db[(midi - self.p.min_band_midi) as usize] = to_db(peak) as f32;
         }
-        remove_floor(&self.spectrum, &mut self.peaks, &mut self.prefix, self.bin_hz);
+        remove_floor(&self.spectrum, &mut self.peaks, &mut self.prefix, self.bin_hz, self.p.floor_half_width_hz, self.p.floor_factor);
         for midi in self.p.min_candidate_midi..=self.p.max_candidate_midi {
             out.salience[(midi - self.p.min_candidate_midi) as usize] = self.comb.salience(&self.peaks, self.peak_length, midi, 0) as f32;
         }
@@ -214,18 +224,18 @@ impl PolyphonicAnalyzer {
     }
 }
 
-/// Keeps only what rises above twice the local mean (over ±25 Hz).
-fn remove_floor(magnitudes: &[f64], result: &mut [f64], prefix: &mut [f64], bin_hz: f64) {
+/// Keeps only what rises above `floor_factor` times the local mean (over ±`floor_half_width_hz`).
+fn remove_floor(magnitudes: &[f64], result: &mut [f64], prefix: &mut [f64], bin_hz: f64, floor_half_width_hz: f64, floor_factor: f64) {
     prefix[0] = 0.0;
     for k in 0..magnitudes.len() {
         prefix[k + 1] = prefix[k] + magnitudes[k];
     }
-    let half_width = 2i64.max(super::comb::java_round(FLOOR_HALF_WIDTH_HZ / bin_hz)) as usize;
+    let half_width = 2i64.max(super::comb::java_round(floor_half_width_hz / bin_hz)) as usize;
     for k in 0..magnitudes.len() {
         let low = k.saturating_sub(half_width);
         let high = (magnitudes.len() - 1).min(k + half_width);
         let mean = (prefix[high + 1] - prefix[low]) / (high - low + 1) as f64;
-        result[k] = (magnitudes[k] - FLOOR_FACTOR * mean).max(0.0);
+        result[k] = (magnitudes[k] - floor_factor * mean).max(0.0);
     }
 }
 

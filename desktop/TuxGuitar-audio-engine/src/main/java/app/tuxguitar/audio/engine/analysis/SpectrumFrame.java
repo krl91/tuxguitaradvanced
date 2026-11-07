@@ -92,7 +92,13 @@ public final class SpectrumFrame {
 	 */
 	public static SpectrumFrame of(double binHz, int minBandMidi, float[] bandDb, int minSalienceMidi, float[] salience, List<PitchCandidate> candidates,
 			float[] peaks) {
-		return new SpectrumFrame(PolyphonicAnalyzer.Parameters.defaults(), binHz, minBandMidi, bandDb, minSalienceMidi, salience, candidates, peaks);
+		return of(PolyphonicAnalyzer.Parameters.defaults(), binHz, minBandMidi, bandDb, minSalienceMidi, salience, candidates, peaks);
+	}
+
+	/** As the other, with the parameters the frame was analysed with (spec 026). */
+	public static SpectrumFrame of(PolyphonicAnalyzer.Parameters parameters, double binHz, int minBandMidi, float[] bandDb, int minSalienceMidi,
+			float[] salience, List<PitchCandidate> candidates, float[] peaks) {
+		return new SpectrumFrame(parameters, binHz, minBandMidi, bandDb, minSalienceMidi, salience, candidates, peaks);
 	}
 
 	/** Copies the floor-removed magnitude spectrum into {@code target} (length ≥ {@link #getPeakLength()}). */

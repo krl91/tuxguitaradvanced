@@ -1,5 +1,8 @@
 package app.tuxguitar.audio.engine.frontend;
 
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
+
 /**
  * The input front end applied to every hop before analysis (spec 002, FR-060…FR-065): the input
  * gain first (so the level meter, the level check and the recognition all see the boosted signal),
@@ -10,6 +13,52 @@ package app.tuxguitar.audio.engine.frontend;
  * be called from any thread.</p>
  */
 public final class FrontEnd {
+
+	/** The stages' values (spec 026, sections {@code FRONT_END} and {@code NOISE_GATE}); the defaults are the former constants. Immutable. */
+	public static final class Parameters {
+		public final double highPassHz;
+		public final double noiseRiseDbPerSecond;
+		public final double noiseFallRate;
+		public final int noiseTrustedHops;
+		public final double gateOpenDb;
+		public final double gateCloseDb;
+		public final double gateReductionDb;
+		public final int gateHoldHops;
+		public final double subtractionAlpha;
+		public final double subtractionBeta;
+		public final double subtractionLearnRate;
+
+		public Parameters(double highPassHz, double noiseRiseDbPerSecond, double noiseFallRate, int noiseTrustedHops, double gateOpenDb,
+				double gateCloseDb, double gateReductionDb, int gateHoldHops, double subtractionAlpha, double subtractionBeta,
+				double subtractionLearnRate) {
+			this.highPassHz = highPassHz;
+			this.noiseRiseDbPerSecond = noiseRiseDbPerSecond;
+			this.noiseFallRate = noiseFallRate;
+			this.noiseTrustedHops = noiseTrustedHops;
+			this.gateOpenDb = gateOpenDb;
+			this.gateCloseDb = gateCloseDb;
+			this.gateReductionDb = gateReductionDb;
+			this.gateHoldHops = gateHoldHops;
+			this.subtractionAlpha = subtractionAlpha;
+			this.subtractionBeta = subtractionBeta;
+			this.subtractionLearnRate = subtractionLearnRate;
+		}
+
+		public static Parameters defaults() {
+			return new Parameters(HighPass.CORNER_HZ, NoiseEstimator.DEFAULT_RISE_DB_PER_SECOND, NoiseEstimator.DEFAULT_FALL_RATE,
+					NoiseEstimator.TRUSTED_AFTER_HOPS, NoiseGate.OPEN_MARGIN_DB, NoiseGate.CLOSE_MARGIN_DB, NoiseGate.REDUCTION_DB, NoiseGate.HOLD_HOPS,
+					SpectralSubtractor.ALPHA, SpectralSubtractor.BETA, SpectralSubtractor.DEFAULT_LEARN_RATE);
+		}
+
+		public static Parameters of(RecognitionSettings settings) {
+			return new Parameters(settings.get(RecognitionParameters.FRONT_END_HIGH_PASS), settings.get(RecognitionParameters.FRONT_END_NOISE_RISE),
+					settings.get(RecognitionParameters.FRONT_END_NOISE_FALL), (int) Math.round(settings.get(RecognitionParameters.FRONT_END_NOISE_TRUSTED)),
+					settings.get(RecognitionParameters.NOISE_GATE_OPEN), settings.get(RecognitionParameters.NOISE_GATE_CLOSE),
+					settings.get(RecognitionParameters.NOISE_GATE_REDUCTION), (int) Math.round(settings.get(RecognitionParameters.NOISE_GATE_HOLD)),
+					settings.get(RecognitionParameters.NOISE_GATE_SUBTRACTION), settings.get(RecognitionParameters.NOISE_GATE_SUBTRACTION_FLOOR),
+					settings.get(RecognitionParameters.NOISE_GATE_SUBTRACTION_LEARN));
+		}
+	}
 
 	private final InputGain gain = new InputGain();
 	private volatile boolean noiseReduction;
@@ -23,10 +72,16 @@ public final class FrontEnd {
 
 	/** Adapts the stages to the sample rate and hop size actually negotiated (analysis thread). */
 	public void configure(int sampleRate, int hopSize) {
+		configure(sampleRate, hopSize, Parameters.defaults());
+	}
+
+	/** As {@link #configure(int, int)}, with the stages' values of the settings (spec 026). */
+	public void configure(int sampleRate, int hopSize, Parameters parameters) {
 		this.hopSize = hopSize;
-		this.highPass = new HighPass(sampleRate);
-		this.estimator = new NoiseEstimator(sampleRate, hopSize);
-		this.gate = new NoiseGate(this.estimator);
+		this.highPass = new HighPass(sampleRate, parameters.highPassHz);
+		this.estimator = new NoiseEstimator(sampleRate, hopSize, parameters.noiseRiseDbPerSecond, parameters.noiseFallRate, parameters.noiseTrustedHops);
+		this.gate = new NoiseGate(this.estimator, parameters.gateOpenDb, parameters.gateCloseDb, parameters.gateReductionDb, parameters.gateHoldHops);
+		this.subtractor.setValues(parameters.subtractionAlpha, parameters.subtractionBeta, parameters.subtractionLearnRate);
 		this.subtractor.reset();
 	}
 

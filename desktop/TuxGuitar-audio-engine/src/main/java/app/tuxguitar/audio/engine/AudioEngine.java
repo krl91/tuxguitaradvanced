@@ -180,7 +180,7 @@ public final class AudioEngine {
 				AudioEngine engine = new AudioEngine(singletonContext, new InputDeviceCatalog(),
 						CurrentInputSelection.getInstance(singletonContext), DEFAULT_RING_BUFFER_CAPACITY,
 						levelAnalyzer(settings), articulationDetector(settings),
-						sampleRate -> PitchEngineCatalog.resolve(store.get().get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate),
+						sampleRate -> PitchEngineCatalog.resolve(store.get().get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate, store.get()),
 						store, RecognitionBackendFactory.PRODUCTION);
 				// the profile of the selected device is laid over the settings, for every reader, whether or not a window is open (spec 013)
 				app.tuxguitar.audio.engine.calibration.ProfileActivator.attach(singletonContext, engine);
@@ -629,8 +629,13 @@ public final class AudioEngine {
 		RecognitionSettings settings = this.settingsStore.get();
 		LevelAnalyzer levels = levelAnalyzer(settings);
 		ArticulationDetector articulation = articulationDetector(settings);
-		this.analysisService.reconfigure(sampleRate, estimator, this.ringBuffer.getWrittenSampleCount(), levels, articulation,
-				nativeParameters(estimator, levels, articulation));
+		float[] nativeParameters = nativeParameters(estimator, levels, articulation);
+		if( nativeParameters != null ) {
+			// the stages' own values of the settings (spec 026), beside those the analysers carry
+			nativeParameters[NativeParameters.YIN_THRESHOLD] = (float) settings.get(RecognitionParameters.PITCH_YIN_THRESHOLD);
+		}
+		this.analysisService.reconfigure(sampleRate, estimator, this.ringBuffer.getWrittenSampleCount(), levels, articulation, nativeParameters,
+				NativeParameters.tuning(settings), settings);
 	}
 
 	/**
@@ -719,7 +724,7 @@ public final class AudioEngine {
 		if( this.settingsStore != null && !this.settingsStore.get().get(RecognitionParameters.INPUT_GAIN_SUGGESTION) ) {
 			return java.util.Optional.empty();
 		}
-		return java.util.Optional.ofNullable(GainSuggester.suggest(this.assessor.getLastStats(), getInputGain()));
+		return java.util.Optional.ofNullable(GainSuggester.suggest(this.assessor.getLastStats(), getInputGain(), GainSuggester.Parameters.of(currentSettings())));
 	}
 
 	/**
@@ -734,7 +739,7 @@ public final class AudioEngine {
 			return InputWarning.BOOST_CAUSES_CLIPPING;
 		}
 		LevelCheckStats stats = this.assessor.getLastStats();
-		if( stats != null && stats.hasPlaying() && GainSuggester.isNoiseDominated(stats) ) {
+		if( stats != null && stats.hasPlaying() && GainSuggester.isNoiseDominated(stats, GainSuggester.Parameters.of(currentSettings())) ) {
 			return InputWarning.BOOST_AMPLIFIES_NOISE;
 		}
 		return InputWarning.NONE;
@@ -748,14 +753,27 @@ public final class AudioEngine {
 	static boolean engineValuesDiffer(RecognitionSettings a, RecognitionSettings b) {
 		RecognitionParameter[] engineParameters = { RecognitionParameters.INPUT_LEVEL_MIN, RecognitionParameters.INPUT_LEVEL_MAX,
 				RecognitionParameters.LEVEL_CLIP_SAMPLE, RecognitionParameters.LEVEL_CLIP_SHARE, RecognitionParameters.NOTE_ATTACK,
-				RecognitionParameters.ATTACK_MIN_LEVEL, RecognitionParameters.ENGINE_PITCH };
+				RecognitionParameters.ATTACK_MIN_LEVEL, RecognitionParameters.ENGINE_PITCH, RecognitionParameters.PITCH_YIN_THRESHOLD,
+				RecognitionParameters.PITCH_TARGET_SEARCH, RecognitionParameters.PITCH_TARGET_PERIODS };
 		for( RecognitionParameter parameter : engineParameters ) {
 			if( !a.getValue(parameter).equals(b.getValue(parameter)) ) {
 				return true;
 			}
 		}
+		// the engine stages' own values (spec 026): every value of their sections
+		for( RecognitionParameter parameter : RecognitionParameters.ALL ) {
+			if( ENGINE_SECTIONS.contains(parameter.getSection()) && !a.getValue(parameter).equals(b.getValue(parameter)) ) {
+				return true;
+			}
+		}
 		return false;
 	}
+
+	/** The sections whose values an engine stage reads (spec 026, inventory.md "listening restart"). */
+	private static final java.util.Set<RecognitionParameter.Section> ENGINE_SECTIONS = java.util.EnumSet.of(RecognitionParameter.Section.ONSET,
+			RecognitionParameter.Section.ONSET_FAST, RecognitionParameter.Section.POLYPHONIC_1, RecognitionParameter.Section.POLYPHONIC_2,
+			RecognitionParameter.Section.ATTACK_1, RecognitionParameter.Section.CHORD_EVIDENCE, RecognitionParameter.Section.FRONT_END,
+			RecognitionParameter.Section.NOISE_GATE);
 
 	/** The level analyser for these settings (defaults: the former hard-coded values). */
 	public static LevelAnalyzer levelAnalyzer(RecognitionSettings settings) {
@@ -763,10 +781,21 @@ public final class AudioEngine {
 				settings.get(RecognitionParameters.LEVEL_CLIP_SAMPLE), settings.get(RecognitionParameters.LEVEL_CLIP_SHARE));
 	}
 
-	/** The articulation detector for these settings; only the gate and minimum level are settings. */
+	/** The articulation detector for these settings (the defaults: the former hard-coded values). */
 	public static ArticulationDetector articulationDetector(RecognitionSettings settings) {
-		return new ArticulationDetector(ArticulationDetector.DEFAULT_FLUX_MEDIAN_FACTOR, ArticulationDetector.DEFAULT_FLUX_OFFSET,
-				settings.get(RecognitionParameters.ATTACK_MIN_LEVEL), ArticulationDetector.DEFAULT_REFRACTORY_HOPS,
-				settings.get(RecognitionParameters.NOTE_ATTACK));
+		return new ArticulationDetector(settings.get(RecognitionParameters.ONSET_FLUX_FACTOR), settings.get(RecognitionParameters.ONSET_FLUX_OFFSET),
+				settings.get(RecognitionParameters.ATTACK_MIN_LEVEL), (int) settings.get(RecognitionParameters.ONSET_REFRACTORY),
+				settings.get(RecognitionParameters.NOTE_ATTACK), (int) settings.get(RecognitionParameters.ONSET_PRE_FIRST),
+				(int) settings.get(RecognitionParameters.ONSET_PRE_LAST), (int) settings.get(RecognitionParameters.ONSET_POST_FIRST),
+				(int) settings.get(RecognitionParameters.ONSET_POST_LAST));
+	}
+
+	/** The fast-run articulation detector for these settings (the defaults: {@link ArticulationDetector#fast}). */
+	public static ArticulationDetector fastArticulationDetector(RecognitionSettings settings) {
+		return new ArticulationDetector(settings.get(RecognitionParameters.ONSET_FAST_FLUX_FACTOR), settings.get(RecognitionParameters.ONSET_FAST_FLUX_OFFSET),
+				settings.get(RecognitionParameters.ATTACK_MIN_LEVEL), (int) settings.get(RecognitionParameters.ONSET_FAST_REFRACTORY),
+				settings.get(RecognitionParameters.NOTE_ATTACK), (int) settings.get(RecognitionParameters.ONSET_FAST_PRE_FIRST),
+				(int) settings.get(RecognitionParameters.ONSET_FAST_PRE_LAST), (int) settings.get(RecognitionParameters.ONSET_FAST_POST_FIRST),
+				(int) settings.get(RecognitionParameters.ONSET_FAST_POST_LAST));
 	}
 }

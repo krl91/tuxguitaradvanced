@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
+
 /**
  * Deterministic polyphonic spectrum analysis (research R21, plan stage D): a Hann-windowed FFT
  * over the latest {@link Parameters#fftSize} samples, per-semitone band levels, harmonic-sum
@@ -37,11 +40,39 @@ public final class PolyphonicAnalyzer {
 		public final double minRelativeSalience;
 		public final double floorDb;
 		public final double subharmonicRatio;
+		/** Half width of the local floor window: below the lowest partial spacing (A#1 ≈ 58 Hz). */
+		public final double floorHalfWidthHz;
+		/** Content must exceed this multiple of the local mean to count as a partial (+6 dB). */
+		public final double floorFactor;
+		/** The chord evidence: a partial is present from this share of the strongest ({@link ChordEvidence#PARTIAL_PRESENCE_RATIO} by default). */
+		public final double partialPresenceRatio;
+		/** The chord evidence: the chord a whole tone away must explain the partials this many times better ({@link ChordEvidence#NEIGHBOUR_MARGIN}). */
+		public final double neighbourMargin;
 
 		public Parameters(int fftSize, int minBandMidi, int maxBandMidi, int minCandidateMidi, int maxCandidateMidi,
 				int harmonics, double maxHarmonicHz, double harmonicToleranceCents, int maxCandidates,
 				double minRelativeSalience, double floorDb, double subharmonicRatio) {
-			if (minBandMidi > minCandidateMidi || maxCandidateMidi > maxBandMidi || minCandidateMidi > maxCandidateMidi
+			this(fftSize, minBandMidi, maxBandMidi, minCandidateMidi, maxCandidateMidi, harmonics, maxHarmonicHz, harmonicToleranceCents, maxCandidates,
+					minRelativeSalience, floorDb, subharmonicRatio, DEFAULT_FLOOR_HALF_WIDTH_HZ, DEFAULT_FLOOR_FACTOR);
+		}
+
+		public Parameters(int fftSize, int minBandMidi, int maxBandMidi, int minCandidateMidi, int maxCandidateMidi,
+				int harmonics, double maxHarmonicHz, double harmonicToleranceCents, int maxCandidates,
+				double minRelativeSalience, double floorDb, double subharmonicRatio, double floorHalfWidthHz, double floorFactor) {
+			this(fftSize, minBandMidi, maxBandMidi, minCandidateMidi, maxCandidateMidi, harmonics, maxHarmonicHz, harmonicToleranceCents, maxCandidates,
+					minRelativeSalience, floorDb, subharmonicRatio, floorHalfWidthHz, floorFactor, ChordEvidence.PARTIAL_PRESENCE_RATIO,
+					ChordEvidence.NEIGHBOUR_MARGIN);
+		}
+
+		/**
+		 * With the local floor's half width and factor and the chord evidence's two values (spec 026, {@code polyphonic.floor-width},
+		 * {@code polyphonic.floor-factor}, {@code chord-evidence.partial-presence}, {@code chord-evidence.neighbour-margin}).
+		 */
+		public Parameters(int fftSize, int minBandMidi, int maxBandMidi, int minCandidateMidi, int maxCandidateMidi,
+				int harmonics, double maxHarmonicHz, double harmonicToleranceCents, int maxCandidates,
+				double minRelativeSalience, double floorDb, double subharmonicRatio, double floorHalfWidthHz, double floorFactor,
+				double partialPresenceRatio, double neighbourMargin) {
+			if (partialPresenceRatio <= 0 || neighbourMargin <= 0 || floorHalfWidthHz <= 0 || floorFactor <= 0 || minBandMidi > minCandidateMidi || maxCandidateMidi > maxBandMidi || minCandidateMidi > maxCandidateMidi
 					|| minBandMidi < 0 || maxBandMidi > 127 || harmonics < 1 || maxCandidates < 1
 					|| harmonicToleranceCents <= 0 || harmonicToleranceCents > 50 || maxHarmonicHz <= 0) {
 				throw new IllegalArgumentException("invalid polyphonic analysis parameters");
@@ -58,6 +89,10 @@ public final class PolyphonicAnalyzer {
 			this.minRelativeSalience = minRelativeSalience;
 			this.floorDb = floorDb;
 			this.subharmonicRatio = subharmonicRatio;
+			this.floorHalfWidthHz = floorHalfWidthHz;
+			this.floorFactor = floorFactor;
+			this.partialPresenceRatio = partialPresenceRatio;
+			this.neighbourMargin = neighbourMargin;
 		}
 
 		/**
@@ -71,12 +106,24 @@ public final class PolyphonicAnalyzer {
 		public static Parameters defaults() {
 			return new Parameters(8192, 24, 112, 33, 88, 12, 5000.0, 25.0, 6, 0.10, -70.0, 0.30);
 		}
+
+		/** The defaults with the values of the settings (spec 026, sections {@code POLYPHONIC_1} and {@code POLYPHONIC_2}); the FFT size and the bands stay. */
+		public static Parameters of(RecognitionSettings settings) {
+			Parameters d = defaults();
+			return new Parameters(d.fftSize, d.minBandMidi, d.maxBandMidi, (int) settings.get(RecognitionParameters.POLYPHONIC_CANDIDATE_LOW),
+					(int) settings.get(RecognitionParameters.POLYPHONIC_CANDIDATE_HIGH), (int) settings.get(RecognitionParameters.POLYPHONIC_HARMONICS),
+					settings.get(RecognitionParameters.POLYPHONIC_MAX_HARMONIC), settings.get(RecognitionParameters.POLYPHONIC_TOLERANCE),
+					(int) settings.get(RecognitionParameters.POLYPHONIC_CANDIDATES), settings.get(RecognitionParameters.POLYPHONIC_MIN_RELATIVE),
+					settings.get(RecognitionParameters.POLYPHONIC_FLOOR), settings.get(RecognitionParameters.POLYPHONIC_SUBHARMONIC),
+					settings.get(RecognitionParameters.POLYPHONIC_FLOOR_WIDTH), settings.get(RecognitionParameters.POLYPHONIC_FLOOR_FACTOR),
+					settings.get(RecognitionParameters.CHORD_EVIDENCE_PARTIAL_PRESENCE), settings.get(RecognitionParameters.CHORD_EVIDENCE_NEIGHBOUR_MARGIN));
+		}
 	}
 
-	/** Half width of the local floor window: below the lowest partial spacing (A#1 ≈ 58 Hz). */
-	private static final double FLOOR_HALF_WIDTH_HZ = 25.0;
-	/** Content must exceed this multiple of the local mean to count as a partial (+6 dB). */
-	private static final double FLOOR_FACTOR = 2.0;
+	/** The former half width of the local floor window, the default of {@link Parameters#floorHalfWidthHz}. */
+	static final double DEFAULT_FLOOR_HALF_WIDTH_HZ = 25.0;
+	/** The former floor factor, the default of {@link Parameters#floorFactor}. */
+	static final double DEFAULT_FLOOR_FACTOR = 2.0;
 
 	private final Parameters parameters;
 	private final RealFft fft;
@@ -205,8 +252,8 @@ public final class PolyphonicAnalyzer {
 	}
 
 	/**
-	 * Keeps only what rises above {@link #FLOOR_FACTOR} times the local mean (over
-	 * ±{@link #FLOOR_HALF_WIDTH_HZ}), so that summing partials does not accumulate the broadband
+	 * Keeps only what rises above {@link Parameters#floorFactor} times the local mean (over
+	 * ±{@link Parameters#floorHalfWidthHz}), so that summing partials does not accumulate the broadband
 	 * floor between them.
 	 */
 	private void removeFloor(double[] magnitudes, double[] result) {
@@ -214,12 +261,12 @@ public final class PolyphonicAnalyzer {
 		for (int k = 0; k < magnitudes.length; k++) {
 			this.prefix[k + 1] = this.prefix[k] + magnitudes[k];
 		}
-		int halfWidth = Math.max(2, (int) Math.round(FLOOR_HALF_WIDTH_HZ / this.binHz));
+		int halfWidth = Math.max(2, (int) Math.round(this.parameters.floorHalfWidthHz / this.binHz));
 		for (int k = 0; k < magnitudes.length; k++) {
 			int low = Math.max(0, k - halfWidth);
 			int high = Math.min(magnitudes.length - 1, k + halfWidth);
 			double mean = (this.prefix[high + 1] - this.prefix[low]) / (high - low + 1);
-			result[k] = Math.max(0.0, magnitudes[k] - FLOOR_FACTOR * mean);
+			result[k] = Math.max(0.0, magnitudes[k] - this.parameters.floorFactor * mean);
 		}
 	}
 

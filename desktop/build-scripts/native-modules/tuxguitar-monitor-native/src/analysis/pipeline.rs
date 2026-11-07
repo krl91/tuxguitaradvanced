@@ -8,7 +8,7 @@ use super::attack::{Attack, AttackAnalyzer, AttackParameters};
 use super::chord::{ChordEvaluator, ChordEvidence, ExpectedChord};
 use super::frame::{self, Writer};
 use super::level::LevelAnalyzer;
-use super::polyphonic::{PolyphonicAnalyzer, PolyphonicParameters, Spectrum};
+use super::polyphonic::{PolyphonicAnalyzer, Spectrum};
 use super::target::{ExpectedPitchVerifier, Target, MAX_HYPOTHESES};
 use super::yin::Yin;
 use super::{Parameters, Tuning};
@@ -38,6 +38,10 @@ pub enum HopResult {
 
 pub struct Pipeline {
     rate: i32,
+    /// The attack analyser's values of the tuning, for each new set of candidates (spec 026).
+    attack_parameters: AttackParameters,
+    /// The front end's values of the tuning: the live loop gives them to its front end when it swaps this pipeline in (spec 026).
+    front_parameters: super::front_end::FrontEndParameters,
     level: LevelAnalyzer,
     yin: Yin,
     articulation: ArticulationDetector,
@@ -65,12 +69,14 @@ impl Pipeline {
     }
 
     /// With the tuning array (spec 026); each engine family reads its values from it.
-    pub fn new_tuned(rate: i32, p: Parameters, _tuning: Tuning) -> Pipeline {
-        let polyphonic_parameters = PolyphonicParameters::defaults();
+    pub fn new_tuned(rate: i32, p: Parameters, tuning: Tuning) -> Pipeline {
+        let polyphonic_parameters = tuning.polyphonic;
         let polyphonic = PolyphonicAnalyzer::new(polyphonic_parameters, rate as f64);
         let bin_hz = polyphonic.bin_hz();
         Pipeline {
             rate,
+            attack_parameters: tuning.attack,
+            front_parameters: tuning.front,
             level: level_of(&p),
             yin: Yin::new(rate as f64, WINDOW, p.yin_threshold),
             articulation: ArticulationDetector::new(articulation_of(&p)),
@@ -80,7 +86,7 @@ impl Pipeline {
             attack: None,
             attack_out: Attack { pitches: Vec::new(), amplitudes: Vec::new(), attack_strength: 0.0, growth: Vec::new(), bin_hz: 0.0 },
             attack_ready: false,
-            verifier: ExpectedPitchVerifier::new(rate as f64),
+            verifier: ExpectedPitchVerifier::new_tuned(rate as f64, tuning.target_search_cents, tuning.target_periods),
             target: Target::default(),
             expected: [0; MAX_HYPOTHESES],
             expected_count: 0,
@@ -91,6 +97,10 @@ impl Pipeline {
             filled: 0,
             processed: 0,
         }
+    }
+
+    pub fn front_parameters(&self) -> super::front_end::FrontEndParameters {
+        self.front_parameters
     }
 
     pub fn sample_rate(&self) -> i32 {
@@ -118,7 +128,7 @@ impl Pipeline {
             self.attack = None;
             self.attack_ready = false;
         } else {
-            let analyzer = AttackAnalyzer::new(AttackParameters::defaults(), self.rate as f64, candidates);
+            let analyzer = AttackAnalyzer::new(self.attack_parameters, self.rate as f64, candidates);
             self.attack_out = analyzer.new_evidence();
             self.attack = Some(analyzer);
             self.attack_ready = false;

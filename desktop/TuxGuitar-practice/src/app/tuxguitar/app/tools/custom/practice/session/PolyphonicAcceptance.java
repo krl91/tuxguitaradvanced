@@ -2,6 +2,7 @@ package app.tuxguitar.app.tools.custom.practice.session;
 
 import app.tuxguitar.audio.engine.analysis.AttackEvidence;
 import app.tuxguitar.audio.engine.pitch.TolerancePolicy;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 
 /**
  * Decides, from the attack evidence of successive hops, that the expected notes were just played
@@ -71,8 +72,20 @@ public final class PolyphonicAcceptance {
 	private boolean rearmAtNextFrame;
 	private int run;
 
+	/** The settings of the run: the offset measure of the new partials (spec 026, section {@code ATTACK_2}). */
+	private final RecognitionSettings settings;
+
 	public PolyphonicAcceptance(Parameters parameters) {
+		this(parameters, RecognitionSettings.defaults());
+	}
+
+	public PolyphonicAcceptance(Parameters parameters, RecognitionSettings settings) {
 		this.parameters = parameters;
+		this.settings = settings;
+	}
+
+	public RecognitionSettings getSettings() {
+		return this.settings;
 	}
 
 	public Parameters getParameters() {
@@ -176,7 +189,7 @@ public final class PolyphonicAcceptance {
 		boolean inTune = true;
 		if( tolerance != null ) {
 			for( int i = 0 ; i < expected.length ; i ++ ) {
-				double offset = evidence.offsetCents(expected[i]);
+				double offset = evidence.offsetCents(expected[i], this.settings);
 				int fret = (frets != null && i < frets.length ? frets[i] : 0);
 				if( Double.isNaN(offset) || offset < -(tolerance.getPracticeAcceptCents() + OFFSET_MARGIN) || offset > tolerance.sharpLimitCents(fret) + OFFSET_MARGIN ) {
 					inTune = false;

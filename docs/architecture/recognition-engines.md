@@ -171,7 +171,7 @@ Spec 024 changed none of these: the chord profile rule runs in Java on the spect
 
 ## 4. Recognition settings (`RecognitionParameters`)
 
-Source: `desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/settings/RecognitionParameters.java` (34 parameters). Each key is `"recognition."` followed by the part given in the code; the tables show the full stored key.
+Source: `desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/settings/RecognitionParameters.java` (34 parameters before spec 026, which adds the expert categories of §4.11). Each key is `"recognition."` followed by the part given in the code; the tables show the full stored key.
 
 **Where they live.** `RecognitionSettingsStore` saves them in the TuxGuitar configuration module `tuxguitar-audio-recognition`, with `recognition.version` = 1 (`RecognitionParameters.VERSION_KEY`, `VERSION`). On reading, `RecognitionSettings.fromStrings` repairs every value: a missing, empty or unreadable value gives the default, a number out of bounds is clamped. Cross-rule: `recognition.note.accept` is never below `recognition.tuner.in-tune`. Unknown `recognition.*` keys are dropped at the next save.
 
@@ -275,6 +275,128 @@ The *Chord check* level is not stored. `ChordLeniency.of` derives it from the va
 | *Lenient* | `profile` | 0.70 | on |
 
 Values from `specs/024-lenient-chords/data-model.md`, held by `ChordLeniency.values`; `ChordLeniency.apply` writes them and changes no other value. The *Mode* tab of the practice window shows the level (`ChordLeniencyPanel`) and lists *Custom* only while the settings hold no level.
+
+<!-- spec026-sections:start -->
+### 4.11 Engine stages and session values (spec 026)
+
+Expert settings, one category per section in the Advanced part of the settings window. Each replaces a constant that was fixed in the code (last column); its default is that constant, so nothing changes until a value is changed. "Native" values are sent to the native engine in the tuning array (`NativeParameters.tuning`, §3.4). Rows from `specs/026-engine-external-parameters/inventory.md`.
+
+#### Advanced: Onsets (`Section.ONSET`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.onset.flux-factor` | Onset: flux factor | × | 1.5 | 0.5 to 6 | listening restart | `ArticulationDetector.java` `DEFAULT_FLUX_MEDIAN_FACTOR`; native: float[21] ONSET_FLUX_FACTOR |
+| `recognition.onset.flux-offset` | Onset: flux margin | — | 5.0 | 1 to 20 | listening restart | `ArticulationDetector.java` `DEFAULT_FLUX_OFFSET`; native: float[21] ONSET_FLUX_OFFSET |
+| `recognition.onset.refractory` | Onset: rest after an attack | hops | 12 | 3 to 48 | listening restart | `ArticulationDetector.java` `DEFAULT_REFRACTORY_HOPS`; native: float[21] ONSET_REFRACTORY |
+| `recognition.onset.pre-first` | Onset: level before, from | hops | 19 | 2 to 19 | listening restart | `ArticulationDetector.java` constructor 19; `NativeParameters.java` `NORMAL_PRE_FIRST`; native: float[21] ONSET_PRE_FIRST |
+| `recognition.onset.pre-last` | Onset: level before, to | hops | 2 | 1 to 19 | listening restart | `ArticulationDetector.java` constructor 2; `NativeParameters.java` `NORMAL_PRE_LAST`; native: float[21] ONSET_PRE_LAST |
+| `recognition.onset.post-first` | Onset: level after, from | hops | 4 | 1 to 13 | listening restart | `ArticulationDetector.java` constructor 4; `NativeParameters.java` `NORMAL_POST_FIRST`; native: float[21] ONSET_POST_FIRST |
+| `recognition.onset.post-last` | Onset: level after, to | hops | 13 | 4 to 13 | listening restart | `ArticulationDetector.java` constructor post window 13; native: float[21] ONSET_POST_LAST |
+
+#### Advanced: Fast-run onsets (`Section.ONSET_FAST`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.onset-fast.flux-factor` | Fast run: flux factor | × | 1.5 | 0.5 to 6 | listening restart | `ArticulationDetector.java` `DEFAULT_FLUX_MEDIAN_FACTOR`; native: articulation fast (withFastOnset) |
+| `recognition.onset-fast.flux-offset` | Fast run: flux margin | — | 5.0 | 1 to 20 | listening restart | `ArticulationDetector.java` `DEFAULT_FLUX_OFFSET`; native: articulation fast (withFastOnset) |
+| `recognition.onset-fast.refractory` | Fast run: rest after an attack | hops | 6 | 2 to 24 | listening restart | `ArticulationDetector.java` `FAST_REFRACTORY_HOPS`; native: articulation fast (withFastOnset) |
+| `recognition.onset-fast.pre-first` | Fast run: level before, from | hops | 8 | 2 to 19 | listening restart | `ArticulationDetector.java` fast() 8; `NativeParameters.java` `FAST_PRE_FIRST`; native: articulation fast (withFastOnset) |
+| `recognition.onset-fast.pre-last` | Fast run: level before, to | hops | 2 | 1 to 8 | listening restart | `ArticulationDetector.java` fast() 2; `NativeParameters.java` `FAST_PRE_LAST`; native: articulation fast (withFastOnset) |
+| `recognition.onset-fast.post-first` | Fast run: level after, from | hops | 3 | 1 to 8 | listening restart | `ArticulationDetector.java` fast() 3; `NativeParameters.java` `FAST_POST_FIRST`; native: articulation fast (withFastOnset) |
+| `recognition.onset-fast.post-last` | Fast run: level after, to | hops | 8 | 3 to 8 | listening restart | `ArticulationDetector.java` fast() post window 8; native: articulation fast (withFastOnset) |
+
+#### Advanced: Pitch (`Section.PITCH`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.pitch.yin-threshold` | Pitch: YIN threshold | % | 0.20 | 0.05 to 0.5 | listening restart | `TarsosFastYinEstimator.java` (FastYin default 0.20); `NativeParameters.java` `DEFAULT_YIN_THRESHOLD`; native: float[21] YIN_THRESHOLD; yin.rs DEFAULT_THRESHOLD |
+| `recognition.pitch.target-search` | Pitch: expected-note search | cents | 20.0 | 5 to 50 | listening restart | `ExpectedPitchVerifier.java` `SEARCH_CENTS`; native: target.rs SEARCH_CENTS (tuning) |
+| `recognition.pitch.target-periods` | Pitch: expected-note periods | — | 4 | 2 to 8 | listening restart | `ExpectedPitchVerifier.java` `PERIODS`; native: target.rs PERIODS (tuning) |
+| `recognition.pitch.max-sharp` | Pitch: maximum sharp side | cents | 49.0 | 20 to 49 | next run | `TolerancePolicy.java` `MAX_SHARP_CENTS` |
+| `recognition.pitch.attack-candidates-low` | Pitch: lowest attack candidate | MIDI | 28 | 24 to 40 | next run | `AttackCandidates.java` `LOWEST` |
+| `recognition.pitch.attack-candidates-high` | Pitch: highest attack candidate | MIDI | 100 | 80 to 112 | next run | `AttackCandidates.java` `HIGHEST` |
+
+#### Advanced: Chord spectrum, candidates (`Section.POLYPHONIC_1`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.polyphonic.candidate-low` | Spectrum: lowest candidate | MIDI | 33 | 24 to 60 | listening restart | `PolyphonicAnalyzer.java` `Parameters.minCandidateMidi`; native: polyphonic.rs min_candidate_midi |
+| `recognition.polyphonic.candidate-high` | Spectrum: highest candidate | MIDI | 88 | 64 to 112 | listening restart | `PolyphonicAnalyzer.java` `Parameters.maxCandidateMidi`; native: polyphonic.rs max_candidate_midi |
+| `recognition.polyphonic.harmonics` | Spectrum: partials per note | — | 12 | 4 to 24 | listening restart | `PolyphonicAnalyzer.java` `Parameters.harmonics`; native: polyphonic.rs harmonics |
+| `recognition.polyphonic.max-harmonic` | Spectrum: highest partial | Hz | 5000.0 | 1000 to 12000 | listening restart | `PolyphonicAnalyzer.java` `Parameters.maxHarmonicHz`; native: polyphonic.rs max_harmonic_hz |
+| `recognition.polyphonic.tolerance` | Spectrum: partial tolerance | cents | 25.0 | 5 to 50 | listening restart | `PolyphonicAnalyzer.java` `Parameters.harmonicToleranceCents`; native: polyphonic.rs harmonic_tolerance_cents |
+| `recognition.polyphonic.candidates` | Spectrum: pitches per frame | — | 6 | 1 to 12 | listening restart | `PolyphonicAnalyzer.java` `Parameters.maxCandidates`; native: polyphonic.rs max_candidates |
+
+#### Advanced: Chord spectrum, floor (`Section.POLYPHONIC_2`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.polyphonic.min-relative` | Spectrum: weakest pitch kept | % | 0.10 | 0.01 to 0.5 | listening restart | `PolyphonicAnalyzer.java` `Parameters.minRelativeSalience`; native: polyphonic.rs min_relative_salience |
+| `recognition.polyphonic.floor` | Spectrum: level floor | dB | -70.0 | -100 to -40 | listening restart | `PolyphonicAnalyzer.java` `Parameters.floorDb`; native: polyphonic.rs floor_db |
+| `recognition.polyphonic.subharmonic` | Spectrum: lower note check | % | 0.30 | 0.05 to 0.9 | listening restart | `PolyphonicAnalyzer.java` `Parameters.subharmonicRatio`; native: polyphonic.rs subharmonic_ratio |
+| `recognition.polyphonic.floor-width` | Spectrum: floor width | Hz | 25.0 | 5 to 100 | listening restart | `PolyphonicAnalyzer.java` `FLOOR_HALF_WIDTH_HZ`; native: polyphonic.rs FLOOR_HALF_WIDTH_HZ |
+| `recognition.polyphonic.floor-factor` | Spectrum: floor factor | × | 2.0 | 1 to 6 | listening restart | `PolyphonicAnalyzer.java` `FLOOR_FACTOR`; native: polyphonic.rs FLOOR_FACTOR |
+
+#### Advanced: Struck notes, growth (`Section.ATTACK_1`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.attack.lag` | Struck: growth span | hops | 22 | 4 to 64 | listening restart | `AttackAnalyzer.java` `Parameters.lagHops`; native: attack.rs lag_hops |
+| `recognition.attack.max-frequency` | Struck: highest frequency | Hz | 5000.0 | 1000 to 12000 | listening restart | `AttackAnalyzer.java` `Parameters.maxHz`; native: attack.rs max_hz |
+| `recognition.attack.partials` | Struck: partials per note | — | 14 | 4 to 24 | listening restart | `AttackAnalyzer.java` `Parameters.partials`; native: attack.rs partials |
+| `recognition.attack.beta` | Struck: weight of high partials | — | 0.3 | 0 to 2 | listening restart | `AttackAnalyzer.java` `Parameters.beta`; native: attack.rs beta |
+| `recognition.attack.sigma` | Struck: partial width | — | 1.2 | 0.3 to 4 | listening restart | `AttackAnalyzer.java` `Parameters.sigmaBins`; native: attack.rs sigma_bins |
+
+#### Advanced: Struck notes, tuning (`Section.ATTACK_2`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.attack.evidence-partials` | Struck tuning: partials measured | — | 12 | 4 to 24 | next run | `AttackEvidence.java` `PARTIALS` |
+| `recognition.attack.evidence-search` | Struck tuning: search | cents | 60.0 | 10 to 100 | next run | `AttackEvidence.java` `SEARCH_CENTS` |
+| `recognition.attack.evidence-peak` | Struck tuning: smallest peak | % | 0.03 | 0.01 to 0.2 | next run | `AttackEvidence.java` `MIN_PEAK_SHARE` |
+
+#### Advanced: Chord evidence and strum check (`Section.CHORD_EVIDENCE`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.chord-evidence.partial-presence` | Chord: partial present from | % | 0.05 | 0.01 to 0.3 | listening restart | `ChordEvidence.java` `PARTIAL_PRESENCE_RATIO`; native: chord.rs PARTIAL_PRESENCE_RATIO |
+| `recognition.chord-evidence.neighbour-margin` | Chord: whole-tone check | × | 1.5 | 1 to 4 | listening restart | `ChordEvidence.java` `NEIGHBOUR_MARGIN`; native: chord.rs NEIGHBOUR_MARGIN |
+| `recognition.chord-evidence.strum-window` | Strum check: window | ms | 300 | 100 to 1000 | listening restart | `StrumClipMeter.java` Parameters 300_000_000L; native: strum_clip.rs WINDOW_NANOS |
+| `recognition.chord-evidence.strum-quiet` | Strum check: quiet before | hops | 60 | 10 to 200 | listening restart | `StrumClipMeter.java` Parameters 60; native: strum_clip.rs ARM_QUIET_HOPS |
+| `recognition.chord-evidence.strum-rise` | Strum check: rise | dB | 12.0 | 3 to 30 | listening restart | `StrumClipMeter.java` Parameters 12.0; native: strum_clip.rs ATTACK_RISE_DB |
+| `recognition.chord-evidence.strum-clip-share` | Strum check: clipping share | ‰ | 0.005 | 0.001 to 0.05 | listening restart | `StrumClipMeter.java` Parameters 0.005; native: strum_clip.rs CLIP_SHARE |
+
+#### Advanced: Input clean-up (`Section.FRONT_END`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.front-end.high-pass` | Rumble filter corner | Hz | 40.0 | 10 to 120 | listening restart | `HighPass.java` `CORNER_HZ`; native: front_end.rs CORNER_HZ |
+| `recognition.front-end.noise-rise` | Noise level: rise speed | dB/s | 0.5 | 0.1 to 5 | listening restart | `NoiseEstimator.java` `RISE_DB_PER_SECOND`; native: front_end.rs RISE_DB_PER_SECOND |
+| `recognition.front-end.noise-fall` | Noise level: fall speed | — | 0.2 | 0.1 to 1 | listening restart | `NoiseEstimator.java` `FALL_RATE`; native: front_end.rs FALL_RATE |
+| `recognition.front-end.noise-trusted` | Noise level: trusted after | hops | 188 | 20 to 1000 | listening restart | `NoiseEstimator.java` `TRUSTED_AFTER_HOPS`; native: front_end.rs TRUSTED_AFTER_HOPS |
+
+#### Advanced: Noise gate (`Section.NOISE_GATE`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.noise-gate.open` | Gate: opens above the noise by | dB | 9.0 | 6 to 30 | listening restart | `NoiseGate.java` `OPEN_MARGIN_DB`; native: front_end.rs OPEN_MARGIN_DB |
+| `recognition.noise-gate.close` | Gate: closes under the noise plus | dB | 5.0 | 0 to 8 | listening restart | `NoiseGate.java` `CLOSE_MARGIN_DB`; native: front_end.rs CLOSE_MARGIN_DB |
+| `recognition.noise-gate.reduction` | Gate: reduction | dB | 20.0 | 0 to 60 | listening restart | `NoiseGate.java` `REDUCTION_DB`; native: front_end.rs REDUCTION_DB |
+| `recognition.noise-gate.hold` | Gate: hold | hops | 19 | 1 to 100 | listening restart | `NoiseGate.java` `HOLD_HOPS`; native: front_end.rs HOLD_HOPS |
+| `recognition.noise-gate.subtraction` | Noise subtraction: strength | × | 1.5 | 0.5 to 4 | listening restart | `SpectralSubtractor.java` `ALPHA`; native: front_end.rs ALPHA |
+| `recognition.noise-gate.subtraction-floor` | Noise subtraction: floor | % | 0.05 | 0 to 0.3 | listening restart | `SpectralSubtractor.java` `BETA`; native: front_end.rs BETA |
+| `recognition.noise-gate.subtraction-learn` | Noise subtraction: learning speed | % | 0.1 | 0.01 to 1 | listening restart | `SpectralSubtractor.java` `LEARN_RATE`; native: front_end.rs LEARN_RATE |
+
+#### Advanced: Gain suggestion (`Section.GAIN`)
+
+| Key | Meaning | Unit | Default | Bounds | Takes effect | Replaces |
+|---|---|---|---|---|---|---|
+| `recognition.gain.target` | Gain suggestion: playing level aimed at | dBFS | -22.0 | -40 to -10 | next run | `GainSuggester.java` `TARGET_PLAYING_RMS_DBFS` |
+| `recognition.gain.max-peak` | Gain suggestion: highest peak | dBFS | -3.0 | -12 to -1 | next run | `GainSuggester.java` `MAX_PEAK_DBFS` |
+| `recognition.gain.no-change` | Gain suggestion: nothing to change within | dB | 1.5 | 0.5 to 6 | next run | `GainSuggester.java` `NO_CHANGE_DB` |
+| `recognition.gain.min-snr` | Gain suggestion: playing above the noise by | dB | 20.0 | 6 to 40 | next run | `GainSuggester.java` `MIN_SIGNAL_TO_NOISE_DB` |
+
+<!-- spec026-sections:end -->
 
 ## 5. The chord rule's migration and the rule for later updates
 

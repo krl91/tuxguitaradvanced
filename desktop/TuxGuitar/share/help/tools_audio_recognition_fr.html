@@ -133,6 +133,121 @@
     <tr><td>Harmoniques par corde (accords)</td><td></td><td>1</td><td>4</td><td>2</td><td>plus de cordes vérifiables, de façon moins fiable</td><td>moins de cordes vérifiables séparément</td></tr>
     <tr><td>Durée de confirmation d'un accord</td><td>ms</td><td>20</td><td>150</td><td>43</td><td>les accords sont acceptés plus vite</td><td>plus stable, plus lent. Arrondi à des pas d'analyse entiers</td></tr>
     </table>
+    <h2 id="onset">Avancé : Attaques</h2>
+    <p>Comment une attaque (un nouveau coup de médiator) est trouvée : une montée du changement du spectre, puis un niveau après l'attaque plus haut qu'avant. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer. Le pas de l'analyse (256 échantillons) est l'unité des fenêtres.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Attaque : facteur de flux</td><td>×</td><td>0.5</td><td>6</td><td>1.5</td><td>plus d'attaques trouvées, plus de fausses</td><td>moins de fausses attaques, plus de notes rejouées manquées</td></tr>
+    <tr><td>Attaque : marge de flux</td><td></td><td>1</td><td>20</td><td>5</td><td>plus sensible dans les passages calmes</td><td>moins d'attaques dues au bruit</td></tr>
+    <tr><td>Attaque : repos après une attaque</td><td>pas</td><td>3</td><td>48</td><td>12</td><td>les notes répétées rapides sont toutes entendues</td><td>une note ne compte jamais deux fois</td></tr>
+    <tr><td>Attaque : niveau avant, depuis</td><td>pas</td><td>2</td><td>19</td><td>19</td><td>les notes rejouées sur une note qui s'éteint sont mieux trouvées</td><td>une note précédente qui sonne masque plus de notes rejouées</td></tr>
+    <tr><td>Attaque : niveau avant, jusqu’à</td><td>pas</td><td>1</td><td>19</td><td>2</td><td>la montée est mesurée par rapport au niveau le plus récent</td><td>la montée est mesurée par rapport à un niveau plus ancien</td></tr>
+    <tr><td>Attaque : niveau après, depuis</td><td>pas</td><td>1</td><td>13</td><td>4</td><td>le transitoire lui-même compte davantage</td><td>seul le niveau tenu compte</td></tr>
+    <tr><td>Attaque : niveau après, jusqu’à</td><td>pas</td><td>4</td><td>13</td><td>13</td><td>attaques signalées plus vite, sur moins de son</td><td>plus sûr, signalé plus tard</td></tr>
+    </table>
+    <h2 id="onset-fast">Avancé : Attaques des traits rapides</h2>
+    <p>La même détection avec les fenêtres des traits rapides, où les notes se suivent de près. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Trait rapide : facteur de flux</td><td>×</td><td>0.5</td><td>6</td><td>1.5</td><td>plus d'attaques trouvées, plus de fausses</td><td>moins de fausses attaques</td></tr>
+    <tr><td>Trait rapide : marge de flux</td><td></td><td>1</td><td>20</td><td>5</td><td>plus sensible</td><td>moins d'attaques dues au bruit</td></tr>
+    <tr><td>Trait rapide : repos après une attaque</td><td>pas</td><td>2</td><td>24</td><td>6</td><td>les notes plus rapprochées sont toutes entendues</td><td>une note ne compte jamais deux fois</td></tr>
+    <tr><td>Trait rapide : niveau avant, depuis</td><td>pas</td><td>2</td><td>19</td><td>8</td><td>une note précédente qui s'éteint masque moins de notes rejouées</td><td>le niveau avant est pris sur plus de pas</td></tr>
+    <tr><td>Trait rapide : niveau avant, jusqu’à</td><td>pas</td><td>1</td><td>8</td><td>2</td><td>la montée est mesurée par rapport au niveau le plus récent</td><td>la montée est mesurée par rapport à un niveau plus ancien</td></tr>
+    <tr><td>Trait rapide : niveau après, depuis</td><td>pas</td><td>1</td><td>8</td><td>3</td><td>le transitoire lui-même compte davantage</td><td>seul le niveau tenu compte</td></tr>
+    <tr><td>Trait rapide : niveau après, jusqu’à</td><td>pas</td><td>3</td><td>8</td><td>8</td><td>signalé plus vite, sur moins de son</td><td>plus sûr, signalé plus tard</td></tr>
+    </table>
+    <h2 id="pitch">Avancé : Hauteur</h2>
+    <p>Comment une hauteur est lue dans le son et comparée aux notes attendues. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Hauteur : seuil YIN</td><td>%</td><td>5</td><td>50</td><td>20</td><td>seules les notes nettes ont une hauteur</td><td>les notes faibles aussi, plus de fausses</td></tr>
+    <tr><td>Hauteur : recherche de la note attendue</td><td>cents</td><td>5</td><td>50</td><td>20</td><td>notes fausses moins souvent confirmées</td><td>notes voisines plus souvent prises</td></tr>
+    <tr><td>Hauteur : périodes de la note attendue</td><td></td><td>2</td><td>8</td><td>4</td><td>plus rapide, sur moins de son</td><td>plus stable, demande une note plus longue</td></tr>
+    <tr><td>Hauteur : côté aigu maximal</td><td>cents</td><td>20</td><td>49</td><td>49</td><td>frettes hautes trop appuyées refusées plus tôt</td><td>jusqu'à juste sous le demi-ton suivant</td></tr>
+    <tr><td>Hauteur : candidat d'attaque le plus grave</td><td>MIDI</td><td>24</td><td>40</td><td>28</td><td>les fausses notes graves concourent aussi</td><td>moins de calcul</td></tr>
+    <tr><td>Hauteur : candidat d'attaque le plus aigu</td><td>MIDI</td><td>80</td><td>112</td><td>100</td><td>moins de calcul</td><td>les fausses notes aiguës concourent aussi</td></tr>
+    </table>
+    <h2 id="polyphonic-1">Avancé : Spectre des accords, candidats</h2>
+    <p>Quelles hauteurs le spectre des accords cherche, et comment il pèse chacune d'après ses harmoniques. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Spectre : candidat le plus grave</td><td>MIDI</td><td>24</td><td>60</td><td>33</td><td>cordes graves d'une guitare accordée plus bas trouvées</td><td>moins de fausses notes graves</td></tr>
+    <tr><td>Spectre : candidat le plus aigu</td><td>MIDI</td><td>64</td><td>112</td><td>88</td><td>moins de fausses notes aiguës</td><td>frettes les plus hautes trouvées</td></tr>
+    <tr><td>Spectre : harmoniques par note</td><td></td><td>4</td><td>24</td><td>12</td><td>plus stable sur un son brillant</td><td>notes sourdes encore trouvées</td></tr>
+    <tr><td>Spectre : harmonique la plus haute</td><td>Hz</td><td>1000</td><td>12000</td><td>5000</td><td>harmoniques hautes des autres notes comptent moins</td><td>plus d'harmoniques des notes aiguës comptent</td></tr>
+    <tr><td>Spectre : tolérance des harmoniques</td><td>cents</td><td>5</td><td>50</td><td>25</td><td>harmoniques d'autres notes moins souvent prises</td><td>cordes un peu fausses encore trouvées</td></tr>
+    <tr><td>Spectre : hauteurs par trame</td><td></td><td>1</td><td>12</td><td>6</td><td>seulement les hauteurs les plus fortes</td><td>chaque corde d'un accord complet</td></tr>
+    </table>
+    <h2 id="polyphonic-2">Avancé : Spectre des accords, plancher</h2>
+    <p>Quand le spectre des accords cesse de nommer des hauteurs, et le plancher qu'il retire avant de chercher les harmoniques. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Spectre : hauteur la plus faible gardée</td><td>%</td><td>1</td><td>50</td><td>10</td><td>cordes douces d'un accord nommées</td><td>moins de fausses hauteurs venues des harmoniques</td></tr>
+    <tr><td>Spectre : niveau plancher</td><td>dB</td><td>-100</td><td>-40</td><td>-70</td><td>jeu très doux analysé</td><td>silence et ronflement ne nomment rien</td></tr>
+    <tr><td>Spectre : vérification de la note plus grave</td><td>%</td><td>5</td><td>90</td><td>30</td><td>octave en dessous choisie plus souvent</td><td>hauteur entendue gardée</td></tr>
+    <tr><td>Spectre : largeur du plancher</td><td>Hz</td><td>5</td><td>100</td><td>25</td><td>harmoniques proches ressortent mieux</td><td>bruit large mieux retiré</td></tr>
+    <tr><td>Spectre : facteur du plancher</td><td>×</td><td>1</td><td>6</td><td>2</td><td>harmoniques faibles comptent</td><td>seules les harmoniques nettes comptent</td></tr>
+    </table>
+    <h2 id="attack-1">Avancé : Notes frappées, croissance</h2>
+    <p>Comment les notes qui viennent d'être frappées sont reconnues, même sur des cordes qui sonnent encore : la croissance du spectre est expliquée par des modèles des notes candidates. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Frappe : durée de la croissance</td><td>pas</td><td>4</td><td>64</td><td>22</td><td>frappes rapprochées séparées</td><td>attaques lentes vues en entier</td></tr>
+    <tr><td>Frappe : fréquence la plus haute</td><td>Hz</td><td>1000</td><td>12000</td><td>5000</td><td>moins de bruit du médiator</td><td>harmoniques des notes aiguës comptent</td></tr>
+    <tr><td>Frappe : harmoniques par note</td><td></td><td>4</td><td>24</td><td>14</td><td>notes partageant des harmoniques moins distinguées</td><td>notes reconnues par tout leur son</td></tr>
+    <tr><td>Frappe : poids des harmoniques hautes</td><td></td><td>0</td><td>2</td><td>0.3</td><td>harmoniques hautes pèsent autant</td><td>premières harmoniques décident</td></tr>
+    <tr><td>Frappe : largeur des harmoniques</td><td></td><td>0.3</td><td>4</td><td>1.2</td><td>notes voisines mieux distinguées</td><td>cordes un peu fausses correspondent encore</td></tr>
+    </table>
+    <h2 id="attack-2">Avancé : Notes frappées, justesse</h2>
+    <p>À quelle distance une note frappée est de sa hauteur exacte, mesurée sur ses nouvelles harmoniques : l'entraînement la compare à l'écart accepté. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Justesse frappée : harmoniques mesurées</td><td></td><td>4</td><td>24</td><td>12</td><td>seulement les plus nettes</td><td>médiane plus stable</td></tr>
+    <tr><td>Justesse frappée : recherche</td><td>cents</td><td>10</td><td>100</td><td>60</td><td>pics voisins moins souvent pris</td><td>notes très fausses encore mesurées</td></tr>
+    <tr><td>Justesse frappée : plus petit pic</td><td>%</td><td>1</td><td>20</td><td>3</td><td>harmoniques faibles aussi mesurées</td><td>seulement les harmoniques fortes</td></tr>
+    </table>
+    <h2 id="chord-evidence">Avancé : Preuve d'accord et vérification du strum</h2>
+    <p>Comment la preuve d'un accord attendu est lue dans le spectre, et comment le premier strum d'une vérification est mesuré pour son niveau et sa saturation. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Accord : harmonique présente dès</td><td>%</td><td>1</td><td>30</td><td>5</td><td>cordes douces comptent comme entendues</td><td>seules les cordes nettes comptent</td></tr>
+    <tr><td>Accord : vérification au ton près</td><td>×</td><td>1</td><td>4</td><td>1.5</td><td>accord un ton à côté refusé plus tôt</td><td>refusé seulement s'il est nettement à côté</td></tr>
+    <tr><td>Vérification du strum : fenêtre</td><td>ms</td><td>100</td><td>1000</td><td>300</td><td>seulement l'attaque</td><td>tout le son du strum</td></tr>
+    <tr><td>Vérification du strum : calme avant</td><td>pas</td><td>10</td><td>200</td><td>60</td><td>trouvé après un moment bruyant</td><td>bruit lent pas pris pour un strum</td></tr>
+    <tr><td>Vérification du strum : montée</td><td>dB</td><td>3</td><td>30</td><td>12</td><td>strums doux la lancent, le bruit aussi</td><td>seuls les strums nets la lancent</td></tr>
+    <tr><td>Vérification du strum : part saturée</td><td>‰</td><td>1</td><td>50</td><td>5</td><td>la moindre saturation signalée</td><td>seulement une forte saturation</td></tr>
+    </table>
+    <h2 id="front-end">Avancé : Nettoyage de l'entrée</h2>
+    <p>Avec la réduction de bruit active, comment l'entrée est nettoyée avant la reconnaissance : le filtre anti-grondement, et comment le niveau du bruit de fond est estimé. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Coupure du filtre anti-grondement</td><td>Hz</td><td>10</td><td>120</td><td>40</td><td>cordes graves gardent leur corps</td><td>plus de grondement coupé</td></tr>
+    <tr><td>Niveau du bruit : vitesse de montée</td><td>dB/s</td><td>0.1</td><td>5</td><td>0.5</td><td>une note tenue n'est pas prise pour du bruit</td><td>un bruit qui grandit est suivi plus tôt</td></tr>
+    <tr><td>Niveau du bruit : vitesse de descente</td><td></td><td>0.1</td><td>1</td><td>0.2</td><td>l'estimation descend doucement</td><td>elle descend tout de suite</td></tr>
+    <tr><td>Niveau du bruit : fiable après</td><td>pas</td><td>20</td><td>1000</td><td>188</td><td>le gate agit plus tôt</td><td>une estimation plus sûre d'abord</td></tr>
+    </table>
+    <h2 id="noise-gate">Avancé : Noise gate</h2>
+    <p>Avec la réduction de bruit active, quand le noise gate s'ouvre et se ferme, de combien il baisse les silences, et les valeurs de la soustraction du bruit. La marge de fermeture reste toujours sous celle d'ouverture. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Gate : s'ouvre au-dessus du bruit de</td><td>dB</td><td>6</td><td>30</td><td>9</td><td>les notes douces l'ouvrent, un bruit fort aussi</td><td>seules les notes nettes l'ouvrent</td></tr>
+    <tr><td>Gate : se ferme sous le bruit plus</td><td>dB</td><td>0</td><td>8</td><td>5</td><td>une note qui s'éteint est gardée plus longtemps</td><td>se ferme plus tôt sur une note qui s'éteint</td></tr>
+    <tr><td>Gate : réduction</td><td>dB</td><td>0</td><td>60</td><td>20</td><td>le bruit reste audible</td><td>silences plus calmes</td></tr>
+    <tr><td>Gate : maintien</td><td>pas</td><td>1</td><td>100</td><td>19</td><td>se ferme vite</td><td>les courts silences restent ouverts</td></tr>
+    <tr><td>Soustraction du bruit : force</td><td>×</td><td>0.5</td><td>4</td><td>1.5</td><td>un peu de bruit reste</td><td>plus de bruit retiré, notes plus minces</td></tr>
+    <tr><td>Soustraction du bruit : plancher</td><td>%</td><td>0</td><td>30</td><td>5</td><td>silences plus profonds, plus d'artefacts</td><td>moins d'artefacts, plus de bruit restant</td></tr>
+    <tr><td>Soustraction du bruit : vitesse d'apprentissage</td><td>%</td><td>1</td><td>100</td><td>10</td><td>une image du bruit plus stable</td><td>un bruit qui change est suivi plus tôt</td></tr>
+    </table>
+    <h2 id="gain">Avancé : Suggestion de gain</h2>
+    <p>Le gain que propose la vérification du niveau : le niveau de jeu visé, la crête la plus haute permise, quand il n'y a rien à changer, et quand une hausse monterait surtout le bruit. Pris en compte à la prochaine vérification du niveau. Réglages experts : les valeurs recommandées ont été mesurées ; ne les changez que pour essayer.</p>
+    <table>
+    <tr><th>Réglage</th><th>Unité</th><th>Minimum</th><th>Maximum</th><th>Recommandé</th><th>Valeur plus basse</th><th>Valeur plus haute</th></tr>
+    <tr><td>Suggestion de gain : niveau de jeu visé</td><td>dBFS</td><td>-40</td><td>-10</td><td>-22</td><td>niveau plus doux, plus de marge</td><td>niveau plus fort, plus près de la saturation</td></tr>
+    <tr><td>Suggestion de gain : crête la plus haute</td><td>dBFS</td><td>-12</td><td>-1</td><td>-3</td><td>plus de marge avant la saturation</td><td>plus fort, plus près de la saturation</td></tr>
+    <tr><td>Suggestion de gain : rien à changer en deçà de</td><td>dB</td><td>0.5</td><td>6</td><td>1.5</td><td>petites corrections proposées</td><td>seulement les grandes</td></tr>
+    <tr><td>Suggestion de gain : jeu au-dessus du bruit de</td><td>dB</td><td>6</td><td>40</td><td>20</td><td>l'avertissement de bruit moins souvent</td><td>l'avertissement plus tôt</td></tr>
+    </table>
     <h2 id="limits">Limites</h2><p>La reconnaissance repose uniquement sur la hauteur : elle ne peut pas savoir quelle corde ou quelle case a été utilisée. Les techniques écrites dans la partition (hammer-on, pull-off, slide, bend, vibrato) sont écoutées, mais aucune n'est encore vérifiée : la pratique les affiche « pas encore vérifiable » plutôt que de deviner. Les notes liées (hammer-on, pull-off, glissé) n'ont pas d'attaque au médiator et peuvent devoir être rejouées ou passées ; les accepter sans attaque et refuser les cordes en trop sont des propositions encore à l'étude, elles ne sont donc pas proposées comme réglages.</p>
     <h2 id="calibration">Calibrer la reconnaissance pour une entrée</h2><p>L'onglet <strong>Entrée</strong> de la fenêtre d'entraînement montre un point coloré à côté du choix de l'entrée. <strong>Gris</strong> : aucune entrée sélectionnée. <strong>Orange</strong> : cette entrée n'a jamais été calibrée (ou le défaut a été choisi), les réglages par défaut sont utilisés. <strong>Vert</strong> : calibrée, au moins 60 % des sons du morceau de calibration reconnus. <strong>Rouge</strong> : calibrée, mais sous 60 %. Une phrase à côté du point avertit quand la réduction de bruit ou le gain d'entrée n'est plus celui de l'enregistrement ; le profil reste utilisé. Un profil fait à une autre fréquence d'échantillonnage n'est pas appliqué (orange, avec la raison).</p><p><strong>Calibrer la reconnaissance</strong> ouvre une seule fenêtre qui vous guide : accordage, conseils, puis un court morceau à jouer une fois, sans tempo. La fenêtre écoute seule et compte les sons sans dire lequel elle a entendu ; elle s'arrête quand tous ont été entendus. Les mesures de l'enregistrement (sons entendus, niveau le plus haut, bruit de fond, saturation) vous sont montrées et on vous demande s'il est assez bon. Les meilleurs réglages pour cette entrée sont ensuite cherchés sur l'enregistrement, deux minutes au plus, et la fenêtre bloque l'application jusqu'à la fin. Le résultat montre le taux de reconnaissance avec les réglages par défaut et avec ceux trouvés, pour les notes, les accords et au total.</p><p>Si l'enregistrement est inutilisable, ou si les réglages trouvés ne valent pas mieux que le défaut, ou valent mieux mais restent sous 60 %, l'application ne décide jamais à votre place : vous pouvez réenregistrer, utiliser la configuration par défaut ou arrêter. Fermer la fenêtre, à n'importe quelle étape, demande « Arrêter la calibration ? » ; rien n'est alors enregistré. <strong>Oublier la calibration</strong> supprime le profil de l'entrée choisie seulement, après confirmation.</p><p>La fenêtre montre une <strong>image de la tablature du prochain son à jouer</strong> : six lignes (la corde la plus fine en haut) avec le numéro de case sur la corde de chaque note, 0 pour une corde à vide, les numéros d'un accord étant l'un au-dessus de l'autre. Elle change à chaque son entendu. À la question sur la qualité de l'enregistrement, une case <strong>Garder une copie de cet enregistrement pour le diagnostic</strong>, décochée à chaque fois, écrit l'enregistrement en fichier WAV dans le dossier <code>tuxguitar-calibration-takes</code> de votre dossier personnel, seulement si vous la cochez ; la fenêtre indique où. L'application ne le relit jamais et ne l'envoie nulle part.</p><p>Le profil s'applique partout où la reconnaissance est utilisée (accordeur, Suivi, Arcade, Attente), sauf pour les paramètres propres à l'accordeur. <strong>Aucun son n'est conservé</strong> sauf si vous cochez la copie de diagnostic : l'enregistrement reste en mémoire pendant la calibration et disparaît à la fin ou quand vous arrêtez. Le résultat est mesuré sur un seul enregistrement : confirmez-le en jouant.</p>
     </section>

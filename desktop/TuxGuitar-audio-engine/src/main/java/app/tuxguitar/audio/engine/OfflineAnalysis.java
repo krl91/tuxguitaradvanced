@@ -72,10 +72,10 @@ public final class OfflineAnalysis {
 		}
 		LevelAnalyzer levels = AudioEngine.levelAnalyzer(settings);
 		ArticulationDetector articulation = AudioEngine.articulationDetector(settings);
-		PitchEstimator estimator = PitchEngineCatalog.resolve(settings.get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate);
-		PolyphonicAnalyzer polyphonic = (spectrum ? new PolyphonicAnalyzer(PolyphonicAnalyzer.Parameters.defaults(), sampleRate) : null);
+		PitchEstimator estimator = PitchEngineCatalog.resolve(settings.get(RecognitionParameters.ENGINE_PITCH)).create(sampleRate, settings);
+		PolyphonicAnalyzer polyphonic = (spectrum ? new PolyphonicAnalyzer(PolyphonicAnalyzer.Parameters.of(settings), sampleRate) : null);
 		AttackAnalyzer attacks = (attackCandidates != null && attackCandidates.length > 0
-				? new AttackAnalyzer(AttackAnalyzer.Parameters.defaults(), sampleRate, HOP, attackCandidates) : null);
+				? new AttackAnalyzer(AttackAnalyzer.Parameters.of(settings), sampleRate, HOP, attackCandidates) : null);
 		if( hops != null ) {
 			hops.configure(sampleRate);
 		}
@@ -125,11 +125,13 @@ public final class OfflineAnalysis {
 				hops.hop(hop, 0, HOP);
 			}
 		}
-		float[] records = NativeRecognitionLibrary.analyze(mono, sampleRate, NativeParameters.of(settings), spectrum, attackCandidates, null, chordRequired, chordTolerated);
+		float[] records = NativeRecognitionLibrary.analyzeTuned(mono, sampleRate, NativeParameters.of(settings), NativeParameters.tuning(settings), spectrum,
+				attackCandidates, null, chordRequired, chordTolerated);
 		List<AnalysisFrame> frames = new ArrayList<AnalysisFrame>();
+		PolyphonicAnalyzer.Parameters polyphonic = PolyphonicAnalyzer.Parameters.of(settings);
 		int offset = 0;
 		while( offset < records.length ) {
-			frames.add(FrameRecords.read(records, offset));
+			frames.add(FrameRecords.read(records, offset, polyphonic));
 			offset += FrameRecords.length(records, offset);
 		}
 		return frames;

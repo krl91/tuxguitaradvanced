@@ -13,7 +13,7 @@ use crate::analysis::strum_clip::{self, StrumClip, StrumShared};
 use crate::analysis::{Parameters, Tuning};
 use crate::workgroup::Workgroup;
 use crate::capture::{Capture, CaptureShared};
-use crate::recognition::{self, front_of, strum_of, AttackSlot, Config, Requests, Shared, Worker, HOP_BLOCK};
+use crate::recognition::{self, front_of, strum_of, strum_of_tuned, AttackSlot, Config, Requests, Shared, Worker, HOP_BLOCK};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
@@ -138,7 +138,7 @@ fn open_live(env: &mut JNIEnv, input: &JString, channel: jint, java_nanos_at_ope
     };
     let rate = capture.sample_rate() as i32;
     let shared = Arc::new(Shared::new(capture_shared, rate, java_nanos_at_open));
-    let worker = Worker::new_tuned(shared.clone(), parameters, tuning, front_of(&parameters), strum_of(&parameters));
+    let worker = Worker::new_tuned(shared.clone(), parameters, tuning, front_of(&parameters), strum_of_tuned(&parameters, &tuning));
     let thread = recognition::start_in(worker, Workgroup::of_device(capture.name()));
     let live = Live { shared, capture, thread: Some(thread), parameters, tuning, requests: Requests::default() };
     let handle = LiveHandle { live: Mutex::new(Some(live)), frames_scratch: Mutex::new(Vec::new()), hops_scratch: Mutex::new(Vec::new()) };
@@ -168,7 +168,7 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
         // the new pipeline is built here, on Java's thread, with the requests made so far: the loop only swaps it in
         let pipeline = if recognition::analysis_changed(&live.parameters, &parameters) { Some(recognition::pipeline_for_tuned(live.shared.rate, parameters, live.tuning, &live.requests)) } else { None };
         live.parameters = parameters;
-        live.shared.config.post(Box::new(Config { pipeline, front: front_of(&parameters), strum: strum_of(&parameters) }));
+        live.shared.config.post(Box::new(Config { pipeline, front: front_of(&parameters), strum: strum_of_tuned(&parameters, &live.tuning) }));
     });
 }
 
@@ -190,7 +190,7 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
         live.tuning = tuning;
         let parameters = live.parameters;
         let pipeline = Some(recognition::pipeline_for_tuned(live.shared.rate, parameters, tuning, &live.requests));
-        live.shared.config.post(Box::new(Config { pipeline, front: front_of(&parameters), strum: strum_of(&parameters) }));
+        live.shared.config.post(Box::new(Config { pipeline, front: front_of(&parameters), strum: strum_of_tuned(&parameters, &tuning) }));
     });
 }
 
@@ -246,7 +246,7 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
 ) {
     let pitches = ints(&mut env, &pitches);
     with_live(handle, |live| {
-        live.shared.attack.post(Box::new(AttackSlot::of(live.shared.rate, &pitches)));
+        live.shared.attack.post(Box::new(AttackSlot::of_tuned(live.shared.rate, live.tuning.attack, &pitches)));
         live.requests.attack = pitches;
     });
 }
@@ -507,6 +507,32 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
     float_array(&mut env, &out)
 }
 
+/// As `frontEnd`, with the tuning array (spec 026): null when it is missing or of another length.
+#[no_mangle]
+pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_frontEndTuned<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    mono: JFloatArray<'local>,
+    rate: jint,
+    parameters: JFloatArray<'local>,
+    tuning: JDoubleArray<'local>,
+) -> jfloatArray {
+    let Some((samples, parameters)) = offline_input(&mut env, &mono, rate, &parameters) else {
+        return std::ptr::null_mut();
+    };
+    let Some(tuning) = tuning_of(&mut env, &tuning) else {
+        return std::ptr::null_mut();
+    };
+    let mut front = FrontEnd::new_tuned(rate as f64, pipeline::HOP, tuning.front);
+    front.set(front_of(&parameters));
+    let hops = samples.len() / pipeline::HOP;
+    let mut out = samples[..hops * pipeline::HOP].to_vec();
+    for hop in out.chunks_exact_mut(pipeline::HOP) {
+        front.process(hop);
+    }
+    float_array(&mut env, &out)
+}
+
 #[no_mangle]
 pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_strumClipOffline<'local>(
     mut env: JNIEnv<'local>,
@@ -518,14 +544,37 @@ pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecogn
     let Some((samples, parameters)) = offline_input(&mut env, &mono, rate, &parameters) else {
         return std::ptr::null_mut();
     };
+    strum_clip_reading(&mut env, &samples, rate, strum_of(&parameters))
+}
+
+/// As `strumClipOffline`, with the tuning array (spec 026): null when it is missing or of another length.
+#[no_mangle]
+pub extern "system" fn Java_app_tuxguitar_audio_engine_nativeengine_NativeRecognitionLibrary_strumClipOfflineTuned<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    mono: JFloatArray<'local>,
+    rate: jint,
+    parameters: JFloatArray<'local>,
+    tuning: JDoubleArray<'local>,
+) -> jfloatArray {
+    let Some((samples, parameters)) = offline_input(&mut env, &mono, rate, &parameters) else {
+        return std::ptr::null_mut();
+    };
+    let Some(tuning) = tuning_of(&mut env, &tuning) else {
+        return std::ptr::null_mut();
+    };
+    strum_clip_reading(&mut env, &samples, rate, strum_of_tuned(&parameters, &tuning))
+}
+
+fn strum_clip_reading(env: &mut JNIEnv, samples: &[f32], rate: jint, p: crate::analysis::strum_clip::StrumParameters) -> jfloatArray {
     let shared = StrumShared::default();
-    let mut meter = StrumClip::new(strum_of(&parameters));
+    let mut meter = StrumClip::new(p);
     meter.configure(rate, &shared);
     for hop in samples.chunks_exact(pipeline::HOP) {
         meter.hop(hop, &shared);
     }
     let reading = shared.snapshot();
-    float_array(&mut env, &[reading.verdict as f32, reading.clipped_share as f32, reading.rms_dbfs as f32])
+    float_array(env, &[reading.verdict as f32, reading.clipped_share as f32, reading.rms_dbfs as f32])
 }
 
 /// A per-hop analysis of a stream captured by Java (amendment of 2026-11-03): the offline pipeline fed one hop at a time. Its buffers are made at open,

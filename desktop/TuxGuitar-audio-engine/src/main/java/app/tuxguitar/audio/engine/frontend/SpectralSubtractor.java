@@ -15,8 +15,12 @@ public final class SpectralSubtractor implements FrontEndStage {
 	public static final double ALPHA = 1.5;
 	/** Spectral floor: never subtract below this share of the original magnitude. */
 	public static final double BETA = 0.05;
-	/** Share of the new quiet spectrum mixed into the learnt noise spectrum. */
-	private static final double LEARN_RATE = 0.1;
+	/** Share of the new quiet spectrum mixed into the learnt noise spectrum (the default of {@code noise-gate.subtraction-learn}). */
+	public static final double DEFAULT_LEARN_RATE = 0.1;
+
+	private double alpha = ALPHA;
+	private double beta = BETA;
+	private double learnRate = DEFAULT_LEARN_RATE;
 
 	private final double[] window = new double[FRAME];
 	private final double[] noise = new double[FRAME / 2 + 1];
@@ -42,6 +46,13 @@ public final class SpectralSubtractor implements FrontEndStage {
 		}
 	}
 
+	/** Other subtraction values (spec 026, section {@code NOISE_GATE}); set before processing, on the analysis thread. */
+	public void setValues(double alpha, double beta, double learnRate) {
+		this.alpha = alpha;
+		this.beta = beta;
+		this.learnRate = learnRate;
+	}
+
 	/** Tells whether the input is quiet right now (the noise gate is closed): the noise spectrum is learnt then. */
 	public void setQuiet(boolean quiet) {
 		this.quiet = quiet;
@@ -64,9 +75,9 @@ public final class SpectralSubtractor implements FrontEndStage {
 		for( int k = 0 ; k <= FRAME / 2 ; k ++ ) {
 			double magnitude = Math.hypot(this.re[k], this.im[k]);
 			if( learn ) {
-				this.noise[k] = (this.learnedOnce ? (1.0 - LEARN_RATE) * this.noise[k] + LEARN_RATE * magnitude : magnitude);
+				this.noise[k] = (this.learnedOnce ? (1.0 - this.learnRate) * this.noise[k] + this.learnRate * magnitude : magnitude);
 			}
-			double kept = Math.max(magnitude - ALPHA * this.noise[k], BETA * magnitude);
+			double kept = Math.max(magnitude - this.alpha * this.noise[k], this.beta * magnitude);
 			double scale = (magnitude > 0.0 ? kept / magnitude : 0.0);
 			this.re[k] *= scale;
 			this.im[k] *= scale;

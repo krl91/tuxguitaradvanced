@@ -7,6 +7,7 @@ import app.tuxguitar.audio.engine.analysis.AnalysisFrame;
 import app.tuxguitar.audio.engine.analysis.AttackEvidence;
 import app.tuxguitar.audio.engine.analysis.ChordEvidence;
 import app.tuxguitar.audio.engine.analysis.PitchCandidate;
+import app.tuxguitar.audio.engine.analysis.PolyphonicAnalyzer;
 import app.tuxguitar.audio.engine.analysis.SpectrumFrame;
 import app.tuxguitar.audio.engine.recognition.TargetEvidence;
 
@@ -37,7 +38,7 @@ public final class FrameRecords {
 	public static final int PART_CHORD = 8;
 
 	/** The largest record, in floats. */
-	public static final int CAPACITY = 4096;
+	public static final int CAPACITY = 8192;
 
 	private static final AnalysisFrame.LevelState[] STATES = AnalysisFrame.LevelState.values();
 
@@ -159,6 +160,11 @@ public final class FrameRecords {
 	 * @throws IllegalArgumentException if the record is longer than what is left of {@code records}, or malformed
 	 */
 	public static AnalysisFrame read(float[] records, int offset) {
+		return read(records, offset, PolyphonicAnalyzer.Parameters.defaults());
+	}
+
+	/** As {@link #read(float[], int)}, the spectrum carrying the parameters the native engine analysed with (spec 026). */
+	public static AnalysisFrame read(float[] records, int offset, PolyphonicAnalyzer.Parameters polyphonic) {
 		int length = length(records, offset);
 		if (length < HEADER || length > CAPACITY || offset + length > records.length) {
 			throw new IllegalArgumentException("a record of " + length + " floats at " + offset + " does not fit in " + records.length);
@@ -179,7 +185,7 @@ public final class FrameRecords {
 			float[] salience = r.nextFloats(r.nextCount());
 			List<PitchCandidate> candidates = nextCandidates(r);
 			float[] peaks = r.nextFloats(r.nextCount());
-			spectrum = SpectrumFrame.of(binHz, minBandMidi, bandDb, minSalienceMidi, salience, candidates, peaks);
+			spectrum = SpectrumFrame.of(polyphonic, binHz, minBandMidi, bandDb, minSalienceMidi, salience, candidates, peaks);
 		}
 		TargetEvidence target = null;
 		if ((parts & PART_TARGET) != 0) {

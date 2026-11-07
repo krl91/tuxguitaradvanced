@@ -56,6 +56,11 @@ public final class PitchEngineCatalog {
 		/** A new estimator for this sample rate, with the standard analysis window and hop. */
 		PitchEstimator create(int sampleRate);
 
+		/** As {@link #create(int)}, with the values of these settings that the estimator reads (spec 026). */
+		default PitchEstimator create(int sampleRate, RecognitionSettings settings) {
+			return create(sampleRate);
+		}
+
 		/** Where this engine's analysis runs. */
 		default Kind kind() {
 			return Kind.JAVA;
@@ -74,6 +79,11 @@ public final class PitchEngineCatalog {
 		public PitchEstimator create(int sampleRate) {
 			return new TarsosFastYinEstimator(sampleRate, TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE, TarsosFastYinEstimator.DEFAULT_HOP_SIZE);
 		}
+
+		public PitchEstimator create(int sampleRate, RecognitionSettings settings) {
+			return new TarsosFastYinEstimator(sampleRate, TarsosFastYinEstimator.DEFAULT_WINDOW_SIZE, TarsosFastYinEstimator.DEFAULT_HOP_SIZE,
+					settings.get(RecognitionParameters.PITCH_YIN_THRESHOLD));
+		}
 	};
 
 	private static final List<Engine> ENGINES = Collections.unmodifiableList(new ArrayList<Engine>(Collections.singletonList(FASTYIN_ENGINE)));
@@ -91,6 +101,10 @@ public final class PitchEngineCatalog {
 		public PitchEstimator create(int sampleRate) {
 			return FASTYIN_ENGINE.create(sampleRate);
 		}
+
+		public PitchEstimator create(int sampleRate, RecognitionSettings settings) {
+			return FASTYIN_ENGINE.create(sampleRate, settings);
+		}
 	};
 
 	/** The native engine (spec 023): its analysis runs in the crate; {@code create} gives the Java estimator, for the callers that only need one. */
@@ -105,6 +119,10 @@ public final class PitchEngineCatalog {
 
 		public PitchEstimator create(int sampleRate) {
 			return FASTYIN_ENGINE.create(sampleRate);
+		}
+
+		public PitchEstimator create(int sampleRate, RecognitionSettings settings) {
+			return FASTYIN_ENGINE.create(sampleRate, settings);
 		}
 
 		@Override

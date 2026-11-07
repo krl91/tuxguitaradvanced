@@ -19,11 +19,11 @@ struct HighPass {
     y2: f64,
 }
 
-impl HighPass {
-    const CORNER_HZ: f64 = 40.0;
+const CORNER_HZ: f64 = 40.0;
 
-    fn new(sample_rate: f64) -> HighPass {
-        let w0 = 2.0 * std::f64::consts::PI * Self::CORNER_HZ / sample_rate;
+impl HighPass {
+    fn new(sample_rate: f64, corner_hz: f64) -> HighPass {
+        let w0 = 2.0 * std::f64::consts::PI * corner_hz / sample_rate;
         let q = 1.0 / 2.0f64.sqrt();
         let alpha = w0.sin() / (2.0 * q);
         let cos = w0.cos();
@@ -66,15 +66,24 @@ enum Source {
 
 struct NoiseEstimator {
     rise_factor_per_hop: f64,
+    fall_rate: f64,
+    trusted_after_hops: i64,
     floor_rms: f64,
     hops: i64,
     source: Source,
 }
 
 impl NoiseEstimator {
-    fn new(sample_rate: f64, hop_size: usize) -> NoiseEstimator {
+    fn new(sample_rate: f64, hop_size: usize, p: &FrontEndParameters) -> NoiseEstimator {
         let seconds_per_hop = hop_size as f64 / sample_rate;
-        NoiseEstimator { rise_factor_per_hop: 10.0f64.powf(RISE_DB_PER_SECOND * seconds_per_hop / 20.0), floor_rms: 0.0, hops: 0, source: Source::None }
+        NoiseEstimator {
+            rise_factor_per_hop: 10.0f64.powf(p.noise_rise_db_per_second * seconds_per_hop / 20.0),
+            fall_rate: p.noise_fall_rate,
+            trusted_after_hops: p.noise_trusted_hops,
+            floor_rms: 0.0,
+            hops: 0,
+            source: Source::None,
+        }
     }
 
     fn update(&mut self, hop_rms: f64) {
@@ -82,7 +91,7 @@ impl NoiseEstimator {
         if self.hops == 0 || self.floor_rms <= 0.0 {
             self.floor_rms = level;
         } else if level < self.floor_rms {
-            self.floor_rms += FALL_RATE * (level - self.floor_rms);
+            self.floor_rms += self.fall_rate * (level - self.floor_rms);
         } else {
             self.floor_rms = level.min(self.floor_rms * self.rise_factor_per_hop);
         }
@@ -99,7 +108,7 @@ impl NoiseEstimator {
     }
 
     fn trusted(&self) -> bool {
-        self.source == Source::LevelCheck || self.hops >= TRUSTED_AFTER_HOPS
+        self.source == Source::LevelCheck || self.hops >= self.trusted_after_hops
     }
 
     fn reset(&mut self) {
@@ -123,6 +132,9 @@ const REDUCTION_DB: f64 = 20.0;
 const HOLD_HOPS: i32 = 19;
 
 struct NoiseGate {
+    open_factor: f64,
+    close_factor: f64,
+    hold_hops: i32,
     reduction: f64,
     open: bool,
     hold: i32,
@@ -130,19 +142,27 @@ struct NoiseGate {
 }
 
 impl NoiseGate {
-    fn new() -> NoiseGate {
-        NoiseGate { reduction: 10.0f64.powf(-REDUCTION_DB / 20.0), open: false, hold: 0, last_gain: 1.0 }
+    fn new(p: &FrontEndParameters) -> NoiseGate {
+        NoiseGate {
+            open_factor: 10.0f64.powf(p.gate_open_db / 20.0),
+            close_factor: 10.0f64.powf(p.gate_close_db / 20.0),
+            hold_hops: p.gate_hold_hops,
+            reduction: 10.0f64.powf(-p.gate_reduction_db / 20.0),
+            open: false,
+            hold: 0,
+            last_gain: 1.0,
+        }
     }
 
     fn process(&mut self, hop: &mut [f32], estimator: &mut NoiseEstimator) {
         let level = rms(hop);
         estimator.update(level);
         let floor = estimator.floor_rms;
-        let open_threshold = floor * 10.0f64.powf(OPEN_MARGIN_DB / 20.0);
-        let close_threshold = floor * 10.0f64.powf(CLOSE_MARGIN_DB / 20.0);
+        let open_threshold = floor * self.open_factor;
+        let close_threshold = floor * self.close_factor;
         if level > open_threshold {
             self.open = true;
-            self.hold = HOLD_HOPS;
+            self.hold = self.hold_hops;
         } else if self.open {
             if level < close_threshold {
                 self.hold -= 1;
@@ -150,7 +170,7 @@ impl NoiseGate {
                     self.open = false;
                 }
             } else {
-                self.hold = HOLD_HOPS;
+                self.hold = self.hold_hops;
             }
         }
         let target = if self.open || !estimator.trusted() { 1.0 } else { self.reduction };
@@ -182,6 +202,9 @@ const BETA: f64 = 0.05;
 const LEARN_RATE: f64 = 0.1;
 
 struct SpectralSubtractor {
+    alpha: f64,
+    beta: f64,
+    learn_rate: f64,
     window: Vec<f64>,
     noise: Vec<f64>,
     spectrum: Vec<Complex<f64>>,
@@ -194,6 +217,9 @@ struct SpectralSubtractor {
 impl SpectralSubtractor {
     fn new() -> SpectralSubtractor {
         SpectralSubtractor {
+            alpha: ALPHA,
+            beta: BETA,
+            learn_rate: LEARN_RATE,
             window: (0..FRAME).map(|i| 0.5 - 0.5 * (2.0 * std::f64::consts::PI * i as f64 / FRAME as f64).cos()).collect(),
             noise: vec![0.0; FRAME / 2 + 1],
             spectrum: vec![Complex::new(0.0, 0.0); FRAME],
@@ -215,9 +241,9 @@ impl SpectralSubtractor {
             let c = self.spectrum[k];
             let magnitude = c.re.hypot(c.im);
             if quiet {
-                self.noise[k] = if self.learned_once { (1.0 - LEARN_RATE) * self.noise[k] + LEARN_RATE * magnitude } else { magnitude };
+                self.noise[k] = if self.learned_once { (1.0 - self.learn_rate) * self.noise[k] + self.learn_rate * magnitude } else { magnitude };
             }
-            let kept = (magnitude - ALPHA * self.noise[k]).max(BETA * magnitude);
+            let kept = (magnitude - self.alpha * self.noise[k]).max(self.beta * magnitude);
             let scale = if magnitude > 0.0 { kept / magnitude } else { 0.0 };
             self.spectrum[k] = Complex::new(c.re * scale, c.im * scale);
             if k > 0 && k < FRAME / 2 {
@@ -234,11 +260,52 @@ impl SpectralSubtractor {
         }
     }
 
+    fn set_values(&mut self, p: &FrontEndParameters) {
+        self.alpha = p.subtraction_alpha;
+        self.beta = p.subtraction_beta;
+        self.learn_rate = p.subtraction_learn_rate;
+    }
+
     fn reset(&mut self) {
         self.previous.iter_mut().for_each(|v| *v = 0.0);
         self.overlap.iter_mut().for_each(|v| *v = 0.0);
         self.noise.iter_mut().for_each(|v| *v = 0.0);
         self.learned_once = false;
+    }
+}
+
+/// The values of the front end's stages (spec 026, sections `FRONT_END` and `NOISE_GATE`): read from the tuning array, as Java's
+/// `FrontEnd.Parameters`; the defaults are the former constants.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FrontEndParameters {
+    pub high_pass_hz: f64,
+    pub noise_rise_db_per_second: f64,
+    pub noise_fall_rate: f64,
+    pub noise_trusted_hops: i64,
+    pub gate_open_db: f64,
+    pub gate_close_db: f64,
+    pub gate_reduction_db: f64,
+    pub gate_hold_hops: i32,
+    pub subtraction_alpha: f64,
+    pub subtraction_beta: f64,
+    pub subtraction_learn_rate: f64,
+}
+
+impl FrontEndParameters {
+    pub fn defaults() -> FrontEndParameters {
+        FrontEndParameters {
+            high_pass_hz: CORNER_HZ,
+            noise_rise_db_per_second: RISE_DB_PER_SECOND,
+            noise_fall_rate: FALL_RATE,
+            noise_trusted_hops: TRUSTED_AFTER_HOPS,
+            gate_open_db: OPEN_MARGIN_DB,
+            gate_close_db: CLOSE_MARGIN_DB,
+            gate_reduction_db: REDUCTION_DB,
+            gate_hold_hops: HOLD_HOPS,
+            subtraction_alpha: ALPHA,
+            subtraction_beta: BETA,
+            subtraction_learn_rate: LEARN_RATE,
+        }
     }
 }
 
@@ -252,7 +319,9 @@ pub struct FrontEndSettings {
 
 pub struct FrontEnd {
     settings: FrontEndSettings,
+    sample_rate: f64,
     hop_size: usize,
+    parameters: FrontEndParameters,
     high_pass: HighPass,
     estimator: NoiseEstimator,
     gate: NoiseGate,
@@ -262,15 +331,39 @@ pub struct FrontEnd {
 
 impl FrontEnd {
     pub fn new(sample_rate: f64, hop_size: usize) -> FrontEnd {
+        FrontEnd::new_tuned(sample_rate, hop_size, FrontEndParameters::defaults())
+    }
+
+    /// With the stages' values of the tuning array (spec 026).
+    pub fn new_tuned(sample_rate: f64, hop_size: usize, parameters: FrontEndParameters) -> FrontEnd {
+        let mut subtractor = SpectralSubtractor::new();
+        subtractor.set_values(&parameters);
         FrontEnd {
             settings: FrontEndSettings { gain: NEUTRAL_GAIN, noise_reduction: false, subtraction: false },
+            sample_rate,
             hop_size,
-            high_pass: HighPass::new(sample_rate),
-            estimator: NoiseEstimator::new(sample_rate, hop_size),
-            gate: NoiseGate::new(),
-            subtractor: SpectralSubtractor::new(),
+            parameters,
+            high_pass: HighPass::new(sample_rate, parameters.high_pass_hz),
+            estimator: NoiseEstimator::new(sample_rate, hop_size, &parameters),
+            gate: NoiseGate::new(&parameters),
+            subtractor,
             reset_requested: false,
         }
+    }
+
+    /// New stage values (a new tuning): every stage is rebuilt and its history starts again, as Java's `FrontEnd.configure`. Allocates
+    /// nothing, so the analysis loop may call it.
+    pub fn set_parameters(&mut self, parameters: FrontEndParameters) {
+        self.parameters = parameters;
+        self.high_pass = HighPass::new(self.sample_rate, parameters.high_pass_hz);
+        self.estimator = NoiseEstimator::new(self.sample_rate, self.hop_size, &parameters);
+        self.gate = NoiseGate::new(&parameters);
+        self.subtractor.set_values(&parameters);
+        self.subtractor.reset();
+    }
+
+    pub fn parameters(&self) -> FrontEndParameters {
+        self.parameters
     }
 
     /// New values from Java; switching a stage on or off starts its history again, as Java's setters do.

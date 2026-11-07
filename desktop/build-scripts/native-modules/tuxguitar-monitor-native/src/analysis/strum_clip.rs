@@ -13,23 +13,35 @@ pub const TOO_WEAK: i32 = 3;
 pub const GOOD: i32 = 4;
 
 const SILENCE_DBFS: f64 = -120.0;
-const WINDOW_NANOS: f64 = 300_000_000.0;
-const ARM_QUIET_HOPS: usize = 60;
-const ATTACK_RISE_DB: f64 = 12.0;
-const CLIP_SHARE: f64 = 0.005;
+/// The most quiet hops a strum is compared with: the history is kept at this bound (spec 026, research R6).
+pub const MAX_ARM_QUIET_HOPS: usize = 200;
 
-/// The three levels taken from the recognition settings (`StrumClipMeter.Parameters.of`).
+/// The values taken from the recognition settings (`StrumClipMeter.Parameters.of`): the three levels, and the window, the quiet hops, the rise and
+/// the clip share (spec 026, `chord-evidence.strum-*`).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct StrumParameters {
     pub arm_floor_dbfs: f64,
     pub clip_sample: f64,
     pub weak_dbfs: f64,
     pub loud_dbfs: f64,
+    pub window_nanos: f64,
+    pub arm_quiet_hops: usize,
+    pub attack_rise_db: f64,
+    pub clip_share: f64,
 }
 
 impl StrumParameters {
     pub fn defaults() -> StrumParameters {
-        StrumParameters { arm_floor_dbfs: -40.0, clip_sample: 0.99, weak_dbfs: -40.0, loud_dbfs: -6.0 }
+        StrumParameters {
+            arm_floor_dbfs: -40.0,
+            clip_sample: 0.99,
+            weak_dbfs: -40.0,
+            loud_dbfs: -6.0,
+            window_nanos: 300_000_000.0,
+            arm_quiet_hops: 60,
+            attack_rise_db: 12.0,
+            clip_share: 0.005,
+        }
     }
 }
 
@@ -114,7 +126,7 @@ pub struct StrumClip {
     p: StrumParameters,
     sample_rate: i32,
     window_samples: i32,
-    history: [f32; ARM_QUIET_HOPS],
+    history: [f32; MAX_ARM_QUIET_HOPS],
     history_count: usize,
     history_next: usize,
     armed: bool,
@@ -131,7 +143,7 @@ impl StrumClip {
             p,
             sample_rate: 0,
             window_samples: 0,
-            history: [0.0; ARM_QUIET_HOPS],
+            history: [0.0; MAX_ARM_QUIET_HOPS],
             history_count: 0,
             history_next: 0,
             armed: false,
@@ -143,14 +155,28 @@ impl StrumClip {
         }
     }
 
+    /// New values; a new window or quiet length starts the check again, as a new meter would.
     pub fn set_parameters(&mut self, p: StrumParameters) {
+        let restart = p.window_nanos != self.p.window_nanos || p.arm_quiet_hops != self.p.arm_quiet_hops;
         self.p = p;
+        if restart {
+            self.window_samples = self.window_of(self.sample_rate);
+            self.clear();
+        }
+    }
+
+    fn window_of(&self, sample_rate: i32) -> i32 {
+        super::comb::java_round(self.p.window_nanos / 1e9 * sample_rate as f64) as i32
+    }
+
+    fn quiet_hops(&self) -> usize {
+        self.p.arm_quiet_hops.clamp(1, MAX_ARM_QUIET_HOPS)
     }
 
     /// The rate of the hops that follow: any check in progress is dropped and its verdict hidden.
     pub fn configure(&mut self, sample_rate: i32, shared: &StrumShared) {
         self.sample_rate = sample_rate;
-        self.window_samples = super::comb::java_round(WINDOW_NANOS / 1e9 * sample_rate as f64) as i32;
+        self.window_samples = self.window_of(sample_rate);
         shared.generation.fetch_add(1, Ordering::SeqCst);
         self.clear();
     }
@@ -169,13 +195,13 @@ impl StrumClip {
                 sum += (*s as f64) * (*s as f64);
             }
             let db = to_dbfs(sum / length as f64);
-            if self.history_count > 0 && db >= self.p.arm_floor_dbfs && db >= self.quietest() + ATTACK_RISE_DB {
+            if self.history_count > 0 && db >= self.p.arm_floor_dbfs && db >= self.quietest() + self.p.attack_rise_db {
                 self.armed = true;
                 self.arm_generation = shared.generation.load(Ordering::SeqCst);
             } else {
                 self.history[self.history_next] = db as f32;
-                self.history_next = (self.history_next + 1) % ARM_QUIET_HOPS;
-                self.history_count = (self.history_count + 1).min(ARM_QUIET_HOPS);
+                self.history_next = (self.history_next + 1) % self.quiet_hops();
+                self.history_count = (self.history_count + 1).min(self.quiet_hops());
                 return;
             }
         }
@@ -196,7 +222,7 @@ impl StrumClip {
     fn finish(&mut self, shared: &StrumShared) {
         let share = self.clipped as f64 / self.window_samples as f64;
         let rms = to_dbfs(self.sum_squares / self.window_samples as f64);
-        let verdict = if share >= CLIP_SHARE - 1e-12 {
+        let verdict = if share >= self.p.clip_share - 1e-12 {
             CLIPPING
         } else if rms > self.p.loud_dbfs {
             TOO_LOUD

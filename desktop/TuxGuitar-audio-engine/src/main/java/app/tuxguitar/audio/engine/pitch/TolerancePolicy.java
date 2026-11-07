@@ -15,7 +15,9 @@ public final class TolerancePolicy {
 	private final double fretSharpCentsPerFret;
 
 	/** The sharp side never reaches the neighbouring note: the nearest-note reading would flip. */
-	private static final double MAX_SHARP_CENTS = 49.0;
+	public static final double DEFAULT_MAX_SHARP_CENTS = 49.0;
+
+	private final double maxSharpCents;
 
 	public TolerancePolicy(double tunerInTuneCents, double practiceAcceptCents) {
 		this(tunerInTuneCents, practiceAcceptCents, 0.0);
@@ -27,6 +29,11 @@ public final class TolerancePolicy {
 	 *        +10 to +25 cents on real fretted notes); 0 disables it. The flat side is unchanged.
 	 */
 	public TolerancePolicy(double tunerInTuneCents, double practiceAcceptCents, double fretSharpCentsPerFret) {
+		this(tunerInTuneCents, practiceAcceptCents, fretSharpCentsPerFret, DEFAULT_MAX_SHARP_CENTS);
+	}
+
+	/** @param maxSharpCents the largest sharp deviation ever accepted, whatever the fret (spec 026, {@code pitch.max-sharp}) */
+	public TolerancePolicy(double tunerInTuneCents, double practiceAcceptCents, double fretSharpCentsPerFret, double maxSharpCents) {
 		if (!Double.isFinite(tunerInTuneCents) || !Double.isFinite(practiceAcceptCents)
 				|| tunerInTuneCents < 0.0
 				|| practiceAcceptCents < tunerInTuneCents
@@ -39,6 +46,7 @@ public final class TolerancePolicy {
 		this.tunerInTuneCents = tunerInTuneCents;
 		this.practiceAcceptCents = practiceAcceptCents;
 		this.fretSharpCentsPerFret = fretSharpCentsPerFret;
+		this.maxSharpCents = maxSharpCents;
 	}
 
 	public TunerState tunerState(PitchReading reading) {
@@ -68,7 +76,7 @@ public final class TolerancePolicy {
 	/** The largest sharp deviation accepted for a note written on the given fret. */
 	public double sharpLimitCents(int fret) {
 		double limit = this.practiceAcceptCents + this.fretSharpCentsPerFret * Math.max(0, fret);
-		return Math.max(this.practiceAcceptCents, Math.min(MAX_SHARP_CENTS, limit));
+		return Math.max(this.practiceAcceptCents, Math.min(this.maxSharpCents, limit));
 	}
 
 	public double getTunerInTuneCents() {

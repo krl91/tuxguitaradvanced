@@ -59,7 +59,7 @@ public final class EventJudge {
 		PracticeSequence only = this.piece.onlyEvent(eventIndex);
 		float[] samples = new float[segment.length + sampleRate / 2];
 		System.arraycopy(segment, 0, samples, sampleRate / 2, segment.length);
-		return OfflineAnalysis.analyze(samples, sampleRate, settings, isChord(eventIndex), AttackCandidates.of(only));
+		return OfflineAnalysis.analyze(samples, sampleRate, settings, isChord(eventIndex), AttackCandidates.of(only, settings));
 	}
 
 	/** True when a session expecting {@code eventIndex} accepts the frames, with the practice parameters of {@code settings}. */
@@ -71,7 +71,7 @@ public final class EventJudge {
 		PracticeParameters parameters = PracticeParameters.of(settings);
 		PracticeSession session = new PracticeSession(selection, only, parameters.noteInterpreter(), parameters.tolerance(), parameters.stabilityNanos(),
 				parameters.articulationLatencyNanos(), new ChordMatcher(parameters.chordParameters()), null);
-		session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
+		session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults(), settings));
 		session.setAssessment(new InputAssessment(InputAssessment.Status.SUITABLE, InputAssessment.Reason.NONE));
 		session.onCommand(PracticeCommand.START);
 		for (AnalysisFrame frame : frames) {

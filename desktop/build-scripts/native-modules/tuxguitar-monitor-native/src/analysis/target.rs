@@ -27,11 +27,18 @@ impl Default for Target {
 
 pub struct ExpectedPitchVerifier {
     sample_rate: f64,
+    search_cents: f64,
+    periods: i64,
 }
 
 impl ExpectedPitchVerifier {
     pub fn new(sample_rate: f64) -> ExpectedPitchVerifier {
-        ExpectedPitchVerifier { sample_rate }
+        ExpectedPitchVerifier::new_tuned(sample_rate, SEARCH_CENTS, PERIODS)
+    }
+
+    /// With the search and the periods of the tuning array (spec 026, `pitch.target-search`, `pitch.target-periods`).
+    pub fn new_tuned(sample_rate: f64, search_cents: f64, periods: i64) -> ExpectedPitchVerifier {
+        ExpectedPitchVerifier { sample_rate, search_cents, periods }
     }
 
     pub fn verify(&self, audio: &[f32], expected: &[i32], out: &mut Target) {
@@ -52,25 +59,25 @@ impl ExpectedPitchVerifier {
 
     fn window_for(&self, midi: i32, available: i64) -> i64 {
         let period = (self.sample_rate / frequency(midi)).ceil() as i64;
-        available.min(MIN_WINDOW.max(PERIODS * period + period))
+        available.min(MIN_WINDOW.max(self.periods * period + period))
     }
 
     fn score(&self, audio: &[f32], midi: i32, window: i64) -> f64 {
         let period = self.sample_rate / frequency(midi);
-        let own = periodicity(audio, window, period);
-        let half = periodicity(audio, window, period / 2.0);
+        let own = periodicity(audio, window, period, self.search_cents, self.periods);
+        let half = periodicity(audio, window, period / 2.0, self.search_cents, self.periods);
         let penalty = half.max(0.0);
         (own * (1.0 - penalty * penalty)).clamp(0.0, 1.0)
     }
 }
 
-fn periodicity(audio: &[f32], window: i64, period: f64) -> f64 {
-    let low = (period * 2.0f64.powf(-SEARCH_CENTS / 1200.0)).floor() as i64;
-    let high = (period * 2.0f64.powf(SEARCH_CENTS / 1200.0)).ceil() as i64;
+fn periodicity(audio: &[f32], window: i64, period: f64, search_cents: f64, periods: i64) -> f64 {
+    let low = (period * 2.0f64.powf(-search_cents / 1200.0)).floor() as i64;
+    let high = (period * 2.0f64.powf(search_cents / 1200.0)).ceil() as i64;
     let mut best = 0.0f64;
     let mut lag = low.max(2);
     while lag <= high {
-        let length = (PERIODS * super::comb::java_round(period)).min(window - lag);
+        let length = (periods * super::comb::java_round(period)).min(window - lag);
         if length >= 32 {
             let start = audio.len() as i64 - length;
             let mut cross = 0.0;

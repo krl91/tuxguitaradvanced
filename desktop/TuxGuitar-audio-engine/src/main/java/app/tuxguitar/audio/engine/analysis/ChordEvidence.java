@@ -186,7 +186,7 @@ public final class ChordEvidence {
 			double[] uniquePeaks = comb.partialPeaks(peaks, length, pitch.getMidi(), sounding);
 			int clear = 0;
 			for (double peak : uniquePeaks) {
-				if (strongestPartial > 0.0 && peak >= PARTIAL_PRESENCE_RATIO * strongestPartial) {
+				if (strongestPartial > 0.0 && peak >= parameters.partialPresenceRatio * strongestPartial) {
 					clear++;
 				}
 			}
@@ -259,7 +259,7 @@ public final class ChordEvidence {
 			return false;
 		}
 		double f0 = HarmonicComb.frequency(midi);
-		double threshold = PARTIAL_PRESENCE_RATIO * strongestPartial;
+		double threshold = parameters.partialPresenceRatio * strongestPartial;
 		if (comb.peakAround(peaks, length, f0, comb.toleranceRatio()) >= threshold || comb.peakAround(peaks, length, f0 * 2.0, comb.toleranceRatio()) < threshold
 				|| comb.peakAround(peaks, length, f0 * 3.0, comb.toleranceRatio()) < threshold) {
 			return false;
@@ -302,7 +302,7 @@ public final class ChordEvidence {
 			for (int midi : distinct) {
 				neighbour += comb.salience(peaks, length, midi + shift, 0);
 			}
-			if (neighbour > NEIGHBOUR_MARGIN * own) {
+			if (neighbour > parameters.neighbourMargin * own) {
 				return true;
 			}
 		}

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import app.tuxguitar.audio.engine.recognition.TargetEvidence.Hypothesis;
+import app.tuxguitar.audio.engine.settings.RecognitionParameters;
+import app.tuxguitar.audio.engine.settings.RecognitionSettings;
 
 /**
  * Asks "is the expected pitch playing?" instead of "which pitch is playing?" (spec 002, research
@@ -23,12 +25,26 @@ public final class ExpectedPitchVerifier {
 	public static final int MIN_WINDOW = 512;
 
 	private final int sampleRate;
+	private final double searchCents;
+	private final int periods;
 
 	public ExpectedPitchVerifier(int sampleRate) {
+		this(sampleRate, SEARCH_CENTS, PERIODS);
+	}
+
+	/** With the search and the periods of the settings (spec 026, {@code pitch.target-search}, {@code pitch.target-periods}). */
+	public ExpectedPitchVerifier(int sampleRate, double searchCents, int periods) {
 		if( sampleRate <= 0 ) {
 			throw new IllegalArgumentException("sampleRate must be positive: " + sampleRate);
 		}
 		this.sampleRate = sampleRate;
+		this.searchCents = searchCents;
+		this.periods = periods;
+	}
+
+	public static ExpectedPitchVerifier of(int sampleRate, RecognitionSettings settings) {
+		return new ExpectedPitchVerifier(sampleRate, settings.get(RecognitionParameters.PITCH_TARGET_SEARCH),
+				(int) settings.get(RecognitionParameters.PITCH_TARGET_PERIODS));
 	}
 
 	/**
@@ -56,7 +72,7 @@ public final class ExpectedPitchVerifier {
 
 	private int windowFor(int midi, int available) {
 		int period = (int) Math.ceil(this.sampleRate / frequency(midi));
-		return Math.min(available, Math.max(MIN_WINDOW, PERIODS * period + period));
+		return Math.min(available, Math.max(MIN_WINDOW, this.periods * period + period));
 	}
 
 	private double score(float[] audio, int midi, int window) {
@@ -69,11 +85,11 @@ public final class ExpectedPitchVerifier {
 
 	/** Best normalised correlation between the newest samples and themselves one period earlier. */
 	private double periodicity(float[] audio, int window, double period) {
-		int low = (int) Math.floor(period * Math.pow(2.0, -SEARCH_CENTS / 1200.0));
-		int high = (int) Math.ceil(period * Math.pow(2.0, SEARCH_CENTS / 1200.0));
+		int low = (int) Math.floor(period * Math.pow(2.0, -this.searchCents / 1200.0));
+		int high = (int) Math.ceil(period * Math.pow(2.0, this.searchCents / 1200.0));
 		double best = 0.0;
 		for( int lag = Math.max(2, low) ; lag <= high ; lag ++ ) {
-			int length = Math.min(PERIODS * (int) Math.round(period), window - lag);
+			int length = Math.min(this.periods * (int) Math.round(period), window - lag);
 			if( length < 32 ) {
 				continue;
 			}

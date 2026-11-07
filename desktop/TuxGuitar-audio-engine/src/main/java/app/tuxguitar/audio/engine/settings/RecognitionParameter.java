@@ -22,7 +22,19 @@ public abstract class RecognitionParameter {
 		CHORD_DETAILS,
 		PASSAGES,
 		ENGINE,
-		ADVANCED
+		ADVANCED,
+		/** The engines' own values (spec 026): expert settings, one family per category, at most seven values each. */
+		ONSET,
+		ONSET_FAST,
+		PITCH,
+		POLYPHONIC_1,
+		POLYPHONIC_2,
+		ATTACK_1,
+		ATTACK_2,
+		CHORD_EVIDENCE,
+		FRONT_END,
+		NOISE_GATE,
+		GAIN
 	}
 
 	/** What validation did with a raw value. */

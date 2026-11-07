@@ -127,7 +127,42 @@ impl Parameters {
 
 /// The length of the tuning array sent by Java's `NativeParameters.tuning` as a `double[]` (spec 026, contracts/native-parameters.md): every
 /// other value a native stage reads, at the indices `T_…` that each engine family adds, the same names as in Java.
-pub const TUNING_LENGTH: usize = 0;
+pub const T_TARGET_SEARCH: usize = 0;
+pub const T_TARGET_PERIODS: usize = 1;
+pub const T_POLY_CANDIDATE_LOW: usize = 2;
+pub const T_POLY_CANDIDATE_HIGH: usize = 3;
+pub const T_POLY_HARMONICS: usize = 4;
+pub const T_POLY_MAX_HARMONIC: usize = 5;
+pub const T_POLY_TOLERANCE: usize = 6;
+pub const T_POLY_CANDIDATES: usize = 7;
+pub const T_POLY_MIN_RELATIVE: usize = 8;
+pub const T_POLY_FLOOR: usize = 9;
+pub const T_POLY_SUBHARMONIC: usize = 10;
+pub const T_POLY_FLOOR_WIDTH: usize = 11;
+pub const T_POLY_FLOOR_FACTOR: usize = 12;
+pub const T_ATTACK_LAG: usize = 13;
+pub const T_ATTACK_MAX_FREQUENCY: usize = 14;
+pub const T_ATTACK_PARTIALS: usize = 15;
+pub const T_ATTACK_BETA: usize = 16;
+pub const T_ATTACK_SIGMA: usize = 17;
+pub const T_CHORD_PARTIAL_PRESENCE: usize = 18;
+pub const T_CHORD_NEIGHBOUR_MARGIN: usize = 19;
+pub const T_STRUM_WINDOW: usize = 20;
+pub const T_STRUM_QUIET: usize = 21;
+pub const T_STRUM_RISE: usize = 22;
+pub const T_STRUM_CLIP_SHARE: usize = 23;
+pub const T_FRONT_HIGH_PASS: usize = 24;
+pub const T_FRONT_NOISE_RISE: usize = 25;
+pub const T_FRONT_NOISE_FALL: usize = 26;
+pub const T_FRONT_NOISE_TRUSTED: usize = 27;
+pub const T_GATE_OPEN: usize = 28;
+pub const T_GATE_CLOSE: usize = 29;
+pub const T_GATE_REDUCTION: usize = 30;
+pub const T_GATE_HOLD: usize = 31;
+pub const T_SUBTRACTION: usize = 32;
+pub const T_SUBTRACTION_FLOOR: usize = 33;
+pub const T_SUBTRACTION_LEARN: usize = 34;
+pub const TUNING_LENGTH: usize = 35;
 
 /// What `tuningLayout()` reports to Java: a library whose layout differs is not used.
 pub fn tuning_layout() -> i32 {
@@ -136,12 +171,68 @@ pub fn tuning_layout() -> i32 {
 
 /// The values of the tuning array, read from it; carried as doubles, as Java holds them.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Tuning {}
+pub struct Tuning {
+    /// `pitch.target-search`: the cents around each expected period the verifier searches.
+    pub target_search_cents: f64,
+    /// `pitch.target-periods`: the periods the verifier compares.
+    pub target_periods: i64,
+    /// The polyphonic analyser's values, the FFT size and the bands aside (`polyphonic.*`).
+    pub polyphonic: polyphonic::PolyphonicParameters,
+    /// The attack analyser's values, the FFT size aside (`attack.*`).
+    pub attack: attack::AttackParameters,
+    /// The strum meter's window (`chord-evidence.strum-window`, sent in milliseconds), quiet hops, rise and clip share.
+    pub strum_window_nanos: f64,
+    pub strum_quiet_hops: usize,
+    pub strum_rise_db: f64,
+    pub strum_clip_share: f64,
+    /// The front end's stages (`front-end.*`, `noise-gate.*`).
+    pub front: front_end::FrontEndParameters,
+}
 
 impl Tuning {
     /// The values of today's stages, at their indices: what `NativeParameters.tuning(RecognitionSettings.defaults())` sends.
     pub fn default_values() -> [f64; TUNING_LENGTH] {
-        [0f64; TUNING_LENGTH]
+        let mut values = [0f64; TUNING_LENGTH];
+        values[T_TARGET_SEARCH] = target::SEARCH_CENTS;
+        values[T_TARGET_PERIODS] = target::PERIODS as f64;
+        let p = polyphonic::PolyphonicParameters::defaults();
+        values[T_POLY_CANDIDATE_LOW] = p.min_candidate_midi as f64;
+        values[T_POLY_CANDIDATE_HIGH] = p.max_candidate_midi as f64;
+        values[T_POLY_HARMONICS] = p.harmonics as f64;
+        values[T_POLY_MAX_HARMONIC] = p.max_harmonic_hz;
+        values[T_POLY_TOLERANCE] = p.harmonic_tolerance_cents;
+        values[T_POLY_CANDIDATES] = p.max_candidates as f64;
+        values[T_POLY_MIN_RELATIVE] = p.min_relative_salience;
+        values[T_POLY_FLOOR] = p.floor_db;
+        values[T_POLY_SUBHARMONIC] = p.subharmonic_ratio;
+        values[T_POLY_FLOOR_WIDTH] = p.floor_half_width_hz;
+        values[T_POLY_FLOOR_FACTOR] = p.floor_factor;
+        let a = attack::AttackParameters::defaults();
+        values[T_ATTACK_LAG] = a.lag_hops as f64;
+        values[T_ATTACK_MAX_FREQUENCY] = a.max_hz;
+        values[T_ATTACK_PARTIALS] = a.partials as f64;
+        values[T_ATTACK_BETA] = a.beta;
+        values[T_ATTACK_SIGMA] = a.sigma_bins;
+        values[T_CHORD_PARTIAL_PRESENCE] = p.partial_presence_ratio;
+        values[T_CHORD_NEIGHBOUR_MARGIN] = p.neighbour_margin;
+        let s = strum_clip::StrumParameters::defaults();
+        values[T_STRUM_WINDOW] = s.window_nanos / 1_000_000.0;
+        values[T_STRUM_QUIET] = s.arm_quiet_hops as f64;
+        values[T_STRUM_RISE] = s.attack_rise_db;
+        values[T_STRUM_CLIP_SHARE] = s.clip_share;
+        let f = front_end::FrontEndParameters::defaults();
+        values[T_FRONT_HIGH_PASS] = f.high_pass_hz;
+        values[T_FRONT_NOISE_RISE] = f.noise_rise_db_per_second;
+        values[T_FRONT_NOISE_FALL] = f.noise_fall_rate;
+        values[T_FRONT_NOISE_TRUSTED] = f.noise_trusted_hops as f64;
+        values[T_GATE_OPEN] = f.gate_open_db;
+        values[T_GATE_CLOSE] = f.gate_close_db;
+        values[T_GATE_REDUCTION] = f.gate_reduction_db;
+        values[T_GATE_HOLD] = f.gate_hold_hops as f64;
+        values[T_SUBTRACTION] = f.subtraction_alpha;
+        values[T_SUBTRACTION_FLOOR] = f.subtraction_beta;
+        values[T_SUBTRACTION_LEARN] = f.subtraction_learn_rate;
+        values
     }
 
     pub fn defaults() -> Tuning {
@@ -153,7 +244,50 @@ impl Tuning {
         if values.len() != TUNING_LENGTH {
             return None;
         }
-        Some(Tuning {})
+        let polyphonic = polyphonic::PolyphonicParameters {
+            min_candidate_midi: values[T_POLY_CANDIDATE_LOW].round() as i32,
+            max_candidate_midi: values[T_POLY_CANDIDATE_HIGH].round() as i32,
+            harmonics: values[T_POLY_HARMONICS].round() as i32,
+            max_harmonic_hz: values[T_POLY_MAX_HARMONIC],
+            harmonic_tolerance_cents: values[T_POLY_TOLERANCE],
+            max_candidates: values[T_POLY_CANDIDATES].round() as usize,
+            min_relative_salience: values[T_POLY_MIN_RELATIVE],
+            floor_db: values[T_POLY_FLOOR],
+            subharmonic_ratio: values[T_POLY_SUBHARMONIC],
+            floor_half_width_hz: values[T_POLY_FLOOR_WIDTH],
+            floor_factor: values[T_POLY_FLOOR_FACTOR],
+            partial_presence_ratio: values[T_CHORD_PARTIAL_PRESENCE],
+            neighbour_margin: values[T_CHORD_NEIGHBOUR_MARGIN],
+            ..polyphonic::PolyphonicParameters::defaults()
+        };
+        let attack = attack::AttackParameters {
+            lag_hops: values[T_ATTACK_LAG].round() as usize,
+            max_hz: values[T_ATTACK_MAX_FREQUENCY],
+            partials: values[T_ATTACK_PARTIALS].round() as i32,
+            beta: values[T_ATTACK_BETA],
+            sigma_bins: values[T_ATTACK_SIGMA],
+            ..attack::AttackParameters::defaults()
+        };
+        Some(Tuning { target_search_cents: values[T_TARGET_SEARCH], target_periods: values[T_TARGET_PERIODS].round() as i64, polyphonic,
+            attack,
+            strum_window_nanos: values[T_STRUM_WINDOW] * 1_000_000.0,
+            strum_quiet_hops: values[T_STRUM_QUIET].round() as usize,
+            strum_rise_db: values[T_STRUM_RISE],
+            strum_clip_share: values[T_STRUM_CLIP_SHARE],
+            front: front_end::FrontEndParameters {
+                high_pass_hz: values[T_FRONT_HIGH_PASS],
+                noise_rise_db_per_second: values[T_FRONT_NOISE_RISE],
+                noise_fall_rate: values[T_FRONT_NOISE_FALL],
+                noise_trusted_hops: values[T_FRONT_NOISE_TRUSTED].round() as i64,
+                gate_open_db: values[T_GATE_OPEN],
+                gate_close_db: values[T_GATE_CLOSE],
+                gate_reduction_db: values[T_GATE_REDUCTION],
+                gate_hold_hops: values[T_GATE_HOLD].round() as i32,
+                subtraction_alpha: values[T_SUBTRACTION],
+                subtraction_beta: values[T_SUBTRACTION_FLOOR],
+                subtraction_learn_rate: values[T_SUBTRACTION_LEARN],
+            },
+        })
     }
 }
 
@@ -198,6 +332,93 @@ mod tests {
     fn the_default_tuning_is_today_s_literals() {
         assert_eq!(Some(Tuning::defaults()), Tuning::from_slice(&Tuning::default_values()));
         assert_eq!(TUNING_LENGTH, Tuning::default_values().len());
+    }
+
+    #[test]
+    fn the_pitch_values_are_read_at_their_indices() {
+        let mut values = Tuning::default_values();
+        values[T_TARGET_SEARCH] = 35.0;
+        values[T_TARGET_PERIODS] = 6.0;
+        let t = Tuning::from_slice(&values).unwrap();
+        assert_eq!(35.0, t.target_search_cents);
+        assert_eq!(6, t.target_periods);
+        assert_eq!(20.0, Tuning::defaults().target_search_cents);
+        assert_eq!(4, Tuning::defaults().target_periods);
+    }
+
+    #[test]
+    fn the_polyphonic_values_are_read_at_their_indices() {
+        let mut values = Tuning::default_values();
+        let defaults = polyphonic::PolyphonicParameters::defaults();
+        assert_eq!(defaults, Tuning::defaults().polyphonic, "the defaults are the analyser's");
+        values[T_POLY_CANDIDATE_LOW] = 40.0;
+        values[T_POLY_CANDIDATE_HIGH] = 100.0;
+        values[T_POLY_HARMONICS] = 8.0;
+        values[T_POLY_MAX_HARMONIC] = 3000.0;
+        values[T_POLY_TOLERANCE] = 15.0;
+        values[T_POLY_CANDIDATES] = 3.0;
+        values[T_POLY_MIN_RELATIVE] = 0.2;
+        values[T_POLY_FLOOR] = -60.0;
+        values[T_POLY_SUBHARMONIC] = 0.5;
+        values[T_POLY_FLOOR_WIDTH] = 40.0;
+        values[T_POLY_FLOOR_FACTOR] = 3.0;
+        let p = Tuning::from_slice(&values).unwrap().polyphonic;
+        assert_eq!((p.min_candidate_midi, p.max_candidate_midi, p.harmonics, p.max_candidates), (40, 100, 8, 3));
+        assert_eq!((p.max_harmonic_hz, p.harmonic_tolerance_cents, p.min_relative_salience), (3000.0, 15.0, 0.2));
+        assert_eq!((p.floor_db, p.subharmonic_ratio, p.floor_half_width_hz, p.floor_factor), (-60.0, 0.5, 40.0, 3.0));
+        assert_eq!((p.fft_size, p.min_band_midi, p.max_band_midi), (defaults.fft_size, defaults.min_band_midi, defaults.max_band_midi), "the FFT and the bands stay");
+    }
+
+    #[test]
+    fn the_attack_values_are_read_at_their_indices() {
+        let defaults = attack::AttackParameters::defaults();
+        assert_eq!(defaults, Tuning::defaults().attack, "the defaults are the analyser's");
+        let mut values = Tuning::default_values();
+        values[T_ATTACK_LAG] = 30.0;
+        values[T_ATTACK_MAX_FREQUENCY] = 7000.0;
+        values[T_ATTACK_PARTIALS] = 9.0;
+        values[T_ATTACK_BETA] = 0.8;
+        values[T_ATTACK_SIGMA] = 2.0;
+        let a = Tuning::from_slice(&values).unwrap().attack;
+        assert_eq!((a.fft_size, a.lag_hops, a.max_hz, a.partials, a.beta, a.sigma_bins), (defaults.fft_size, 30, 7000.0, 9, 0.8, 2.0));
+    }
+
+    #[test]
+    fn the_chord_evidence_and_strum_values_are_read_at_their_indices() {
+        let t = Tuning::defaults();
+        assert_eq!((t.polyphonic.partial_presence_ratio, t.polyphonic.neighbour_margin), (chord::PARTIAL_PRESENCE_RATIO, chord::NEIGHBOUR_MARGIN));
+        assert_eq!((t.strum_window_nanos, t.strum_quiet_hops, t.strum_rise_db, t.strum_clip_share), (300_000_000.0, 60, 12.0, 0.005));
+        let mut values = Tuning::default_values();
+        values[T_CHORD_PARTIAL_PRESENCE] = 0.1;
+        values[T_CHORD_NEIGHBOUR_MARGIN] = 2.5;
+        values[T_STRUM_WINDOW] = 500.0;
+        values[T_STRUM_QUIET] = 100.0;
+        values[T_STRUM_RISE] = 6.0;
+        values[T_STRUM_CLIP_SHARE] = 0.01;
+        let t = Tuning::from_slice(&values).unwrap();
+        assert_eq!((t.polyphonic.partial_presence_ratio, t.polyphonic.neighbour_margin), (0.1, 2.5));
+        assert_eq!((t.strum_window_nanos, t.strum_quiet_hops, t.strum_rise_db, t.strum_clip_share), (500_000_000.0, 100, 6.0, 0.01));
+    }
+
+    #[test]
+    fn the_front_end_values_are_read_at_their_indices() {
+        assert_eq!(front_end::FrontEndParameters::defaults(), Tuning::defaults().front, "the defaults are the front end's");
+        let mut values = Tuning::default_values();
+        values[T_FRONT_HIGH_PASS] = 80.0;
+        values[T_FRONT_NOISE_RISE] = 2.0;
+        values[T_FRONT_NOISE_FALL] = 0.5;
+        values[T_FRONT_NOISE_TRUSTED] = 50.0;
+        values[T_GATE_OPEN] = 12.0;
+        values[T_GATE_CLOSE] = 3.0;
+        values[T_GATE_REDUCTION] = 30.0;
+        values[T_GATE_HOLD] = 40.0;
+        values[T_SUBTRACTION] = 2.5;
+        values[T_SUBTRACTION_FLOOR] = 0.1;
+        values[T_SUBTRACTION_LEARN] = 0.3;
+        let f = Tuning::from_slice(&values).unwrap().front;
+        assert_eq!((f.high_pass_hz, f.noise_rise_db_per_second, f.noise_fall_rate, f.noise_trusted_hops), (80.0, 2.0, 0.5, 50));
+        assert_eq!((f.gate_open_db, f.gate_close_db, f.gate_reduction_db, f.gate_hold_hops), (12.0, 3.0, 30.0, 40));
+        assert_eq!((f.subtraction_alpha, f.subtraction_beta, f.subtraction_learn_rate), (2.5, 0.1, 0.3));
     }
 
     #[test]

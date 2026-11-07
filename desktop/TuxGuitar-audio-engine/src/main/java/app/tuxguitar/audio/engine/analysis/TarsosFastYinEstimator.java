@@ -9,6 +9,8 @@ public final class TarsosFastYinEstimator implements PitchEstimator {
 	public static final float DEFAULT_SAMPLE_RATE = 48000f;
 	public static final int DEFAULT_WINDOW_SIZE = 2048;
 	public static final int DEFAULT_HOP_SIZE = 256;
+	/** The threshold {@code new FastYin(rate, size)} uses (TarsosDSP 2.5). */
+	public static final double DEFAULT_THRESHOLD = 0.20;
 
 	private final int windowSize;
 	private final int hopSize;
@@ -19,6 +21,11 @@ public final class TarsosFastYinEstimator implements PitchEstimator {
 	}
 
 	public TarsosFastYinEstimator(float sampleRate, int windowSize, int hopSize) {
+		this(sampleRate, windowSize, hopSize, DEFAULT_THRESHOLD);
+	}
+
+	/** With the YIN threshold of the settings (spec 026, {@code pitch.yin-threshold}); FastYin's own default is {@link #DEFAULT_THRESHOLD}. */
+	public TarsosFastYinEstimator(float sampleRate, int windowSize, int hopSize, double threshold) {
 		if (!Float.isFinite(sampleRate) || sampleRate <= 0f) {
 			throw new IllegalArgumentException("sampleRate must be positive and finite");
 		}
@@ -30,7 +37,7 @@ public final class TarsosFastYinEstimator implements PitchEstimator {
 		}
 		this.windowSize = windowSize;
 		this.hopSize = hopSize;
-		this.detector = new FastYin(sampleRate, windowSize);
+		this.detector = new FastYin(sampleRate, windowSize, threshold);
 	}
 
 	@Override

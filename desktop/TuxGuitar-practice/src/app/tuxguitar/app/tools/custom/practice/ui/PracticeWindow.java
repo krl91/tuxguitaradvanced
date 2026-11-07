@@ -874,8 +874,8 @@ public class PracticeWindow {
 		// the written techniques are judged beside the pitch, never instead of it (spec 002); off: every technique is "not verifiable"
 		this.session.setTechniqueJudge(new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)));
 		// notes and chords are also judged from what each attack adds to the sound (spec 004): works over strings that keep ringing
-		this.session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()));
-		this.engine.setAttackCandidates(AttackCandidates.of(sequence));
+		this.session.setPolyphonicAcceptance(new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults(), recognition));
+		this.engine.setAttackCandidates(AttackCandidates.of(sequence, recognition));
 		this.session.setExpectedChordSink(this.engine::setExpectedChord);
 		if( PracticeParameters.EARLY_STABILITY_ENABLED ) {
 			this.session.setEarlyStability(PracticeParameters.EARLY_STABILITY_MARGIN, PracticeParameters.EARLY_STABILITY_NANOS);
@@ -985,7 +985,7 @@ public class PracticeWindow {
 			plan = ArcadeStarter.prepareFrom(this.context, this.song, candidate.getTrack(), full, FollowSettings.getInstance(this.context),
 					ArcadeLeniency.windowMillis(leniency, FollowSettings.getInstance(this.context).getWindowMillis()), parameters,
 					new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
-					() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()), this.followAdapter, this::renderArcade,
+					() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults(), recognition), this.followAdapter, this::renderArcade,
 					runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), endRun::ended,
 					(loop, handler) -> new FollowEvents(this.context, loop, handler, this.engine.getSelection(), this.shared),
 					() -> TGSynchronizer.getInstance(this.context).executeLater(this::restartArcade));
@@ -1010,7 +1010,7 @@ public class PracticeWindow {
 				FollowSettings.getInstance(this.context).getFarScalePercent() / 100.0, FollowSettings.getInstance(this.context).getHorizonPercent() / 100.0,
 				FollowSettings.getInstance(this.context).getFlames(), !this.reducedMotion.requested(),
 				FireTuningStore.of(this.context).load(FireTuning.Group.ARCADE));
-		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
+		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence(), recognition));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
 		final FollowRun run = plan.run();
 		this.followFrameListener = run::postFrame;
@@ -1207,7 +1207,7 @@ public class PracticeWindow {
 		FollowStarter.Plan plan = FollowStarter.prepareFollow(this.context, this.song, this.preparedSequence, candidate.getTrack().getNumber(),
 				FollowSettings.getInstance(this.context), FollowChoices.of(this.context).leniency(), recognition,
 				new TechniqueJudge(TechniqueCatalog.defaults(), recognition.get(RecognitionParameters.NOTE_TECHNIQUE)),
-				() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults()), this.followAdapter, this::renderFollow,
+				() -> new PolyphonicAcceptance(PolyphonicAcceptance.Parameters.defaults(), recognition), this.followAdapter, this::renderFollow,
 				runnable -> TGSynchronizer.getInstance(this.context).executeLater(runnable), this::followEnded,
 				(loop, handler) -> new FollowEvents(this.context, loop, handler, this.engine.getSelection(), this.shared),
 				() -> TGSynchronizer.getInstance(this.context).executeLater(this::restartFollow));
@@ -1216,7 +1216,7 @@ public class PracticeWindow {
 		this.followLast = null;
 		this.followShownEvent = -1;
 		this.followShownExtras = 0;
-		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence()));
+		this.engine.setAttackCandidates(AttackCandidates.of(plan.sequence(), recognition));
 		this.engine.setSpectrumEnabled(hasChords(plan.sequence()));
 		final FollowRun run = plan.run();
 		FollowSettings followSettings = FollowSettings.getInstance(this.context);

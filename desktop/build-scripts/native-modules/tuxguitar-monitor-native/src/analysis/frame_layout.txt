@@ -28,4 +28,4 @@ PART_CHORD 8
 #   uniquePartials, uniquePresentFraction(d), uniqueClearPartials), residualCount, residualCount x (midi, salience(d),
 #   relativeSalience(d), levelDb(d))
 # The largest record fits in this many floats:
-CAPACITY 4096
+CAPACITY 8192
