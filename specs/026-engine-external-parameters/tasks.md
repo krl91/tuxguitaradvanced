@@ -193,5 +193,5 @@ Phase 6: T035, T036, T037, T038 together.
 
 ## Phase 7: Convergence
 
-- [ ] T044 After the push of T042, dispatch the Ubuntu and macOS CI on the branch (`gh workflow run ubuntu-maven.yml` and `macos-maven.yml`, `--ref feature/interactive-practice`), wait for both results, and write them in the CI line of the *Gates* table of `SPEC/final-report.md` (T040 is ticked, but the CI half of its gate is not done yet) per SC-006, FR-011 (partial)
+- [X] T044 After the push of T042, dispatch the Ubuntu and macOS CI on the branch (`gh workflow run ubuntu-maven.yml` and `macos-maven.yml`, `--ref feature/interactive-practice`), wait for both results, and write them in the CI line of the *Gates* table of `SPEC/final-report.md` (T040 is ticked, but the CI half of its gate is not done yet) per SC-006, FR-011 (partial)
 - [X] T045 Bring research R6 in line with what was built: add a note under its decision saying that `configureTuning` builds the new pipeline, with buffers sized by the new values, on Java's thread, and the loop only swaps it in, so the loop never allocates (the crate's `no_allocation.rs` tests); the stages are not allocated at their upper bound at `open`. Cite T015 and the deviation in `final-report.md` per plan: research R6 (contradicts) Done: the note "As built" under R6's decision.
