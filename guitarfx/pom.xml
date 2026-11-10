@@ -1,0 +1,104 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<!-- GuitarFX, the standalone amp and effect pedals (spec 027): a cargo workspace, built by the profile "guitarfx" of the macOS build
+	     script only (TuxGuitarAdvanced's own builds, CI and release jobs never activate it). cargo checks the licences and runs the tests,
+	     the comparison with the Java effects reading the references GuitarFxReferenceTest of TuxGuitar-audio-engine wrote earlier in
+	     the same build, then builds the application. Nothing of it is packaged with TuxGuitarAdvanced. -->
+
+	<parent>
+		<artifactId>tuxguitar-pom</artifactId>
+		<groupId>app.tuxguitar</groupId>
+		<version>9.99-SNAPSHOT</version>
+		<relativePath>../desktop/</relativePath>
+	</parent>
+
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>guitarfx</artifactId>
+	<packaging>pom</packaging>
+	<name>${project.artifactId}</name>
+
+	<properties>
+		<guitarfx.cargo>cargo</guitarfx.cargo>
+		<guitarfx.reference.dir>${project.basedir}/../desktop/TuxGuitar-audio-engine/target/guitarfx-reference</guitarfx.reference.dir>
+	</properties>
+
+	<profiles>
+		<!-- the licence check and the tests, skipped with -DskipTests -->
+		<profile>
+			<id>guitarfx-checks</id>
+			<activation>
+				<property>
+					<name>!skipTests</name>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.7</version>
+						<executions>
+							<execution>
+								<id>guitarfx-checks</id>
+								<phase>test</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<target name="guitarfx-checks">
+										<exec dir="${basedir}" executable="${guitarfx.cargo}" failonerror="true">
+											<arg value="deny" />
+											<arg value="--locked" />
+											<arg value="check" />
+											<arg value="licenses" />
+										</exec>
+										<exec dir="${basedir}" executable="${guitarfx.cargo}" failonerror="true">
+											<env key="MACOSX_DEPLOYMENT_TARGET" value="${macos.minimumVersion}" />
+											<env key="GUITARFX_REFERENCE_DIR" value="${guitarfx.reference.dir}" />
+											<arg value="test" />
+											<arg value="--workspace" />
+											<arg value="--locked" />
+										</exec>
+									</target>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>guitarfx-build</id>
+						<phase>package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target name="guitarfx-build">
+								<exec dir="${basedir}" executable="${guitarfx.cargo}" failonerror="true">
+									<env key="MACOSX_DEPLOYMENT_TARGET" value="${macos.minimumVersion}" />
+									<arg value="build" />
+									<arg value="--release" />
+									<arg value="--locked" />
+									<arg value="-p" />
+									<arg value="guitarfx-app" />
+								</exec>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

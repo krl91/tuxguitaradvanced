@@ -1,0 +1,10 @@
+[package]
+name = "guitarfx-probe"
+description = "GuitarFX's latency probe (spec 027, research R8)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]

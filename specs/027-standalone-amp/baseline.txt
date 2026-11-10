@@ -1,0 +1,55 @@
+# Spec 027 baseline (T006), 2026-11-10
+
+HEAD at the start of spec 027's implementation: c8c25b6d1e27d84c4c27d592475ecd6c1cfaeb0a
+
+Gate: mvn -o -e clean verify -P native-modules,guitarfx (desktop/build-scripts/tuxguitar-macosx-swt-cocoa)
+- every module and test green; the last step (the clean of the .app folder) failed once because the owner's TuxGuitarAdvanced was running from it and the Finder wrote a .DS_Store into it; the assembly was rerun with -DskipTests and is green; nothing of guitarfx/ is packaged.
+
+Counts:
+- tuxguitar-practice: 1547 tests, 0 failures, 12 skipped
+- tuxguitar-audio-engine: 763 tests, 0 failures, 1 skipped (762 before + GuitarFxReferenceTest)
+- tuxguitar-monitor-native (crate): 64 passed, 4 ignored
+- guitarfx: cargo deny check licenses ok; cargo test --workspace: 0 tests (empty crates)
+
+target/guitarfx-reference/: 93 MB, 2544 runs (measured on the test run of T005; the -DskipTests assembly rerun cleaned it)
+
+Committed tests that read MON (must stay unchanged):
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/ChainAllocationTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/ChainCostBenchmarkTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/ChainSettingsTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/EngineCostBenchmarkTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/FakeMonitorDevice.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/FeedbackGuardTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/MonitorEnduranceBenchmarkTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/MonitorEngineLateInputTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/MonitorEngineTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/MonitorLatencyProbeTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/NativeMonitorDeviceTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/NativeMonitorProbeTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/OverloadTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/ReadyMadeSilenceTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/RealtimeEnduranceBenchmarkTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/RecognitionUntouchedTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/SmoothChangesTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/AmpTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/BiquadTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/CabinetTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/DrivePedalsTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/NoiseGateTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/OutputStageTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/OversamplerTest.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/Signals.java
+- desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/monitor/fx/SpacePedalsTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/AmpSoundRenameTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/AmpSoundSettingsTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/AmpSoundStoreLogTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/session/AmpSoundStoreTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpAutoStartWarningSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpNamePromptSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpPedalRowsSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpSafetySwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpSoundListSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpSoundsUnchangedTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpTextsTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpWindowSwtTest.java
+- desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/ui/AmpWindowTabsSwtTest.java

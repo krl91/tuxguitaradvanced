@@ -569,5 +569,14 @@
 				</plugins>
 			</build>
 		</profile>
+		<!-- GuitarFX, the standalone amp (spec 027): its licence check, tests and build, after TuxGuitar-audio-engine, whose
+		     GuitarFxReferenceTest writes the Java references it compares with. Never packaged with TuxGuitarAdvanced, and never
+		     activated by its CI or release jobs (they have no cargo-deny); GuitarFX has its own workflow. -->
+		<profile>
+			<id>guitarfx</id>
+			<modules>
+				<module>../../../guitarfx</module>
+			</modules>
+		</profile>
 	</profiles>
 </project>

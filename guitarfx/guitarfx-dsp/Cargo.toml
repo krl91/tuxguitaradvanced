@@ -1,0 +1,10 @@
+[package]
+name = "guitarfx-dsp"
+description = "GuitarFX's effects: the ported elements of spec 022, the chain, the safety and the parameter registry (spec 027)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]

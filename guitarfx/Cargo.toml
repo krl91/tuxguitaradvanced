@@ -1,0 +1,23 @@
+[workspace]
+resolver = "2"
+members = [
+	"guitarfx-dsp",
+	"guitarfx-settings",
+	"guitarfx-ui",
+	"guitarfx-app",
+	"guitarfx-plugin",
+	"guitarfx-probe",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.93"
+license = "LGPL-2.1-or-later"
+publish = false
+
+[profile.release]
+opt-level = 3
+# The strip of the macOS 27 tools leaves a mis-aligned string pool in the proc-macro libraries, which rustc then cannot load
+# (as in desktop/build-scripts/native-modules/tuxguitar-monitor-native).
+strip = "none"

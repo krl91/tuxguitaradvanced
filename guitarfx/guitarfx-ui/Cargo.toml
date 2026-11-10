@@ -1,0 +1,10 @@
+[package]
+name = "guitarfx-ui"
+description = "GuitarFX's windows, shared by the application and the plugin's editor (spec 027)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]

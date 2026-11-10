@@ -1,0 +1,10 @@
+[package]
+name = "guitarfx-app"
+description = "GuitarFX, the standalone amp and effect pedals (spec 027)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]

@@ -50,35 +50,36 @@
 
 ## Phase 1: Setup (the inventory, the workspace, the Java references)
 
-- [ ] T001 Write `SPEC/inventory.md` with the method of `specs/026-engine-external-parameters/inventory.md`.
+- [X] T001 Write `SPEC/inventory.md` with the method of `specs/026-engine-external-parameters/inventory.md`.
   - **Sources**: every `static final` (53 today) and every inline number of `MON/fx/*.java`, `MON/Chain.java`, `MON/FeedbackGuard.java`, `MON/MonitorEngine.java`, `MON/fx/OutputStage.java`.
   - **Each value is either**:
     - a **parameter**: key `guitarfx.<category>.<name>`, category of contracts/application.md, unit, default (the Java literal), min, max, a description;
     - or **fixed**: its kind (a mathematical constant, a buffer size, a format, a knob range of spec 022) and its reason.
   - **Categories**: at most 8 rows each.
   - The scan's allow list of plain numbers is written at the top.
-- [ ] T002 Create the workspace `GFX/Cargo.toml` with the members `guitarfx-dsp`, `guitarfx-settings`, `guitarfx-ui`, `guitarfx-app`, `guitarfx-plugin`, `guitarfx-probe`.
+- [X] T002 Create the workspace `GFX/Cargo.toml` with the members `guitarfx-dsp`, `guitarfx-settings`, `guitarfx-ui`, `guitarfx-app`, `guitarfx-plugin`, `guitarfx-probe`.
   - Each member is an empty crate that builds.
   - `rust-version = "1.93"`, the toolchain of `.github/actions/install-rust` (the CRATE declares none).
   - Run `cargo fetch` once (network: the crates are not in the local cargo cache) and commit `GFX/Cargo.lock`; every later build is `--locked`.
   - The licence is `LGPL-2.1-or-later`, as the CRATE.
   - Add `GFX/README.md` (what GuitarFX is, how to build) and `GFX/.gitignore` (`target/`).
-- [ ] T003 Write `GFX/deny.toml` with the allow list of research R3: MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, ISC, BSD-2-Clause, BSD-3-Clause, Zlib, Unicode-3.0, LGPL-2.1-or-later, and the non-GPL licences R3 expects in the planned tree (MPL-2.0, OFL-1.1, LicenseRef-UFL-1.0, BSL-1.0, CC0-1.0).
+- [X] T003 Write `GFX/deny.toml` with the allow list of research R3: MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, ISC, BSD-2-Clause, BSD-3-Clause, Zlib, Unicode-3.0, LGPL-2.1-or-later, and the non-GPL licences R3 expects in the planned tree (MPL-2.0, OFL-1.1, LicenseRef-UFL-1.0, BSL-1.0, CC0-1.0).
   - Each of those five is allowed only for the crates R3 names (`exceptions` of `deny.toml`), and T029 and T051 run `cargo deny list` once their dependencies are in, adjusting the exceptions to the crates actually pulled and recording them in R3.
   - Every GPL and AGPL variant is denied, and unknown licences are denied.
   - Check that `cargo deny check licenses` passes on the empty workspace, then fails when a GPL test crate is added temporarily in a scratch copy (seen red, never committed).
-- [ ] T004 Write `GFX/pom.xml`, a Maven module in the style of `CRATE/pom.xml`:
+- [X] T004 Write `GFX/pom.xml`, a Maven module in the style of `CRATE/pom.xml`:
   - `cargo deny check licenses`;
   - `cargo test --workspace`, with `GUITARFX_REFERENCE_DIR=${project.basedir}/../desktop/TuxGuitar-audio-engine/target/guitarfx-reference`;
   - `cargo build --release -p guitarfx-app`.
   - every cargo call has `--locked`, as in `CRATE/pom.xml`; `cargo deny` and `cargo test` are skipped when `skipTests` is set.
   - Add the module to a **new profile `guitarfx`** of `desktop/build-scripts/tuxguitar-macosx-swt-cocoa/pom.xml` only, listed after `TuxGuitar-audio-engine`. It is **not** added to `native-modules`, nor to the Linux or Windows build scripts: TuxGuitarAdvanced's CI and release jobs build with `-P native-modules -DskipTests` and have no `cargo-deny`, so the module there would break them (constitution I). GuitarFX's Linux and Windows builds are `guitarfx.yml` (T058) and its own release jobs (T060).
   - Check that `mvn -o -e clean verify -P native-modules` without the profile builds as before, and that no packaging step copies anything of `GFX`.
-- [ ] T005 New test `MONT/fx/GuitarFxReferenceTest.java` (package `app.tuxguitar.audio.engine.monitor.fx`, so it can call the package-private `Signals`; normal build, not tagged). For each element of `MON/fx`, the whole chain of each ready-made sound of `MON/ReadyMadeChains.java`, `FeedbackGuard` and `OutputStage`, at 44.1, 48 and 96 kHz, with the default knobs and with each knob at its minimum and maximum:
+- [X] T005 New test `MONT/fx/GuitarFxReferenceTest.java` (package `app.tuxguitar.audio.engine.monitor.fx`, so it can call the package-private `Signals`; normal build, not tagged). For each element of `MON/fx`, the whole chain of each ready-made sound of `MON/ReadyMadeChains.java`, `FeedbackGuard` and `OutputStage`, at 44.1, 48 and 96 kHz, with the default knobs and with each knob at its minimum and maximum:
   - it runs `Signals.sine` at 3 levels and `Signals.noise` at −40 dBFS (the committed `Signals.java` is not changed), plus a silence and a step built in the test itself, and the first recording of `benchmark/MonitorFixtureSet.recognitionInputs()` (public, the guitar recordings of spec 022's `RecognitionUntouchedTest`);
   - it writes the input, the knob values and the output as little-endian `f32` files, plus an `index.properties`, into `desktop/TuxGuitar-audio-engine/target/guitarfx-reference/`;
   - it asserts that the files exist and that the index lists them.
-- [ ] T006 Run the gate once (T004 and T005 in): green.
+  - *Done*: `Chain` and `FeedbackGuard` are package-private in `monitor`, so a new public test helper `MONT/GuitarFxReferenceRuns.java` runs them for the test. Besides the elements of `MON/fx`, the test also writes `Biquad` (five shapes and a glide) and `Oversampler` (factors 1, 2, 4, up then down), a *moved* variant per element (every knob to its maximum in the middle), the amp's change of character, each ready-made sound changed for the next, and a growing 1 kHz howl for the guard (found after about 0.49 s at each rate). 2,544 runs, 93 MB, 3.4 s.
+- [X] T006 Run the gate once (T004 and T005 in): green.
   - Write `SPEC/baseline.txt`: HEAD, the counts per module, the size of `target/guitarfx-reference/`, and the committed tests that read `MON` (`MONT/**`, `PT/**/Amp*`).
   - Commit Phase 1.
 
