@@ -18,12 +18,11 @@ fn decimals(min: f64, max: f64) -> usize {
     }
 }
 
-/// The new value when the guitarist moved it.
-#[allow(clippy::too_many_arguments)]
-pub fn slider(ui: &mut Ui, label: &str, what: &str, value: f64, min: f64, max: f64, unit: &str, default: f64, texts: &Texts) -> Option<f64> {
+/// A value's tooltip: what it changes, then its range and default with their unit, which no translated text holds (FR-018).
+pub fn tip(texts: &Texts, what: &str, min: f64, max: f64, unit: &str, default: f64) -> String {
     let places = decimals(min, max);
     let unit_text = if unit.is_empty() { String::new() } else { format!(" {unit}") };
-    let tip = texts.format(
+    texts.format(
         "knob.tip",
         &[
             ("what", what),
@@ -32,7 +31,15 @@ pub fn slider(ui: &mut Ui, label: &str, what: &str, value: f64, min: f64, max: f
             ("unit", &unit_text),
             ("default", &format!("{default:.places$}")),
         ],
-    );
+    )
+}
+
+/// The new value when the guitarist moved it.
+#[allow(clippy::too_many_arguments)]
+pub fn slider(ui: &mut Ui, label: &str, what: &str, value: f64, min: f64, max: f64, unit: &str, default: f64, texts: &Texts) -> Option<f64> {
+    let places = decimals(min, max);
+    let unit_text = if unit.is_empty() { String::new() } else { format!(" {unit}") };
+    let tip = tip(texts, what, min, max, unit, default);
     ui.label(label).on_hover_text(&tip);
     let mut current = value;
     ui.spacing_mut().slider_width = SLIDER_WIDTH;

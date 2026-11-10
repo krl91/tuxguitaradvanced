@@ -3,13 +3,15 @@
 
 use crate::delay_estimate;
 use crate::devices::{self, DeviceList, Problem, Running};
-use crate::engine::State;
+use crate::safety::{self, Reading, Watch};
 use eframe::egui;
+use guitarfx_dsp::params::Params;
 use guitarfx_dsp::{chain_text, ready_made, settings::ChainParams};
 use guitarfx_settings::settings::{Notice, Settings};
 use guitarfx_settings::sound_file;
 use guitarfx_settings::sounds::{Import, NameProblem, Sounds};
 use guitarfx_settings::texts::Texts;
+use guitarfx_ui::advanced::{self, AdvancedModel};
 use guitarfx_ui::sounds::{SoundDialog, SoundItem, SoundsModel};
 use guitarfx_ui::window::{self, Action, Dialog, Model, Tab};
 use std::path::PathBuf;
@@ -31,11 +33,6 @@ fn refresh() -> Duration {
     Duration::from_secs(1) / 20
 }
 
-/// A repeated message (the clipping) is shown at most this often.
-fn notice_interval() -> Duration {
-    Duration::from_secs(1)
-}
-
 pub struct App {
     folder: PathBuf,
     settings: Settings,
@@ -44,10 +41,8 @@ pub struct App {
     devices: DeviceList,
     model: Model,
     running: Option<Running>,
-    lightening: usize,
-    clipped: u64,
-    clipping_until: Option<Instant>,
-    last_clipping_notice: Option<Instant>,
+    /// The safety messages already shown since the sound was turned on.
+    watch: Watch,
     /// A change not saved yet (the knobs move many times a second: they are saved once they rest).
     unsaved_since: Option<Instant>,
     sounds: Sounds,
@@ -56,6 +51,7 @@ pub struct App {
     sound_list: SoundsModel,
     /// An imported sound waiting for the guitarist's answer: its name and chain.
     pending_import: Option<(String, ChainParams)>,
+    advanced: AdvancedModel,
 }
 
 fn name_problem_key(problem: NameProblem) -> &'static str {
@@ -75,7 +71,7 @@ impl App {
     pub fn new(folder: PathBuf) -> App {
         let loaded = Settings::load(&folder);
         let sounds = Sounds::load(&folder);
-        let texts = Texts::english();
+        let texts = Texts::system();
         let settings = loaded.settings;
         let mut app = App {
             folder,
@@ -100,15 +96,13 @@ impl App {
             texts,
             devices: DeviceList::default(),
             running: None,
-            lightening: 0,
-            clipped: 0,
-            clipping_until: None,
-            last_clipping_notice: None,
+            watch: Watch::new(),
             unsaved_since: None,
             sounds: sounds.sounds,
             sounds_writable: sounds.writable,
             sound_list: SoundsModel::default(),
             pending_import: None,
+            advanced: AdvancedModel::default(),
         };
         match sounds.notice {
             Some(Notice::Newer) => app.say("message.sounds.newer"),
@@ -206,7 +200,8 @@ impl App {
 
     /// Shows what is wrong with the name in the open prompt.
     fn name_problem(&mut self, problem: NameProblem) {
-        let text = self.texts.get(name_problem_key(problem)).to_string();
+        let length = guitarfx_settings::sounds::NAME_LENGTH.to_string();
+        let text = self.texts.format(name_problem_key(problem), &[("length", &length)]);
         if let Some(SoundDialog::Save { problem, .. } | SoundDialog::Rename { problem, .. }) = &mut self.sound_list.dialog {
             *problem = Some(text);
         }
@@ -312,7 +307,7 @@ impl App {
             self.say("message.choose");
             return;
         };
-        if !warned && devices::is_built_in_microphone(&input) {
+        if safety::needs_warning(&input, warned) {
             self.model.dialog = Some(Dialog::BuiltInMicrophone);
             return;
         }
@@ -321,8 +316,7 @@ impl App {
             Ok(running) => {
                 self.running = Some(running);
                 self.model.sound_on = true;
-                self.lightening = 0;
-                self.clipped = 0;
+                self.watch = Watch::new();
                 self.model.message = None;
             }
             Err(problem) => self.problem(&problem),
@@ -411,6 +405,16 @@ impl App {
                     self.imported(&name);
                 }
             }
+            Action::OpenAdvanced | Action::CloseAdvanced => {}
+            // read when the sound is next turned on (FR-025)
+            Action::Param { key, value } => {
+                self.settings.params = advanced::set(&self.settings.params, key, value);
+                self.unsaved_since.get_or_insert_with(Instant::now);
+            }
+            Action::AdvancedDefaults => {
+                self.settings.params = Params::defaults();
+                self.save_settings();
+            }
             Action::CloseSoundDialog => {
                 self.sound_list.dialog = None;
                 self.pending_import = None;
@@ -433,46 +437,30 @@ impl App {
             return;
         };
         let control = &running.control;
-        let state = control.state();
+        let reading = Reading {
+            state: control.state(),
+            lightening: control.lightening(),
+            clipped: control.clipped_blocks(),
+        };
         let problem = running.problem();
-        let lightening = control.lightening();
-        let clipped = control.clipped_blocks();
-        let peak = control.take_peak();
-        let delay = delay_estimate::milliseconds(&running.parts());
-        let now = Instant::now();
-        self.model.meter = peak;
-        self.model.delay_ms = Some(delay);
-        if clipped > self.clipped {
-            self.clipped = clipped;
-            self.clipping_until = Some(now + notice_interval());
-            if self.last_clipping_notice.is_none_or(|t| now - t >= notice_interval()) {
-                self.last_clipping_notice = Some(now);
-                self.say("message.clipping");
-            }
-        }
-        self.model.clipping = self.clipping_until.is_some_and(|t| now < t);
-        if lightening > self.lightening {
-            self.lightening = lightening;
-            self.say(&format!("message.lighter.{lightening}"));
-        }
+        self.model.meter = control.take_peak();
+        self.model.delay_ms = Some(delay_estimate::milliseconds(&running.parts()));
         if let Some(problem) = problem {
             self.sound_off_now();
             self.problem(&problem);
             return;
         }
-        match state {
-            State::Off => self.sound_off_now(),
-            State::MutedFeedback => {
-                self.sound_off_now();
-                let text = self.texts.get("message.feedback").to_string();
-                self.model.message = Some(text.clone());
-                self.model.dialog = Some(Dialog::Message(text));
+        let outcome = self.watch.step(&reading, Instant::now());
+        self.model.clipping = outcome.clipping;
+        if outcome.off {
+            self.sound_off_now();
+        }
+        if let Some(key) = outcome.message {
+            let text = self.texts.get(&key).to_string();
+            if outcome.dialog {
+                self.model.dialog = Some(Dialog::Message(text.clone()));
             }
-            State::MutedOverload => {
-                self.sound_off_now();
-                self.say("message.overload");
-            }
-            State::Starting | State::On | State::Stopping => {}
+            self.model.message = Some(text);
         }
     }
 
@@ -491,18 +479,20 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll();
         self.refresh_sound_list();
-        let actions = window::show_with(ctx, &mut self.model, &mut self.sound_list, &self.texts);
+        self.advanced.params = self.settings.params;
+        self.advanced.sound_on = self.model.sound_on;
+        let actions = window::show_all(ctx, &mut self.model, &mut self.sound_list, &mut self.advanced, &self.texts);
         for action in actions {
             self.act(action);
         }
         self.remember_window(ctx);
-        if self.unsaved_since.is_some_and(|t| t.elapsed() >= notice_interval()) {
+        if self.unsaved_since.is_some_and(|t| t.elapsed() >= safety::notice_interval()) {
             self.unsaved_since = None;
             self.save_settings();
             self.save_sounds();
         }
         if self.unsaved_since.is_some() {
-            ctx.request_repaint_after(notice_interval());
+            ctx.request_repaint_after(safety::notice_interval());
         }
         if self.running.is_some() {
             ctx.request_repaint_after(refresh());
@@ -533,7 +523,7 @@ fn options(settings: &Settings, title: &str) -> eframe::NativeOptions {
 /// Opens the main window until it is closed.
 pub fn run(folder: PathBuf) -> ExitCode {
     let app = App::new(folder);
-    let texts = Texts::english();
+    let texts = Texts::system();
     let title = texts.get("app.title").to_string();
     let options = options(&app.settings, &title);
     match eframe::run_native(&title, options, Box::new(|_| Ok(Box::new(app)))) {
@@ -547,7 +537,7 @@ pub fn run(folder: PathBuf) -> ExitCode {
 
 /// The second instance: a small window says GuitarFX is already open, then it quits. No device is opened.
 pub fn already_open() -> ExitCode {
-    let texts = Texts::english();
+    let texts = Texts::system();
     let title = texts.get("app.title").to_string();
     let message = texts.get("message.already-open").to_string();
     let ok = texts.get("dialog.ok").to_string();

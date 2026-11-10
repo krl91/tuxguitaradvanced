@@ -1,10 +1,12 @@
 //! The main window (contracts/application.md): the devices bar, the sound control (*Sound on*, the volume, the input meter, the estimated
 //! delay and the Bluetooth note), the chain's three tabs, and the message line. It fits a 1024×768 screen.
 
+use crate::advanced::{self, AdvancedModel};
 use crate::sounds::{self, SoundsModel};
-use crate::{chain_rows, devices_bar, messages};
+use crate::{chain_rows, devices_bar, knobs, messages};
 use egui::{Align, Context, Layout, RichText, Ui};
 use guitarfx_dsp::settings::ChainParams;
+use guitarfx_settings::settings::Settings;
 use guitarfx_settings::texts::Texts;
 
 /// The size the window opens at the first time, and the least it may be made.
@@ -108,31 +110,69 @@ pub enum Action {
     ImportReplace,
     ImportKeepBoth,
     CloseSoundDialog,
+    OpenAdvanced,
+    CloseAdvanced,
+    /// An advanced value moved (FR-025).
+    Param {
+        key: &'static str,
+        value: f64,
+    },
+    /// *Defaults*, confirmed.
+    AdvancedDefaults,
 }
 
 /// The window without a sound list.
 pub fn show(ctx: &Context, model: &mut Model, texts: &Texts) -> Vec<Action> {
-    show_parts(ctx, model, None, texts)
+    show_parts(ctx, model, None, None, texts)
 }
 
 /// The window with its sound list.
 pub fn show_with(ctx: &Context, model: &mut Model, sound_list: &mut SoundsModel, texts: &Texts) -> Vec<Action> {
-    show_parts(ctx, model, Some(sound_list), texts)
+    show_parts(ctx, model, Some(sound_list), None, texts)
 }
 
-fn show_parts(ctx: &Context, model: &mut Model, mut sound_list: Option<&mut SoundsModel>, texts: &Texts) -> Vec<Action> {
+/// The whole window: the sound list, and *Advanced…* with its window.
+pub fn show_all(ctx: &Context, model: &mut Model, sound_list: &mut SoundsModel, advanced: &mut AdvancedModel, texts: &Texts) -> Vec<Action> {
+    show_parts(ctx, model, Some(sound_list), Some(advanced), texts)
+}
+
+fn show_parts(
+    ctx: &Context,
+    model: &mut Model,
+    mut sound_list: Option<&mut SoundsModel>,
+    mut advanced: Option<&mut AdvancedModel>,
+    texts: &Texts,
+) -> Vec<Action> {
     let mut actions = Vec::new();
     egui::TopBottomPanel::top("devices").show(ctx, |ui| devices_bar::show(ui, model, texts, &mut actions));
     egui::TopBottomPanel::top("sound").show(ctx, |ui| sound(ui, model, texts, &mut actions));
     if let Some(list) = sound_list.as_deref_mut() {
         egui::TopBottomPanel::top("sounds").show(ctx, |ui| sounds::show(ui, list, texts, &mut actions));
     }
-    egui::TopBottomPanel::bottom("messages").show(ctx, |ui| messages::line(ui, model.message.as_deref()));
+    egui::TopBottomPanel::bottom("messages").show(ctx, |ui| {
+        if let Some(advanced) = advanced.as_deref_mut() {
+            ui.horizontal(|ui| {
+                if ui
+                    .button(texts.get("advanced.open"))
+                    .on_hover_text(texts.get("advanced.open.tip"))
+                    .clicked()
+                {
+                    advanced.open = true;
+                    actions.push(Action::OpenAdvanced);
+                }
+                messages::line(ui, model.message.as_deref());
+            });
+        } else {
+            messages::line(ui, model.message.as_deref());
+        }
+    });
     egui::CentralPanel::default().show(ctx, |ui| tabs(ui, model, texts, &mut actions));
     if let Some(dialog) = model.dialog.clone() {
         messages::dialog(ctx, &dialog, texts, &mut actions);
-    } else if let Some(list) = sound_list {
+    } else if let Some(list) = sound_list.filter(|l| l.dialog.is_some()) {
         sounds::dialog(ctx, list, texts, &mut actions);
+    } else if let Some(advanced) = advanced {
+        advanced::show(ctx, advanced, texts, &mut actions);
     }
     actions
 }
@@ -153,7 +193,14 @@ fn sound(ui: &mut Ui, model: &mut Model, texts: &Texts, actions: &mut Vec<Action
         ui.spacing_mut().slider_width = VOLUME_WIDTH;
         let slider = ui
             .add(egui::Slider::new(&mut percent, 0.0..=100.0).suffix(" %").fixed_decimals(0))
-            .on_hover_text(texts.get("volume.tip"));
+            .on_hover_text(knobs::tip(
+                texts,
+                texts.get("volume.tip"),
+                0.0,
+                100.0,
+                "%",
+                Settings::default().volume * 100.0,
+            ));
         if slider.changed() || slider.drag_stopped() {
             model.volume = percent / 100.0;
             actions.push(Action::Volume {

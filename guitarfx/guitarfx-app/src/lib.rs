@@ -7,4 +7,5 @@ pub mod delay_estimate;
 pub mod devices;
 pub mod engine;
 pub mod resample;
+pub mod safety;
 pub mod single_instance;

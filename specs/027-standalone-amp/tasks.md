@@ -251,26 +251,31 @@
 
 **Independent test**: T021 is green; the owner opens *Advanced…*, changes a value, turns the sound off and on, and hears the change.
 
-- [ ] T046 [P] [US4] Test `SET/tests/texts.rs`, then write `GFX/lang/messages{,_fr,_es}.properties` and `SET/src/texts.rs`:
+- [X] T046 [P] [US4] Test `SET/tests/texts.rs`, then write `GFX/lang/messages{,_fr,_es}.properties` and `SET/src/texts.rs`:
   - every key in the three files;
   - French and Spanish differ from English except a short listed set;
   - no translated text contains a figure with a unit: the unit and the default of a knob or a parameter are appended to its tooltip from the knob table or the registry when it is shown, so every tooltip says its unit and default (FR-018) and a changed default never leaves a stale text;
   - the language comes from `sys-locale`, English otherwise.
   - Fill every text of the windows, knobs, parameters, messages and categories.
-- [ ] T047 [US4] Write the feedback and safety behaviour in the application:
+- [X] T047 [US4] Write the feedback and safety behaviour in the application:
   - the built-in-microphone warning before turning the sound on, with *Turn on anyway* and *Cancel*;
   - a howl mutes the sound with its message (SC-005);
   - the overload lightening message;
   - the input clipping message.
   - Test `APP/tests/safety_messages.rs` on the fake device.
-- [ ] T048 [US4] Test `UI/tests/advanced.rs` on the model, then write `UI/src/advanced.rs` per contracts/application.md "Advanced…":
+  - Done 2026-11-10 (T046 and T047): `GFX/lang/messages{,_fr,_es}.properties` (399 keys each: the windows, knobs, messages, the *Advanced* window, 19 categories, each of the 103 parameters' name and tooltip) are built into the program; `sys-locale` 0.3.2 (MIT or Apache-2.0, licence check green) picks the language. `SET/tests/texts.rs` (7) was seen red, and its unit check was seen failing on the old volume tooltip ("from 0 to 100 %"), which now gets its range and default from `knobs::tip`; the name length comes from `NAME_LENGTH`. The committed `fits_screen.rs` stays green with the longest French and Spanish texts. Texts the same in every language are the list `SAME` of the test (product and pedal names such as Overdrive, Chorus, Crunch, symbols, OK).
+  - T047: the existing behaviour moved into `APP/src/safety.rs` (`needs_warning`, `Watch`), used by `App::poll`; `APP/tests/safety_messages.rs` (4, seen red) drives the real engine on a fake device: a loud steady tone is caught as a howl (muted, message and dialog), slow blocks give each lightening message then the overload one, clipping is said at most once a second.
+- [X] T048 [US4] Test `UI/tests/advanced.rs` on the model, then write `UI/src/advanced.rs` per contracts/application.md "Advanced…":
   - categories in a drop-down, at most 8 rows, each row with name, slider, value, unit, "default X" and a tooltip, all from the registry;
   - *Defaults* with a confirmation;
   - the line "Changes take effect the next time the sound is turned on." while the sound is on.
   - Values are saved to `settings.properties` and read when the sound is next turned on (FR-025).
   - The window fits 1024×768.
-- [ ] T049 [US4] Test `APP/tests/takes_effect.rs`: a non-default value of one parameter per category, written in the settings, changes the chain's output the next time the sound is turned on, and not before.
-- [ ] T050 [US4] Gate: green. Commit Phase 6.
+- [X] T049 [US4] Test `APP/tests/takes_effect.rs`: a non-default value of one parameter per category, written in the settings, changes the chain's output the next time the sound is turned on, and not before.
+  - Done 2026-11-10 (T048 and T049): `UI/src/advanced.rs`, opened by *Advanced…* beside the message line (`window::show_all`; the committed `show` and `show_with` are unchanged); a value moved is written to `settings.properties` once it rests, *Defaults* asks first. `UI/tests/advanced.rs` (7, seen red) checks the categories, rows, texts, bounds, the takes-effect line, the confirmation, and the fit at 1024×768 for every category in the longest language.
+  - T049: `APP/tests/takes_effect.rs` was first red for five parameters, each time because of the test's scenario, not the program: its fake clock made every block look slow, so the overload rule muted the sound after a second; a pedal level at unity hides `pedals.level-step`; the guard's analysis values only matter once a howl is caught. The scenario now runs quarter-time blocks, a compressor level of 7, and for the analysis category starts from `feedback.loud` = −40 so that the guard catches the tone. Every category then changes the output once the sound is turned on again, and an engine already playing is unchanged.
+- [X] T050 [US4] Gate: green. Commit Phase 6.
+  - Done 2026-11-10: `mvn -o -e verify -P native-modules,guitarfx` BUILD SUCCESS, no Java test failing, cargo 188 passed, licence check green, `GuitarFX.app --check` prints `ok`. No committed test changed.
 
 ---
 

@@ -16,7 +16,7 @@ const RATE: f32 = 48000.0;
 
 pub fn run() -> Result<(), String> {
     let settings = settings_folder().map(|f| Settings::read_only(&f)).unwrap_or_default();
-    let texts = Texts::english();
+    let texts = Texts::system();
     if texts.get("app.title") == "app.title" {
         return Err("the texts are missing".to_string());
     }

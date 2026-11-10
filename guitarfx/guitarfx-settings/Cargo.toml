@@ -11,3 +11,5 @@ publish.workspace = true
 guitarfx-dsp = { path = "../guitarfx-dsp" }
 # the settings folder of each system (MIT or Apache-2.0; pulls option-ext, MPL-2.0: deny.toml)
 directories = "=6.0.0"
+# the system language for the texts (MIT or Apache-2.0)
+sys-locale = "=0.3.2"

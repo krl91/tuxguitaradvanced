@@ -168,7 +168,7 @@ fn name_prompt(ui: &mut Ui, name: &mut String, problem: &Option<String>, texts: 
                 .char_limit(guitarfx_settings::sounds::NAME_LENGTH)
                 .desired_width(NAME_WIDTH),
         )
-        .on_hover_text(texts.get("sound.name.tip"));
+        .on_hover_text(texts.format("sound.name.tip", &[("length", &guitarfx_settings::sounds::NAME_LENGTH.to_string())]));
     if field.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
         answer = Answer::Ok(name.clone());
     }
