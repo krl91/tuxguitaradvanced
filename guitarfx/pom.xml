@@ -21,6 +21,9 @@
 
 	<properties>
 		<guitarfx.cargo>cargo</guitarfx.cargo>
+		<!-- the workspace's version (Cargo.toml [workspace.package]), shown in the bundle -->
+		<guitarfx.version>0.1.0</guitarfx.version>
+		<guitarfx.app>${project.build.directory}/GuitarFX.app</guitarfx.app>
 		<guitarfx.reference.dir>${project.basedir}/../desktop/TuxGuitar-audio-engine/target/guitarfx-reference</guitarfx.reference.dir>
 	</properties>
 
@@ -93,6 +96,27 @@
 									<arg value="--locked" />
 									<arg value="-p" />
 									<arg value="guitarfx-app" />
+								</exec>
+								<!-- the macOS bundle (T032): the binary, its Info.plist and the microphone text in three languages, signed ad hoc -->
+								<delete dir="${guitarfx.app}" />
+								<copy file="${project.build.directory}/release/guitarfx" todir="${guitarfx.app}/Contents/MacOS" />
+								<chmod file="${guitarfx.app}/Contents/MacOS/guitarfx" perm="755" />
+								<copy file="${basedir}/guitarfx-app/packaging/macos/Info.plist" todir="${guitarfx.app}/Contents">
+									<filterset begintoken="@" endtoken="@">
+										<filter token="VERSION" value="${guitarfx.version}" />
+										<filter token="MINIMUM_MACOS" value="${macos.minimumVersion}" />
+									</filterset>
+								</copy>
+								<copy todir="${guitarfx.app}/Contents/Resources">
+									<fileset dir="${basedir}/guitarfx-app/packaging/macos" includes="*.lproj/InfoPlist.strings" />
+								</copy>
+								<exec executable="/usr/bin/codesign" failonerror="true">
+									<arg value="--force" />
+									<arg value="--sign" />
+									<arg value="-" />
+									<arg value="--identifier" />
+									<arg value="app.tuxguitar.guitarfx" />
+									<arg value="${guitarfx.app}" />
 								</exec>
 							</target>
 						</configuration>

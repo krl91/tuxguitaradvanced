@@ -7,4 +7,19 @@ rust-version.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[lib]
+name = "guitarfx_app"
+path = "src/lib.rs"
+
+[[bin]]
+name = "guitarfx"
+path = "src/main.rs"
+
 [dependencies]
+guitarfx-dsp = { path = "../guitarfx-dsp" }
+guitarfx-settings = { path = "../guitarfx-settings" }
+# the ring, the mailbox, the real-time thread, the workgroup and the declared latencies (research R1)
+tuxguitar-monitor-native = { path = "../../desktop/build-scripts/native-modules/tuxguitar-monitor-native" }
+cpal = "=0.15.3"
+eframe = { version = "=0.33.3", default-features = false, features = ["accesskit", "default_fonts", "glow", "wayland", "x11"] }
+guitarfx-ui = { path = "../guitarfx-ui" }

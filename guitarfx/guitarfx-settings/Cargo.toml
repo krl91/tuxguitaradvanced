@@ -8,3 +8,6 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+guitarfx-dsp = { path = "../guitarfx-dsp" }
+# the settings folder of each system (MIT or Apache-2.0; pulls option-ext, MPL-2.0: deny.toml)
+directories = "=6.0.0"

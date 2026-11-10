@@ -151,8 +151,8 @@
 
 **Independent test**: on a Mac with no Java on the `PATH`, `guitarfx --check` prints `ok`; then the owner chooses the cable and the headphones, turns the sound on and plays (quickstart §3, steps 1–2).
 
-- [ ] T024 [US1] Change `CRATE/src/lib.rs`: `mod latency` → `pub mod latency`, the only change to the CRATE (plan, constitution II). The CRATE's own tests stay green.
-- [ ] T025 [P] [US1] Test `SET/tests/settings.rs`, then write `SET/src/{folder,properties,settings}.rs` per contracts/settings-files.md:
+- [X] T024 [US1] Change `CRATE/src/lib.rs`: `mod latency` → `pub mod latency`, the only change to the CRATE (plan, constitution II). The CRATE's own tests stay green.
+- [X] T025 [P] [US1] Test `SET/tests/settings.rs`, then write `SET/src/{folder,properties,settings}.rs` per contracts/settings-files.md:
   - the folder per system (`directories`);
   - `settings.format=1`;
   - devices, `volume` (0–1, clamped), `sound.current` (default "Clean"), `chain.current`, and every `guitarfx.*` key from the registry;
@@ -161,7 +161,7 @@
   - **a newer format**: the file is left untouched and the defaults are used;
   - **a damaged file**: copied to `settings.properties.damaged-<yyyymmdd-hhmmss>`, the readable values kept;
   - the sound's on/off state is never written.
-- [ ] T026 [US1] Test `APP/tests/engine.rs` on a fake device (no hardware), then write `APP/src/engine.rs`:
+- [X] T026 [US1] Test `APP/tests/engine.rs` on a fake device (no hardware), then write `APP/src/engine.rs`:
   - the input callback pushes the chosen channel into a `Ring` (CRATE);
   - the output callback pops blocks of the block size, resamples mono when the rates differ (`APP/src/resample.rs`, a mono Hermite port of `CRATE/src/resampler.rs`), runs the chain, and writes stereo;
   - changes through `recognition::Mailbox` (CRATE): the callback hands every box it took back with `give_back`, never drops it (a drop would free on the audio thread); T020's allocator counts frees as well as allocations;
@@ -170,22 +170,25 @@
   - **overload** (FR-014), ported from `MonitorEngine` (lines 243–258): a block whose processing takes more than `guitarfx.overload.budget` of its duration (default 0.5, the inline `/ 2`) counts as slow; after `guitarfx.overload.blocks` slow blocks in a row (default 20, `OVERLOAD_BLOCKS`) the chain is lightened by the next step of `LIGHTER`, and past the last step the sound mutes with its message. The fake device's clock drives it in the test.
   - The fake device checks the output equals the chain's on the same input.
   - T020's allocator covers both callbacks.
-- [ ] T027 [P] [US1] Test `APP/tests/delay_estimate.rs`, then write `APP/src/delay_estimate.rs`: input block + output block + `latency::declared` (input and output) + the resampler's target fill, in ms at the output rate, rounded to 0.1 (data-model "Estimated delay").
-- [ ] T028 [US1] Write `APP/src/devices.rs`:
+- [X] T027 [P] [US1] Test `APP/tests/delay_estimate.rs`, then write `APP/src/delay_estimate.rs`: input block + output block + `latency::declared` (input and output) + the resampler's target fill, in ms at the output rate, rounded to 0.1 (data-model "Estimated delay").
+- [X] T028 [US1] Write `APP/src/devices.rs`:
   - list the inputs, their channels and the outputs, with refresh (FR-003);
   - a missing remembered device is shown as missing and never replaced;
   - a lost device, a denied permission or an unsupported format stop the sound with the message of contracts/application.md, and the application stays open (FR-013);
   - the built-in microphone is recognised by the rule of `desktop/TuxGuitar-audio-engine/.../input/InputDeviceCatalog.java` (lines 70–80: a microphone whose name holds `built-in`, `internal` or `macbook`), ported with its cases as a test (FR-012).
   - Test with cpal's error kinds mapped through a fake.
-- [ ] T029 [US1] Write the main window in `APP/src/main.rs` and `UI/src/{window,devices_bar,messages}.rs` per contracts/application.md:
+- [X] T029 [US1] Write the main window in `APP/src/main.rs` and `UI/src/{window,devices_bar,messages}.rs` per contracts/application.md:
   - the devices bar, *Sound on* (off at every start), the volume, the input meter with clipping, the estimated delay with the word "estimated" and the Bluetooth note shown at all times beside it, never depending on the output (clarification 2026-11-07), the message line;
   - the window's place and size remembered;
   - it fits 1024×768: a new test `UI/tests/fits_screen.rs` runs the window's layout headless (`egui::Context::run` with a 1024×768 screen, the longest texts of the three languages and every pedal in each tab) and asserts that every widget's rectangle lies inside the screen; it is seen red with a screen of 600 pixels.
   - Texts come through `SET/src/texts.rs` with English keys now; the other languages come in T046.
-- [ ] T030 [US1] Write `APP/src/single_instance.rs`: a lock file in the settings folder; a second instance shows "GuitarFX is already open." and quits without opening a device. Test with two processes.
-- [ ] T031 [US1] Write `guitarfx --check` (contracts/application.md "Headless start"): no window, no device; it loads the settings, texts and registry, builds the chain at 48 kHz, processes 1 s of silence, prints `ok`, and exits with 0. Test `APP/tests/check.rs` runs the binary.
-- [ ] T032 [US1] Write `APP/packaging/macos/Info.plist` (`CFBundleIdentifier app.tuxguitar.guitarfx`, `NSMicrophoneUsageDescription` in three languages through `InfoPlist.strings`) and the `.app` bundle step in `GFX/pom.xml`. Ad-hoc sign it in the local build.
-- [ ] T033 [US1] Gate: green. Run `GuitarFX.app` once with `--check`. Commit Phase 3.
+- [X] T030 [US1] Write `APP/src/single_instance.rs`: a lock file in the settings folder; a second instance shows "GuitarFX is already open." and quits without opening a device. Test with two processes.
+- [X] T031 [US1] Write `guitarfx --check` (contracts/application.md "Headless start"): no window, no device; it loads the settings, texts and registry, builds the chain at 48 kHz, processes 1 s of silence, prints `ok`, and exits with 0. Test `APP/tests/check.rs` runs the binary.
+- [X] T032 [US1] Write `APP/packaging/macos/Info.plist` (`CFBundleIdentifier app.tuxguitar.guitarfx`, `NSMicrophoneUsageDescription` in three languages through `InfoPlist.strings`) and the `.app` bundle step in `GFX/pom.xml`. Ad-hoc sign it in the local build.
+- [X] T033 [US1] Gate: green. Run `GuitarFX.app` once with `--check`. Commit Phase 3.
+  - 2026-11-10: `mvn -o -e verify -P native-modules,guitarfx` without `clean` (the owner's TuxGuitarAdvanced was running from the build's `.app`): BUILD SUCCESS, 1547 Java tests (0 failures, 12 skipped), cargo 137 tests (the workspace's 73 and the crate's 64), licences ok. `GuitarFX.app` (signed ad hoc, `app.tuxguitar.guitarfx`) `--check` printed `ok`, exit 0.
+  - `cargo fmt --all` had also formatted the native crate (a path dependency); that formatting was undone, so the crate's only change stays `pub mod latency` (T024). Format with `cargo fmt -p <crate>` from now on.
+  - Decisions to confirm with the owner: two different devices are resampled even at the same rate (their clocks drift; about 5 ms more delay than a direct path); 32-bit integer devices are accepted besides float and 16-bit; each part of the estimated delay is counted at its own device's rate.
 
 **Checkpoint**: GuitarFX plays the guitar through the chain of the current sound.
 

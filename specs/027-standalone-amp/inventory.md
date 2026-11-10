@@ -266,6 +266,8 @@ A number the port needs and this file lacks is added here **in the same commit**
 | 2048 | `feedback_guard.rs` | `FeedbackGuard.SIZE` | buffer size | The analysis frame. It must be a power of two (the FFT), and it sets the bin width the other values are measured in (23 Hz at 48 kHz). |
 | 0.1 | `delay_estimate.rs` (APP) | none (data-model "Estimated delay") | display | The delay is shown to a tenth of a millisecond. |
 | 1000000000 | `engine.rs` (APP) | `MonitorEngine` `1_000_000_000.0`, `NOTICE_INTERVAL_NANOS` | mathematics, display | Nanoseconds in a second; a repeated message is shown at most once a second (not heard). |
+| 4096, 16 | `engine.rs` (APP) | `CRATE/src/device.rs` `CHUNK`, `16 * block.max(CHUNK)` | buffer size | The most frames of one callback copied at a time, and the ring's size in such callbacks. They size buffers made before the sound starts; the delay is set by `guitarfx.devices.ring-blocks`, not by them. |
+| 32768, 32767 | `engine.rs` (APP) | `CRATE/src/device.rs` `as f32 / 32768.0`, `* 32767.0` | format | A 16-bit device's full scale, in and out. |
 | 48000 | `check.rs` (APP) | none (contracts/application.md "Headless start") | test format | `guitarfx --check` builds the chain at 48 kHz on one second of silence. |
 | 1.5, 2.5, 3, 4 | `resample.rs` (APP) | `CRATE/src/resampler.rs` `hermite`, `[f32; 4]` | mathematics | The four-point Hermite interpolation and its coefficients. |
 

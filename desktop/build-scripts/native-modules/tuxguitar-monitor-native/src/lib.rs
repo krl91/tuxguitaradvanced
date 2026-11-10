@@ -7,7 +7,7 @@ pub mod capture;
 pub mod device;
 mod jni_bridge;
 mod jni_recognition;
-mod latency;
+pub mod latency;
 pub mod realtime;
 pub mod recognition;
 pub mod resampler;

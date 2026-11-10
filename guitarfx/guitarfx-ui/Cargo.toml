@@ -8,3 +8,6 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+egui = { version = "=0.33.3", default-features = false, features = ["default_fonts"] }
+guitarfx-dsp = { path = "../guitarfx-dsp" }
+guitarfx-settings = { path = "../guitarfx-settings" }

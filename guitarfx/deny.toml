@@ -28,11 +28,11 @@ exceptions = [
 	# a dependency of `directories` (the settings folder)
 	{ crate = "option-ext", allow = ["MPL-2.0"] },
 	# egui's default fonts
-	{ crate = "epaint_default_fonts", allow = ["OFL-1.1", "LicenseRef-UFL-1.0"] },
+	{ crate = "epaint_default_fonts", allow = ["OFL-1.1", "Ubuntu-font-1.0"] },
 	# the Windows clipboard of egui
 	{ crate = "clipboard-win", allow = ["BSL-1.0"] },
 	{ crate = "error-code", allow = ["BSL-1.0"] },
-	# CC0-1.0: R3 expects it in some small crate, none named yet; T029 and T051 add the exception for the crate `cargo deny list` shows
+	# CC0-1.0: R3 expected it in some small crate; `cargo deny list` shows none with the interface in (T029); T051 checks again with the plugin
 ]
 
 [licenses.private]

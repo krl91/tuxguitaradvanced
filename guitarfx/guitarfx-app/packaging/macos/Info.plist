@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- GuitarFX's bundle (spec 027, T032). @VERSION@ and @MINIMUM_MACOS@ are filled by guitarfx/pom.xml. -->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>guitarfx</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.tuxguitar.guitarfx</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>GuitarFX</string>
+	<key>CFBundleDisplayName</key>
+	<string>GuitarFX</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>@MINIMUM_MACOS@</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>GuitarFX plays your guitar through its amp and pedals: it needs the input your guitar is plugged into.</string>
+</dict>
+</plist>
