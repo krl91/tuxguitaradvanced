@@ -251,12 +251,14 @@ A number the port needs and this file lacks is added here **in the same commit**
 | 9 | `chain.rs` | `Chain.KINDS`, `EffectKind.values()` | structure | The nine elements (seven pedals, the amp, the cabinet), always present (research R10). |
 | 1e-30 | `gate.rs` | `NoiseGate.process` | numerical safety | Flushes the mean square's denormals. |
 | 1e-12 | `compressor.rs` | `Compressor.process` `meanSquare + 1e-12` | numerical safety | `log10(0)` is −∞. |
+| 1e-12 | `feedback_guard.rs` | `FeedbackGuard.db` `Math.max(1e-12, magnitude)` | numerical safety | `log10(0)` is −∞. |
+| 0.99 | `params.rs` | none ("Combined bounds" above) | numerical safety | The highest sum of a feedback and its steps: under 1 the reverb's and the echo's tails always decay. |
 | 4000 | `overdrive.rs` | `Overdrive.prepare` `setLowPass(4000, …)` | starting state | The tone filter's first frequency. It glides to the knob's frequency within the first block, so it is never heard as a setting, but it shapes that block; it is kept for the comparison with Java (SC-003). |
 | 6000 | `distortion.rs` | `Distortion.prepare` `setLowPass(6000, …)` | starting state | The same, for the distortion's tone filter. |
 | 10 | `amp.rs`, `distortion.rs` | `Amp.prepare`, `Distortion.prepare` `setHighPass(10, …)` | DC blocker | Removes the offset of the asymmetric shapes. At 10 Hz it is under the audible band and changes nothing heard. |
 | 0.45 | `pedals.rs` | `Pedals.onePole` `0.45 * sampleRate` | numerical safety | Keeps a one-pole filter under Nyquist. |
 | 5 | `pedals.rs`, `amp.rs` | `Pedals.level` `knob - 5`, `Amp.update` `value.bass() - 5` … | knob range (spec 022) | The middle of a 0–10 knob, where a level or a band is flat. |
-| 1.5 | `echo.rs` | `Echo.LONGEST_SECONDS` | buffer size | The line holds the longest *time* of the knob (1500 ms, data-model "Knob"). |
+| 1.5 | `echo.rs` | `Echo.LONGEST_SECONDS` | buffer size | The line holds the longest *time* of the knob (1500 ms, data-model "Knob"). The port computes it from that knob's maximum in `knobs.rs` (`1500 / 1000`), so the literal is not in the code. |
 | 4 | `echo.rs`, `chorus.rs` | `Echo.prepare`, `Chorus.prepare` `+ maxBlock + 4` | buffer size | A margin for the interpolated read. |
 | 1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617 | `reverb.rs` | `Reverb.COMBS` | buffer size | The comb lengths in samples at 44.1 kHz (the classic public-domain Freeverb tuning). They are mutually prime as a set; changing one alone colours the tail. |
 | 556, 441, 341, 225 | `reverb.rs` | `Reverb.ALL_PASSES` | buffer size | The all-pass lengths, as the combs. |
