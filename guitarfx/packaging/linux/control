@@ -1,0 +1,14 @@
+Package: guitarfx
+Version: @VERSION@
+Architecture: amd64
+Maintainer: https://github.com/krl91/tuxguitaradvanced
+Installed-Size: @SIZE@
+Depends: libc6, libgcc-s1, libasound2t64 | libasound2, libgl1, libxkbcommon0
+Recommends: libxkbcommon-x11-0, libwayland-client0
+Section: sound
+Priority: optional
+Homepage: https://github.com/krl91/tuxguitaradvanced
+Description: Amp and effect pedals for the guitar
+ GuitarFX turns the computer into a guitar amp with effect pedals: noise gate,
+ compressor, overdrive, distortion, amp with cabinet, chorus, echo and reverb.
+ It is also a VST3 and CLAP plugin for music software. It needs no Java.

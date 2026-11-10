@@ -7,6 +7,7 @@ members = [
 	"guitarfx-app",
 	"guitarfx-plugin",
 	"guitarfx-probe",
+	"xtask",
 ]
 
 [workspace.package]

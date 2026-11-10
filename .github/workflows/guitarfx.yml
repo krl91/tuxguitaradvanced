@@ -1,0 +1,276 @@
+# GuitarFX (spec 027, T058): the standalone amp and its plugin, checked on the three systems. Only when asked (Actions > Run workflow): a
+# push does not start it. TuxGuitarAdvanced's own workflows never build GuitarFX.
+#
+# Each system:
+#  - cargo deny (no GPL code, FR-020);
+#  - the Java references (GuitarFxReferenceTest, through Maven), then cargo test --workspace, which compares the Rust chain with them;
+#  - the plugin bundles and clap-validator; auval on macOS;
+#  - the installer (T059) installed, guitarfx --check, uninstalled, and nothing left but the settings folder (FR-026);
+#  - no Java (FR-001, SC-001): the runners have Java, so the binaries' linked libraries must name no libjvm / jvm.dll, and guitarfx --check
+#    runs with JAVA_HOME unset and no java on the PATH.
+# Windows: the packages are built on Linux with Mingw-w64 (as TuxGuitarAdvanced's), then installed and checked on a Windows machine, where
+# the tests also run (MSVC), with the Java references written on Linux.
+
+name: GuitarFX CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_DENY_VERSION: '0.20.2'
+  CLAP_VALIDATOR_VERSION: '0.4.1'
+  CLAP_VALIDATOR_BUILD: '0.4.1-127-g152b982'
+  CARGO_TERM_COLOR: never
+
+jobs:
+  macos:
+    runs-on: macos-15   # Apple Silicon
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Install SWT
+        uses: ./.github/actions/install-swt
+        with:
+          platform: macos
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
+        with:
+          target: aarch64-apple-darwin
+      - name: Install cargo-deny and clap-validator
+        run: |
+          mkdir -p "$HOME/tools"
+          curl -fsSL "https://github.com/EmbarkStudios/cargo-deny/releases/download/${CARGO_DENY_VERSION}/cargo-deny-${CARGO_DENY_VERSION}-aarch64-apple-darwin.tar.gz" | tar -xz -C "$HOME/tools" --strip-components 1
+          curl -fsSL -o "$RUNNER_TEMP/clap-validator.zip" "https://github.com/free-audio/clap-validator/releases/download/${CLAP_VALIDATOR_VERSION}/clap-validator-${CLAP_VALIDATOR_BUILD}-macos-15-aarch64.zip"
+          unzip -q "$RUNNER_TEMP/clap-validator.zip" -d "$RUNNER_TEMP/clap-validator"
+          cp "$(find "$RUNNER_TEMP/clap-validator" -type f -name clap-validator | head -1)" "$HOME/tools/clap-validator"
+          chmod +x "$HOME/tools/"*
+          echo "$HOME/tools" >> "$GITHUB_PATH"
+      # the reference test, then the guitarfx module (cargo deny, cargo test reading the references, the application and the three bundles)
+      - name: Java references, cargo deny, cargo test, the application and the plugin bundles
+        run: |
+          cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa
+          mvn -B --no-transfer-progress -e verify -P guitarfx -pl ../../TuxGuitar-audio-engine,../../../guitarfx -am \
+            -Dtest=GuitarFxReferenceTest -Dsurefire.failIfNoSpecifiedTests=false
+          # the references the comparison read (the POM points cargo test at them; without them it would skip the comparison)
+          test -f ../../TuxGuitar-audio-engine/target/guitarfx-reference/index.properties
+      - name: No Java in the binaries
+        run: |
+          for binary in guitarfx/target/GuitarFX.app/Contents/MacOS/guitarfx guitarfx/target/plugins/GuitarFX.clap/Contents/MacOS/GuitarFX; do
+            otool -L "$binary"
+            if otool -L "$binary" | grep -qi jvm; then echo "::error::$binary links Java"; exit 1; fi
+          done
+      - name: The installer
+        run: guitarfx/packaging/macos/build-pkg.sh guitarfx/target/GuitarFX.app guitarfx/target/plugins 0.0.0 "$RUNNER_TEMP/GuitarFX.pkg"
+      - name: Self-test of the installer
+        run: guitarfx/packaging/test-macos-pkg.sh
+      - name: Install, check without Java, validate the plugins, uninstall
+        run: |
+          before="$RUNNER_TEMP/before.txt"; after="$RUNNER_TEMP/after.txt"
+          list() { find /Applications /Library/Audio/Plug-Ins -maxdepth 3 2>/dev/null | sort; }
+          list > "$before"
+          sudo installer -pkg "$RUNNER_TEMP/GuitarFX.pkg" -target /
+          env -i HOME="$HOME" PATH=/nonexistent /Applications/GuitarFX.app/Contents/MacOS/guitarfx --check | tee "$RUNNER_TEMP/check.txt"
+          grep -qx ok "$RUNNER_TEMP/check.txt"
+          if env -i PATH=/nonexistent sh -c 'command -v java'; then echo "::error::java was on the PATH"; exit 1; fi
+          clap-validator validate /Library/Audio/Plug-Ins/CLAP/GuitarFX.clap
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          auval -v aufx GFX1 TGAd
+          sudo /Applications/GuitarFX.app/Contents/Resources/guitarfx-uninstall
+          list > "$after"
+          diff "$before" "$after"
+          if pkgutil --pkgs | grep -q app.tuxguitar.guitarfx; then echo "::error::the package receipt is left"; exit 1; fi
+
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libasound2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev \
+            libxcb-dri2-0-dev libxcursor-dev libxrandr-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libgl-dev libwayland-dev
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
+        with:
+          target: x86_64-unknown-linux-gnu
+      - name: Install cargo-deny and clap-validator
+        run: |
+          mkdir -p "$HOME/tools"
+          curl -fsSL "https://github.com/EmbarkStudios/cargo-deny/releases/download/${CARGO_DENY_VERSION}/cargo-deny-${CARGO_DENY_VERSION}-x86_64-unknown-linux-musl.tar.gz" | tar -xz -C "$HOME/tools" --strip-components 1
+          curl -fsSL -o "$RUNNER_TEMP/clap-validator.zip" "https://github.com/free-audio/clap-validator/releases/download/${CLAP_VALIDATOR_VERSION}/clap-validator-${CLAP_VALIDATOR_BUILD}-ubuntu-22.04.zip"
+          unzip -q "$RUNNER_TEMP/clap-validator.zip" -d "$RUNNER_TEMP/clap-validator"
+          cp "$(find "$RUNNER_TEMP/clap-validator" -type f -name clap-validator | head -1)" "$HOME/tools/clap-validator"
+          chmod +x "$HOME/tools/"*
+          echo "$HOME/tools" >> "$GITHUB_PATH"
+      - name: cargo deny
+        run: cd guitarfx && cargo deny --locked check licenses
+      # TuxGuitar-audio-engine needs no SWT: only it and its dependencies are built
+      - name: Java references
+        run: |
+          cd desktop/build-scripts/tuxguitar-linux-swt
+          mvn -B --no-transfer-progress -e test -pl ../../TuxGuitar-audio-engine -am -Dtest=GuitarFxReferenceTest -Dsurefire.failIfNoSpecifiedTests=false
+      - uses: actions/upload-artifact@v7
+        with:
+          name: guitarfx-reference
+          path: desktop/TuxGuitar-audio-engine/target/guitarfx-reference
+          retention-days: 1
+      - name: cargo test
+        # the comparison reads these references; without them it would skip
+        env:
+          GUITARFX_REFERENCE_DIR: ${{ github.workspace }}/desktop/TuxGuitar-audio-engine/target/guitarfx-reference
+        run: |
+          test -f "$GUITARFX_REFERENCE_DIR/index.properties"
+          cd guitarfx && cargo test --workspace --locked
+      - name: Build the application and the plugin
+        run: cd guitarfx && cargo build --release --locked -p guitarfx-app -p guitarfx-plugin
+      - name: No Java in the binaries
+        run: |
+          for binary in guitarfx/target/release/guitarfx guitarfx/target/release/libguitarfx_plugin.so; do
+            ldd "$binary"
+            if ldd "$binary" | grep -qi jvm; then echo "::error::$binary links Java"; exit 1; fi
+          done
+      - name: The packages
+        run: guitarfx/packaging/linux/build-packages.sh guitarfx/target/release/guitarfx guitarfx/target/release/libguitarfx_plugin.so 0.0.0 ci "$RUNNER_TEMP/out"
+      - name: Self-test of the packages
+        run: guitarfx/packaging/test-linux-packages.sh
+      - name: Install the .deb, check without Java, validate the plugin, remove
+        run: |
+          before="$RUNNER_TEMP/before.txt"; after="$RUNNER_TEMP/after.txt"
+          list() { find /usr/bin /usr/lib/vst3 /usr/lib/clap /usr/share/applications -maxdepth 1 2>/dev/null | sort; }
+          list > "$before"
+          sudo apt-get install -y "$RUNNER_TEMP/out/guitarfx_0.0.0_amd64.deb"
+          env -i HOME="$HOME" PATH=/nonexistent /usr/bin/guitarfx --check | tee "$RUNNER_TEMP/check.txt"
+          grep -qx ok "$RUNNER_TEMP/check.txt"
+          if env -i PATH=/nonexistent sh -c 'command -v java'; then echo "::error::java was on the PATH"; exit 1; fi
+          clap-validator validate /usr/lib/clap/GuitarFX.clap
+          sudo apt-get remove -y guitarfx
+          list > "$after"
+          diff "$before" "$after"
+      - name: Install the tar.gz for the user, check, uninstall
+        run: |
+          mkdir -p "$RUNNER_TEMP/tar" && tar -xzf "$RUNNER_TEMP/out/GuitarFX-ci-linux-x86_64.tar.gz" -C "$RUNNER_TEMP/tar"
+          "$RUNNER_TEMP/tar/GuitarFX/install.sh"
+          env -i HOME="$HOME" PATH=/nonexistent "$HOME/.local/bin/guitarfx" --check | grep -qx ok
+          "$RUNNER_TEMP/tar/GuitarFX/install.sh" --uninstall
+          for path in "$HOME/.local/bin/guitarfx" "$HOME/.local/share/applications/guitarfx.desktop" "$HOME/.vst3/GuitarFX.vst3" "$HOME/.clap/GuitarFX.clap"; do
+            if [ -e "$path" ]; then echo "::error::$path is left"; exit 1; fi
+          done
+
+  windows-build:
+    runs-on: ubuntu-24.04   # cross-compiled with Mingw-w64, as TuxGuitarAdvanced's Windows package
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 nsis
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
+        with:
+          target: x86_64-pc-windows-gnu
+      - name: Build the application and the plugin
+        env:
+          CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: x86_64-w64-mingw32-gcc
+          CC_x86_64_pc_windows_gnu: x86_64-w64-mingw32-gcc
+          CXX_x86_64_pc_windows_gnu: x86_64-w64-mingw32-g++
+          AR_x86_64_pc_windows_gnu: x86_64-w64-mingw32-ar
+        run: cd guitarfx && cargo build --release --locked -p guitarfx-app -p guitarfx-plugin --target x86_64-pc-windows-gnu
+      - name: No Java and no MinGW library needed
+        run: |
+          for binary in guitarfx/target/x86_64-pc-windows-gnu/release/guitarfx.exe guitarfx/target/x86_64-pc-windows-gnu/release/guitarfx_plugin.dll; do
+            x86_64-w64-mingw32-objdump -p "$binary" | grep "DLL Name"
+            if x86_64-w64-mingw32-objdump -p "$binary" | grep -i "DLL Name" | grep -qiE "jvm|libstdc|libgcc|libwinpthread"; then
+              echo "::error::$binary needs Java or a MinGW library"; exit 1
+            fi
+          done
+      - name: The installer
+        run: |
+          mkdir -p "$RUNNER_TEMP/win"
+          cp guitarfx/target/x86_64-pc-windows-gnu/release/guitarfx.exe guitarfx/target/x86_64-pc-windows-gnu/release/guitarfx_plugin.dll "$RUNNER_TEMP/win/"
+          makensis -V2 -DVERSION=0.0.0 -DLABEL=ci "-DSOURCE=$RUNNER_TEMP/win" "-DOUTFILE=$RUNNER_TEMP/GuitarFX-ci-windows-x86_64-setup.exe" guitarfx/packaging/windows/guitarfx.nsi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: guitarfx-windows
+          path: ${{ runner.temp }}/GuitarFX-ci-windows-x86_64-setup.exe
+          retention-days: 1
+
+  windows:
+    needs: [linux, windows-build]
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Rust (MSVC, for the tests)
+        uses: ./.github/actions/install-rust
+        with:
+          target: x86_64-pc-windows-msvc
+      - uses: actions/download-artifact@v8
+        with:
+          name: guitarfx-reference
+          path: ${{ runner.temp }}/guitarfx-reference
+      - uses: actions/download-artifact@v8
+        with:
+          name: guitarfx-windows
+          path: ${{ runner.temp }}/setup
+      - name: Install cargo-deny and clap-validator
+        run: |
+          mkdir -p "$HOME/tools"
+          curl -fsSL "https://github.com/EmbarkStudios/cargo-deny/releases/download/${CARGO_DENY_VERSION}/cargo-deny-${CARGO_DENY_VERSION}-x86_64-pc-windows-msvc.tar.gz" | tar -xz -C "$HOME/tools" --strip-components 1
+          curl -fsSL -o "$RUNNER_TEMP/clap-validator.zip" "https://github.com/free-audio/clap-validator/releases/download/${CLAP_VALIDATOR_VERSION}/clap-validator-${CLAP_VALIDATOR_BUILD}-windows.zip"
+          unzip -q "$RUNNER_TEMP/clap-validator.zip" -d "$RUNNER_TEMP/clap-validator"
+          cp "$(find "$RUNNER_TEMP/clap-validator" -type f -name clap-validator.exe | head -1)" "$HOME/tools/clap-validator.exe"
+          echo "$HOME/tools" >> "$GITHUB_PATH"
+      - name: cargo deny
+        run: cd guitarfx && cargo deny --locked check licenses
+      - name: cargo test, with the Java references written on Linux
+        run: |
+          test -f "$RUNNER_TEMP/guitarfx-reference/index.properties"
+          cd guitarfx && GUITARFX_REFERENCE_DIR="$RUNNER_TEMP/guitarfx-reference" cargo test --workspace --locked
+      - name: Install, check without Java, validate the plugin, uninstall
+        shell: pwsh
+        run: |
+          $list = { Get-ChildItem -Recurse -Force "$env:ProgramFiles\GuitarFX", "$env:CommonProgramFiles\VST3", "$env:CommonProgramFiles\CLAP" -ErrorAction SilentlyContinue | ForEach-Object FullName | Sort-Object }
+          $before = & $list
+          $setup = Get-ChildItem "$env:RUNNER_TEMP\setup\*.exe" | Select-Object -First 1
+          Start-Process $setup.FullName -ArgumentList '/S' -Wait
+          foreach ($path in "$env:ProgramFiles\GuitarFX\guitarfx.exe", "$env:CommonProgramFiles\VST3\GuitarFX.vst3\Contents\x86_64-win\GuitarFX.vst3", "$env:CommonProgramFiles\CLAP\GuitarFX.clap") {
+            if (-not (Test-Path $path)) { throw "missing after install: $path" }
+          }
+          # no Java: JAVA_HOME unset, only System32 on the PATH (no java there)
+          Remove-Item Env:JAVA_HOME -ErrorAction SilentlyContinue
+          $saved = $env:PATH
+          $env:PATH = "$env:SystemRoot\System32"
+          if (Get-Command java -ErrorAction SilentlyContinue) { throw "java was on the PATH" }
+          $check = Start-Process "$env:ProgramFiles\GuitarFX\guitarfx.exe" -ArgumentList '--check' -Wait -PassThru -NoNewWindow -RedirectStandardOutput "$env:RUNNER_TEMP\check.txt"
+          $env:PATH = $saved
+          Get-Content "$env:RUNNER_TEMP\check.txt"
+          if ($check.ExitCode -ne 0 -or (Get-Content "$env:RUNNER_TEMP\check.txt") -notcontains 'ok') { throw "guitarfx --check failed" }
+          & "$HOME\tools\clap-validator.exe" validate "$env:CommonProgramFiles\CLAP\GuitarFX.clap"
+          if ($LASTEXITCODE -ne 0) { throw "clap-validator failed" }
+          Start-Process "$env:ProgramFiles\GuitarFX\uninstall.exe" -ArgumentList '/S', "_?=$env:ProgramFiles\GuitarFX" -Wait
+          Remove-Item "$env:ProgramFiles\GuitarFX\uninstall.exe" -ErrorAction SilentlyContinue
+          Remove-Item "$env:ProgramFiles\GuitarFX" -ErrorAction SilentlyContinue
+          $after = & $list
+          $left = Compare-Object @($before) @($after)
+          if ($left) { $left | Format-Table; throw "files left after the uninstall" }
+          if (Test-Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GuitarFX") { throw "the uninstall entry is left" }

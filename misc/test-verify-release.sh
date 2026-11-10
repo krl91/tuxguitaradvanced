@@ -74,4 +74,29 @@ check "published: a release still in draft fails" 1 "WRONG" --published
 export FAKE_RELEASE="$(rel false "$TAG" "TuxGuitarAdvanced $TAG" "$COMMIT" "$BODY" "$ASSETS_OK" false)"
 check "published: a labelled version not marked pre-release fails" 1 "WRONG" --published
 unset FAKE_REF
+# --guitarfx (spec 027, T060, FR-021): the draft also carries GuitarFX's four files; the cases above, without the option, are unchanged
+check_gfx() { # name expected-exit expected-word
+  local out code; out="$(PATH="$TMP/bin:$PATH" GITHUB_REPOSITORY=krl91/tuxguitaradvanced "$VERIFY" --draft --guitarfx "$TAG" "$VERSION" "$COMMIT" 2>&1)"; code=$?
+  if { [ "$2" = 0 ] && [ "$code" = 0 ]; } || { [ "$2" != 0 ] && [ "$code" != 0 ] && echo "$out" | grep -q "$3"; }; then echo "ok: $1"
+  else echo "FAILED: $1 (exit $code)"; echo "$out" | head -4; fail=1; fi
+}
+GFX_FILES=(GuitarFX-$VERSION-macos-arm64.pkg GuitarFX-$VERSION-windows-x86_64-setup.exe guitarfx_${VERSION}_amd64.deb GuitarFX-$VERSION-linux-x86_64.tar.gz)
+TGA_FILES=(TuxGuitarAdvanced-$TAG-macos-arm64.zip TuxGuitarAdvanced-$TAG-windows-x86_64.zip TuxGuitarAdvanced-$TAG-linux-x86_64.tar.gz TuxGuitarAdvanced-$TAG-linux-amd64.deb)
+export FAKE_REF=""
+export FAKE_RELEASE="$(rel true "$TAG" "TuxGuitarAdvanced $TAG" "$COMMIT" "$BODY" "$(assets "${TGA_FILES[@]}" "${GFX_FILES[@]}")" true)"
+check_gfx "guitarfx: a draft with the eight files passes" 0 ""
+check "guitarfx: without the option, GuitarFX's files are extra files and fail" 1 "WRONG" --draft
+export FAKE_RELEASE="$(rel true "$TAG" "TuxGuitarAdvanced $TAG" "$COMMIT" "$BODY" "$ASSETS_OK" true)"
+check_gfx "guitarfx: a draft with only TuxGuitarAdvanced's files fails" 1 "MISSING"
+for i in 0 1 2 3; do
+  left=("${GFX_FILES[@]:0:$i}" "${GFX_FILES[@]:$((i + 1))}")
+  export FAKE_RELEASE="$(rel true "$TAG" "TuxGuitarAdvanced $TAG" "$COMMIT" "$BODY" "$(assets "${TGA_FILES[@]}" "${left[@]}")" true)"
+  check_gfx "guitarfx: a missing ${GFX_FILES[$i]} fails" 1 "MISSING"
+done
+export FAKE_RELEASE="$(rel true "$TAG" "TuxGuitarAdvanced $TAG" "$COMMIT" "$BODY" "$(assets "${TGA_FILES[@]:1}" "${GFX_FILES[@]}")" true)"
+check_gfx "guitarfx: a missing TuxGuitarAdvanced file still fails" 1 "MISSING"
+export FAKE_RELEASE="$(rel true "$TAG" "TuxGuitarAdvanced $TAG" "$COMMIT" "$BODY" "$(assets "${TGA_FILES[@]}" "${GFX_FILES[@]}" extra.txt)" true)"
+check_gfx "guitarfx: an extra file fails" 1 "WRONG"
+export FAKE_RELEASE="$(rel true "$TAG" "TuxGuitarAdvanced $TAG" "$COMMIT" "$BODY" "$(assets "${TGA_FILES[@]}" GuitarFX-0.6.0-macos-arm64.pkg "${GFX_FILES[@]:1}")" true)"
+check_gfx "guitarfx: a GuitarFX file named with another version fails" 1 "MISSING\|WRONG"
 exit $fail

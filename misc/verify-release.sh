@@ -1,12 +1,18 @@
 #!/bin/bash
 # Verifies a GitHub release against the identity that was asked for (spec 015, FR-004, FR-006, SC-002, contracts/verify-version.md, release level).
-# usage: GITHUB_REPOSITORY=owner/repo misc/verify-release.sh (--draft | --published) <tag> <version> <commit>
+# usage: GITHUB_REPOSITORY=owner/repo misc/verify-release.sh (--draft | --published) [--guitarfx] <tag> <version> <commit>
 #   --draft      before publication: still a draft, tag name, title, TARGET commit, the full commit in the notes, exactly the four expected files.
 #                A draft has no git tag (probe of 2026-10-22, research R11b): a git tag found for it is wrong.
+#   --guitarfx   (spec 027, FR-021) the draft also carries GuitarFX's four files: GuitarFX-<version>-macos-arm64.pkg,
+#                GuitarFX-<version>-windows-x86_64-setup.exe, guitarfx_<version>_amd64.deb and GuitarFX-<version>-linux-x86_64.tar.gz.
+#                Without it the check is the one above.
 #   --published  right after publication: no longer a draft, pre-release flag matching the label, and the git TAG points to the commit (never moved).
 # One line per place  OK | WRONG | MISSING; exit 0 only if every place is OK. Needs gh (authenticated) and python3.
 set -uo pipefail
-MODE="${1:?--draft or --published}"; TAG="${2:?tag}"; VERSION="${3:?version}"; COMMIT="${4:?commit}"
+MODE="${1:?--draft or --published}"; shift
+GUITARFX=0
+if [ "${1:-}" = --guitarfx ]; then GUITARFX=1; shift; fi
+TAG="${1:?tag}"; VERSION="${2:?version}"; COMMIT="${3:?commit}"
 REPO="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY (owner/repo) is required: a bare gh may resolve to another repository}"
 case "$MODE" in --draft|--published) ;; *) echo "unknown mode: $MODE" >&2; exit 2;; esac
 [[ "$TAG" == "v$VERSION" ]] || { echo "the tag $TAG is not v$VERSION" >&2; exit 2; }
@@ -39,8 +45,13 @@ if [ "$MODE" = --draft ]; then
   if python3 -c 'import json,sys; sys.exit(0 if sys.argv[1] in json.load(sys.stdin).get("body","") else 1)' "$COMMIT" <<< "$JSON"; then ok "notes" "state the full commit"; else miss "notes" "the full commit $COMMIT is not in the notes of the release"; fi
   GOT="$(python3 -c 'import json,sys; print("\n".join(sorted(a["name"] for a in json.load(sys.stdin).get("assets",[]))))' <<< "$JSON")"
   WANT="$(printf '%s\n' "TuxGuitarAdvanced-$TAG-linux-amd64.deb" "TuxGuitarAdvanced-$TAG-linux-x86_64.tar.gz" "TuxGuitarAdvanced-$TAG-macos-arm64.zip" "TuxGuitarAdvanced-$TAG-windows-x86_64.zip" | sort)"
+  FILES="the four packages"
+  if [ "$GUITARFX" = 1 ]; then
+    WANT="$(printf '%s\n' "$WANT" "GuitarFX-$VERSION-macos-arm64.pkg" "GuitarFX-$VERSION-windows-x86_64-setup.exe" "guitarfx_${VERSION}_amd64.deb" "GuitarFX-$VERSION-linux-x86_64.tar.gz" | sort)"
+    FILES="the eight packages"
+  fi
   while IFS= read -r want; do echo "$GOT" | grep -qxF "$want" && ok "asset" "$want" || miss "asset" "$want is not attached"; done <<< "$WANT"
-  while IFS= read -r got; do [ -n "$got" ] && ! echo "$WANT" | grep -qxF "$got" && wrong "asset" "$got" "one of the four packages"; done <<< "$GOT"
+  while IFS= read -r got; do [ -n "$got" ] && ! echo "$WANT" | grep -qxF "$got" && wrong "asset" "$got" "one of $FILES"; done <<< "$GOT"
   if ts="$(tagsha)"; then wrong "git tag" "a tag exists ($ts)" "none before publication"; fi
 else
   cmp_ "state" "$([ "$(field isDraft)" = true ] && echo draft || echo published)" "published"

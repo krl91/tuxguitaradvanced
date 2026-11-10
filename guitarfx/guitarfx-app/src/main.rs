@@ -1,5 +1,8 @@
 //! GuitarFX, the standalone amp and effect pedals (spec 027).
 
+// a window, not a console, on Windows (as on the other systems); `--check` still writes to a redirected output
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 use guitarfx_app::{app, check, single_instance};
 use std::process::ExitCode;
 

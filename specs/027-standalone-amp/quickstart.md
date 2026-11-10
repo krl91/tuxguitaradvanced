@@ -54,7 +54,8 @@ cargo run -p guitarfx-app --release    # opens the window
 ## 5. Delay (SC-002; owner's request only, audible)
 
 ```sh
-cd guitarfx && cargo run -p guitarfx-probe --release -- --input "<device>" --output "<device>" --block 128
+cd guitarfx && cargo run -p guitarfx-probe --release -- --audible --input "<device>" --output "<device>" --blocks 128 \
+  --report ../specs/027-standalone-amp/benchmark/latency.md
 ```
 
 The report goes to `specs/027-standalone-amp/benchmark/latency.md`. Compare with `specs/022-guitar-amp-effects/benchmark/native-probe-usb.md` for the same devices.
@@ -62,8 +63,9 @@ The report goes to `specs/027-standalone-amp/benchmark/latency.md`. Compare with
 ## 6. The plugin (SC-012)
 
 ```sh
-cd guitarfx && cargo xtask bundle   # GuitarFX.clap, GuitarFX.vst3, GuitarFX.component (macOS)
-clap-validator validate target/bundled/GuitarFX.clap
+# macOS: the profile guitarfx builds guitarfx/target/plugins/GuitarFX.{clap,vst3,component}, signed ad hoc (research R3: no xtask bundle)
+cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa && mvn -o -e verify -P native-modules,guitarfx
+clap-validator validate ../../../guitarfx/target/plugins/GuitarFX.clap
 auval -v aufx GFX1 TGAd              # macOS, after copying the component to ~/Library/Audio/Plug-Ins/Components
 ```
 

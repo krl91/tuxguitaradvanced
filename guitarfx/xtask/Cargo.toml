@@ -1,0 +1,13 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# The project's own tasks (spec 027, T061): `cargo run -p xtask -- parameters` writes docs/guitarfx/parameters.md from the registry.
+
+[dependencies]
+guitarfx-dsp = { path = "../guitarfx-dsp" }
+guitarfx-settings = { path = "../guitarfx-settings" }

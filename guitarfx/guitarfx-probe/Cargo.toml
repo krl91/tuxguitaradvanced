@@ -7,4 +7,16 @@ rust-version.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[lib]
+name = "guitarfx_probe"
+path = "src/lib.rs"
+
+[[bin]]
+name = "guitarfx-probe"
+path = "src/main.rs"
+
 [dependencies]
+guitarfx-app = { path = "../guitarfx-app" }
+guitarfx-dsp = { path = "../guitarfx-dsp" }
+tuxguitar-monitor-native = { path = "../../desktop/build-scripts/native-modules/tuxguitar-monitor-native" }
+cpal = "=0.15.3"

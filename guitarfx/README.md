@@ -14,6 +14,7 @@ It comes as a standalone application and as a plugin (CLAP, VST3, and Audio Unit
 | `guitarfx-app` | the application: the devices, the real-time engine, the main and *Advanced* windows |
 | `guitarfx-plugin` | the plugin |
 | `guitarfx-probe` | the latency probe (it plays clicks: run it only on purpose) |
+| `xtask` | the project's tasks: `cargo run -p xtask -- parameters` writes `docs/guitarfx/parameters.md` from the registry |
 
 ## Build
 

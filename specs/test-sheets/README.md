@@ -29,6 +29,7 @@ Ces fiches regroupent **tout ce qui reste à tester par une personne** dans les 
 | [F14](F14-ergonomie.md) | 025 les fenêtres de pratique et d'ampli tiennent dans l'écran et disent quoi faire | T031 | guitare + câble + casque | 20 min | Porte de la spec 025 ; avec une ligne pour les testeurs Linux et Windows |
 | [F15](F15-accords-tolerants.md) | 024 les accords bien joués acceptés, les accords nettement faux refusés, la *Vérification des accords* | T045 | guitare + câble Rocksmith | 25 min | Porte de la spec 024 ; avec une ligne pour les testeurs Linux et Windows |
 | [F16](F16-parametres-experts.md) | 026 les réglages experts se règlent sans reconstruire, avec chaque moteur, et chaque catégorie *Avancé : …* tient sur l'écran | T043 | guitare + câble Rocksmith | 20 min | Porte de la spec 026 ; avec une ligne pour les testeurs Linux et Windows |
+| [F17](F17-guitarfx.md) | 027 GuitarFX : l'ampli et les pédales sans TuxGuitarAdvanced, en application et en plugin (CLAP, VST3, Audio Unit) | T066 | guitare + câble Rocksmith + casque filaire (+ micro intégré) ; SoundCraft, GarageBand ou Logic | 45 min | Porte de la spec 027 ; avec des lignes pour les testeurs Linux et Windows |
 
 ## Ce qui reste ouvert mais n'est pas une fiche pour toi seul
 

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=GuitarFX
+Comment=Amp and effect pedals for the guitar
+Comment[fr]=Ampli et pédales d'effets pour la guitare
+Comment[es]=Amplificador y pedales de efectos para la guitarra
+Exec=guitarfx
+Terminal=false
+Categories=AudioVideo;Audio;Music;
+Keywords=guitar;amp;effects;
