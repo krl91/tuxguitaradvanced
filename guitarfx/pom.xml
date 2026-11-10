@@ -24,6 +24,9 @@
 		<!-- the workspace's version (Cargo.toml [workspace.package]), shown in the bundle -->
 		<guitarfx.version>0.1.0</guitarfx.version>
 		<guitarfx.app>${project.build.directory}/GuitarFX.app</guitarfx.app>
+		<!-- the version as an Audio Unit reads it: major × 65536 + minor × 256 + patch (guitarfx-plugin/tests/bundle.rs checks it) -->
+		<guitarfx.au.version>256</guitarfx.au.version>
+		<guitarfx.plugins>${project.build.directory}/plugins</guitarfx.plugins>
 		<guitarfx.reference.dir>${project.basedir}/../desktop/TuxGuitar-audio-engine/target/guitarfx-reference</guitarfx.reference.dir>
 	</properties>
 
@@ -118,6 +121,42 @@
 									<arg value="app.tuxguitar.guitarfx" />
 									<arg value="${guitarfx.app}" />
 								</exec>
+								<!-- the plugin (T056): one library in three macOS bundles, CLAP, VST3 and Audio Unit, each signed ad hoc -->
+								<exec dir="${basedir}" executable="${guitarfx.cargo}" failonerror="true">
+									<env key="MACOSX_DEPLOYMENT_TARGET" value="${macos.minimumVersion}" />
+									<arg value="build" />
+									<arg value="--release" />
+									<arg value="--locked" />
+									<arg value="-p" />
+									<arg value="guitarfx-plugin" />
+								</exec>
+								<delete dir="${guitarfx.plugins}" />
+								<macrodef name="plugin-bundle">
+									<attribute name="format" />
+									<sequential>
+										<copy file="${project.build.directory}/release/libguitarfx_plugin.dylib"
+											tofile="${guitarfx.plugins}/GuitarFX.@{format}/Contents/MacOS/GuitarFX" />
+										<chmod file="${guitarfx.plugins}/GuitarFX.@{format}/Contents/MacOS/GuitarFX" perm="755" />
+										<copy file="${basedir}/guitarfx-plugin/packaging/macos/@{format}.Info.plist"
+											tofile="${guitarfx.plugins}/GuitarFX.@{format}/Contents/Info.plist">
+											<filterset begintoken="@" endtoken="@">
+												<filter token="VERSION" value="${guitarfx.version}" />
+												<filter token="AU_VERSION" value="${guitarfx.au.version}" />
+												<filter token="MINIMUM_MACOS" value="${macos.minimumVersion}" />
+											</filterset>
+										</copy>
+										<echo file="${guitarfx.plugins}/GuitarFX.@{format}/Contents/PkgInfo" message="BNDL????" />
+										<exec executable="/usr/bin/codesign" failonerror="true">
+											<arg value="--force" />
+											<arg value="--sign" />
+											<arg value="-" />
+											<arg value="${guitarfx.plugins}/GuitarFX.@{format}" />
+										</exec>
+									</sequential>
+								</macrodef>
+								<plugin-bundle format="clap" />
+								<plugin-bundle format="vst3" />
+								<plugin-bundle format="component" />
 							</target>
 						</configuration>
 					</execution>

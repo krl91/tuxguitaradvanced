@@ -267,13 +267,14 @@ A number the port needs and this file lacks is added here **in the same commit**
 | 0.1 | `delay_estimate.rs` (APP) | none (data-model "Estimated delay") | display | The delay is shown to a tenth of a millisecond. |
 | 1000000000 | `engine.rs` (APP) | `MonitorEngine` `1_000_000_000.0`, `NOTICE_INTERVAL_NANOS` | mathematics, display | Nanoseconds in a second; a repeated message is shown at most once a second (not heard). |
 | 4096, 16 | `engine.rs` (APP) | `CRATE/src/device.rs` `CHUNK`, `16 * block.max(CHUNK)` | buffer size | The most frames of one callback copied at a time, and the ring's size in such callbacks. They size buffers made before the sound starts; the delay is set by `guitarfx.devices.ring-blocks`, not by them. |
+| 16 | `lib.rs` (PLUG) | none (contracts/plugin.md "Identity") | format | The VST3 class id: 16 bytes, written as 32 digits in base 16. |
 | 32768, 32767 | `engine.rs` (APP) | `CRATE/src/device.rs` `as f32 / 32768.0`, `* 32767.0` | format | A 16-bit device's full scale, in and out. |
 | 48000 | `check.rs` (APP) | none (contracts/application.md "Headless start") | test format | `guitarfx --check` builds the chain at 48 kHz on one second of silence. |
 | 1.5, 2.5, 3, 4 | `resample.rs` (APP) | `CRATE/src/resampler.rs` `hermite`, `[f32; 4]` | mathematics | The four-point Hermite interpolation and its coefficients. |
 
 The output's clamp at ±1 (`OutputStage.process`) and the volume's default 0.7 (`OutputStage`, `MonitorEngine.guitarVolume`) are not inventory values. The first is the format's full scale (allow list). The second is the default of the `volume` setting of contracts/settings-files.md, in `SET`, outside the scan.
 
-**Reported latency (plugin, T053)**: derived, with no literal. Each half-band filter delays by `(TAPS − 1) / 2` samples at its own rate. The plugin reports the delay of the amp's oversampling at factor 4, which is always present: `(31 / 2 + 31 / 4) × 2 = 46.5` samples, rounded down to 46, computed from `TAPS` in `oversampler.rs`. The drives' oversamplers are not reported, because a host cannot follow a latency that changes with the chain.
+**Reported latency (plugin, T053)**: derived, with no literal. A half-band stage on the way up delays by `(TAPS − 1) / 2` samples at its own rate, and one on the way down by one sample less, since it keeps the sample just before its filter's middle (measured in `guitarfx-plugin/tests/render.rs`; this note first said 31 both ways, 46.5 samples). The plugin reports the delay of the amp's oversampling at factor 4, which is always present: `(31 + 30) / 2 + (31 + 30) / 4 = 45.75` samples, rounded down to 45, computed from `TAPS` in `oversampler.rs`. The drives' oversamplers are not reported, because a host cannot follow a latency that changes with the chain.
 
 ## Knob ranges (spec 022, fixed; `DSP/src/knobs.rs`)
 

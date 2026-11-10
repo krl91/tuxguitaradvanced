@@ -285,21 +285,31 @@
 
 **Independent test**: `clap-validator` and `auval` pass in CI; the owner loads it in SoundCraft and GarageBand or Logic (T066).
 
-- [ ] T051 [US5] Add `nih-plug` (git, pinned to one commit in `Cargo.lock`, the `vst3` feature off), `nih_plug_egui` and `clap-wrapper` (features `vst3` and `auv2`) to `PLUG/Cargo.toml`. `cargo deny check licenses` stays green (stop condition B). Write in `SPEC/research.md` R3 the commit pinned and the licences of the AudioUnitSDK and VST3 SDK copies embedded in `clap-wrapper`, as read from its sources.
-- [ ] T052 [US5] Test `PLUG/tests/render.rs`: the plugin's `process`, driven directly at 44.1, 48 and 96 kHz with blocks of 64, 128, 512 and 1024, gives the same output as the chain on the reference signals (SC-003), and an offline render equals a real-time one. T020's allocator covers `process`.
-- [ ] T053 [US5] Write `PLUG/src/lib.rs` per contracts/plugin.md:
+- [X] T051 [US5] Add `nih-plug` (git, pinned to one commit in `Cargo.lock`, the `vst3` feature off), `nih_plug_egui` and `clap-wrapper` (features `vst3` and `auv2`) to `PLUG/Cargo.toml`. `cargo deny check licenses` stays green (stop condition B). Write in `SPEC/research.md` R3 the commit pinned and the licences of the AudioUnitSDK and VST3 SDK copies embedded in `clap-wrapper`, as read from its sources.
+  - Done 2026-11-10: commits, licences and the deviation (`nih_plug_egui` from the `egui-baseview` repository, for egui 0.33) in research R3.
+- [X] T052 [US5] Test `PLUG/tests/render.rs`: the plugin's `process`, driven directly at 44.1, 48 and 96 kHz with blocks of 64, 128, 512 and 1024, gives the same output as the chain on the reference signals (SC-003), and an offline render equals a real-time one. T020's allocator covers `process`.
+  - Done 2026-11-10: `guitarfx-plugin/src/processor.rs` (the plugin's processing, testable without a host); 8 tests, with the 4 ready-made sounds and a chain with every pedal, all within −90 dBFS; a stereo input is the mean of its channels; the overload rule per piece, its budget scaled to the piece; the reported latency measured (45.75 samples, 45 reported: inventory.md corrected, it said 46.5).
+- [X] T053 [US5] Write `PLUG/src/lib.rs` per contracts/plugin.md:
   - the nih-plug `Plugin`: mono or stereo input summed to mono, stereo output;
   - everything prepared in `initialize`; `process` cut into pieces of at most `guitarfx.devices.block` frames (default 128);
   - the overload rule of T026 applies to `process` too (FR-024 includes FR-014);
   - `nih_export_clap!`, `export_vst3!`, `export_auv2!`, with the identifiers of the contract (CLAP `app.tuxguitar.guitarfx`, AU `aufx`/`GFX1`/`TGAd`, a fixed VST3 class id);
   - the latency reported as the inventory says;
   - no host automation.
-- [ ] T054 [US5] Test `PLUG/tests/state.rs`, then write `PLUG/src/state.rs`: `state.format=1` and `chain=<text>` saved and restored; a newer format gives the default sound and a line in the editor; the external parameters are read from `settings.properties` at load (defaults when missing) and never stored in the state.
-- [ ] T055 [US5] Write `PLUG/src/editor.rs` with `nih_plug_egui` and the shared `UI` widgets: the sound list and its menu, and the three tabs. There are no devices, volume, *Sound on* or *Advanced*. Sounds are read from and saved to the same `sounds.properties` as the application's.
-- [ ] T056 [US5] Bundle the three formats (`GuitarFX.clap`, `GuitarFX.vst3`, `GuitarFX.component` on macOS) with nih-plug's bundler (`GFX/xtask`), called from `GFX/pom.xml`.
+  - Done 2026-11-10: CLAP entry written out in `entry.rs` to give the fixed VST3 class id (deviation, research R3); exported symbols checked (`clap_entry`, `GetPluginFactory`, `GetPluginFactoryAUV2`, `bundleEntry`, no JNI); the processor is rebuilt in `initialize`, `reset` brings back a muted sound.
+- [X] T054 [US5] Test `PLUG/tests/state.rs`, then write `PLUG/src/state.rs`: `state.format=1` and `chain=<text>` saved and restored; a newer format gives the default sound and a line in the editor; the external parameters are read from `settings.properties` at load (defaults when missing) and never stored in the state.
+  - Done 2026-11-10: 5 tests; the state is one persisted text (`#[persist = "guitarfx"]`); a newer state is kept as it is until the guitarist changes the sound.
+- [X] T055 [US5] Write `PLUG/src/editor.rs` with `nih_plug_egui` and the shared `UI` widgets: the sound list and its menu, and the three tabs. There are no devices, volume, *Sound on* or *Advanced*. Sounds are read from and saved to the same `sounds.properties` as the application's.
+  - Done 2026-11-10: `window::show_plugin` in `UI` (3 tests: fits 800×560, shows the sounds and tabs, nothing of the devices) and `editor.rs` (6 tests: the logic without a window). The sounds file is written only by the sound list (save, rename, delete, restore, import), never by a knob or a pick; the editor test was written before its code but first run after it. New texts `plugin.state.newer`, `plugin.muted.feedback`, `plugin.muted.overload` in the three languages.
+- [X] T056 [US5] Bundle the three formats (`GuitarFX.clap`, `GuitarFX.vst3`, `GuitarFX.component` on macOS) with nih-plug's bundler (`GFX/xtask`), called from `GFX/pom.xml`.
   - Run `clap-validator validate` and, on macOS, `auval -v aufx GFX1 TGAd` after copying the component to `~/Library/Audio/Plug-Ins/Components` (the owner's user folder: tell the owner, remove it after).
   - Build the Windows plugin with the MinGW cross-toolchain of `release.yml`; if the VST3 wrapper fails there, record it and use the `windows-2022` runner in T058 (R3).
-- [ ] T057 [US5] Gate: green. Commit Phase 7.
+  - Done 2026-11-10: the three macOS bundles are made by `GFX/pom.xml` (ant, as `GuitarFX.app`), from templates in `PLUG/packaging/macos`, each signed ad hoc; nih-plug's xtask is not used (deviation, research R3: it makes no Audio Unit, and the application's bundle is already made in the POM). `PLUG/tests/bundle.rs` checks the Audio Unit's version and codes.
+  - `auval -v aufx GFX1 TGAd`: **AU VALIDATION SUCCEEDED** (the component copied to `~/Library/Audio/Plug-Ins/Components` for the run, removed after). Warnings: no tail time, preset name not kept, a MIDI entry point from the wrapper in an effect; the Audio Unit offers only stereo in and out (the wrapper takes the first layout), a mono track reaching it as two equal channels, which give the same sound.
+  - `clap-validator` was not run: installing it from git was refused on the owner's machine; it runs in CI (T058). The CLAP entry was checked by a small C host instead: id, name, vendor, version, features, and the VST3 class id given to the wrapper.
+  - Windows with MinGW (`x86_64-pc-windows-gnu`, the cross-toolchain of `release.yml`) builds: `PLUG/build.rs` links `libuuid` (the VST3 wrapper's `FOLDERID_*`) and the C++ standard library statically (no `libstdc++-6.dll` next to the host). The DLL exports `clap_entry`, `GetPluginFactory`, `InitDll` and `ExitDll`. The `windows-2022` fallback is not needed. Linux is built by CI only.
+- [X] T057 [US5] Gate: green. Commit Phase 7.
+  - Done 2026-11-10: BUILD SUCCESS, no Java failure, cargo 212 passed (the Java references read), the three bundles built and signed.
 
 ---
 

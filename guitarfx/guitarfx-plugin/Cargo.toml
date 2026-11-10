@@ -8,3 +8,19 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+guitarfx-dsp = { path = "../guitarfx-dsp" }
+guitarfx-settings = { path = "../guitarfx-settings" }
+guitarfx-ui = { path = "../guitarfx-ui" }
+# not on crates.io: one commit, the one the editor adapter below is built against (research R3). Its default feature `vst3` (GPLv3 bindings)
+# stays off: VST3 comes from clap-wrapper.
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", rev = "28b149ec4d62757d0b448809148a0c3ca6e09a95", default-features = false }
+# the egui editor adapter for nih-plug, from the egui-baseview repository, whose copy follows egui 0.33 as guitarfx-ui does (the crate in
+# nih-plug's own repository is on egui 0.31; research R3)
+nih_plug_egui = { git = "https://github.com/BillyDM/egui-baseview.git", rev = "11f487fe915d6208961064e619474b98f971594a", default-features = false, features = ["opengl", "default_fonts"] }
+# VST3 and Audio Unit entry points over the CLAP entry (MIT or Apache-2.0; embeds the VST3 SDK, MIT, and the AudioUnitSDK, Apache-2.0)
+clap-wrapper = { version = "=0.3.1", default-features = false, features = ["vst3", "auv2", "parallel"] }
+# the system's file dialogs for *Export…* and *Import…*, as the application's
+rfd = "=0.15.4"
+
+[lib]
+crate-type = ["cdylib", "lib"]

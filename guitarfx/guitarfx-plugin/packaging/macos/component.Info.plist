@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The plugin's Audio Unit bundle (spec 027, T056). @VERSION@, @AU_VERSION@ and @MINIMUM_MACOS@ are filled by guitarfx/pom.xml. -->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>GuitarFX</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.tuxguitar.guitarfx.component</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>GuitarFX</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>@MINIMUM_MACOS@</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<!-- contracts/plugin.md "Identity": read by the Audio Unit host, the wrapper's entry point exported by guitarfx-plugin/src/lib.rs -->
+	<key>AudioComponents</key>
+	<array>
+		<dict>
+			<key>name</key>
+			<string>TuxGuitarAdvanced: GuitarFX</string>
+			<key>description</key>
+			<string>A guitar amp and effect pedals</string>
+			<key>factoryFunction</key>
+			<string>GetPluginFactoryAUV2</string>
+			<key>type</key>
+			<string>aufx</string>
+			<key>subtype</key>
+			<string>GFX1</string>
+			<key>manufacturer</key>
+			<string>TGAd</string>
+			<key>version</key>
+			<integer>@AU_VERSION@</integer>
+			<key>sandboxSafe</key>
+			<true/>
+			<key>tags</key>
+			<array>
+				<string>Effects</string>
+				<string>Distortion</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

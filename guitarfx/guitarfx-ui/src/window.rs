@@ -12,6 +12,8 @@ use guitarfx_settings::texts::Texts;
 /// The size the window opens at the first time, and the least it may be made.
 pub const FIRST_SIZE: [f32; 2] = [960.0, 640.0];
 pub const SMALLEST_SIZE: [f32; 2] = [800.0, 560.0];
+/// The plugin's editor: the window's least size, which the host's window keeps.
+pub const PLUGIN_SIZE: [f32; 2] = SMALLEST_SIZE;
 /// The size of the small window that says GuitarFX is already open.
 pub const NOTICE_SIZE: [f32; 2] = [360.0, 100.0];
 /// The input meter's length.
@@ -134,6 +136,21 @@ pub fn show_with(ctx: &Context, model: &mut Model, sound_list: &mut SoundsModel,
 /// The whole window: the sound list, and *Advanced…* with its window.
 pub fn show_all(ctx: &Context, model: &mut Model, sound_list: &mut SoundsModel, advanced: &mut AdvancedModel, texts: &Texts) -> Vec<Action> {
     show_parts(ctx, model, Some(sound_list), Some(advanced), texts)
+}
+
+/// The plugin's editor (contracts/plugin.md "Editor"): the sound list, the message line and the chain's three tabs; no devices, volume,
+/// *Sound on* or *Advanced…*.
+pub fn show_plugin(ctx: &Context, model: &mut Model, sound_list: &mut SoundsModel, texts: &Texts) -> Vec<Action> {
+    let mut actions = Vec::new();
+    egui::TopBottomPanel::top("sounds").show(ctx, |ui| sounds::show(ui, sound_list, texts, &mut actions));
+    egui::TopBottomPanel::bottom("messages").show(ctx, |ui| messages::line(ui, model.message.as_deref()));
+    egui::CentralPanel::default().show(ctx, |ui| tabs(ui, model, texts, &mut actions));
+    if let Some(dialog) = model.dialog.clone() {
+        messages::dialog(ctx, &dialog, texts, &mut actions);
+    } else if sound_list.dialog.is_some() {
+        sounds::dialog(ctx, sound_list, texts, &mut actions);
+    }
+    actions
 }
 
 fn show_parts(
