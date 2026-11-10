@@ -45,6 +45,8 @@ pub struct App {
     clipped: u64,
     clipping_until: Option<Instant>,
     last_clipping_notice: Option<Instant>,
+    /// A change not saved yet (the knobs move many times a second: they are saved once they rest).
+    unsaved_since: Option<Instant>,
 }
 
 impl App {
@@ -79,6 +81,7 @@ impl App {
             clipped: 0,
             clipping_until: None,
             last_clipping_notice: None,
+            unsaved_since: None,
         };
         match loaded.notice {
             Some(Notice::Newer) => app.model.dialog = Some(Dialog::NewerSettings),
@@ -204,6 +207,14 @@ impl App {
                 self.save_settings();
             }
             Action::CloseDialog => self.model.dialog = None,
+            Action::Chain(chain) => {
+                self.model.chain = *chain;
+                self.settings.chain_current = Some(chain_text::format(&chain));
+                if let Some(running) = &self.running {
+                    running.control.post_chain(*chain);
+                }
+                self.unsaved_since.get_or_insert_with(Instant::now);
+            }
         }
     }
 
@@ -284,6 +295,13 @@ impl eframe::App for App {
             self.act(action);
         }
         self.remember_window(ctx);
+        if self.unsaved_since.is_some_and(|t| t.elapsed() >= notice_interval()) {
+            self.unsaved_since = None;
+            self.save_settings();
+        }
+        if self.unsaved_since.is_some() {
+            ctx.request_repaint_after(notice_interval());
+        }
         if self.running.is_some() {
             ctx.request_repaint_after(refresh());
         }

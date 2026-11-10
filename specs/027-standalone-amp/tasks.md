@@ -200,11 +200,14 @@
 
 **Independent test**: T007 green for every element. The owner moves every knob while playing (quickstart §3, step 3).
 
-- [ ] T034 [US2] Test `UI/tests/chain_rows.rs` on the UI's model (no rendering): adding a pedal puts it at the end of its section; a kind already in the chain is not offered; moves stay in the section; removing and switching produce the expected `ChainParams`.
-- [ ] T035 [US2] Write `UI/src/{chain_rows,knobs}.rs`: the three tabs (before the amp, the amp, after the amp), a row per element with its switch, its knobs as sliders with value and unit (the knob ranges of data-model "Knob"), ↑, ↓ and ✕, and *+ Add a pedal*. Each change posts a `ChainParams` through the engine's mailbox. Tooltips say what the knob changes, its unit and its default.
-- [ ] T036 [US2] Test `APP/tests/live_changes.rs` on the fake device: a knob change reaches the output within 0.1 s (FR-006) and passes T022's jump limit.
-- [ ] T037 [US2] Write `SPEC/benchmark/comparison.md`: the largest difference per element and per ready-made sound at each rate, from the T007 run's printout.
-- [ ] T038 [US2] Gate: green. Commit Phase 4.
+- [X] T034 [US2] Test `UI/tests/chain_rows.rs` on the UI's model (no rendering): adding a pedal puts it at the end of its section; a kind already in the chain is not offered; moves stay in the section; removing and switching produce the expected `ChainParams`.
+- [X] T035 [US2] Write `UI/src/{chain_rows,knobs}.rs`: the three tabs (before the amp, the amp, after the amp), a row per element with its switch, its knobs as sliders with value and unit (the knob ranges of data-model "Knob"), ↑, ↓ and ✕, and *+ Add a pedal*. Each change posts a `ChainParams` through the engine's mailbox. Tooltips say what the knob changes, its unit and its default.
+- [X] T036 [US2] Test `APP/tests/live_changes.rs` on the fake device: a knob change reaches the output within 0.1 s (FR-006) and passes T022's jump limit.
+- [X] T037 [US2] Write `SPEC/benchmark/comparison.md`: the largest difference per element and per ready-made sound at each rate, from the T007 run's printout.
+- [X] T038 [US2] Gate: green. Commit Phase 4.
+  - 2026-11-10: the same gate without `clean`: BUILD SUCCESS, 1547 Java tests (0 failures, 12 skipped), cargo 145 tests (the workspace's 81 and the crate's 64).
+  - T036 drives the chain at a level the output stage's limiter never reaches: the limiter clamps a sudden loud peak at once and releases slowly, which is not the change's doing (it is checked by T021); asserted in the test.
+  - T037: the per-sound figures come from a new test, `guitarfx-dsp/tests/comparison_by_sound.rs`; the committed `java_reference.rs` is unchanged.
 
 ---
 

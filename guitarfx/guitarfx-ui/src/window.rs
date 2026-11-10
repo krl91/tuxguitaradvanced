@@ -1,7 +1,7 @@
 //! The main window (contracts/application.md): the devices bar, the sound control (*Sound on*, the volume, the input meter, the estimated
 //! delay and the Bluetooth note), the chain's three tabs, and the message line. It fits a 1024×768 screen.
 
-use crate::{devices_bar, messages};
+use crate::{chain_rows, devices_bar, messages};
 use egui::{Align, Context, Layout, RichText, Ui};
 use guitarfx_dsp::settings::ChainParams;
 use guitarfx_settings::texts::Texts;
@@ -90,6 +90,8 @@ pub enum Action {
     KeepNewerSettings,
     ReplaceNewerSettings,
     CloseDialog,
+    /// The chain as the guitarist changed it.
+    Chain(Box<ChainParams>),
 }
 
 pub fn show(ctx: &Context, model: &mut Model, texts: &Texts) -> Vec<Action> {
@@ -97,7 +99,7 @@ pub fn show(ctx: &Context, model: &mut Model, texts: &Texts) -> Vec<Action> {
     egui::TopBottomPanel::top("devices").show(ctx, |ui| devices_bar::show(ui, model, texts, &mut actions));
     egui::TopBottomPanel::top("sound").show(ctx, |ui| sound(ui, model, texts, &mut actions));
     egui::TopBottomPanel::bottom("messages").show(ctx, |ui| messages::line(ui, model.message.as_deref()));
-    egui::CentralPanel::default().show(ctx, |ui| tabs(ui, model, texts));
+    egui::CentralPanel::default().show(ctx, |ui| tabs(ui, model, texts, &mut actions));
     if let Some(dialog) = model.dialog.clone() {
         messages::dialog(ctx, &dialog, texts, &mut actions);
     }
@@ -153,11 +155,17 @@ fn meter(ui: &mut Ui, level: f32, clipping: bool, texts: &Texts) {
     });
 }
 
-fn tabs(ui: &mut Ui, model: &mut Model, texts: &Texts) {
+fn tabs(ui: &mut Ui, model: &mut Model, texts: &Texts, actions: &mut Vec<Action>) {
     ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
         for tab in Tab::ALL {
             ui.selectable_value(&mut model.tab, *tab, texts.get(tab.key()));
         }
     });
     ui.separator();
+    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+        if let Some(chain) = chain_rows::show(ui, &model.chain, model.tab, texts) {
+            model.chain = chain;
+            actions.push(Action::Chain(Box::new(chain)));
+        }
+    });
 }
