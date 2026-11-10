@@ -80,8 +80,10 @@ fn number<T: std::str::FromStr>(text: &str, damaged: &mut bool) -> Option<T> {
     parsed
 }
 
-fn copy_aside(path: &Path) -> Notice {
-    let copy = path.with_file_name(format!("{FILE}{DAMAGED}{}", crate::time::now()));
+/// Copies a damaged file to `<name>.damaged-<yyyymmdd-hhmmss>` beside it.
+pub(crate) fn copy_aside(path: &Path) -> Notice {
+    let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let copy = path.with_file_name(format!("{name}{DAMAGED}{}", crate::time::now()));
     let _ = std::fs::copy(path, &copy);
     Notice::Damaged(copy)
 }

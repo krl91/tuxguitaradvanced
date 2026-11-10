@@ -1,0 +1,4 @@
+# GuitarFX sound
+format=2
+name=From the future
+chain=amp:clean,5,5,5,5,5|cab:on

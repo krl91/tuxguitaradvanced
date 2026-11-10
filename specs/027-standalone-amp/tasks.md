@@ -217,27 +217,31 @@
 
 **Independent test**: SC-011's round trip is green in the build. The owner exports from one program and imports in the other (quickstart §4).
 
-- [ ] T039 [P] [US3] Test `SET/tests/sounds.rs`, then write `SET/src/sounds.rs` per contracts/settings-files.md (`sounds.properties`, `sounds.format=1`, `ready.<name>.chain`, `sound.<n>.name`, `sound.<n>.chain`, the keys of `AmpSoundStore`):
+- [X] T039 [P] [US3] Test `SET/tests/sounds.rs`, then write `SET/src/sounds.rs` per contracts/settings-files.md (`sounds.properties`, `sounds.format=1`, `ready.<name>.chain`, `sound.<n>.name`, `sound.<n>.chain`, the keys of `AmpSoundStore`):
   - a newer `sounds.format` or a damaged file is handled as contracts/settings-files.md says (left untouched, or copied aside as `.damaged-<date>`), as T025 does for `settings.properties`;
   - a name is "1 to 40 characters, not blank, unique among the sounds; it cannot take a ready-made sound's name";
   - a changed ready-made sound shows as changed, and *Restore* brings back the shipped chain;
   - an own sound edited shows as changed until *Save*, and is dropped when another sound is picked.
-- [ ] T040 [P] [US3] Test `SET/tests/sound_file.rs` on the example files `SET/tests/sounds/{valid,format2,malformed,every-pedal}.guitarfx`, then write `SET/src/sound_file.rs` per contracts/sound-file.md:
+- [X] T040 [P] [US3] Test `SET/tests/sound_file.rs` on the example files `SET/tests/sounds/{valid,format2,malformed,every-pedal}.guitarfx`, then write `SET/src/sound_file.rs` per contracts/sound-file.md:
   - `format` must be 1; a greater number gives "made by a newer version";
   - missing fields or a malformed chain give "not a sound file";
   - the name is trimmed, 1 to 40 characters;
   - the writing order is the comment line, `format`, `name`, `chain`, written atomically.
-- [ ] T041 [US3] New Java test `MONT/SoundFileTest.java` on the same four example files (read from `guitarfx/guitarfx-settings/tests/sounds/`), then write `MON/SoundFile.java`: read and write with `ChainSettings.parse` and `toText`, the same rules and messages as T040.
-- [ ] T042 [US3] Round trip SC-011, both ways, in one build:
+- [X] T041 [US3] New Java test `MONT/SoundFileTest.java` on the same four example files (read from `guitarfx/guitarfx-settings/tests/sounds/`), then write `MON/SoundFile.java`: read and write with `ChainSettings.parse` and `toText`, the same rules and messages as T040.
+- [X] T042 [US3] Round trip SC-011, both ways, in one build:
   - `MONT/SoundFileTest.java` also writes the four ready-made sounds and the every-pedal sound into `target/guitarfx-reference/sounds/`;
   - `SET/tests/sound_file.rs` reads them and asserts equal chains (Java → Rust);
   - it then writes the same five sounds itself and asserts each file is **byte-identical** to Java's. Since `SoundFileTest` reads Java's files, Rust's files are readable by TuxGuitarAdvanced (Rust → Java) without a second build.
-- [ ] T043 [US3] Write `UI/src/sounds.rs`: the sound list (ready-made first, then own sounds alphabetically, "(changed)"), *Save…* with the name prompt, and ⋯ with *Rename…*, *Delete*, *Restore*, *Export…* and *Import…* (a file dialog through `rfd`, MIT; add it to T003's check). Importing over an existing own name asks "replace, or keep both" (keep both names it "<name> 2"); a ready-made name gives "<name> (imported)".
-- [ ] T044 [US3] TuxGuitarAdvanced: add *Export…* and *Import…* to the ⋯ menu of `PR/ui/AmpWindow.java` (the `menu` built at line 300, its items made by the helper of line 324) using `MON/SoundFile.java` and the toolkit's file dialog, with their texts and tips in `desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties` (French and Spanish different from English).
+- [X] T043 [US3] Write `UI/src/sounds.rs`: the sound list (ready-made first, then own sounds alphabetically, "(changed)"), *Save…* with the name prompt, and ⋯ with *Rename…*, *Delete*, *Restore*, *Export…* and *Import…* (a file dialog through `rfd`, MIT; add it to T003's check). Importing over an existing own name asks "replace, or keep both" (keep both names it "<name> 2"); a ready-made name gives "<name> (imported)".
+- [X] T044 [US3] TuxGuitarAdvanced: add *Export…* and *Import…* to the ⋯ menu of `PR/ui/AmpWindow.java` (the `menu` built at line 300, its items made by the helper of line 324) using `MON/SoundFile.java` and the toolkit's file dialog, with their texts and tips in `desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties` (French and Spanish different from English).
   - The two keys go in `AmpTexts.KEYS`, each with its `.tip`, so the committed `AmpTextsTest` keeps every control with a label and a tip in the three languages.
   - New test `PT/session/AmpSoundImportTest.java` (no window): importing a file into `AmpSoundStore` adds the sound, a name that exists asks (replace, or keep both), a ready-made name gives "<name> (imported)", a newer format is refused with the message.
   - New SWT test `PT/ui/AmpSoundFileSwtTest.java` (`swt-gui-tests`): the ⋯ menu offers *Export…* and *Import…*. Written now, run in T065 with the Mac unlocked.
-- [ ] T045 [US3] Gate: green, including every committed `MONT/**` and `PT/**/Amp*` test unchanged. Commit Phase 5.
+  - Done 2026-11-10. `SET/tests/sounds_import.rs` (5, seen red) and `PT/session/AmpSoundImportTest.java` (5, seen red) hold the import rule, the same in both programs (`Sounds::import` and `AmpSoundImport`). Decisions within the contract: "keep both" goes on to "<name> 3"… when "<name> 2" is taken, and shortens the name so that the whole fits 40 characters; the import keeps the file's own name ("MINE" gives "MINE 2"); an import does not change the current sound, except *Replace* of the current sound, whose new chain is then played; *Export…* adds `.guitarfx` when the name chosen has another ending.
+  - The views never open a file: `UI/src/sounds.rs` returns the actions and `APP/src/app.rs` opens the `rfd` dialogs. To keep the committed `fits_screen.rs` unchanged, the window with its sound list is `window::show_with`, checked at 1024×768 by the new `UI/tests/fits_screen_sounds.rs` (with each sound dialog; 600 px fails); `UI/tests/sounds.rs` checks "(changed)" and the ⋯ items.
+  - `rfd` 0.15.4 (MIT) is in `deny.toml`'s comment and research R3: no new licence. The French and Spanish texts of GuitarFX's new keys come with T046.
+- [X] T045 [US3] Gate: green, including every committed `MONT/**` and `PT/**/Amp*` test unchanged. Commit Phase 5.
+  - Done 2026-11-10: `mvn -o -e verify -P native-modules,guitarfx` BUILD SUCCESS, no Java test failing (SWT tests excluded as usual), cargo 169 passed with the Java round trip run (not skipped), `cargo deny --locked check licenses` green, `GuitarFX.app --check` prints `ok`. No committed test changed.
 
 ---
 

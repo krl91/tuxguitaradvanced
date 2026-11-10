@@ -32,6 +32,8 @@ exceptions = [
 	# the Windows clipboard of egui
 	{ crate = "clipboard-win", allow = ["BSL-1.0"] },
 	{ crate = "error-code", allow = ["BSL-1.0"] },
+	# rfd (MIT, the file dialogs of *Export…* and *Import…*, T043) adds no licence outside the list: on Linux it goes through the
+	# desktop portal (ashpd, zbus), all MIT or Apache-2.0
 	# CC0-1.0: R3 expected it in some small crate; `cargo deny list` shows none with the interface in (T029); T051 checks again with the plugin
 ]
 

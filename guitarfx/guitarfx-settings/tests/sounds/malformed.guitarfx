@@ -1,0 +1,4 @@
+# GuitarFX sound
+format=1
+name=Broken
+chain=amp:nothing,5|cab:maybe

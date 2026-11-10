@@ -109,19 +109,33 @@ final class AmpTexts {
 	static final String TAB_OUTPUT = P + "tab.output";
 	static final String SAVE_TITLE = P + "name-prompt.save-title";
 	static final String RENAME_TITLE = P + "name-prompt.rename-title";
+	// spec 027 (FR-023): the sound files
+	static final String EXPORT = P + "export";
+	static final String IMPORT = P + "import";
+	static final String IMPORT_REPLACE = P + "import.replace";
+	static final String IMPORT_KEEP_BOTH = P + "import.keep-both";
+	static final String IMPORT_CLASH_TITLE = P + "import.clash-title";
+	static final String IMPORT_CLASH = P + "import.clash";
+	static final String IMPORT_DONE = P + "import.done";
+	static final String FILE_FORMAT = P + "file.format";
+	static final String FILE_NEWER = P + "file.newer";
+	static final String FILE_NOT = P + "file.not";
+	static final String EXPORT_DONE = P + "export.done";
+	static final String EXPORT_FAILED = P + "export.failed";
 
 	static final List<String> KEYS;
 
 	static final List<String> PLAIN = Collections.unmodifiableList(Arrays.asList(TITLE, AMP, OUTPUT_DEFAULT, DELAY_VALUE, DELAY_UNKNOWN, CLEAN, CRUNCH, HIGH_GAIN,
 			UNIT_SCALE, UNIT_PERCENT, FAILED, CLIPPING, BEFORE, AFTER, UNIT_DB, UNIT_MS, UNIT_HZ, CHANGED, NAME_READY_MADE, NAME_TOO_LONG, WARNING_TITLE, WARNING_TEXT, FEEDBACK, OVERLOAD, DEVICE_LOST, LIGHTER_REVERB_OFF, LIGHTER_CHORUS_OFF,
-			LIGHTER_OVERSAMPLING_2X, LIGHTER_OVERSAMPLING_1X, LIGHTER_AMP_ALONE, TAB_BEFORE, TAB_AMP, TAB_AFTER, TAB_OUTPUT, SAVE_TITLE, RENAME_TITLE));
+			LIGHTER_OVERSAMPLING_2X, LIGHTER_OVERSAMPLING_1X, LIGHTER_AMP_ALONE, TAB_BEFORE, TAB_AMP, TAB_AFTER, TAB_OUTPUT, SAVE_TITLE, RENAME_TITLE,
+			IMPORT_CLASH_TITLE, IMPORT_CLASH, IMPORT_DONE, FILE_FORMAT, FILE_NEWER, FILE_NOT, EXPORT_DONE, EXPORT_FAILED));
 
 	static final List<KnobText> KNOBS;
 
 	static {
 		List<String> keys = new ArrayList<String>(Arrays.asList(OPEN, ENABLED, OUTPUT, GUITAR_VOLUME, SCORE_VOLUME, DELAY, CHARACTER, GAIN, BASS, MIDDLE, TREBLE,
 				VOLUME, CABINET, ADD_PEDAL, PEDAL_UP, PEDAL_DOWN, PEDAL_REMOVE, SOUND, SOUND_NAME, SAVE_AS, RENAME, DELETE, RESTORE, TURN_ON_ANYWAY, WARNING_CANCEL, SAVE, MORE, NAME_OK,
-				NAME_CANCEL));
+				NAME_CANCEL, EXPORT, IMPORT, IMPORT_REPLACE, IMPORT_KEEP_BOTH));
 		List<KnobText> knobs = new ArrayList<KnobText>(Arrays.asList(new KnobText(GUITAR_VOLUME, UNIT_PERCENT, "70"), new KnobText(SCORE_VOLUME, UNIT_SCALE, "10"),
 				new KnobText(GAIN, UNIT_SCALE, "3"), new KnobText(BASS, UNIT_SCALE, "5"), new KnobText(MIDDLE, UNIT_SCALE, "5"), new KnobText(TREBLE, UNIT_SCALE, "6"),
 				new KnobText(VOLUME, UNIT_SCALE, "6")));

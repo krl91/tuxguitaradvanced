@@ -5,4 +5,5 @@ pub mod chain_rows;
 pub mod devices_bar;
 pub mod knobs;
 pub mod messages;
+pub mod sounds;
 pub mod window;

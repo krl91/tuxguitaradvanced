@@ -1,11 +1,15 @@
 package app.tuxguitar.app.tools.custom.practice.ui;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import app.tuxguitar.app.tools.custom.practice.session.AmpSoundImport;
 import app.tuxguitar.app.tools.custom.practice.session.AmpSoundSettings;
 import app.tuxguitar.app.tools.custom.practice.session.AmpSoundStore;
 import app.tuxguitar.app.tools.custom.practice.session.ScoreKey;
@@ -13,7 +17,10 @@ import app.tuxguitar.audio.engine.monitor.ChainSettings;
 import app.tuxguitar.audio.engine.monitor.MonitorNotice;
 import app.tuxguitar.audio.engine.monitor.MonitorState;
 import app.tuxguitar.audio.engine.monitor.ReadyMadeChains;
+import app.tuxguitar.audio.engine.monitor.SoundFile;
 import app.tuxguitar.ui.UIFactory;
+import app.tuxguitar.ui.chooser.UIFileChooser;
+import app.tuxguitar.ui.chooser.UIFileChooserFormat;
 import app.tuxguitar.ui.event.UIDisposeEvent;
 import app.tuxguitar.ui.event.UIDisposeListener;
 import app.tuxguitar.ui.event.UISelectionEvent;
@@ -102,6 +109,9 @@ final class AmpWindow {
 	private UIMenuActionItem rename;
 	private UIMenuActionItem delete;
 	private UIMenuActionItem restore;
+	private UIMenuActionItem exportItem;
+	private UIMenuActionItem importItem;
+	private UIWindow clash;
 	private final AmpNamePrompt namePrompt;
 	private UITabFolder tabs;
 	private final List<UIPanel> tabPanels = new ArrayList<UIPanel>();
@@ -269,7 +279,7 @@ final class AmpWindow {
 		this.window.open();
 	}
 
-	/** The sound list, Save… and ⋯ with Rename…, Delete and Restore (contracts/amp-window.md "Layout"); a name is asked in a small window. */
+	/** The sound list, Save… and ⋯ with Rename…, Delete, Restore, Export… and Import… (contracts/amp-window.md "Layout", spec 027 FR-023); a name is asked in a small window. */
 	private void createSounds(UIPanel top, UITableLayout topLayout, int row) {
 		this.soundsLabel = label(top, topLayout, row, AmpTexts.SOUND);
 		UIPanel panel = this.factory.createPanel(top, false);
@@ -318,6 +328,108 @@ final class AmpWindow {
 			this.sound.setChain(chain);
 			showSounds();
 		});
+		this.exportItem = item(AmpTexts.EXPORT, () -> exportSound());
+		this.importItem = item(AmpTexts.IMPORT, () -> importSound());
+	}
+
+	/** The sound files' type in the file dialogs. */
+	private List<UIFileChooserFormat> soundFormat() {
+		return Collections.singletonList(new UIFileChooserFormat(this.texts.get(AmpTexts.FILE_FORMAT), Collections.singletonList(SoundFile.EXTENSION)));
+	}
+
+	/** Export…: the chain in use, under the current sound's name (spec 027, FR-023). */
+	private void exportSound() {
+		String name = this.store.current().name();
+		ChainSettings chain = this.rows.chain();
+		UIFileChooser chooser = this.factory.createSaveFileChooser(this.window);
+		chooser.setText(this.texts.get(AmpTexts.EXPORT));
+		chooser.setDefaultPath(new File(System.getProperty("user.home"), name.replaceAll("[\\\\/:*?\"<>|]", "-") + "." + SoundFile.EXTENSION));
+		chooser.setSupportedFormats(soundFormat());
+		chooser.choose(file -> {
+			if (file == null) {
+				return;
+			}
+			File target = (file.getName().toLowerCase().endsWith("." + SoundFile.EXTENSION) ? file : new File(file.getPath() + "." + SoundFile.EXTENSION));
+			try {
+				SoundFile.write(target.toPath(), name, chain);
+				message(this.texts.get(AmpTexts.EXPORT_DONE, target.getName()));
+			} catch (IOException exception) {
+				message(this.texts.get(AmpTexts.EXPORT_FAILED, String.valueOf(exception.getMessage())));
+			}
+		});
+	}
+
+	/** Import…: a file refused changes nothing; the name of an own sound waits for the learner's answer. */
+	private void importSound() {
+		UIFileChooser chooser = this.factory.createOpenFileChooser(this.window);
+		chooser.setText(this.texts.get(AmpTexts.IMPORT));
+		chooser.setSupportedFormats(soundFormat());
+		chooser.choose(file -> {
+			if (file == null) {
+				return;
+			}
+			AmpSoundImport.Result result = AmpSoundImport.importFile(this.store, file.toPath());
+			switch (result.outcome()) {
+			case REFUSED:
+				message(this.texts.get(result.problem() == SoundFile.Problem.NEWER ? AmpTexts.FILE_NEWER : AmpTexts.FILE_NOT));
+				break;
+			case CLASH:
+				askClash(result);
+				break;
+			default:
+				imported(result.name());
+			}
+		});
+	}
+
+	private void imported(String name) {
+		showSounds();
+		message(this.texts.get(AmpTexts.IMPORT_DONE, name));
+	}
+
+	/** Replace it, Keep both, or Cancel, for an import whose name is an own sound's. */
+	private void askClash(AmpSoundImport.Result result) {
+		if (this.clash != null && !this.clash.isDisposed()) {
+			this.clash.dispose();
+		}
+		this.clash = this.factory.createWindow(this.window, true, false);
+		this.clash.setText(this.texts.get(AmpTexts.IMPORT_CLASH_TITLE));
+		UITableLayout layout = new UITableLayout();
+		this.clash.setLayout(layout);
+		UILabel text = this.factory.createLabel(this.clash);
+		text.setText(this.texts.get(AmpTexts.IMPORT_CLASH, result.name()));
+		layout.set(text, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false, 1, 3);
+		layout.set(text, UITableLayout.PACKED_WIDTH, 360f);
+		clashButton(layout, 1, AmpTexts.NAME_CANCEL, () -> this.clash.dispose());
+		clashButton(layout, 2, AmpTexts.IMPORT_KEEP_BOTH, () -> {
+			this.clash.dispose();
+			imported(AmpSoundImport.keepBoth(this.store, result.sound()));
+		});
+		clashButton(layout, 3, AmpTexts.IMPORT_REPLACE, () -> {
+			this.clash.dispose();
+			String name = AmpSoundImport.replace(this.store, result.sound());
+			if (name.equalsIgnoreCase(this.store.current().name())) {
+				use(name);
+			}
+			imported(name);
+		});
+		this.clash.pack();
+		UIRectangle over = this.window.getBounds();
+		UIRectangle size = this.clash.getBounds();
+		this.clash.setBounds(new UIRectangle(over.getX() + (over.getWidth() - size.getWidth()) / 2f, over.getY() + 40f, size.getWidth(), size.getHeight()));
+		this.clash.open();
+	}
+
+	private void clashButton(UITableLayout layout, int column, String key, Runnable action) {
+		UIButton button = this.factory.createButton(this.clash);
+		button.setText(this.texts.get(key));
+		button.setToolTipText(this.texts.get(key + ".tip"));
+		button.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				action.run();
+			}
+		});
+		layout.set(button, 2, column, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, false);
 	}
 
 	private UIMenuActionItem item(String key, Runnable action) {
@@ -691,6 +803,14 @@ final class AmpWindow {
 
 	UIMenuActionItem getRestore() {
 		return this.restore;
+	}
+
+	UIMenuActionItem getExport() {
+		return this.exportItem;
+	}
+
+	UIMenuActionItem getImport() {
+		return this.importItem;
 	}
 
 	AmpNamePrompt getNamePrompt() {

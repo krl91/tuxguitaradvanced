@@ -1,0 +1,4 @@
+# GuitarFX sound
+format=1
+name=Lead with echo
+chain=gate:on,-60,150|compressor:on,5,10,5|amp:highgain,7,5,6,6,5|cab:on|echo:on,380,3,5,30|reverb:on,5,5,25

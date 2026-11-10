@@ -23,3 +23,5 @@ tuxguitar-monitor-native = { path = "../../desktop/build-scripts/native-modules/
 cpal = "=0.15.3"
 eframe = { version = "=0.33.3", default-features = false, features = ["accesskit", "default_fonts", "glow", "wayland", "x11"] }
 guitarfx-ui = { path = "../guitarfx-ui" }
+# the system's file dialogs for *Export…* and *Import…* (MIT; on Linux through the desktop portal, no GTK)
+rfd = "=0.15.4"

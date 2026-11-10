@@ -1,0 +1,4 @@
+# GuitarFX sound
+format=1
+name=Every pedal\: a \= b \\ été
+chain=gate:on,-50,200|compressor:off,6,20,4|overdrive:on,7,4,6|distortion:on,3,6,5|amp:highgain,8,4,7,6,5|cab:off|chorus:on,1.5,6,40|echo:on,500,4,6,20|reverb:on,7,3,30

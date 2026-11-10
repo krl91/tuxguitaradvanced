@@ -1,6 +1,7 @@
 //! The main window (contracts/application.md): the devices bar, the sound control (*Sound on*, the volume, the input meter, the estimated
 //! delay and the Bluetooth note), the chain's three tabs, and the message line. It fits a 1024×768 screen.
 
+use crate::sounds::{self, SoundsModel};
 use crate::{chain_rows, devices_bar, messages};
 use egui::{Align, Context, Layout, RichText, Ui};
 use guitarfx_dsp::settings::ChainParams;
@@ -92,16 +93,46 @@ pub enum Action {
     CloseDialog,
     /// The chain as the guitarist changed it.
     Chain(Box<ChainParams>),
+    PickSound(String),
+    /// *Save…* with that name.
+    SaveSound(String),
+    RenameSound {
+        from: String,
+        to: String,
+    },
+    DeleteSound(String),
+    RestoreSound(String),
+    ExportSound,
+    ImportSound,
+    /// The answers to an import whose name is an own sound's.
+    ImportReplace,
+    ImportKeepBoth,
+    CloseSoundDialog,
 }
 
+/// The window without a sound list.
 pub fn show(ctx: &Context, model: &mut Model, texts: &Texts) -> Vec<Action> {
+    show_parts(ctx, model, None, texts)
+}
+
+/// The window with its sound list.
+pub fn show_with(ctx: &Context, model: &mut Model, sound_list: &mut SoundsModel, texts: &Texts) -> Vec<Action> {
+    show_parts(ctx, model, Some(sound_list), texts)
+}
+
+fn show_parts(ctx: &Context, model: &mut Model, mut sound_list: Option<&mut SoundsModel>, texts: &Texts) -> Vec<Action> {
     let mut actions = Vec::new();
     egui::TopBottomPanel::top("devices").show(ctx, |ui| devices_bar::show(ui, model, texts, &mut actions));
     egui::TopBottomPanel::top("sound").show(ctx, |ui| sound(ui, model, texts, &mut actions));
+    if let Some(list) = sound_list.as_deref_mut() {
+        egui::TopBottomPanel::top("sounds").show(ctx, |ui| sounds::show(ui, list, texts, &mut actions));
+    }
     egui::TopBottomPanel::bottom("messages").show(ctx, |ui| messages::line(ui, model.message.as_deref()));
     egui::CentralPanel::default().show(ctx, |ui| tabs(ui, model, texts, &mut actions));
     if let Some(dialog) = model.dialog.clone() {
         messages::dialog(ctx, &dialog, texts, &mut actions);
+    } else if let Some(list) = sound_list {
+        sounds::dialog(ctx, list, texts, &mut actions);
     }
     actions
 }

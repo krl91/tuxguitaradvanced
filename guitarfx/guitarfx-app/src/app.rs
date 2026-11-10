@@ -7,7 +7,10 @@ use crate::engine::State;
 use eframe::egui;
 use guitarfx_dsp::{chain_text, ready_made, settings::ChainParams};
 use guitarfx_settings::settings::{Notice, Settings};
+use guitarfx_settings::sound_file;
+use guitarfx_settings::sounds::{Import, NameProblem, Sounds};
 use guitarfx_settings::texts::Texts;
+use guitarfx_ui::sounds::{SoundDialog, SoundItem, SoundsModel};
 use guitarfx_ui::window::{self, Action, Dialog, Model, Tab};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -47,11 +50,31 @@ pub struct App {
     last_clipping_notice: Option<Instant>,
     /// A change not saved yet (the knobs move many times a second: they are saved once they rest).
     unsaved_since: Option<Instant>,
+    sounds: Sounds,
+    /// False while a newer sounds file must not be written over.
+    sounds_writable: bool,
+    sound_list: SoundsModel,
+    /// An imported sound waiting for the guitarist's answer: its name and chain.
+    pending_import: Option<(String, ChainParams)>,
+}
+
+fn name_problem_key(problem: NameProblem) -> &'static str {
+    match problem {
+        NameProblem::Empty => "sound.name.empty",
+        NameProblem::TooLong => "sound.name.too-long",
+        NameProblem::ReadyMade => "sound.name.ready-made",
+        NameProblem::Taken => "sound.name.taken",
+    }
+}
+
+fn file_name(path: &std::path::Path) -> String {
+    path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()
 }
 
 impl App {
     pub fn new(folder: PathBuf) -> App {
         let loaded = Settings::load(&folder);
+        let sounds = Sounds::load(&folder);
         let texts = Texts::english();
         let settings = loaded.settings;
         let mut app = App {
@@ -82,7 +105,18 @@ impl App {
             clipping_until: None,
             last_clipping_notice: None,
             unsaved_since: None,
+            sounds: sounds.sounds,
+            sounds_writable: sounds.writable,
+            sound_list: SoundsModel::default(),
+            pending_import: None,
         };
+        match sounds.notice {
+            Some(Notice::Newer) => app.say("message.sounds.newer"),
+            Some(Notice::Damaged(copy)) => {
+                app.model.message = Some(app.texts.format("message.sounds.damaged", &[("file", &file_name(&copy))]));
+            }
+            None => {}
+        }
         match loaded.notice {
             Some(Notice::Newer) => app.model.dialog = Some(Dialog::NewerSettings),
             Some(Notice::Damaged(copy)) => {
@@ -101,6 +135,151 @@ impl App {
                 eprintln!("the settings could not be saved: {error}");
             }
         }
+    }
+
+    fn save_sounds(&self) {
+        if self.sounds_writable {
+            if let Err(error) = self.sounds.save(&self.folder) {
+                eprintln!("the sounds could not be saved: {error}");
+            }
+        }
+    }
+
+    /// The list as the window shows it, the open dialog kept.
+    fn refresh_sound_list(&mut self) {
+        self.sound_list.sounds = self
+            .sounds
+            .list()
+            .into_iter()
+            .map(|s| SoundItem {
+                name: s.name,
+                ready_made: s.ready_made,
+                changed: s.changed,
+            })
+            .collect();
+        self.sound_list.current = self.settings.sound_current.clone();
+        self.sound_list.unsaved = self.sounds.is_changed(&self.settings.sound_current, &self.model.chain);
+    }
+
+    /// The chain in use becomes `chain`: played at once, kept in the settings.
+    fn use_chain(&mut self, chain: ChainParams) {
+        self.model.chain = chain;
+        self.settings.chain_current = Some(chain_text::format(&chain));
+        if let Some(running) = &self.running {
+            running.control.post_chain(chain);
+        }
+    }
+
+    fn pick_sound(&mut self, name: &str) {
+        if let Some(sound) = self.sounds.sound(name) {
+            self.settings.sound_current = sound.name;
+            self.use_chain(sound.chain);
+            self.save_settings();
+        }
+    }
+
+    fn save_sound(&mut self, name: &str) {
+        match self.sounds.save_as(name, self.model.chain) {
+            Ok(()) => {
+                self.settings.sound_current = name.trim().to_string();
+                self.sound_list.dialog = None;
+                self.save_sounds();
+                self.save_settings();
+            }
+            Err(problem) => self.name_problem(problem),
+        }
+    }
+
+    fn rename_sound(&mut self, from: &str, to: &str) {
+        match self.sounds.rename(from, to) {
+            Ok(()) => {
+                if self.settings.sound_current.eq_ignore_ascii_case(from.trim()) {
+                    self.settings.sound_current = to.trim().to_string();
+                }
+                self.sound_list.dialog = None;
+                self.save_sounds();
+                self.save_settings();
+            }
+            Err(problem) => self.name_problem(problem),
+        }
+    }
+
+    /// Shows what is wrong with the name in the open prompt.
+    fn name_problem(&mut self, problem: NameProblem) {
+        let text = self.texts.get(name_problem_key(problem)).to_string();
+        if let Some(SoundDialog::Save { problem, .. } | SoundDialog::Rename { problem, .. }) = &mut self.sound_list.dialog {
+            *problem = Some(text);
+        }
+    }
+
+    /// Deletes an own sound; the chain in use stays, and Clean becomes the current sound (as `AmpSoundStore.current`).
+    fn delete_sound(&mut self, name: &str) {
+        if self.sounds.delete(name) {
+            if self.settings.sound_current.eq_ignore_ascii_case(name.trim()) {
+                self.settings.sound_current = ready_made::ALL[0].0.to_string();
+            }
+            self.save_sounds();
+            self.save_settings();
+        }
+    }
+
+    fn restore_sound(&mut self, name: &str) {
+        if let Some(chain) = self.sounds.restore(name) {
+            if self.settings.sound_current.eq_ignore_ascii_case(name.trim()) {
+                self.use_chain(chain);
+            }
+            self.save_sounds();
+            self.save_settings();
+        }
+    }
+
+    /// *Export…*: the chain in use, under the current sound's name.
+    fn export_sound(&mut self) {
+        let name = self.settings.sound_current.clone();
+        let chosen = rfd::FileDialog::new()
+            .add_filter(self.texts.get("sound.file.filter"), &[sound_file::EXTENSION])
+            .set_file_name(format!("{name}.{}", sound_file::EXTENSION))
+            .save_file();
+        let Some(mut path) = chosen else {
+            return;
+        };
+        if !path.extension().is_some_and(|e| e.eq_ignore_ascii_case(sound_file::EXTENSION)) {
+            path.as_mut_os_string().push(format!(".{}", sound_file::EXTENSION));
+        }
+        self.model.message = Some(match sound_file::write(&path, &name, &self.model.chain) {
+            Ok(()) => self.texts.format("message.sound.exported", &[("file", &file_name(&path))]),
+            Err(error) => self.texts.format("message.sound.not-saved", &[("error", &error.to_string())]),
+        });
+    }
+
+    /// *Import…*: a file refused changes nothing; a name of an own sound waits for the guitarist's answer.
+    fn import_sound(&mut self) {
+        let chosen = rfd::FileDialog::new()
+            .add_filter(self.texts.get("sound.file.filter"), &[sound_file::EXTENSION])
+            .pick_file();
+        let Some(path) = chosen else {
+            return;
+        };
+        match sound_file::read_file(&path) {
+            Err(error) => {
+                let text = self.texts.get(error.key()).to_string();
+                self.model.dialog = Some(Dialog::Message(text.clone()));
+                self.model.message = Some(text);
+            }
+            Ok(sound) => match self.sounds.import(&sound.name, sound.chain) {
+                Import::Added(name) => self.imported(&name),
+                Import::Clash(name) => {
+                    self.pending_import = Some((sound.name, sound.chain));
+                    self.sound_list.dialog = Some(SoundDialog::Clash { name });
+                }
+            },
+        }
+    }
+
+    fn imported(&mut self, name: &str) {
+        self.sound_list.dialog = None;
+        self.model.message = Some(self.texts.format("message.sound.imported", &[("name", name)]));
+        self.save_sounds();
     }
 
     fn refresh_devices(&mut self) {
@@ -208,12 +387,33 @@ impl App {
             }
             Action::CloseDialog => self.model.dialog = None,
             Action::Chain(chain) => {
-                self.model.chain = *chain;
-                self.settings.chain_current = Some(chain_text::format(&chain));
-                if let Some(running) = &self.running {
-                    running.control.post_chain(*chain);
-                }
+                self.use_chain(*chain);
+                self.sounds.keep_current(&self.settings.sound_current, &chain);
                 self.unsaved_since.get_or_insert_with(Instant::now);
+            }
+            Action::PickSound(name) => self.pick_sound(&name),
+            Action::SaveSound(name) => self.save_sound(&name),
+            Action::RenameSound { from, to } => self.rename_sound(&from, &to),
+            Action::DeleteSound(name) => self.delete_sound(&name),
+            Action::RestoreSound(name) => self.restore_sound(&name),
+            Action::ExportSound => self.export_sound(),
+            Action::ImportSound => self.import_sound(),
+            Action::ImportReplace => {
+                if let Some((name, chain)) = self.pending_import.take() {
+                    self.sounds.import_replace(&name, chain);
+                    let name = self.sounds.sound(&name).map(|s| s.name).unwrap_or(name);
+                    self.imported(&name);
+                }
+            }
+            Action::ImportKeepBoth => {
+                if let Some((name, chain)) = self.pending_import.take() {
+                    let name = self.sounds.import_keep_both(&name, chain);
+                    self.imported(&name);
+                }
+            }
+            Action::CloseSoundDialog => {
+                self.sound_list.dialog = None;
+                self.pending_import = None;
             }
         }
     }
@@ -290,7 +490,8 @@ impl App {
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll();
-        let actions = window::show(ctx, &mut self.model, &self.texts);
+        self.refresh_sound_list();
+        let actions = window::show_with(ctx, &mut self.model, &mut self.sound_list, &self.texts);
         for action in actions {
             self.act(action);
         }
@@ -298,6 +499,7 @@ impl eframe::App for App {
         if self.unsaved_since.is_some_and(|t| t.elapsed() >= notice_interval()) {
             self.unsaved_since = None;
             self.save_settings();
+            self.save_sounds();
         }
         if self.unsaved_since.is_some() {
             ctx.request_repaint_after(notice_interval());
@@ -310,6 +512,7 @@ impl eframe::App for App {
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
         self.running = None;
         self.save_settings();
+        self.save_sounds();
     }
 }
 
