@@ -359,6 +359,7 @@
   - update `specs/STATUS.md`;
   - commit, then one push of both refs.
   - 2026-11-10: the full build green without the SWT profile (2,536 Java tests, cargo 219, `--check` ok); the SWT run, made with the Mac locked, gave 92 of 95 green and the 3 tests of `PracticeWindowFitsSwtTest` red for want of a screen (no code of that window changed by this spec): **left open until the SWT run passes with the Mac unlocked**. The test diff shows only added files but `misc/test-verify-release.sh` (cases added, as T060 asks) and the sheets' index. Delay per system: not measured (T062 waits; Linux and Windows unknown). `final-report.md` written, `STATUS.md` updated, committed and pushed.
+  - 2026-11-10, Mac unlocked: `mvn -o -e verify -P native-modules,guitarfx,swt-gui-tests` **BUILD SUCCESS**, the 95 SWT tests green (`PracticeWindowFitsSwtTest` 3/3, `AmpSoundFileSwtTest` included), cargo 219 passed, 0 failed. **Left open only for the macOS delay, which comes from T062 (the owner's go).**
 - [ ] T066 [HUMAN] The owner's gate: sheet F17 on the built packages (quickstart §3, §4, §6, §7). Linux and Windows testers' reports, or stated as unchecked (SC-001, SC-012).
 
 ## Dependencies & execution order

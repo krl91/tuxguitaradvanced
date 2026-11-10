@@ -70,11 +70,12 @@
 
 - **Phases 1 to 7**: each gate green and committed (see `tasks.md`).
 - **Final gate, 2026-11-10** (`mvn -o -e verify -P native-modules,guitarfx`, without `clean`): **BUILD SUCCESS**; 2,536 Java tests, 0 failures, 1 skipped; cargo 219 passed, 0 failed (64 in the native crate, 155 in GuitarFX, the comparison with the Java references run, not skipped), 5 ignored (the endurance hour among them); `cargo deny` green; `GuitarFX.app --check` prints `ok`.
-- **SWT tests (`-P swt-gui-tests`)**: run with the Mac **locked** (`IOConsoleLocked` true): 92 of 95 green, among them the new `AmpSoundFileSwtTest`; the 3 tests of `PracticeWindowFitsSwtTest` fail because a locked screen gives the window no size ("the last row (bottom at 4.0) is in view (0.0)"). Spec 027 changed no code of that window. **To run again with the Mac unlocked.**
+- **SWT tests (`-P swt-gui-tests`)**: first run with the Mac locked (`IOConsoleLocked` true): 92 of 95, the 3 tests of `PracticeWindowFitsSwtTest` red for want of a screen size. Run again the same day with the Mac **unlocked** (`mvn -o -e verify -P native-modules,guitarfx,swt-gui-tests`): **BUILD SUCCESS, 95 of 95 green**, among them the new `AmpSoundFileSwtTest`; cargo 219 passed, 0 failed.
 - **Committed tests**: `git diff --name-status ed5dac77f -- '*test*' '*Test*'` shows only added files, except `misc/test-verify-release.sh` (10 cases added at its end, as T060 asks; its 17 cases unchanged) and `specs/test-sheets/README.md` (the index of the sheets, a line for F17).
 - **Other checks run**: `misc/test-verify-release.sh` (27 ok), `misc/test-check-guitarfx-size.sh` (5 ok), `guitarfx/packaging/test-macos-pkg.sh` and `test-linux-packages.sh` (ok, the `.deb` part skipped without `dpkg-deb`), the release `.pkg` built ad hoc with every signature inside verified, the endurance test for one minute (0 dropped).
 
 ## Open
 
+- T065: closed but for the macOS delay (FR-021), which comes from T062.
 - T062 (the probe, audible) and T063 (the hour): on the owner's go.
 - T066 [HUMAN]: sheet F17; Linux and Windows testers, or stated as unchecked.
