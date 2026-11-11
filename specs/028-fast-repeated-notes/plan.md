@@ -30,7 +30,7 @@
 **Storage**: the existing recognition settings file, with eleven new keys in two new sections (data-model.md). `VERSION` is unchanged; a missing key reads as its default.
 
 **Testing**: JUnit 5.
-- **Unit tests**: `FollowSessionReattackTest`, `PracticeSessionReattackTest`, `ArcadeReattackTest`, `FollowSessionNearestTargetTest`, `TuningDriftTest`, `FollowSessionTuningDriftTest`, `PracticeSessionTuningDriftTest`, `TuningDriftTextTest`, `ArcadeRetuneOfferTest`, `FollowSessionAcceptBoostTest`, `ArcadeRetuneFlowTest`, and the settings tests. The committed `FastRunFunctionalTest` (`REPEATED` runs, Wait) is the guard and the measure of repeats at 3–12 notes per second.
+- **Unit tests**: `FollowSessionReattackTest`, `PracticeSessionReattackTest`, `ArcadeReattackTest`, `FollowSessionNearestTargetTest`, `TuningDriftTest`, `FollowSessionTuningDriftTest`, `PracticeSessionTuningDriftTest`, `TuningDriftTextTest`, `ArcadeRetuneOfferTest`, `FollowSessionAcceptBoostTest`, `TolerancePolicyAcceptTest`, `ArcadeRetuneFlowTest`, and the settings tests. The committed `FastRunFunctionalTest` (`REPEATED` runs, Wait) is the guard and the measure of repeats at 3–12 notes per second.
 - **Dataset tests**: `RepeatedNotesProbeTest` (probe), `OwnerOffsetTest` (tag `owner-offset`) and the existing `dataset` and `benchmark` suites, with both engines.
 - **SWT tests**: the threshold setting in the panel and Arcade's retune window, run once at the end (the owner's rule: SWT runs at the end, Mac unlocked).
 
@@ -51,7 +51,7 @@
 - The recording is never committed.
 
 **Scale/Scope**:
-- one rule in `FollowSession` and in `PracticeSession`, one assignment change, two pure classes (`TuningDrift`, `ArcadeRetuneOffer`), one palette line, one modal window over the paused Arcade run and its flow;
+- one rule in `FollowSession` and in `PracticeSession`, one assignment change, two pure classes (`TuningDrift`, `ArcadeRetuneOffer`), one palette line, one modal window over the paused Arcade run and its flow, one method added to `TolerancePolicy` (its acceptance changed, nothing else);
 - eleven settings in two new sections;
 - about 14 strings in three languages (the suggestion, the window's title, text and three buttons, the risk, the tuner unavailable, the settings' names and tips);
 - two scripts with self-tests (the check and the release-notes verification), one release step, one workflow line and one test sheet.
@@ -103,6 +103,9 @@ desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/settings
 ├── RecognitionParameter.java     + Section.REATTACK, Section.TUNING_DRIFT (after the existing sections)
 └── RecognitionParameters.java    + reattack.{rise,before,spread,octave,enabled}, tuning.drift-{threshold,max-fret,notes,agreement,quiet}, tuning.arcade-boost
 
+desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/pitch/
+└── TolerancePolicy.java          + withPracticeAcceptCents(double): the same policy with another acceptance (Arcade's boost; the fret-sharp step and maximum are not readable)
+
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── session/FollowSession.java    expected repeats per event (full sequence), band rings, re-attacks into PendingOnset, nearest-target assignment, TuningDrift fed; FollowParameters reads the new values
 ├── session/PracticeSession.java  Wait: the re-attack of the awaited event, TuningDrift fed
@@ -139,6 +142,9 @@ desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/
 
 desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings/
 └── ReattackSettingsTest.java               new: keys, defaults, bounds, round trip
+
+desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/pitch/
+└── TolerancePolicyAcceptTest.java          new: withPracticeAcceptCents keeps in-tune, fret-sharp and maximum
 
 misc/owner-offset-check.sh, misc/test-owner-offset-check.sh            new
 misc/verify-offset-table.sh, misc/test-verify-offset-table.sh          new
