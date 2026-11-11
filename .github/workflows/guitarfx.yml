@@ -123,6 +123,7 @@ jobs:
           misc/test-ci-apt-mirrors.sh
           misc/test-ci-debs-install.sh
           misc/test-ci-debs-install-cache.sh
+          misc/test-guitarfx-windows-path.sh
           # when no Ubuntu host resolves (seventh run), or apt fails, the packages of this repository's release ci-packages
           if timeout 5 getent hosts archive.ubuntu.com >/dev/null; then
             misc/ci-apt-mirrors.sh
@@ -280,7 +281,9 @@ jobs:
           curl -fsSL -o "$RUNNER_TEMP/clap-validator.zip" "https://github.com/free-audio/clap-validator/releases/download/${CLAP_VALIDATOR_VERSION}/clap-validator-${CLAP_VALIDATOR_BUILD}-windows.zip"
           unzip -q "$RUNNER_TEMP/clap-validator.zip" -d "$RUNNER_TEMP/clap-validator"
           cp "$(find "$RUNNER_TEMP/clap-validator" -type f -name clap-validator.exe | head -1)" "$HOME/tools/clap-validator.exe"
-          echo "$HOME/tools" >> "$GITHUB_PATH"
+          ls "$HOME/tools"
+          # Git Bash's $HOME is a POSIX path, which the runner does not read in GITHUB_PATH (ninth run: "no such command: `deny`")
+          cygpath -w "$HOME/tools" >> "$GITHUB_PATH"
       - name: cargo deny
         run: cd guitarfx && cargo deny --locked check licenses
       - name: cargo test, with the Java references written on Linux
