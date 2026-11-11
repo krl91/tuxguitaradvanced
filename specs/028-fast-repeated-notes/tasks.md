@@ -12,6 +12,8 @@
 
 **Version 5** (2026-11-11, fourth analysis): Wait at offset 0 written into FR-003 and SC-001; the release check refuses absent notes and a table from another recognition code; the probe's sweep made affordable; a suggestion during Arcade's count-in waits.
 
+**Version 6** (2026-11-11, fifth analysis): the band rings cleared at a pause (contract item 9); `release.yml`'s generated-notes branch removed now that the notes are required; research R7 brought in line.
+
 **Tests**: required. The owner's rules apply:
 - tests come first and must be seen red;
 - never modify an existing test, only add new ones;
@@ -146,10 +148,11 @@
   - a ring of band levels per open expected repeat, preallocated and sized from the bound of `reattack.before`;
   - the rise and spread test on each frame in `process`;
   - re-attacks go into the `PendingOnset` path;
-  - a re-attack is merged with a detector onset within `ONSET_REFRACTORY` hops.
+  - a re-attack is merged with a detector onset within `ONSET_REFRACTORY` hops;
+  - the rings are cleared in `pause`, beside `pending` and `history` (contract item 9), with a case in T010: a pause between two plucks of the same pitch, the second pluck after the resume is a re-attack measured on frames after the resume only.
 
   T010 and T011 must turn green.
-- [ ] T014 [US1] In `PR/session/PracticeSession.java`, the same rule for the awaited event (items 1, 2, 3, 6, 6a, 7, 8), so that T012 is green and `FastRunFunctionalTest` keeps its floors.
+- [ ] T014 [US1] In `PR/session/PracticeSession.java`, the same rule for the awaited event (items 1, 2, 3, 6, 6a, 7, 8), so that T012 is green and `FastRunFunctionalTest` keeps its floors; the rings are cleared when the session pauses (contract item 9).
 - [ ] T015 [US1] New test `PT/dataset/RepeatedPlucksEnginesTest.java` (tag `dataset`). It runs synthetic Karplus-Strong plucks, as `FastRunFunctionalTest` makes them, through each engine (`OfflineAnalysis`, `-Dtuxguitar.recognition.engine`), then through Follow and Wait:
   - two plucks 100 ms apart are two matches (SC-005);
   - a held note expected twice is one match (SC-004).
@@ -204,6 +207,7 @@
 
   In `.github/workflows/release.yml`:
   - list both self-tests beside the others (lines 67–71);
+  - the comment and the `--generate-notes` branch of the `create-release` job (line 102, "generated notes otherwise") go, since the notes are now required;
   - in the `validate` job, check out with `fetch-depth: 0` and run `misc/verify-offset-table.sh "docs/release-notes/$RELEASE_TAG.md" "$GITHUB_SHA"` before anything is published.
 - [ ] T028 [P] [US3] In `docs/VERSIONING.md`, add the section "Before a release":
   - run `misc/owner-offset-check.sh <report> tests/tiktok/1` on the owner's machine;

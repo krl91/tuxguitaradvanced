@@ -11,3 +11,4 @@ Applies to `FollowSession` (Follow and Arcade) and to `PracticeSession` (Wait), 
 6a. A rise of the band of `p` that comes with a rise of most other bands in the same frame (a scratch, a click) is not a re-attack; the share of bands is `reattack.spread` (data-model.md), its default set by the probe.
 7. Never: a re-attack for an event that does not expect a repeat; a re-attack from a band that did not rise (a held note, FR-002); a change of a verdict already given.
 8. Nothing allocated per frame; nothing on the audio threads (constitution VI).
+9. A pause clears the band rings with the pending onsets (`FollowSession.pause` already clears `pending` and `history`; `PracticeSession` likewise): after a pause, a band's minimum is taken only over frames heard since the resume, so the silence or the tuning of a pause is never a "before" level.
