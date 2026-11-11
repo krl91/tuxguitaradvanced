@@ -34,12 +34,12 @@
 | FR-018 / SC-010 | **Met**: 399 keys in English, French and Spanish, the system's language, every tooltip with its range and default | `SET/tests/texts.rs` |
 | FR-019 | **Met**: the guides in three languages and the generated parameters page | `xtask/tests/parameters_doc.rs` |
 | FR-020 | **Met**: no GPL code (`cargo deny` with the allow list of research R3, green in every gate) | `GFX/deny.toml`, gates |
-| FR-021 | **Met in the release jobs**: the same features and four packages on the three systems in the same draft, checked by `verify-release.sh --draft --guitarfx`. **The delay on each system: not measured** (the probe waits for the owner's go; Linux and Windows unknown) | `release.yml`, `misc/test-verify-release.sh` |
+| FR-021 | **Met in the release jobs**: the same features and four packages on the three systems in the same draft, checked by `verify-release.sh --draft --guitarfx`. **The delay**: macOS 32.5 ms at 128 frames (USB microphone before the speakers); Linux and Windows unknown | `release.yml`, `misc/test-verify-release.sh` |
 | FR-022 | **Met**: TuxGuitarAdvanced's amp keeps its own Java effects; the committed `MONT/**` and amp tests unchanged and green | gates |
 | FR-023 / SC-011 | **Met**: the `.guitarfx` file read and written alike by both programs; the round trip on the four ready-made sounds and one with every pedal, both ways, in one build | `SET/tests/sound_file.rs`, `MONT/SoundFileTest.java`, round trip test (T042) |
 | FR-024 / SC-012 | **Met in code**: CLAP, VST3 (fixed class id), Audio Unit on macOS; `auval` passed on the owner's Mac; `clap-validator` in CI (not run yet). Loading in SoundCraft and GarageBand or Logic is F17 | `PLUG/tests/*`, `auval -v aufx GFX1 TGAd`; F17 |
 | FR-026 | **Met in scripts**: the installers place the application and plugins in the standard folders; the uninstall keeps the settings unless asked. macOS self-test run locally; Linux and Windows in CI only | `GFX/packaging/test-macos-pkg.sh`, `test-linux-packages.sh`, `guitarfx.yml` |
-| SC-002 | **Not measured**: the probe is written and tested on made-up recordings, not run (audible, owner's go). Stop condition D cannot be judged yet | `GFX/guitarfx-probe/tests/analysis.rs` |
+| SC-002 | **Met** (2026-11-11): 32.5 ms at 128 frames, equal to TuxGuitarAdvanced's 32.5 ms with the same devices (Samson Q2U before the built-in speakers); not shorter. 27.8 ms at 64 (TuxGuitarAdvanced 26.4), 41.8 ms at 256 (43.5). The 30 ms ceiling with the Rocksmith cable is not measured | `SPEC/benchmark/latency.md` |
 | SC-006 | **Not measured for an hour**: the endurance test is written; a one-minute run in release gave 0 dropped blocks, 0 underruns, worst gap 3.05 ms for 2.67 ms blocks. The hour waits for the owner's go | `APP/tests/endurance.rs` |
 | SC-009 | **Checked by the release job** (`check-guitarfx-size.sh`, sizes in the job's summary). Locally: the macOS `.pkg` weighs 10.2 MB against 303 MB for TuxGuitarAdvanced's v0.6.0 macOS zip (3 %). Windows and Linux sizes at the first release | `misc/test-check-guitarfx-size.sh` |
 
@@ -48,7 +48,7 @@
 - **A** (an element above −90 dBFS): not met; the worst difference is −150.5 dBFS.
 - **B** (a licence outside the allow list): not met; `cargo deny` green in every gate.
 - **C** (a wrapper that cannot be built): not met; VST3 and AUv2 build on macOS, the Windows plugin builds with MinGW (the `windows-2022` runner is used only to run the installer and the MSVC tests).
-- **D** (a delay longer than TuxGuitarAdvanced's): **not judged**, the probe has not been run.
+- **D** (a delay longer than TuxGuitarAdvanced's): **not met** at SC-002's 128 frames (32.5 ms each). At 64 frames GuitarFX is 1.4 ms longer, a setting that drops blocks in both programs on this Mac.
 
 ## Deviations and points for the owner
 
@@ -76,6 +76,5 @@
 
 ## Open
 
-- T065: closed but for the macOS delay (FR-021), which comes from T062.
-- T062 (the probe, audible) and T063 (the hour): on the owner's go.
+- T063 (the hour): on the owner's go. T062 run 2026-11-11.
 - T066 [HUMAN]: sheet F17; Linux and Windows testers, or stated as unchecked.
