@@ -142,7 +142,7 @@ desktop/TuxGuitar-audio-engine/src/test/java/app/tuxguitar/audio/engine/settings
 
 misc/owner-offset-check.sh, misc/test-owner-offset-check.sh            new
 misc/verify-offset-table.sh, misc/test-verify-offset-table.sh          new
-.github/workflows/release.yml               the self-tests listed, the notes verified
+.github/workflows/release.yml               the self-tests listed, the notes required and verified (validate job, fetch-depth 0)
 docs/VERSIONING.md                          "Before a release" step
 docs/architecture/recognition-engines.md    the ten rows (phase 2), the method (phase 7)
 docs/PRACTICE{,-FR,-ES}.md                  repeated notes, the retune suggestion

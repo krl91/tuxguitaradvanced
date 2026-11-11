@@ -13,7 +13,7 @@ NATIVE=$PWD/../native-modules/tuxguitar-monitor-native/target
    ../../../misc/owner-offset-check.sh /tmp/offset.md ../../../tests/tiktok/1
    ```
 
-   Expected: the Wait row and every Follow row and Arcade row (levels 1 to 5), Java and native, from −70 to +70 ms at 100 / 100; the script exits 0. Then `misc/verify-offset-table.sh` on release notes holding that table exits 0.
+   Expected: the Wait row and every Follow row and Arcade row (levels 1 to 5), Java and native, from −70 to +70 ms at 100 / 100; the script exits 0. Then `misc/verify-offset-table.sh <notes> $(git rev-parse HEAD)` on release notes holding that table exits 0; it exits 1 when the notes are absent, the table is below 100 %, or it was run on other recognition code.
 
 2. **Repeats and held notes** (SC-004, SC-005), in every build:
 

@@ -10,6 +10,8 @@
 
 **Version 4** (2026-11-11, third analysis): the suggestion on a palette line of its own; the boost swaps the run's `TolerancePolicy` on the session's loop; Arcade's Resume waits for the tuner; Restart is a new run; the committed tests that iterate every setting listed; T015 written at the phase start; the suggestion says how far off.
 
+**Version 5** (2026-11-11, fourth analysis): Wait at offset 0 written into FR-003 and SC-001; the release check refuses absent notes and a table from another recognition code; the probe's sweep made affordable; a suggestion during Arcade's count-in waits.
+
 **Tests**: required. The owner's rules apply:
 - tests come first and must be seen red;
 - never modify an existing test, only add new ones;
@@ -93,6 +95,8 @@
   For each setting, report:
   - the recognised count on `DI` (Wait at 0; Follow and Arcade at every level and every offset from −100 to +100 ms; Java and native);
   - the extra accepts on the guard cases: the `FastPassageBenchmarkTest` takes, the sustained single notes of `DatasetBenchmarkTest`, a synthetic held note, and a synthetic scratch (broadband burst) over a ringing note.
+
+  The engines' frames are computed once per engine and offset and cached; only the sessions are replayed per setting. The sweep goes coarse to fine: `rise` × `before` first (spread 0.6, octave on, nearest on), then `spread`, `octave` and the assignment around the best rows. The run time is written at the head of the results.
 
   Append the results to `SPEC/benchmark/probe.md`.
 - [ ] T006 Read `SPEC/benchmark/probe.md`:
@@ -183,6 +187,7 @@
   - both engines, all the offsets;
   - the switch `tuxguitar.owner.offset.reattack`;
   - the table and the per-event detail of failing rows;
+  - the commit on the report's first line (`dirty` when the recognition sources differ from HEAD);
   - fails below 100 % from −70 to +70 ms on a gated folder;
   - skipped (`Assumptions.assumeTrue`) without the property.
 - [ ] T025 [US3] Check T024 three ways and record the three outcomes in `SPEC/benchmark/owner-offset.md`:
@@ -195,14 +200,14 @@
   - exits with the test's status.
 
   Its self-test `misc/test-owner-offset-check.sh` checks the argument errors (no report, no folder, a folder without its files).
-- [ ] T027 [P] [US3] New script `misc/verify-offset-table.sh <release-notes>`, which fails when the heading `## Offset test` is missing, or when a row of a gated folder between −70 and +70 ms is under 100 %. Write its self-test `misc/test-verify-offset-table.sh` first and see it red, on sample notes with and without a failing row.
+- [ ] T027 [P] [US3] New script `misc/verify-offset-table.sh <release-notes> <tagged-commit>`, which fails when the notes file is absent, the heading `## Offset test` is missing, a row of a gated folder between −70 and +70 ms is under 100 %, the table names no commit or a `dirty` one, or the recognition sources differ between that commit and the tagged one (contracts/owner-offset-test.md). Write its self-test `misc/test-verify-offset-table.sh` first and see it red, on sample notes (absent, without heading, with a failing row, without commit, dirty) and on a throw-away git repository for the commit check.
 
   In `.github/workflows/release.yml`:
   - list both self-tests beside the others (lines 67–71);
-  - run `misc/verify-offset-table.sh docs/release-notes/<tag>.md` before anything is published.
+  - in the `validate` job, check out with `fetch-depth: 0` and run `misc/verify-offset-table.sh "docs/release-notes/$RELEASE_TAG.md" "$GITHUB_SHA"` before anything is published.
 - [ ] T028 [P] [US3] In `docs/VERSIONING.md`, add the section "Before a release":
   - run `misc/owner-offset-check.sh <report> tests/tiktok/1` on the owner's machine;
-  - copy the table under `## Offset test` in `docs/release-notes/<tag>.md`;
+  - copy the table, with its commit line, under `## Offset test` in `docs/release-notes/<tag>.md` (the notes are now required);
   - the release workflow refuses it otherwise.
 - [ ] T029 [US3] Gate, and commit "impl(028): US3: the offset test before every version".
 
@@ -237,7 +242,7 @@
 - [ ] T036 [US4] New pure class `PR/arcade/core/ArcadeRetuneOffer.java`, so that T035 is green; no numeric `static final` (`SessionConstantInventoryTest` covers `PR/arcade/core`); the cap of 45 cents comes from the bound of `NOTE_ACCEPT` in `RecognitionParameters`, not a literal.
 - [ ] T037 [US4] New test `PT/session/FollowSessionAcceptBoostTest.java`, seen red: a note 40 cents flat on a low fret (out of the fret-sharp margin) is refused at 35; after `setNoteAcceptCents(42)` the next such note is accepted, the verdict already given is unchanged, the 49-cent sharp margin is unchanged, and a new session starts from the settings' value. Then add `setNoteAcceptCents` to `PR/session/FollowSession.java`: `tolerance` (line 497, a final `TolerancePolicy`) becomes replaceable; one new policy per call with the same in-tune, fret-sharp and maximum values; the call is posted on the session's loop; nothing allocated per frame.
 - [ ] T038 [US4] New `PR/arcade/ui/ArcadeRetuneWindow.java` (modal, over the Arcade window, on the model of `PR/ui/ConfirmWindow.java`), with the texts of contracts/retune-suggestion.md in `LANG` (three languages; the More tolerant button says what it risks), and its wiring in `PR/ui/PracticeWindow.java`, which owns `ArcadeController`:
-  - the suggestion from `FollowSession.Snapshot` while the run is RUNNING → `ArcadeController.pause()` and the window;
+  - the suggestion from `FollowSession.Snapshot` while the run is RUNNING → `ArcadeController.pause()` and the window; one that comes during the count-in or a pause waits until the run is RUNNING;
   - Yes → `new PracticeTunerOpener(context).open()` (as `PR/ui/PreRunStartGate.java` does) and `toFront()`; its closed listener → `ArcadeController.resume()` only once the track is given back and `TUNER_OPEN` is resolved by `PR/session/FollowEvents.java` (the tuner refuses to open while a practice track is set: `tuner-next` `TunerWindow.open`); the lifted track ends nothing and shows no mismatch (`PracticeWindow.updateMismatch`); if the tuner is not available or did not open, Yes behaves as No and the window says so;
   - the run ended while the window is open (Stop, the Arcade window closed): the window closes with no effect;
   - while the tuner is open, Arcade's own Resume does not resume the run (the flow keeps it paused until the tuner closes);
