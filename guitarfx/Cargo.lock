@@ -1695,6 +1695,7 @@ version = "0.1.0"
 name = "guitarfx-plugin"
 version = "0.1.0"
 dependencies = [
+ "clap-sys",
  "clap-wrapper",
  "guitarfx-dsp",
  "guitarfx-settings",

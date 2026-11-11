@@ -27,6 +27,10 @@ env:
   CARGO_DENY_VERSION: '0.20.2'
   CLAP_VALIDATOR_VERSION: '0.4.1'
   CLAP_VALIDATOR_BUILD: '0.4.1-127-g152b982'
+  # param-conversions divides by the number of automatable parameters and crashes at zero ("attempt to divide by zero. This is a bug in
+  # the validator", src/tests/plugin_instance/params.rs:82); GuitarFX has none on purpose: the project's state holds the chain
+  # (contracts/plugin.md)
+  CLAP_VALIDATOR_SKIP: param-conversions
   CARGO_TERM_COLOR: never
 
 jobs:
@@ -87,7 +91,7 @@ jobs:
           env -i HOME="$HOME" PATH=/nonexistent /Applications/GuitarFX.app/Contents/MacOS/guitarfx --check | tee "$RUNNER_TEMP/check.txt"
           grep -qx ok "$RUNNER_TEMP/check.txt"
           if env -i PATH=/nonexistent sh -c 'command -v java'; then echo "::error::java was on the PATH"; exit 1; fi
-          clap-validator validate /Library/Audio/Plug-Ins/CLAP/GuitarFX.clap
+          clap-validator validate -x "$CLAP_VALIDATOR_SKIP" /Library/Audio/Plug-Ins/CLAP/GuitarFX.clap
           killall -9 AudioComponentRegistrar 2>/dev/null || true
           auval -v aufx GFX1 TGAd
           sudo /Applications/GuitarFX.app/Contents/Resources/guitarfx-uninstall
@@ -166,7 +170,7 @@ jobs:
           env -i HOME="$HOME" PATH=/nonexistent /usr/bin/guitarfx --check | tee "$RUNNER_TEMP/check.txt"
           grep -qx ok "$RUNNER_TEMP/check.txt"
           if env -i PATH=/nonexistent sh -c 'command -v java'; then echo "::error::java was on the PATH"; exit 1; fi
-          clap-validator validate /usr/lib/clap/GuitarFX.clap
+          clap-validator validate -x "$CLAP_VALIDATOR_SKIP" /usr/lib/clap/GuitarFX.clap
           sudo apt-get remove -y guitarfx
           list > "$after"
           diff "$before" "$after"
@@ -272,7 +276,7 @@ jobs:
           $env:PATH = $saved
           Get-Content "$env:RUNNER_TEMP\check.txt"
           if ($check.ExitCode -ne 0 -or (Get-Content "$env:RUNNER_TEMP\check.txt") -notcontains 'ok') { throw "guitarfx --check failed" }
-          & "$HOME\tools\clap-validator.exe" validate "$env:CommonProgramFiles\CLAP\GuitarFX.clap"
+          & "$HOME\tools\clap-validator.exe" validate -x "$env:CLAP_VALIDATOR_SKIP" "$env:CommonProgramFiles\CLAP\GuitarFX.clap"
           if ($LASTEXITCODE -ne 0) { throw "clap-validator failed" }
           Start-Process "$env:ProgramFiles\GuitarFX\uninstall.exe" -ArgumentList '/S', "_?=$env:ProgramFiles\GuitarFX" -Wait
           Remove-Item "$env:ProgramFiles\GuitarFX\uninstall.exe" -ErrorAction SilentlyContinue

@@ -4,7 +4,7 @@
 //! over it.
 
 pub mod editor;
-mod entry;
+pub mod entry;
 pub mod mailbox;
 pub mod processor;
 pub mod state;

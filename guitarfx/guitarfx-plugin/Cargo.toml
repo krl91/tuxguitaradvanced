@@ -17,6 +17,8 @@ nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", rev = "28b149e
 # the egui editor adapter for nih-plug, from the egui-baseview repository, whose copy follows egui 0.33 as guitarfx-ui does (the crate in
 # nih-plug's own repository is on egui 0.31; research R3)
 nih_plug_egui = { git = "https://github.com/BillyDM/egui-baseview.git", rev = "11f487fe915d6208961064e619474b98f971594a", default-features = false, features = ["opengl", "default_fonts"] }
+# the CLAP types, at the commit nih-plug uses (no new crate): the entry guards the state and the audio ports nih-plug gives (entry.rs)
+clap-sys = { git = "https://github.com/micahrj/clap-sys.git", rev = "25d7f53fdb6363ad63fbd80049cb7a42a97ac156" }
 # VST3 and Audio Unit entry points over the CLAP entry (MIT or Apache-2.0; embeds the VST3 SDK, MIT, and the AudioUnitSDK, Apache-2.0)
 clap-wrapper = { version = "=0.3.1", default-features = false, features = ["vst3", "auv2", "parallel"] }
 # the system's file dialogs for *Export…* and *Import…*, as the application's
