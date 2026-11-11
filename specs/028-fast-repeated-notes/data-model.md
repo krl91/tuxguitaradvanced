@@ -34,8 +34,10 @@ Existing settings untouched: every `ONSET_*`, `ONSET_FAST_*`, `NOTE_ATTACK`, `NO
 
 ## `TuningDrift` (pure, new, `session/`)
 
-- Input per judged single note (Wait, Follow, Arcade; chords are not inputs): `cents` (signed offset from the written pitch), `string` (`PracticeEvent.getStringNumber()`, or 0 when unknown), `outOfTune` (refused for the margin).
+- Input per judged single note (Wait, Follow, Arcade; chords are not inputs): `cents` (signed offset from the written pitch), `string` (`PracticeEvent.getStringNumber()`, or 0 when unknown), `outOfTune` (refused for the margin), `fret` (`PracticeEvent.getFret()`: a note above `drift-max-fret` is not an input). Not inputs either: misses, wrong notes, chords, notes with a technique that moves the pitch (`PracticeEvent.getTechniques()`: bend, release, slide, vibrato, harmonic) and grace notes (`isGrace()`).
 - Output after each note: `none`, or `suggest(direction, string or 0)`.
+- State: a ring of the last `drift-notes` entries; a count of notes since the last suggestion.
+- `reset()` forgets the notes kept: called from `FollowSession.resolve` and `PracticeSession.resolve` when the reason is `TUNER_OPEN` (posted by `InputEvents`, lines 86–88, which `FollowEvents` extends).
 
 ## Arcade retune offer (`arcade/core/ArcadeRetuneOffer.java`, pure, new)
 
@@ -43,7 +45,6 @@ Existing settings untouched: every `ONSET_*`, `ONSET_FAST_*`, `NOTE_ATTACK`, `NO
 - Run state: `boostSteps` (0 at the start of each run); the run's acceptance = min(45, start × (1 + steps × `arcade-boost`)).
 - The session takes the new acceptance from the next judged frame (`FollowSession.setNoteAcceptCents`, new); a verdict already given never changes. `FollowSession.tolerance` is today a final `TolerancePolicy` (`session/FollowSession.java` line 497) built from `NOTE_ACCEPT`: the setter builds one new policy per choice (on the learner's click, never per frame) with the same in-tune, fret-sharp and 49-cent values, and the swap is posted on the session's loop, as `FollowEvents` posts pause and resolve.
 - A Restart is a new run: a new `ArcadeRetuneOffer`, steps 0.
-- State: a ring of the last `drift-notes` entries; a count of notes since the last suggestion.
 
 ## Offset test case and table
 

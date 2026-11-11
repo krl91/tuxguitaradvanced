@@ -143,7 +143,7 @@ During a run, the guitar goes out of tune (a string slips, the temperature chang
 - **SC-003**: The offset table of every published version is in its report, and a version below SC-001 is not published.
 - **SC-004**: A held note expected twice by the score is recognised once, not twice, with each engine, on synthetic plucks and on sheet F18 played live.
 - **SC-005**: The same note played again 100 ms after itself, both expected by the score, is recognised twice, with each engine.
-- **SC-006**: With the default threshold, on a recording steadily 20 cents or more off the same way, the suggestion to retune appears during the run, without stopping it in Wait and Follow, as a paused window in Arcade; on the dataset recordings whose notes lie within 10 cents of their written pitch on average, it never appears.
+- **SC-006**: With the default threshold, on a recording whose open strings are steadily 20 cents or more off the same way (default setting, FR-009), the suggestion to retune appears during the run, without stopping it in Wait and Follow, as a paused window in Arcade; on the dataset recordings whose notes lie within 10 cents of their written pitch on average, it never appears.
 
 ## Assumptions
 
