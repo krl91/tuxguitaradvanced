@@ -30,6 +30,18 @@ fn main() {
     let folder = PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("static-stdc++");
     std::fs::create_dir_all(&folder).unwrap();
     std::fs::copy(&library, folder.join("libstdc++.a")).unwrap();
+    // clap-wrapper asks for `Shell32`, MinGW ships `libshell32.a`: found only on a case-insensitive disk (macOS), not on Linux
+    let output = Command::new(&compiler)
+        .arg("-print-file-name=libshell32.a")
+        .output()
+        .unwrap_or_else(|e| panic!("{compiler}: {e}"));
+    let shell32 = PathBuf::from(String::from_utf8_lossy(&output.stdout).trim());
+    assert!(
+        shell32.is_absolute() && shell32.exists(),
+        "{compiler} has no libshell32.a: {}",
+        shell32.display()
+    );
+    std::fs::copy(&shell32, folder.join("libShell32.a")).unwrap();
     println!("cargo:rustc-link-search=native={}", folder.display());
     println!("cargo:rerun-if-env-changed=CXX_{}", target.replace('-', "_"));
 }
