@@ -4,7 +4,7 @@
 
 ## New recognition settings
 
-All in `RecognitionParameters`, read at run time, documented in `docs/architecture/recognition-engines.md` (FR-007). Ten keys. The `%` values are stored as shares and shown ×100, as `NOTE_CONFIDENCE` and `CHORD_EVIDENCE` are (`RecognitionParameters`, display factor 100.0). Defaults are set by the probe (phase 2); the values below are the starting points of the sweep.
+All in `RecognitionParameters`, read at run time, documented in `docs/architecture/recognition-engines.md` (FR-007). Eleven keys. The `%` values are stored as shares and shown ×100, as `NOTE_CONFIDENCE` and `CHORD_EVIDENCE` are (`RecognitionParameters`, display factor 100.0). Defaults are set by the probe (phase 2); the values below are the starting points of the sweep.
 
 | Key | Section | Unit | Start | Bounds | User setting | What it does |
 |---|---|---|---|---|---|---|
@@ -14,12 +14,13 @@ All in `RecognitionParameters`, read at run time, documented in `docs/architectu
 | `recognition.reattack.octave` | `REATTACK` | flag | on | — | no | Whether the band an octave above counts with the fundamental's |
 | `recognition.reattack.enabled` | `REATTACK` | flag | on | — | no | Off: today's behaviour (no re-attack, and the first open event takes an attack), for comparison |
 | `recognition.tuning.drift-threshold` | new `TUNING_DRIFT` (first row) | cents | 20 | 10–35 | **yes** | Mean offset from which a retune is suggested (clarification Q5) |
+| `recognition.tuning.drift-max-fret` | `TUNING_DRIFT` | frets | 0 | 0–12 | no | Highest fret whose notes count for the drift; 0: open strings only, as a tuner (owner's answer, 2026-11-11: a fretted note sounds sharp on a guitar in tune) |
 | `recognition.tuning.drift-notes` | `TUNING_DRIFT` | notes | 6 | 3–20 | no | Notes the mean is taken over |
 | `recognition.tuning.drift-agreement` | `TUNING_DRIFT` | % | 0.8 | 0.5–1.0 | no | Share of them off the same way |
 | `recognition.tuning.drift-quiet` | `TUNING_DRIFT` | notes | 16 | 4–100 | no | Notes without a new suggestion after one |
 | `recognition.tuning.arcade-boost` | `TUNING_DRIFT` | % | 0.10 | 0.05–0.25 | no | What Arcade's "more tolerant" choice adds to the run's pitch acceptance, as a share of its value at the start of the run (never above 45 cents) |
 
-Types: numbers are `RecognitionParameter.Number`, the on/off values `RecognitionParameter.Flag`. The new sections come after the existing ones in `Section` (the first eight are pinned by `RecognitionSectionsTest`), hold 5 values each (1 to 7 allowed), and are never overlaid by a device profile (`ProfileParameters` unchanged). Each key has, in the same change: a row in `docs/architecture/recognition-engines.md` under its section (unit, default, bounds, "next run"), a row in both help pages `desktop/TuxGuitar/share/help/tools_audio_recognition{,_fr}.html` with an `<h2>` per new section, and a name and tip in `LANG` (three languages, translated). The section names too.
+Types: numbers are `RecognitionParameter.Number`, the on/off values `RecognitionParameter.Flag`. The new sections come after the existing ones in `Section` (the first eight are pinned by `RecognitionSectionsTest`), hold 5 and 6 values (1 to 7 allowed), and are never overlaid by a device profile (`ProfileParameters` unchanged). Each key has, in the same change: a row in `docs/architecture/recognition-engines.md` under its section (unit, default, bounds, "next run"), a row in both help pages `desktop/TuxGuitar/share/help/tools_audio_recognition{,_fr}.html` with an `<h2>` per new section, and a name and tip in `LANG` (three languages, translated). The section names too.
 
 Existing settings untouched: every `ONSET_*`, `ONSET_FAST_*`, `NOTE_ATTACK`, `NOTE_ACCEPT`, `NOTE_FRET_SHARP`, the leniencies of Follow and Arcade (`FollowLeniencyTest` and `ArcadeLeniencyTest` require that the leniencies change none of the new keys). Arcade's boost changes the value one run uses, never the setting. If the probe shows that a mode's default must become more permissive (spec Assumptions, FR-007a), T006 records it in "R3 closing" with its former and new default (FR-007), and the guards decide (stop condition B).
 

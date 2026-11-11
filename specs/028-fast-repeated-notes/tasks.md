@@ -12,6 +12,8 @@
 
 **Version 5** (2026-11-11, fourth analysis): Wait at offset 0 written into FR-003 and SC-001; the release check refuses absent notes and a table from another recognition code; the probe's sweep made affordable; a suggestion during Arcade's count-in waits.
 
+**Version 7** (2026-11-11, sixth analysis): the drift judged on open strings by default (owner's answer), `tuning.drift-max-fret` an eleventh setting; notes whose pitch moves on purpose are not inputs; the drift forgets its notes when the tuner closes; the probe tables the offsets by fret.
+
 **Version 6** (2026-11-11, fifth analysis): the band rings cleared at a pause (contract item 9); `release.yml`'s generated-notes branch removed now that the notes are required; research R7 brought in line.
 
 **Tests**: required. The owner's rules apply:
@@ -84,9 +86,10 @@
   - the flux;
   - the rise of the expected pitch's band and of its octave (`SpectrumFrame.bandDb`);
   - the share of bands rising in the same frame;
+  - the cents offset of each single note judged on its pitch, with its string and fret (what `TuningDrift` would receive: the guitar of `DI` is in tune, so these offsets are the fretted sharpness the suggestion must not take for a drift);
   - the event each attack went to.
 
-  The results go to `SPEC/benchmark/probe.md`.
+  The results go to `SPEC/benchmark/probe.md`, the cents offsets as a table by fret.
 - [ ] T005 In `RepeatedNotesProbeTest`, compute an offline re-attack (contracts/reattack-rule.md, items 1–6a) in the test, on the frames of each engine. Sweep:
   - `rise` 1.5–6 dB by 0.5;
   - `before` 4, 6, 8, 12 and 19 hops;
@@ -110,14 +113,14 @@
 
   **Stop condition A** if no setting qualifies.
 - [ ] T007 [P] New test `AET/settings/ReattackSettingsTest.java`, seen red. It checks:
-  - the ten keys of data-model.md, with their unit, type (`Number`, or `Flag` for `reattack.octave` and `reattack.enabled`), default (from T006; `tuning.drift-threshold` 20) and bounds, quoted: `reattack.rise` "1.0–10.0" dB, `reattack.before` "2–19" hops, `reattack.spread` "0.3–1.0", `tuning.drift-threshold` "10–35" cents, `tuning.drift-notes` "3–20", `tuning.drift-agreement` "0.5–1.0", `tuning.drift-quiet` "4–100", `tuning.arcade-boost` "0.05–0.25" (default 0.10; the `%` keys are shares shown ×100, display factor 100.0 as `NOTE_CONFIDENCE`);
-  - `Section.REATTACK` holds the five reattack keys and `Section.TUNING_DRIFT` the five drift keys, the threshold first; both come after the existing sections;
+  - the eleven keys of data-model.md, with their unit, type (`Number`, or `Flag` for `reattack.octave` and `reattack.enabled`), default (from T006; `tuning.drift-threshold` 20) and bounds, quoted: `reattack.rise` "1.0–10.0" dB, `reattack.before` "2–19" hops, `reattack.spread` "0.3–1.0", `tuning.drift-threshold` "10–35" cents, `tuning.drift-max-fret` "0–12" frets (default 0), `tuning.drift-notes` "3–20", `tuning.drift-agreement` "0.5–1.0", `tuning.drift-quiet` "4–100", `tuning.arcade-boost` "0.05–0.25" (default 0.10; the `%` keys are shares shown ×100, display factor 100.0 as `NOTE_CONFIDENCE`);
+  - `Section.REATTACK` holds the five reattack keys and `Section.TUNING_DRIFT` the six drift keys, the threshold first; both come after the existing sections;
   - `ProfileParameters` contains none of them;
   - the round trip through `RecognitionSettingsStore`;
   - a file without the keys reads the defaults.
 - [ ] T008 Add the settings so that T007 is green and the committed tests of the standing rules stay green, all in one change:
   - `Section.REATTACK` and `Section.TUNING_DRIFT` at the end of `AE/settings/RecognitionParameter.java`;
-  - the ten entries in `AE/settings/RecognitionParameters.java`, registered in its list;
+  - the eleven entries in `AE/settings/RecognitionParameters.java`, registered in its list;
   - their rows in `DOC`, under a heading per new section naming `` `Section.REATTACK` `` and `` `Section.TUNING_DRIFT` ``, with unit, default, bounds and "next run";
   - a row per setting and an `<h2>` per new section in both `HELP` pages;
   - names, tips and section names in `LANG`, in three languages, translated;
@@ -222,15 +225,18 @@
 **Independent Test**: the new tests green; in Wait and Follow the run and the music go on; in Arcade each of the three choices resumes the run where it paused, and the boost is gone at the next run.
 
 - [ ] T030 [P] [US4] New test `PT/session/TuningDriftTest.java`, seen red, per contracts/retune-suggestion.md:
-  - six notes −25 cents on string 3: suggest flat, string 3;
-  - six notes −25 on strings 2 and 3: suggest flat, no string;
+  - six open-string notes −25 cents on string 3: suggest flat, string 3;
+  - six notes −25 on fret 5 at the default `drift-max-fret` 0: none (not inputs); at `drift-max-fret` 5: suggested;
+  - fretted notes 35 cents sharp (a guitar in tune, research R5) at the default: none;
+  - six open-string notes −25 on strings 2 and 3: suggest flat, no string;
   - six notes mixed +25 and −25: none;
   - six notes −15 at a threshold of 20: none;
   - a threshold of 10: suggested;
   - after a suggestion: none for `drift-quiet` notes;
-  - misses, wrong notes and chords are not inputs.
+  - misses, wrong notes and chords are not inputs, nor notes with a bend, a release, a slide, vibrato, a harmonic, nor grace notes;
+  - the notes kept are forgotten by `reset()` (called when the tuner closes): six notes −25, `reset()`, three notes −25: none.
 - [ ] T031 [US4] New pure class `PR/session/TuningDrift.java`, so that T030 is green. It has a preallocated ring sized from the bound of `drift-notes`, its values from the settings, and no numeric `static final`.
-- [ ] T032 [US4] New test `PT/session/FollowSessionTuningDriftTest.java`, seen red: a run of drifting single notes gives the suggestion in `FollowSession.Snapshot` (a new accessor; the snapshot is built only in `FollowSession`), and no verdict changes. Then feed `TuningDrift` from `PR/session/FollowSession.java` with each single note judged on its pitch, using its cents offset and `PracticeEvent.getStringNumber()`.
+- [ ] T032 [US4] New test `PT/session/FollowSessionTuningDriftTest.java`, seen red: a run of drifting single notes gives the suggestion in `FollowSession.Snapshot` (a new accessor; the snapshot is built only in `FollowSession`), and no verdict changes. Then feed `TuningDrift` from `PR/session/FollowSession.java` with each single note judged on its pitch, using the cents offset of the reading that judged it and `PracticeEvent.getStringNumber()`, and call `reset()` when `TUNER_OPEN` is resolved (`FollowEvents`).
 - [ ] T033 [US4] The same for Wait: a new test in `PT/session/PracticeSessionTuningDriftTest.java`, seen red, then `TuningDrift` fed from `PR/session/PracticeSession.java` and exposed in `PracticeSnapshot`.
 - [ ] T034 [US4] Write the texts of contracts/retune-suggestion.md in `LANG` (three languages) and a new test `PT/ui/TuningDriftTextTest.java`, seen red first: the text choice (flat or sharp, one string or several) for Wait, Follow and Arcade.
 
@@ -259,7 +265,7 @@
   New test `PT/arcade/ui/ArcadeRetuneWindowSwtTest.java` (`swt-gui`): the three buttons, their texts (the step shown as set), each one resumes; written here and run at T044. The Arcade painting tests stay green.
 - [ ] T039 [US4] New test `PT/ui/TuningDriftSettingSwtTest.java` (`swt-gui`): the threshold is the first row of the *Tuning drift* section of the settings panel, with its recommended value. It is written here and run at T044.
 - [ ] T040 [US4] New test `PT/dataset/TuningDriftReplayTest.java` (tag `dataset`), both engines:
-  - a clean dataset recording resampled to sound 25 cents flat, then 40 cents flat: the suggestion appears, and the run completes with the same number of verdicts;
+  - a clean dataset recording with open strings, resampled to sound 25 cents flat, then 40 cents flat: the suggestion appears, and the run completes with the same number of verdicts;
   - on the dataset recordings whose notes lie within 10 cents on average: it never appears (SC-006).
 - [ ] T041 [US4] Gate (without SWT), and commit "impl(028): US4: the suggestion to retune".
 
