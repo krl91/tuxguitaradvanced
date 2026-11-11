@@ -124,6 +124,7 @@ jobs:
           misc/test-ci-debs-install.sh
           misc/test-ci-debs-install-cache.sh
           misc/test-guitarfx-windows-path.sh
+          misc/test-guitarfx-lf.sh
           # when no Ubuntu host resolves (seventh run), or apt fails, the packages of this repository's release ci-packages
           if timeout 5 getent hosts archive.ubuntu.com >/dev/null; then
             misc/ci-apt-mirrors.sh

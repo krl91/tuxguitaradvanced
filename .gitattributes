@@ -1,0 +1,5 @@
+# Files GuitarFX's tests compare byte for byte or line by line: LF on every checkout, the Windows runners included (core.autocrlf;
+# spec 027, T058, guitarfx.yml's tenth run). Checked by misc/test-guitarfx-lf.sh.
+*.guitarfx text eol=lf
+guitarfx/guitarfx-plugin/packaging/macos/*.plist text eol=lf
+docs/guitarfx/parameters.md text eol=lf
