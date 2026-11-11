@@ -114,9 +114,12 @@ jobs:
       - name: Install packages
         timeout-minutes: 20   # the fourth run's Linux job hung here for over an hour on the runner's network
         run: |
-          # the runner's mirror failing (fourth and fifth runs: "Temporary failure resolving") is retried with waits, then replaced
-          echo 'Acquire::Retries "5"; Acquire::http::Timeout "30"; Acquire::https::Timeout "30";' | sudo tee /etc/apt/apt.conf.d/80-retries >/dev/null
+          # the runner's mirror failing (fourth to sixth runs: "Temporary failure resolving 'azure.archive.ubuntu.com'"): a mirror that does
+          # not resolve is dropped before apt runs, short timeouts, and the attempts are retried with waits (no apt retries: they multiplied)
+          echo 'Acquire::http::Timeout "10"; Acquire::https::Timeout "10";' | sudo tee /etc/apt/apt.conf.d/80-timeouts >/dev/null
           misc/test-ci-apt-install.sh
+          misc/test-ci-apt-mirrors.sh
+          misc/ci-apt-mirrors.sh
           misc/ci-apt-install.sh build-essential pkg-config libasound2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev \
             libxcb-dri2-0-dev libxcursor-dev libxrandr-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libgl-dev libwayland-dev
       - name: Install Rust
@@ -196,8 +199,10 @@ jobs:
       - name: Install packages
         timeout-minutes: 20   # the fourth run's Linux job hung here for over an hour on the runner's network
         run: |
-          # the runner's mirror failing (fourth and fifth runs: "Temporary failure resolving") is retried with waits, then replaced
-          echo 'Acquire::Retries "5"; Acquire::http::Timeout "30"; Acquire::https::Timeout "30";' | sudo tee /etc/apt/apt.conf.d/80-retries >/dev/null
+          # the runner's mirror failing (fourth to sixth runs: "Temporary failure resolving 'azure.archive.ubuntu.com'"): a mirror that does
+          # not resolve is dropped before apt runs, short timeouts, and the attempts are retried with waits (no apt retries: they multiplied)
+          echo 'Acquire::http::Timeout "10"; Acquire::https::Timeout "10";' | sudo tee /etc/apt/apt.conf.d/80-timeouts >/dev/null
+          misc/ci-apt-mirrors.sh
           misc/ci-apt-install.sh gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 nsis
       - name: Install Rust
         uses: ./.github/actions/install-rust
