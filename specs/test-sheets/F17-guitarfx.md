@@ -43,7 +43,7 @@ Dis-moi si tu veux les lancer ; je préviens avant.
 | # | Ce que c'est | Commande |
 |---|---|---|
 | S1 | **Sonde de délai** (SC-002), **audible** : 20 clics forts par réglage dans la sortie. L'**entrée doit entendre la sortie** : un micro devant les haut-parleurs (le micro USB de la spec 022, ou le micro intégré), ou la sortie casque branchée dans le câble par un adaptateur, volume bas. Le câble avec le casque sur les oreilles ne marche pas : rien ne revient. | `cd guitarfx && cargo run --release -p guitarfx-probe -- --audible --input "<entrée>" --output "<sortie>" --report ../specs/027-standalone-amp/benchmark/latency.md` |
-| S2 | **Endurance** (SC-006) : une heure, rien d'audible, le Mac éveillé. | `cd guitarfx && GUITARFX_ENDURANCE_REPORT=../specs/027-standalone-amp/benchmark/endurance.md caffeinate -i cargo test --release -p guitarfx-app --test endurance -- --ignored --nocapture` |
+| S2 | **Endurance** (SC-006) : une heure, rien d'audible, le Mac éveillé. | `cd guitarfx && GUITARFX_ENDURANCE_REPORT=$PWD/../specs/027-standalone-amp/benchmark/endurance.md caffeinate -i cargo test --release -p guitarfx-app --test endurance -- --ignored --nocapture` |
 
 ## Pour les testeurs Linux et Windows
 

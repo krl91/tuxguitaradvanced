@@ -40,7 +40,7 @@
 | FR-024 / SC-012 | **Met in code**: CLAP, VST3 (fixed class id), Audio Unit on macOS; `auval` passed on the owner's Mac; `clap-validator` in CI (not run yet). Loading in SoundCraft and GarageBand or Logic is F17 | `PLUG/tests/*`, `auval -v aufx GFX1 TGAd`; F17 |
 | FR-026 | **Met in scripts**: the installers place the application and plugins in the standard folders; the uninstall keeps the settings unless asked. macOS self-test run locally; Linux and Windows in CI only | `GFX/packaging/test-macos-pkg.sh`, `test-linux-packages.sh`, `guitarfx.yml` |
 | SC-002 | **Met** (2026-11-11): 32.5 ms at 128 frames, equal to TuxGuitarAdvanced's 32.5 ms with the same devices (Samson Q2U before the built-in speakers); not shorter. 27.8 ms at 64 (TuxGuitarAdvanced 26.4), 41.8 ms at 256 (43.5). The 30 ms ceiling with the Rocksmith cable is not measured | `SPEC/benchmark/latency.md` |
-| SC-006 | **Not measured for an hour**: the endurance test is written; a one-minute run in release gave 0 dropped blocks, 0 underruns, worst gap 3.05 ms for 2.67 ms blocks. The hour waits for the owner's go | `APP/tests/endurance.rs` |
+| SC-006 | **Met** (2026-11-11): one hour in release with six active elements, 0 dropped blocks, 0 underruns, 0 late, worst gap 4.93 ms for 2.67 ms blocks, the sound still on | `SPEC/benchmark/endurance.md`, `APP/tests/endurance.rs` |
 | SC-009 | **Checked by the release job** (`check-guitarfx-size.sh`, sizes in the job's summary). Locally: the macOS `.pkg` weighs 10.2 MB against 303 MB for TuxGuitarAdvanced's v0.6.0 macOS zip (3 %). Windows and Linux sizes at the first release | `misc/test-check-guitarfx-size.sh` |
 
 ## Stop conditions
@@ -76,5 +76,5 @@
 
 ## Open
 
-- T063 (the hour): on the owner's go. T062 run 2026-11-11.
+- T062 and T063 run 2026-11-11.
 - T066 [HUMAN]: sheet F17; Linux and Windows testers, or stated as unchecked.
