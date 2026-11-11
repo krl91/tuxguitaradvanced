@@ -64,9 +64,10 @@ jobs:
         run: |
           cd desktop/build-scripts/tuxguitar-macosx-swt-cocoa
           mvn -B --no-transfer-progress -e verify -P guitarfx -pl ../../TuxGuitar-audio-engine,../../../guitarfx -am \
-            -Dtest=GuitarFxReferenceTest -Dsurefire.failIfNoSpecifiedTests=false
+            -Dtest=GuitarFxReferenceTest,SoundFileTest -Dsurefire.failIfNoSpecifiedTests=false
           # the references the comparison read (the POM points cargo test at them; without them it would skip the comparison)
           test -f ../../TuxGuitar-audio-engine/target/guitarfx-reference/index.properties
+          test -f ../../TuxGuitar-audio-engine/target/guitarfx-reference/sounds/clean.guitarfx
       - name: No Java in the binaries
         run: |
           for binary in guitarfx/target/GuitarFX.app/Contents/MacOS/guitarfx guitarfx/target/plugins/GuitarFX.clap/Contents/MacOS/GuitarFX; do
@@ -130,7 +131,7 @@ jobs:
       - name: Java references
         run: |
           cd desktop/build-scripts/tuxguitar-linux-swt
-          mvn -B --no-transfer-progress -e test -pl ../../TuxGuitar-audio-engine -am -Dtest=GuitarFxReferenceTest -Dsurefire.failIfNoSpecifiedTests=false
+          mvn -B --no-transfer-progress -e test -pl ../../TuxGuitar-audio-engine -am -Dtest=GuitarFxReferenceTest,SoundFileTest -Dsurefire.failIfNoSpecifiedTests=false
       - uses: actions/upload-artifact@v7
         with:
           name: guitarfx-reference
@@ -142,6 +143,7 @@ jobs:
           GUITARFX_REFERENCE_DIR: ${{ github.workspace }}/desktop/TuxGuitar-audio-engine/target/guitarfx-reference
         run: |
           test -f "$GUITARFX_REFERENCE_DIR/index.properties"
+          test -f "$GUITARFX_REFERENCE_DIR/sounds/clean.guitarfx"
           cd guitarfx && cargo test --workspace --locked
       - name: Build the application and the plugin
         run: cd guitarfx && cargo build --release --locked -p guitarfx-app -p guitarfx-plugin
@@ -249,6 +251,7 @@ jobs:
       - name: cargo test, with the Java references written on Linux
         run: |
           test -f "$RUNNER_TEMP/guitarfx-reference/index.properties"
+          test -f "$RUNNER_TEMP/guitarfx-reference/sounds/clean.guitarfx"
           cd guitarfx && GUITARFX_REFERENCE_DIR="$RUNNER_TEMP/guitarfx-reference" cargo test --workspace --locked
       - name: Install, check without Java, validate the plugin, uninstall
         shell: pwsh
