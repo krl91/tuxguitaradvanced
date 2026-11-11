@@ -114,10 +114,10 @@ jobs:
       - name: Install packages
         timeout-minutes: 20   # the fourth run's Linux job hung here for over an hour on the runner's network
         run: |
-          # a runner's network that fails for a moment (fourth run: "Temporary failure resolving") is retried, never waited on forever
+          # the runner's mirror failing (fourth and fifth runs: "Temporary failure resolving") is retried with waits, then replaced
           echo 'Acquire::Retries "5"; Acquire::http::Timeout "30"; Acquire::https::Timeout "30";' | sudo tee /etc/apt/apt.conf.d/80-retries >/dev/null
-          sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libasound2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev \
+          misc/test-ci-apt-install.sh
+          misc/ci-apt-install.sh build-essential pkg-config libasound2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev \
             libxcb-dri2-0-dev libxcursor-dev libxrandr-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libgl-dev libwayland-dev
       - name: Install Rust
         uses: ./.github/actions/install-rust
@@ -196,10 +196,9 @@ jobs:
       - name: Install packages
         timeout-minutes: 20   # the fourth run's Linux job hung here for over an hour on the runner's network
         run: |
-          # a runner's network that fails for a moment (fourth run: "Temporary failure resolving") is retried, never waited on forever
+          # the runner's mirror failing (fourth and fifth runs: "Temporary failure resolving") is retried with waits, then replaced
           echo 'Acquire::Retries "5"; Acquire::http::Timeout "30"; Acquire::https::Timeout "30";' | sudo tee /etc/apt/apt.conf.d/80-retries >/dev/null
-          sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 nsis
+          misc/ci-apt-install.sh gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 nsis
       - name: Install Rust
         uses: ./.github/actions/install-rust
         with:
