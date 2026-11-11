@@ -63,7 +63,7 @@
 - **Plugin editor**: the sounds file is written only by the sound list (save, rename, delete, restore, import); a muted plugin asks to remove and re-add GuitarFX or reopen the project.
 - **Tests seen red late**: the settings tests (phase 3) were written after their code; the plugin editor test was not seen red (both noted in `tasks.md`).
 - **A committed test file gained cases**: `misc/test-verify-release.sh` received 10 new cases for `--guitarfx` at its end, as T060 asks; its 17 committed cases are unchanged and pass.
-- **Not run locally**: `clap-validator` (installing it from git was refused on the owner's machine), the NSIS installer and the Linux packages (no `makensis`, no `dpkg-deb` here), the release signing with the certificate (no secret here). `guitarfx.yml` runs when started from *Actions*: three runs on 2026-11-11 found five faults, all fixed (tasks.md T058); the fourth run is the check.
+- **Not run locally**: `clap-validator` (installing it from git was refused on the owner's machine), the NSIS installer and the Linux packages (no `makensis`, no `dpkg-deb` here), the release signing with the certificate (no secret here). `guitarfx.yml` runs when started from *Actions*: four runs on 2026-11-11 found six faults, all fixed (tasks.md T058; the fourth also met a network failure of the Windows runner); the fifth run is the check.
 - **auval run**: the component was copied to `~/Library/Audio/Plug-Ins/Components` for the run, then removed, and `AudioComponentRegistrar` was restarted.
 
 ## Gates

@@ -81,7 +81,9 @@ jobs:
       - name: The installer
         run: guitarfx/packaging/macos/build-pkg.sh guitarfx/target/GuitarFX.app guitarfx/target/plugins 0.0.0 "$RUNNER_TEMP/GuitarFX.pkg"
       - name: Self-test of the installer
-        run: guitarfx/packaging/test-macos-pkg.sh
+        run: |
+          guitarfx/packaging/test-macos-pkg.sh
+          guitarfx/packaging/test-macos-uninstall-folders.sh
       - name: Install, check without Java, validate the plugins, uninstall
         run: |
           before="$RUNNER_TEMP/before.txt"; after="$RUNNER_TEMP/after.txt"

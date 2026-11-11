@@ -26,6 +26,10 @@ for path in \
 	"$ROOT/Applications/GuitarFX.app"; do
 	if [ -e "$path" ]; then rm -rf "$path" && echo "removed $path"; fi
 done
+# the installer creates the CLAP and VST3 folders when the system has none (macOS ships only Components): removed when left empty
+for folder in "$ROOT/Library/Audio/Plug-Ins/CLAP" "$ROOT/Library/Audio/Plug-Ins/VST3"; do
+	[ -d "$folder" ] && rmdir "$folder" 2>/dev/null && echo "removed $folder"
+done
 [ -z "$ROOT" ] && pkgutil --forget app.tuxguitar.guitarfx.pkg >/dev/null 2>&1
 SETTINGS="$HOME_DIR/Library/Application Support/GuitarFX"
 if $REMOVE_SETTINGS; then
