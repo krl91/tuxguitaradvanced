@@ -21,7 +21,7 @@ All in `RecognitionParameters`, read at run time, documented in `docs/architectu
 
 Types: numbers are `RecognitionParameter.Number`, the on/off values `RecognitionParameter.Flag`. The new sections come after the existing ones in `Section` (the first eight are pinned by `RecognitionSectionsTest`), hold 5 values each (1 to 7 allowed), and are never overlaid by a device profile (`ProfileParameters` unchanged). Each key has, in the same change: a row in `docs/architecture/recognition-engines.md` under its section (unit, default, bounds, "next run"), a row in both help pages `desktop/TuxGuitar/share/help/tools_audio_recognition{,_fr}.html` with an `<h2>` per new section, and a name and tip in `LANG` (three languages, translated). The section names too.
 
-Existing settings untouched: every `ONSET_*`, `ONSET_FAST_*`, `NOTE_ATTACK`, `NOTE_ACCEPT`, `NOTE_FRET_SHARP`, the leniencies of Follow and Arcade.
+Existing settings untouched: every `ONSET_*`, `ONSET_FAST_*`, `NOTE_ATTACK`, `NOTE_ACCEPT`, `NOTE_FRET_SHARP`, the leniencies of Follow and Arcade (`FollowLeniencyTest` and `ArcadeLeniencyTest` require that the leniencies change none of the new keys). Arcade's boost changes the value one run uses, never the setting. If the probe shows that a mode's default must become more permissive (spec Assumptions, FR-007a), T006 records it in "R3 closing" with its former and new default (FR-007), and the guards decide (stop condition B).
 
 ## Session state (`FollowSession`)
 
@@ -40,7 +40,8 @@ Existing settings untouched: every `ONSET_*`, `ONSET_FAST_*`, `NOTE_ATTACK`, `NO
 
 - States: `PLAYING` → (suggestion) `OFFERED` → `TUNING` (Yes) → `PLAYING` on the tuner's close; `OFFERED` → `PLAYING` (No, or the window closed); `OFFERED` → `PLAYING` with the boost raised (More tolerant).
 - Run state: `boostSteps` (0 at the start of each run); the run's acceptance = min(45, start × (1 + steps × `arcade-boost`)).
-- The session takes the new acceptance from the next judged frame (`FollowSession.setNoteAcceptCents`, new); a verdict already given never changes.
+- The session takes the new acceptance from the next judged frame (`FollowSession.setNoteAcceptCents`, new); a verdict already given never changes. `FollowSession.tolerance` is today a final `TolerancePolicy` (`session/FollowSession.java` line 497) built from `NOTE_ACCEPT`: the setter builds one new policy per choice (on the learner's click, never per frame) with the same in-tune, fret-sharp and 49-cent values, and the swap is posted on the session's loop, as `FollowEvents` posts pause and resolve.
+- A Restart is a new run: a new `ArcadeRetuneOffer`, steps 0.
 - State: a ring of the last `drift-notes` entries; a count of notes since the last suggestion.
 
 ## Offset test case and table

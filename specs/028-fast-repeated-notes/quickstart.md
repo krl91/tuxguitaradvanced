@@ -18,7 +18,7 @@ NATIVE=$PWD/../native-modules/tuxguitar-monitor-native/target
 2. **Repeats and held notes** (SC-004, SC-005), in every build:
 
    ```sh
-   mvn -o -q test -pl ../../TuxGuitar-practice -am -Dtest='FollowSessionReattackTest,PracticeSessionReattackTest,ArcadeReattackTest,FastRunFunctionalTest,TuningDriftTest' -Dsurefire.failIfNoSpecifiedTests=false
+   mvn -o -q test -pl ../../TuxGuitar-practice -am -Dtest='FollowSessionReattackTest,PracticeSessionReattackTest,ArcadeReattackTest,FollowSessionNearestTargetTest,FastRunFunctionalTest,TuningDriftTest,FollowSessionTuningDriftTest,PracticeSessionTuningDriftTest,TuningDriftTextTest,ArcadeRetuneOfferTest,FollowSessionAcceptBoostTest,ArcadeRetuneFlowTest' -Dsurefire.failIfNoSpecifiedTests=false
    ```
 
    Expected: two plucks 100 ms apart are two notes; a held note expected twice is one note; a scratch over a ringing note is not a second one; with `reattack.enabled` off, the verdicts are those of before; `FastRunFunctionalTest` keeps its floors and prints the `REPEATED` rates.

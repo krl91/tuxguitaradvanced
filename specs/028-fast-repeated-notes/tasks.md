@@ -8,6 +8,8 @@
 
 **Version 3** (2026-11-11, after the second /speckit-clarify): Arcade at every level 1 to 5; in Arcade the suggestion pauses the run on a window (Yes: the tuner, then resume; No; More tolerant: +10 % for this run, capped at 45 cents); a tenth setting `tuning.arcade-boost`.
 
+**Version 4** (2026-11-11, third analysis): the suggestion on a palette line of its own; the boost swaps the run's `TolerancePolicy` on the session's loop; Arcade's Resume waits for the tuner; Restart is a new run; the committed tests that iterate every setting listed; T015 written at the phase start; the suggestion says how far off.
+
 **Tests**: required. The owner's rules apply:
 - tests come first and must be seen red;
 - never modify an existing test, only add new ones;
@@ -42,7 +44,7 @@
   - `mvn -o -e clean verify -P native-modules` from `BUILD` is green;
   - the SWT tests (`-P swt-gui-tests`) run once, at T044, with the Mac unlocked (the owner's rule);
   - `git diff --name-status <phase start> -- '*test*'` shows only added files.
-- **Committed tests that constrain the settings** (research R0) stay green from the phase that adds a setting: `RecognitionSectionsTest`, `EngineDocumentationTest`, `EngineDocumentationFactsTest`, `RecognitionControlsTest`, `RecognitionStringsAllLanguagesTest`, `RecognitionSettingsPanelTest`, `SessionConstantInventoryTest`.
+- **Committed tests that constrain the settings** (research R0) stay green from the phase that adds a setting: `RecognitionSectionsTest`, `EngineDocumentationTest`, `EngineDocumentationFactsTest`, `RecognitionControlsTest`, `RecognitionStringsAllLanguagesTest`, `RecognitionSettingsPanelTest`, `RecognitionSettingsMigrationTest`, `RecognitionProfileTest`, `RecognitionSettingsStoreProfileTest`, `FollowLeniencyTest`, `ArcadeLeniencyTest`, `SessionConstantInventoryTest`; `RecognitionSettingsFitSwtTest` at T044.
 - **Real time:** nothing is allocated per frame in the sessions' re-attack handling.
 - **Parameters:** no engine constant hard-coded; every new value is a `RecognitionParameters` entry. There is no numeric `static final` in new code under `PR/session` or `PR/arcade/core`.
 - **Strings:** every new string goes in `LANG/messages.properties`, `_fr` and `_es`, translated.
@@ -59,7 +61,7 @@
   - HEAD;
   - the counts of the full gate and of `swt-gui-tests`;
   - the committed tests that read what this spec touches:
-    - the settings: `OnsetParametersTest`, `RecognitionSettingsTest`, `RecognitionSettingsStoreTest`, `RecognitionSectionsTest`, `EngineDocumentationTest`, `EngineDocumentationFactsTest`, `RecognitionControlsTest`, `RecognitionStringsAllLanguagesTest`, `RecognitionSettingsPanelTest`, `RecognitionSettingsSwtTest`, `SessionConstantInventoryTest`, `FollowLeniencyTest`, `ArcadeLeniencyTest`;
+    - the settings: `OnsetParametersTest`, `RecognitionSettingsTest`, `RecognitionSettingsStoreTest`, `RecognitionSectionsTest`, `EngineDocumentationTest`, `EngineDocumentationFactsTest`, `RecognitionControlsTest`, `RecognitionStringsAllLanguagesTest`, `RecognitionSettingsPanelTest`, `RecognitionSettingsSwtTest`, `RecognitionSettingsFitSwtTest` (each section fits the window), `RecognitionSettingsMigrationTest`, `RecognitionSettingsStoreProfileTest`, `RecognitionProfileTest`, `AudioEngineEngineValuesTest`, `SessionConstantInventoryTest` and `ConstantInventory`, `FollowLeniencyTest`, `ArcadeLeniencyTest` (the leniencies change none of the new keys);
     - the sessions and Arcade: `FastRunFunctionalTest`, `FastPassageBenchmarkTest`, `FollowDeterminismTest`, the `FollowSession` and `PracticeSession` tests, `ArcadeRunFunctionalTest`, `ArcadeResultTextTest`, `SceneFixture` and the Arcade painting tests.
 - [ ] T002 Run the committed dataset and benchmark suites (`-Dgroups=dataset,benchmark -DexcludedGroups=`) with each engine at the current code (quickstart §3). Copy `desktop/TuxGuitar-practice/target/dataset-benchmark/`, the other reports and the `REPEATED` table printed by `FastRunFunctionalTest` into `SPEC/benchmark/before-java/` and `SPEC/benchmark/before-native/`.
 - [ ] T003 Extend the untracked `PT/session/OffsetReplayProbeTest.java`:
@@ -97,7 +99,8 @@
   - check R1 and R4;
   - choose the defaults: the least sensitive setting that gives 100/100 from −70 to +70 ms where the spec requires it, with no extra accept;
   - write the decision and its figures at the end of `SPEC/research.md` ("R3 closing");
-  - if R1 or R4 does not hold, revise the plan section concerned before any code.
+  - if R1 or R4 does not hold, revise the plan section concerned before any code;
+  - if only an existing mode default made more permissive reaches 100 % (spec Assumptions, FR-007a), record it with its former and new default (FR-007); the guards decide (stop condition B).
 
   **Stop condition A** if no setting qualifies.
 - [ ] T007 [P] New test `AET/settings/ReattackSettingsTest.java`, seen red. It checks:
@@ -147,7 +150,7 @@
   - two plucks 100 ms apart are two matches (SC-005);
   - a held note expected twice is one match (SC-004).
 
-  See it red before T013–T014 (run at the phase start), green after.
+  Written and run at the phase start with T010–T012, seen red before T013–T014, green after.
 - [ ] T016 [US1] Run `RepeatedNotesProbeTest` on the product path and the offset probe on time: 100/100 in Wait, Follow and Arcade (each level 1 to 5), with both engines. Write the result to `SPEC/benchmark/us1.md`, with the `REPEATED` table of `FastRunFunctionalTest` before and after.
 - [ ] T017 [US1] Guards: rerun T002 into `SPEC/benchmark/after-us1-java/` and `-native/`, and compare with `before-*` into `SPEC/benchmark/comparison.md`. **Stop condition B** applies.
 - [ ] T018 [US1] Gate, and commit "impl(028): US1: a note played again is recognised".
@@ -222,28 +225,27 @@
 - [ ] T033 [US4] The same for Wait: a new test in `PT/session/PracticeSessionTuningDriftTest.java`, seen red, then `TuningDrift` fed from `PR/session/PracticeSession.java` and exposed in `PracticeSnapshot`.
 - [ ] T034 [US4] Write the texts of contracts/retune-suggestion.md in `LANG` (three languages) and a new test `PT/ui/TuningDriftTextTest.java`, seen red first: the text choice (flat or sharp, one string or several) for Wait, Follow and Arcade.
 
-  Show the suggestion:
-  - in Follow, through `PracticePalette.showFollowNotice`;
-  - in Wait, on the feedback line of `PR/ui/PracticePalette.java`;
-  - Arcade's text is the window's (T038).
+  The text gives the mean offset rounded to 5 cents (contract). Show the suggestion in Wait and Follow on a new line of its own in `PR/ui/PracticePalette.java` (`showTuningNotice`), kept until the next suggestion or the end of the run and cleared at a new run; not through `showFollowNotice` (its single notice is the record not written, spec 016) nor Wait's feedback line (rewritten at each event). Arcade's text is the window's (T038). The committed `PaletteMoveSwtTest` stays green (run at T044).
 
   Nothing pauses in Wait and Follow.
 - [ ] T035 [P] [US4] New test `PT/arcade/core/ArcadeRetuneOfferTest.java`, seen red, per contracts/retune-suggestion.md and data-model.md:
   - a suggestion while `PLAYING` → `OFFERED`; a second suggestion while `OFFERED` or `TUNING` is ignored;
   - Yes → `TUNING`, then the tuner's close → `PLAYING`; No → `PLAYING`; the window closed by its frame = No;
-  - More tolerant from a start of 35: 38.5, then 42, then 45, then still 45 (the cap); at a start of 45 or more: unchanged, and the button says so;
-  - a new run: steps back to 0, acceptance back to its start;
+  - More tolerant from a start of 35: 38.5, then 42, then 45, then still 45 (the cap); at a start of 45: unchanged, and the button says so;
+  - a new run (Restart included): steps back to 0, acceptance back to its start;
   - the step is `tuning.arcade-boost` read from the settings (0.05 and 0.25 checked).
 - [ ] T036 [US4] New pure class `PR/arcade/core/ArcadeRetuneOffer.java`, so that T035 is green; no numeric `static final` (`SessionConstantInventoryTest` covers `PR/arcade/core`); the cap of 45 cents comes from the bound of `NOTE_ACCEPT` in `RecognitionParameters`, not a literal.
-- [ ] T037 [US4] New test `PT/session/FollowSessionAcceptBoostTest.java`, seen red: a note 40 cents off is refused at 35; after `setNoteAcceptCents(42)` the next such note is accepted, the verdict already given is unchanged, and a new run starts from the settings' value. Then add `setNoteAcceptCents` to `PR/session/FollowSession.java` (applied from the next judged frame, no allocation).
+- [ ] T037 [US4] New test `PT/session/FollowSessionAcceptBoostTest.java`, seen red: a note 40 cents flat on a low fret (out of the fret-sharp margin) is refused at 35; after `setNoteAcceptCents(42)` the next such note is accepted, the verdict already given is unchanged, the 49-cent sharp margin is unchanged, and a new session starts from the settings' value. Then add `setNoteAcceptCents` to `PR/session/FollowSession.java`: `tolerance` (line 497, a final `TolerancePolicy`) becomes replaceable; one new policy per call with the same in-tune, fret-sharp and maximum values; the call is posted on the session's loop; nothing allocated per frame.
 - [ ] T038 [US4] New `PR/arcade/ui/ArcadeRetuneWindow.java` (modal, over the Arcade window, on the model of `PR/ui/ConfirmWindow.java`), with the texts of contracts/retune-suggestion.md in `LANG` (three languages; the More tolerant button says what it risks), and its wiring in `PR/ui/PracticeWindow.java`, which owns `ArcadeController`:
   - the suggestion from `FollowSession.Snapshot` while the run is RUNNING → `ArcadeController.pause()` and the window;
   - Yes → `new PracticeTunerOpener(context).open()` (as `PR/ui/PreRunStartGate.java` does) and `toFront()`; its closed listener → `ArcadeController.resume()` only once the track is given back and `TUNER_OPEN` is resolved by `PR/session/FollowEvents.java` (the tuner refuses to open while a practice track is set: `tuner-next` `TunerWindow.open`); the lifted track ends nothing and shows no mismatch (`PracticeWindow.updateMismatch`); if the tuner is not available or did not open, Yes behaves as No and the window says so;
   - the run ended while the window is open (Stop, the Arcade window closed): the window closes with no effect;
+  - while the tuner is open, Arcade's own Resume does not resume the run (the flow keeps it paused until the tuner closes);
+  - Restart is a new run: a new `ArcadeRetuneOffer`;
   - No → `resume()`; More tolerant → `ArcadeRetuneOffer`, then `FollowSession.setNoteAcceptCents`, then `resume()`;
   - nothing is saved; the next run builds a new `ArcadeRetuneOffer`.
 
-  Before the wiring, a new unit test `PT/ui/ArcadeRetuneFlowTest.java`, seen red, for a new class `PR/ui/ArcadeRetuneFlow.java` (the order of the calls, out of `PracticeWindow`), on fakes of `ArcadeRunPort` and of the tuner opener (`PreRunWindow.TunerOpener`, which `PracticeTunerOpener` implements): Yes pauses, opens, and resumes only after the close and the resolve, with no pause reason left; Yes with no tuner = No; No and More tolerant resume; a run ended while offered closes the offer.
+  Before the wiring, a new unit test `PT/ui/ArcadeRetuneFlowTest.java`, seen red, for a new class `PR/ui/ArcadeRetuneFlow.java` (the order of the calls, out of `PracticeWindow`), on fakes of `ArcadeRunPort` and of the tuner opener (`PreRunWindow.TunerOpener`, which `PracticeTunerOpener` implements): Yes pauses, opens, and resumes only after the close and the resolve, with no pause reason left; Yes with no tuner = No; No and More tolerant resume; a run ended while offered closes the offer; Arcade's Resume while tuning does nothing.
 
   New test `PT/arcade/ui/ArcadeRetuneWindowSwtTest.java` (`swt-gui`): the three buttons, their texts (the step shown as set), each one resumes; written here and run at T044. The Arcade painting tests stay green.
 - [ ] T039 [US4] New test `PT/ui/TuningDriftSettingSwtTest.java` (`swt-gui`): the threshold is the first row of the *Tuning drift* section of the settings panel, with its recommended value. It is written here and run at T044.
@@ -265,7 +267,7 @@
   - in Arcade, the pause and each of Yes (tuner, then resume where paused), No, and More tolerant (twice, then a new run back to the usual setting);
   - the setting.
 - [ ] T044 Full gate (`clean verify -P native-modules`), then once with the Mac unlocked `-P swt-gui-tests` (T038's and T039's tests and the committed SWT tests). Then the guards a last time into `SPEC/benchmark/after-java/` and `-native/`, and `misc/owner-offset-check.sh` on `DI`.
-- [ ] T045 Write `SPEC/final-report.md` (each FR and SC with its evidence, the figures before and after, the stop conditions met or not, "no existing setting changed" for FR-007, the boost only per run in Arcade). Update `specs/STATUS.md`. Delete the untracked `PT/session/OffsetReplayProbeTest.java`. Commit "impl(028): polish, report", then push once.
+- [ ] T045 Write `SPEC/final-report.md` (each FR and SC with its evidence, the figures before and after, the stop conditions met or not, the existing settings changed, with former and new defaults, or "none", for FR-007; the boost only per run in Arcade). Update `specs/STATUS.md`. Delete the untracked `PT/session/OffsetReplayProbeTest.java`. Commit "impl(028): polish, report", then push once.
 - [ ] T046 [HUMAN] The owner runs sheet F18 and gives the verdict.
 
 ## Dependencies & Execution Order
@@ -280,7 +282,7 @@
 ## Parallel Opportunities
 
 - T007 runs beside T004–T005 (different modules).
-- T010, T011 and T012 are written together.
+- T010, T011, T012 and T015 are written together, at the start of Phase 3.
 - T019 can be written during US1's guard runs.
 - T026, T027 and T028 run beside T024–T025.
 - T030 runs beside T032's test; T035 beside T037's test.
