@@ -13,7 +13,7 @@ NATIVE=$PWD/../native-modules/tuxguitar-monitor-native/target
    ../../../misc/owner-offset-check.sh /tmp/offset.md ../../../tests/tiktok/1
    ```
 
-   Expected: the Wait row and every Follow and Arcade row, Java and native, from −70 to +70 ms at 100 / 100; the script exits 0. Then `misc/verify-offset-table.sh` on release notes holding that table exits 0.
+   Expected: the Wait row and every Follow row and Arcade row (levels 1 to 5), Java and native, from −70 to +70 ms at 100 / 100; the script exits 0. Then `misc/verify-offset-table.sh` on release notes holding that table exits 0.
 
 2. **Repeats and held notes** (SC-004, SC-005), in every build:
 
@@ -32,8 +32,8 @@ NATIVE=$PWD/../native-modules/tuxguitar-monitor-native/target
 
    Expected: no figure lower than its `before` value.
 
-4. **The suggestion to retune** (SC-006): `TuningDriftReplayTest` replays a clean recording shifted 25 then 40 cents flat; the suggestion appears and the run goes on; on the dataset recordings within 10 cents on average it never appears.
+4. **The suggestion to retune** (SC-006): `TuningDriftReplayTest` replays a clean recording shifted 25 then 40 cents flat; the suggestion appears and the run goes on; on the dataset recordings within 10 cents on average it never appears. `ArcadeRetuneOfferTest` and `FollowSessionAcceptBoostTest`: Arcade's three choices, the boost of 10 % per choice, capped at 45 cents, reset at the next run.
 
-5. **The owner's sheet** F18 (`specs/test-sheets/F18-notes-repetees.md`): the riff played live in Follow and Arcade, early and late, and a guitar detuned on purpose.
+5. **The owner's sheet** F18 (`specs/test-sheets/F18-notes-repetees.md`): the riff played live in Wait, Follow and Arcade, early and late, and a guitar detuned on purpose (in Arcade: the pause and its three choices).
 
 After each Maven run: `git checkout -- specs/003-arcade-mode/benchmark/ specs/023-native-recognition-engine/benchmark/recognition-delay.md`.

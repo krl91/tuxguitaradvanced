@@ -29,6 +29,11 @@ Every refused event was refused for "no attack": no event was refused for a wron
 - Q: Must the 100 % target also be checked in Arcade mode, or only in Follow mode? → A: In every mode, each with its default settings. The owner's principle: whatever the mode, it is better that the engine believes it heard the right note when the note is a little off (not too much), a little early, a little late or on time; the engines must be more permissive.
 - Q: Down to what does a note out of tune still count as the right note? → A: Keep what exists: ±35 cents (setting `NOTE_ACCEPT`, 10 to 45, below the halfway to the next fret), plus the extra sharp margin on high frets (up to 49 cents); the neighbouring fret stays a wrong note. And offer to retune the guitar, without stopping the play.
 - Q: From what steady average gap, over several notes, should the practice suggest retuning? → A: 20 cents by default (before the first refusals at 35), configurable by the user.
+- Q: Arcade's default level judges 30 % of the notes and no chord; at which Arcade level(s) must every event be recognised? → A: At every level, 1 to 5.
+- Q: Arcade has no place for a message during the run; how does Arcade suggest retuning? → A: Arcade pauses and shows a window proposing to retune, with three choices: Yes, No, and make Arcade more tolerant (+10 %).
+- Q: What does "make Arcade more tolerant (+10 %)" widen? → A: The pitch acceptance in Arcade, +10 % (35 → 38.5 cents), capped at 45 cents so that the neighbouring fret stays a wrong note.
+- Q: What happens when the learner chooses "Yes" (retune) in Arcade's window? → A: The application's tuner opens (the one of the pre-run check), the run stays paused; when the tuner closes, the run resumes where it paused.
+- Q: Does the "+10 %" chosen in the window hold for the current run only, or is it kept? → A: For the current run only; several choices in the same run add up, never above 45 cents; the next run starts from the usual setting.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -38,11 +43,11 @@ A guitarist practises a fast riff in which the same note comes back many times i
 
 **Why this priority**: today half of such a riff is marked missed although it was played right. The learner is told they failed when they did not, which is the worst feedback the product can give (constitution XIV), and this kind of riff is common in rock, punk and metal.
 
-**Independent Test**: replay the owner's DI recording over its tablature in Follow and in Arcade, each with its default settings, played on time: every event is judged played.
+**Independent Test**: replay the owner's DI recording over its tablature in Follow and in Arcade at each level, with the default settings, played on time: every event judged is judged played.
 
 **Acceptance Scenarios**:
 
-1. **Given** the owner's DI recording and its tablature, **When** they are replayed in Follow or in Arcade with that mode's default settings, played on time, **Then** all 100 events are recognised, with each engine.
+1. **Given** the owner's DI recording and its tablature, **When** they are replayed in Follow, or in Arcade at any of its five levels, with that mode's default settings, played on time, **Then** every event judged is recognised (all 100 in Follow), with each engine.
 2. **Given** a note played, then played again at the same pitch 150 ms later, **When** both are expected by the score, **Then** both are recognised, one per expected event.
 3. **Given** a note played once and left ringing, **When** the score expects that note twice, **Then** the second one is not recognised: a held note is not a note played again.
 
@@ -78,19 +83,20 @@ Before every version is published, the offset test is replayed on the DI recordi
 
 ---
 
-### User Story 4 - The guitar drifts, the practice says so without stopping (Priority: P3)
+### User Story 4 - The guitar drifts, the practice says so (Priority: P3)
 
-During a run, the guitar goes out of tune (a string slips, the temperature changes): its notes come out more and more off, the same way. Without stopping the music or the run, the practice suggests retuning, and says which string when it can tell.
+During a run, the guitar goes out of tune (a string slips, the temperature changes): its notes come out more and more off, the same way. The practice suggests retuning, and says which string when it can tell. In Wait and Follow it says so without stopping the music or the run. In Arcade, a game where a message would be missed, the run pauses and a window offers: retune (Yes), go on (No), or make Arcade more tolerant (+10 %).
 
-**Why this priority**: the out-of-tune margin stays at what was measured (a wider one would accept the neighbouring fret), so a guitar that drifts ends up with notes refused; the learner must be told the cause is the tuning, not their playing (constitution XIV), and the owner does not want the play stopped for it.
+**Why this priority**: the out-of-tune margin stays at what was measured (a wider one would accept the neighbouring fret), so a guitar that drifts ends up with notes refused; the learner must be told the cause is the tuning, not their playing (constitution XIV), and the owner does not want Wait and Follow stopped for it; in Arcade the owner prefers a pause and a choice.
 
-**Independent Test**: replay a recording whose notes are all 25 cents flat, then one 40 cents flat: the suggestion appears during the run, the run and the music go on, and no note is judged differently because of it.
+**Independent Test**: replay a recording whose notes are all 25 cents flat, then one 40 cents flat: in Wait and Follow, the suggestion appears during the run, the run and the music go on, and no note is judged differently because of it; in Arcade, the run pauses on the window, and each choice does what it says.
 
 **Acceptance Scenarios**:
 
-1. **Given** a run where the notes heard are steadily off the same way by 20 cents or more (the default, which the user can change), **When** this lasts several notes, **Then** a suggestion to retune appears, naming the string when the notes off are all on one string, and the run goes on.
-2. **Given** that suggestion, **When** the learner ignores it, **Then** nothing stops, and it does not come back at every note.
+1. **Given** a run where the notes heard are steadily off the same way by 20 cents or more (the default, which the user can change), **When** this lasts several notes, **Then** a suggestion to retune appears, naming the string when the notes off are all on one string; in Wait and Follow the run goes on, in Arcade the run pauses on the window of three choices.
+2. **Given** that suggestion in Wait or Follow, **When** the learner ignores it, **Then** nothing stops, and it does not come back at every note.
 3. **Given** a guitar in tune and a learner who misses a few notes, **When** the run goes on, **Then** no suggestion to retune appears.
+4. **Given** the Arcade window, **When** the learner chooses Yes, **Then** the application's tuner opens while the run stays paused, and the run resumes where it paused when the tuner closes; **When** the learner chooses No, **Then** the run resumes where it paused and the window does not come back at every note; **When** the learner chooses "more tolerant", **Then** Arcade's pitch acceptance widens by 10 % (35 → 38.5 cents, never above 45) for this run only (a second choice adds another 10 %), and the run resumes; the next run starts from the usual setting.
 
 ---
 
@@ -111,31 +117,32 @@ During a run, the guitar goes out of tune (a string slips, the temperature chang
 - **FR-001**: A note played again at the same pitch, with an attack of its own, MUST be recognised as a new note when the score expects it, with each recognition engine, in every practice mode that judges notes (Wait, Follow and Arcade).
 - **FR-001a**: Two attacks of the same pitch 100 ms apart or more MUST be told apart as two notes, with each engine; below 100 ms there is no target.
 - **FR-002**: A note held or ringing on, without a new attack, MUST NOT be recognised as a note played again.
-- **FR-003**: On the owner's DI recording (tablature `tablature_extrait.gp5`, recording `extrait_offspring_guitare_DI.wav`), every one of its 100 events MUST be recognised, in Follow and in Arcade with that mode's default settings [NEEDS CLARIFICATION: Arcade's default level (level 1) judges 30 % of the notes and no chord, so the riff's 100 events become about 23; at which Arcade level(s) must every event be recognised?], when the performance is moved by −70, −50, −40, −30, −20, 0, 20, 30, 40, 50 or 70 ms (negative: early), with each engine. The figures at −100 and 100 ms are reported, without a target.
+- **FR-003**: On the owner's DI recording (tablature `tablature_extrait.gp5`, recording `extrait_offspring_guitare_DI.wav`), every event judged MUST be recognised, in Follow (its 100 events) and in Arcade at each of its five levels (the events each level keeps), each with that mode's other default settings, when the performance is moved by −70, −50, −40, −30, −20, 0, 20, 30, 40, 50 or 70 ms (negative: early), with each engine. The figures at −100 and 100 ms are reported, without a target.
 - **FR-004**: The offset test MUST be kept as an automated test: it replays a recording over its tablature in each mode with its default settings, at each offset and with each engine, aligns the start of the tablature on the recording's own note starts (not on what an engine detects), and writes a table of the mode, the engine, the offset, the share of events recognised and the reasons of the refusals. It MUST accept other recordings with their tablature, so that the owner can add more.
 - **FR-005**: The offset test MUST be run before every version is published, and its table kept with the version's report; a version where an event of the DI recording is not recognised between 70 ms early and 70 ms late MUST NOT be published. The recording and its tablature stay on the owner's machine (`tests/tiktok/1`, never committed: an excerpt of a published song); the test is skipped where they are absent (every other build, the CI) and run on the owner's machine before each release, its table going into the release's report.
 - **FR-006**: No other recognition result MAY get worse: every dataset report and every committed test of the recognition, with each engine, gives figures at least as good as before this spec, in particular wrong notes refused, chords with a note missing refused, and no note accepted before its own attack (owner's rule: the recognition must not get worse on any other test).
 - **FR-007**: Every new value that decides what the recognition hears or accepts MUST be an external parameter with its default, bounds, unit and description, documented with the engines (owner's rule, spec 026); the settings changed by this spec are listed with their former and new defaults.
 - **FR-007a**: When in doubt, the recognition MUST lean towards accepting: a note a little off pitch (within FR-007b), a little early or a little late is judged played, in every mode (owner's principle, 2026-11-11). Where this principle and an existing refusal test disagree, the work stops and the case is reported to the owner, the committed test being left unchanged.
-- **FR-007b**: The acceptance of a note out of tune stays as it is: ±35 cents by default (setting 10 to 45), plus the extra sharp margin on high frets up to 49 cents; the neighbouring fret stays a wrong note in every mode (spec 016).
+- **FR-007b**: The acceptance of a note out of tune stays as it is: ±35 cents by default (setting 10 to 45), plus the extra sharp margin on high frets up to 49 cents; the neighbouring fret stays a wrong note in every mode (spec 016). The only exception is the learner's own choice in Arcade's retune window (FR-009): +10 % per choice for that run only, never above 45 cents, never saved.
 - **FR-008**: A note judged missed on a repeated note MUST still give the reason the learner sees today ("no attack heard" or the like); it MUST NOT be presented as a wrong note (constitution XIV).
-- **FR-009**: When the notes heard during a run are steadily off pitch the same way, the practice MUST suggest retuning the guitar (naming the string when the notes off are on one string) without pausing the run, the playback or the judging, in every mode (Wait, Follow and Arcade); the suggestion MUST NOT repeat at every note, and MUST NOT appear for a guitar in tune with a few notes missed. It is triggered from a steady average gap of 20 cents by default, the same way over several notes; this threshold is a setting the user can change, with its bounds, and the other thresholds are external parameters (FR-007). [NEEDS CLARIFICATION: Arcade has no place yet for a message during the run; where on the Arcade screen does the suggestion appear?]
+- **FR-009**: When the notes heard during a run are steadily off pitch the same way, the practice MUST suggest retuning the guitar (naming the string when the notes off are on one string) in every mode: in Wait and Follow without pausing the run, the playback or the judging; in Arcade by pausing the run and showing a window with three choices: Yes (the application's tuner opens; when it closes, the run resumes where it paused), No (resume), and make Arcade more tolerant (its pitch acceptance +10 % for this run only, cumulative, never above 45 cents, then resume); the suggestion MUST NOT repeat at every note, and MUST NOT appear for a guitar in tune with a few notes missed. It is triggered from a steady average gap of 20 cents by default, the same way over several notes; this threshold is a setting the user can change, with its bounds, and the other thresholds are external parameters (FR-007).
 
 ### Key Entities
 
 - **Offset test case**: a recording of the guitar alone, its tablature, the track played, and the offsets to replay; ships with its expected figures (100 % from 70 ms early to 70 ms late for the owner's DI recording).
+- **Arcade retune offer**: during one Arcade run, the window's state (playing, offered, tuning) and the number of "more tolerant" choices; it sets the run's pitch acceptance and is forgotten at the end of the run.
 - **Offset table**: for each mode, each engine and each offset, the events recognised out of the events of the score, and the count of each refusal reason.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: On the owner's DI recording, 100 of 100 events recognised, in Follow and in Arcade with their default settings, at 0, 20, 30, 40, 50 and 70 ms late (Follow today: 51, 49, 41, 38, 31 and 30; Arcade not measured yet) and at 20, 30, 40, 50 and 70 ms early (not measured yet; measured before the work starts), with each engine.
+- **SC-001**: On the owner's DI recording, every event judged is recognised (100 of 100 in Follow; all those kept by each Arcade level, 1 to 5), with the modes' other default settings, at 0, 20, 30, 40, 50 and 70 ms late (Follow today: 51, 49, 41, 38, 31 and 30; Arcade not measured yet) and at 20, 30, 40, 50 and 70 ms early (not measured yet; measured before the work starts), with each engine.
 - **SC-002**: Every dataset figure of the recognition, with each engine, is at least as good as before this spec (no regression), in particular wrong notes and incomplete chords still refused.
 - **SC-003**: The offset table of every published version is in its report, and a version below SC-001 is not published.
 - **SC-004**: A held note expected twice by the score is recognised once, not twice, with each engine, on synthetic plucks and on sheet F18 played live.
 - **SC-005**: The same note played again 100 ms after itself, both expected by the score, is recognised twice, with each engine.
-- **SC-006**: With the default threshold, on a recording steadily 20 cents or more off the same way, the suggestion to retune appears during the run without stopping it; on the dataset recordings whose notes lie within 10 cents of their written pitch on average, it never appears.
+- **SC-006**: With the default threshold, on a recording steadily 20 cents or more off the same way, the suggestion to retune appears during the run, without stopping it in Wait and Follow, as a paused window in Arcade; on the dataset recordings whose notes lie within 10 cents of their written pitch on average, it never appears.
 
 ## Assumptions
 

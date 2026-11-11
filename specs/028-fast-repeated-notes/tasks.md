@@ -2,9 +2,11 @@
 
 **Input**: design documents from `specs/028-fast-repeated-notes/`
 
-**Prerequisites**: plan.md, spec.md (clarified 2026-11-11, 5 answers; two more questions open after /speckit-analyze, FR-003 and FR-009), research.md (R0–R7), data-model.md, contracts/reattack-rule.md, contracts/retune-suggestion.md, contracts/owner-offset-test.md, quickstart.md
+**Prerequisites**: plan.md, spec.md (clarified 2026-11-11: 5 answers, then 5 more after /speckit-analyze), research.md (R0–R7), data-model.md, contracts/reattack-rule.md, contracts/retune-suggestion.md, contracts/owner-offset-test.md, quickstart.md
 
 **Version 2** (2026-11-11, after /speckit-analyze): Wait mode added, the settings land with their documentation, help and strings, SWT at the end, the release workflow checks the table, the Arcade text and level wait for the owner's answers.
+
+**Version 3** (2026-11-11, after the second /speckit-clarify): Arcade at every level 1 to 5; in Arcade the suggestion pauses the run on a window (Yes: the tuner, then resume; No; More tolerant: +10 % for this run, capped at 45 cents); a tenth setting `tuning.arcade-boost`.
 
 **Tests**: required. The owner's rules apply:
 - tests come first and must be seen red;
@@ -12,7 +14,7 @@
 - if a committed test fails, fix the code under the bug protocol, at most 3 attempts, then stop and report.
 
 **Stop conditions**: stop and report to the owner, with the figures, when:
-- **A (research R3)**: no setting of the probe gives 100/100 from −70 to +70 ms on the DI recording (Follow, Arcade at the level the owner chose; Wait at offset 0), with both engines, without a new accept on the guard cases;
+- **A (research R3)**: no setting of the probe gives 100/100 from −70 to +70 ms on the DI recording (Follow, Arcade at each level 1 to 5; Wait at offset 0), with both engines, without a new accept on the guard cases;
 - **B**: a guard figure (research R6) is lower than its `before` value, and no setting of the sweep avoids it;
 - **C**: FR-007a (lean towards accepting) and a committed refusal test disagree;
 - **D**: the rule needs evidence the frames do not carry (a JNI or native change).
@@ -38,7 +40,7 @@
 - **Engines:** each dataset run is done with `-Dtuxguitar.recognition.engine=java` and with `=native` (`-Dtuxguitar.native.library.dir=$LIB`).
 - **Gate:**
   - `mvn -o -e clean verify -P native-modules` from `BUILD` is green;
-  - the SWT tests (`-P swt-gui-tests`) run once, at T040, with the Mac unlocked (the owner's rule);
+  - the SWT tests (`-P swt-gui-tests`) run once, at T044, with the Mac unlocked (the owner's rule);
   - `git diff --name-status <phase start> -- '*test*'` shows only added files.
 - **Committed tests that constrain the settings** (research R0) stay green from the phase that adds a setting: `RecognitionSectionsTest`, `EngineDocumentationTest`, `EngineDocumentationFactsTest`, `RecognitionControlsTest`, `RecognitionStringsAllLanguagesTest`, `RecognitionSettingsPanelTest`, `SessionConstantInventoryTest`.
 - **Real time:** nothing is allocated per frame in the sessions' re-attack handling.
@@ -99,14 +101,14 @@
 
   **Stop condition A** if no setting qualifies.
 - [ ] T007 [P] New test `AET/settings/ReattackSettingsTest.java`, seen red. It checks:
-  - the nine keys of data-model.md, with their unit, type (`Number`, or `Flag` for `reattack.octave` and `reattack.enabled`), default (from T006; `tuning.drift-threshold` 20) and bounds, quoted: `reattack.rise` "1.0–10.0" dB, `reattack.before` "2–19" hops, `reattack.spread` "0.3–1.0", `tuning.drift-threshold` "10–35" cents, `tuning.drift-notes` "3–20", `tuning.drift-agreement` "0.5–1.0", `tuning.drift-quiet` "4–100";
-  - `Section.REATTACK` holds the five reattack keys and `Section.TUNING_DRIFT` the four drift keys, the threshold first; both come after the existing sections;
+  - the ten keys of data-model.md, with their unit, type (`Number`, or `Flag` for `reattack.octave` and `reattack.enabled`), default (from T006; `tuning.drift-threshold` 20) and bounds, quoted: `reattack.rise` "1.0–10.0" dB, `reattack.before` "2–19" hops, `reattack.spread` "0.3–1.0", `tuning.drift-threshold` "10–35" cents, `tuning.drift-notes` "3–20", `tuning.drift-agreement` "0.5–1.0", `tuning.drift-quiet` "4–100", `tuning.arcade-boost` "0.05–0.25" (default 0.10; the `%` keys are shares shown ×100, display factor 100.0 as `NOTE_CONFIDENCE`);
+  - `Section.REATTACK` holds the five reattack keys and `Section.TUNING_DRIFT` the five drift keys, the threshold first; both come after the existing sections;
   - `ProfileParameters` contains none of them;
   - the round trip through `RecognitionSettingsStore`;
   - a file without the keys reads the defaults.
 - [ ] T008 Add the settings so that T007 is green and the committed tests of the standing rules stay green, all in one change:
   - `Section.REATTACK` and `Section.TUNING_DRIFT` at the end of `AE/settings/RecognitionParameter.java`;
-  - the nine entries in `AE/settings/RecognitionParameters.java`, registered in its list;
+  - the ten entries in `AE/settings/RecognitionParameters.java`, registered in its list;
   - their rows in `DOC`, under a heading per new section naming `` `Section.REATTACK` `` and `` `Section.TUNING_DRIFT` ``, with unit, default, bounds and "next run";
   - a row per setting and an `<h2>` per new section in both `HELP` pages;
   - names, tips and section names in `LANG`, in three languages, translated;
@@ -146,7 +148,7 @@
   - a held note expected twice is one match (SC-004).
 
   See it red before T013–T014 (run at the phase start), green after.
-- [ ] T016 [US1] Run `RepeatedNotesProbeTest` on the product path and the offset probe on time: 100/100 in Wait, Follow and Arcade, with both engines. Write the result to `SPEC/benchmark/us1.md`, with the `REPEATED` table of `FastRunFunctionalTest` before and after.
+- [ ] T016 [US1] Run `RepeatedNotesProbeTest` on the product path and the offset probe on time: 100/100 in Wait, Follow and Arcade (each level 1 to 5), with both engines. Write the result to `SPEC/benchmark/us1.md`, with the `REPEATED` table of `FastRunFunctionalTest` before and after.
 - [ ] T017 [US1] Guards: rerun T002 into `SPEC/benchmark/after-us1-java/` and `-native/`, and compare with `before-*` into `SPEC/benchmark/comparison.md`. **Stop condition B** applies.
 - [ ] T018 [US1] Gate, and commit "impl(028): US1: a note played again is recognised".
 
@@ -174,7 +176,7 @@
 - [ ] T024 [US3] New test `PT/dataset/OwnerOffsetTest.java` (tag `owner-offset`, no pom change), per contracts/owner-offset-test.md:
   - folders separated by commas, and `report-only`;
   - the alignment;
-  - Wait, Follow and Arcade at the level the owner chose;
+  - Wait, Follow and Arcade at each level 1 to 5 (the `Level` column);
   - both engines, all the offsets;
   - the switch `tuxguitar.owner.offset.reattack`;
   - the table and the per-event detail of failing rows;
@@ -201,11 +203,11 @@
   - the release workflow refuses it otherwise.
 - [ ] T029 [US3] Gate, and commit "impl(028): US3: the offset test before every version".
 
-## Phase 6: User Story 4 - The guitar drifts, the practice says so without stopping (P3)
+## Phase 6: User Story 4 - The guitar drifts, the practice says so (P3)
 
-**Goal**: a suggestion to retune appears in Wait, Follow and Arcade when the notes drift the same way, from 20 cents by default (user setting), without stopping anything (FR-007b, FR-009, SC-006).
+**Goal**: a suggestion to retune appears in Wait, Follow and Arcade when the notes drift the same way, from 20 cents by default (user setting). Wait and Follow go on; Arcade pauses on a window with Yes (the tuner, then resume), No, and More tolerant (+10 % for this run, never above 45 cents) (FR-007b, FR-009, SC-006).
 
-**Independent Test**: the new tests green; the run and the music go on.
+**Independent Test**: the new tests green; in Wait and Follow the run and the music go on; in Arcade each of the three choices resumes the run where it paused, and the boost is gone at the next run.
 
 - [ ] T030 [P] [US4] New test `PT/session/TuningDriftTest.java`, seen red, per contracts/retune-suggestion.md:
   - six notes −25 cents on string 3: suggest flat, string 3;
@@ -223,33 +225,51 @@
   Show the suggestion:
   - in Follow, through `PracticePalette.showFollowNotice`;
   - in Wait, on the feedback line of `PR/ui/PracticePalette.java`;
-  - in Arcade, through a new **default** method of `PR/arcade/view/SceneLabels.java` (the committed `SceneFixture` compiles unchanged), implemented in `PR/arcade/ui/ArcadeSceneLabels.java`, and drawn by `PR/arcade/ui/ArcadeRenderer.java` at the place the owner chose (spec FR-009), never over the lanes.
+  - Arcade's text is the window's (T038).
 
-  Nothing pauses. The Arcade painting tests stay green.
-- [ ] T035 [US4] New test `PT/ui/TuningDriftSettingSwtTest.java` (`swt-gui`): the threshold is the first row of the *Tuning drift* section of the settings panel, with its recommended value. It is written here and run at T040.
-- [ ] T036 [US4] New test `PT/dataset/TuningDriftReplayTest.java` (tag `dataset`), both engines:
+  Nothing pauses in Wait and Follow.
+- [ ] T035 [P] [US4] New test `PT/arcade/core/ArcadeRetuneOfferTest.java`, seen red, per contracts/retune-suggestion.md and data-model.md:
+  - a suggestion while `PLAYING` → `OFFERED`; a second suggestion while `OFFERED` or `TUNING` is ignored;
+  - Yes → `TUNING`, then the tuner's close → `PLAYING`; No → `PLAYING`; the window closed by its frame = No;
+  - More tolerant from a start of 35: 38.5, then 42, then 45, then still 45 (the cap); at a start of 45 or more: unchanged, and the button says so;
+  - a new run: steps back to 0, acceptance back to its start;
+  - the step is `tuning.arcade-boost` read from the settings (0.05 and 0.25 checked).
+- [ ] T036 [US4] New pure class `PR/arcade/core/ArcadeRetuneOffer.java`, so that T035 is green; no numeric `static final` (`SessionConstantInventoryTest` covers `PR/arcade/core`); the cap of 45 cents comes from the bound of `NOTE_ACCEPT` in `RecognitionParameters`, not a literal.
+- [ ] T037 [US4] New test `PT/session/FollowSessionAcceptBoostTest.java`, seen red: a note 40 cents off is refused at 35; after `setNoteAcceptCents(42)` the next such note is accepted, the verdict already given is unchanged, and a new run starts from the settings' value. Then add `setNoteAcceptCents` to `PR/session/FollowSession.java` (applied from the next judged frame, no allocation).
+- [ ] T038 [US4] New `PR/arcade/ui/ArcadeRetuneWindow.java` (modal, over the Arcade window, on the model of `PR/ui/ConfirmWindow.java`), with the texts of contracts/retune-suggestion.md in `LANG` (three languages; the More tolerant button says what it risks), and its wiring in `PR/ui/PracticeWindow.java`, which owns `ArcadeController`:
+  - the suggestion from `FollowSession.Snapshot` while the run is RUNNING → `ArcadeController.pause()` and the window;
+  - Yes → `new PracticeTunerOpener(context).open()` (as `PR/ui/PreRunStartGate.java` does) and `toFront()`; its closed listener → `ArcadeController.resume()` only once the track is given back and `TUNER_OPEN` is resolved by `PR/session/FollowEvents.java` (the tuner refuses to open while a practice track is set: `tuner-next` `TunerWindow.open`); the lifted track ends nothing and shows no mismatch (`PracticeWindow.updateMismatch`); if the tuner is not available or did not open, Yes behaves as No and the window says so;
+  - the run ended while the window is open (Stop, the Arcade window closed): the window closes with no effect;
+  - No → `resume()`; More tolerant → `ArcadeRetuneOffer`, then `FollowSession.setNoteAcceptCents`, then `resume()`;
+  - nothing is saved; the next run builds a new `ArcadeRetuneOffer`.
+
+  Before the wiring, a new unit test `PT/ui/ArcadeRetuneFlowTest.java`, seen red, for a new class `PR/ui/ArcadeRetuneFlow.java` (the order of the calls, out of `PracticeWindow`), on fakes of `ArcadeRunPort` and of the tuner opener (`PreRunWindow.TunerOpener`, which `PracticeTunerOpener` implements): Yes pauses, opens, and resumes only after the close and the resolve, with no pause reason left; Yes with no tuner = No; No and More tolerant resume; a run ended while offered closes the offer.
+
+  New test `PT/arcade/ui/ArcadeRetuneWindowSwtTest.java` (`swt-gui`): the three buttons, their texts (the step shown as set), each one resumes; written here and run at T044. The Arcade painting tests stay green.
+- [ ] T039 [US4] New test `PT/ui/TuningDriftSettingSwtTest.java` (`swt-gui`): the threshold is the first row of the *Tuning drift* section of the settings panel, with its recommended value. It is written here and run at T044.
+- [ ] T040 [US4] New test `PT/dataset/TuningDriftReplayTest.java` (tag `dataset`), both engines:
   - a clean dataset recording resampled to sound 25 cents flat, then 40 cents flat: the suggestion appears, and the run completes with the same number of verdicts;
   - on the dataset recordings whose notes lie within 10 cents on average: it never appears (SC-006).
-- [ ] T037 [US4] Gate (without SWT), and commit "impl(028): US4: the suggestion to retune".
+- [ ] T041 [US4] Gate (without SWT), and commit "impl(028): US4: the suggestion to retune".
 
 ## Phase 7: Polish & cross-cutting concerns
 
-- [ ] T038 [P] Documentation:
+- [ ] T042 [P] Documentation:
   - in `DOC`, the method: the re-attack, the nearest target, the drift; the detector's rule and defaults unchanged;
-  - in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md`: repeated notes in every mode, playing early or late, and the suggestion to retune and its setting.
-- [ ] T039 [P] New owner's sheet `specs/test-sheets/F18-notes-repetees.md`, in French, covering:
+  - in `docs/PRACTICE.md`, `docs/PRACTICE-FR.md` and `docs/PRACTICE-ES.md`: repeated notes in every mode, playing early or late, and the suggestion to retune, its setting, and Arcade's pause with its three choices.
+- [ ] T043 [P] New owner's sheet `specs/test-sheets/F18-notes-repetees.md`, in French, covering:
   - the riff of `DI` played live in Wait, Follow and Arcade, on time, early and late;
   - a held note and a scratch;
   - a guitar detuned on purpose (one string, then all);
-  - the suggestion that does not stop the play;
+  - the suggestion that does not stop the play in Wait and Follow;
+  - in Arcade, the pause and each of Yes (tuner, then resume where paused), No, and More tolerant (twice, then a new run back to the usual setting);
   - the setting.
-- [ ] T040 Full gate (`clean verify -P native-modules`), then once with the Mac unlocked `-P swt-gui-tests` (T035 and the committed SWT tests). Then the guards a last time into `SPEC/benchmark/after-java/` and `-native/`, and `misc/owner-offset-check.sh` on `DI`.
-- [ ] T041 Write `SPEC/final-report.md` (each FR and SC with its evidence, the figures before and after, the stop conditions met or not, "no existing setting changed" for FR-007). Update `specs/STATUS.md`. Delete the untracked `PT/session/OffsetReplayProbeTest.java`. Commit "impl(028): polish, report", then push once.
-- [ ] T042 [HUMAN] The owner runs sheet F18 and gives the verdict.
+- [ ] T044 Full gate (`clean verify -P native-modules`), then once with the Mac unlocked `-P swt-gui-tests` (T038's and T039's tests and the committed SWT tests). Then the guards a last time into `SPEC/benchmark/after-java/` and `-native/`, and `misc/owner-offset-check.sh` on `DI`.
+- [ ] T045 Write `SPEC/final-report.md` (each FR and SC with its evidence, the figures before and after, the stop conditions met or not, "no existing setting changed" for FR-007, the boost only per run in Arcade). Update `specs/STATUS.md`. Delete the untracked `PT/session/OffsetReplayProbeTest.java`. Commit "impl(028): polish, report", then push once.
+- [ ] T046 [HUMAN] The owner runs sheet F18 and gives the verdict.
 
 ## Dependencies & Execution Order
 
-- **Before Phase 2**: the two questions open in the spec (Arcade's level in FR-003, the place of Arcade's text in FR-009) are answered through `/speckit-clarify`. T003 measures every level so the answer can be informed.
 - **Phase 1 → Phase 2**: T006 gates everything after it.
 - **US1 (Phase 3)** depends on Phase 2.
 - **US2 (Phase 4)** depends on US1: the assignment acts on re-attacks too.
@@ -263,8 +283,8 @@
 - T010, T011 and T012 are written together.
 - T019 can be written during US1's guard runs.
 - T026, T027 and T028 run beside T024–T025.
-- T030 runs beside T032's test.
-- T038 and T039 run together.
+- T030 runs beside T032's test; T035 beside T037's test.
+- T042 and T043 run together.
 
 ## Implementation Strategy
 
@@ -272,5 +292,5 @@
 - **Then**:
   - US2 (early and late) completes SC-001;
   - US3 locks it for every version and every release;
-  - US4 (the retune suggestion) comes as a separate increment.
+  - US4 (the retune suggestion, and Arcade's pause window) comes as a separate increment.
 - Each phase ends with the gate and a commit. The SWT run is at the end, and so is the single push.

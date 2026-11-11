@@ -10,7 +10,7 @@
 - **The detector stays as it is.** Committed tests pin its defaults, and spec 002 measured false attacks with a lower gate (R2).
 - **The method:** a *re-attack expected by the score*. Where the tab plays a pitch that already sounds, a rise of that pitch's own semitone band counts as its attack. It is computed in Java on the bands both engines already give, in `FollowSession` (Follow and Arcade) and `PracticeSession` (Wait), so every mode and both engines judge the same way. A rise of every band at once (a scratch) is not one. There is no native change (R3).
 - **Early and late:** an attack inside the windows of two notes of the same pitch goes to the nearest one, not to the first one still open. No window gets wider (R4).
-- **Out of tune:** the margin stays at ±35 cents. A new `TuningDrift` suggests retuning when the notes drift the same way (20 cents by default, a user setting in a new section, since *Notes* is full), in every mode, and never stops the run (R5).
+- **Out of tune:** the margin stays at ±35 cents. A new `TuningDrift` suggests retuning when the notes drift the same way (20 cents by default, a user setting in a new section, since *Notes* is full), in every mode. Wait and Follow are never stopped; Arcade pauses on a window (Yes: the tuner; No; More tolerant: +10 % for the run) (R5).
 - **The offset test** becomes `OwnerOffsetTest`, skipped where the recording is absent and run on the owner's machine before each release. Its table goes into the release notes, and the release workflow refuses notes without it or below 100 % (R7).
 - **Order:**
   1. the figures before;
@@ -25,9 +25,9 @@
 
 **Language/Version**: Java, release 11 for the fork modules (`TuxGuitar-audio-engine`, `TuxGuitar-practice`); JDK 21 locally. The native crate is unchanged.
 
-**Primary Dependencies**: none new. `FollowSession` (and its `FollowParameters`), `PracticeSession` and `PracticeParameters`, `FollowStarter`, `ArcadeStarter`, `ArcadeLevelFilter`, `SpectrumFrame`, `RecognitionParameters`, `RecognitionSettings`, `PracticePalette`, `ArcadeRenderer`, `SceneLabels`, `ArcadeSceneLabels`, `RecognitionSettingsPanel`.
+**Primary Dependencies**: none new. `FollowSession` (and its `FollowParameters`), `PracticeSession` and `PracticeParameters`, `FollowStarter`, `ArcadeStarter`, `ArcadeLevelFilter`, `SpectrumFrame`, `RecognitionParameters`, `RecognitionSettings`, `PracticePalette`, `ArcadeController`, `PracticeTunerOpener`, `ConfirmWindow` (model), `RecognitionSettingsPanel`.
 
-**Storage**: the existing recognition settings file, with nine new keys in two new sections (data-model.md). `VERSION` is unchanged; a missing key reads as its default.
+**Storage**: the existing recognition settings file, with ten new keys in two new sections (data-model.md). `VERSION` is unchanged; a missing key reads as its default.
 
 **Testing**: JUnit 5.
 - **Unit tests**: `FollowSessionReattackTest`, `PracticeSessionReattackTest`, `ArcadeReattackTest`, `FollowSessionNearestTargetTest`, `TuningDriftTest`, and the settings tests. The committed `FastRunFunctionalTest` (`REPEATED` runs, Wait) is the guard and the measure of repeats at 3–12 notes per second.
@@ -46,13 +46,13 @@
 - No committed test modified.
 - No engine constant hard-coded; the re-attack values and the drift values are parameters (FR-007). No numeric `static final` in `PR/session` or `PR/arcade/core` that `SessionConstantInventoryTest` would not account for.
 - Committed tests that constrain new settings stay green from the phase that adds them: sections (`RecognitionSectionsTest`), documentation (`EngineDocumentationTest`, `EngineDocumentationFactsTest`), help pages (`RecognitionControlsTest`), strings (`RecognitionStringsAllLanguagesTest`, `RecognitionSettingsPanelTest`). So the settings, their documentation rows, help rows and strings land together (phase 2).
-- `SceneLabels` gains only a default method (the committed `SceneFixture` implements it).
+- Arcade's scene, `SceneLabels` and `ArcadeRenderer` are unchanged: the suggestion is a window over the paused run.
 - No JNI change.
 - The recording is never committed.
 
 **Scale/Scope**:
 - one rule in `FollowSession` and in `PracticeSession`, one assignment change, one pure class, one text on the Arcade scene;
-- nine settings in two new sections;
+- ten settings in two new sections;
 - about 6 strings in three languages;
 - two scripts with self-tests (the check and the release-notes verification), one release step, one workflow line and one test sheet.
 
@@ -101,7 +101,7 @@ specs/028-fast-repeated-notes/
 ```text
 desktop/TuxGuitar-audio-engine/src/main/java/app/tuxguitar/audio/engine/settings/
 ├── RecognitionParameter.java     + Section.REATTACK, Section.TUNING_DRIFT (after the existing sections)
-└── RecognitionParameters.java    + reattack.{rise,before,spread,octave,enabled}, tuning.drift-{threshold,notes,agreement,quiet}
+└── RecognitionParameters.java    + reattack.{rise,before,spread,octave,enabled}, tuning.drift-{threshold,notes,agreement,quiet}, tuning.arcade-boost
 
 desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── session/FollowSession.java    expected repeats per event (full sequence), band rings, re-attacks into PendingOnset, nearest-target assignment, TuningDrift fed; FollowParameters reads the new values
@@ -109,9 +109,11 @@ desktop/TuxGuitar-practice/src/app/tuxguitar/app/tools/custom/practice/
 ├── session/PracticeParameters.java  the new values for Wait
 ├── session/TuningDrift.java      new, pure
 ├── ui/PracticePalette.java       the suggestion: showFollowNotice (Follow), the feedback line (Wait)
-├── arcade/view/SceneLabels.java  + a default method for the suggestion's words
-├── arcade/ui/ArcadeSceneLabels.java  its words
-└── arcade/ui/ArcadeRenderer.java the suggestion drawn on the scene (place: owner's answer)
+├── arcade/core/ArcadeRetuneOffer.java  new, pure: the window's states and the run's boost
+├── arcade/ui/ArcadeRetuneWindow.java   new: the modal window (model: ui/ConfirmWindow), three buttons, texts
+├── ui/ArcadeRetuneFlow.java        new: pause → window → tuner (lift track, TUNER_OPEN) → resume, testable on fakes
+├── ui/PracticeWindow.java          (owns ArcadeController) wires the flow
+└── session/FollowSession.java   + setNoteAcceptCents for the run (Arcade's boost)
 
 desktop/TuxGuitar-practice/share/lang/messages{,_fr,_es}.properties
 desktop/TuxGuitar/share/help/tools_audio_recognition{,_fr}.html   a row per new setting, an <h2> per new section
@@ -125,6 +127,10 @@ desktop/TuxGuitar-practice/test/app/tuxguitar/app/tools/custom/practice/
 ├── session/ArcadeReattackTest.java      new (unit): Arcade, a level that removes notes
 ├── session/FollowSessionTuningDriftTest.java new (unit)
 ├── ui/TuningDriftTextTest.java          new (unit)
+├── arcade/core/ArcadeRetuneOfferTest.java new (unit): the states, the boost, the cap, the reset per run
+├── session/FollowSessionAcceptBoostTest.java new (unit): a wider acceptance from the next frame, no verdict changed
+├── ui/ArcadeRetuneFlowTest.java        new (unit): the order pause, tuner, resolve, resume; Yes without tuner = No
+├── arcade/ui/ArcadeRetuneWindowSwtTest.java new (swt-gui): the three buttons, run at the end
 ├── dataset/RepeatedPlucksEnginesTest.java new (dataset): two synthetic plucks 100 ms apart, held notes, through both engines
 ├── session/FollowSessionNearestTargetTest.java new (unit): R4
 ├── session/TuningDriftTest.java            new (unit)
@@ -137,7 +143,7 @@ misc/owner-offset-check.sh, misc/test-owner-offset-check.sh            new
 misc/verify-offset-table.sh, misc/test-verify-offset-table.sh          new
 .github/workflows/release.yml               the self-tests listed, the notes verified
 docs/VERSIONING.md                          "Before a release" step
-docs/architecture/recognition-engines.md    the nine rows (phase 2), the method (phase 7)
+docs/architecture/recognition-engines.md    the ten rows (phase 2), the method (phase 7)
 docs/PRACTICE{,-FR,-ES}.md                  repeated notes, the retune suggestion
 specs/test-sheets/F18-notes-repetees.md     the owner's gate
 ```
@@ -147,14 +153,14 @@ specs/test-sheets/F18-notes-repetees.md     the owner's gate
 ## Phases
 
 1. **Before:** run the dataset and benchmark suites, both engines, into `benchmark/before-*`. Also run the offset table in Follow and Arcade, from −100 to +100 ms (the Arcade and early figures were never measured).
-2. **Probe, the gate of the method, and the settings:** `RepeatedNotesProbeTest` writes `benchmark/probe.md`. Then the nine settings with their documentation rows, help rows and strings.
+2. **Probe, the gate of the method, and the settings:** `RepeatedNotesProbeTest` writes `benchmark/probe.md`. Then the ten settings with their documentation rows, help rows and strings.
    - Per missed event: the level rise, the flux, the band rise, and the event an attack went to (R1, R4).
    - A sweep of `reattack.rise`, `reattack.before` and `reattack.octave`, Java and native, both modes, all offsets, plus the guard datasets.
    - Stop condition A applies here (R3).
 3. **US1 (P1), the re-attack:** tests first and seen red (SC-004, SC-005, a scratch, `enabled` off = before), in Follow, Arcade and Wait. Then the rule in `FollowSession` and `PracticeSession`, with the values from the probe. Guards after (stop condition B).
 4. **US2 (P1), early and late:** `FollowSessionNearestTargetTest` red, then the assignment change. The offset table from −70 to +70 ms at 100 %, both modes and both engines.
 5. **US3 (P2), every version:** `OwnerOffsetTest` from the probe, `misc/owner-offset-check.sh`, `misc/verify-offset-table.sh` in the release workflow, the step in `docs/VERSIONING.md`. Run on the DI recording, with the table in `benchmark/`.
-6. **US4 (P3), the retune suggestion:** `TuningDriftTest` red, then `TuningDrift`, fed in the three modes, the palette and the Arcade text, texts in three languages, the threshold's SWT test (written here, run at the end), and `TuningDriftReplayTest`.
+6. **US4 (P3), the retune suggestion:** `TuningDriftTest` red, then `TuningDrift`, fed in the three modes, the palette (Wait, Follow), Arcade's pause and window with its three choices and the run's boost, texts in three languages, the threshold's SWT test (written here, run at the end), and `TuningDriftReplayTest`.
 7. **Polish:**
    - the engines document (FR-007) and the practice guides;
    - sheet F18 and draft release notes;
